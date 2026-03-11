@@ -11,6 +11,7 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from quote_models import InvoiceCreateNew, ConvertOrderToInvoiceRequest
+from payment_terms_utils import resolve_payment_terms, calculate_due_date
 
 router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
 
@@ -37,9 +38,22 @@ def serialize_doc(doc):
 
 @router.post("")
 async def create_invoice(payload: InvoiceCreateNew):
-    """Create a new invoice"""
+    """Create a new invoice with auto-applied customer payment terms and due date"""
     now = datetime.now(timezone.utc)
     invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    # Look up customer by email to auto-apply payment terms
+    customer = await db.customers.find_one({"email": payload.customer_email})
+    resolved_terms = resolve_payment_terms(customer)
+    
+    # Calculate due date from payment terms if not provided
+    due_date = payload.due_date
+    if not due_date:
+        due_date = calculate_due_date(
+            issue_date=now,
+            payment_term_type=resolved_terms["payment_term_type"],
+            payment_term_days=resolved_terms["payment_term_days"],
+        )
 
     doc = payload.model_dump()
     doc["invoice_number"] = invoice_number
@@ -48,9 +62,20 @@ async def create_invoice(payload: InvoiceCreateNew):
     doc["payments"] = []
     doc["amount_paid"] = 0
     
-    # Convert due_date to string if present
-    if doc.get("due_date"):
-        doc["due_date"] = doc["due_date"].isoformat() if hasattr(doc["due_date"], "isoformat") else str(doc["due_date"])
+    # Auto-apply customer payment terms
+    doc["payment_term_type"] = resolved_terms["payment_term_type"]
+    doc["payment_term_days"] = resolved_terms["payment_term_days"]
+    doc["payment_term_label"] = resolved_terms["payment_term_label"]
+    doc["payment_term_notes"] = resolved_terms["payment_term_notes"]
+    
+    # Set calculated due date
+    if due_date:
+        doc["due_date"] = due_date.isoformat() if hasattr(due_date, "isoformat") else str(due_date)
+    
+    # If terms are not provided, use payment term notes or default
+    if not doc.get("terms"):
+        settings = await db.company_settings.find_one({})
+        doc["terms"] = resolved_terms["payment_term_notes"] or (settings.get("invoice_terms") if settings else None)
 
     result = await db.invoices.insert_one(doc)
     created = await db.invoices.find_one({"_id": result.inserted_id})
@@ -157,7 +182,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
 
 @router.post("/convert-from-order")
 async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
-    """Convert an order to an invoice"""
+    """Convert an order to an invoice with customer payment terms"""
     try:
         order = await db.orders.find_one({"_id": ObjectId(payload.order_id)})
     except Exception:
@@ -169,10 +194,27 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
     now = datetime.now(timezone.utc)
     invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
+    # Look up customer by email to auto-apply payment terms
+    customer_email = order.get("customer_email") or order.get("email")
+    customer = await db.customers.find_one({"email": customer_email}) if customer_email else None
+    resolved_terms = resolve_payment_terms(customer)
+    
+    # Calculate due date from payment terms if not provided
+    due_date = payload.due_date
+    if not due_date:
+        due_date = calculate_due_date(
+            issue_date=now,
+            payment_term_type=resolved_terms["payment_term_type"],
+            payment_term_days=resolved_terms["payment_term_days"],
+        )
+    
+    # Get company settings for default terms
+    settings = await db.company_settings.find_one({})
+
     invoice_doc = {
         "invoice_number": invoice_number,
         "customer_name": order.get("customer_name"),
-        "customer_email": order.get("customer_email") or order.get("email"),
+        "customer_email": customer_email,
         "customer_company": order.get("customer_company"),
         "customer_phone": order.get("customer_phone") or order.get("phone"),
         "order_id": str(order["_id"]),
@@ -184,9 +226,14 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
         "tax": order.get("tax", 0),
         "discount": order.get("discount", 0),
         "total": order.get("total", 0),
-        "due_date": payload.due_date.isoformat() if payload.due_date else None,
+        "due_date": due_date.isoformat() if due_date and hasattr(due_date, "isoformat") else due_date,
         "notes": order.get("notes"),
-        "terms": None,
+        "terms": resolved_terms["payment_term_notes"] or (settings.get("invoice_terms") if settings else None),
+        # Payment Terms
+        "payment_term_type": resolved_terms["payment_term_type"],
+        "payment_term_days": resolved_terms["payment_term_days"],
+        "payment_term_label": resolved_terms["payment_term_label"],
+        "payment_term_notes": resolved_terms["payment_term_notes"],
         "status": "draft",
         "payments": [],
         "amount_paid": 0,

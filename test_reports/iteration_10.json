@@ -1,0 +1,92 @@
+{
+  "summary": "Completed testing of per-client payment terms feature for Konekt B2B Business OS. All 18 backend API tests passed (100%). Frontend Customers page, Quotes page with customer lookup, and Invoices page all working correctly. Payment terms flow: Customer profile -> Quote -> Invoice -> PDF with auto-calculated due dates.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "customer_crud_api": {
+      "POST /api/admin/customers": "PASS - Creates customer with payment terms (Net 7/14/30, due_on_receipt, etc.)",
+      "GET /api/admin/customers": "PASS - Lists customers with search/filter support",
+      "GET /api/admin/customers/{id}": "PASS - Returns specific customer by ID",
+      "GET /api/admin/customers/by-email/{email}": "PASS - Returns customer by email for quote/invoice lookup",
+      "PATCH /api/admin/customers/{id}": "PASS - Updates payment terms and other fields correctly",
+      "DELETE /api/admin/customers/{id}": "PASS - Soft deletes (deactivates) customer"
+    },
+    "payment_terms_flow": {
+      "quote_inherits_terms": "PASS - Quote auto-applies customer's payment terms when email matches",
+      "invoice_calculates_due_date": "PASS - Invoice calculates due date based on payment term type",
+      "due_on_receipt": "PASS - Due date equals issue date for due_on_receipt",
+      "30_days": "PASS - Due date is 30 days after issue for Net 30 terms",
+      "14_days": "PASS - Due date is 14 days after issue for Net 14 terms",
+      "7_days": "PASS - Due date is 7 days after issue for Net 7 terms"
+    },
+    "frontend_customers_page": {
+      "page_loads": "PASS - CustomersPage loads with data-testid='customers-page'",
+      "add_customer_button": "PASS - data-testid='create-customer-btn' opens form",
+      "customer_form": "PASS - Form includes payment term type dropdown (data-testid='customer-payment-term-type')",
+      "payment_term_badges": "PASS - Customer cards display payment term badges (Net 30, Net 14, etc.)"
+    },
+    "frontend_quotes_page": {
+      "customer_email_lookup": "PASS - Entering customer email triggers API lookup",
+      "customer_info_card": "PASS - data-testid='customer-info-card' shows customer profile",
+      "payment_terms_display": "PASS - Payment terms (Net 30) displayed in customer info card",
+      "auto_fill": "PASS - Customer name, company, phone auto-filled from profile"
+    },
+    "frontend_invoices_page": {
+      "page_loads": "PASS - Invoices page shows invoice list with due dates",
+      "due_date_column": "PASS - Due Date column shows calculated dates",
+      "pdf_download": "PASS - PDF download buttons available"
+    },
+    "pdf_service": {
+      "quote_pdf": "PASS - /api/admin/pdf/quote/{id} returns application/pdf",
+      "payment_term_label_stored": "PASS - payment_term_label stored in quote/invoice documents"
+    },
+    "existing_customer_test": {
+      "john@acmecorp.tz": "PASS - Existing customer has Net 30 terms as expected"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_customer_payment_terms.py",
+    "/app/test_reports/pytest/pytest_results_customer_payment.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_customer_payment_terms.py - Created comprehensive tests for Customer CRUD and payment terms flow"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Created 14 TEST_ prefixed customers for testing (automatically cleaned up by test teardown). Test customer john@acmecorp.tz with Net 30 terms was pre-existing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Payment terms feature fully functional. Customer CRUD with payment_term_type flows through to Quotes (via customer email lookup) and Invoices (with auto-calculated due dates). PDF service shows payment_term_label in documents. All payment term types tested: due_on_receipt, 7_days, 14_days, 30_days, 50_upfront_50_delivery, credit_account, custom, advance_payment.",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "features_verified": [
+    "POST /api/admin/customers - Create customer with payment terms",
+    "GET /api/admin/customers - List customers with search/filter",
+    "GET /api/admin/customers/{id} - Get customer by ID",
+    "GET /api/admin/customers/by-email/{email} - Get customer by email",
+    "PATCH /api/admin/customers/{id} - Update customer payment terms",
+    "DELETE /api/admin/customers/{id} - Soft delete customer",
+    "POST /api/admin/quotes-v2 - Auto-apply customer payment terms to quote",
+    "POST /api/admin/invoices-v2 - Auto-calculate due date from payment terms",
+    "CustomersPage - Displays payment term badges on customer cards",
+    "QuotesPageNew - Shows customer payment terms when email matches existing customer",
+    "PDF documents include payment_term_label in header card"
+  ]
+}

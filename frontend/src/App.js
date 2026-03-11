@@ -53,6 +53,7 @@ import QuoteKanbanPage from "@/pages/admin/QuoteKanbanPage";
 import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPageOps from "@/pages/admin/OrdersPageOps";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
+import CustomersPage from "@/pages/admin/CustomersPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -119,6 +120,7 @@ function App() {
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="orders-ops" element={<OrdersPageOps />} />
           <Route path="production" element={<ProductionQueuePage />} />
+          <Route path="customers" element={<CustomersPage />} />
         </Route>
         
         {/* Customer Routes */}

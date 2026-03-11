@@ -657,28 +657,34 @@ async def list_customers(
     search: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all customers (from users collection)"""
-    query = {"role": "customer"}
+    """List all B2B customers (from dedicated customers collection)"""
+    query = {}
     if search:
         query["$or"] = [
-            {"full_name": {"$regex": search, "$options": "i"}},
-            {"email": {"$regex": search, "$options": "i"}},
-            {"company": {"$regex": search, "$options": "i"}}
+            {"company_name": {"$regex": search, "$options": "i"}},
+            {"contact_name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
         ]
     
-    docs = await db.users.find(query, {"password_hash": 0}).sort("created_at", -1).to_list(length=limit)
+    docs = await db.customers.find(query).sort("created_at", -1).to_list(length=limit)
     return [serialize_doc(doc) for doc in docs]
 
 
 @router.get("/customers/{customer_id}")
 async def get_customer(customer_id: str):
-    """Get a specific customer with order history"""
-    customer = await db.users.find_one({"id": customer_id}, {"password_hash": 0})
+    """Get a specific B2B customer with order history"""
+    try:
+        from bson import ObjectId
+        customer = await db.customers.find_one({"_id": ObjectId(customer_id)})
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid customer ID format")
+    
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
-    # Get customer orders
-    orders = await db.orders.find({"user_id": customer_id}).sort("created_at", -1).to_list(length=50)
+    # Get customer orders by email
+    customer_email = customer.get("email")
+    orders = await db.orders.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=50)
     
     result = serialize_doc(customer)
     result["orders"] = [serialize_doc(o) for o in orders]

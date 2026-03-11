@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FileText, Plus, Search, Download, ArrowRight, Trash2, X } from "lucide-react";
+import { FileText, Plus, Search, Download, ArrowRight, Trash2, X, CreditCard, User } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 
 const quoteStatuses = ["draft", "sent", "approved", "rejected", "expired", "converted"];
@@ -18,6 +18,8 @@ export default function QuotesPageNew() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [customerInfo, setCustomerInfo] = useState(null);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -48,6 +50,32 @@ export default function QuotesPageNew() {
   useEffect(() => {
     loadQuotes();
   }, [filterStatus]);
+
+  // Fetch customer by email to show payment terms
+  const fetchCustomerByEmail = async (email) => {
+    if (!email || !email.includes("@")) {
+      setCustomerInfo(null);
+      return;
+    }
+    try {
+      setLoadingCustomer(true);
+      const res = await adminApi.getCustomerByEmail(email);
+      setCustomerInfo(res.data);
+      // Auto-fill customer details from profile
+      if (res.data) {
+        setForm((prev) => ({
+          ...prev,
+          customer_name: res.data.contact_name || prev.customer_name,
+          customer_company: res.data.company_name || prev.customer_company,
+          customer_phone: res.data.phone || prev.customer_phone,
+        }));
+      }
+    } catch (error) {
+      setCustomerInfo(null);
+    } finally {
+      setLoadingCustomer(false);
+    }
+  };
 
   const updateLine = (index, key, value) => {
     const lines = [...form.line_items];
@@ -107,6 +135,7 @@ export default function QuotesPageNew() {
         terms: "",
         line_items: [{ description: "", quantity: 1, unit_price: 0, total: 0 }],
       });
+      setCustomerInfo(null);
       setShowForm(false);
       loadQuotes();
     } catch (error) {
@@ -240,20 +269,53 @@ export default function QuotesPageNew() {
               <form onSubmit={createQuote} className="space-y-4">
                 <input
                   className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                  placeholder="Customer email *"
+                  type="email"
+                  value={form.customer_email}
+                  onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
+                  onBlur={(e) => fetchCustomerByEmail(e.target.value)}
+                  required
+                  data-testid="quote-customer-email"
+                />
+
+                {/* Customer Info Card */}
+                {loadingCustomer && (
+                  <div className="rounded-xl bg-slate-50 border p-3 text-sm text-slate-500">
+                    Looking up customer...
+                  </div>
+                )}
+                {customerInfo && (
+                  <div className="rounded-xl bg-[#D4A843]/5 border border-[#D4A843]/30 p-4" data-testid="customer-info-card">
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="w-4 h-4 text-[#D4A843]" />
+                      <span className="font-semibold text-sm">Customer Profile Found</span>
+                    </div>
+                    <p className="text-sm text-slate-700">{customerInfo.company_name}</p>
+                    <p className="text-xs text-slate-500">{customerInfo.contact_name}</p>
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#D4A843]/20">
+                      <CreditCard className="w-4 h-4 text-[#2D3E50]" />
+                      <span className="text-sm font-medium text-[#2D3E50]">
+                        {customerInfo.payment_term_label || "Due on Receipt"}
+                      </span>
+                    </div>
+                    {customerInfo.payment_term_notes && (
+                      <p className="text-xs text-slate-500 mt-1 ml-6">
+                        {customerInfo.payment_term_notes}
+                      </p>
+                    )}
+                    {customerInfo.tax_number && (
+                      <p className="text-xs text-slate-500 mt-2">TIN: {customerInfo.tax_number}</p>
+                    )}
+                  </div>
+                )}
+
+                <input
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3"
                   placeholder="Customer name *"
                   value={form.customer_name}
                   onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                   required
                   data-testid="quote-customer-name"
-                />
-                <input
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3"
-                  placeholder="Customer email *"
-                  type="email"
-                  value={form.customer_email}
-                  onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
-                  required
-                  data-testid="quote-customer-email"
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <input

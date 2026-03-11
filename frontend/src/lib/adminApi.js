@@ -64,6 +64,10 @@ export const adminApi = {
   // Customers
   getCustomers: (params) => api.get("/api/admin/customers", { params }),
   getCustomer: (id) => api.get(`/api/admin/customers/${id}`),
+  getCustomerByEmail: (email) => api.get(`/api/admin/customers/by-email/${encodeURIComponent(email)}`),
+  createCustomer: (payload) => api.post("/api/admin/customers", payload),
+  updateCustomer: (customerId, payload) => api.patch(`/api/admin/customers/${customerId}`, payload),
+  deleteCustomer: (customerId) => api.delete(`/api/admin/customers/${customerId}`),
 
   // Service Orders
   getServiceOrders: (params) => api.get("/api/service-orders", { params }),

@@ -81,8 +81,8 @@ def draw_header(c, settings, doc_type, number, status):
     c.drawCentredString(width - 40 * mm, height - 29 * mm, status.upper())
 
 
-def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
-    """Draw two-column company and bill-to section with TIN/Registration"""
+def draw_company_and_billto(c, settings, customer, issue_date, due_date=None, payment_term_label=None):
+    """Draw two-column company and bill-to section with TIN/Registration and Payment Terms"""
     width, height = A4
     top_y = height - 55 * mm
 
@@ -153,20 +153,33 @@ def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
             c.drawString(95 * mm, y2, str(line))
             y2 -= 4.5 * mm
 
-    # Date card
-    card_x = width - 65 * mm
-    card_y = top_y - 18 * mm
+    # Date and Payment Terms card (expanded to show payment terms)
+    card_x = width - 70 * mm
+    card_y = top_y - 24 * mm
+    card_height = 34 * mm if payment_term_label else 24 * mm
     c.setFillColor(SOFT)
-    c.roundRect(card_x, card_y, 47 * mm, 24 * mm, 3 * mm, stroke=0, fill=1)
+    c.roundRect(card_x, card_y - (10 * mm if payment_term_label else 0), 52 * mm, card_height, 3 * mm, stroke=0, fill=1)
 
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
-    c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
+    
+    # Adjust positions based on whether we have payment terms
+    if payment_term_label:
+        c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
+        c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
+        c.drawString(card_x + 4 * mm, card_y + 2 * mm, "Payment Terms")
 
-    c.setFont("Helvetica", 9)
-    c.drawRightString(card_x + 43 * mm, card_y + 16 * mm, issue_date or "-")
-    c.drawRightString(card_x + 43 * mm, card_y + 9 * mm, due_date or "-")
+        c.setFont("Helvetica", 9)
+        c.drawRightString(card_x + 47 * mm, card_y + 16 * mm, issue_date or "-")
+        c.drawRightString(card_x + 47 * mm, card_y + 9 * mm, due_date or "-")
+        c.drawRightString(card_x + 47 * mm, card_y + 2 * mm, payment_term_label[:25] or "-")
+    else:
+        c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
+        c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
+
+        c.setFont("Helvetica", 9)
+        c.drawRightString(card_x + 43 * mm, card_y + 16 * mm, issue_date or "-")
+        c.drawRightString(card_x + 43 * mm, card_y + 9 * mm, due_date or "-")
 
 
 def draw_items_table(c, items, currency="TZS", start_y=150 * mm):
@@ -314,6 +327,9 @@ def build_document_pdf(doc_type, doc, settings):
         due_date = str(doc.get("valid_until"))[:10]
 
     title = "Invoice" if doc_type == "invoice" else "Quote"
+    
+    # Get payment term label for display
+    payment_term_label = doc.get("payment_term_label", "")
 
     # Include all customer details for PDF
     customer = {
@@ -327,14 +343,14 @@ def build_document_pdf(doc_type, doc, settings):
     }
 
     draw_header(c, settings, title, number, status)
-    draw_company_and_billto(c, settings, customer, issue_date, due_date)
+    draw_company_and_billto(c, settings, customer, issue_date, due_date, payment_term_label)
     
     # Draw items table and get the Y position after items
     items_end_y = draw_items_table(
         c,
         doc.get("line_items", []),
         doc.get("currency", settings.get("currency", "TZS")),
-        start_y=125 * mm,  # Slightly lower to accommodate more company info
+        start_y=120 * mm,  # Slightly lower to accommodate payment terms card
     )
     
     # Calculate totals Y position based on items
@@ -350,7 +366,10 @@ def build_document_pdf(doc_type, doc, settings):
         tax_rate=doc.get("tax_rate", settings.get("default_tax_rate", 18.0)),
         y=totals_y,
     )
-    draw_footer(c, settings, notes=doc.get("notes"), terms=doc.get("terms"))
+    
+    # Use payment_term_notes if terms not explicitly set
+    terms = doc.get("terms") or doc.get("payment_term_notes")
+    draw_footer(c, settings, notes=doc.get("notes"), terms=terms)
 
     c.showPage()
     c.save()

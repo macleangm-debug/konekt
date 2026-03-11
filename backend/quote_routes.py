@@ -10,6 +10,7 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from quote_models import QuoteCreate, ConvertQuoteToOrderRequest
+from payment_terms_utils import resolve_payment_terms
 
 router = APIRouter(prefix="/api/admin/quotes-v2", tags=["Quotes V2"])
 
@@ -36,14 +37,30 @@ def serialize_doc(doc):
 
 @router.post("")
 async def create_quote(payload: QuoteCreate):
-    """Create a new quote"""
+    """Create a new quote with auto-applied customer payment terms"""
     now = datetime.now(timezone.utc)
     quote_number = f"QTN-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    # Look up customer by email to auto-apply payment terms
+    customer = await db.customers.find_one({"email": payload.customer_email})
+    resolved_terms = resolve_payment_terms(customer)
 
     doc = payload.model_dump()
     doc["quote_number"] = quote_number
     doc["created_at"] = now.isoformat()
     doc["updated_at"] = now.isoformat()
+    
+    # Auto-apply customer payment terms if not explicitly provided
+    if not payload.payment_term_type or payload.payment_term_type == "due_on_receipt":
+        doc["payment_term_type"] = resolved_terms["payment_term_type"]
+        doc["payment_term_days"] = resolved_terms["payment_term_days"]
+        doc["payment_term_label"] = resolved_terms["payment_term_label"]
+        doc["payment_term_notes"] = resolved_terms["payment_term_notes"]
+    
+    # If terms are not provided, use payment term notes or default
+    if not doc.get("terms"):
+        settings = await db.company_settings.find_one({})
+        doc["terms"] = resolved_terms["payment_term_notes"] or (settings.get("quote_terms") if settings else None)
     
     # Convert valid_until to string if present
     if doc.get("valid_until"):

@@ -87,6 +87,11 @@ class QuoteCreate(BaseModel):
     notes: Optional[str] = None
     terms: Optional[str] = None
     status: QuoteStatus = "draft"
+    # Payment Terms (inherited from customer profile)
+    payment_term_type: Optional[str] = "due_on_receipt"
+    payment_term_days: int = 0
+    payment_term_label: Optional[str] = "Due on Receipt"
+    payment_term_notes: Optional[str] = None
 
 
 class QuoteOut(QuoteCreate):
@@ -124,6 +129,11 @@ class InvoiceCreateNew(BaseModel):
     notes: Optional[str] = None
     terms: Optional[str] = None
     status: InvoiceStatus = "draft"
+    # Payment Terms (inherited from customer profile)
+    payment_term_type: Optional[str] = "due_on_receipt"
+    payment_term_days: int = 0
+    payment_term_label: Optional[str] = "Due on Receipt"
+    payment_term_notes: Optional[str] = None
 
 
 class InvoiceOut(InvoiceCreateNew):

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -21,6 +21,7 @@ const navItems = [
   { path: '/admin/stock', label: 'Stock Management', icon: Boxes },
   { type: 'divider', label: 'Business OS' },
   { path: '/admin/crm', label: 'CRM Pipeline', icon: Target },
+  { path: '/admin/customers', label: 'Customers', icon: Contact },
   { path: '/admin/quotes', label: 'Quotes', icon: FileText },
   { path: '/admin/quotes/kanban', label: 'Quote Kanban', icon: Columns3 },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt },
