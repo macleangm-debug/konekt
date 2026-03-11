@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -17,12 +17,12 @@ const navItems = [
   { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
   { path: '/admin/products', label: 'Products', icon: Package },
   { path: '/admin/stock', label: 'Stock Management', icon: Boxes },
-  { type: 'divider', label: 'Sales' },
-  { path: '/admin/sales', label: 'Sales Dashboard', icon: TrendingUp, exact: true },
-  { path: '/admin/sales/leads', label: 'Leads', icon: Target },
-  { path: '/admin/sales/quotes', label: 'Quotes', icon: FileText },
-  { path: '/admin/sales/tasks', label: 'Tasks', icon: Zap },
-  { path: '/admin/sales/team', label: 'Sales Team', icon: UsersRound },
+  { type: 'divider', label: 'Business OS' },
+  { path: '/admin/crm', label: 'CRM Pipeline', icon: Target },
+  { path: '/admin/quotes', label: 'Quotes', icon: FileText },
+  { path: '/admin/invoices', label: 'Invoices', icon: Receipt },
+  { path: '/admin/inventory', label: 'Inventory', icon: Briefcase },
+  { path: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
   { type: 'divider', label: 'Other' },
   { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/admin/offers', label: 'Offers', icon: Gift },

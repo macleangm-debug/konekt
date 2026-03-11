@@ -36,6 +36,11 @@ import AdminMaintenance from "@/pages/admin/AdminMaintenance";
 import AdminOffers from "@/pages/admin/AdminOffers";
 import AdminReferrals from "@/pages/admin/AdminReferrals";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import CRMPage from "@/pages/admin/CRMPage";
+import InventoryPage from "@/pages/admin/InventoryPage";
+import TasksPage from "@/pages/admin/TasksPage";
+import InvoicesPage from "@/pages/admin/InvoicesPage";
+import AdminQuotes from "@/pages/admin/AdminQuotes";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -91,6 +96,11 @@ function App() {
           <Route path="offers" element={<AdminOffers />} />
           <Route path="referrals" element={<AdminReferrals />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="crm" element={<CRMPage />} />
+          <Route path="inventory" element={<InventoryPage />} />
+          <Route path="tasks" element={<TasksPage />} />
+          <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="quotes" element={<AdminQuotes />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
         
