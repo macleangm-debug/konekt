@@ -1,0 +1,123 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "Konekt",
+      "archetype": "Corporate Vibrance",
+      "core_values": ["Professional", "Reliable", "Forward-Thinking", "Rewarding"],
+      "visual_style": "Modern Corporate with Gamified Accents"
+    },
+    "typography": {
+      "font_family": {
+        "heading": "Space Grotesk, sans-serif",
+        "body": "Outfit, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "usage": {
+        "h1": "text-5xl md:text-6xl font-bold tracking-tight text-foreground",
+        "h2": "text-3xl md:text-4xl font-semibold tracking-tight text-foreground",
+        "h3": "text-2xl font-medium text-foreground",
+        "body": "text-base md:text-lg text-muted-foreground leading-relaxed",
+        "caption": "text-sm font-medium text-muted-foreground uppercase tracking-wider"
+      }
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "name": "Konekt Navy",
+          "hex": "#2D3E50",
+          "hsl": "211 28% 25%",
+          "usage": "Primary buttons, headers, active states, text emphasis"
+        },
+        "secondary": {
+          "name": "Konekt Gold",
+          "hex": "#D4A843",
+          "hsl": "42 64% 55%",
+          "usage": "Accents, call-to-actions, gamification rewards, highlights"
+        },
+        "background": {
+          "light": "#F8FAFC",
+          "paper": "#FFFFFF",
+          "dark": "#0F172A"
+        },
+        "gamification": {
+          "gold": "linear-gradient(135deg, #FFD700 0%, #FDB931 100%)",
+          "silver": "linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 100%)",
+          "bronze": "linear-gradient(135deg, #CD7F32 0%, #A0522D 100%)"
+        }
+      }
+    },
+    "visual_enhancers": {
+      "glassmorphism": "backdrop-blur-xl bg-white/80 border border-white/20 shadow-sm",
+      "gradients": {
+        "hero": "bg-gradient-to-br from-slate-50 to-slate-100",
+        "primary_shine": "bg-gradient-to-r from-primary/90 to-primary"
+      },
+      "shadows": {
+        "card": "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-shadow duration-300",
+        "floating": "shadow-[0_12px_32px_rgba(45,62,80,0.12)]"
+      },
+      "borders": "border border-slate-200"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 rounded-full font-medium transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:-translate-y-0.5",
+      "secondary": "bg-white text-primary border-2 border-primary/10 hover:border-primary/30 hover:bg-primary/5 h-11 px-8 rounded-full font-medium transition-all duration-200",
+      "accent": "bg-secondary text-white hover:bg-secondary/90 h-11 px-8 rounded-full font-bold uppercase tracking-wide shadow-md hover:shadow-lg transition-all"
+    },
+    "cards": {
+      "product": "group relative bg-white rounded-2xl border border-slate-100 overflow-hidden transition-all duration-300 hover:border-primary/20 hover:shadow-xl",
+      "dashboard": "bg-white rounded-xl border border-slate-100 p-6 shadow-sm",
+      "feature": "bg-slate-50/50 rounded-2xl p-8 border border-slate-100 hover:bg-white hover:shadow-md transition-all duration-300"
+    },
+    "inputs": {
+      "default": "h-11 rounded-lg border-slate-200 bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+    }
+  },
+  "layout_strategies": {
+    "marketing": {
+      "hero": "grid grid-cols-1 lg:grid-cols-12 gap-12 items-center min-h-[80vh] px-6 lg:px-12",
+      "section": "py-20 px-6 lg:px-12 max-w-7xl mx-auto",
+      "grid_bento": "grid grid-cols-1 md:grid-cols-3 gap-6"
+    },
+    "dashboard": {
+      "shell": "flex h-screen bg-slate-50",
+      "sidebar": "w-64 bg-white border-r border-slate-200 hidden lg:block",
+      "content": "flex-1 overflow-auto p-8"
+    }
+  },
+  "assets": {
+    "images": {
+      "hero_bg": "https://images.unsplash.com/photo-1758518731722-320023fb8e66?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "products": {
+        "notebook": "https://images.unsplash.com/photo-1553018440-8e05c070608a?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "pen_set": "https://images.unsplash.com/photo-1598620616572-ff4d5e76bc07?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "hoodie": "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "tshirt": "https://images.unsplash.com/photo-1610502778270-c5c6f4c7d575?crop=entropy&cs=srgb&fm=jpg&q=85"
+      },
+      "team": "https://images.unsplash.com/photo-1758518731467-c2c48f5dc5ac?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "logo": "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg"
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width={1.5} className='w-5 h-5'"
+    }
+  },
+  "instructions_to_main_agent": [
+    "UPDATE /app/frontend/src/index.css: Replace the root color variables with the new Navy (#2D3E50) and Gold (#D4A843) palette. Ensure HSL values are correct.",
+    "UPDATE /app/frontend/src/index.css: Remove 'card-brutalist' and replace with 'card-modern' using the shadow/border styles defined in visual_enhancers.",
+    "UPDATE /app/frontend/src/App.css: Refine .hero-section to use the new gradient and layout.",
+    "Ensure all buttons use the new 'pill' shape and shadow styles.",
+    "Implement the 'Bento Grid' layout for the dashboard and feature sections.",
+    "Use the provided image URLs for the product catalog and hero section.",
+    "Maintain the 'Space Grotesk' font for headings but ensure 'Outfit' is used for all body text.",
+    "Gamification elements (points, badges) should use the metallic gradient styles defined in colors.gamification."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not use generic centered layouts. Use asymmetry.",
+    "Use 2-3x more spacing than typical designs (p-8, p-12).",
+    "Every interaction needs micro-animations (hover, focus, active).",
+    "Use 'sonner' for toasts.",
+    "All interactive elements MUST include data-testid attributes."
+  ]
+}

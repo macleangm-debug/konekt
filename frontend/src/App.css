@@ -1,0 +1,256 @@
+/* Konekt Corporate App Styles */
+
+/* Hero Section */
+.hero-section {
+    @apply relative min-h-screen flex items-center;
+    background: linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 50%, #F1F5F9 100%);
+}
+
+/* Product Card */
+.product-card {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid rgb(241 245 249);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.product-card:hover {
+    border-color: rgba(45, 62, 80, 0.2);
+    box-shadow: 0 12px 32px rgba(45, 62, 80, 0.12);
+    transform: translateY(-4px);
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+/* Canvas Container */
+.canvas-container {
+    @apply relative bg-white border border-slate-200 rounded-xl overflow-hidden;
+    touch-action: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+/* Color Swatch */
+.color-swatch {
+    @apply w-8 h-8 rounded-full border-2 border-transparent cursor-pointer transition-all duration-200;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.color-swatch:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.color-swatch.selected {
+    @apply border-primary ring-2 ring-primary/30;
+}
+
+/* Chat Widget */
+.chat-widget {
+    @apply fixed bottom-6 right-6;
+    z-index: 9999;
+}
+
+.chat-bubble {
+    @apply w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300;
+    background: linear-gradient(135deg, #2D3E50 0%, #1a2633 100%);
+    color: white;
+    box-shadow: 0 8px 24px rgba(45, 62, 80, 0.4);
+}
+
+.chat-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(45, 62, 80, 0.5);
+}
+
+/* Order Tracking Timeline */
+.tracking-timeline {
+    @apply relative pl-8;
+}
+
+.tracking-timeline::before {
+    content: '';
+    @apply absolute left-3 top-0 bottom-0 w-0.5 bg-slate-200;
+}
+
+.tracking-step {
+    @apply relative pb-6 last:pb-0;
+}
+
+.tracking-step::before {
+    content: '';
+    @apply absolute -left-5 top-1 w-4 h-4 rounded-full bg-slate-200;
+}
+
+.tracking-step.completed::before {
+    background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+}
+
+.tracking-step.current::before {
+    @apply bg-primary animate-pulse;
+}
+
+/* Points Animation */
+@keyframes points-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.points-earned {
+    animation: points-pop 0.5s ease-out;
+}
+
+/* Loading Skeleton */
+.skeleton {
+    @apply bg-slate-100 animate-pulse rounded-lg;
+}
+
+/* Quantity Input */
+.quantity-input {
+    @apply flex items-center gap-2;
+}
+
+.quantity-input button {
+    @apply w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center font-bold transition-all bg-white;
+}
+
+.quantity-input button:hover {
+    @apply border-primary text-primary bg-primary/5;
+}
+
+.quantity-input input {
+    @apply w-16 h-10 text-center border border-slate-200 rounded-lg font-bold bg-white;
+}
+
+/* Size Selector */
+.size-option {
+    @apply min-w-[48px] h-12 flex items-center justify-center border border-slate-200 rounded-lg font-medium cursor-pointer transition-all bg-white;
+}
+
+.size-option:hover {
+    @apply border-primary text-primary;
+}
+
+.size-option.selected {
+    @apply bg-primary text-primary-foreground border-primary;
+}
+
+/* Print Method Cards */
+.print-method-card {
+    @apply p-4 border border-slate-200 rounded-xl cursor-pointer transition-all bg-white;
+}
+
+.print-method-card:hover {
+    @apply border-primary/50 bg-primary/5;
+}
+
+.print-method-card.selected {
+    @apply border-primary bg-primary/5;
+    box-shadow: 0 0 0 2px rgba(45, 62, 80, 0.1);
+}
+
+/* Quote Calculator */
+.quote-result {
+    @apply p-6 rounded-xl border border-secondary/30;
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.08) 0%, rgba(212, 168, 67, 0.02) 100%);
+}
+
+.quote-result .best-value {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold;
+    background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+    color: #2D3E50;
+}
+
+/* Canvas Tools */
+.canvas-tools {
+    @apply flex gap-2 p-2 bg-white border border-slate-200 rounded-xl;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.canvas-tool-btn {
+    @apply w-10 h-10 flex items-center justify-center rounded-lg transition-colors;
+}
+
+.canvas-tool-btn:hover {
+    @apply bg-slate-100;
+}
+
+.canvas-tool-btn.active {
+    @apply bg-primary text-primary-foreground;
+}
+
+/* Mobile Navigation */
+.mobile-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-40 md:hidden;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+
+.mobile-nav-item {
+    @apply flex flex-col items-center gap-1 text-muted-foreground transition-colors;
+}
+
+.mobile-nav-item.active {
+    @apply text-primary;
+}
+
+/* Deposit Progress */
+.deposit-progress {
+    @apply h-2 rounded-full bg-slate-100 overflow-hidden;
+}
+
+.deposit-progress-bar {
+    @apply h-full rounded-full transition-all duration-500;
+    background: linear-gradient(90deg, #D4A843 0%, #FFD700 100%);
+}
+
+/* Badge Shine Effect */
+.badge-shine {
+    @apply relative overflow-hidden;
+}
+
+.badge-shine::after {
+    content: '';
+    @apply absolute inset-0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transform: translateX(-100%);
+    animation: shine 2s infinite;
+}
+
+@keyframes shine {
+    100% { transform: translateX(100%); }
+}
+
+/* Responsive Grid Helpers */
+@media (max-width: 768px) {
+    .bento-grid {
+        @apply grid-cols-1 !important;
+    }
+}
+
+/* Corporate Trust Badge */
+.trust-badge {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium;
+    background: rgba(45, 62, 80, 0.05);
+    border: 1px solid rgba(45, 62, 80, 0.1);
+}
+
+/* Gold Accent Border */
+.gold-accent {
+    position: relative;
+}
+
+.gold-accent::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #D4A843, #FFD700);
+    border-radius: 2px;
+}

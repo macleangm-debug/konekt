@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        /* Konekt Corporate Colors */
+        --background: 210 40% 98%;
+        --foreground: 211 28% 25%;
+        --card: 0 0% 100%;
+        --card-foreground: 211 28% 25%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 211 28% 25%;
+        --primary: 211 28% 25%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 42 64% 55%;
+        --secondary-foreground: 211 28% 15%;
+        --accent: 42 64% 55%;
+        --accent-foreground: 211 28% 15%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 211 28% 25%;
+        --chart-1: 211 28% 25%;
+        --chart-2: 42 64% 55%;
+        --chart-3: 215 16% 47%;
+        --chart-4: 210 40% 80%;
+        --chart-5: 42 64% 70%;
+        --radius: 0.75rem;
+        
+        /* Gamification Metallic Colors */
+        --gold-start: 51 100% 50%;
+        --gold-end: 39 97% 59%;
+        --silver-start: 0 0% 88%;
+        --silver-end: 0 0% 74%;
+        --bronze-start: 30 56% 50%;
+        --bronze-end: 19 60% 40%;
+    }
+
+    .dark {
+        --background: 222 47% 11%;
+        --foreground: 210 40% 98%;
+        --card: 222 47% 15%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222 47% 15%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 42 64% 55%;
+        --primary-foreground: 211 28% 15%;
+        --secondary: 211 28% 35%;
+        --secondary-foreground: 210 40% 98%;
+        --accent: 42 64% 55%;
+        --accent-foreground: 211 28% 15%;
+        --muted: 222 47% 20%;
+        --muted-foreground: 215 20% 65%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 222 47% 20%;
+        --input: 222 47% 20%;
+        --ring: 42 64% 55%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    
+    body {
+        @apply bg-background text-foreground antialiased;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', sans-serif;
+        letter-spacing: -0.02em;
+    }
+
+    code, pre, .mono {
+        font-family: 'JetBrains Mono', monospace;
+    }
+}
+
+@layer components {
+    /* Modern Card Style */
+    .card-modern {
+        @apply bg-white rounded-2xl border border-slate-100 transition-all duration-300;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .card-modern:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        @apply border-primary/20;
+    }
+
+    /* Gamified Button with Gold Accent */
+    .btn-gamified {
+        @apply bg-secondary text-white font-bold uppercase tracking-wide rounded-full px-8 py-3 transition-all duration-200;
+        box-shadow: 0 4px 14px rgba(212, 168, 67, 0.4);
+    }
+    
+    .btn-gamified:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 168, 67, 0.5);
+    }
+    
+    .btn-gamified:active {
+        transform: translateY(0);
+    }
+
+    /* Primary Pill Button */
+    .btn-primary-pill {
+        @apply bg-primary text-primary-foreground rounded-full px-8 py-3 font-medium transition-all duration-200;
+        box-shadow: 0 4px 14px rgba(45, 62, 80, 0.25);
+    }
+    
+    .btn-primary-pill:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(45, 62, 80, 0.35);
+    }
+    
+    .btn-primary-pill:active {
+        transform: translateY(0);
+    }
+
+    /* Floating Glass Effect */
+    .glass-panel {
+        @apply backdrop-blur-xl bg-white/80 border border-white/20;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    }
+
+    /* Points Badge - Gold Metallic */
+    .points-badge {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm;
+        background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+        color: #2D3E50;
+        box-shadow: 0 2px 8px rgba(212, 168, 67, 0.4);
+    }
+
+    /* Feature Card */
+    .feature-card {
+        @apply bg-slate-50/50 rounded-2xl p-8 border border-slate-100 transition-all duration-300;
+    }
+    
+    .feature-card:hover {
+        @apply bg-white;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    /* Stats Card */
+    .stat-card {
+        @apply bg-white rounded-xl p-6 border border-slate-100 transition-all duration-300;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    
+    .stat-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+}
+
+@layer utilities {
+    .text-gradient-gold {
+        background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .bg-gradient-hero {
+        @apply bg-gradient-to-br from-slate-50 to-slate-100;
+    }
+
+    .bg-gradient-navy {
+        background: linear-gradient(135deg, #2D3E50 0%, #1a2633 100%);
+    }
+
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .animate-pulse-slow {
+        animation: pulse 3s ease-in-out infinite;
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-primary/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/40;
+}
+
+/* Selection */
+::selection {
+    @apply bg-secondary/30 text-foreground;
+}
+
+/* Chat Widget */
+.chat-widget {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    z-index: 9999;
+}
+
+.chat-bubble {
+    @apply bg-primary text-primary-foreground w-14 h-14 rounded-full flex items-center justify-center shadow-lg relative;
+    @apply hover:scale-110 transition-transform cursor-pointer;
+}
+
+/* Ensure chat is above all elements */
+.chat-widget .fixed {
+    z-index: 10000 !important;
+    bottom: 90px !important;
+}
+
