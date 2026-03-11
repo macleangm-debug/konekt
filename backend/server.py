@@ -23,6 +23,10 @@ from sales_automation import init_automation_engine
 from ai_services import router as ai_services_router
 from service_orders import router as service_orders_router
 from admin_routes import router as admin_ops_router
+from settings_routes import router as settings_router
+from quote_routes import router as quote_router
+from invoice_routes import router as invoice_router
+from pdf_routes import router as pdf_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1871,6 +1875,18 @@ app.include_router(service_orders_router)
 
 # Include admin operations router (CRM, Inventory, Invoices, Tasks, Quotes)
 app.include_router(admin_ops_router)
+
+# Include settings router
+app.include_router(settings_router)
+
+# Include quote routes (v2)
+app.include_router(quote_router)
+
+# Include invoice routes (v2)
+app.include_router(invoice_router)
+
+# Include PDF export routes
+app.include_router(pdf_router)
 
 app.add_middleware(
     CORSMiddleware,

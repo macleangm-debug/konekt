@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -29,6 +29,7 @@ const navItems = [
   { path: '/admin/referrals', label: 'Referrals', icon: UserPlus },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
+  { path: '/admin/settings/company', label: 'Company Branding', icon: Building2 },
 ];
 
 export default function AdminLayout() {

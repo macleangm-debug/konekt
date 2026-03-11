@@ -1,8 +1,14 @@
 import api from "./api";
 
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
+
 export const adminApi = {
   // Dashboard
   getDashboardSummary: () => api.get("/api/admin/dashboard/summary"),
+
+  // Company Settings
+  getCompanySettings: () => api.get("/api/admin/settings/company"),
+  updateCompanySettings: (payload) => api.put("/api/admin/settings/company", payload),
 
   // CRM / Leads
   getLeads: (params) => api.get("/api/admin/crm/leads", { params }),
@@ -27,22 +33,33 @@ export const adminApi = {
   getStockMovements: (params) => api.get("/api/admin/inventory/movements", { params }),
   getLowStockItems: () => api.get("/api/admin/inventory/low-stock"),
 
-  // Invoices
-  getInvoices: (params) => api.get("/api/admin/invoices", { params }),
-  getInvoice: (id) => api.get(`/api/admin/invoices/${id}`),
-  createInvoice: (payload) => api.post("/api/admin/invoices", payload),
+  // Invoices (v2 routes)
+  getInvoices: (params) => api.get("/api/admin/invoices-v2", { params }),
+  getInvoice: (id) => api.get(`/api/admin/invoices-v2/${id}`),
+  createInvoice: (payload) => api.post("/api/admin/invoices-v2", payload),
   updateInvoiceStatus: (invoiceId, status) =>
-    api.patch(`/api/admin/invoices/${invoiceId}/status`, null, { params: { status } }),
-  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices/${invoiceId}/payments`, payload),
+    api.patch(`/api/admin/invoices-v2/${invoiceId}/status`, null, { params: { status } }),
+  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices-v2/${invoiceId}/payments`, payload),
+  convertOrderToInvoice: (orderId, dueDate) =>
+    api.post("/api/admin/invoices-v2/convert-from-order", {
+      order_id: orderId,
+      due_date: dueDate || null,
+    }),
 
-  // Quotes
-  getQuotes: (params) => api.get("/api/admin/quotes", { params }),
-  getQuote: (id) => api.get(`/api/admin/quotes/${id}`),
-  createQuote: (payload) => api.post("/api/admin/quotes", payload),
+  // Quotes (v2 routes)
+  getQuotes: (params) => api.get("/api/admin/quotes-v2", { params }),
+  getQuote: (id) => api.get(`/api/admin/quotes-v2/${id}`),
+  createQuote: (payload) => api.post("/api/admin/quotes-v2", payload),
   updateQuoteStatus: (quoteId, status) =>
-    api.patch(`/api/admin/quotes/${quoteId}/status`, null, { params: { status } }),
-  convertQuoteToOrder: (quoteId) => api.post(`/api/admin/quotes/${quoteId}/convert-to-order`),
-  convertQuoteToInvoice: (quoteId) => api.post(`/api/admin/quotes/${quoteId}/convert-to-invoice`),
+    api.patch(`/api/admin/quotes-v2/${quoteId}/status`, null, { params: { status } }),
+  convertQuoteToOrder: (quoteId) =>
+    api.post("/api/admin/quotes-v2/convert-to-order", { quote_id: quoteId }),
+  convertQuoteToInvoice: (quoteId) =>
+    api.post(`/api/admin/quotes-v2/${quoteId}/convert-to-invoice`),
+
+  // PDF Export URLs
+  downloadQuotePdf: (quoteId) => `${API_BASE_URL}/api/admin/pdf/quote/${quoteId}`,
+  downloadInvoicePdf: (invoiceId) => `${API_BASE_URL}/api/admin/pdf/invoice/${invoiceId}`,
 
   // Customers
   getCustomers: (params) => api.get("/api/admin/customers", { params }),

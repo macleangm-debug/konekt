@@ -1,0 +1,210 @@
+"""
+Konekt Invoice Routes - Create, manage, convert from orders
+"""
+from datetime import datetime, timezone
+from uuid import uuid4
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Query
+from pydantic import BaseModel
+from bson import ObjectId
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+
+from quote_models import InvoiceCreateNew, ConvertOrderToInvoiceRequest
+
+router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
+
+# Database connection
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+db_name = os.environ.get('DB_NAME', 'konekt_db')
+client = AsyncIOMotorClient(mongo_url)
+db = client[db_name]
+
+
+def serialize_doc(doc):
+    """Convert MongoDB document to JSON-serializable dict"""
+    if doc is None:
+        return None
+    doc = dict(doc)
+    if "_id" in doc:
+        doc["id"] = str(doc["_id"])
+        del doc["_id"]
+    for key, value in doc.items():
+        if isinstance(value, datetime):
+            doc[key] = value.isoformat()
+    return doc
+
+
+@router.post("")
+async def create_invoice(payload: InvoiceCreateNew):
+    """Create a new invoice"""
+    now = datetime.now(timezone.utc)
+    invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    doc = payload.model_dump()
+    doc["invoice_number"] = invoice_number
+    doc["created_at"] = now.isoformat()
+    doc["updated_at"] = now.isoformat()
+    doc["payments"] = []
+    doc["amount_paid"] = 0
+    
+    # Convert due_date to string if present
+    if doc.get("due_date"):
+        doc["due_date"] = doc["due_date"].isoformat() if hasattr(doc["due_date"], "isoformat") else str(doc["due_date"])
+
+    result = await db.invoices.insert_one(doc)
+    created = await db.invoices.find_one({"_id": result.inserted_id})
+    return serialize_doc(created)
+
+
+@router.get("")
+async def list_invoices(
+    status: Optional[str] = None,
+    customer_email: Optional[str] = None,
+    limit: int = Query(default=100, le=500)
+):
+    """List all invoices"""
+    query = {}
+    if status:
+        query["status"] = status
+    if customer_email:
+        query["customer_email"] = customer_email
+    
+    docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
+    return [serialize_doc(doc) for doc in docs]
+
+
+@router.get("/{invoice_id}")
+async def get_invoice(invoice_id: str):
+    """Get a specific invoice"""
+    try:
+        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        return serialize_doc(doc)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+
+@router.patch("/{invoice_id}/status")
+async def update_invoice_status(invoice_id: str, status: str = Query(...)):
+    """Update invoice status"""
+    valid_statuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"]
+    if status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    now = datetime.now(timezone.utc)
+    result = await db.invoices.update_one(
+        {"_id": ObjectId(invoice_id)},
+        {"$set": {"status": status, "updated_at": now.isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    return serialize_doc(updated)
+
+
+class PaymentRecord(BaseModel):
+    amount: float
+    method: str
+    reference: Optional[str] = None
+    notes: Optional[str] = None
+
+
+@router.post("/{invoice_id}/payments")
+async def add_payment(invoice_id: str, payload: PaymentRecord):
+    """Add a payment to an invoice"""
+    now = datetime.now(timezone.utc)
+    
+    try:
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    payment = payload.model_dump()
+    payment["timestamp"] = now.isoformat()
+    
+    # Calculate new paid amount
+    existing_payments = invoice.get("payments", [])
+    total_paid = sum(p.get("amount", 0) for p in existing_payments) + payload.amount
+    invoice_total = invoice.get("total", 0)
+    
+    # Determine new status
+    new_status = invoice.get("status")
+    if total_paid >= invoice_total:
+        new_status = "paid"
+    elif total_paid > 0:
+        new_status = "partially_paid"
+    
+    await db.invoices.update_one(
+        {"_id": ObjectId(invoice_id)},
+        {
+            "$push": {"payments": payment},
+            "$set": {
+                "status": new_status,
+                "amount_paid": total_paid,
+                "updated_at": now.isoformat()
+            }
+        }
+    )
+    
+    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    return serialize_doc(updated)
+
+
+@router.post("/convert-from-order")
+async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
+    """Convert an order to an invoice"""
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(payload.order_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    now = datetime.now(timezone.utc)
+    invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    invoice_doc = {
+        "invoice_number": invoice_number,
+        "customer_name": order.get("customer_name"),
+        "customer_email": order.get("customer_email") or order.get("email"),
+        "customer_company": order.get("customer_company"),
+        "customer_phone": order.get("customer_phone") or order.get("phone"),
+        "order_id": str(order["_id"]),
+        "order_number": order.get("order_number"),
+        "quote_id": order.get("quote_id"),
+        "currency": order.get("currency", "TZS"),
+        "line_items": order.get("line_items") or order.get("items", []),
+        "subtotal": order.get("subtotal", 0),
+        "tax": order.get("tax", 0),
+        "discount": order.get("discount", 0),
+        "total": order.get("total", 0),
+        "due_date": payload.due_date.isoformat() if payload.due_date else None,
+        "notes": order.get("notes"),
+        "terms": None,
+        "status": "draft",
+        "payments": [],
+        "amount_paid": 0,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+    }
+
+    result = await db.invoices.insert_one(invoice_doc)
+    
+    # Update order with invoice reference
+    await db.orders.update_one(
+        {"_id": order["_id"]},
+        {"$set": {
+            "invoice_id": str(result.inserted_id),
+            "invoice_number": invoice_number,
+            "updated_at": now.isoformat()
+        }}
+    )
+    
+    created = await db.invoices.find_one({"_id": result.inserted_id})
+    return serialize_doc(created)

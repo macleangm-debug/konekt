@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FileText, Plus, Search, DollarSign, Calendar, Mail, Building2 } from "lucide-react";
+import { FileText, Plus, Search, DollarSign, Calendar, Mail, Building2, Download, ArrowRight } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 
 const invoiceStatuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"];
@@ -17,9 +17,14 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showConvertForm, setShowConvertForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(null);
+
+  // Convert from order form
+  const [orderId, setOrderId] = useState("");
+  const [dueDate, setDueDate] = useState("");
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -129,6 +134,22 @@ export default function InvoicesPage() {
     }
   };
 
+  const convertFromOrder = async (e) => {
+    e.preventDefault();
+    if (!orderId) return;
+    try {
+      await adminApi.convertOrderToInvoice(orderId, dueDate || null);
+      setOrderId("");
+      setDueDate("");
+      setShowConvertForm(false);
+      loadInvoices();
+      alert("Invoice created from order!");
+    } catch (error) {
+      console.error("Failed to convert:", error);
+      alert(error.response?.data?.detail || "Failed to create invoice from order");
+    }
+  };
+
   const changeStatus = async (invoiceId, status) => {
     try {
       await adminApi.updateInvoiceStatus(invoiceId, status);
@@ -179,16 +200,25 @@ export default function InvoicesPage() {
               <FileText className="w-8 h-8 text-[#D4A843]" />
               Invoices
             </h1>
-            <p className="text-slate-600 mt-1">Manage customer invoices and payments</p>
+            <p className="text-slate-600 mt-1">Manage customer invoices with PDF export</p>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 bg-[#2D3E50] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#3d5166] transition-all"
-            data-testid="create-invoice-btn"
-          >
-            <Plus className="w-5 h-5" />
-            Create Invoice
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setShowConvertForm(!showConvertForm); setShowForm(false); }}
+              className="inline-flex items-center gap-2 border border-slate-300 px-4 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-all"
+            >
+              <ArrowRight className="w-4 h-4" />
+              From Order
+            </button>
+            <button
+              onClick={() => { setShowForm(!showForm); setShowConvertForm(false); }}
+              className="inline-flex items-center gap-2 bg-[#2D3E50] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#3d5166] transition-all"
+              data-testid="create-invoice-btn"
+            >
+              <Plus className="w-5 h-5" />
+              Create Invoice
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -238,6 +268,47 @@ export default function InvoicesPage() {
             ))}
           </select>
         </div>
+
+        {/* Convert from Order Form */}
+        {showConvertForm && (
+          <div className="rounded-2xl border bg-white p-6 mb-6 shadow-lg">
+            <h2 className="text-xl font-bold mb-4">Create Invoice from Order</h2>
+            <form onSubmit={convertFromOrder} className="flex flex-wrap gap-4 items-end">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Order ID</label>
+                <input
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                  placeholder="Enter Order ID"
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Due Date</label>
+                <input
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-[#2D3E50] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#3d5166]"
+              >
+                Create Invoice
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConvertForm(false)}
+                className="border border-slate-300 px-6 py-3 rounded-xl font-semibold hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Create Invoice Form */}
         {showForm && (
@@ -447,7 +518,7 @@ export default function InvoicesPage() {
                         {inv.due_date ? (
                           <span className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {new Date(inv.due_date).toLocaleDateString()}
+                            {inv.due_date.slice(0, 10)}
                           </span>
                         ) : (
                           "—"
@@ -469,14 +540,26 @@ export default function InvoicesPage() {
                           ))}
                         </select>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => setShowPaymentModal(inv.id)}
-                          className="text-sm text-[#D4A843] hover:underline font-medium"
-                          data-testid={`add-payment-${inv.id}`}
-                        >
-                          Add Payment
-                        </button>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <a
+                            href={adminApi.downloadInvoicePdf(inv.id)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 border rounded-lg px-2.5 py-1.5 text-sm hover:bg-slate-50"
+                            data-testid={`download-invoice-${inv.id}`}
+                          >
+                            <Download className="w-4 h-4" />
+                            PDF
+                          </a>
+                          <button
+                            onClick={() => setShowPaymentModal(inv.id)}
+                            className="text-sm text-[#D4A843] hover:underline font-medium px-2"
+                            data-testid={`add-payment-${inv.id}`}
+                          >
+                            + Payment
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
