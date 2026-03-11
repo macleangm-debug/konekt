@@ -11,12 +11,51 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Database**: MongoDB 7.0
 - **AI**: OpenAI GPT-5.2 via Emergent LLM Key
 - **Email**: Resend API
+- **PDF**: ReportLab for Zoho-style professional documents
 - **Authentication**: JWT with role-based permissions
 - **Deployment**: Docker Compose + Nginx
 
 ---
 
 ## What's Been Implemented ✅
+
+### March 11, 2026 - Phase 5: Quote → Order → Invoice → PDF Workflow (TESTED ✅)
+
+#### New Backend Files
+- [x] `quote_models.py` - Pydantic models for quotes, invoices, company settings
+- [x] `settings_routes.py` - Company branding API at `/api/admin/settings/company`
+- [x] `quote_routes.py` - Quotes v2 API at `/api/admin/quotes-v2`
+- [x] `invoice_routes.py` - Invoices v2 API at `/api/admin/invoices-v2`
+- [x] `pdf_service.py` - Zoho-style PDF generator with ReportLab
+- [x] `pdf_routes.py` - PDF export at `/api/admin/pdf/quote/{id}` and `/api/admin/pdf/invoice/{id}`
+
+#### New Frontend Pages
+- [x] `QuotesPageNew.jsx` - Create quotes with line items, PDF export, convert to order/invoice
+- [x] `InvoicesPage.js` - Updated with PDF export, convert from order, payment tracking
+- [x] `CompanySettingsPage.jsx` - Company branding for PDFs (logo, address, banking, terms)
+
+#### Complete Workflow
+```
+Lead → Quote (draft) → Quote (sent) → Quote (approved) → Order → Invoice → Payment → PAID
+                    ↓                      ↓
+              PDF Export              PDF Export
+```
+
+#### PDF Features (Zoho-style)
+- Company logo and branding
+- Professional header with document number and status badge
+- Customer billing details
+- Line items table with quantities and totals
+- Subtotal, tax, discount, total breakdown
+- Payment instructions and terms
+- Footer with timestamp
+
+#### Test Results (iteration_5.json)
+- Backend: 100% (21/21 tests passed)
+- Frontend: 100% verified
+- Features tested: Company Settings, Quotes v2, Invoices v2, PDF Export, Full E2E Workflow
+
+---
 
 ### March 11, 2026 - Phase 4: Admin Business Operating System (TESTED ✅)
 
@@ -192,6 +231,25 @@ GET    /api/admin/customers             - List customers
 GET    /api/admin/customers/{id}        - Get customer with orders
 ```
 
+### Quote/Invoice v2 & PDF Export (NEW)
+```
+GET/PUT /api/admin/settings/company     - Company branding settings
+POST    /api/admin/quotes-v2            - Create quote with line items
+GET     /api/admin/quotes-v2            - List all quotes
+GET     /api/admin/quotes-v2/{id}       - Get quote by ID
+PATCH   /api/admin/quotes-v2/{id}/status - Update quote status
+POST    /api/admin/quotes-v2/convert-to-order - Convert quote to order
+POST    /api/admin/quotes-v2/{id}/convert-to-invoice - Convert quote to invoice
+POST    /api/admin/invoices-v2          - Create invoice with line items
+GET     /api/admin/invoices-v2          - List all invoices
+GET     /api/admin/invoices-v2/{id}     - Get invoice by ID
+PATCH   /api/admin/invoices-v2/{id}/status - Update invoice status
+POST    /api/admin/invoices-v2/{id}/payments - Add payment
+POST    /api/admin/invoices-v2/convert-from-order - Create invoice from order
+GET     /api/admin/pdf/quote/{id}       - Export quote as PDF
+GET     /api/admin/pdf/invoice/{id}     - Export invoice as PDF
+```
+
 ### Admin
 ```
 POST /api/admin/auth/login
@@ -279,6 +337,8 @@ cp backend/.env.production backend/.env
 - [x] Creative services flow complete
 - [x] Service order management
 - [x] Admin Business OS (CRM, Tasks, Inventory, Invoices, Quotes) - TESTED
+- [x] Quote → Order → Invoice → PDF workflow - TESTED
+- [x] Company branding settings for PDFs
 - [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
 - [ ] Point DNS
 - [ ] Enable SSL
@@ -287,7 +347,9 @@ cp backend/.env.production backend/.env
 - [ ] File upload for design assets (currently only metadata)
 - [ ] Email notifications for service milestones
 - [ ] Payment gateway (M-Pesa, Stripe)
-- [ ] Kanban-style sales pipeline board (enhanced)
+- [ ] Send quote/invoice by email from admin
+- [ ] PDF watermarks for DRAFT/PAID/OVERDUE status
+- [ ] Customer approval link for quotes
 
 ### P2 - Growth (Week 2-4)
 - [ ] WhatsApp notifications
@@ -295,6 +357,9 @@ cp backend/.env.production backend/.env
 - [ ] Inventory alerts
 - [ ] B2B team accounts
 - [ ] Saved brand assets
+- [ ] Sequential invoice numbering rules
+- [ ] Multiple currencies support
+- [ ] Statement of account export
 
 ### P3 - Future
 - [ ] Mobile app
@@ -316,6 +381,11 @@ Landing → Browse Products → Product Detail → Customize → Cart → Login 
 Landing → Creative Services → Service Detail → Choose Package → Fill Brief → AI Assist → Submit → Dashboard → Track → Review Drafts → Approve → Download
 ```
 
+### Quote to Invoice Flow (NEW)
+```
+CRM Lead → Create Quote → Send to Customer → Customer Approves → Convert to Order → Production → Convert to Invoice → Add Payments → PAID
+```
+
 ---
 
-*Last updated: March 11, 2026 - Phase 4 Complete*
+*Last updated: March 11, 2026 - Phase 5 Complete (Quote/Invoice/PDF)*
