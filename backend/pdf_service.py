@@ -1,5 +1,6 @@
 """
-Konekt PDF Generator Service - Zoho-style professional documents
+Konekt PDF Generator Service - World-Class Professional Documents
+Premium Zoho/Stripe/Freshbooks style design
 """
 import io
 from datetime import datetime
@@ -10,65 +11,91 @@ from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 import requests
 
-
-# Color palette
-NAVY = colors.HexColor("#2D3E50")
+# Premium color palette
+NAVY = colors.HexColor("#1F3247")
+NAVY_2 = colors.HexColor("#2D3E50")
 GOLD = colors.HexColor("#D4A843")
-LIGHT = colors.HexColor("#F8FAFC")
-GRAY = colors.HexColor("#64748B")
-DARK = colors.HexColor("#0F172A")
-
-
-def draw_logo(c, logo_url, x, y, width=32*mm, height=16*mm):
-    """Draw company logo from URL"""
-    if not logo_url:
-        return
-    try:
-        response = requests.get(logo_url, timeout=8)
-        response.raise_for_status()
-        image = ImageReader(io.BytesIO(response.content))
-        c.drawImage(image, x, y, width=width, height=height, preserveAspectRatio=True, mask='auto')
-    except Exception:
-        return
+TEXT = colors.HexColor("#0F172A")
+MUTED = colors.HexColor("#64748B")
+BORDER = colors.HexColor("#E2E8F0")
+SOFT = colors.HexColor("#F8FAFC")
+WHITE = colors.white
 
 
 def money(value, currency="TZS"):
     """Format currency value"""
-    return f"{currency} {value:,.2f}"
+    try:
+        value = float(value or 0)
+    except Exception:
+        value = 0
+    return f"{currency} {value:,.0f}"
 
 
-def draw_header(c, settings, title, number, status, issue_date, due_date=None):
-    """Draw document header with company info and document details"""
+def fetch_logo(logo_url: str):
+    """Fetch company logo from URL"""
+    if not logo_url:
+        return None
+    try:
+        response = requests.get(logo_url, timeout=10)
+        response.raise_for_status()
+        return ImageReader(io.BytesIO(response.content))
+    except Exception:
+        return None
+
+
+def draw_header(c, settings, doc_type, number, status):
+    """Draw premium branded header with navy bar"""
     width, height = A4
-    
-    # Draw logo
-    draw_logo(c, settings.get("logo_url"), 20*mm, height - 30*mm)
 
-    # Document title
-    c.setFont("Helvetica-Bold", 20)
+    # Navy header bar
     c.setFillColor(NAVY)
-    c.drawRightString(width - 20*mm, height - 20*mm, title.upper())
+    c.rect(0, height - 38 * mm, width, 38 * mm, stroke=0, fill=1)
+
+    # Company logo
+    logo = fetch_logo(settings.get("logo_url"))
+    if logo:
+        c.drawImage(
+            logo,
+            18 * mm,
+            height - 28 * mm,
+            width=24 * mm,
+            height=14 * mm,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+
+    # Document type title
+    c.setFillColor(WHITE)
+    c.setFont("Helvetica-Bold", 21)
+    c.drawRightString(width - 18 * mm, height - 18 * mm, doc_type.upper())
 
     # Document number
-    c.setFillColor(DARK)
     c.setFont("Helvetica-Bold", 10)
-    c.drawRightString(width - 20*mm, height - 28*mm, number)
+    c.drawRightString(width - 18 * mm, height - 26 * mm, number)
 
     # Status badge
     c.setFillColor(GOLD)
-    c.roundRect(width - 60*mm, height - 40*mm, 40*mm, 8*mm, 3*mm, stroke=0, fill=1)
-    c.setFillColor(colors.white)
+    c.roundRect(width - 62 * mm, height - 34 * mm, 44 * mm, 8 * mm, 3 * mm, stroke=0, fill=1)
+    c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.drawCentredString(width - 40*mm, height - 34.5*mm, status.upper())
+    c.drawCentredString(width - 40 * mm, height - 29 * mm, status.upper())
 
-    # Company name
-    c.setFillColor(DARK)
-    c.setFont("Helvetica-Bold", 10)
-    c.drawString(20*mm, height - 42*mm, settings.get("company_name", "Konekt Limited"))
 
-    # Company address
+def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
+    """Draw two-column company and bill-to section"""
+    width, height = A4
+    top_y = height - 55 * mm
+
+    # FROM section
+    c.setFillColor(TEXT)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(18 * mm, top_y, "From")
+
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(18 * mm, top_y - 7 * mm, settings.get("company_name", "Konekt Limited"))
+
     c.setFont("Helvetica", 9)
-    y = height - 48*mm
+    c.setFillColor(MUTED)
     lines = [
         settings.get("address_line_1", ""),
         settings.get("address_line_2", ""),
@@ -76,218 +103,213 @@ def draw_header(c, settings, title, number, status, issue_date, due_date=None):
         settings.get("email", ""),
         settings.get("phone", ""),
         settings.get("website", ""),
+        f"TIN/VAT: {settings.get('tax_number')}" if settings.get("tax_number") else "",
     ]
+
+    y = top_y - 13 * mm
     for line in lines:
         if line:
-            c.drawString(20*mm, y, line)
-            y -= 4.5*mm
+            c.drawString(18 * mm, y, line)
+            y -= 4.5 * mm
 
-    # Date box
-    box_x = width - 80*mm
-    box_y = height - 70*mm
-    c.setFillColor(LIGHT)
-    c.roundRect(box_x, box_y, 60*mm, 24*mm, 4*mm, stroke=0, fill=1)
+    # BILL TO section
+    c.setFillColor(TEXT)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(95 * mm, top_y, "Bill To")
 
-    c.setFillColor(DARK)
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(box_x + 5*mm, box_y + 18*mm, "Issue Date")
-    c.drawString(box_x + 5*mm, box_y + 11*mm, "Due Date" if due_date else "Valid Until")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(95 * mm, top_y - 7 * mm, customer.get("customer_name", ""))
+
     c.setFont("Helvetica", 9)
-    c.drawRightString(box_x + 55*mm, box_y + 18*mm, issue_date or "-")
-    c.drawRightString(box_x + 55*mm, box_y + 11*mm, due_date or "-")
-
-
-def draw_customer_block(c, customer):
-    """Draw customer/billing information block"""
-    width, height = A4
-    y = height - 88*mm
-
-    c.setFont("Helvetica-Bold", 10)
-    c.setFillColor(NAVY)
-    c.drawString(20*mm, y, "Bill To")
-
-    c.setFillColor(DARK)
-    c.setFont("Helvetica", 10)
-    y -= 6*mm
-
-    lines = [
-        customer.get("customer_name", ""),
+    c.setFillColor(MUTED)
+    customer_lines = [
         customer.get("customer_company", ""),
         customer.get("customer_email", ""),
         customer.get("customer_phone", ""),
     ]
-    for line in lines:
+
+    y2 = top_y - 13 * mm
+    for line in customer_lines:
         if line:
-            c.drawString(20*mm, y, str(line))
-            y -= 5*mm
+            c.drawString(95 * mm, y2, str(line))
+            y2 -= 4.5 * mm
+
+    # Date card
+    card_x = width - 65 * mm
+    card_y = top_y - 18 * mm
+    c.setFillColor(SOFT)
+    c.roundRect(card_x, card_y, 47 * mm, 24 * mm, 3 * mm, stroke=0, fill=1)
+
+    c.setFillColor(TEXT)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
+    c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
+
+    c.setFont("Helvetica", 9)
+    c.drawRightString(card_x + 43 * mm, card_y + 16 * mm, issue_date or "-")
+    c.drawRightString(card_x + 43 * mm, card_y + 9 * mm, due_date or "-")
 
 
-def draw_line_items_table(c, items, currency="TZS", start_y=150*mm):
-    """Draw line items table"""
+def draw_items_table(c, items, currency="TZS", start_y=150 * mm):
+    """Draw premium line items table"""
     width, _ = A4
-    left = 20*mm
-    table_width = width - 40*mm
+    left = 18 * mm
+    total_width = width - 36 * mm
 
-    col_desc = 95*mm
-    col_qty = 20*mm
-    col_unit = 35*mm
+    col_desc = 95 * mm
+    col_qty = 18 * mm
+    col_unit = 35 * mm
+    col_total = total_width - (col_desc + col_qty + col_unit)
 
     y = start_y
 
     # Table header
-    c.setFillColor(NAVY)
-    c.roundRect(left, y, table_width, 10*mm, 2*mm, stroke=0, fill=1)
-    c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(left + 4*mm, y + 3.3*mm, "Description")
-    c.drawRightString(left + col_desc + col_qty - 2*mm, y + 3.3*mm, "Qty")
-    c.drawRightString(left + col_desc + col_qty + col_unit - 2*mm, y + 3.3*mm, "Unit Price")
-    c.drawRightString(left + table_width - 4*mm, y + 3.3*mm, "Total")
+    c.setFillColor(NAVY_2)
+    c.roundRect(left, y, total_width, 10 * mm, 2 * mm, stroke=0, fill=1)
 
-    y -= 9*mm
+    c.setFillColor(WHITE)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(left + 4 * mm, y + 3.3 * mm, "Description")
+    c.drawRightString(left + col_desc + col_qty - 2 * mm, y + 3.3 * mm, "Qty")
+    c.drawRightString(left + col_desc + col_qty + col_unit - 2 * mm, y + 3.3 * mm, "Unit Price")
+    c.drawRightString(left + total_width - 4 * mm, y + 3.3 * mm, "Amount")
+
+    y -= 9 * mm
+    c.setFont("Helvetica", 9)
 
     # Table rows
-    c.setFont("Helvetica", 9)
-    c.setFillColor(DARK)
-
     for idx, item in enumerate(items):
-        row_fill = LIGHT if idx % 2 == 0 else colors.white
-        c.setFillColor(row_fill)
-        c.rect(left, y, table_width, 9*mm, stroke=0, fill=1)
+        c.setFillColor(SOFT if idx % 2 == 0 else WHITE)
+        c.rect(left, y, total_width, 9 * mm, stroke=0, fill=1)
 
-        c.setFillColor(DARK)
-        desc = str(item.get("description", ""))[:65]
-        c.drawString(left + 4*mm, y + 3.2*mm, desc)
-        c.drawRightString(left + col_desc + col_qty - 2*mm, y + 3.2*mm, str(item.get("quantity", 0)))
+        c.setFillColor(TEXT)
+        c.drawString(left + 4 * mm, y + 3.1 * mm, str(item.get("description", ""))[:70])
+        c.drawRightString(left + col_desc + col_qty - 2 * mm, y + 3.1 * mm, str(item.get("quantity", 0)))
         c.drawRightString(
-            left + col_desc + col_qty + col_unit - 2*mm,
-            y + 3.2*mm,
-            money(float(item.get("unit_price", 0)), currency)
+            left + col_desc + col_qty + col_unit - 2 * mm,
+            y + 3.1 * mm,
+            money(item.get("unit_price", 0), currency),
         )
-        c.drawRightString(
-            left + table_width - 4*mm,
-            y + 3.2*mm,
-            money(float(item.get("total", 0)), currency)
-        )
+        c.drawRightString(left + total_width - 4 * mm, y + 3.1 * mm, money(item.get("total", 0), currency))
 
-        y -= 9*mm
+        y -= 9 * mm
 
+    # Bottom border
+    c.setStrokeColor(BORDER)
+    c.line(left, y + 2 * mm, left + total_width, y + 2 * mm)
     return y
 
 
-def draw_totals(c, subtotal, tax, discount, total, currency="TZS", y=70*mm):
-    """Draw totals section"""
+def draw_totals(c, subtotal, tax, discount, total, currency="TZS", y=58 * mm):
+    """Draw premium totals section"""
     width, _ = A4
-    box_x = width - 80*mm
+    box_x = width - 75 * mm
 
-    c.setFillColor(LIGHT)
-    c.roundRect(box_x, y, 60*mm, 30*mm, 4*mm, stroke=0, fill=1)
+    # Totals card
+    c.setFillColor(SOFT)
+    c.roundRect(box_x, y, 57 * mm, 34 * mm, 4 * mm, stroke=0, fill=1)
 
-    labels = [("Subtotal", subtotal), ("Tax", tax), ("Discount", discount), ("Total", total)]
-    row_y = y + 22*mm
+    rows = [
+        ("Subtotal", subtotal),
+        ("Tax", tax),
+        ("Discount", discount),
+    ]
 
-    for label, value in labels[:-1]:
-        c.setFillColor(DARK)
-        c.setFont("Helvetica", 9)
-        c.drawString(box_x + 5*mm, row_y, label)
-        c.drawRightString(box_x + 55*mm, row_y, money(float(value or 0), currency))
-        row_y -= 6*mm
+    row_y = y + 25 * mm
+    c.setFont("Helvetica", 9)
+    c.setFillColor(TEXT)
 
-    # Total line
+    for label, value in rows:
+        c.drawString(box_x + 5 * mm, row_y, label)
+        c.drawRightString(box_x + 52 * mm, row_y, money(value, currency))
+        row_y -= 6 * mm
+
+    # Gold divider
     c.setStrokeColor(GOLD)
-    c.line(box_x + 5*mm, row_y + 2*mm, box_x + 55*mm, row_y + 2*mm)
+    c.line(box_x + 5 * mm, row_y + 2 * mm, box_x + 52 * mm, row_y + 2 * mm)
 
-    c.setFont("Helvetica-Bold", 11)
+    # Total
+    c.setFont("Helvetica-Bold", 12)
     c.setFillColor(NAVY)
-    c.drawString(box_x + 5*mm, row_y - 4*mm, "Total")
-    c.drawRightString(box_x + 55*mm, row_y - 4*mm, money(float(total or 0), currency))
+    c.drawString(box_x + 5 * mm, row_y - 5 * mm, "Total")
+    c.drawRightString(box_x + 52 * mm, row_y - 5 * mm, money(total, currency))
 
 
-def draw_terms_footer(c, settings, notes=None, terms=None):
-    """Draw notes, terms, and footer"""
+def draw_footer(c, settings, notes=None, terms=None):
+    """Draw document footer with notes and terms"""
     width, _ = A4
-    y = 34*mm
+
+    # Divider line
+    c.setStrokeColor(BORDER)
+    c.line(18 * mm, 42 * mm, width - 18 * mm, 42 * mm)
 
     # Notes
+    c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.setFillColor(NAVY)
-    c.drawString(20*mm, y, "Notes")
+    c.drawString(18 * mm, 35 * mm, "Notes")
     c.setFont("Helvetica", 8.5)
-    c.setFillColor(DARK)
-    c.drawString(20*mm, y - 5*mm, (notes or "Thank you for doing business with us.")[:140])
+    c.setFillColor(MUTED)
+    c.drawString(18 * mm, 30 * mm, (notes or "Thank you for your business.")[:140])
 
     # Terms
+    c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.setFillColor(NAVY)
-    c.drawString(20*mm, y - 15*mm, "Terms")
+    c.drawString(18 * mm, 22 * mm, "Terms")
     c.setFont("Helvetica", 8.5)
-    c.setFillColor(DARK)
+    c.setFillColor(MUTED)
     c.drawString(
-        20*mm,
-        y - 20*mm,
-        (terms or settings.get("invoice_terms") or "Payment is due according to the agreed terms.")[:170]
+        18 * mm,
+        17 * mm,
+        (terms or settings.get("invoice_terms") or "Payment is due according to the agreed terms.")[:170],
     )
 
     # Payment instructions
-    payment_info = settings.get("payment_instructions")
-    if payment_info:
+    payment = settings.get("payment_instructions")
+    if payment:
+        c.setFillColor(TEXT)
         c.setFont("Helvetica-Bold", 9)
-        c.setFillColor(NAVY)
-        c.drawString(20*mm, y - 30*mm, "Payment Instructions")
+        c.drawString(110 * mm, 35 * mm, "Payment Instructions")
         c.setFont("Helvetica", 8.5)
-        c.setFillColor(DARK)
-        c.drawString(20*mm, y - 35*mm, payment_info[:170])
+        c.setFillColor(MUTED)
+        c.drawString(110 * mm, 30 * mm, payment[:90])
 
-    # Footer line
-    c.setStrokeColor(colors.HexColor("#E2E8F0"))
-    c.line(20*mm, 15*mm, width - 20*mm, 15*mm)
+    # Generation timestamp
     c.setFont("Helvetica", 8)
-    c.setFillColor(GRAY)
-    c.drawString(20*mm, 10*mm, f"Generated by {settings.get('company_name', 'Konekt Limited')}")
-    c.drawRightString(width - 20*mm, 10*mm, datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"))
+    c.setFillColor(MUTED)
+    c.drawString(18 * mm, 8 * mm, f"Generated by {settings.get('company_name', 'Konekt Limited')}")
+    c.drawRightString(width - 18 * mm, 8 * mm, datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"))
 
 
 def build_document_pdf(doc_type, doc, settings):
-    """Build a complete PDF document (quote or invoice)"""
+    """Build a premium PDF document (quote or invoice)"""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
 
-    # Parse dates
-    issue_date = ""
-    if doc.get("created_at"):
-        created = doc["created_at"]
-        if hasattr(created, "strftime"):
-            issue_date = created.strftime("%Y-%m-%d")
-        else:
-            issue_date = str(created)[:10]
-
-    due_date = ""
-    if doc.get("due_date"):
-        dd = doc["due_date"]
-        if hasattr(dd, "strftime"):
-            due_date = dd.strftime("%Y-%m-%d")
-        else:
-            due_date = str(dd)[:10]
-    elif doc.get("valid_until"):
-        vu = doc["valid_until"]
-        if hasattr(vu, "strftime"):
-            due_date = vu.strftime("%Y-%m-%d")
-        else:
-            due_date = str(vu)[:10]
-
-    # Document details
     number = doc.get("invoice_number") or doc.get("quote_number") or doc.get("order_number") or "-"
-    title = "Invoice" if doc_type == "invoice" else "Quote"
     status = doc.get("status", "draft")
+    issue_date = str(doc.get("created_at", ""))[:10] if doc.get("created_at") else "-"
+    due_date = None
+    if doc.get("due_date"):
+        due_date = str(doc.get("due_date"))[:10]
+    elif doc.get("valid_until"):
+        due_date = str(doc.get("valid_until"))[:10]
 
-    # Draw all sections
-    draw_header(c, settings, title, number, status, issue_date, due_date)
-    draw_customer_block(c, doc)
-    draw_line_items_table(
-        c, 
-        doc.get("line_items", []), 
-        doc.get("currency", settings.get("currency", "TZS")), 
-        start_y=145*mm
+    title = "Invoice" if doc_type == "invoice" else "Quote"
+
+    customer = {
+        "customer_name": doc.get("customer_name", ""),
+        "customer_company": doc.get("customer_company", ""),
+        "customer_email": doc.get("customer_email", ""),
+        "customer_phone": doc.get("customer_phone", ""),
+    }
+
+    draw_header(c, settings, title, number, status)
+    draw_company_and_billto(c, settings, customer, issue_date, due_date)
+    draw_items_table(
+        c,
+        doc.get("line_items", []),
+        doc.get("currency", settings.get("currency", "TZS")),
+        start_y=135 * mm,
     )
     draw_totals(
         c,
@@ -296,11 +318,22 @@ def build_document_pdf(doc_type, doc, settings):
         doc.get("discount", 0),
         doc.get("total", 0),
         doc.get("currency", settings.get("currency", "TZS")),
-        y=55*mm,
+        y=52 * mm,
     )
-    draw_terms_footer(c, settings, notes=doc.get("notes"), terms=doc.get("terms"))
+    draw_footer(c, settings, notes=doc.get("notes"), terms=doc.get("terms"))
 
     c.showPage()
     c.save()
     buffer.seek(0)
     return buffer
+
+
+# Legacy function aliases for backward compatibility
+def generate_quote_pdf(quote: dict, settings: dict):
+    """Generate a premium quote PDF"""
+    return build_document_pdf("quote", quote, settings)
+
+
+def generate_invoice_pdf(invoice: dict, settings: dict):
+    """Generate a premium invoice PDF"""
+    return build_document_pdf("invoice", invoice, settings)

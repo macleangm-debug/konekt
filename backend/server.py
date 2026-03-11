@@ -31,6 +31,7 @@ from order_ops_routes import router as order_ops_router
 from production_routes import router as production_router
 from document_send_routes import router as document_send_router
 from quote_pipeline_routes import router as quote_pipeline_router
+from customer_order_routes import router as customer_order_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1903,6 +1904,9 @@ app.include_router(production_router)
 
 # Include document send routes (email stubs)
 app.include_router(document_send_router)
+
+# Include customer-facing order routes
+app.include_router(customer_order_router)
 
 app.add_middleware(
     CORSMiddleware,

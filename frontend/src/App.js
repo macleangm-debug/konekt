@@ -24,6 +24,10 @@ import OrderTracking from "@/pages/OrderTracking";
 import EquipmentMaintenance from "@/pages/EquipmentMaintenance";
 import CreativeServicesPage from "@/pages/CreativeServicesPage";
 import ServiceDetail from "@/pages/ServiceDetail";
+import CheckoutPage from "@/pages/CheckoutPage";
+import CustomerDashboard from "@/pages/CustomerDashboard";
+import OrderConfirmationPage from "@/pages/OrderConfirmationPage";
+import OrderTrackingPage from "@/pages/OrderTrackingPage";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -128,9 +132,16 @@ function App() {
                     <Route path="/product/:productId" element={<ProductDetail />} />
                     <Route path="/customize/:productId" element={<Customize />} />
                     <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<CustomerDashboard />} />
+                    <Route path="/dashboard/orders" element={<CustomerDashboard />} />
+                    <Route path="/dashboard/quotes" element={<CustomerDashboard />} />
+                    <Route path="/dashboard/designs" element={<CustomerDashboard />} />
+                    <Route path="/dashboard/invoices" element={<CustomerDashboard />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
+                    <Route path="/orders/:orderId/tracking" element={<OrderTrackingPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
