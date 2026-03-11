@@ -20,6 +20,7 @@ from emergentintegrations.llm.openai.image_generation import OpenAIImageGenerati
 from email_service import EmailService
 from sales_routes import sales_router, create_sales_routes
 from sales_automation import init_automation_engine
+from ai_services import router as ai_services_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1859,6 +1860,9 @@ app.include_router(admin_router)
 # Initialize and include sales router
 sales_routes = create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
 app.include_router(sales_routes)
+
+# Include AI services router
+app.include_router(ai_services_router)
 
 app.add_middleware(
     CORSMiddleware,

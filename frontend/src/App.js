@@ -13,7 +13,7 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import PromoBanner from "@/components/PromoBanner";
 
 // Customer Pages
-import Landing from "@/pages/Landing";
+import Landing from "@/pages/LandingNew";
 import Products from "@/pages/Products";
 import ProductDetail from "@/pages/ProductDetail";
 import Customize from "@/pages/Customize";

@@ -1,7 +1,9 @@
 # Konekt - Promotional Materials Platform PRD
 
 ## Overview
-Konekt is a B2B e-commerce platform for ordering customized promotional materials, office equipment, and exclusive branded clothing (KonektSeries). Based in Dar es Salaam, Tanzania.
+Konekt is a B2B e-commerce platform for ordering customized promotional materials, office equipment, **Creative Design Services**, and exclusive branded clothing (KonektSeries). Based in Dar es Salaam, Tanzania.
+
+**Vision**: The biggest B2B branding platform in East Africa — combining VistaPrint + Printful + Fiverr for corporate merchandise and design services.
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Framer Motion, Shadcn UI
@@ -16,210 +18,192 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ## What's Been Implemented ✅
 
-### March 11, 2026 - Production Preparation
+### March 11, 2026 - Phase 2: World-Class Improvements
 
-#### Configuration & Deployment Files
-- [x] `backend/.env.example` - Environment template
-- [x] `backend/.env.production` - Production config template
-- [x] `frontend/.env.example` - Frontend env template
-- [x] `frontend/.env.production` - Frontend production config
-- [x] `backend/Dockerfile` - Python 3.11 + uvicorn
-- [x] `frontend/Dockerfile` - Node 20 + nginx multi-stage build
-- [x] `docker-compose.yml` - Production-ready orchestration
-- [x] `nginx/nginx.conf` - Full reverse proxy with SSL, rate limiting, security headers
-- [x] `deploy.sh` - Deployment automation script
+#### New World-Class Landing Page
+- [x] Premium hero section with business-focused messaging
+- [x] 4 category cards (Promotional Materials, Office Equipment, Creative Services, KonektSeries)
+- [x] Popular products showcase
+- [x] Creative Services highlight section
+- [x] How it works (4-step process)
+- [x] Trust points (Delivery, Quality, Clients)
+- [x] Customer testimonials
+- [x] Final CTA section
 
-#### Security
-- [x] Admin password rotated (no longer `admin123`)
-- [x] Backup admin account created
-- [x] Rate limiting on login/AI endpoints
-- [x] Security headers configured
-- [x] CORS properly configured
+#### Creative Services (NEW CATEGORY)
+- [x] 8 design services added:
+  - Logo Design (3 packages: Basic, Standard, Premium)
+  - Company Profile Design (3 packages)
+  - Brochure Design (3 packages)
+  - Flyer Design (3 packages)
+  - Poster Design (2 packages)
+  - Social Media Kit (2 packages)
+  - Business Card Design (2 packages)
+  - Letterhead & Stationery (2 packages)
 
-#### Database
-- [x] 24 products seeded across 3 branches
-- [x] Database indexes created
-- [x] Admin users created and secured
+#### AI-Powered Services (NEW)
+- [x] **Product Recommender**: AI suggests products based on business type & campaign goal
+- [x] **Design Brief Generator**: Converts simple requirements into structured briefs
+- [x] **Logo Concept Generator**: Creates AI prompts for logo ideas
+- [x] **Pricing Suggestion**: Intelligent pricing for custom orders
+- [x] **Service Packages API**: Returns package tiers for design services
+
+#### Deployment Hardening
+- [x] Docker Compose (production-ready, internal networking)
+- [x] Nginx reverse proxy with SSL, rate limiting, security headers
+- [x] Admin password rotated
+- [x] Backup admin created
+- [x] Deploy script (`./deploy.sh`)
 
 ---
 
-## Product Structure
+## Product Catalog
 
-| Branch | Products | Customizable |
-|--------|----------|--------------|
-| Promotional Materials | 13 | Yes |
-| Office Equipment | 6 | Yes |
-| KonektSeries | 5 | No (ready-to-buy) |
-
----
-
-## User Roles & Permissions
-
-| Role | Access |
-|------|--------|
-| **Admin** | Full access to everything |
-| **Sales** | Orders, customers, quotes, basic analytics |
-| **Marketing** | Products, analytics, customers |
-| **Production** | Orders, production status |
-| **Customer** | Own orders, profile, referrals |
+| Branch | Products | Type |
+|--------|----------|------|
+| Promotional Materials | 13 | Physical, Customizable |
+| Office Equipment | 6 | Physical |
+| KonektSeries | 5 | Physical, Ready-to-buy |
+| **Creative Services** | **8** | **Services with packages** |
+| **Total** | **32** | |
 
 ---
 
 ## API Endpoints
 
-### Public
-- `GET /api/products` - Product catalog
-- `GET /api/products/{id}` - Product details
-- `POST /api/auth/register` - Customer registration
-- `POST /api/auth/login` - Customer login
-- `POST /api/chat` - AI assistant
-- `POST /api/logo/generate` - AI logo generation
-
-### Customer (authenticated)
-- `GET /api/orders` - My orders
-- `POST /api/orders` - Create order
-- `GET /api/drafts` - Saved designs
-- `GET /api/referral/*` - Referral program
-
-### Admin
-- `POST /api/admin/auth/login` - Admin login
-- `GET /api/admin/analytics/*` - Dashboard analytics
-- `GET /api/admin/orders/*` - Order management
-- `GET /api/admin/products/*` - Product CRUD
-- `GET /api/admin/users/*` - User management
-
-### Sales CRM
-- `GET /api/sales/leads` - Lead pipeline
-- `GET /api/sales/quotes` - Quote management
-- `GET /api/sales/tasks` - Task management
-- `GET /api/sales/dashboard` - Sales metrics
-- `GET /api/sales/team` - Team management
-
----
-
-## Admin Credentials (SECURE)
-
-| Account | Email | Purpose |
-|---------|-------|---------|
-| Primary | `admin@konekt.co.tz` | Main admin |
-| Backup | `backup@konekt.co.tz` | Emergency access |
-
-**Passwords stored separately - not in this file**
-
----
-
-## Deployment Checklist
-
-### Pre-Launch
-- [ ] Copy `backend/.env.production` to `backend/.env`
-- [ ] Set `JWT_SECRET` (generate: `openssl rand -base64 32`)
-- [ ] Set `EMERGENT_LLM_KEY` for AI features
-- [ ] Set `RESEND_API_KEY` for emails
-- [ ] Update `CORS_ORIGINS` with production domain
-- [ ] Point DNS to server
-- [ ] Setup SSL certificates
-
-### Launch
-```bash
-./deploy.sh build
-./deploy.sh start
-./deploy.sh seed  # First time only
-./deploy.sh status
+### AI Services (NEW)
+```
+POST /api/ai/recommend-products    - Product recommendations
+POST /api/ai/generate-design-brief - Design brief generator
+POST /api/ai/generate-logo-concept - Logo concept ideas
+POST /api/ai/suggest-price         - Pricing suggestions
+GET  /api/ai/service-packages/{type} - Service package tiers
 ```
 
-### Post-Launch
-- [ ] Enable HSTS in nginx config
-- [ ] Setup log rotation
-- [ ] Configure backups for MongoDB
-- [ ] Setup monitoring/alerting
+### Products
+```
+GET  /api/products                 - List all products
+GET  /api/products/{id}            - Product detail
+GET  /api/products/categories/list - Categories & branches
+```
+
+### Customer
+```
+POST /api/auth/register            - Register
+POST /api/auth/login               - Login
+GET  /api/orders                   - My orders
+POST /api/orders                   - Create order
+POST /api/chat                     - AI assistant
+POST /api/logo/generate            - AI logo generation
+```
+
+### Admin
+```
+POST /api/admin/auth/login         - Admin login
+GET  /api/admin/analytics/*        - Dashboard
+GET  /api/admin/orders/*           - Order management
+GET  /api/admin/products/*         - Product CRUD
+```
+
+### Sales CRM
+```
+GET  /api/sales/leads              - Lead pipeline
+GET  /api/sales/quotes             - Quotes
+GET  /api/sales/tasks              - Tasks
+GET  /api/sales/dashboard          - Metrics
+```
 
 ---
 
-## Smoke Test Checklist
+## Customer Journey
 
-### Public Flow
-- [ ] Homepage loads
-- [ ] Products page shows 24 products
-- [ ] Product detail page works
-- [ ] Customization canvas loads
-- [ ] Cart functionality works
-
-### Customer Flow
-- [ ] Registration works
-- [ ] Login works
-- [ ] Dashboard accessible
-- [ ] Order creation works
-- [ ] Order tracking works
-
-### Admin Flow
-- [ ] Admin login works
-- [ ] Analytics dashboard loads
-- [ ] Order management works
-- [ ] Product CRUD works
-- [ ] User management works
-- [ ] Sales CRM works
-
-### Integration Flow
-- [ ] AI chat responds (requires EMERGENT_LLM_KEY)
-- [ ] Logo generation works (requires EMERGENT_LLM_KEY)
-- [ ] Email notifications send (requires RESEND_API_KEY)
+```
+Landing → Browse Category → Product/Service Detail → Customize/Brief → Cart/Quote → Login → Order → Dashboard → Track → Reorder/Refer
+```
 
 ---
 
-## Backlog (Post-Launch)
-
-### P0 - Critical
-- Payment gateway integration (M-Pesa, Stripe)
-
-### P1 - High Priority
-- WhatsApp notifications
-- Advanced referral gamification
-- Inventory alerts
-
-### P2 - Medium Priority
-- Analytics dashboard enhancements
-- Multi-currency support
-- Supplier portal
-
-### P3 - Nice to Have
-- Mobile app
-- AR product preview
-- B2B portal for resellers
-
----
-
-## Files Reference
+## File Structure
 
 ```
 /app
 ├── backend/
 │   ├── server.py           # Main FastAPI (1900 lines)
-│   ├── sales_routes.py     # Sales CRM (895 lines)
+│   ├── ai_services.py      # AI recommendation endpoints (NEW)
+│   ├── sales_routes.py     # Sales CRM
 │   ├── sales_automation.py # Automation engine
 │   ├── email_service.py    # Resend integration
 │   ├── seed_products.py    # Database seeder
-│   ├── requirements.txt    # Python deps
-│   ├── Dockerfile          # Production build
-│   ├── .env.example        # Config template
-│   └── .env.production     # Production template
+│   ├── Dockerfile
+│   └── .env.production
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/          # 9 customer + 15 admin pages
-│   │   ├── components/     # Shared components
-│   │   └── contexts/       # Auth, Cart, AdminAuth
-│   ├── Dockerfile          # Multi-stage build
-│   ├── nginx.conf          # Static serving
-│   └── .env.production     # Build-time config
+│   │   ├── pages/
+│   │   │   ├── LandingNew.js    # World-class homepage (NEW)
+│   │   │   ├── Products.js
+│   │   │   ├── ProductDetail.js
+│   │   │   └── admin/           # 15 admin pages
+│   │   ├── components/
+│   │   └── contexts/
+│   ├── Dockerfile
+│   └── nginx.conf
 │
-├── nginx/
-│   └── nginx.conf          # Production reverse proxy
-│
-├── docker-compose.yml      # Full stack orchestration
-├── deploy.sh               # Deployment script
-└── memory/
-    └── PRD.md              # This file
+├── nginx/nginx.conf        # Production proxy
+├── docker-compose.yml      # Full stack
+├── deploy.sh               # Automation
+└── memory/PRD.md
 ```
+
+---
+
+## Deployment
+
+```bash
+# Configure
+cp backend/.env.production backend/.env
+# Edit with real values
+
+# Deploy
+./deploy.sh build
+./deploy.sh start
+./deploy.sh seed
+./deploy.sh status
+
+# SSL
+./deploy.sh ssl
+```
+
+---
+
+## Backlog
+
+### P0 - Ready for Launch
+- [x] All deployment files
+- [x] Database seeded
+- [x] Admin credentials secured
+- [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
+- [ ] Point DNS
+- [ ] Enable SSL
+
+### P1 - Post-Launch
+- [ ] Payment gateway (M-Pesa, Stripe)
+- [ ] Design brief submission flow UI
+- [ ] Service package selection UI
+- [ ] Admin: Service order management
+
+### P2 - Growth
+- [ ] WhatsApp notifications
+- [ ] Advanced referral gamification
+- [ ] Inventory alerts
+- [ ] B2B team accounts
+- [ ] Saved brand assets
+
+### P3 - Future
+- [ ] Mobile app
+- [ ] 3D product customization
+- [ ] AR preview
+- [ ] AI brand builder
 
 ---
 
