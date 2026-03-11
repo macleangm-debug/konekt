@@ -30,6 +30,7 @@ from pdf_routes import router as pdf_router
 from order_ops_routes import router as order_ops_router
 from production_routes import router as production_router
 from document_send_routes import router as document_send_router
+from quote_pipeline_routes import router as quote_pipeline_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1875,6 +1876,9 @@ app.include_router(ai_services_router)
 
 # Include service orders router
 app.include_router(service_orders_router)
+
+# Include quote pipeline routes (Kanban board) - MUST be before admin_ops_router
+app.include_router(quote_pipeline_router)
 
 # Include admin operations router (CRM, Inventory, Invoices, Tasks, Quotes)
 app.include_router(admin_ops_router)

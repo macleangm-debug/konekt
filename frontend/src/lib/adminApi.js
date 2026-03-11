@@ -94,6 +94,14 @@ export const adminApi = {
   sendQuoteDocument: (quoteId) => api.post(`/api/admin/send/quote/${quoteId}`),
   sendInvoiceDocument: (invoiceId) => api.post(`/api/admin/send/invoice/${invoiceId}`),
   sendOrderConfirmation: (orderId) => api.post(`/api/admin/send/order/${orderId}/confirmation`),
+
+  // Quote Pipeline (Kanban)
+  getQuotePipeline: () => api.get("/api/admin/quotes/pipeline"),
+  moveQuoteToStage: (quoteId, status) =>
+    api.patch(`/api/admin/quotes/${quoteId}/move`, null, {
+      params: { status },
+    }),
+  getQuotePipelineStats: () => api.get("/api/admin/quotes/pipeline/stats"),
 };
 
 export default adminApi;
