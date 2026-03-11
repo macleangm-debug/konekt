@@ -19,6 +19,47 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ## What's Been Implemented ✅
 
+### March 11, 2026 - Phase 9: Per-Client Payment Terms (TESTED ✅)
+
+#### New Backend Files
+- [x] `customer_models.py` - CustomerCreate/CustomerUpdate with payment term fields
+- [x] `payment_terms_utils.py` - resolve_payment_terms(), calculate_due_date()
+- [x] `customer_admin_routes.py` - Full CRUD for B2B customers with payment terms
+
+#### Payment Term Types Supported
+- Due on Receipt
+- Net 7, Net 14, Net 30
+- 50% Upfront / 50% on Delivery
+- Advance Payment Required
+- Credit Account
+- Custom Terms (configurable days)
+
+#### Payment Terms Flow
+- **Customer Profile**: Stores payment_term_type, payment_term_days, payment_term_label, payment_term_notes, credit_limit
+- **Quote Creation**: Auto-applies customer's payment terms when email matches
+- **Invoice Creation**: Auto-calculates due date based on payment terms
+- **PDF Documents**: Displays payment terms in info card (Issue Date, Due Date, Payment Terms)
+
+#### API Endpoints
+- `POST /api/admin/customers` - Create B2B customer with payment terms
+- `GET /api/admin/customers` - List customers with search/filter
+- `GET /api/admin/customers/{id}` - Get customer by ID
+- `GET /api/admin/customers/by-email/{email}` - Lookup customer for quote/invoice
+- `PATCH /api/admin/customers/{id}` - Update payment terms
+- `DELETE /api/admin/customers/{id}` - Soft delete (deactivate)
+
+#### Frontend Updates
+- [x] `CustomersPage.jsx` - Full CRUD UI with payment terms section
+- [x] `QuotesPageNew.jsx` - Shows customer info card with payment terms on email match
+- [x] `adminApi.js` - Customer API methods added
+
+#### Test Results (iteration_10.json)
+- Backend: 100% (18/18 tests passed)
+- Frontend: 100% verified
+- Features tested: Customer CRUD, payment terms auto-apply, due date calculation, PDF display
+
+---
+
 ### March 11, 2026 - Phase 8: World-Class Platform Upgrades (TESTED ✅)
 
 #### PDF Design Upgrade
