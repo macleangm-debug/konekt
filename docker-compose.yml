@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # MongoDB Database
+  # MongoDB Database (internal only)
   mongodb:
     image: mongo:7.0
     container_name: konekt-mongodb
@@ -10,17 +10,16 @@ services:
       MONGO_INITDB_DATABASE: konekt_db
     volumes:
       - mongodb_data:/data/db
-    ports:
-      - "27017:27017"
     networks:
-      - konekt-network
+      - konekt-internal
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/konekt_db --quiet
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
-  # FastAPI Backend
+  # FastAPI Backend (internal only)
   backend:
     build:
       context: ./backend
@@ -32,34 +31,33 @@ services:
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=konekt_db
-    ports:
-      - "8001:8001"
     depends_on:
       mongodb:
         condition: service_healthy
     networks:
-      - konekt-network
+      - konekt-internal
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 15s
 
-  # React Frontend
+  # React Frontend (internal only)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=https://konekt.co.tz
     container_name: konekt-frontend
     restart: unless-stopped
-    ports:
-      - "3000:80"
     depends_on:
       - backend
     networks:
-      - konekt-network
+      - konekt-internal
 
-  # Nginx Reverse Proxy (Production)
+  # Nginx Reverse Proxy (public-facing)
   nginx:
     image: nginx:alpine
     container_name: konekt-nginx
@@ -74,11 +72,12 @@ services:
       - frontend
       - backend
     networks:
-      - konekt-network
+      - konekt-internal
 
 volumes:
   mongodb_data:
+    driver: local
 
 networks:
-  konekt-network:
+  konekt-internal:
     driver: bridge
