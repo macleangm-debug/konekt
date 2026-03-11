@@ -19,6 +19,40 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ## What's Been Implemented ✅
 
+### March 11, 2026 - Phase 6: Order Operations & Production Queue (TESTED ✅)
+
+#### New Backend Files
+- [x] `order_ops_models.py` - Models for orders, inventory reservation, production queue
+- [x] `order_ops_routes.py` - Order operations at `/api/admin/orders-ops`
+- [x] `production_routes.py` - Production queue at `/api/admin/production`
+- [x] `document_send_routes.py` - Email send stubs (ready for Resend integration)
+
+#### New Frontend Pages
+- [x] `OrdersPageOps.jsx` - Order management with reserve inventory, assign tasks, send to production
+- [x] `ProductionQueuePage.jsx` - Kanban board for production tracking with status sync to orders
+
+#### Order Operations Features
+- List/filter orders by status
+- Update order status with history tracking
+- Reserve inventory for orders (prevents over-reservation)
+- Assign tasks directly from orders (links to admin tasks)
+- Send orders to production queue
+- Convert orders to invoices
+
+#### Production Queue Features
+- Kanban board view (7 columns: queued → completed)
+- Status updates sync back to linked order
+- Priority badges (low/medium/high/urgent)
+- Stats dashboard (total, queued, in_progress, completed, blocked)
+- Full history tracking
+
+#### Test Results (iteration_6.json)
+- Backend: 100% (23/23 tests passed)
+- Frontend: 100% verified
+- Features tested: Order ops, inventory reservation, task assignment, production queue, status sync
+
+---
+
 ### March 11, 2026 - Phase 5: Quote → Order → Invoice → PDF Workflow (TESTED ✅)
 
 #### New Backend Files
@@ -250,6 +284,23 @@ GET     /api/admin/pdf/quote/{id}       - Export quote as PDF
 GET     /api/admin/pdf/invoice/{id}     - Export invoice as PDF
 ```
 
+### Order Operations & Production Queue (NEW)
+```
+GET     /api/admin/orders-ops           - List all orders
+GET     /api/admin/orders-ops/{id}      - Get single order
+PATCH   /api/admin/orders-ops/{id}/status - Update order status with history
+POST    /api/admin/orders-ops/reserve-inventory - Reserve inventory for order
+POST    /api/admin/orders-ops/assign-task - Create task linked to order
+POST    /api/admin/orders-ops/send-to-production - Add order to production queue
+GET     /api/admin/production/queue     - List production queue items
+GET     /api/admin/production/queue/{id} - Get production item
+PATCH   /api/admin/production/queue/{id}/status - Update production status (syncs to order)
+GET     /api/admin/production/stats     - Production queue statistics
+POST    /api/admin/send/quote/{id}      - Send quote email (stub)
+POST    /api/admin/send/invoice/{id}    - Send invoice email (stub)
+POST    /api/admin/send/order/{id}/confirmation - Send order confirmation (stub)
+```
+
 ### Admin
 ```
 POST /api/admin/auth/login
@@ -339,17 +390,20 @@ cp backend/.env.production backend/.env
 - [x] Admin Business OS (CRM, Tasks, Inventory, Invoices, Quotes) - TESTED
 - [x] Quote → Order → Invoice → PDF workflow - TESTED
 - [x] Company branding settings for PDFs
+- [x] Order Operations & Production Queue - TESTED
+- [x] Inventory reservation for orders
+- [x] Task assignment from orders
 - [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
 - [ ] Point DNS
 - [ ] Enable SSL
 
 ### P1 - Post-Launch (Week 1)
 - [ ] File upload for design assets (currently only metadata)
-- [ ] Email notifications for service milestones
+- [ ] Connect email send stubs to Resend API
 - [ ] Payment gateway (M-Pesa, Stripe)
-- [ ] Send quote/invoice by email from admin
 - [ ] PDF watermarks for DRAFT/PAID/OVERDUE status
 - [ ] Customer approval link for quotes
+- [ ] Role-based permissions (admin/sales/production)
 
 ### P2 - Growth (Week 2-4)
 - [ ] WhatsApp notifications
@@ -360,6 +414,7 @@ cp backend/.env.production backend/.env
 - [ ] Sequential invoice numbering rules
 - [ ] Multiple currencies support
 - [ ] Statement of account export
+- [ ] Audit trail for all admin actions
 
 ### P3 - Future
 - [ ] Mobile app
@@ -386,6 +441,11 @@ Landing → Creative Services → Service Detail → Choose Package → Fill Bri
 CRM Lead → Create Quote → Send to Customer → Customer Approves → Convert to Order → Production → Convert to Invoice → Add Payments → PAID
 ```
 
+### Order Operations Flow (NEW)
+```
+Order Created → Reserve Inventory → Assign Tasks → Send to Production → Track Production → Quality Check → Ready for Dispatch → Delivered
+```
+
 ---
 
-*Last updated: March 11, 2026 - Phase 5 Complete (Quote/Invoice/PDF)*
+*Last updated: March 11, 2026 - Phase 6 Complete (Order Operations & Production Queue)*
