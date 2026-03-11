@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -15,6 +15,8 @@ const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/art
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { path: '/admin/orders-ops', label: 'Order Operations', icon: ClipboardList },
+  { path: '/admin/production', label: 'Production Queue', icon: Factory },
   { path: '/admin/products', label: 'Products', icon: Package },
   { path: '/admin/stock', label: 'Stock Management', icon: Boxes },
   { type: 'divider', label: 'Business OS' },

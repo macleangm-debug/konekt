@@ -27,6 +27,9 @@ from settings_routes import router as settings_router
 from quote_routes import router as quote_router
 from invoice_routes import router as invoice_router
 from pdf_routes import router as pdf_router
+from order_ops_routes import router as order_ops_router
+from production_routes import router as production_router
+from document_send_routes import router as document_send_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1887,6 +1890,15 @@ app.include_router(invoice_router)
 
 # Include PDF export routes
 app.include_router(pdf_router)
+
+# Include order operations routes
+app.include_router(order_ops_router)
+
+# Include production queue routes
+app.include_router(production_router)
+
+# Include document send routes (email stubs)
+app.include_router(document_send_router)
 
 app.add_middleware(
     CORSMiddleware,

@@ -73,6 +73,27 @@ export const adminApi = {
   addDesignerNote: (orderId, note, isCustomerVisible) =>
     api.post(`/api/service-orders/${orderId}/notes`, { note, is_customer_visible: isCustomerVisible }),
   getServiceOrderStats: () => api.get("/api/admin/service-orders/stats"),
+
+  // Order Operations
+  getOrders: (params) => api.get("/api/admin/orders-ops", { params }),
+  getOrder: (orderId) => api.get(`/api/admin/orders-ops/${orderId}`),
+  updateOrderStatus: (orderId, status, note) =>
+    api.patch(`/api/admin/orders-ops/${orderId}/status`, null, { params: { status, note } }),
+  reserveInventory: (payload) => api.post("/api/admin/orders-ops/reserve-inventory", payload),
+  assignOrderTask: (payload) => api.post("/api/admin/orders-ops/assign-task", payload),
+  sendOrderToProduction: (payload) => api.post("/api/admin/orders-ops/send-to-production", payload),
+
+  // Production Queue
+  getProductionQueue: (params) => api.get("/api/admin/production/queue", { params }),
+  getProductionItem: (queueId) => api.get(`/api/admin/production/queue/${queueId}`),
+  updateProductionStatus: (queueId, payload) =>
+    api.patch(`/api/admin/production/queue/${queueId}/status`, payload),
+  getProductionStats: () => api.get("/api/admin/production/stats"),
+
+  // Document Sending (email stubs)
+  sendQuoteDocument: (quoteId) => api.post(`/api/admin/send/quote/${quoteId}`),
+  sendInvoiceDocument: (invoiceId) => api.post(`/api/admin/send/invoice/${invoiceId}`),
+  sendOrderConfirmation: (orderId) => api.post(`/api/admin/send/order/${orderId}/confirmation`),
 };
 
 export default adminApi;

@@ -43,6 +43,8 @@ import InvoicesPage from "@/pages/admin/InvoicesPage";
 import AdminQuotes from "@/pages/admin/AdminQuotes";
 import QuotesPageNew from "@/pages/admin/QuotesPageNew";
 import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
+import OrdersPageOps from "@/pages/admin/OrdersPageOps";
+import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -106,6 +108,8 @@ function App() {
           <Route path="quotes-old" element={<AdminQuotes />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
+          <Route path="orders-ops" element={<OrdersPageOps />} />
+          <Route path="production" element={<ProductionQueuePage />} />
         </Route>
         
         {/* Customer Routes */}
