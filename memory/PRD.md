@@ -18,42 +18,35 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ## What's Been Implemented ✅
 
-### March 11, 2026 - Phase 2: World-Class Improvements
+### March 11, 2026 - Phase 3: Full Creative Services Flow
 
-#### New World-Class Landing Page
-- [x] Premium hero section with business-focused messaging
-- [x] 4 category cards (Promotional Materials, Office Equipment, Creative Services, KonektSeries)
-- [x] Popular products showcase
-- [x] Creative Services highlight section
-- [x] How it works (4-step process)
-- [x] Trust points (Delivery, Quality, Clients)
-- [x] Customer testimonials
-- [x] Final CTA section
+#### New Frontend Pages
+- [x] `CreativeServicesPage.js` - Service listing with category filters
+- [x] `ServiceDetail.js` - Service detail with package selection
+- [x] `DesignBriefForm.js` - Complete design brief submission form with AI assistance
+- [x] `LandingNew.js` - World-class homepage
 
-#### Creative Services (NEW CATEGORY)
-- [x] 8 design services added:
-  - Logo Design (3 packages: Basic, Standard, Premium)
-  - Company Profile Design (3 packages)
-  - Brochure Design (3 packages)
-  - Flyer Design (3 packages)
-  - Poster Design (2 packages)
-  - Social Media Kit (2 packages)
-  - Business Card Design (2 packages)
-  - Letterhead & Stationery (2 packages)
+#### New Backend Routes
+- [x] `POST /api/service-orders` - Create service order
+- [x] `GET /api/service-orders` - List all service orders
+- [x] `GET /api/service-orders/{id}` - Get specific order
+- [x] `PATCH /api/service-orders/{id}/status` - Update order status
+- [x] `POST /api/service-orders/{id}/notes` - Add designer notes
+- [x] `GET /api/admin/service-orders/stats` - Dashboard stats
 
-#### AI-Powered Services (NEW)
-- [x] **Product Recommender**: AI suggests products based on business type & campaign goal
-- [x] **Design Brief Generator**: Converts simple requirements into structured briefs
-- [x] **Logo Concept Generator**: Creates AI prompts for logo ideas
-- [x] **Pricing Suggestion**: Intelligent pricing for custom orders
-- [x] **Service Packages API**: Returns package tiers for design services
+#### Service Order Flow
+```
+Customer selects service → Chooses package → Fills brief → AI assists → Submits order
+     ↓
+Admin receives order → Reviews brief → Assigns designer → Creates draft → Sends for review
+     ↓
+Customer reviews → Requests revisions → Approves final → Receives files
+```
 
-#### Deployment Hardening
-- [x] Docker Compose (production-ready, internal networking)
-- [x] Nginx reverse proxy with SSL, rate limiting, security headers
-- [x] Admin password rotated
-- [x] Backup admin created
-- [x] Deploy script (`./deploy.sh`)
+#### Service Statuses
+```
+pending → brief_review → in_design → draft_sent → revision_requested → approved → final_delivery → completed
+```
 
 ---
 
@@ -69,56 +62,82 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
-## API Endpoints
+## Frontend Routes
 
-### AI Services (NEW)
+### Customer Routes
 ```
-POST /api/ai/recommend-products    - Product recommendations
-POST /api/ai/generate-design-brief - Design brief generator
-POST /api/ai/generate-logo-concept - Logo concept ideas
-POST /api/ai/suggest-price         - Pricing suggestions
-GET  /api/ai/service-packages/{type} - Service package tiers
-```
-
-### Products
-```
-GET  /api/products                 - List all products
-GET  /api/products/{id}            - Product detail
-GET  /api/products/categories/list - Categories & branches
-```
-
-### Customer
-```
-POST /api/auth/register            - Register
-POST /api/auth/login               - Login
-GET  /api/orders                   - My orders
-POST /api/orders                   - Create order
-POST /api/chat                     - AI assistant
-POST /api/logo/generate            - AI logo generation
+/                       - Landing page
+/products               - Product catalog
+/product/:id            - Product detail
+/customize/:id          - Product customization canvas
+/cart                   - Shopping cart
+/auth                   - Login/Register
+/dashboard              - Customer dashboard
+/orders/:id             - Order tracking
+/creative-services      - Design services listing  (NEW)
+/services/:id           - Service detail + brief   (NEW)
+/services/maintenance   - Equipment maintenance
 ```
 
-### Admin
+### Admin Routes
 ```
-POST /api/admin/auth/login         - Admin login
-GET  /api/admin/analytics/*        - Dashboard
-GET  /api/admin/orders/*           - Order management
-GET  /api/admin/products/*         - Product CRUD
-```
-
-### Sales CRM
-```
-GET  /api/sales/leads              - Lead pipeline
-GET  /api/sales/quotes             - Quotes
-GET  /api/sales/tasks              - Tasks
-GET  /api/sales/dashboard          - Metrics
+/admin/login            - Admin login
+/admin                  - Dashboard
+/admin/orders           - Order management
+/admin/products         - Product CRUD
+/admin/users            - User management
+/admin/offers           - Promotional offers
+/admin/referrals        - Referral program
+/admin/maintenance      - Maintenance requests
+/admin/stock            - Inventory
 ```
 
 ---
 
-## Customer Journey
+## API Endpoints
 
+### Service Orders (NEW)
 ```
-Landing → Browse Category → Product/Service Detail → Customize/Brief → Cart/Quote → Login → Order → Dashboard → Track → Reorder/Refer
+POST   /api/service-orders              - Create service order
+GET    /api/service-orders              - List orders (admin)
+GET    /api/service-orders/{id}         - Get order details
+PATCH  /api/service-orders/{id}/status  - Update status
+POST   /api/service-orders/{id}/notes   - Add designer note
+GET    /api/admin/service-orders/stats  - Dashboard stats
+GET    /api/service-orders/customer/{email} - Customer orders
+```
+
+### AI Services
+```
+POST /api/ai/recommend-products      - Product recommendations
+POST /api/ai/generate-design-brief   - Design brief generator
+POST /api/ai/generate-logo-concept   - Logo concept ideas
+POST /api/ai/suggest-price           - Pricing suggestions
+GET  /api/ai/service-packages/{type} - Package tiers
+```
+
+### Products
+```
+GET  /api/products           - List all products
+GET  /api/products/{id}      - Product detail
+GET  /api/products/categories/list
+```
+
+### Customer
+```
+POST /api/auth/register/login
+GET  /api/orders
+POST /api/orders
+POST /api/chat
+POST /api/logo/generate
+```
+
+### Admin
+```
+POST /api/admin/auth/login
+GET  /api/admin/analytics/*
+GET  /api/admin/orders/*
+GET  /api/admin/products/*
 ```
 
 ---
@@ -128,30 +147,36 @@ Landing → Browse Category → Product/Service Detail → Customize/Brief → C
 ```
 /app
 ├── backend/
-│   ├── server.py           # Main FastAPI (1900 lines)
-│   ├── ai_services.py      # AI recommendation endpoints (NEW)
-│   ├── sales_routes.py     # Sales CRM
-│   ├── sales_automation.py # Automation engine
-│   ├── email_service.py    # Resend integration
-│   ├── seed_products.py    # Database seeder
+│   ├── server.py              # Main FastAPI
+│   ├── ai_services.py         # AI recommendation endpoints
+│   ├── service_orders.py      # Creative service orders (NEW)
+│   ├── sales_routes.py        # Sales CRM
+│   ├── sales_automation.py    # Automation engine
+│   ├── email_service.py       # Resend integration
+│   ├── seed_products.py       # Database seeder
 │   ├── Dockerfile
 │   └── .env.production
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── pages/
-│   │   │   ├── LandingNew.js    # World-class homepage (NEW)
+│   │   │   ├── LandingNew.js           # World-class homepage
+│   │   │   ├── CreativeServicesPage.js # Services listing (NEW)
+│   │   │   ├── ServiceDetail.js        # Service detail (NEW)
 │   │   │   ├── Products.js
-│   │   │   ├── ProductDetail.js
-│   │   │   └── admin/           # 15 admin pages
+│   │   │   └── admin/
 │   │   ├── components/
+│   │   │   ├── DesignBriefForm.js      # Brief form (NEW)
+│   │   │   └── ...
+│   │   ├── lib/
+│   │   │   └── api.js                  # API client (NEW)
 │   │   └── contexts/
 │   ├── Dockerfile
 │   └── nginx.conf
 │
-├── nginx/nginx.conf        # Production proxy
-├── docker-compose.yml      # Full stack
-├── deploy.sh               # Automation
+├── nginx/nginx.conf
+├── docker-compose.yml
+├── deploy.sh
 └── memory/PRD.md
 ```
 
@@ -176,23 +201,35 @@ cp backend/.env.production backend/.env
 
 ---
 
+## Admin Credentials
+
+| Account | Email | Note |
+|---------|-------|------|
+| Primary Admin | admin@konekt.co.tz | Password rotated |
+| Backup Admin | backup@konekt.co.tz | Emergency access |
+
+---
+
 ## Backlog
 
 ### P0 - Ready for Launch
 - [x] All deployment files
-- [x] Database seeded
+- [x] Database seeded (32 products)
 - [x] Admin credentials secured
+- [x] Creative services flow complete
+- [x] Service order management
 - [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
 - [ ] Point DNS
 - [ ] Enable SSL
 
-### P1 - Post-Launch
+### P1 - Post-Launch (Week 1)
+- [ ] Admin service orders dashboard UI
+- [ ] Revision request workflow UI
+- [ ] File upload for design assets
+- [ ] Email notifications for service milestones
 - [ ] Payment gateway (M-Pesa, Stripe)
-- [ ] Design brief submission flow UI
-- [ ] Service package selection UI
-- [ ] Admin: Service order management
 
-### P2 - Growth
+### P2 - Growth (Week 2-4)
 - [ ] WhatsApp notifications
 - [ ] Advanced referral gamification
 - [ ] Inventory alerts
@@ -204,6 +241,20 @@ cp backend/.env.production backend/.env
 - [ ] 3D product customization
 - [ ] AR preview
 - [ ] AI brand builder
+
+---
+
+## Customer Journey
+
+### Promotional Products Flow
+```
+Landing → Browse Products → Product Detail → Customize → Cart → Login → Order → Track → Reorder
+```
+
+### Creative Services Flow (NEW)
+```
+Landing → Creative Services → Service Detail → Choose Package → Fill Brief → AI Assist → Submit → Dashboard → Track → Review Drafts → Approve → Download
+```
 
 ---
 

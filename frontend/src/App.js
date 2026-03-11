@@ -22,6 +22,8 @@ import Auth from "@/pages/Auth";
 import Dashboard from "@/pages/Dashboard";
 import OrderTracking from "@/pages/OrderTracking";
 import EquipmentMaintenance from "@/pages/EquipmentMaintenance";
+import CreativeServicesPage from "@/pages/CreativeServicesPage";
+import ServiceDetail from "@/pages/ServiceDetail";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -110,6 +112,8 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
+                    <Route path="/creative-services" element={<CreativeServicesPage />} />
+                    <Route path="/services/:id" element={<ServiceDetail />} />
                   </Routes>
                 </main>
                 <Footer />
