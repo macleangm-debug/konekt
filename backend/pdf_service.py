@@ -82,11 +82,11 @@ def draw_header(c, settings, doc_type, number, status):
 
 
 def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
-    """Draw two-column company and bill-to section"""
+    """Draw two-column company and bill-to section with TIN/Registration"""
     width, height = A4
     top_y = height - 55 * mm
 
-    # FROM section
+    # FROM section (Konekt/Seller)
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 11)
     c.drawString(18 * mm, top_y, "From")
@@ -96,23 +96,33 @@ def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
 
     c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
-    lines = [
+    
+    # Build company lines including TIN and Registration
+    company_lines = [
         settings.get("address_line_1", ""),
         settings.get("address_line_2", ""),
         ", ".join(filter(None, [settings.get("city", ""), settings.get("country", "")])),
         settings.get("email", ""),
         settings.get("phone", ""),
-        settings.get("website", ""),
-        f"TIN/VAT: {settings.get('tax_number')}" if settings.get("tax_number") else "",
     ]
+    
+    # Add TIN and Registration numbers
+    if settings.get("tin_number"):
+        company_lines.append(f"TIN: {settings.get('tin_number')}")
+    if settings.get("business_registration_number"):
+        company_lines.append(f"Reg No: {settings.get('business_registration_number')}")
+    if settings.get("vat_number"):
+        company_lines.append(f"VAT: {settings.get('vat_number')}")
+    
+    company_lines.append(settings.get("website", ""))
 
     y = top_y - 13 * mm
-    for line in lines:
+    for line in company_lines:
         if line:
             c.drawString(18 * mm, y, line)
             y -= 4.5 * mm
 
-    # BILL TO section
+    # BILL TO section (Customer/Client)
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 11)
     c.drawString(95 * mm, top_y, "Bill To")
@@ -122,11 +132,20 @@ def draw_company_and_billto(c, settings, customer, issue_date, due_date=None):
 
     c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
+    
+    # Build customer lines including TIN and Registration
     customer_lines = [
         customer.get("customer_company", ""),
+        customer.get("customer_address", ""),
         customer.get("customer_email", ""),
         customer.get("customer_phone", ""),
     ]
+    
+    # Add customer TIN and Registration
+    if customer.get("customer_tin"):
+        customer_lines.append(f"TIN: {customer.get('customer_tin')}")
+    if customer.get("customer_registration_number"):
+        customer_lines.append(f"Reg No: {customer.get('customer_registration_number')}")
 
     y2 = top_y - 13 * mm
     for line in customer_lines:
@@ -200,22 +219,22 @@ def draw_items_table(c, items, currency="TZS", start_y=150 * mm):
     return y
 
 
-def draw_totals(c, subtotal, tax, discount, total, currency="TZS", y=58 * mm):
-    """Draw premium totals section"""
+def draw_totals(c, subtotal, tax, discount, total, currency="TZS", tax_rate=18.0, y=58 * mm):
+    """Draw premium totals section with tax rate"""
     width, _ = A4
     box_x = width - 75 * mm
 
     # Totals card
     c.setFillColor(SOFT)
-    c.roundRect(box_x, y, 57 * mm, 34 * mm, 4 * mm, stroke=0, fill=1)
+    c.roundRect(box_x, y, 57 * mm, 38 * mm, 4 * mm, stroke=0, fill=1)
 
     rows = [
         ("Subtotal", subtotal),
-        ("Tax", tax),
+        (f"VAT ({tax_rate}%)", tax),
         ("Discount", discount),
     ]
 
-    row_y = y + 25 * mm
+    row_y = y + 29 * mm
     c.setFont("Helvetica", 9)
     c.setFillColor(TEXT)
 
@@ -296,21 +315,31 @@ def build_document_pdf(doc_type, doc, settings):
 
     title = "Invoice" if doc_type == "invoice" else "Quote"
 
+    # Include all customer details for PDF
     customer = {
         "customer_name": doc.get("customer_name", ""),
         "customer_company": doc.get("customer_company", ""),
         "customer_email": doc.get("customer_email", ""),
         "customer_phone": doc.get("customer_phone", ""),
+        "customer_address": doc.get("customer_address", ""),
+        "customer_tin": doc.get("customer_tin", ""),
+        "customer_registration_number": doc.get("customer_registration_number", ""),
     }
 
     draw_header(c, settings, title, number, status)
     draw_company_and_billto(c, settings, customer, issue_date, due_date)
-    draw_items_table(
+    
+    # Draw items table and get the Y position after items
+    items_end_y = draw_items_table(
         c,
         doc.get("line_items", []),
         doc.get("currency", settings.get("currency", "TZS")),
-        start_y=135 * mm,
+        start_y=125 * mm,  # Slightly lower to accommodate more company info
     )
+    
+    # Calculate totals Y position based on items
+    totals_y = max(items_end_y - 15 * mm, 52 * mm)
+    
     draw_totals(
         c,
         doc.get("subtotal", 0),
@@ -318,7 +347,8 @@ def build_document_pdf(doc_type, doc, settings):
         doc.get("discount", 0),
         doc.get("total", 0),
         doc.get("currency", settings.get("currency", "TZS")),
-        y=52 * mm,
+        tax_rate=doc.get("tax_rate", settings.get("default_tax_rate", 18.0)),
+        y=totals_y,
     )
     draw_footer(c, settings, notes=doc.get("notes"), terms=doc.get("terms"))
 

@@ -28,6 +28,9 @@ import CheckoutPage from "@/pages/CheckoutPage";
 import CustomerDashboard from "@/pages/CustomerDashboard";
 import OrderConfirmationPage from "@/pages/OrderConfirmationPage";
 import OrderTrackingPage from "@/pages/OrderTrackingPage";
+import PaymentSelectionPage from "@/pages/PaymentSelectionPage";
+import BankTransferPage from "@/pages/BankTransferPage";
+import PaymentPendingPage from "@/pages/PaymentPendingPage";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -142,6 +145,9 @@ function App() {
                     <Route path="/dashboard/invoices" element={<CustomerDashboard />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/orders/:orderId/tracking" element={<OrderTrackingPage />} />
+                    <Route path="/payment/select" element={<PaymentSelectionPage />} />
+                    <Route path="/payment/bank-transfer" element={<BankTransferPage />} />
+                    <Route path="/payment/pending" element={<PaymentPendingPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />

@@ -71,8 +71,21 @@ export default function CheckoutPage() {
       };
 
       const res = await api.post("/api/guest/orders", payload);
+      const orderId = res.data.id || res.data.order_id;
+      const orderNumber = res.data.order_number;
+      
       clearCart();
-      navigate(`/order-confirmation/${res.data.order_number || res.data.id || "success"}`);
+      
+      // Redirect to payment selection
+      navigate(
+        `/payment/select?target_type=order&target_id=${orderId}&email=${encodeURIComponent(form.email)}&amount=${grandTotal}`,
+        {
+          state: {
+            customerName: form.full_name,
+            orderNumber: orderNumber,
+          },
+        }
+      );
     } catch (error) {
       console.error("Checkout failed", error);
       setError("Failed to submit order. Please try again.");

@@ -34,7 +34,17 @@ class CompanySettings(BaseModel):
     address_line_2: Optional[str] = None
     city: Optional[str] = None
     country: Optional[str] = None
-    tax_number: Optional[str] = None
+    # Tax & Registration
+    tin_number: Optional[str] = None  # Tax Identification Number
+    business_registration_number: Optional[str] = None  # BRELA Registration
+    vat_number: Optional[str] = None  # VAT Registration Number
+    tax_number: Optional[str] = None  # Legacy field for backward compatibility
+    # Tax Settings
+    default_tax_rate: float = 18.0  # VAT rate in Tanzania is 18%
+    tax_inclusive_pricing: bool = False  # Whether prices include tax
+    apply_tax_to_services: bool = True
+    apply_tax_to_products: bool = True
+    # Currency & Banking
     currency: str = "TZS"
     bank_name: Optional[str] = None
     bank_account_name: Optional[str] = None
@@ -42,8 +52,11 @@ class CompanySettings(BaseModel):
     bank_branch: Optional[str] = None
     swift_code: Optional[str] = None
     payment_instructions: Optional[str] = None
+    # Document Terms
     invoice_terms: Optional[str] = None
     quote_terms: Optional[str] = None
+    quote_validity_days: int = 30
+    invoice_payment_days: int = 14
 
 
 class QuoteLineItem(BaseModel):
@@ -58,12 +71,16 @@ class QuoteCreate(BaseModel):
     customer_email: EmailStr
     customer_company: Optional[str] = None
     customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
+    customer_tin: Optional[str] = None  # Client TIN
+    customer_registration_number: Optional[str] = None  # Client Business Registration
     lead_id: Optional[str] = None
     order_reference: Optional[str] = None
     currency: str = "TZS"
     line_items: List[QuoteLineItem]
     subtotal: float
     tax: float = 0.0
+    tax_rate: float = 18.0  # Applied tax rate
     discount: float = 0.0
     total: float
     valid_until: Optional[datetime] = None
@@ -91,12 +108,16 @@ class InvoiceCreateNew(BaseModel):
     customer_email: EmailStr
     customer_company: Optional[str] = None
     customer_phone: Optional[str] = None
+    customer_address: Optional[str] = None
+    customer_tin: Optional[str] = None  # Client TIN
+    customer_registration_number: Optional[str] = None  # Client Business Registration
     order_id: Optional[str] = None
     quote_id: Optional[str] = None
     currency: str = "TZS"
     line_items: List[InvoiceLineItem]
     subtotal: float
     tax: float = 0.0
+    tax_rate: float = 18.0  # Applied tax rate
     discount: float = 0.0
     total: float
     due_date: Optional[datetime] = None
