@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Building2, Copy, CheckCircle2 } from "lucide-react";
+import { Building2, Copy, CheckCircle2, Upload, FileText, X } from "lucide-react";
 import { paymentApi } from "../lib/paymentApi";
+import { uploadApi } from "../lib/uploadApi";
 
 export default function BankTransferPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const data = location.state;
 
+  const [proofFile, setProofFile] = useState(null);
   const [proofUrl, setProofUrl] = useState("");
+  const [proofFilename, setProofFilename] = useState("");
   const [transactionReference, setTransactionReference] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState("");
 
@@ -37,18 +41,60 @@ export default function BankTransferPage() {
     setTimeout(() => setCopied(""), 2000);
   };
 
+  const uploadProof = async () => {
+    if (!proofFile) return;
+
+    try {
+      setUploading(true);
+      const res = await uploadApi.uploadPaymentProof({
+        paymentId: payment.id,
+        customerEmail: payment.customer_email,
+        file: proofFile,
+      });
+
+      setProofUrl(res.data.file.url);
+      setProofFilename(res.data.file.filename);
+    } catch (error) {
+      console.error(error);
+      alert(error?.response?.data?.detail || "Failed to upload proof");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProofFile(file);
+      setProofUrl("");
+      setProofFilename("");
+    }
+  };
+
+  const clearFile = () => {
+    setProofFile(null);
+    setProofUrl("");
+    setProofFilename("");
+  };
+
   const markSubmitted = async () => {
     try {
       setSubmitting(true);
       await paymentApi.markBankTransferSubmitted({
         payment_id: payment.id,
         proof_url: proofUrl || null,
+        proof_filename: proofFilename || null,
         transaction_reference: transactionReference || null,
       });
+
       navigate("/payment/pending", {
         state: {
           provider: "bank_transfer",
-          payment,
+          payment: {
+            ...payment,
+            status: "payment_submitted",
+            reference: payment.reference,
+          },
           bankDetails: bank_details,
         },
       });
@@ -152,13 +198,13 @@ export default function BankTransferPage() {
             After making the bank transfer, fill in the details below so we can verify your payment faster.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
               <label className="block text-sm font-medium mb-2">
                 Bank Transaction Reference
               </label>
               <input
-                className="w-full border rounded-xl px-4 py-3"
+                className="w-full border border-slate-300 rounded-xl px-4 py-3"
                 placeholder="Enter the reference from your bank receipt"
                 value={transactionReference}
                 onChange={(e) => setTransactionReference(e.target.value)}
@@ -166,17 +212,93 @@ export default function BankTransferPage() {
               />
             </div>
 
+            {/* File Upload Section */}
             <div>
               <label className="block text-sm font-medium mb-2">
-                Proof of Payment URL (Optional)
+                <Upload className="w-4 h-4 inline mr-2" />
+                Upload Proof of Payment
               </label>
-              <input
-                className="w-full border rounded-xl px-4 py-3"
-                placeholder="Link to receipt screenshot or document"
-                value={proofUrl}
-                onChange={(e) => setProofUrl(e.target.value)}
-                data-testid="proof-url-input"
-              />
+              
+              {!proofFile && !proofUrl && (
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    data-testid="proof-file-input"
+                  />
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-[#D4A843] transition-colors">
+                    <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+                    <p className="text-sm text-slate-600">
+                      Click or drag to upload your payment receipt
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Supported: Images, PDF (max 10MB)
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {proofFile && !proofUrl && (
+                <div className="rounded-xl bg-slate-50 border p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-8 h-8 text-[#2D3E50]" />
+                      <div>
+                        <p className="font-medium text-sm">{proofFile.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {(proofFile.size / 1024).toFixed(1)} KB
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={clearFile}
+                        className="p-1 hover:bg-slate-200 rounded"
+                      >
+                        <X className="w-5 h-5 text-slate-400" />
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={uploadProof}
+                    disabled={uploading}
+                    className="mt-3 w-full rounded-lg bg-[#D4A843] text-[#2D3E50] px-4 py-2 font-medium text-sm disabled:opacity-50"
+                    data-testid="upload-proof-btn"
+                  >
+                    {uploading ? "Uploading..." : "Upload File"}
+                  </button>
+                </div>
+              )}
+
+              {proofUrl && (
+                <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-emerald-800">Proof uploaded</p>
+                      <a
+                        href={proofUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-emerald-700 underline"
+                      >
+                        {proofFilename || "View proof"}
+                      </a>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearFile}
+                      className="text-sm text-emerald-700 underline"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

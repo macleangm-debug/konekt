@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -37,6 +38,7 @@ from kwikpay_webhook_routes import router as kwikpay_webhook_router
 from bank_transfer_routes import router as bank_transfer_router
 from payment_admin_routes import router as payment_admin_router
 from customer_admin_routes import router as customer_admin_router
+from payment_upload_routes import router as payment_upload_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -58,6 +60,11 @@ app = FastAPI(title="Konekt API")
 api_router = APIRouter(prefix="/api")
 admin_router = APIRouter(prefix="/api/admin")
 security = HTTPBearer(auto_error=False)
+
+# Mount static files for uploads
+STATIC_DIR = Path("/app/static")
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -1921,6 +1928,9 @@ app.include_router(payment_admin_router)
 
 # Include customer admin routes
 app.include_router(customer_admin_router)
+
+# Include payment upload routes
+app.include_router(payment_upload_router)
 
 app.add_middleware(
     CORSMiddleware,

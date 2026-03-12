@@ -11,6 +11,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import api from "../lib/api";
+import PaymentStatusBadge from "../components/PaymentStatusBadge";
 
 const quickCards = [
   {
@@ -150,8 +151,11 @@ export default function CustomerDashboard() {
                           {order.currency || "TZS"} {Number(order.total || 0).toLocaleString()}
                         </div>
                       </div>
-                      <div className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
-                        {order.status?.replace(/_/g, ' ')}
+                      <div className="flex items-center gap-2">
+                        <div className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
+                          {order.status?.replace(/_/g, ' ')}
+                        </div>
+                        <PaymentStatusBadge status={order.payment_status || "unpaid"} />
                       </div>
                     </div>
                   </Link>

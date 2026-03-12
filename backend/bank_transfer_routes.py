@@ -45,6 +45,7 @@ class BankTransferIntentCreate(BaseModel):
 class BankTransferMarkSubmitted(BaseModel):
     payment_id: str
     proof_url: Optional[str] = None
+    proof_filename: Optional[str] = None
     transaction_reference: Optional[str] = None
 
 
@@ -133,6 +134,7 @@ async def mark_bank_transfer_submitted(payload: BankTransferMarkSubmitted):
             "$set": {
                 "status": "payment_submitted",
                 "proof_url": payload.proof_url,
+                "proof_filename": payload.proof_filename,
                 "transaction_reference": payload.transaction_reference,
                 "updated_at": now,
             }

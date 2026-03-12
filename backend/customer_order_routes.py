@@ -61,6 +61,7 @@ async def create_guest_order(payload: GuestOrderCreate):
     doc["order_number"] = order_number
     doc["status"] = "pending"
     doc["current_status"] = "pending"
+    doc["payment_status"] = "unpaid"
     doc["status_history"] = [
         {
             "status": "pending",

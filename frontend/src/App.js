@@ -54,6 +54,7 @@ import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPageOps from "@/pages/admin/OrdersPageOps";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPage from "@/pages/admin/CustomersPage";
+import PaymentsPage from "@/pages/admin/PaymentsPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -121,6 +122,7 @@ function App() {
           <Route path="orders-ops" element={<OrdersPageOps />} />
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPage />} />
+          <Route path="payments" element={<PaymentsPage />} />
         </Route>
         
         {/* Customer Routes */}

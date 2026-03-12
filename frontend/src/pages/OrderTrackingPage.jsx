@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Package, MapPin, Phone, Mail } from "lucide-react";
 import OrderTimeline from "../components/OrderTimeline";
+import PaymentStatusBadge from "../components/PaymentStatusBadge";
 import api from "../lib/api";
 
 export default function OrderTrackingPage() {
@@ -90,16 +91,19 @@ export default function OrderTrackingPage() {
               <div className="text-2xl font-bold mt-1">
                 {order.currency || "TZS"} {Number(order.total || 0).toLocaleString()}
               </div>
-              <div
-                className={`inline-block mt-2 rounded-full px-4 py-1.5 text-sm font-medium ${
-                  order.status === "delivered"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : order.status === "in_production"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-amber-100 text-amber-700"
-                }`}
-              >
-                {order.status?.replace(/_/g, " ")}
+              <div className="flex items-center gap-2 justify-end mt-2">
+                <div
+                  className={`inline-block rounded-full px-4 py-1.5 text-sm font-medium ${
+                    order.status === "delivered"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : order.status === "in_production"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {order.status?.replace(/_/g, " ")}
+                </div>
+                <PaymentStatusBadge status={order.payment_status || "unpaid"} />
               </div>
             </div>
           </div>

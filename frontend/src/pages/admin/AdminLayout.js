@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -25,6 +25,7 @@ const navItems = [
   { path: '/admin/quotes', label: 'Quotes', icon: FileText },
   { path: '/admin/quotes/kanban', label: 'Quote Kanban', icon: Columns3 },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt },
+  { path: '/admin/payments', label: 'Payments', icon: CreditCard },
   { path: '/admin/inventory', label: 'Inventory', icon: Briefcase },
   { path: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
   { type: 'divider', label: 'Other' },
