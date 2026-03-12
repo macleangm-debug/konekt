@@ -47,52 +47,52 @@ def draw_header(c, settings, doc_type, number, status):
     """Draw premium branded header with navy bar"""
     width, height = A4
 
-    # Navy header bar
+    # Navy header bar - slightly taller for better presence
     c.setFillColor(NAVY)
-    c.rect(0, height - 38 * mm, width, 38 * mm, stroke=0, fill=1)
+    c.rect(0, height - 42 * mm, width, 42 * mm, stroke=0, fill=1)
 
-    # Company logo
+    # Company logo - larger and better positioned
     logo = fetch_logo(settings.get("logo_url"))
     if logo:
         c.drawImage(
             logo,
             18 * mm,
-            height - 28 * mm,
-            width=24 * mm,
-            height=14 * mm,
+            height - 32 * mm,
+            width=28 * mm,
+            height=18 * mm,
             preserveAspectRatio=True,
             mask="auto",
         )
 
-    # Document type title
+    # Document type title - larger, more prominent
     c.setFillColor(WHITE)
-    c.setFont("Helvetica-Bold", 21)
+    c.setFont("Helvetica-Bold", 24)
     c.drawRightString(width - 18 * mm, height - 18 * mm, doc_type.upper())
 
-    # Document number
-    c.setFont("Helvetica-Bold", 10)
-    c.drawRightString(width - 18 * mm, height - 26 * mm, number)
+    # Document number - better spacing
+    c.setFont("Helvetica-Bold", 11)
+    c.drawRightString(width - 18 * mm, height - 28 * mm, number)
 
-    # Status badge
+    # Status badge - better positioned
     c.setFillColor(GOLD)
-    c.roundRect(width - 62 * mm, height - 34 * mm, 44 * mm, 8 * mm, 3 * mm, stroke=0, fill=1)
+    c.roundRect(width - 65 * mm, height - 38 * mm, 47 * mm, 9 * mm, 3 * mm, stroke=0, fill=1)
     c.setFillColor(TEXT)
-    c.setFont("Helvetica-Bold", 9)
-    c.drawCentredString(width - 40 * mm, height - 29 * mm, status.upper())
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(width - 41.5 * mm, height - 32.5 * mm, status.upper())
 
 
 def draw_company_and_billto(c, settings, customer, issue_date, due_date=None, payment_term_label=None):
     """Draw two-column company and bill-to section with TIN/Registration and Payment Terms"""
     width, height = A4
-    top_y = height - 55 * mm
+    top_y = height - 58 * mm  # Adjusted for taller header
 
     # FROM section (Konekt/Seller)
     c.setFillColor(TEXT)
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(18 * mm, top_y, "From")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(18 * mm, top_y, "FROM")
 
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(18 * mm, top_y - 7 * mm, settings.get("company_name", "Konekt Limited"))
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(18 * mm, top_y - 8 * mm, settings.get("company_name", "Konekt Limited"))
 
     c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
@@ -116,19 +116,19 @@ def draw_company_and_billto(c, settings, customer, issue_date, due_date=None, pa
     
     company_lines.append(settings.get("website", ""))
 
-    y = top_y - 13 * mm
+    y = top_y - 15 * mm  # Better spacing from company name
     for line in company_lines:
         if line:
             c.drawString(18 * mm, y, line)
-            y -= 4.5 * mm
+            y -= 5 * mm  # Increased line spacing
 
     # BILL TO section (Customer/Client)
     c.setFillColor(TEXT)
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(95 * mm, top_y, "Bill To")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(95 * mm, top_y, "BILL TO")
 
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(95 * mm, top_y - 7 * mm, customer.get("customer_name", ""))
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(95 * mm, top_y - 8 * mm, customer.get("customer_name", ""))
 
     c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
@@ -147,99 +147,99 @@ def draw_company_and_billto(c, settings, customer, issue_date, due_date=None, pa
     if customer.get("customer_registration_number"):
         customer_lines.append(f"Reg No: {customer.get('customer_registration_number')}")
 
-    y2 = top_y - 13 * mm
+    y2 = top_y - 15 * mm
     for line in customer_lines:
         if line:
             c.drawString(95 * mm, y2, str(line))
-            y2 -= 4.5 * mm
+            y2 -= 5 * mm  # Increased line spacing
 
     # Date and Payment Terms card (expanded to show payment terms)
-    card_x = width - 70 * mm
-    card_y = top_y - 24 * mm
-    card_height = 34 * mm if payment_term_label else 24 * mm
+    card_x = width - 72 * mm
+    card_y = top_y - 26 * mm
+    card_height = 38 * mm if payment_term_label else 26 * mm
     c.setFillColor(SOFT)
-    c.roundRect(card_x, card_y - (10 * mm if payment_term_label else 0), 52 * mm, card_height, 3 * mm, stroke=0, fill=1)
+    c.roundRect(card_x, card_y - (12 * mm if payment_term_label else 0), 54 * mm, card_height, 4 * mm, stroke=0, fill=1)
 
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
     
     # Adjust positions based on whether we have payment terms
     if payment_term_label:
-        c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
-        c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
-        c.drawString(card_x + 4 * mm, card_y + 2 * mm, "Payment Terms")
+        c.drawString(card_x + 5 * mm, card_y + 18 * mm, "Issue Date")
+        c.drawString(card_x + 5 * mm, card_y + 10 * mm, "Due Date" if due_date else "Valid Until")
+        c.drawString(card_x + 5 * mm, card_y + 2 * mm, "Payment Terms")
 
         c.setFont("Helvetica", 9)
-        c.drawRightString(card_x + 47 * mm, card_y + 16 * mm, issue_date or "-")
-        c.drawRightString(card_x + 47 * mm, card_y + 9 * mm, due_date or "-")
-        c.drawRightString(card_x + 47 * mm, card_y + 2 * mm, payment_term_label[:25] or "-")
+        c.drawRightString(card_x + 49 * mm, card_y + 18 * mm, issue_date or "-")
+        c.drawRightString(card_x + 49 * mm, card_y + 10 * mm, due_date or "-")
+        c.drawRightString(card_x + 49 * mm, card_y + 2 * mm, payment_term_label[:25] or "-")
     else:
-        c.drawString(card_x + 4 * mm, card_y + 16 * mm, "Issue Date")
-        c.drawString(card_x + 4 * mm, card_y + 9 * mm, "Due Date" if due_date else "Valid Until")
+        c.drawString(card_x + 5 * mm, card_y + 18 * mm, "Issue Date")
+        c.drawString(card_x + 5 * mm, card_y + 10 * mm, "Due Date" if due_date else "Valid Until")
 
         c.setFont("Helvetica", 9)
-        c.drawRightString(card_x + 43 * mm, card_y + 16 * mm, issue_date or "-")
-        c.drawRightString(card_x + 43 * mm, card_y + 9 * mm, due_date or "-")
+        c.drawRightString(card_x + 45 * mm, card_y + 18 * mm, issue_date or "-")
+        c.drawRightString(card_x + 45 * mm, card_y + 10 * mm, due_date or "-")
 
 
 def draw_items_table(c, items, currency="TZS", start_y=150 * mm):
-    """Draw premium line items table"""
+    """Draw premium line items table with improved spacing"""
     width, _ = A4
     left = 18 * mm
     total_width = width - 36 * mm
 
-    col_desc = 95 * mm
-    col_qty = 18 * mm
-    col_unit = 35 * mm
-    col_total = total_width - (col_desc + col_qty + col_unit)
+    col_desc = 92 * mm
+    col_qty = 20 * mm
+    col_unit = 36 * mm
+    # col_total calculated but used implicitly for remaining space
 
     y = start_y
 
-    # Table header
+    # Table header - taller with better padding
     c.setFillColor(NAVY_2)
-    c.roundRect(left, y, total_width, 10 * mm, 2 * mm, stroke=0, fill=1)
+    c.roundRect(left, y, total_width, 12 * mm, 3 * mm, stroke=0, fill=1)
 
     c.setFillColor(WHITE)
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(left + 4 * mm, y + 3.3 * mm, "Description")
-    c.drawRightString(left + col_desc + col_qty - 2 * mm, y + 3.3 * mm, "Qty")
-    c.drawRightString(left + col_desc + col_qty + col_unit - 2 * mm, y + 3.3 * mm, "Unit Price")
-    c.drawRightString(left + total_width - 4 * mm, y + 3.3 * mm, "Amount")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(left + 5 * mm, y + 4 * mm, "Description")
+    c.drawRightString(left + col_desc + col_qty - 3 * mm, y + 4 * mm, "Qty")
+    c.drawRightString(left + col_desc + col_qty + col_unit - 3 * mm, y + 4 * mm, "Unit Price")
+    c.drawRightString(left + total_width - 5 * mm, y + 4 * mm, "Amount")
 
-    y -= 9 * mm
+    y -= 11 * mm
     c.setFont("Helvetica", 9)
 
-    # Table rows
+    # Table rows with improved height
     for idx, item in enumerate(items):
         c.setFillColor(SOFT if idx % 2 == 0 else WHITE)
-        c.rect(left, y, total_width, 9 * mm, stroke=0, fill=1)
+        c.rect(left, y, total_width, 11 * mm, stroke=0, fill=1)
 
         c.setFillColor(TEXT)
-        c.drawString(left + 4 * mm, y + 3.1 * mm, str(item.get("description", ""))[:70])
-        c.drawRightString(left + col_desc + col_qty - 2 * mm, y + 3.1 * mm, str(item.get("quantity", 0)))
+        c.drawString(left + 5 * mm, y + 4 * mm, str(item.get("description", ""))[:65])
+        c.drawRightString(left + col_desc + col_qty - 3 * mm, y + 4 * mm, str(item.get("quantity", 0)))
         c.drawRightString(
-            left + col_desc + col_qty + col_unit - 2 * mm,
-            y + 3.1 * mm,
+            left + col_desc + col_qty + col_unit - 3 * mm,
+            y + 4 * mm,
             money(item.get("unit_price", 0), currency),
         )
-        c.drawRightString(left + total_width - 4 * mm, y + 3.1 * mm, money(item.get("total", 0), currency))
+        c.drawRightString(left + total_width - 5 * mm, y + 4 * mm, money(item.get("total", 0), currency))
 
-        y -= 9 * mm
+        y -= 11 * mm
 
     # Bottom border
     c.setStrokeColor(BORDER)
-    c.line(left, y + 2 * mm, left + total_width, y + 2 * mm)
+    c.line(left, y + 3 * mm, left + total_width, y + 3 * mm)
     return y
 
 
 def draw_totals(c, subtotal, tax, discount, total, currency="TZS", tax_rate=18.0, y=58 * mm):
-    """Draw premium totals section with tax rate"""
+    """Draw premium totals section with improved spacing"""
     width, _ = A4
-    box_x = width - 75 * mm
+    box_x = width - 78 * mm
 
-    # Totals card
+    # Totals card - larger with better padding
     c.setFillColor(SOFT)
-    c.roundRect(box_x, y, 57 * mm, 38 * mm, 4 * mm, stroke=0, fill=1)
+    c.roundRect(box_x, y, 60 * mm, 42 * mm, 4 * mm, stroke=0, fill=1)
 
     rows = [
         ("Subtotal", subtotal),
@@ -247,69 +247,81 @@ def draw_totals(c, subtotal, tax, discount, total, currency="TZS", tax_rate=18.0
         ("Discount", discount),
     ]
 
-    row_y = y + 29 * mm
-    c.setFont("Helvetica", 9)
+    row_y = y + 32 * mm
+    c.setFont("Helvetica", 10)
     c.setFillColor(TEXT)
 
     for label, value in rows:
-        c.drawString(box_x + 5 * mm, row_y, label)
-        c.drawRightString(box_x + 52 * mm, row_y, money(value, currency))
-        row_y -= 6 * mm
+        c.drawString(box_x + 6 * mm, row_y, label)
+        c.drawRightString(box_x + 54 * mm, row_y, money(value, currency))
+        row_y -= 7 * mm
 
-    # Gold divider
+    # Gold divider - thicker
     c.setStrokeColor(GOLD)
-    c.line(box_x + 5 * mm, row_y + 2 * mm, box_x + 52 * mm, row_y + 2 * mm)
+    c.setLineWidth(1.5)
+    c.line(box_x + 6 * mm, row_y + 3 * mm, box_x + 54 * mm, row_y + 3 * mm)
+    c.setLineWidth(1)
 
-    # Total
-    c.setFont("Helvetica-Bold", 12)
+    # Total - larger and bolder
+    c.setFont("Helvetica-Bold", 13)
     c.setFillColor(NAVY)
-    c.drawString(box_x + 5 * mm, row_y - 5 * mm, "Total")
-    c.drawRightString(box_x + 52 * mm, row_y - 5 * mm, money(total, currency))
+    c.drawString(box_x + 6 * mm, row_y - 6 * mm, "Total")
+    c.drawRightString(box_x + 54 * mm, row_y - 6 * mm, money(total, currency))
 
 
 def draw_footer(c, settings, notes=None, terms=None):
-    """Draw document footer with notes and terms"""
+    """Draw document footer with notes and terms - improved layout"""
     width, _ = A4
 
     # Divider line
     c.setStrokeColor(BORDER)
-    c.line(18 * mm, 42 * mm, width - 18 * mm, 42 * mm)
+    c.setLineWidth(0.5)
+    c.line(18 * mm, 45 * mm, width - 18 * mm, 45 * mm)
 
-    # Notes
+    # Notes section
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(18 * mm, 35 * mm, "Notes")
-    c.setFont("Helvetica", 8.5)
+    c.drawString(18 * mm, 38 * mm, "Notes")
+    c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
-    c.drawString(18 * mm, 30 * mm, (notes or "Thank you for your business.")[:140])
+    notes_text = notes or "Thank you for your business."
+    # Handle longer notes with word wrap
+    if len(notes_text) > 80:
+        c.drawString(18 * mm, 32 * mm, notes_text[:80])
+        c.drawString(18 * mm, 27 * mm, notes_text[80:160])
+    else:
+        c.drawString(18 * mm, 32 * mm, notes_text[:140])
 
-    # Terms
+    # Terms section
     c.setFillColor(TEXT)
     c.setFont("Helvetica-Bold", 9)
-    c.drawString(18 * mm, 22 * mm, "Terms")
-    c.setFont("Helvetica", 8.5)
+    c.drawString(18 * mm, 20 * mm, "Terms & Conditions")
+    c.setFont("Helvetica", 9)
     c.setFillColor(MUTED)
-    c.drawString(
-        18 * mm,
-        17 * mm,
-        (terms or settings.get("invoice_terms") or "Payment is due according to the agreed terms.")[:170],
-    )
+    terms_text = terms or settings.get("invoice_terms") or "Payment is due according to the agreed terms."
+    if len(terms_text) > 90:
+        c.drawString(18 * mm, 14 * mm, terms_text[:90])
+        c.drawString(18 * mm, 9 * mm, terms_text[90:180])
+    else:
+        c.drawString(18 * mm, 14 * mm, terms_text[:170])
 
-    # Payment instructions
+    # Payment instructions - moved to right column
     payment = settings.get("payment_instructions")
     if payment:
         c.setFillColor(TEXT)
         c.setFont("Helvetica-Bold", 9)
-        c.drawString(110 * mm, 35 * mm, "Payment Instructions")
-        c.setFont("Helvetica", 8.5)
+        c.drawString(112 * mm, 38 * mm, "Payment Instructions")
+        c.setFont("Helvetica", 9)
         c.setFillColor(MUTED)
-        c.drawString(110 * mm, 30 * mm, payment[:90])
+        c.drawString(112 * mm, 32 * mm, payment[:45])
+        if len(payment) > 45:
+            c.drawString(112 * mm, 27 * mm, payment[45:90])
 
-    # Generation timestamp
-    c.setFont("Helvetica", 8)
-    c.setFillColor(MUTED)
-    c.drawString(18 * mm, 8 * mm, f"Generated by {settings.get('company_name', 'Konekt Limited')}")
-    c.drawRightString(width - 18 * mm, 8 * mm, datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"))
+    # Generation timestamp - more subtle
+    c.setFont("Helvetica", 7)
+    c.setFillColor(colors.HexColor("#94A3B8"))
+    c.drawString(18 * mm, 4 * mm, f"Generated by {settings.get('company_name', 'Konekt Limited')}")
+    c.drawRightString(width - 18 * mm, 4 * mm, datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"))
 
 
 def build_document_pdf(doc_type, doc, settings):
@@ -346,15 +358,16 @@ def build_document_pdf(doc_type, doc, settings):
     draw_company_and_billto(c, settings, customer, issue_date, due_date, payment_term_label)
     
     # Draw items table and get the Y position after items
+    # Adjusted start position for taller header and address sections
     items_end_y = draw_items_table(
         c,
         doc.get("line_items", []),
         doc.get("currency", settings.get("currency", "TZS")),
-        start_y=120 * mm,  # Slightly lower to accommodate payment terms card
+        start_y=115 * mm,
     )
     
     # Calculate totals Y position based on items
-    totals_y = max(items_end_y - 15 * mm, 52 * mm)
+    totals_y = max(items_end_y - 18 * mm, 50 * mm)
     
     draw_totals(
         c,

@@ -75,6 +75,7 @@ import StatementPage from "@/pages/admin/StatementPage";
 import InventoryVariantsPage from "@/pages/admin/InventoryVariantsPage";
 import WarehousesPage from "@/pages/admin/WarehousesPage";
 import RawMaterialsPage from "@/pages/admin/RawMaterialsPage";
+import DocumentWorkflowPage from "@/pages/admin/DocumentWorkflowPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -141,6 +142,7 @@ function App() {
           <Route path="quotes" element={<QuotesPage />} />
           <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
           <Route path="quotes-old" element={<AdminQuotes />} />
+          <Route path="workflow" element={<DocumentWorkflowPage />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="orders-ops" element={<OrdersPageOps />} />
