@@ -23,6 +23,7 @@ import Dashboard from "@/pages/Dashboard";
 import OrderTracking from "@/pages/OrderTracking";
 import EquipmentMaintenance from "@/pages/EquipmentMaintenance";
 import CreativeServicesPage from "@/pages/CreativeServicesPage";
+import CreativeServiceBriefPage from "@/pages/CreativeServiceBriefPage";
 import ServiceDetail from "@/pages/ServiceDetail";
 import CheckoutPage from "@/pages/CheckoutPage";
 import CustomerDashboard from "@/pages/CustomerDashboard";
@@ -48,6 +49,7 @@ import AdminOffers from "@/pages/admin/AdminOffers";
 import AdminReferrals from "@/pages/admin/AdminReferrals";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import CRMPage from "@/pages/admin/CRMPage";
+import CRMPageV2 from "@/pages/admin/CRMPageV2";
 import InventoryPage from "@/pages/admin/InventoryPage";
 import TasksPage from "@/pages/admin/TasksPage";
 import InvoicesPage from "@/pages/admin/InvoicesPage";
@@ -58,6 +60,7 @@ import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPageOps from "@/pages/admin/OrdersPageOps";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPage from "@/pages/admin/CustomersPage";
+import CustomersPageV2 from "@/pages/admin/CustomersPageV2";
 import PaymentsPage from "@/pages/admin/PaymentsPage";
 import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
@@ -121,7 +124,8 @@ function App() {
           <Route path="offers" element={<AdminOffers />} />
           <Route path="referrals" element={<AdminReferrals />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="crm" element={<CRMPage />} />
+          <Route path="crm" element={<CRMPageV2 />} />
+          <Route path="crm-old" element={<CRMPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
@@ -132,7 +136,8 @@ function App() {
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="orders-ops" element={<OrdersPageOps />} />
           <Route path="production" element={<ProductionQueuePage />} />
-          <Route path="customers" element={<CustomersPage />} />
+          <Route path="customers" element={<CustomersPageV2 />} />
+          <Route path="customers-old" element={<CustomersPage />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="central-payments" element={<CentralPaymentsPage />} />
           <Route path="statements" element={<StatementPage />} />
@@ -176,6 +181,7 @@ function App() {
                     <Route path="/dashboard/points" element={<MyPointsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
+                    <Route path="/creative-services/:slug" element={<CreativeServiceBriefPage />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
                   </Routes>
                 </main>
