@@ -40,23 +40,42 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Invoice Creation**: Auto-calculates due date based on payment terms
 - **PDF Documents**: Displays payment terms in info card (Issue Date, Due Date, Payment Terms)
 
-#### API Endpoints
-- `POST /api/admin/customers` - Create B2B customer with payment terms
-- `GET /api/admin/customers` - List customers with search/filter
-- `GET /api/admin/customers/{id}` - Get customer by ID
-- `GET /api/admin/customers/by-email/{email}` - Lookup customer for quote/invoice
-- `PATCH /api/admin/customers/{id}` - Update payment terms
-- `DELETE /api/admin/customers/{id}` - Soft delete (deactivate)
-
-#### Frontend Updates
-- [x] `CustomersPage.jsx` - Full CRUD UI with payment terms section
-- [x] `QuotesPageNew.jsx` - Shows customer info card with payment terms on email match
-- [x] `adminApi.js` - Customer API methods added
-
 #### Test Results (iteration_10.json)
 - Backend: 100% (18/18 tests passed)
 - Frontend: 100% verified
-- Features tested: Customer CRUD, payment terms auto-apply, due date calculation, PDF display
+
+---
+
+### March 12, 2026 - Phase 10: Polished Quote & Invoice UI (TESTED ✅)
+
+#### New Shared Components
+- [x] `frontend/src/components/admin/CustomerSummaryCard.jsx` - Company, contact, email, TIN, BRN display
+- [x] `frontend/src/components/admin/PaymentTermsCard.jsx` - Payment terms, notes, credit limit
+- [x] `frontend/src/components/admin/TaxSummaryCard.jsx` - Subtotal, VAT, discount, total
+- [x] `frontend/src/components/admin/LineItemsEditor.jsx` - SKU lookup, qty, price, total
+
+#### New Frontend Utilities
+- [x] `frontend/src/utils/finance.js` - formatMoney(), calculateTotals()
+
+#### Polished Pages
+- [x] `QuotesPage.jsx` - Customer dropdown, auto-fill, payment terms preview, SKU pricing lookup
+- [x] `InvoicesPage.jsx` - Due date auto-calculation, Convert Order form, status management
+
+#### Key Features
+- Customer selection dropdown with auto-fill of all fields (name, email, company, phone, address, TIN, BRN)
+- CustomerSummaryCard and PaymentTermsCard appear when customer selected
+- LineItemsEditor with SKU-based pricing lookup from inventory
+- TaxSummaryCard with real-time calculation
+- Quote actions: PDF export, Send email, Convert to Order
+- Invoice actions: PDF export, Send email, Status dropdown (draft/sent/paid/overdue/cancelled)
+- Convert Order to Invoice form with automatic payment terms
+
+#### API Endpoints Added
+- `GET /api/admin/inventory/items/by-sku/{sku}` - SKU pricing lookup
+
+#### Test Results (iteration_11.json)
+- Backend: 94% (15/16 tests passed)
+- Frontend: 100% verified
 
 ---
 
