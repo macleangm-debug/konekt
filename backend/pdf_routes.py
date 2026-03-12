@@ -7,7 +7,7 @@ from bson import ObjectId
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from pdf_service import build_document_pdf
+from pdf_service_v2 import build_document_pdf
 
 router = APIRouter(prefix="/api/admin/pdf", tags=["PDF Export"])
 

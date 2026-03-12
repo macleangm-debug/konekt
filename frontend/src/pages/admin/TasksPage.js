@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { CheckSquare, Plus, Search, Calendar, User, Clock } from "lucide-react";
+import { CheckSquare, Plus, Search, Calendar, User, Clock, Users, Eye } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 const taskStatuses = ["todo", "in_progress", "done", "blocked"];
 const priorities = ["low", "medium", "high", "urgent"];
@@ -20,12 +21,18 @@ const priorityColors = {
 };
 
 export default function TasksPage() {
+  const { user } = useAdminAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterPriority, setFilterPriority] = useState("");
+  const [viewScope, setViewScope] = useState("mine"); // "mine" or "team"
+
+  // Check if user is supervisor (admin or has team.view permission)
+  const isSupervisor = user?.role === "admin" || user?.role === "production" || user?.permissions?.includes("team.view");
+  const currentUserName = user?.name || user?.email?.split("@")[0] || "";
 
   const [form, setForm] = useState({
     title: "",
@@ -56,7 +63,7 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks();
-  }, [filterStatus, filterPriority]);
+  }, [filterStatus, filterPriority, viewScope]);
 
   const createTask = async (e) => {
     e.preventDefault();
@@ -106,6 +113,12 @@ export default function TasksPage() {
   };
 
   const filteredTasks = tasks.filter((task) => {
+    // First, filter by view scope
+    if (viewScope === "mine" && task.assigned_to !== currentUserName && task.assigned_to !== user?.email) {
+      return false;
+    }
+    
+    // Then apply search filter
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
     return (
@@ -141,6 +154,40 @@ export default function TasksPage() {
             <Plus className="w-5 h-5" />
             Add Task
           </button>
+        </div>
+
+        {/* View Scope Toggle */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          <button
+            onClick={() => setViewScope("mine")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+              viewScope === "mine"
+                ? "bg-[#D4A843] text-[#2D3E50]"
+                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
+            data-testid="view-my-tasks-btn"
+          >
+            <User className="w-4 h-4" />
+            My Tasks
+          </button>
+          <button
+            onClick={() => setViewScope("team")}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+              viewScope === "team"
+                ? "bg-[#D4A843] text-[#2D3E50]"
+                : "bg-white border border-slate-300 text-slate-700 hover:bg-slate-50"
+            }`}
+            data-testid="view-team-tasks-btn"
+          >
+            <Users className="w-4 h-4" />
+            Team Overview
+          </button>
+          {isSupervisor && viewScope === "team" && (
+            <span className="flex items-center gap-1 text-sm text-slate-500 ml-2">
+              <Eye className="w-4 h-4" />
+              Supervisor View
+            </span>
+          )}
         </div>
 
         {/* Filters */}

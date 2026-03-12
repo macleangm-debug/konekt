@@ -24,6 +24,7 @@ import OrderTracking from "@/pages/OrderTracking";
 import EquipmentMaintenance from "@/pages/EquipmentMaintenance";
 import CreativeServicesPage from "@/pages/CreativeServicesPage";
 import CreativeServiceBriefPage from "@/pages/CreativeServiceBriefPage";
+import CreativeServiceDetailPage from "@/pages/CreativeServiceDetailPage";
 import ServiceDetail from "@/pages/ServiceDetail";
 import CheckoutPage from "@/pages/CheckoutPage";
 import CustomerDashboard from "@/pages/CustomerDashboard";
@@ -196,7 +197,8 @@ function App() {
                     <Route path="/dashboard/points" element={<MyPointsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
-                    <Route path="/creative-services/:slug" element={<CreativeServiceBriefPage />} />
+                    <Route path="/creative-services/:slug" element={<CreativeServiceDetailPage />} />
+                    <Route path="/creative-services/:slug/brief" element={<CreativeServiceBriefPage />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
                   </Routes>
                 </main>
