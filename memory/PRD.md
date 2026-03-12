@@ -855,4 +855,64 @@ Merged the separate "Inventory" and "Stock Management" modules into a unified "I
 
 ---
 
-*Last updated: March 12, 2026 - Phase 15 Complete (Inventory Module Consolidation)*
+### March 12, 2026 - Phase 16: Production Task Visibility, Warehouses & Raw Materials (TESTED ✅)
+
+#### What Changed
+Added role-based task visibility toggle in Production Queue. Created complete Warehouse Management and Raw Materials Management modules with full CRUD, stats dashboards, and stock adjustment functionality.
+
+#### New Backend Files
+- [x] `warehouse_routes.py` - Full CRUD API for warehouses with capacity tracking and stats
+- [x] `raw_materials_routes.py` - Full CRUD API with stock adjustments, categories, low-stock alerts
+
+#### New Frontend Files
+- [x] `WarehousesPage.jsx` - Warehouse management UI with cards, utilization bars, create/edit/delete
+- [x] `RawMaterialsPage.jsx` - Raw materials management with table, stock adjustment modal, category filter
+
+#### Updated Files
+- [x] `ProductionQueuePage.jsx` - Added "All Tasks" / "My Tasks Only" toggle button with role-based filtering
+- [x] `production_routes.py` - Added `assigned_to` query parameter for task filtering
+- [x] `AdminLayout.js` - Updated sidebar INVENTORY section with Warehouses and Raw Materials links
+- [x] `App.js` - Added routes for `/admin/warehouses` and `/admin/raw-materials`
+- [x] `server.py` - Registered warehouse and raw_materials routers
+
+#### Key Features Implemented
+1. **Production Queue Task Visibility**
+   - "All Tasks" / "My Tasks Only" toggle button with eye icon
+   - Backend filtering by `assigned_to` parameter
+   - "Supervisor View" indicator for admin/production roles
+
+2. **Warehouse Management**
+   - Stats dashboard: Total, Active, Capacity, Utilization
+   - Warehouse cards with utilization progress bars
+   - Create/Edit modal with: Name, Code, Type, Address, City, Country, Contact, Capacity
+   - Warehouse types: General, Cold Storage, Hazardous Materials, Finished Goods, Raw Materials
+   - Search by name, code, or city
+
+3. **Raw Materials Management**
+   - Stats dashboard: Total, Active, Low Stock, Inventory Value
+   - Materials table with SKU, Name, Category, Stock levels, Unit Cost, Supplier
+   - Stock Adjustment modal: Add/Remove/Set with reason tracking
+   - Create/Edit modal with: Name, SKU, Category, Unit of Measure, Stock levels, Supplier, Warehouse location, Lead time
+   - Category filter and search functionality
+   - Low stock alert banner
+
+#### API Endpoints
+- `GET/POST /api/admin/warehouses` - List/Create warehouses
+- `GET/PUT/DELETE /api/admin/warehouses/{id}` - CRUD single warehouse
+- `GET /api/admin/warehouses/stats/summary` - Warehouse statistics
+- `GET/POST /api/admin/raw-materials` - List/Create materials
+- `GET/PUT/DELETE /api/admin/raw-materials/{id}` - CRUD single material
+- `POST /api/admin/raw-materials/{id}/adjust-stock` - Stock adjustments
+- `GET /api/admin/raw-materials/categories` - Material categories
+- `GET /api/admin/raw-materials/low-stock` - Low stock alerts
+- `GET /api/admin/raw-materials/stats/summary` - Material statistics
+- `GET /api/admin/production/queue?assigned_to=X` - Filter by assignee
+
+#### Test Results (iteration_19.json)
+- Backend: 100% (27/27 tests passed)
+- Frontend: 100% verified
+- Features tested: Production toggle, Warehouses CRUD, Raw Materials CRUD, Stock adjustments, Sidebar navigation
+
+---
+
+*Last updated: March 12, 2026 - Phase 16 Complete (Production Task Visibility, Warehouses & Raw Materials)*
