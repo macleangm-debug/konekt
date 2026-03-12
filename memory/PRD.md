@@ -79,6 +79,70 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
+### March 12, 2026 - Phase 12: Rotating Hero Banner & Strengthened Referral Program (TESTED ✅)
+
+#### New Backend Files
+- [x] `hero_banner_models.py` - HeroBannerCreate, HeroBannerUpdate, HeroBannerOut models
+- [x] `hero_banner_routes.py` - Full CRUD endpoints for hero banner management
+- [x] `referral_public_routes.py` - Public referral code lookup and settings
+- [x] `customer_referral_routes.py` - Customer referral stats and transactions
+
+#### New Frontend Files
+- [x] `components/HeroCarousel.jsx` - Rotating hero carousel with auto-play, navigation, and dots
+- [x] `lib/heroBannerApi.js` - Hero banner API helper
+- [x] `lib/referralApi.js` - Referral API helper
+- [x] `pages/admin/HeroBannersPage.jsx` - Admin UI for CRUD hero banners
+- [x] `pages/ReferralLandingPage.jsx` - Public /r/{code} referral landing page
+- [x] `pages/MyReferralsPage.jsx` - Customer referral dashboard with social sharing
+
+#### Updated Files
+- [x] `LandingNew.js` - Integrated HeroCarousel component
+- [x] `AdminLayout.js` - Added Hero Banners nav link
+- [x] `CustomerDashboard.jsx` - Added My Referrals card
+- [x] `App.js` - Added new routes for hero banners and referrals
+- [x] `server.py` - Registered new routers
+
+#### Hero Banner Features
+- Admin can create/edit/delete hero banners with title, subtitle, description
+- Desktop and mobile image URLs
+- Primary and secondary CTA buttons
+- Badge text (e.g., "Limited Time", "New")
+- Theme selection (dark/light)
+- Position ordering
+- Active/inactive toggle
+- Date-based scheduling (starts_at, ends_at)
+- Auto-rotation every 5 seconds on landing page
+- Navigation arrows and dot indicators
+
+#### Referral Program Features
+- Public referral landing page at /r/{code}
+- Shows referrer name and discount percentage
+- "Create Account" CTA with pre-filled referral code
+- My Referrals dashboard in customer portal
+- Stats: Total Referrals, Successful, Total Earned
+- Copy referral link and code buttons
+- Social sharing: WhatsApp, Facebook, X (Twitter), Email
+- Configurable share messages from admin
+
+#### API Endpoints
+- `GET /api/hero-banners/active` - Public, returns active banners sorted by position
+- `GET /api/hero-banners/admin` - Admin, returns all banners
+- `POST /api/hero-banners/admin` - Admin, create banner
+- `PATCH /api/hero-banners/admin/{id}` - Admin, update banner
+- `DELETE /api/hero-banners/admin/{id}` - Admin, delete banner
+- `GET /api/referrals/code/{code}` - Public, get referrer info
+- `GET /api/referrals/settings/public` - Public, get referral program settings
+- `GET /api/customer/referrals/me` - Authenticated, get user's referral data
+- `GET /api/customer/referrals/stats` - Authenticated, get referral stats
+
+#### Test Results (iteration_13.json)
+- Backend: 100% (14/14 tests passed)
+- Frontend: 100% verified
+- Seeded 3 hero banners for testing: New Year Sale, Creative Services, KonektSeries Collection
+- Fixed token key mismatch in referralApi.js and heroBannerApi.js
+
+---
+
 ### March 12, 2026 - Phase 11: Bank Transfer Proof Upload & Payment Visibility (TESTED ✅)
 
 #### New Backend Files
@@ -559,6 +623,11 @@ cp backend/.env.production backend/.env
 - [x] Order Operations & Production Queue - TESTED
 - [x] Inventory reservation for orders
 - [x] Task assignment from orders
+- [x] Per-Client Payment Terms - TESTED
+- [x] Polished Quote & Invoice Admin UI - TESTED
+- [x] Bank Transfer Proof Upload & Payment Visibility - TESTED
+- [x] Rotating Hero Banner System - TESTED
+- [x] Strengthened Referral Program with Social Sharing - TESTED
 - [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
 - [ ] Point DNS
 - [ ] Enable SSL
@@ -614,4 +683,4 @@ Order Created → Reserve Inventory → Assign Tasks → Send to Production → 
 
 ---
 
-*Last updated: March 11, 2026 - Phase 6 Complete (Order Operations & Production Queue)*
+*Last updated: March 12, 2026 - Phase 12 Complete (Rotating Hero Banner & Strengthened Referral Program)*
