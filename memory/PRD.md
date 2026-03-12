@@ -915,4 +915,44 @@ Added role-based task visibility toggle in Production Queue. Created complete Wa
 
 ---
 
-*Last updated: March 12, 2026 - Phase 16 Complete (Production Task Visibility, Warehouses & Raw Materials)*
+### March 12, 2026 - Phase 17: Document Workflow Visualization & PDF Polish (TESTED ✅)
+
+#### What Changed
+Created a new Document Workflow page that visualizes the Quote → Order → Invoice journey. Improved PDF document generation with better spacing, larger fonts, and improved visual hierarchy.
+
+#### New Frontend Files
+- [x] `DocumentWorkflowPage.jsx` - Visual workflow tracking showing document journey
+
+#### Updated Files
+- [x] `AdminLayout.js` - Added "Document Flow" link to Business OS section in sidebar
+- [x] `App.js` - Added route `/admin/workflow` for workflow page
+- [x] `pdf_service.py` - Improved header (taller, larger logo/text), better section spacing, larger table rows, improved totals card, cleaner footer
+
+#### Key Features Implemented
+1. **Document Workflow Page** (`/admin/workflow`)
+   - Visual header showing Quote → Order → Invoice flow with icons
+   - Stats dashboard: Quotes, Orders, Invoices, Conversion Rate (Quote→Order), Payment Rate (Invoice→Paid)
+   - Legend explaining workflow stages and completion states
+   - Search by customer name, company, or document numbers
+   - Workflow chains showing each customer's document journey
+   - Visual progress indicator (colored icons with connecting lines)
+   - Expandable details showing individual Quote, Order, Invoice info
+   - "View" links to navigate to respective admin pages
+
+2. **PDF Document Improvements**
+   - Taller header bar (42mm vs 38mm) with larger logo (28mm vs 24mm)
+   - Larger document title (24pt vs 21pt) and better status badge positioning
+   - FROM/BILL TO sections with uppercase labels and increased line spacing (5mm vs 4.5mm)
+   - Taller table header (12mm vs 10mm) and rows (11mm vs 9mm)
+   - Larger totals card (60mm x 42mm) with 13pt total font
+   - Better footer with Terms & Conditions section and subtle timestamp
+   - Gold divider line now 1.5pt thick for better visibility
+
+#### Test Results (iteration_20.json)
+- Backend: 100% (15/15 tests passed)
+- Frontend: 100% verified
+- PDF validation: Both quote and invoice PDFs generate correctly
+
+---
+
+*Last updated: March 12, 2026 - Phase 17 Complete (Document Workflow Visualization & PDF Polish)*
