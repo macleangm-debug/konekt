@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -32,7 +32,13 @@ const navItems = [
   { path: '/admin/hero-banners', label: 'Hero Banners', icon: Image },
   { path: '/admin/maintenance', label: 'Maintenance', icon: Wrench },
   { path: '/admin/offers', label: 'Offers', icon: Gift },
-  { path: '/admin/referrals', label: 'Referrals', icon: UserPlus },
+  { type: 'divider', label: 'Referrals & Affiliates' },
+  { path: '/admin/referral-settings', label: 'Referral Settings', icon: Coins },
+  { path: '/admin/referrals', label: 'Referral Users', icon: UserPlus },
+  { path: '/admin/affiliates', label: 'Affiliates', icon: Percent },
+  { path: '/admin/affiliate-commissions', label: 'Commissions', icon: Receipt },
+  { path: '/admin/affiliate-payouts', label: 'Payouts', icon: CreditCard },
+  { type: 'divider', label: 'System' },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
   { path: '/admin/settings/company', label: 'Company Branding', icon: Building2 },

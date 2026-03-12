@@ -42,6 +42,13 @@ from payment_upload_routes import router as payment_upload_router
 from hero_banner_routes import router as hero_banner_router
 from referral_public_routes import router as referral_public_router
 from customer_referral_routes import router as customer_referral_router
+from referral_settings_routes import router as referral_settings_router
+from customer_points_routes import router as customer_points_router
+from admin_points_routes import router as admin_points_router
+from affiliate_public_routes import router as affiliate_public_router
+from affiliate_admin_routes import router as affiliate_admin_router
+from affiliate_commission_routes import router as affiliate_commission_router
+from affiliate_payout_routes import router as affiliate_payout_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1943,6 +1950,27 @@ app.include_router(referral_public_router)
 
 # Include customer referral routes
 app.include_router(customer_referral_router)
+
+# Include referral settings routes
+app.include_router(referral_settings_router)
+
+# Include customer points routes
+app.include_router(customer_points_router)
+
+# Include admin points routes
+app.include_router(admin_points_router)
+
+# Include affiliate public routes
+app.include_router(affiliate_public_router)
+
+# Include affiliate admin routes
+app.include_router(affiliate_admin_router)
+
+# Include affiliate commission routes
+app.include_router(affiliate_commission_router)
+
+# Include affiliate payout routes
+app.include_router(affiliate_payout_router)
 
 app.add_middleware(
     CORSMiddleware,

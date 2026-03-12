@@ -10,6 +10,7 @@ import {
   PenTool,
   TrendingUp,
   Gift,
+  Coins,
 } from "lucide-react";
 import api from "../lib/api";
 import PaymentStatusBadge from "../components/PaymentStatusBadge";
@@ -44,6 +45,12 @@ const quickCards = [
     description: "Share your code and earn rewards",
     icon: Gift,
     href: "/dashboard/referrals",
+  },
+  {
+    title: "My Points",
+    description: "View your points balance and activity",
+    icon: Coins,
+    href: "/dashboard/points",
   },
 ];
 

@@ -109,6 +109,14 @@ export const adminApi = {
       params: { status },
     }),
   getQuotePipelineStats: () => api.get("/api/admin/quotes/pipeline/stats"),
+
+  // Referral Settings
+  getReferralSettings: () => api.get("/api/admin/referral-settings"),
+  updateReferralSettings: (payload) => api.put("/api/admin/referral-settings", payload),
+
+  // Points Management
+  getPointsWallets: () => api.get("/api/admin/points/wallets"),
+  getPointsTransactions: () => api.get("/api/admin/points/transactions"),
 };
 
 export default adminApi;
