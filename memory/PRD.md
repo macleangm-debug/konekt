@@ -699,11 +699,14 @@ cp backend/.env.production backend/.env
 - [x] Bank Transfer Proof Upload & Payment Visibility - TESTED
 - [x] Rotating Hero Banner System - TESTED
 - [x] Strengthened Referral Program with Social Sharing - TESTED
+- [x] Platform Alignment Phase A - TESTED (UnifiedHero, Structured Creative Services, CRM Settings, Inventory Variants, Central Payments, Statements, Quotes View Toggle, Client Promo Strip)
 - [ ] Fill real API keys (EMERGENT_LLM_KEY, RESEND_API_KEY)
 - [ ] Point DNS
 - [ ] Enable SSL
 
 ### P1 - Post-Launch (Week 1)
+- [ ] Platform Alignment Phase B - Client page filters, CRM Kanban inside CRM page, Inventory module merge
+- [ ] Platform Alignment Phase C - Affiliate application flow, Partner portal
 - [ ] File upload for design assets (currently only metadata)
 - [ ] Connect email send stubs to Resend API
 - [ ] Payment gateway (M-Pesa, Stripe)
@@ -714,7 +717,7 @@ cp backend/.env.production backend/.env
 ### P2 - Growth (Week 2-4)
 - [ ] WhatsApp notifications
 - [ ] Advanced referral gamification
-- [ ] Inventory alerts
+- [ ] Inventory alerts (partial - low stock alerts API ready)
 - [ ] B2B team accounts
 - [ ] Saved brand assets
 - [ ] Sequential invoice numbering rules
@@ -754,4 +757,62 @@ Order Created → Reserve Inventory → Assign Tasks → Send to Production → 
 
 ---
 
-*Last updated: March 12, 2026 - Phase 13 Complete (Referral Settings, Points Wallet & Affiliate System)*
+### March 12, 2026 - Phase 14: Platform Alignment - Phase A (TESTED ✅)
+
+#### What Changed
+Major architectural alignment to unify the platform UX and business logic. This is part of a multi-phase project to make Konekt feel like one coherent system.
+
+#### New Backend Files
+- [x] `creative_service_models.py` - CreativeService with brief_fields and addons
+- [x] `creative_service_routes_v2.py` - Structured creative services with service-specific briefs
+- [x] `crm_settings_routes.py` - Admin-configurable CRM settings (industries, sources)
+- [x] `inventory_variant_routes.py` - SKU-level inventory variants linked to products
+- [x] `payment_records_models.py` - ManualPaymentCreate, PaymentAllocationItem
+- [x] `central_payments_routes.py` - Central payment management with allocations
+- [x] `statement_routes.py` - Statement of account and aging reports
+
+#### New Frontend Components
+- [x] `UnifiedHero.jsx` - Unified rotating hero integrated into existing hero layout (replaces floating HeroCarousel)
+- [x] `ClientPromoStrip.jsx` - Rotating promotional strip on customer dashboard
+- [x] `CentralPaymentsPage.jsx` - Central payment management page
+- [x] `StatementPage.jsx` - Statement of account page
+
+#### Updated Frontend Components
+- [x] `LandingNew.js` - Uses UnifiedHero instead of HeroCarousel
+- [x] `CustomerDashboard.jsx` - Includes ClientPromoStrip
+- [x] `QuotesPage.jsx` - List/Cards/Kanban view toggle integrated (removed separate Quote Kanban page)
+- [x] `AdminLayout.js` - Updated sidebar: Finance section (Payments, Statements, Bank Transfers), Operations section
+
+#### Key Features Implemented
+1. **Unified Hero Rotator** - Dynamic hero content from database with Quick Journey card
+2. **Structured Creative Services** - Service-specific brief forms with billable add-ons (copywriting, rush, source files)
+3. **CRM Settings** - Admin-configurable industries (18) and lead sources (16)
+4. **Inventory Variants** - SKU-level stock tracking with product linking
+5. **Central Payments Module** - Payment recording, allocation to invoices, partial payments
+6. **Statement of Accounts** - Transaction history with running balance, aging report
+7. **Quotes View Toggle** - List/Cards/Kanban views in single page
+8. **Client Promo Strip** - Rotating promotional messages in customer dashboard
+
+#### New API Endpoints
+- `GET /api/creative-services-v2` - List active creative services
+- `GET /api/creative-services-v2/all` - Admin: list all services
+- `POST /api/creative-services-v2/admin` - Create service
+- `POST /api/creative-services-v2/orders` - Submit service order with brief
+- `GET /api/admin/crm-settings` - Get CRM settings
+- `PUT /api/admin/crm-settings` - Update CRM settings
+- `GET /api/admin/inventory-variants` - List inventory variants
+- `POST /api/admin/inventory-variants` - Create variant
+- `GET /api/admin/inventory-variants/low-stock/alerts` - Low stock alerts
+- `GET /api/admin/central-payments` - List payments
+- `POST /api/admin/central-payments` - Record manual payment
+- `GET /api/admin/central-payments/stats/summary` - Payment statistics
+- `GET /api/admin/statements/customer/{email}` - Customer statement
+- `GET /api/admin/statements/customer/{email}/aging` - Aging report
+
+#### Test Results (iteration_15.json)
+- Backend: 100% (18/18 tests passed)
+- Frontend: 100% verified
+
+---
+
+*Last updated: March 12, 2026 - Phase 14 Complete (Platform Alignment - Phase A)*
