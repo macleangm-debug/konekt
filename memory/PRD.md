@@ -79,6 +79,77 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
+### March 12, 2026 - Phase 13: Referral Settings, Points Wallet & Affiliate System (TESTED ✅)
+
+#### New Backend Files
+- [x] `referral_models.py` - ReferralSettings Pydantic model
+- [x] `referral_settings_routes.py` - Admin referral settings CRUD
+- [x] `points_service.py` - Points wallet helpers (add_points, redeem_points)
+- [x] `referral_reward_service.py` - Points calculation from purchase amounts
+- [x] `customer_points_routes.py` - Customer points wallet API
+- [x] `admin_points_routes.py` - Admin points wallets/transactions
+- [x] `referral_hooks.py` - Auto-reward referrers on paid orders
+- [x] `affiliate_models.py` - Affiliate Pydantic model
+- [x] `affiliate_commission_models.py` - Commission/Payout models
+- [x] `affiliate_service.py` - Commission calculation helper
+- [x] `affiliate_public_routes.py` - Public affiliate code lookup
+- [x] `affiliate_admin_routes.py` - Affiliate CRUD
+- [x] `affiliate_commission_routes.py` - Commission approve/pay workflow
+- [x] `affiliate_payout_routes.py` - Payout request workflow
+- [x] `affiliate_hooks.py` - Auto-create commission on paid orders
+
+#### New Frontend Files
+- [x] `lib/customerRewardsApi.js` - Customer rewards API helper
+- [x] `lib/affiliateApi.js` - Affiliate admin API helper
+- [x] `pages/admin/ReferralSettingsPage.jsx` - Admin referral config
+- [x] `pages/admin/AffiliatesPage.jsx` - Affiliate partner management
+- [x] `pages/admin/AffiliateCommissionsPage.jsx` - Commission tracking
+- [x] `pages/admin/AffiliatePayoutsPage.jsx` - Payout management
+- [x] `pages/MyPointsPage.jsx` - Customer points dashboard
+- [x] `pages/AffiliateLandingPage.jsx` - Public /a/{code} landing
+
+#### Key Features
+**Referral System (Points-based, for customers):**
+- Admin-controlled settings: points per amount, trigger events, caps
+- Points wallet per user with transaction history
+- Auto-reward referrers when referred users make purchases
+- Configurable share messages for WhatsApp/social
+- Points redemption at checkout (planned for checkout integration)
+
+**Affiliate System (Commission-based, for partners):**
+- Affiliate partners with promo codes and tracking links
+- Configurable commission (percentage or fixed)
+- Attribution tracking for orders using affiliate codes
+- Commission ledger with approve → pay workflow
+- Payout request system for settlement
+- Public landing pages at /a/{code}
+
+#### API Endpoints Added
+- `GET/PUT /api/admin/referral-settings` - Referral program config
+- `GET /api/customer/points/me` - User's wallet and transactions
+- `GET /api/customer/points/balance` - Quick balance check
+- `GET /api/admin/points/wallets` - All user wallets
+- `GET /api/admin/points/transactions` - All transactions
+- `GET /api/admin/affiliates` - List affiliates
+- `POST /api/admin/affiliates` - Create affiliate
+- `PATCH /api/admin/affiliates/{id}` - Update affiliate
+- `DELETE /api/admin/affiliates/{id}` - Delete affiliate
+- `GET /api/affiliates/code/{code}` - Public affiliate lookup
+- `GET /api/admin/affiliate-commissions` - List commissions
+- `POST /api/admin/affiliate-commissions/{id}/approve` - Approve
+- `POST /api/admin/affiliate-commissions/{id}/mark-paid` - Mark paid
+- `GET /api/affiliate-payouts/admin` - List payouts
+- `POST /api/affiliate-payouts/admin` - Create payout request
+- `POST /api/affiliate-payouts/admin/{id}/approve` - Approve
+- `POST /api/affiliate-payouts/admin/{id}/mark-paid` - Mark paid
+
+#### Test Results (iteration_14.json)
+- Backend: 100% (22/22 tests passed)
+- Frontend: 100% verified
+- Test affiliate created: Partner Marketing Agency (PARTNER10, 10%)
+
+---
+
 ### March 12, 2026 - Phase 12: Rotating Hero Banner & Strengthened Referral Program (TESTED ✅)
 
 #### New Backend Files
@@ -683,4 +754,4 @@ Order Created → Reserve Inventory → Assign Tasks → Send to Production → 
 
 ---
 
-*Last updated: March 12, 2026 - Phase 12 Complete (Rotating Hero Banner & Strengthened Referral Program)*
+*Last updated: March 12, 2026 - Phase 13 Complete (Referral Settings, Points Wallet & Affiliate System)*
