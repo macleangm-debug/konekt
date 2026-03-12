@@ -56,6 +56,8 @@ from crm_settings_routes import router as crm_settings_router
 from inventory_variant_routes import router as inventory_variant_router
 from central_payments_routes import router as central_payments_router
 from statement_routes import router as statement_router
+from warehouse_routes import router as warehouse_router
+from raw_materials_routes import router as raw_materials_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1989,6 +1991,8 @@ app.include_router(crm_settings_router)
 app.include_router(inventory_variant_router)
 app.include_router(central_payments_router)
 app.include_router(statement_router)
+app.include_router(warehouse_router)
+app.include_router(raw_materials_router)
 
 app.add_middleware(
     CORSMiddleware,

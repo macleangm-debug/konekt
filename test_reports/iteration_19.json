@@ -1,0 +1,154 @@
+{
+  "summary": "Warehouse Management and Raw Materials modules fully tested. All 27 backend API tests passed (100%). Frontend UI verified: Production Queue task toggle with Eye icon, Warehouses page with CRUD and stats, Raw Materials page with stock adjustments, sidebar INVENTORY section with 4 links (Stock Items, Product Variants, Warehouses, Raw Materials).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "backend_api_tests": {
+      "total": 27,
+      "passed": 27,
+      "failed": 0,
+      "test_file": "/app/backend/tests/test_warehouse_raw_materials.py",
+      "details": {
+        "TestHealth": {
+          "test_health_endpoint": "PASS"
+        },
+        "TestAdminAuth": {
+          "test_admin_login": "PASS - Token received"
+        },
+        "TestWarehouseAPI": {
+          "test_list_warehouses_requires_auth": "PASS - 401 without auth",
+          "test_list_warehouses": "PASS - Returns 4 warehouses",
+          "test_create_warehouse": "PASS - Created TEST-WH-ALPHA",
+          "test_duplicate_warehouse_code_rejected": "PASS - Returns 400",
+          "test_get_warehouse_by_id": "PASS - Retrieves by ID",
+          "test_update_warehouse": "PASS - Updated name and capacity",
+          "test_delete_warehouse": "PASS - Soft delete successful",
+          "test_warehouse_stats": "PASS - Stats returned (total, active, capacity, utilization)"
+        },
+        "TestRawMaterialsAPI": {
+          "test_list_raw_materials_requires_auth": "PASS - 401 without auth",
+          "test_list_raw_materials": "PASS - Returns 5 materials",
+          "test_create_raw_material": "PASS - Created TEST-RAW-COT-001",
+          "test_duplicate_sku_rejected": "PASS - Returns 400",
+          "test_get_material_by_id": "PASS - Retrieves by ID",
+          "test_get_material_categories": "PASS - Returns categories",
+          "test_filter_by_category": "PASS - Filters by Fabrics",
+          "test_update_raw_material": "PASS - Updated name and qty",
+          "test_delete_raw_material": "PASS - Soft delete successful"
+        },
+        "TestStockAdjustment": {
+          "test_adjust_stock_add": "PASS - Added 50 units",
+          "test_adjust_stock_remove": "PASS - Removed 25 units",
+          "test_adjust_stock_set": "PASS - Set to 200 units"
+        },
+        "TestMaterialStats": {
+          "test_material_stats_summary": "PASS - Total: 5, Active: 4, Low Stock: 0",
+          "test_low_stock_materials": "PASS - Returns low stock list"
+        },
+        "TestProductionQueueFilter": {
+          "test_production_queue_list": "PASS - Returns 2 items",
+          "test_production_queue_filter_by_assigned_to": "PASS - Filter works",
+          "test_production_stats": "PASS - Returns stats"
+        }
+      }
+    },
+    "frontend_ui_tests": {
+      "admin_sidebar_navigation": {
+        "inventory_section_header": "PASS - 'INVENTORY' section visible",
+        "stock_items_link": "PASS - /admin/inventory link present",
+        "product_variants_link": "PASS - /admin/inventory/variants link present",
+        "warehouses_link": "PASS - /admin/warehouses link present",
+        "raw_materials_link": "PASS - /admin/raw-materials link present"
+      },
+      "production_queue_page": {
+        "page_loads": "PASS - data-testid='production-queue-page' found",
+        "task_toggle_button": "PASS - data-testid='toggle-my-tasks' with text 'All Tasks'",
+        "eye_icon": "PASS - Eye/EyeOff icon present in toggle button",
+        "stats_cards": "PASS - Total Jobs, Queued, In Progress, Completed, Blocked",
+        "kanban_board": "PASS - 7 status columns with production cards"
+      },
+      "warehouses_page": {
+        "page_loads": "PASS - data-testid='warehouses-page' found",
+        "stats_cards": {
+          "stat-total-warehouses": "PASS - Shows 4",
+          "stat-active-warehouses": "PASS - Shows 3",
+          "stat-total-capacity": "PASS - Shows 19,000 units",
+          "stat-total-utilization": "PASS - Shows 7,000 units"
+        },
+        "warehouse_cards": "PASS - WH-MAIN, TEST-WH-DEL, TEST-WH-UPD, TEST-WH-ALPHA displayed",
+        "utilization_bars": "PASS - Shows percentage (35%, 50%, 30%)",
+        "create_warehouse_btn": "PASS - data-testid='create-warehouse-btn' found",
+        "warehouse_form_modal": "PASS - Opens with name, code, type, capacity fields",
+        "edit_delete_buttons": "PASS - Edit and Delete buttons on cards",
+        "search_input": "PASS - Search by name, code, city working"
+      },
+      "raw_materials_page": {
+        "page_loads": "PASS - data-testid='raw-materials-page' found",
+        "stats_cards": {
+          "stat-total-materials": "PASS - Shows 5",
+          "stat-active-materials": "PASS - Shows 4",
+          "stat-low-stock-materials": "PASS - Shows 0",
+          "stat-inventory-value": "PASS - Shows TZS 10,250,000"
+        },
+        "materials_table": "PASS - Table with SKU, Name, Category, On Hand, Reserved, Available, Unit, Cost, Supplier, Actions",
+        "category_filter": "PASS - data-testid='filter-category-select' found",
+        "search_input": "PASS - data-testid='search-materials-input' found",
+        "create_material_btn": "PASS - data-testid='create-material-btn' found",
+        "material_form_modal": "PASS - Opens with name, SKU, category, unit of measure, stock fields",
+        "stock_adjustment": {
+          "adjust_button": "PASS - data-testid='adjust-stock-*' found",
+          "adjust_form_modal": "PASS - Opens with adjustment type (add/remove/set), quantity, reason",
+          "adjustment_types": "PASS - Add Stock, Remove Stock, Set Stock options"
+        }
+      }
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_warehouse_raw_materials.py",
+    "/app/test_reports/pytest/pytest_results_warehouse_materials.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Minor: DialogContent components show 'Missing Description' console warning - consider adding aria-describedby for accessibility"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_warehouse_raw_materials.py"
+  ],
+  "success_rate": {
+    "backend": "100% (27/27 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Test warehouses created: TEST-WH-ALPHA, TEST-WH-UPD, TEST-WH-DEL. Test materials created: TEST-RAW-COT-001, TEST-RAW-UPD-001, TEST-RAW-DEL-001, TEST-RAW-ADJ-001. These can be cleaned up via admin UI.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Warehouse and Raw Materials features fully implemented and tested. Key endpoints: /api/admin/warehouses/* for warehouse CRUD with stats/summary. /api/admin/raw-materials/* for materials CRUD with /categories, /low-stock, /{id}/adjust-stock for stock adjustments. Production queue now supports ?assigned_to filter parameter for task visibility toggle. Admin sidebar has INVENTORY section with 4 links: Stock Items, Product Variants, Warehouses, Raw Materials.",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "features_verified": [
+    "Production Queue: 'All Tasks' toggle button with Eye icon - WORKING",
+    "Production Queue: Backend ?assigned_to filter parameter - WORKING",
+    "Warehouses page (/admin/warehouses) loads with warehouse cards - WORKING",
+    "Warehouses: Create new warehouse with code, name, type, capacity, contact - WORKING",
+    "Warehouses: Stats cards (total, active, capacity, utilization) - WORKING",
+    "Warehouses: Edit and delete warehouse actions - WORKING",
+    "Raw Materials page (/admin/raw-materials) loads with materials table - WORKING",
+    "Raw Materials: Create material with SKU, category, unit, stock levels - WORKING",
+    "Raw Materials: Stock adjustment modal (add/remove/set) with reason - WORKING",
+    "Raw Materials: Stats cards (total, active, low stock, inventory value) - WORKING",
+    "Raw Materials: Category filter and search functionality - WORKING",
+    "Admin sidebar: INVENTORY section with Warehouses and Raw Materials links - WORKING"
+  ]
+}

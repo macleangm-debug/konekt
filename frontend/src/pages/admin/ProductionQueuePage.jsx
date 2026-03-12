@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Factory, Search, Clock, User, AlertTriangle } from "lucide-react";
+import { Factory, Search, Clock, User, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 const productionStatuses = [
   "queued",
@@ -30,17 +31,29 @@ const priorityColors = {
 };
 
 export default function ProductionQueuePage() {
+  const { user } = useAdminAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("");
+  const [showMyTasksOnly, setShowMyTasksOnly] = useState(false);
   const [notes, setNotes] = useState({});
   const [stats, setStats] = useState(null);
+
+  // Determine if user is supervisor (admin or production role)
+  const isSupervisor = user?.role === "admin" || user?.role === "production";
+  const currentUserName = user?.name || user?.email?.split("@")[0] || "";
 
   const loadQueue = async () => {
     try {
       setLoading(true);
       const params = {};
       if (filterStatus) params.status = filterStatus;
+      
+      // If showing my tasks only, filter by assigned_to
+      if (showMyTasksOnly && currentUserName) {
+        params.assigned_to = currentUserName;
+      }
+      
       const res = await adminApi.getProductionQueue(params);
       setItems(res.data);
     } catch (error) {
@@ -62,7 +75,7 @@ export default function ProductionQueuePage() {
   useEffect(() => {
     loadQueue();
     loadStats();
-  }, [filterStatus]);
+  }, [filterStatus, showMyTasksOnly]);
 
   const changeStatus = async (queueId, status) => {
     try {
@@ -128,7 +141,7 @@ export default function ProductionQueuePage() {
         )}
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
@@ -140,6 +153,36 @@ export default function ProductionQueuePage() {
               <option key={s} value={s}>{s.replace("_", " ")}</option>
             ))}
           </select>
+
+          {/* Task Visibility Toggle */}
+          <button
+            onClick={() => setShowMyTasksOnly(!showMyTasksOnly)}
+            className={`inline-flex items-center gap-2 px-4 py-3 rounded-xl border transition-all font-medium ${
+              showMyTasksOnly
+                ? "bg-[#D4A843] text-[#2D3E50] border-[#D4A843]"
+                : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+            }`}
+            data-testid="toggle-my-tasks"
+          >
+            {showMyTasksOnly ? (
+              <>
+                <EyeOff className="w-4 h-4" />
+                My Tasks Only
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4" />
+                All Tasks
+              </>
+            )}
+          </button>
+
+          {isSupervisor && (
+            <span className="text-sm text-slate-500 flex items-center gap-1">
+              <User className="w-4 h-4" />
+              Supervisor View
+            </span>
+          )}
         </div>
 
         {/* Kanban Board */}

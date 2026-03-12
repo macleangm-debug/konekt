@@ -44,12 +44,15 @@ def serialize_doc(doc):
 @router.get("/queue")
 async def list_production_queue(
     status: Optional[str] = None,
+    assigned_to: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
     """List all items in production queue"""
     query = {}
     if status:
         query["status"] = status
+    if assigned_to:
+        query["assigned_to"] = assigned_to
     docs = await db.production_queue.find(query).sort("created_at", -1).to_list(length=limit)
     return [serialize_doc(doc) for doc in docs]
 
