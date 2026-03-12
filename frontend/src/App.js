@@ -73,6 +73,8 @@ import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
 import AffiliateApplicationsPage from "@/pages/admin/AffiliateApplicationsPage";
 import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
 import StatementPage from "@/pages/admin/StatementPage";
+import QuotePreviewPage from "@/pages/admin/QuotePreviewPage";
+import InvoicePreviewPage from "@/pages/admin/InvoicePreviewPage";
 import InventoryVariantsPage from "@/pages/admin/InventoryVariantsPage";
 import WarehousesPage from "@/pages/admin/WarehousesPage";
 import RawMaterialsPage from "@/pages/admin/RawMaterialsPage";
@@ -140,7 +142,9 @@ function App() {
           <Route path="raw-materials" element={<RawMaterialsPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="invoices/:id" element={<InvoicePreviewPage />} />
           <Route path="quotes" element={<QuotesPage />} />
+          <Route path="quotes/:id" element={<QuotePreviewPage />} />
           <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
           <Route path="quotes-old" element={<AdminQuotes />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />

@@ -438,10 +438,24 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
     return serialize_doc(updated)
 
 
+@router.get("/invoices/{invoice_id}/payments")
+async def get_invoice_payments(invoice_id: str):
+    """Get payment history for an invoice"""
+    try:
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        if not invoice:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        return invoice.get("payments", [])
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+
 class PaymentRecord(BaseModel):
     amount: float
-    method: str
+    method: Optional[str] = None
+    payment_method: Optional[str] = None  # Frontend uses payment_method
     reference: Optional[str] = None
+    payment_date: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -450,12 +464,20 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     """Add a payment to an invoice"""
     now = datetime.now(timezone.utc)
     
-    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    try:
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
     payment = payload.model_dump()
     payment["timestamp"] = now.isoformat()
+    
+    # Normalize payment_method field (frontend sends payment_method, backend used method)
+    if payment.get("payment_method") and not payment.get("method"):
+        payment["method"] = payment["payment_method"]
     
     # Calculate new paid amount
     existing_payments = invoice.get("payments", [])
@@ -476,6 +498,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
             "$set": {
                 "status": new_status,
                 "amount_paid": total_paid,
+                "paid_amount": total_paid,  # Also set paid_amount for frontend compatibility
                 "updated_at": now.isoformat()
             }
         }

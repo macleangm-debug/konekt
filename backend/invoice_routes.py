@@ -111,6 +111,18 @@ async def get_invoice(invoice_id: str):
         raise HTTPException(status_code=404, detail="Invoice not found")
 
 
+@router.get("/{invoice_id}/payments")
+async def get_invoice_payments(invoice_id: str):
+    """Get payment history for an invoice"""
+    try:
+        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        if not doc:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        return doc.get("payments", [])
+    except Exception:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+
 @router.patch("/{invoice_id}/status")
 async def update_invoice_status(invoice_id: str, status: str = Query(...)):
     """Update invoice status"""
@@ -131,8 +143,10 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
 
 class PaymentRecord(BaseModel):
     amount: float
-    method: str
+    payment_method: Optional[str] = "bank_transfer"
+    method: Optional[str] = None  # Backward compat
     reference: Optional[str] = None
+    payment_date: Optional[str] = None
     notes: Optional[str] = None
 
 
