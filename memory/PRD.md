@@ -1013,4 +1013,54 @@ Implemented comprehensive code pack with: 1) Premium PDF Service v2 with improve
 
 ---
 
-*Last updated: March 12, 2026 - Phase 18 Complete (Code Pack Implementation)*
+### March 12, 2026 - Phase 19: Quote & Invoice Preview with Payment Allocation (TESTED ✅)
+
+#### What Changed
+Created comprehensive Quote Preview and Invoice Preview pages with visual document layout, payment tracking, and payment allocation modal.
+
+#### New Files Created
+- [x] `frontend/src/pages/admin/QuotePreviewPage.jsx` - Visual quote preview with status actions
+- [x] `frontend/src/pages/admin/InvoicePreviewPage.jsx` - Invoice preview with payment allocation UI
+
+#### Updated Files
+- [x] `backend/invoice_routes.py` - Added GET /{id}/payments endpoint, updated PaymentRecord model
+- [x] `frontend/src/App.js` - Added routes `/admin/quotes/:id`, `/admin/invoices/:id`
+
+#### Key Features Implemented
+
+1. **Quote Preview Page** (`/admin/quotes/:id`)
+   - Navy header with LOGO placeholder, QUOTE title, quote number, status badge
+   - FROM section (company details from settings)
+   - BILL TO section (customer info with email, phone, address, TIN)
+   - Dates card (Issue Date, Valid Until, Payment Terms)
+   - Line items table with zebra striping
+   - Totals section (Subtotal, VAT %, Discount, Total in gold)
+   - Notes and Terms sections
+   - Actions: Edit, Download PDF, Mark as Sent/Approved/Rejected, Convert to Order
+
+2. **Invoice Preview Page** (`/admin/invoices/:id`)
+   - Payment Summary card at top:
+     - Total Amount, Paid (green), Balance Due/Overdue (amber/red)
+     - "Payment Overdue" warning with AlertCircle icon
+     - Payment progress bar (% paid)
+   - Same navy header layout as quotes
+   - Record Payment button opening modal
+   - Payment History section showing all recorded payments
+
+3. **Payment Allocation Modal**
+   - Amount input (pre-filled with balance due)
+   - Payment method select (Bank Transfer, Mobile Money, Cash, Card, Cheque, Other)
+   - Payment date picker
+   - Reference number input (Transaction ID, Cheque #)
+   - Notes textarea
+   - Records payment and updates invoice status
+
+#### Test Results (iteration_22.json)
+- Backend: 100% (15/15 tests passed)
+- Frontend: 100% verified
+- Testing agent fixed: GET payments endpoint, PaymentRecord model, error handling
+- Invoice shows 3% paid progress (TZS 3,000 of 118,000)
+
+---
+
+*Last updated: March 12, 2026 - Phase 19 Complete (Quote & Invoice Preview with Payment Allocation)*
