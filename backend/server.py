@@ -58,6 +58,8 @@ from central_payments_routes import router as central_payments_router
 from statement_routes import router as statement_router
 from warehouse_routes import router as warehouse_router
 from raw_materials_routes import router as raw_materials_router
+from stock_movement_routes import router as stock_movement_router
+from warehouse_transfer_routes import router as warehouse_transfer_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1993,6 +1995,8 @@ app.include_router(central_payments_router)
 app.include_router(statement_router)
 app.include_router(warehouse_router)
 app.include_router(raw_materials_router)
+app.include_router(stock_movement_router)
+app.include_router(warehouse_transfer_router)
 
 app.add_middleware(
     CORSMiddleware,

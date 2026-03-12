@@ -1,0 +1,157 @@
+"""
+Konekt Statement PDF Service
+Generates statement of account PDFs for customers
+"""
+import io
+from datetime import datetime
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+
+NAVY = colors.HexColor("#20364D")
+GOLD = colors.HexColor("#D4A843")
+TEXT = colors.HexColor("#0F172A")
+MUTED = colors.HexColor("#64748B")
+BORDER = colors.HexColor("#E2E8F0")
+SOFT = colors.HexColor("#F8FAFC")
+
+
+def money(value, currency="TZS"):
+    try:
+        value = float(value or 0)
+    except Exception:
+        value = 0
+    return f"{currency} {value:,.0f}"
+
+
+def build_statement_pdf(settings: dict, statement: dict):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+
+    # Navy header
+    c.setFillColor(NAVY)
+    c.rect(0, height - 34 * mm, width, 34 * mm, stroke=0, fill=1)
+
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 20)
+    c.drawString(18 * mm, height - 18 * mm, "Statement of Account")
+
+    c.setFont("Helvetica", 9)
+    c.drawRightString(width - 18 * mm, height - 18 * mm, datetime.utcnow().strftime("%Y-%m-%d"))
+
+    # Company info
+    c.setFillColor(TEXT)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(18 * mm, height - 48 * mm, settings.get("company_name", "Konekt Limited"))
+    c.setFont("Helvetica", 8.5)
+    c.setFillColor(MUTED)
+    c.drawString(18 * mm, height - 54 * mm, settings.get("email", ""))
+    c.drawString(18 * mm, height - 58.5 * mm, settings.get("phone", ""))
+
+    # Customer info
+    c.setFillColor(TEXT)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(110 * mm, height - 48 * mm, "Customer")
+    c.setFont("Helvetica", 8.8)
+    c.setFillColor(MUTED)
+    c.drawString(110 * mm, height - 54 * mm, statement.get("customer_email", ""))
+
+    # Summary card
+    c.setFillColor(SOFT)
+    c.roundRect(18 * mm, height - 82 * mm, width - 36 * mm, 18 * mm, 3 * mm, stroke=0, fill=1)
+
+    summary = statement.get("summary", {})
+    blocks = [
+        ("Total Invoiced", money(summary.get("total_invoiced", 0))),
+        ("Total Paid", money(summary.get("total_paid", 0))),
+        ("Balance Due", money(summary.get("balance_due", 0))),
+    ]
+    x_positions = [24 * mm, 84 * mm, 144 * mm]
+
+    for idx, (label, value) in enumerate(blocks):
+        x = x_positions[idx]
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 8.5)
+        c.drawString(x, height - 73 * mm, label)
+        c.setFillColor(TEXT)
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(x, height - 68 * mm, value)
+
+    # Table header
+    table_y = height - 102 * mm
+    left = 18 * mm
+    total_w = width - 36 * mm
+    cols = [24 * mm, 26 * mm, 36 * mm, 56 * mm, 22 * mm, 22 * mm, 22 * mm]
+
+    c.setFillColor(NAVY)
+    c.roundRect(left, table_y, total_w, 9 * mm, 2 * mm, stroke=0, fill=1)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 8.2)
+
+    headers = ["Date", "Type", "Document", "Description", "Debit", "Credit", "Balance"]
+    x = left + 3 * mm
+    for i, h in enumerate(headers):
+        if i < 4:
+            c.drawString(x, table_y + 3.2 * mm, h)
+        else:
+            c.drawRightString(x + cols[i] - 3 * mm, table_y + 3.2 * mm, h)
+        x += cols[i]
+
+    # Table rows
+    y = table_y - 8.5 * mm
+    c.setFont("Helvetica", 8)
+
+    for idx, entry in enumerate(statement.get("entries", [])):
+        c.setFillColor(SOFT if idx % 2 == 0 else colors.white)
+        c.rect(left, y, total_w, 8 * mm, stroke=0, fill=1)
+
+        # Format date
+        date_str = "-"
+        if entry.get("date"):
+            try:
+                date_val = entry.get("date")
+                if isinstance(date_val, str):
+                    date_str = date_val[:10]
+                elif hasattr(date_val, 'strftime'):
+                    date_str = date_val.strftime("%Y-%m-%d")
+            except Exception:
+                date_str = "-"
+
+        row = [
+            date_str,
+            str(entry.get("entry_type", "")),
+            str(entry.get("document_number", ""))[:18],
+            str(entry.get("description", ""))[:34],
+            money(entry.get("debit", 0)),
+            money(entry.get("credit", 0)),
+            money(entry.get("balance", 0)),
+        ]
+
+        c.setFillColor(TEXT)
+        x = left + 3 * mm
+        for i, cell in enumerate(row):
+            if i < 4:
+                c.drawString(x, y + 2.7 * mm, cell)
+            else:
+                c.drawRightString(x + cols[i] - 3 * mm, y + 2.7 * mm, cell)
+            x += cols[i]
+
+        y -= 8 * mm
+        if y < 28 * mm:
+            c.showPage()
+            c.setFont("Helvetica", 8)
+            y = height - 24 * mm
+
+    # Footer
+    c.setStrokeColor(BORDER)
+    c.line(18 * mm, 16 * mm, width - 18 * mm, 16 * mm)
+    c.setFillColor(MUTED)
+    c.setFont("Helvetica", 7.5)
+    c.drawString(18 * mm, 10 * mm, f"Generated by {settings.get('company_name', 'Konekt Limited')}")
+    c.drawRightString(width - 18 * mm, 10 * mm, "Konekt Statement")
+
+    c.save()
+    buffer.seek(0)
+    return buffer
