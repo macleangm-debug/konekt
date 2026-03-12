@@ -79,6 +79,46 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
+### March 12, 2026 - Phase 11: Bank Transfer Proof Upload & Payment Visibility (TESTED ✅)
+
+#### New Backend Files
+- [x] `upload_config.py` - Upload directories and public URL helpers
+- [x] `upload_utils.py` - File validation, save, and storage utilities
+- [x] `payment_upload_routes.py` - POST /api/uploads/payment-proof
+
+#### Updated Backend
+- [x] `bank_transfer_routes.py` - Added proof_filename to BankTransferMarkSubmitted
+- [x] `customer_order_routes.py` - Added payment_status field to orders
+- [x] `server.py` - Static files mounted at /static for file serving
+
+#### New Frontend Components
+- [x] `components/PaymentStatusBadge.jsx` - Styled status badges (unpaid, pending, paid, etc.)
+- [x] `lib/uploadApi.js` - uploadPaymentProof() helper
+
+#### Updated Frontend Pages
+- [x] `BankTransferPage.jsx` - Full proof upload with drag-drop, preview, upload button
+- [x] `CustomerDashboard.jsx` - Payment status badge on orders
+- [x] `OrderTrackingPage.jsx` - Payment status badge in header
+- [x] `pages/admin/PaymentsPage.jsx` - Admin payment review with Verify/Reject actions
+
+#### Key Features
+- File upload with validation (images, PDFs, max 10MB)
+- Drag-and-drop interface for proof upload
+- Copy-to-clipboard for bank details and payment reference
+- Admin can view proof files, verify or reject payments
+- Payment status badges flow through: Dashboard → Order Tracking → Admin
+
+#### API Endpoints
+- `POST /api/uploads/payment-proof` - Upload payment proof file
+- Files stored at `/app/static/uploads/payment_proofs/{date}/`
+
+#### Test Results (iteration_12.json)
+- Backend: 88% (14/16 tests passed)
+- Frontend: 100% verified
+- Features verified: proof upload, bank transfer submission, admin verify/reject, status badges
+
+---
+
 ### March 11, 2026 - Phase 8: World-Class Platform Upgrades (TESTED ✅)
 
 #### PDF Design Upgrade
