@@ -31,6 +31,8 @@ import OrderTrackingPage from "@/pages/OrderTrackingPage";
 import PaymentSelectionPage from "@/pages/PaymentSelectionPage";
 import BankTransferPage from "@/pages/BankTransferPage";
 import PaymentPendingPage from "@/pages/PaymentPendingPage";
+import ReferralLandingPage from "@/pages/ReferralLandingPage";
+import MyReferralsPage from "@/pages/MyReferralsPage";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -55,6 +57,7 @@ import OrdersPageOps from "@/pages/admin/OrdersPageOps";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPage from "@/pages/admin/CustomersPage";
 import PaymentsPage from "@/pages/admin/PaymentsPage";
+import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -123,6 +126,7 @@ function App() {
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="payments" element={<PaymentsPage />} />
+          <Route path="hero-banners" element={<HeroBannersPage />} />
         </Route>
         
         {/* Customer Routes */}
@@ -152,6 +156,8 @@ function App() {
                     <Route path="/payment/select" element={<PaymentSelectionPage />} />
                     <Route path="/payment/bank-transfer" element={<BankTransferPage />} />
                     <Route path="/payment/pending" element={<PaymentPendingPage />} />
+                    <Route path="/r/:code" element={<ReferralLandingPage />} />
+                    <Route path="/dashboard/referrals" element={<MyReferralsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />

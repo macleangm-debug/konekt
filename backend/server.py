@@ -39,6 +39,9 @@ from bank_transfer_routes import router as bank_transfer_router
 from payment_admin_routes import router as payment_admin_router
 from customer_admin_routes import router as customer_admin_router
 from payment_upload_routes import router as payment_upload_router
+from hero_banner_routes import router as hero_banner_router
+from referral_public_routes import router as referral_public_router
+from customer_referral_routes import router as customer_referral_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1931,6 +1934,15 @@ app.include_router(customer_admin_router)
 
 # Include payment upload routes
 app.include_router(payment_upload_router)
+
+# Include hero banner routes
+app.include_router(hero_banner_router)
+
+# Include referral public routes
+app.include_router(referral_public_router)
+
+# Include customer referral routes
+app.include_router(customer_referral_router)
 
 app.add_middleware(
     CORSMiddleware,

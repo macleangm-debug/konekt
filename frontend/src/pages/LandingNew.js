@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,7 @@ import {
   Clock,
   Globe,
 } from "lucide-react";
+import HeroCarousel from "../components/HeroCarousel";
 
 const categories = [
   {
@@ -152,10 +153,16 @@ const trustPoints = [
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [showStaticHero, setShowStaticHero] = useState(true);
 
   return (
     <div className="bg-white text-slate-900">
-      {/* Hero Section */}
+      {/* Dynamic Hero Carousel - Will display if banners exist */}
+      <div className="max-w-7xl mx-auto px-6 pt-6">
+        <HeroCarousel onHasContent={(has) => setShowStaticHero(!has)} />
+      </div>
+
+      {/* Static Fallback Hero Section - Shows when no banners */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#2D3E50] via-[#243243] to-[#1A2430] text-white">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_#D4A843,_transparent_25%)]" />
         

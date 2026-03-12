@@ -9,6 +9,7 @@ import {
   ShoppingBag,
   PenTool,
   TrendingUp,
+  Gift,
 } from "lucide-react";
 import api from "../lib/api";
 import PaymentStatusBadge from "../components/PaymentStatusBadge";
@@ -37,6 +38,12 @@ const quickCards = [
     description: "View invoices and payment history",
     icon: Receipt,
     href: "/dashboard/invoices",
+  },
+  {
+    title: "My Referrals",
+    description: "Share your code and earn rewards",
+    icon: Gift,
+    href: "/dashboard/referrals",
   },
 ];
 
