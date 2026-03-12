@@ -955,4 +955,62 @@ Created a new Document Workflow page that visualizes the Quote → Order → Inv
 
 ---
 
-*Last updated: March 12, 2026 - Phase 17 Complete (Document Workflow Visualization & PDF Polish)*
+### March 12, 2026 - Phase 18: Code Pack Implementation (TESTED ✅)
+
+#### What Changed
+Implemented comprehensive code pack with: 1) Premium PDF Service v2 with improved spacing and logo placeholder, 2) Dynamic Creative Brief Form renderer for services, 3) Creative Service Detail page with pricing sidebar, 4) Task visibility toggle (My Tasks vs Team Overview).
+
+#### New Files Created
+- [x] `backend/pdf_service_v2.py` - Premium PDF generator with better spacing, logo placeholder, cleaner layout
+- [x] `frontend/src/components/creative/DynamicBriefForm.jsx` - Dynamic form renderer for service briefs
+- [x] `frontend/src/pages/CreativeServiceDetailPage.jsx` - Service detail page with brief form and pricing sidebar
+
+#### Updated Files
+- [x] `backend/pdf_routes.py` - Uses pdf_service_v2 for PDF generation
+- [x] `frontend/src/pages/admin/TasksPage.js` - Added My Tasks / Team Overview toggle
+- [x] `frontend/src/App.js` - Added route `/creative-services/:slug` for detail page
+
+#### Key Features Implemented
+
+1. **PDF Service v2** - Premium document generation:
+   - Logo placeholder (rounded rect with "LOGO" text) when no logo URL
+   - Better spacing throughout document
+   - Cleaner right-side info panel with Issue Date, Due Date, Payment Terms
+   - Stronger client/company alignment with From/Bill To sections
+   - Totals box not cramped - proper padding and borders
+   - Better footer rhythm with Notes, Terms, Payment Instructions sections
+
+2. **Dynamic Creative Brief Form**:
+   - Supports field types: text, textarea, select, multi_select, boolean, number
+   - Help text display for fields
+   - Required field indicators
+   - Add-ons section with checkboxes and prices
+   - Styled consistently with Konekt brand (gold accents, rounded corners)
+
+3. **Creative Service Detail Page**:
+   - Header with service title and description
+   - Contact information form (name, email, phone, company)
+   - Dynamic brief form with all service-specific fields
+   - File upload section for reference files
+   - Additional notes textarea
+   - Pricing sidebar showing Base Price, Add-Ons, Total
+   - Real-time pricing calculation as add-ons selected
+   - Submit Brief functionality
+
+4. **Task Visibility Toggle**:
+   - "My Tasks" button - shows only tasks assigned to current user
+   - "Team Overview" button - shows all tasks (supervisor view)
+   - Supervisor indicator for admin/production roles
+   - Filter applied before search for proper scoping
+
+#### Test Results (iteration_21.json)
+- Backend: 100% (20/20 tests passed)
+- Frontend: 100% verified
+- PDF generation: Quote and Invoice PDFs generate correctly (~3750 bytes)
+- Dynamic form: All field types render correctly
+- Pricing calculation: Add-ons update total in real-time (verified 120k + 60k + 50k = 230k)
+- Task toggle: My Tasks shows 0 (no admin-assigned tasks), Team Overview shows 3
+
+---
+
+*Last updated: March 12, 2026 - Phase 18 Complete (Code Pack Implementation)*
