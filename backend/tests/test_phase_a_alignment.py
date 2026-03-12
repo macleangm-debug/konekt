@@ -7,7 +7,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://system-restructure.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://konekt-refactor.preview.emergentagent.com').rstrip('/')
 
 ADMIN_EMAIL = "admin@konekt.co.tz"
 ADMIN_PASSWORD = "KnktcKk_L-hw1wSyquvd!"

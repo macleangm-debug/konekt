@@ -1,163 +1,164 @@
 <analysis>**original_problem_statement:**
-The user is building a Business Operating System, Konekt. The initial goal was to add a rotating hero banner and a strengthened affiliate/referral program. This was successfully implemented.
+The user is building a Business Operating System, Konekt. After initially completing a hero banner and referral system, the project's focus has shifted to a comprehensive, multi-phase architectural and UX alignment plan provided by the user. The goal is to refactor and restructure core modules (Creative Services, CRM, Inventory, Finance, Production) to create a more coherent, professional, and scalable platform. The user has provided extremely detailed codebase packs to guide this implementation.
 
-However, the user has now provided a comprehensive architectural and UX alignment plan to elevate the entire platform. The new goal is to refactor and restructure core modules to create a more coherent, professional, and scalable system. This involves a multi-phase implementation plan focused on improving key user journeys and business logic, rather than adding net-new, unrelated features.
-
-**The user's latest request (the new source of truth for the project) is a multi-phase alignment project covering:**
-1.  **Phase 1 - UX / Process Alignment:** Unify the hero section, structure creative service briefs, simplify the production queue, merge inventory/stock modules, integrate Kanban boards into their respective modules (Quotes, CRM), and improve customer page filtering.
+The project is divided into three main phases:
+1.  **Phase 1 - UX / Process Alignment:** Unify the hero section, structure creative service briefs, simplify the production queue, merge inventory modules, integrate Kanban boards, and improve customer page filtering.
 2.  **Phase 2 - Business Logic Alignment:** Implement SKU-variant-linked inventory, clarify the Quote -> Order -> Invoice workflow, centralize payment recording, add a Statement of Account feature, define task visibility for production, and upgrade the CRM lead form.
 3.  **Phase 3 - Growth Systems Alignment:** Implement a formal, application-based affiliate program with a dedicated partner portal, and integrate a promotional banner within the customer dashboard.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a mature full-stack platform (React/FastAPI/MongoDB) with a comprehensive admin back-office and a customer-facing e-commerce front-end.
+The application is a mature full-stack platform (React/FastAPI/MongoDB). The agent has made significant progress on the user's alignment plan.
 
-Key features implemented in this session:
--   **Rotating Hero Banner:** A full-featured, admin-manageable rotating hero carousel is live on the landing page.
--   **Referral & Affiliate System:** A sophisticated, two-tiered system is in place:
-    -   **Referral Program:** A customer-facing, points-based system where users can share a link and earn points from purchases made by their referees. Includes a My Referrals dashboard page.
-    -   **Affiliate Program:** A partner-facing, commission-based system. Admins can create affiliate partners with unique promo codes. The system includes the foundation for commission tracking and payouts.
+-   **Phase 1 (UX / Process Alignment) is largely COMPLETE.** This includes the new , a simplified , an integrated Kanban view in the , and the backend for structured creative services.
+-   **Phase 2 (Business Logic Alignment) is IN PROGRESS.** The central payments module, statement of account feature, and enhanced CRM/Customer pages are complete. The backend for variant-level inventory is done, but the UI is pending.
+-   **Phase 3 (Growth Systems Alignment) is COMPLETE.** This includes the new  on the customer dashboard and a full-featured affiliate system with an application form, admin approval page, and a dedicated partner portal/dashboard.
 
-All features implemented in this session have been thoroughly tested by the testing agent and are confirmed to be working.
+All implemented features have been successfully tested by the testing agent.
 
 **Last working item**:
--   **Last item agent was working:** The agent had just started implementing the user's major platform alignment plan (from message #202). It acknowledged the three-phase plan provided by the user and began work on **Phase A: Core UX & Layout Alignment**.
--   **Status:** IN PROGRESS
--   **Agent Testing Done:** N/A (Implementation just started)
+-   **Last item agent was working:** The agent completed the implementation of Phase 2 (Business Logic) and Phase 3 (Growth Systems), which included the enhanced CRM/Customers pages, the dynamic creative brief system, and the entire affiliate application/portal flow. The final action was to run the testing agent to validate all these changes.
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y
 -   **Which testing method agent to use?** both
--   **User Testing Done:** N/A
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   There are no outstanding bugs. The primary pending work is the large-scale platform alignment requested by the user.
+-   **Issue 1: Missing  attributes (P1)**
+    -   **Description:** Many of the newly created frontend components and interactive elements are missing the  attribute required for robust testing.
+    -   **Attempted fixes:** None. This is a recurring oversight.
+    -   **Next debug checklist:**
+        -   Review all new/modified JSX files created in this session (see All files of reference).
+        -   Add unique and descriptive  attributes to all buttons, inputs, toggles, navigation links, and key display elements.
+    -   **Why fix this issue and what will be achieved with the fix?** To improve the testability and stability of the application, preventing future regressions.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
 -   **Task 1: Implement Platform Alignment Plan (P0)**
-    -   **Description:** The user has provided a series of detailed codebase packs to refactor and align the entire platform for better UX and more robust business logic. This is a multi-phase task.
-    -   **Where to resume:** The agent has just started implementing the first codebase pack for Phase A, which covers:
-        1.  **Unified Hero Rotator:** Replacing the current floating hero carousel with a new, integrated rotator within the main hero section layout ().
-        2.  **Structured Creative Services:** Implementing a new model and UI for creative services with service-specific brief forms and billable add-ons (, ).
-        3.  **CRM Lead Enhancements:** Adding structured fields (industry, source) to the CRM, powered by new admin-configurable settings ().
-        4.  **Inventory Variants:** Linking inventory to product variants at the SKU level ().
-        5.  **Simplified Production Queue:** Refactoring the UI to be a clearer, list-based view by default ().
-        6.  **Integrated Quote Views:** Adding view toggles (list/cards/kanban) directly within the Quotes page.
-        7.  **Client Promo Strip:** Adding a thin promotional banner to the customer dashboard ().
-    -   **What will be achieved with this?** This will complete the first major phase of the user's platform alignment plan, significantly improving UX consistency and core business process flows.
+    -   **Description:** Continue executing the user's comprehensive platform refactoring plan. Significant progress has been made, but several key items from Phase 2 remain.
+    -   **Where to resume:** Focus on the remaining business logic and module consolidation tasks. The highest priorities are unifying the inventory modules and building the UI for the already-completed inventory backend.
+    -   **What will be achieved with this?** This will bring the inventory, production, and financial systems into full alignment as envisioned by the user.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
     -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **Implement Platform Alignment - Phase 2 (P0):**
-    -   **Central Payments Module:** Create a central hub for managing all payments (manual, web, etc.) with support for partial payments and allocations ().
-    -   **Statement of Accounts:** Implement a feature to generate customer account statements showing all invoices and payments ().
-    -   **Client Page Enhancements:** Add advanced filters and a card/table view toggle to the main Customers page.
-    -   **Integrated CRM Kanban:** Move the CRM Kanban board to be a view *within* the main CRM page, not a separate page.
-    -   **Inventory Module Merge:** Refactor the admin navigation to merge Stock Management and Inventory into a single, unified Inventory module.
+-   **Merge Inventory & Stock Management Modules (P0):**
+    -   Refactor the admin sidebar navigation to remove the separate Stock Management menu item.
+    -   Consolidate all inventory-related functionality under a single Inventory top-level menu, as specified by the user.
+-   **Inventory Variant Management UI (P0):**
+    -   Create the frontend UI for admins to create, view, and manage product variants (SKUs) linked to a parent product. The backend routes () are already complete.
+-   **Task Visibility in Production Queue (P1):**
+    -   Enhance the  to implement role-based visibility rules, where assignees see only their tasks and supervisors can see all team tasks.
+-   **Warehouse and Raw Materials UI (P1):**
+    -   Build the frontend pages for managing warehouses and raw materials, extending the new unified Inventory module.
 
 **Future Tasks:**
--   **Implement Platform Alignment - Phase 3 (P1):**
-    -   **Affiliate Application Flow:** Build a formal application and approval process for affiliate partners.
-    -   **Affiliate Portal:** Create a dedicated, separate dashboard for approved affiliates to track performance, commissions, and get marketing assets.
--   **PDF Document Refinement (P2):** Further polish the visual design and layout of generated PDF quotes and invoices based on user feedback.
--   **KwikPay Integration (P2):** Finalize the KwikPay integration by mapping it to the official merchant API documentation.
--   **Role-Based Permissions & Audit Trail (P2):** Enhance supervisor/assignee visibility for production tasks.
+-   **Improve Quote -> Order -> Invoice Workflow Visibility (P1):** Plan and implement a clearer visual flow to show how a Quote becomes an Order and then an Invoice.
+-   **PDF Document Refinement (P2):** Polish the visual design and layout of generated PDF quotes and invoices to address the user's feedback on spacing and alignment.
+-   **Finalize KwikPay Integration (P2):** Map the placeholder KwikPay adapter to the official merchant API documentation.
 
 **Completed work in this session**
--   **Rotating Hero Banner System (DONE):** A full-featured, admin-manageable rotating hero banner was implemented on the landing page. (Note: This is about to be refactored into a new  component as per the user's latest request).
--   **Comprehensive Referral & Affiliate Program (DONE):**
-    -   **Referral System:** A points-based program for customers was created, including a My Referrals dashboard and social sharing.
-    -   **Affiliate System:** A commission-based program for partners was created, including admin management for affiliates, commissions, and payouts, plus an affiliate-specific landing page.
--   **All features were fully tested and passed by the testing agent.**
+-   **Phase 1 (UX Alignment):**
+    -   Replaced  with  on the landing page.
+    -   Integrated Kanban/List/Card views into .
+    -   Created a simplified list-based .
+-   **Phase 2 (Business Logic):**
+    -   Implemented a central payments module (, ).
+    -   Implemented a Statement of Account feature (, ).
+    -   Created enhanced  and  with integrated views and filters.
+    -   Created a dynamic UI () for structured creative briefs with billable add-ons.
+    -   Created backend models and routes for inventory variants, CRM settings, and creative services.
+-   **Phase 3 (Growth Systems):**
+    -   Added  to the customer dashboard.
+    -   Implemented a full affiliate system: application form, admin approval page, and partner portal/dashboard.
+-   Updated admin sidebar navigation to reflect all new modules.
 
 **Earlier issues found/mentioned but not fixed**
--   The initial handoff mentioned adding  attributes to components. This was not explicitly addressed in this session and should be remembered for all new UI components being created in the alignment phase.
+-   **Issue 1: Missing  attributes.** This was mentioned in the previous handoff and was not addressed for the new components created in this session.
+    -   **Debug checklist:** Audit all new  files and add  to interactive elements.
+    -   **Why to solve this issue and what will be achieved with this?** Ensures frontend components are testable, which is critical for a complex application.
+    -   **Should Test frontend/backend/both after fix:** frontend
+    -   **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** None
--   **Recurrence count:** 0
--   **Status:** NA
+-   **Issue recurrence in previous fork:** Missing  attributes.
+-   **Recurrence count:** 1
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Frontend:** React, TailwindCSS, Axios
--   **Backend:** Python, FastAPI, Motor, Pydantic
+-   **Backend:** Python, FastAPI, Motor
 -   **Database:** MongoDB
--   **Business Logic:** Complex, multi-tiered logic for referral (points) and affiliate (commission) programs.
+-   **Key Patterns:** Dynamic form generation (for Creative Briefs), multi-view components (List/Cards/Kanban toggles), centralized financial record-keeping, multi-step application flows.
 
 **key DB schema**
--   **hero_banners:** (New) Stores content for the rotating hero banner.
--   **referral_settings:** (New) Admin-configurable settings for the referral program.
--   **points_wallets:** (New) Stores point balances for each user.
--   **points_transactions:** (New) A ledger of all points earned and redeemed.
--   **referral_transactions:** (Updated) Tracks successful referral conversions.
--   **affiliates:** (New) Stores records for approved affiliate partners.
--   **affiliate_commissions:** (New) A ledger for commissions earned by affiliates.
--   **affiliate_payout_requests:** (New) Tracks payout requests from affiliates.
-
-**changes in tech stack**
-None.
+-   **New Collections:**
+    -   : Stores definitions for creative services with dynamic brief fields and add-ons.
+    -   : Captures submitted creative briefs from customers.
+    -   : Stores admin-configurable options for CRM dropdowns (e.g., industries, sources).
+    -   : Stores SKU-level stock information linked to a parent product.
+    -   : A central ledger for all recorded payments.
+    -   : Maps payments to specific invoices, enabling partial payments.
+    -   : Stores submissions from potential affiliate partners.
+-   **Updated Collections:**  (to track , ),  and  (to include new structured fields like  and ).
 
 **All files of reference**
-*   **Backend:** All new files listed in the architecture tree under , plus  and  which were modified to include new hooks.
-*   **Frontend:** All new files listed in the architecture tree under , plus  which was modified for points redemption.
+-   **Backend Created:** , , , , , , , , , , , 
+-   **Frontend Created:** , , , , , , , , , , , , 
+-   **Files Modified:** , , , , , , 
 
 **Areas that need refactoring**:
-The entire upcoming task list is a massive, user-directed refactoring project. The user has explicitly requested to refactor the hero section, production queue, inventory management, CRM, and financial modules to be more aligned and professional.
+- The primary pending refactoring is to merge the Inventory and Stock Management modules in the admin navigation and UI, creating a single source of truth for inventory.
 
 **key api endpoints**
--    (CRUD for hero banners)
--    (Public lookup for referral codes)
--    (Get current user's referral data)
--    (CRUD for referral program rules)
--    (Get current user's points wallet)
--    (CRUD for affiliate partners)
--    (Manage affiliate commissions)
--    (Manage affiliate payouts)
--    (Public lookup for affiliate codes)
+-   : (New) CRUD for structured creative services and brief submissions.
+-   : (New) CRUD for CRM dropdown options.
+-   : (New) CRUD for SKU-level inventory.
+-   : (New) CRUD for the central payment ledger.
+-   : (New) Generates a customer's statement of account.
+-   : (New) For affiliate application submission and management.
+-   : (New) Endpoints for the affiliate partner dashboard.
 
 **Critical Info for New Agent**
--   **Your primary goal is to implement the user's platform alignment plan from message #202.** This is a major strategic pivot. Do not add new, unplanned features. Focus on executing the user's detailed codebase packs for refactoring.
--   You are currently in the middle of **Phase A**. You should pick up by implementing the codebase pack provided by the user, starting with the  component and continuing through the other items in the pack (creative briefs, CRM fields, etc.).
--   The  you see in the codebase is now considered obsolete and will be replaced by .
--   The user provides extremely detailed instructions and code. Follow them closely.
--   The project is in a healthy state, and all previously implemented features have passed testing. The current work is about refinement and structural improvement, not bug fixing.
+-   **Your primary goal is to continue implementing the user's platform alignment plan.** The user has provided extremely detailed instructions in their messages; follow them closely.
+-   The project is in a healthy state. A large portion of the user's plan (Phases 1, 3, and most of 2) is already implemented and has passed testing.
+-   The next set of priorities are the remaining tasks from Phase 2, focusing on **inventory management**. This includes unifying the admin menu and building the UI to manage product variants.
+-   Pay close attention to the recurring issue of adding  attributes to all new UI elements. This was missed in the last session and should be addressed.
 
 **documents and test reports created in this job**
+-   
+-   
+-   
 -    (Updated)
--   
--   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Msg 205):** Proceed with all of them - Confirms the agent's plan to implement the multi-phase alignment project.
-2.  **Agent (Msg 204):**  - Proposed a detailed, multi-phase plan based on the user's massive feedback, seeking confirmation.
-3.  **Agent (Msg 203):** Internal thought process analyzing the user's huge alignment plan.
-4.  **User (Msg 202):** A **massive and critical** message providing a comprehensive architectural review and a new, multi-phase implementation plan to align and refactor the entire platform. This message is the new source of truth for all future work.
-5.  **Agent (Msg 201):** Provided the preview URL and credentials to the user.
-6.  **User (Msg 200):** Share the web URL.
-7.  **Agent (Msg 196):** Reported that all tests passed for the new Affiliate & Referral system.
-8.  **Agent (Msg 192):** Called the  to test the full Referral/Affiliate implementation.
-9.  **User (Msg 131):** Provided a massive codebase pack to implement a full-fledged Referral (points-based) and Affiliate (commission-based) system. (Completed).
-10. **Agent (Msg 130):**  tool call for the previous task (Hero Banner & initial Referral Program).
+1.  **User:** Proceed with thee codebase to completion - User confirms the agent should continue with the implementation plan after a major update.
+2.  **User:** Yes — let’s align on this first. - User provides a massive, multi-part confirmation and detailed specification for the entire platform alignment, which serves as the blueprint for all work in this session. This message contains the detailed codebase packs and phased rollout plan.
 
 **Project Health Check:**
--   **Broken:** The UX and business process flows are considered broken from the user's perspective, which is why the alignment project was initiated. Specifically, the hero carousel is now considered visually out of place.
--   **Mocked:** KwikPay service is still a placeholder.
+-   **Broken:** The admin navigation for inventory is still split into Inventory and Stock Management, which the user wants unified. This is a high-priority upcoming task.
+-   **Mocked:** KwikPay integration remains a placeholder.
 
 **3rd Party Integrations**
 -   **ReportLab:** (Active) For PDF generation.
 -   **@dnd-kit/core:** (Active) Frontend library for drag-and-drop.
--   **Resend:** (Partially Integrated) A hook  exists, but the integration is blocked pending the user's API key.
+-   **Resend:** (Partially Integrated) Hook exists but is not used.
 -   **KwikPay:** (Scaffold) Backend adapter is a placeholder.
 -   **OpenAI:** (Mocked) Placeholder for AI features.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. The agent ran the testing agent twice in this session after major feature implementations.
+-   **Testing agent used after significant changes:** YES. The agent ran comprehensive tests after completing Phase 1 and again after completing Phases 2 & 3.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
--   **Test files created:** The testing agent generated test suites, but no permanent test files were created by the main agent.
+-   **Test files created:** None by the main agent.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
@@ -167,4 +168,4 @@ The entire upcoming task list is a massive, user-directed refactoring project. T
 | Backup Admin |  |  |
 
 **What agent forgot to execute**
--   The agent did not add  attributes to the newly created UI components, which is a standing requirement from the system prompt. This should be a point of focus for all new components created during the alignment phase.</analysis>
+-   The agent consistently forgot to add  attributes to new frontend components (, , all new admin pages and their interactive elements). This is a high-priority quality-of-life issue that needs to be addressed for testing stability.</analysis>

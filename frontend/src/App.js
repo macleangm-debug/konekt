@@ -72,6 +72,7 @@ import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
 import AffiliateApplicationsPage from "@/pages/admin/AffiliateApplicationsPage";
 import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
 import StatementPage from "@/pages/admin/StatementPage";
+import InventoryVariantsPage from "@/pages/admin/InventoryVariantsPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -130,6 +131,7 @@ function App() {
           <Route path="crm" element={<CRMPageV2 />} />
           <Route path="crm-old" element={<CRMPage />} />
           <Route path="inventory" element={<InventoryPage />} />
+          <Route path="inventory/variants" element={<InventoryVariantsPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="quotes" element={<QuotesPage />} />

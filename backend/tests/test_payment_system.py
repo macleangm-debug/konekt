@@ -8,7 +8,7 @@ import os
 import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://system-restructure.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://konekt-refactor.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "admin@konekt.co.tz"

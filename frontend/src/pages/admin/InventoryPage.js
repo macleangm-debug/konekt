@@ -119,7 +119,7 @@ export default function InventoryPage() {
   const lowStockCount = items.filter(i => i.quantity_on_hand <= i.reorder_level).length;
 
   return (
-    <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-6 md:p-8 bg-slate-50 min-h-screen" data-testid="inventory-page">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -134,6 +134,7 @@ export default function InventoryPage() {
             <button
               onClick={() => setShowMovementForm(!showMovementForm)}
               className="inline-flex items-center gap-2 border border-slate-300 px-4 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition-all"
+              data-testid="stock-movement-btn"
             >
               <ArrowUpDown className="w-4 h-4" />
               Stock Movement
@@ -141,6 +142,7 @@ export default function InventoryPage() {
             <button
               onClick={() => setShowItemForm(!showItemForm)}
               className="inline-flex items-center gap-2 bg-[#2D3E50] text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-[#3d5166] transition-all"
+              data-testid="add-inventory-btn"
             >
               <Plus className="w-5 h-5" />
               Add Item
@@ -150,7 +152,7 @@ export default function InventoryPage() {
 
         {/* Low Stock Alert */}
         {lowStockCount > 0 && (
-          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-6 flex items-center gap-3">
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 mb-6 flex items-center gap-3" data-testid="low-stock-alert">
             <AlertTriangle className="w-5 h-5 text-amber-600" />
             <span className="text-amber-800">
               <strong>{lowStockCount}</strong> item(s) are below reorder level
@@ -158,6 +160,7 @@ export default function InventoryPage() {
             <button
               onClick={() => setShowLowStockOnly(!showLowStockOnly)}
               className="ml-auto text-sm font-medium text-amber-700 hover:underline"
+              data-testid="toggle-low-stock-btn"
             >
               {showLowStockOnly ? "Show all" : "Show low stock only"}
             </button>
@@ -174,6 +177,7 @@ export default function InventoryPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
+              data-testid="search-inventory-input"
             />
           </div>
         </div>

@@ -94,7 +94,7 @@ class EmailService:
                         </table>
                         
                         <p style="text-align: center;">
-                            <a href="https://system-restructure.preview.emergentagent.com/products" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Start Shopping</a>
+                            <a href="https://konekt-refactor.preview.emergentagent.com/products" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Start Shopping</a>
                         </p>
                         
                         <p style="margin-top: 30px;">Questions? Reply to this email or contact us at info@konekt.co.tz</p>
@@ -171,7 +171,7 @@ class EmailService:
                         <p>We'll send you another email when your order status changes.</p>
                         
                         <p style="text-align: center;">
-                            <a href="https://system-restructure.preview.emergentagent.com/orders/{order_id}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Track Your Order</a>
+                            <a href="https://konekt-refactor.preview.emergentagent.com/orders/{order_id}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">Track Your Order</a>
                         </p>
                     </td>
                 </tr>
@@ -236,7 +236,7 @@ class EmailService:
                         <p><strong>Order Number:</strong> {order_number}</p>
                         
                         <p style="text-align: center; margin-top: 30px;">
-                            <a href="https://system-restructure.preview.emergentagent.com/orders/{order_id}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">View Order Details</a>
+                            <a href="https://konekt-refactor.preview.emergentagent.com/orders/{order_id}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold;">View Order Details</a>
                         </p>
                     </td>
                 </tr>
@@ -280,7 +280,7 @@ class EmailService:
                         </table>
                         
                         <p style="text-align: center; margin-top: 20px;">
-                            <a href="https://system-restructure.preview.emergentagent.com/admin/orders" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 10px 25px; text-decoration: none; border-radius: 20px; font-weight: bold;">View in Admin</a>
+                            <a href="https://konekt-refactor.preview.emergentagent.com/admin/orders" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 10px 25px; text-decoration: none; border-radius: 20px; font-weight: bold;">View in Admin</a>
                         </p>
                     </td>
                 </tr>
@@ -323,7 +323,7 @@ class EmailService:
                         <p style="text-align: center; margin-top: 20px;">
                             <a href="tel:{phone}" style="display: inline-block; background: #2D3E50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; margin: 5px;">📞 Call</a>
                             <a href="mailto:{email}" style="display: inline-block; background: #2D3E50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; margin: 5px;">✉️ Email</a>
-                            <a href="https://system-restructure.preview.emergentagent.com/admin/maintenance" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; margin: 5px;">View All</a>
+                            <a href="https://konekt-refactor.preview.emergentagent.com/admin/maintenance" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 10px 20px; text-decoration: none; border-radius: 20px; font-weight: bold; margin: 5px;">View All</a>
                         </p>
                     </td>
                 </tr>

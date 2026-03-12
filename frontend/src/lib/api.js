@@ -8,7 +8,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  // Check for admin token first (used in admin pages), then regular token
+  const adminToken = localStorage.getItem("konekt_admin_token");
+  const customerToken = localStorage.getItem("token");
+  const token = adminToken || customerToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
