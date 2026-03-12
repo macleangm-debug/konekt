@@ -815,4 +815,44 @@ Major architectural alignment to unify the platform UX and business logic. This 
 
 ---
 
-*Last updated: March 12, 2026 - Phase 14 Complete (Platform Alignment - Phase A)*
+### March 12, 2026 - Phase 15: Inventory Module Consolidation (TESTED ✅)
+
+#### What Changed
+Merged the separate "Inventory" and "Stock Management" modules into a unified "Inventory" section. Built a new Inventory Variants (SKUs) management UI with full CRUD functionality and product linking.
+
+#### New Frontend Files
+- [x] `InventoryVariantsPage.jsx` - Full CRUD UI for product variants with SKU, attributes, stock levels, pricing
+
+#### Updated Frontend Files
+- [x] `AdminLayout.js` - Consolidated sidebar navigation: removed separate "Stock Management" and "Operations/Inventory", added unified "Inventory" section with "Stock Items" and "Product Variants"
+- [x] `App.js` - Added route `/admin/inventory/variants` for new variants page
+- [x] `api.js` - Fixed token interceptor to check for `konekt_admin_token` first (admin auth) then `token` (customer auth)
+- [x] `InventoryPage.js` - Added `data-testid` attributes for testing
+
+#### Key Features Implemented
+1. **Unified Inventory Navigation** - Single "Inventory" section in admin sidebar with "Stock Items" and "Product Variants" links
+2. **Inventory Variants UI** - Full CRUD interface for managing product variants:
+   - Stats dashboard: Total, Active, Low Stock, Total Stock Value
+   - Low stock alert banner with toggle
+   - Search by SKU, product, or warehouse location
+   - Filter by parent product dropdown
+   - Create/Edit modal with: Parent Product select, SKU input, Variant Attributes (size/color/material), Stock on Hand, Reserved Stock, Reorder Level, Unit Cost, Selling Price, Warehouse Location
+   - Edit and Delete (soft delete) actions in table
+3. **API Token Fix** - Fixed authentication interceptor to properly use admin tokens stored as `konekt_admin_token`
+
+#### API Endpoints (Backend already existed)
+- `GET /api/admin/inventory-variants` - List all variants (supports ?product_id filter)
+- `POST /api/admin/inventory-variants` - Create variant
+- `GET /api/admin/inventory-variants/{id}` - Get single variant
+- `PUT /api/admin/inventory-variants/{id}` - Update variant
+- `DELETE /api/admin/inventory-variants/{id}` - Soft delete variant
+- `GET /api/admin/inventory-variants/low-stock/alerts` - Low stock alerts
+
+#### Test Results (iteration_18.json)
+- Backend: 100% (21/21 tests passed)
+- Frontend: 100% verified
+- Features tested: Sidebar navigation, Variants CRUD, Low stock alerts, Search/Filter, CRM views, Customers filters
+
+---
+
+*Last updated: March 12, 2026 - Phase 15 Complete (Inventory Module Consolidation)*
