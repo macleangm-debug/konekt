@@ -64,6 +64,8 @@ import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
 import AffiliateCommissionsPage from "@/pages/admin/AffiliateCommissionsPage";
 import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
+import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
+import StatementPage from "@/pages/admin/StatementPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -132,6 +134,8 @@ function App() {
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="payments" element={<PaymentsPage />} />
+          <Route path="central-payments" element={<CentralPaymentsPage />} />
+          <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
           <Route path="affiliates" element={<AffiliatesPage />} />

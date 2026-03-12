@@ -49,6 +49,11 @@ from affiliate_public_routes import router as affiliate_public_router
 from affiliate_admin_routes import router as affiliate_admin_router
 from affiliate_commission_routes import router as affiliate_commission_router
 from affiliate_payout_routes import router as affiliate_payout_router
+from creative_service_routes_v2 import router as creative_service_v2_router
+from crm_settings_routes import router as crm_settings_router
+from inventory_variant_routes import router as inventory_variant_router
+from central_payments_routes import router as central_payments_router
+from statement_routes import router as statement_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1971,6 +1976,13 @@ app.include_router(affiliate_commission_router)
 
 # Include affiliate payout routes
 app.include_router(affiliate_payout_router)
+
+# Include Phase A alignment routes
+app.include_router(creative_service_v2_router)
+app.include_router(crm_settings_router)
+app.include_router(inventory_variant_router)
+app.include_router(central_payments_router)
+app.include_router(statement_router)
 
 app.add_middleware(
     CORSMiddleware,

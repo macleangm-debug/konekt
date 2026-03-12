@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import api from "../lib/api";
 import PaymentStatusBadge from "../components/PaymentStatusBadge";
+import ClientPromoStrip from "../components/ClientPromoStrip";
 
 const quickCards = [
   {
@@ -108,6 +109,9 @@ export default function CustomerDashboard() {
             Manage your orders, quotes, designs, and invoices in one place.
           </p>
         </div>
+
+        {/* Client Promo Strip */}
+        <ClientPromoStrip />
 
         {/* Quick access cards */}
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">

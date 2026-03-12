@@ -17,7 +17,7 @@ import {
   Clock,
   Globe,
 } from "lucide-react";
-import HeroCarousel from "../components/HeroCarousel";
+import UnifiedHero from "../components/UnifiedHero";
 
 const categories = [
   {
@@ -153,126 +153,11 @@ const trustPoints = [
 
 export default function Landing() {
   const navigate = useNavigate();
-  const [showStaticHero, setShowStaticHero] = useState(true);
 
   return (
     <div className="bg-white text-slate-900">
-      {/* Dynamic Hero Carousel - Will display if banners exist */}
-      <div className="max-w-7xl mx-auto px-6 pt-6">
-        <HeroCarousel onHasContent={(has) => setShowStaticHero(!has)} />
-      </div>
-
-      {/* Static Fallback Hero Section - Shows when no banners */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#2D3E50] via-[#243243] to-[#1A2430] text-white">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top_right,_#D4A843,_transparent_25%)]" />
-        
-        <div className="max-w-7xl mx-auto px-6 py-20 lg:py-28 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Content */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-2 text-sm mb-6">
-                <Sparkles className="w-4 h-4 text-[#D4A843]" />
-                Built for modern business branding
-              </div>
-
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
-                Design, Customize & Order
-                <span className="text-[#D4A843] block mt-2">Business Branding</span>
-                Online
-              </h1>
-
-              <p className="mt-6 text-lg text-slate-200 max-w-xl leading-relaxed">
-                Konekt helps businesses anywhere in the world order branded merchandise,
-                office equipment, and graphic design services — all without visiting our office.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link
-                  to="/products"
-                  data-testid="hero-explore-products-btn"
-                  className="inline-flex items-center gap-2 bg-[#D4A843] hover:bg-[#bf953b] text-slate-900 font-semibold px-8 py-4 rounded-full transition-all shadow-lg shadow-[#D4A843]/20 hover:shadow-[#D4A843]/40 hover:-translate-y-0.5"
-                >
-                  Explore Products <ArrowRight className="w-4 h-4" />
-                </Link>
-
-                <Link
-                  to="/products?branch=Creative+Services"
-                  data-testid="hero-design-project-btn"
-                  className="inline-flex items-center gap-2 border border-white/20 bg-white/10 backdrop-blur-sm hover:bg-white/15 px-8 py-4 rounded-full transition-all"
-                >
-                  <Wand2 className="w-4 h-4" />
-                  Start a Design Project
-                </Link>
-              </div>
-
-              <div className="mt-10 grid sm:grid-cols-2 gap-3">
-                {features.map((item) => (
-                  <div key={item.text} className="flex items-center gap-3 text-sm text-slate-200">
-                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#D4A843]">
-                      {item.icon}
-                    </div>
-                    <span>{item.text}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Right Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="hidden lg:block"
-            >
-              <div className="bg-white/10 border border-white/15 rounded-3xl p-6 backdrop-blur-md shadow-2xl">
-                <div className="rounded-2xl bg-white text-slate-900 p-6">
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-xl font-semibold">Quick Order Journey</h3>
-                    <span className="text-xs bg-[#D4A843]/10 text-[#D4A843] px-3 py-1 rounded-full font-medium">
-                      B2B Optimized
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {["Choose product/service", "Customize or upload brief", "Get approval / quote", "Track production & delivery"].map((step, idx) => (
-                      <div key={step} className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2D3E50] to-[#3d5166] text-white flex items-center justify-center font-semibold text-sm">
-                          {idx + 1}
-                        </div>
-                        <div className="text-sm font-medium">{step}</div>
-                        {idx < 3 && <div className="flex-1 h-px bg-slate-200" />}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 p-4 border border-slate-200">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                        <Wand2 className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-700 font-medium">
-                          Need a logo or company profile first?
-                        </p>
-                        <Link
-                          to="/products?branch=Creative+Services"
-                          className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#2D3E50] hover:text-[#D4A843] transition-colors"
-                        >
-                          Order design services <ArrowRight className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* Unified Hero Rotator */}
+      <UnifiedHero />
 
       {/* Categories Section */}
       <section className="max-w-7xl mx-auto px-6 py-20">
