@@ -290,6 +290,15 @@ async def get_inventory_item(item_id: str):
     return serialize_doc(doc)
 
 
+@router.get("/inventory/items/by-sku/{sku}")
+async def get_inventory_item_by_sku(sku: str):
+    """Get inventory item by SKU for pricing lookup in quotes/invoices"""
+    doc = await db.inventory_items.find_one({"sku": sku})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Inventory item not found")
+    return serialize_doc(doc)
+
+
 @router.post("/inventory/movements")
 async def create_stock_movement(payload: StockMovementCreate):
     """Create a stock movement (in/out/adjustment)"""

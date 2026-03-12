@@ -94,6 +94,9 @@ export const adminApi = {
     api.patch(`/api/admin/production/queue/${queueId}/status`, payload),
   getProductionStats: () => api.get("/api/admin/production/stats"),
 
+  // Product Pricing Lookup
+  getProductPricingBySku: (sku) => api.get(`/api/admin/inventory/items/by-sku/${encodeURIComponent(sku)}`),
+
   // Document Sending (email stubs)
   sendQuoteDocument: (quoteId) => api.post(`/api/admin/send/quote/${quoteId}`),
   sendInvoiceDocument: (invoiceId) => api.post(`/api/admin/send/invoice/${invoiceId}`),

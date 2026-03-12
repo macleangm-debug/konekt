@@ -48,7 +48,7 @@ import InventoryPage from "@/pages/admin/InventoryPage";
 import TasksPage from "@/pages/admin/TasksPage";
 import InvoicesPage from "@/pages/admin/InvoicesPage";
 import AdminQuotes from "@/pages/admin/AdminQuotes";
-import QuotesPageNew from "@/pages/admin/QuotesPageNew";
+import QuotesPage from "@/pages/admin/QuotesPage";
 import QuoteKanbanPage from "@/pages/admin/QuoteKanbanPage";
 import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPageOps from "@/pages/admin/OrdersPageOps";
@@ -113,7 +113,7 @@ function App() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
-          <Route path="quotes" element={<QuotesPageNew />} />
+          <Route path="quotes" element={<QuotesPage />} />
           <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
           <Route path="quotes-old" element={<AdminQuotes />} />
           <Route path="settings" element={<AdminSettings />} />
