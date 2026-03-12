@@ -40,6 +40,11 @@ class CustomerCreate(BaseModel):
     credit_limit: float = 0.0
     is_active: bool = True
 
+    # Added for Phase B - CRM alignment
+    industry: Optional[str] = None
+    source: Optional[str] = None
+    assigned_to: Optional[str] = None
+
 
 class CustomerUpdate(BaseModel):
     company_name: Optional[str] = None
@@ -62,6 +67,11 @@ class CustomerUpdate(BaseModel):
 
     credit_limit: Optional[float] = None
     is_active: Optional[bool] = None
+
+    # Added for Phase B - CRM alignment
+    industry: Optional[str] = None
+    source: Optional[str] = None
+    assigned_to: Optional[str] = None
 
 
 class CustomerOut(CustomerCreate):

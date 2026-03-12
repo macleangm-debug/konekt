@@ -36,6 +36,8 @@ import ReferralLandingPage from "@/pages/ReferralLandingPage";
 import MyReferralsPage from "@/pages/MyReferralsPage";
 import MyPointsPage from "@/pages/MyPointsPage";
 import AffiliateLandingPage from "@/pages/AffiliateLandingPage";
+import AffiliateApplyPage from "@/pages/AffiliateApplyPage";
+import AffiliatePortalPage from "@/pages/AffiliatePortalPage";
 
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
@@ -67,6 +69,7 @@ import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
 import AffiliateCommissionsPage from "@/pages/admin/AffiliateCommissionsPage";
 import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
+import AffiliateApplicationsPage from "@/pages/admin/AffiliateApplicationsPage";
 import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
 import StatementPage from "@/pages/admin/StatementPage";
 
@@ -144,6 +147,7 @@ function App() {
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
           <Route path="affiliates" element={<AffiliatesPage />} />
+          <Route path="affiliate-applications" element={<AffiliateApplicationsPage />} />
           <Route path="affiliate-commissions" element={<AffiliateCommissionsPage />} />
           <Route path="affiliate-payouts" element={<AffiliatePayoutsPage />} />
         </Route>
@@ -177,6 +181,9 @@ function App() {
                     <Route path="/payment/pending" element={<PaymentPendingPage />} />
                     <Route path="/r/:code" element={<ReferralLandingPage />} />
                     <Route path="/a/:code" element={<AffiliateLandingPage />} />
+                    <Route path="/partners/apply" element={<AffiliateApplyPage />} />
+                    <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
+                    <Route path="/affiliate/dashboard" element={<AffiliatePortalPage />} />
                     <Route path="/dashboard/referrals" element={<MyReferralsPage />} />
                     <Route path="/dashboard/points" element={<MyPointsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />

@@ -49,6 +49,8 @@ from affiliate_public_routes import router as affiliate_public_router
 from affiliate_admin_routes import router as affiliate_admin_router
 from affiliate_commission_routes import router as affiliate_commission_router
 from affiliate_payout_routes import router as affiliate_payout_router
+from affiliate_application_routes import router as affiliate_application_router
+from affiliate_portal_routes import router as affiliate_portal_router
 from creative_service_routes_v2 import router as creative_service_v2_router
 from crm_settings_routes import router as crm_settings_router
 from inventory_variant_routes import router as inventory_variant_router
@@ -1976,6 +1978,10 @@ app.include_router(affiliate_commission_router)
 
 # Include affiliate payout routes
 app.include_router(affiliate_payout_router)
+
+# Include affiliate application and portal routes
+app.include_router(affiliate_application_router)
+app.include_router(affiliate_portal_router)
 
 # Include Phase A alignment routes
 app.include_router(creative_service_v2_router)
