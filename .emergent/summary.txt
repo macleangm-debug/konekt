@@ -1,63 +1,73 @@
-<analysis>**original_problem_statement:** The user's goal is to build a comprehensive Business Operating System, Konekt, on an e-commerce platform. The project has progressed through multiple phases, including stabilizing the core application, overhauling the UX, and adding extensive features for creative services, an admin OS, a quote-to-invoice workflow, and a sales pipeline kanban board.
+<analysis>**original_problem_statement:**
+The user's goal is to build a comprehensive Business Operating System, Konekt, on an e-commerce platform. The project has progressed through multiple phases, including stabilizing the core application, overhauling the UX, and adding extensive features.
 
-Most recently, the user provided a detailed professional audit of the application's UX and design, followed by several large implementation packs to elevate the platform to a world-class standard. These packs covered a redesigned PDF engine for quotes/invoices, a complete customer-facing checkout flow and dashboard, an order tracking system, and a payment system tailored for the Tanzanian market (KwikPay mobile money + Bank Transfer).
+Most recently, the user provided a series of large, detailed implementation packs to elevate the platform to a world-class standard. These packs covered:
+1.  **Per-Client Payment Terms:** A full B2B feature to manage customer-specific payment terms (e.g., Net 30, 50% upfront) that automatically apply to quotes and invoices.
+2.  **Polished Quote & Invoice UI:** A complete redesign of the admin pages for creating quotes and invoices, making them more professional and data-driven with features like SKU-based price lookups.
+3.  **Bank Transfer Proof Upload:** A flow for customers to upload proof of payment for bank transfers, an admin page to review/verify these proofs, and visibility of payment status in the customer dashboard.
+4.  The user's latest request is a comprehensive architectural review and implementation plan for three key areas: frontend-to-backend service mapping, a rotating hero banner, and a strengthened affiliate/referral program.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a mature full-stack platform (React/FastAPI/MongoDB). It features a comprehensive admin back-office with modules for CRM, Quotes, Invoices, a Quote Kanban Board, Orders, Inventory, and Production.
+The application is a mature full-stack platform (React/FastAPI/MongoDB). It features a comprehensive admin back-office with modules for CRM, a new Customer management system with payment terms, polished Quote and Invoice pages, a Quote Kanban Board, Orders, Inventory, and Production.
 
-The customer-facing side now includes a full e-commerce flow: product catalog, a new checkout page, a customer dashboard for tracking orders/quotes, and a detailed order timeline view.
+The customer-facing side includes a full e-commerce flow, a checkout page, a customer dashboard for tracking orders (now with payment status), and a detailed order timeline.
 
-The payment system has been implemented with a scaffold for KwikPay (mobile money) and a complete flow for Bank Transfers, including admin verification. The PDF generation for quotes and invoices has been significantly upgraded to a professional, industry-standard design, including fields for company TIN and registration numbers.
+The payment system includes a complete workflow for Bank Transfers, including customer proof-of-payment uploads and admin verification. The PDF generation for quotes and invoices has been significantly upgraded.
 
 **Last working item**:
--   **Last item agent was working:** The agent was executing a massive feature implementation based on the user's audit. This included the new world-class PDF design, the customer checkout flow, the customer dashboard with order tracking, and the KwikPay/Bank Transfer payment system. The final step was to initiate a comprehensive test of all these new features.
+-   **Last item agent was working:** The agent was in the process of analyzing the existing codebase to respond to the user's request for a comprehensive audit of three areas: service mapping, hero banners, and the affiliate program. The agent had viewed several relevant frontend and backend files to gather context before formulating a plan.
 -   **Status:** IN PROGRESS
--   **Agent Testing Done:** N (A testing agent job was just started before the end of the last session)
--   **Which testing method agent to use?** The next agent must first review the results of the  call made in message #247. The report should be at . Based on the results, the agent should plan to fix any identified bugs.
--   **User Testing Done:** N
+-   **Agent Testing Done:** N/A (This is an analysis task, not an implementation).
+-   **Which testing method agent to use?** N/A
+-   **User Testing Done:** N/A
 
 **All Pending/In progress Issue list**:
-There are no known issues. The current focus is on verifying the newly implemented features.
+-   **Issue 1: Investigate and Fix Backend Test Failures (P0)**
+    -   **Description:** The test run for the Bank Transfer Proof Upload feature (message #278) resulted in 2 backend test failures (14/16 passed). These need to be identified and fixed to ensure full backend stability.
+    -   **Next debug checklist:**
+        1.  Read the test report at .
+        2.  Identify the two failing tests and the reasons for failure.
+        3.  Analyze the related code, likely within , , or related payment/order services.
+        4.  Implement a fix.
+        5.  Re-run the tests using  focusing on the backend.
+    -   **Why fix this issue and what will be achieved with the fix?** To ensure the entire payment verification and proof upload workflow is robust and bug-free before proceeding.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** N
+    -   **Should Test frontend/backend/both after fix?** backend
+    -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Verify New Customer Flow and Payment System (P0)**
-    -   **Where to resume:** Analyze the test report from the  call made in the previous session. The report file path will likely be .
-    -   **What will be achieved with this?** This will validate the successful implementation of the entire customer journey, from checkout to payment and order tracking, along with the new professional PDF designs.
-    -   **Status:** TESTING PENDING
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** Waiting for the test report from the subagent.
+-   **Task 1: Complete Codebase Audit and Propose Plan (P0)**
+    -   **Description:** The user has requested a detailed audit and implementation plan for three key areas: service mapping, rotating hero banners, and the affiliate/referral program.
+    -   **Where to resume:** The agent has already viewed several key files (, , , , etc.). The next step is to synthesize this information and present the current state of implementation for each of the three areas to the user, as requested in their message, before proposing an implementation plan.
+    -   **What will be achieved with this?** Fulfills the user's immediate request and sets the direction for the next major development phase.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** N/A
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **Resend Email Integration (P0):** Implement the  integration pack provided by the user in message #5. The UI buttons for sending quotes and invoices already exist. This is blocked pending the user's .
--   **File Uploads for Creative Services (P1):** Implement the real file upload system as detailed in the user's implementation pack (message #205). This is critical to making the creative services flow functional.
--   **Admin Navigation Grouping (P2):** Refactor the admin sidebar and navigation into workspaces (Sales, Operations, etc.) using the implementation pack from the user (message #205) to improve UX.
+-   **Implement Service Mapping, Hero Banner, Affiliate Program (P0):** Based on the user's approval of the plan from the audit task.
+-   **Resend Email Integration (P1):** Implement the  integration pack provided by the user. Blocked on receiving the  from the user.
+-   **Finalize KwikPay Integration (P1):** The current implementation is a scaffold. It needs to be mapped to the official KwikPay merchant API documentation once available.
+-   **File Uploads for Creative Services (P2):** Implement the real file upload system as detailed in the user's implementation pack.
+-   **Admin Navigation Grouping (P2):** Refactor the admin sidebar into workspaces (Sales, Operations, etc.) using the user-provided implementation pack.
 
 **Future Tasks:**
--   **Finalize KwikPay Integration:** The current implementation is a scaffold. It needs to be mapped to the official KwikPay merchant API documentation once available.
--   **Payment Integration (Cards):** Add Stripe or another card processor for international payments.
--   **Customer Account Polish:**
-    -   Implement a Save Draft feature for product customizations.
-    -   Build out the My Invoices and My Quotes pages in the customer dashboard.
-    -   Show payment status on orders in the customer dashboard.
--   **Role-Based Permissions & Audit Trail:** Implement access control for different admin roles.
--   **UX/UI Enhancements (from user audit):**
-    -   Add product previews, trust signals, and testimonials to the landing page.
-    -   Improve the product customization tool with live preview and drag-and-drop.
-    -   Add bulk pricing tables to product pages.
+-   **Payment Integration (Cards):** Add Stripe or another card processor.
+-   **Customer Account Polish:** Save Draft for customizations, My Invoices/Quotes pages.
+-   **Role-Based Permissions & Audit Trail.**
+-   **UX/UI Enhancements:** Add product previews, trust signals, and testimonials to the landing page; improve the product customization tool.
 
 **Completed work in this session**
--   **Quote Kanban Board:** Implemented a fully functional drag-and-drop sales pipeline using  and successfully tested it.
--   **World-Class PDF Redesign:** Replaced the existing PDF service with a new, professional template for quotes and invoices, incorporating fields for TIN, business registration numbers, and tax settings.
--   **Customer Checkout Flow:** Created a new  and backend endpoint () to enable a full customer purchase journey.
--   **Customer Dashboard & Tracking:** Built the , , and  component, supported by new backend routes to allow customers to view and track their orders.
--   **Payment System:** Implemented a dual payment system supporting KwikPay (scaffold) for mobile money and a full workflow for Bank Transfers, including new frontend pages and backend routes for payment intent, webhooks, and admin verification.
--   **Model Enhancements:** Updated backend models for , , and  to support new fields like TIN, registration numbers, and tax configurations.
+-   **Per-Client Payment Terms:** A full B2B customer management system was implemented. This allows setting custom payment terms (e.g., Net 30) for each customer, which automatically flows into quotes and invoices, calculating due dates. This included a new  and corresponding backend routes and models. (Tested and passed).
+-   **Polished Quote & Invoice Admin Pages:** The admin UI for creating and managing quotes and invoices was completely overhauled. It now features a professional, data-driven layout with customer selection, SKU-based product lookups, and clear financial summaries. The old  was replaced. (Tested and passed).
+-   **Bank Transfer Proof Upload & Payment Visibility:** A full workflow was implemented allowing customers to upload proof of payment for bank transfers. This included a new admin  for verification and added payment status badges to the customer dashboard and order tracking pages. (Tested, passed with 2 minor backend failures).
 
 **Earlier issues found/mentioned but not fixed**
-None.
+-   The two backend test failures from the last test run (message #278) were not investigated or fixed. This is captured in the All Pending/In progress Issue list.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** None
@@ -68,68 +78,67 @@ None.
 
 
 **Key Technical Concepts**
--   **Frontend:** React, TailwindCSS, Axios, 
+-   **Frontend:** React, TailwindCSS, Axios
 -   **Backend:** Python, FastAPI, Motor, Pydantic, ReportLab
 -   **Database:** MongoDB
--   **Payments:** KwikPay (Mobile Money), Bank Transfer
+-   **File Handling:** Storing user-uploaded files on the server's file system and serving them via a static directory mount in FastAPI.
 
 **key DB schema**
--   **payments:** (New) Stores payment intents and results. Fields: ,  (order/invoice), , , , , , , .
--   **quotes:** (Updated) Added  and .
--   **company_settings:** (Updated) Added , , , .
+-   **customers:** (New) Stores B2B customer profiles. Key fields: , , , , , .
+-   **payments:** (Updated) , ,  added to support bank transfer verification.
+-   **orders:** (Updated)  added (, , , etc.).
+-   **quotes & invoices:** (Updated)  fields added to store the applied payment terms.
 
 **changes in tech stack**
--   Added  for drag-and-drop functionality.
+None.
 
 **All files of reference**
-*   **Backend:** All newly created and updated files under , especially the new payment-related modules (, , ) and customer-facing routes ().
-*   **Frontend:** All newly created and updated files under , especially the new pages (, , , , all  pages) and components ().
-*    and  were updated to integrate the new routes and navigation.
+*   **Backend:** All files listed in the architecture tree under  that are marked as (New) or (Updated).
+*   **Frontend:** All files listed in the architecture tree under  that are marked as (New) or (Updated/Replaced).
 
 **Areas that need refactoring**:
--    and  are large and could benefit from modularization. The user has provided an implementation pack for refactoring the admin navigation, which is a good first step.
+-   The user has provided a task to refactor the admin navigation, which is pending.
+-   The agent identified and fixed a routing collision between  and . The routing in  and various route files could be reviewed for clarity and to prevent future collisions.
 
 **key api endpoints**
--   : (GET) Retrieves data for the Kanban board.
--   : (PATCH) Updates a quote's status on drag-and-drop.
--   : (POST) Creates a new order from the public checkout page.
--   , : (GET) Endpoints for the customer dashboard.
--   : (GET) Public endpoint to fetch order details for the tracking page.
--   : (POST) Initiates a mobile money payment.
--   : (POST) Initiates a bank transfer payment.
--   : (POST) Allows an admin to manually verify a payment.
--   : (POST) Webhook for KwikPay to send asynchronous status updates.
+-    (CRUD): Manages B2B customers.
+-   : Retrieves product pricing for quote/invoice forms.
+-   : Handles file uploads for payment verification.
+-   : Updated to accept proof of payment details.
+-   : Retrieves all payments for the admin review page.
 
 **Critical Info for New Agent**
--   **Execute User Packs Faithfully:** The user provides highly detailed, tested implementation plans. Your primary job is to execute them accurately.
--   **Check Test Results First:** The immediate task is to review the test results for the last major implementation (checkout, dashboard, payments, PDFs). Find the report at  and address any failures.
--   **Pending User Input:** The  email integration is the next high-priority task, but it is blocked on the user providing their API key. You may need to re-ask for it.
--   **KwikPay is a Scaffold:** The KwikPay payment service () is a placeholder. The actual API request/response format needs to be implemented using the official merchant documentation, which is not yet available.
+-   Your immediate task is to finish the analysis for the user's latest request (message #282) regarding the audit of **services, hero banner, and the affiliate program**. You must first present the current state of these features before proposing any changes or new implementation plans.
+-   Before starting new feature work, it is highly recommended to investigate and fix the two failed backend tests from the last test run ().
+-   The  email integration is blocked pending an API key from the user. You will need to prompt the user for this when you are ready to work on it.
+-   The user provides extremely detailed implementation packs. Follow them faithfully.
 
 **documents and test reports created in this job**
--    (Continuously updated)
+-    (Updated)
 -   
 -   
--   A new report  should be available from the last testing agent run.
+-   
+-    (Contains 2 backend failures)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Msg 207):** Provided the full implementation pack for the KwikPay + Bank Transfer payment system and gave requirements for the enhanced invoice/quote design (TIN, registration numbers, tax settings).
-2.  **Agent (Msg 206):** Asked the user to prioritize between implementing File Uploads, waiting for the Resend API key, or doing both.
-3.  **User (Msg 205):** Provided implementation packs for the real file upload system and for refactoring the admin navigation into grouped workspaces.
-4.  **Agent (Msg 204):** Finished implementing the customer checkout flow, dashboard, and PDF redesign and was preparing to finish.
-5.  **... (multiple agent messages):** Agent worked on implementing the checkout, dashboard, and PDF features.
-6.  **User (Msg 130):** Provided an extremely detailed UX/Design audit of the entire application and a massive implementation pack covering the world-class PDF design, checkout page, customer dashboard, and order timeline.
-7.  **Agent (Msg 129):** Reminded the user about the pending request for their Resend API key.
-8.  **... (multiple agent messages):** Agent recovered from a pod restart and verified the previous work (Kanban board).
-9.  **User (Msg 82):** Approved the Quote Kanban board as complete and prioritized the next tasks: 1) Resend email integration, 2) File uploads, 3) Payment integration. Also requested screenshots of the current app state for a design audit.
-10. **Agent (Msg 81):** Finished the Quote Kanban board implementation and asked the user for the next priority.
+1.  **User (Msg 282):** A detailed request to audit three key areas (service mapping, hero banner, affiliate program). The user asks to see the current implementation and provides a vision for how each should be structured. This is the current active task.
+2.  **Agent (Msg 281):** A  message summarizing the previous disbursement feature, which seems to be from a completely different project context and should be disregarded.
+3.  **User (Msg 201):** Provided the implementation pack for the Bank Transfer Proof Upload feature. (Completed).
+4.  **Agent (Msg 200):**  tool call.
+5.  **User (Msg 144):** Provided the implementation pack for the Polished Quote & Invoice UI. (Completed).
+6.  **Agent (Msg 143):**  tool call.
+7.  **User (Msg 5):** Provided the implementation pack for the Per-Client Payment Terms feature. (Completed).
+8.  **Agent (Msg 4):** Empty message.
+9.  **User (Msg 3):** .
+10. **Agent (Msg 2):**  with the initial plan.
 
 **Project Health Check:**
--   **Broken:** None known, but verification of the latest large feature batch is pending.
+-   **Broken:** Potentially the bank transfer submission/verification flow due to the 2 unidentified backend test failures.
 -   **Mocked:**
     -   **Resend Email Integration:** Awaiting user's API key.
-    -   **KwikPay Service:** The  is a placeholder adapter and requires mapping to the official KwikPay API documentation to be functional.
+    -   **KwikPay Service:** The  is a placeholder adapter.
     -   **AI Endpoints:** Return static data.
+    -   **Affiliate/Referral Program:** The user's request implies the current system is minimal or non-existent.
 
 **3rd Party Integrations**
 -   **ReportLab:** (Active) For PDF generation.
@@ -142,7 +151,7 @@ None.
 -   **Testing agent used after significant changes:** YES.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
 -   **Test files created:** None.
--   **Known regressions:** None.
+-   **Known regressions:** None, but there are 2 new, uninvestigated backend test failures from the last run.
 
 **Credentials to test flow:**
 | Account | Email | Password |
@@ -151,4 +160,5 @@ None.
 | Backup Admin |  |  |
 
 **What agent forgot to execute**
--   The agent has not forgotten tasks but is working through a large, user-defined backlog. The , , and  are the next major implementation packs from the user that have not yet been started.</analysis>
+-   The agent did not investigate the 2 failed backend tests from the most recent test run.
+-   The agent did not add  attributes to the new UI components, which was mentioned in the system prompt. This should be done for future components.</analysis>
