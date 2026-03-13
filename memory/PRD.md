@@ -17,61 +17,71 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
-## Feature-Complete Status as of March 12, 2026
+## Feature-Complete Status as of March 13, 2026
 
-### Core Modules Implemented ✅
+### Core Modules Implemented
 
 #### 1. Inventory System
 - **Product Variants**: SKU-level stock tracking with attributes (size, color, etc.)
 - **Warehouses**: Full CRUD with capacity tracking and utilization stats
 - **Raw Materials**: CRUD with stock adjustment functionality
-- **Stock Transfers**: Move stock between warehouses
+- **Stock Transfers**: Move stock between warehouses with movement tracking
 - **Stock Movement History**: Complete ledger of all stock changes
+- **Stock Reserve/Deduct**: Real order-level stock reservation and deduction
 
 #### 2. Financial System
 - **Central Payments**: Record payments and allocate to multiple invoices
+- **Multi-Invoice Payment Allocation**: Partial payments across invoices with UI
 - **Customer Statements**: Transaction history with running balance
-- **Multi-invoice Payment Allocation**: Partial payments across invoices
-- **Statement PDF Export**: Professional PDF generation
+- **Statement PDF Export**: Professional PDF generation with ReportLab
+- **Customer-Facing Statement View**: Customers can view their own statements
 
 #### 3. Creative Services
 - **Dynamic Brief System**: Service-specific forms with custom fields
 - **Billable Add-ons**: Copywriting, rush delivery, source files
 - **Collaboration Portal**: Comments, revision requests, file deliverables
+- **Project Dashboard**: Customer and admin views of creative projects
 
 #### 4. Affiliate Program
 - **Partner Dashboard**: Self-service for affiliates
 - **Commission Tracking**: Automatic commission on referred sales
 - **Payout Requests**: Affiliates can request payouts
+- **Self-Service Dashboard**: Full affiliate self-service functionality
 
 #### 5. Business OS Admin
 - **CRM Pipeline**: Lead management with kanban views
 - **Document Workflow**: Quote → Order → Invoice visualization
 - **Production Queue**: Kanban with task visibility toggle
 - **Tasks Page**: My Tasks vs Team Overview toggle
+- **Setup Pages**: Industries, Sources, Payment Terms configuration
+- **Launch Readiness**: QA dashboard with readiness score
+
+#### 6. Deployment & Monitoring
+- **Health Endpoints**: /api/health, /api/health/ready
+- **Security Headers**: X-Frame-Options, CSP, etc.
+- **Team Role Management**: Staff role assignment API
 
 ---
 
 ## Testing Status
 
-### Iteration 23 (March 12, 2026) - Comprehensive Testing ✅
+### Iteration 24 (March 13, 2026) - Final Alignment Pack
+- **Backend**: 31/31 tests passed (100%)
+- **Frontend**: All pages verified working
+- **Test File**: `/app/backend/tests/test_final_alignment.py`
+
+### Iteration 23 (March 12, 2026) - Comprehensive Testing
 - **Backend**: 51/51 tests passed (100%)
 - **Frontend**: All pages verified working
 - **Test File**: `/app/backend/tests/test_inventory_finance_admin.py`
 
-### Features Verified Working
-- Stock Movement tracking API
-- Warehouse Transfer API
-- Warehouses CRUD
-- Raw Materials CRUD with stock adjustments
-- Inventory Variants CRUD
-- Central Payments with allocation
-- Customer Statements
-- Creative Services V2 with briefs
-- Production Queue with task visibility
-- CRM Settings
-- Document Workflow Page
-- Admin sidebar consolidated Inventory section
+### Launch Readiness Score: 6/6 (READY)
+- has_products: OK
+- has_variants: OK
+- has_creative_services: OK
+- has_referral_settings: OK
+- has_banners: OK
+- has_warehouses: OK
 
 ---
 
@@ -90,48 +100,86 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
-## API Endpoint Summary
+## New API Endpoints (Final Alignment Pack)
 
-### Inventory APIs
-- `GET/POST /api/admin/warehouses` - Warehouse CRUD
-- `GET/POST /api/admin/raw-materials` - Raw materials CRUD
-- `POST /api/admin/raw-materials/{id}/adjust-stock` - Stock adjustments
-- `GET/POST /api/admin/inventory-variants` - Product variants CRUD
-- `GET /api/admin/stock-movements` - Stock movement history
-- `GET/POST /api/admin/warehouse-transfers` - Warehouse transfers
+### Health & QA
+- `GET /api/health` - Health check
+- `GET /api/health/ready` - Readiness check
+- `GET /api/admin/qa/health-check` - Launch readiness dashboard
 
-### Finance APIs
-- `GET/POST /api/admin/central-payments` - Payment recording
-- `GET /api/admin/statements/customer/{email}` - Customer statement
-- `GET /api/admin/statements/customer/{email}/pdf` - Statement PDF
+### Team Roles
+- `GET /api/admin/team-roles/roles` - List staff roles
+- `GET /api/admin/team-roles/users` - List staff users
+- `POST /api/admin/team-roles/{user_id}/assign` - Assign role
 
-### Creative Services APIs
-- `GET /api/creative-services-v2` - List creative services
-- `POST /api/creative-services-v2/orders` - Submit service order
+### Admin Setup
+- `GET/POST/DELETE /api/admin/setup/industries` - Industries CRUD
+- `GET/POST/DELETE /api/admin/setup/sources` - Lead sources CRUD
+- `GET/POST /api/admin/setup/payment-terms` - Payment terms
 
-### Affiliate APIs
-- `GET /api/affiliate-portal/dashboard` - Affiliate dashboard
-- `POST /api/affiliate-portal/payout-request` - Request payout
+### Creative Projects
+- `GET /api/creative-projects/my` - Customer's projects
+- `GET /api/creative-projects/admin` - All projects (admin)
+- `GET /api/creative-projects/{id}` - Project detail
+- `POST /api/creative-projects/admin/{id}/status` - Update status
+
+### Creative Collaboration
+- `GET/POST /api/creative-project-collab/{id}/comments` - Comments
+- `GET/POST /api/creative-project-collab/{id}/revisions` - Revisions
+- `GET/POST /api/creative-project-collab/{id}/deliverables` - Deliverables
+
+### Customer Statements
+- `GET /api/customer/statements/me` - Customer's statement
+
+### Affiliate Self-Service
+- `GET /api/affiliate-self/dashboard` - Affiliate dashboard
+- `POST /api/affiliate-self/payout-request` - Request payout
+
+### Stock Operations
+- `POST /api/admin/orders-ops/{id}/reserve-stock` - Reserve stock
+- `POST /api/admin/orders-ops/{id}/deduct-stock` - Deduct stock
+
+### Public Variants
+- `GET /api/products-public/{product_id}/variants` - Product variants
 
 ---
 
-## Remaining Tasks (Post QA)
+## New Frontend Pages
+
+### Admin Pages
+- `/admin/setup` - Industries and Sources configuration
+- `/admin/launch-readiness` - Launch readiness dashboard
+- `/admin/payments/record` - Multi-invoice payment allocation
+- `/admin/inventory/transfers` - Warehouse transfers
+- `/admin/inventory/movements` - Stock movement history
+
+### Customer Dashboard Pages
+- `/dashboard/designs` - My design projects list
+- `/dashboard/designs/:projectId` - Project detail with collaboration
+- `/dashboard/statement` - Customer statement view
+
+### Affiliate Pages
+- `/affiliate/dashboard` - Affiliate self-service dashboard
+
+---
+
+## Remaining Tasks
 
 ### P1 - Role Cleanup & Menu Simplification
-- [ ] Review role-based permissions by staff type
+- [x] Role cleanup by staff type (implemented)
 - [ ] Final menu grouping/simplification in admin sidebar
 
 ### P2 - Document & Deployment
 - [ ] Document export polish pass (PDF formatting)
 - [ ] Finalize KwikPay integration with live API
 - [ ] Deployment hardening + production readiness checklist
+- [ ] Connect Resend email service
 
 ### P3 - Future Enhancements
-- [ ] Connect Resend email service
 - [ ] WhatsApp notifications
 - [ ] Mobile app
 - [ ] 3D product customization
 
 ---
 
-*Last updated: March 12, 2026 - Feature-Complete Status with Full QA Sweep*
+*Last updated: March 13, 2026 - Final Alignment Code Pack Complete*
