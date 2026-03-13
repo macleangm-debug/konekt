@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
+import { FileDown } from "lucide-react";
 
 export default function LaunchReadinessPage() {
   const [data, setData] = useState(null);
@@ -18,6 +19,12 @@ export default function LaunchReadinessPage() {
     };
     load();
   }, []);
+
+  const handleExportPDF = () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = process.env.REACT_APP_BACKEND_URL || "";
+    window.open(`${baseUrl}/api/admin/launch-report/pdf?token=${token}`, "_blank");
+  };
 
   if (loading) {
     return (
@@ -41,11 +48,21 @@ export default function LaunchReadinessPage() {
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen">
       <div className="max-w-none w-full space-y-6">
-        <div className="text-left">
-          <h1 className="text-4xl font-bold" data-testid="launch-readiness-title">Launch Readiness</h1>
-          <p className="mt-2 text-slate-600">
-            Review critical setup before production launch.
-          </p>
+        <div className="flex items-start justify-between">
+          <div className="text-left">
+            <h1 className="text-4xl font-bold" data-testid="launch-readiness-title">Launch Readiness</h1>
+            <p className="mt-2 text-slate-600">
+              Review critical setup before production launch.
+            </p>
+          </div>
+          <button
+            onClick={handleExportPDF}
+            className="rounded-xl border bg-white px-5 py-3 font-medium flex items-center gap-2 hover:bg-slate-50"
+            data-testid="export-pdf-btn"
+          >
+            <FileDown className="w-4 h-4" />
+            Export Readiness PDF
+          </button>
         </div>
 
         <div className="rounded-3xl border bg-white p-6" data-testid="readiness-score-card">

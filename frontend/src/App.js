@@ -82,6 +82,7 @@ import DocumentWorkflowPage from "@/pages/admin/DocumentWorkflowPage";
 import RecordPaymentPage from "@/pages/admin/RecordPaymentPage";
 import SetupPage from "@/pages/admin/SetupPage";
 import LaunchReadinessPage from "@/pages/admin/LaunchReadinessPage";
+import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
 import StockMovementsPage from "@/pages/admin/StockMovementsPage";
 
@@ -179,6 +180,7 @@ function App() {
           <Route path="payments/record" element={<RecordPaymentPage />} />
           <Route path="setup" element={<SetupPage />} />
           <Route path="launch-readiness" element={<LaunchReadinessPage />} />
+          <Route path="audit" element={<AuditLogPage />} />
           <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
           <Route path="inventory/movements" element={<StockMovementsPage />} />
         </Route>

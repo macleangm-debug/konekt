@@ -1,0 +1,101 @@
+{
+  "summary": "Iteration 25 - Testing menu simplification, audit logs, and launch readiness PDF. Backend APIs 100% working (11/11 tests passed). Found critical bug: PDF export button broken due to auth method mismatch.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/admin/launch-report/pdf",
+        "issue": "PDF endpoint only accepts Authorization Bearer header but frontend uses ?token= query param for window.open(). This breaks PDF export.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "PDF Export on Launch Readiness page",
+        "issue": "handleExportPDF() uses window.open() with ?token= query param but backend doesn't read query param tokens. PDF download returns 401 Unauthorized.",
+        "affected_selectors": ["[data-testid='export-pdf-btn']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_results": {
+    "backend_api_tests": {
+      "total": 11,
+      "passed": 11,
+      "failed": 0,
+      "test_file": "/app/backend/tests/test_audit_launch_report.py",
+      "categories_tested": {
+        "Audit Log Endpoints": "6 tests - list logs, filters, entity logs, actions, entity-types",
+        "Launch Report Endpoints": "4 tests - auth checks, JSON endpoint, PDF endpoint",
+        "Existing Health Endpoints": "1 test - QA health check still working"
+      }
+    },
+    "frontend_ui_tests": {
+      "admin_login": "PASS - Login and navigation working",
+      "sidebar_navigation": "PASS - All 29 nav items found, grouped sections (Sales, Operations, Inventory, Finance, Marketing, Settings) working",
+      "audit_log_page": "PASS - Filter inputs, Apply/Clear buttons, table display all working",
+      "launch_readiness_page": "PASS - Score card, checks grid, data counts, manual checklist all rendering correctly",
+      "pdf_export_button": "FAIL - Returns 401 due to auth mismatch"
+    }
+  },
+  "features_verified": [
+    "Audit Log API (/api/admin/audit) - list and filter audit logs ✓",
+    "Audit Entity API (/api/admin/audit/entity/{type}/{id}) - entity-specific logs ✓",
+    "Audit Actions/Entity-Types APIs - distinct values for filtering ✓",
+    "Launch Report JSON API (/api/admin/launch-report/json) - returns readiness data ✓",
+    "Launch Report PDF API (/api/admin/launch-report/pdf) - PDF generation works with Bearer token ✓",
+    "Audit Log Page (/admin/audit) - filter inputs and table working ✓",
+    "Launch Readiness Page - shows score and checks ✓ (uses /api/admin/qa/health-check)",
+    "Admin sidebar with grouped navigation (SALES, OPERATIONS, INVENTORY, FINANCE, MARKETING, SETTINGS) ✓"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_audit_launch_report.py",
+    "/app/test_reports/pytest/pytest_results_audit_launch.xml"
+  ],
+  "action_items": [
+    "FIX CRITICAL: Add query param token support to launch_readiness_report_routes.py get_admin_user() for PDF endpoint, OR change frontend to use fetch() with blob download instead of window.open()",
+    "MINOR: LaunchReadinessPage.jsx uses /api/admin/qa/health-check but PDF uses /api/admin/launch-report/json - consider syncing these endpoints for data consistency"
+  ],
+  "critical_code_review_comments": [
+    "PDF endpoint auth mismatch: Backend uses HTTPBearer (Authorization header) but frontend sends token as query param via window.open(). Common pattern is to support both header AND query param for PDF downloads.",
+    "Data source mismatch: LaunchReadinessPage.jsx line 12 uses /api/admin/qa/health-check for display but PDF export at line 26 uses /api/admin/launch-report/pdf which has different checks (has_company_name, has_tax_config, has_currency vs has_products, has_variants, etc.)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_audit_launch_report.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "90% - all UI working except PDF export auth"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "None",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "KwikPay payment integration - placeholder adapter",
+      "OpenAI AI features - placeholder",
+      "Resend email service - hook exists but not used"
+    ]
+  },
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 25 added audit log system and launch readiness PDF export. Backend APIs all working. Critical issue: PDF export button on /admin/launch-readiness returns 401 because frontend uses window.open() with ?token= query param but backend only reads Authorization header. Solution: Modify get_admin_user() in launch_readiness_report_routes.py to also check query params for 'token', or use fetch API with blob download on frontend.",
+  "rca_of_issue": {
+    "bug": "PDF Export returns 401 Unauthorized",
+    "root_cause": "Frontend uses window.open(`${baseUrl}/api/admin/launch-report/pdf?token=${token}`) which can't set Authorization headers. Backend get_admin_user() only reads from HTTPBearer (Authorization header), not from query params.",
+    "reproduction_steps": [
+      "1. Login to admin portal",
+      "2. Navigate to /admin/launch-readiness",
+      "3. Click 'Export Readiness PDF' button",
+      "4. New tab opens with ?token= param",
+      "5. Returns {'detail': 'Not authenticated'} with 401 status"
+    ],
+    "suggested_fix": "Option A: Modify backend get_admin_user() to also check request.query_params.get('token'). Option B: Change frontend to use fetch() API with Authorization header, then create blob URL for download."
+  }
+}

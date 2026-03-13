@@ -70,6 +70,8 @@ from qa_routes import router as qa_router
 from health_routes import router as health_router
 from team_role_routes import router as team_role_router
 from security_headers_middleware import SecurityHeadersMiddleware
+from audit_routes import router as audit_router
+from launch_readiness_report_routes import router as launch_report_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2016,6 +2018,8 @@ app.include_router(public_product_variant_router)
 app.include_router(qa_router)
 app.include_router(health_router)
 app.include_router(team_role_router)
+app.include_router(audit_router)
+app.include_router(launch_report_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 
