@@ -8,9 +8,9 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // Check for admin token first (used in admin pages), then regular token
+  // Check for admin token first (used in admin pages), then regular customer token
   const adminToken = localStorage.getItem("konekt_admin_token");
-  const customerToken = localStorage.getItem("token");
+  const customerToken = localStorage.getItem("konekt_token");
   const token = adminToken || customerToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -22,7 +22,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
+      localStorage.removeItem("konekt_token");
       // Optionally redirect to login
     }
     return Promise.reject(error);

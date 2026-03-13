@@ -66,18 +66,27 @@ async def create_address(payload: dict, user: dict = Depends(get_user)):
             {"customer_email": user_email},
             {"$set": {"is_default": False}}
         )
+    else:
+        # Check if first address - make it default
+        existing_count = await db.customer_addresses.count_documents({"customer_email": user_email})
+        if existing_count == 0:
+            payload["is_default"] = True
     
     doc = {
         "customer_email": user_email,
+        "user_id": user.get("id"),
+        "label": payload.get("label"),
         "full_name": payload.get("full_name"),
         "company_name": payload.get("company_name"),
-        "country": payload.get("country", "TZ"),
+        "country": payload.get("country", "Tanzania"),
         "city": payload.get("city"),
+        "state": payload.get("state"),
         "address_line_1": payload.get("address_line_1"),
         "address_line_2": payload.get("address_line_2"),
         "postal_code": payload.get("postal_code"),
         "phone_prefix": payload.get("phone_prefix", "+255"),
         "phone_number": payload.get("phone_number"),
+        "type": payload.get("type", "shipping"),
         "is_default": payload.get("is_default", False),
         "created_at": now,
         "updated_at": now,
@@ -86,6 +95,67 @@ async def create_address(payload: dict, user: dict = Depends(get_user)):
     result = await db.customer_addresses.insert_one(doc)
     created = await db.customer_addresses.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
+
+
+@router.get("/{address_id}")
+async def get_address(address_id: str, user: dict = Depends(get_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_email = user.get("email")
+    doc = await db.customer_addresses.find_one({
+        "_id": ObjectId(address_id),
+        "customer_email": user_email
+    })
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Address not found")
+    
+    return serialize_doc(doc)
+
+
+@router.put("/{address_id}")
+async def update_address(address_id: str, payload: dict, user: dict = Depends(get_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_email = user.get("email")
+    
+    # Check ownership
+    existing = await db.customer_addresses.find_one({
+        "_id": ObjectId(address_id),
+        "customer_email": user_email
+    })
+    if not existing:
+        raise HTTPException(status_code=404, detail="Address not found")
+    
+    # If setting as default, unset other defaults
+    if payload.get("is_default"):
+        await db.customer_addresses.update_many(
+            {"customer_email": user_email, "_id": {"$ne": ObjectId(address_id)}},
+            {"$set": {"is_default": False}}
+        )
+    
+    update_data = {
+        "label": payload.get("label", existing.get("label")),
+        "address_line_1": payload.get("address_line_1", existing.get("address_line_1")),
+        "address_line_2": payload.get("address_line_2", existing.get("address_line_2")),
+        "city": payload.get("city", existing.get("city")),
+        "state": payload.get("state", existing.get("state")),
+        "postal_code": payload.get("postal_code", existing.get("postal_code")),
+        "country": payload.get("country", existing.get("country")),
+        "type": payload.get("type", existing.get("type", "shipping")),
+        "is_default": payload.get("is_default", existing.get("is_default", False)),
+        "updated_at": datetime.utcnow(),
+    }
+    
+    await db.customer_addresses.update_one(
+        {"_id": ObjectId(address_id)},
+        {"$set": update_data}
+    )
+    
+    updated = await db.customer_addresses.find_one({"_id": ObjectId(address_id)})
+    return serialize_doc(updated)
 
 
 @router.delete("/{address_id}")
@@ -102,10 +172,10 @@ async def delete_address(address_id: str, user: dict = Depends(get_user)):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Address not found")
     
-    return {"deleted": True}
+    return {"message": "Address deleted successfully"}
 
 
-@router.put("/{address_id}/set-default")
+@router.put("/{address_id}/default")
 async def set_default_address(address_id: str, user: dict = Depends(get_user)):
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")

@@ -1,7 +1,7 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 
@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import ChatWidget from "@/components/ChatWidget";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import PromoBanner from "@/components/PromoBanner";
+import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 
 // Customer Pages
 import Landing from "@/pages/LandingNew";
@@ -27,15 +28,12 @@ import CreativeServiceBriefPage from "@/pages/CreativeServiceBriefPage";
 import CreativeServiceDetailPage from "@/pages/CreativeServiceDetailPage";
 import ServiceDetail from "@/pages/ServiceDetail";
 import CheckoutPage from "@/pages/CheckoutPage";
-import CustomerDashboard from "@/pages/CustomerDashboard";
 import OrderConfirmationPage from "@/pages/OrderConfirmationPage";
 import OrderTrackingPage from "@/pages/OrderTrackingPage";
 import PaymentSelectionPage from "@/pages/PaymentSelectionPage";
 import BankTransferPage from "@/pages/BankTransferPage";
 import PaymentPendingPage from "@/pages/PaymentPendingPage";
 import ReferralLandingPage from "@/pages/ReferralLandingPage";
-import MyReferralsPage from "@/pages/MyReferralsPage";
-import MyPointsPage from "@/pages/MyPointsPage";
 import AffiliateLandingPage from "@/pages/AffiliateLandingPage";
 import AffiliateApplyPage from "@/pages/AffiliateApplyPage";
 import AffiliatePortalPage from "@/pages/AffiliatePortalPage";
@@ -86,10 +84,20 @@ import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
 import StockMovementsPage from "@/pages/admin/StockMovementsPage";
 
-// Dashboard pages (customer)
+// Dashboard pages (customer) - New Portal
+import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
+import CustomerOrdersPage from "@/pages/dashboard/CustomerOrdersPage";
+import CustomerQuotesPage from "@/pages/dashboard/CustomerQuotesPage";
+import CustomerQuoteDetailPage from "@/pages/dashboard/CustomerQuoteDetailPage";
+import CustomerInvoicesPage from "@/pages/dashboard/CustomerInvoicesPage";
+import CustomerInvoiceDetailPage from "@/pages/dashboard/CustomerInvoiceDetailPage";
 import MyDesignProjectsPage from "@/pages/dashboard/MyDesignProjectsPage";
 import CreativeProjectDetailPage from "@/pages/dashboard/CreativeProjectDetailPage";
 import MyStatementPage from "@/pages/dashboard/MyStatementPage";
+import AddressesPage from "@/pages/dashboard/AddressesPage";
+import MaintenanceDashboardPage from "@/pages/dashboard/MaintenanceDashboardPage";
+import ReferralsPage from "@/pages/dashboard/ReferralsPage";
+import PointsPage from "@/pages/dashboard/PointsPage";
 
 // Affiliate pages
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
@@ -121,6 +129,25 @@ function AdminSettings() {
       <p className="text-muted-foreground">System settings coming soon.</p>
     </div>
   );
+}
+
+// Customer Route Guard - Redirects to auth if not logged in
+function CustomerRoute({ children }) {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  return children;
 }
 
 function App() {
@@ -185,7 +212,32 @@ function App() {
           <Route path="inventory/movements" element={<StockMovementsPage />} />
         </Route>
         
-        {/* Customer Routes */}
+        {/* Customer Portal Routes - Must be before catch-all */}
+        <Route path="/dashboard/*" element={
+          <AuthProvider>
+            <CartProvider>
+              <CustomerRoute>
+                <CustomerPortalLayout />
+              </CustomerRoute>
+            </CartProvider>
+          </AuthProvider>
+        }>
+          <Route index element={<CustomerDashboardHome />} />
+          <Route path="orders" element={<CustomerOrdersPage />} />
+          <Route path="quotes" element={<CustomerQuotesPage />} />
+          <Route path="quotes/:quoteId" element={<CustomerQuoteDetailPage />} />
+          <Route path="invoices" element={<CustomerInvoicesPage />} />
+          <Route path="invoices/:invoiceId" element={<CustomerInvoiceDetailPage />} />
+          <Route path="designs" element={<MyDesignProjectsPage />} />
+          <Route path="designs/:projectId" element={<CreativeProjectDetailPage />} />
+          <Route path="statement" element={<MyStatementPage />} />
+          <Route path="addresses" element={<AddressesPage />} />
+          <Route path="maintenance" element={<MaintenanceDashboardPage />} />
+          <Route path="referrals" element={<ReferralsPage />} />
+          <Route path="points" element={<PointsPage />} />
+        </Route>
+        
+        {/* Public Customer Routes - Catch-all at the end */}
         <Route path="/*" element={
           <AuthProvider>
             <CartProvider>
@@ -202,13 +254,6 @@ function App() {
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/dashboard" element={<CustomerDashboard />} />
-                    <Route path="/dashboard/orders" element={<CustomerDashboard />} />
-                    <Route path="/dashboard/quotes" element={<CustomerDashboard />} />
-                    <Route path="/dashboard/invoices" element={<CustomerDashboard />} />
-                    <Route path="/dashboard/designs" element={<MyDesignProjectsPage />} />
-                    <Route path="/dashboard/designs/:projectId" element={<CreativeProjectDetailPage />} />
-                    <Route path="/dashboard/statement" element={<MyStatementPage />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/orders/:orderId/tracking" element={<OrderTrackingPage />} />
                     <Route path="/payment/select" element={<PaymentSelectionPage />} />
@@ -219,8 +264,6 @@ function App() {
                     <Route path="/partners/apply" element={<AffiliateApplyPage />} />
                     <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
                     <Route path="/affiliate/dashboard" element={<AffiliateDashboardPage />} />
-                    <Route path="/dashboard/referrals" element={<MyReferralsPage />} />
-                    <Route path="/dashboard/points" element={<MyPointsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
                     <Route path="/creative-services/:slug" element={<CreativeServiceDetailPage />} />

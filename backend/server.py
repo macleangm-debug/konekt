@@ -72,6 +72,9 @@ from team_role_routes import router as team_role_router
 from security_headers_middleware import SecurityHeadersMiddleware
 from audit_routes import router as audit_router
 from launch_readiness_report_routes import router as launch_report_router
+from customer_address_routes import router as customer_address_router
+from customer_invoice_routes import router as customer_invoice_router
+from customer_quote_actions_routes import router as customer_quote_actions_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1311,6 +1314,12 @@ async def get_orders(user: dict = Depends(get_current_user)):
     orders = await db.orders.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"orders": orders}
 
+@api_router.get("/orders/me")
+async def get_my_orders(user: dict = Depends(get_current_user)):
+    """Get customer's own orders - used by customer dashboard"""
+    orders = await db.orders.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return orders
+
 @api_router.get("/orders/{order_id}")
 async def get_order(order_id: str, user: dict = Depends(get_current_user)):
     order = await db.orders.find_one({"id": order_id, "user_id": user["id"]}, {"_id": 0})
@@ -2020,6 +2029,9 @@ app.include_router(health_router)
 app.include_router(team_role_router)
 app.include_router(audit_router)
 app.include_router(launch_report_router)
+app.include_router(customer_address_router)
+app.include_router(customer_invoice_router)
+app.include_router(customer_quote_actions_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

@@ -1,0 +1,112 @@
+{
+  "summary": "Iteration 26 - Customer Portal Redesign Testing. Backend APIs 100% working (14/14 tests passed). Frontend UI working correctly with all navigation, filters, and address CRUD. Fixed missing /api/orders/me endpoint and corrected API paths for referrals/points endpoints.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Sidebar Logo",
+        "issues": ["Logo in sidebar appears as a black square with Konekt text below - may need logo image adjustment for dark background"]
+      }
+    ]
+  },
+  "test_results": {
+    "backend_api_tests": {
+      "total": 14,
+      "passed": 14,
+      "failed": 0,
+      "test_file": "/app/backend/tests/test_customer_portal_apis.py",
+      "categories_tested": {
+        "Health Endpoints": "1 test - API health check",
+        "Customer Authentication": "1 test - login flow",
+        "Customer Quotes API": "2 tests - unauthorized/authorized access",
+        "Customer Invoices API": "2 tests - unauthorized/authorized access",
+        "Customer Addresses API": "4 tests - list, create, full CRUD flow",
+        "Customer Orders API": "1 test - get my orders",
+        "Referrals & Points API": "3 tests - referrals/me, points/me, my-referrals"
+      }
+    },
+    "frontend_ui_tests": {
+      "customer_login": "PASS - Login redirects to /dashboard with token saved",
+      "customer_dashboard_home": "PASS - Stats cards, referral banner, recent orders/quotes sections all rendering",
+      "sidebar_navigation": "PASS - All nav items clickable: Dashboard, My Orders, My Quotes, My Invoices, Design Projects, Maintenance, Address Book, My Statement, Referrals, My Points",
+      "customer_orders_page": "PASS - Filters (All/Active/Completed/Cancelled) working, empty state displayed",
+      "customer_quotes_page": "PASS - Filters (All/Pending/Approved/Rejected) working, empty state displayed",
+      "customer_invoices_page": "PASS - Filters (All/Unpaid/Paid/Overdue) working, empty state displayed",
+      "addresses_page": "PASS - Add Address dialog opens, form submission works, address saved and displayed correctly",
+      "referrals_page": "PASS - Referral code displayed, Copy Link and Share buttons present, stats cards showing",
+      "points_page": "PASS - Points balance stat card displayed, transaction history section present"
+    }
+  },
+  "bugs_fixed_during_testing": [
+    {
+      "bug": "/api/orders/me endpoint missing - returning 404",
+      "fix": "Added /api/orders/me endpoint in server.py that returns customer orders directly (not wrapped in object)",
+      "file_changed": "/app/backend/server.py"
+    },
+    {
+      "bug": "Frontend calling wrong API paths for referrals and points",
+      "fix": "Updated frontend to use /api/customer/referrals/me and /api/customer/points/me instead of /api/referrals/me and /api/points/me",
+      "files_changed": [
+        "/app/frontend/src/components/customer/ReferralPointsBanner.jsx",
+        "/app/frontend/src/pages/dashboard/ReferralsPage.jsx",
+        "/app/frontend/src/pages/dashboard/PointsPage.jsx"
+      ]
+    },
+    {
+      "bug": "Incorrect response field mapping for referrals and points data",
+      "fix": "Updated ReferralPointsBanner to use total_referrals instead of referral_count, and wallet.points_balance instead of balance",
+      "files_changed": ["/app/frontend/src/components/customer/ReferralPointsBanner.jsx"]
+    }
+  ],
+  "features_verified": [
+    "Customer login flow redirects to /dashboard ✓",
+    "CustomerPortalLayout with sidebar navigation ✓",
+    "CustomerDashboardHome with stats cards (orders, quotes, invoices, projects) ✓",
+    "ReferralPointsBanner displays referral code and points ✓",
+    "CustomerQuotesPage - filters work (all/pending/approved/rejected) ✓",
+    "CustomerInvoicesPage - filters work (all/unpaid/paid/overdue) ✓",
+    "CustomerOrdersPage - filters work (all/active/completed/cancelled) ✓",
+    "AddressesPage - CRUD operations work, dialog opens correctly ✓",
+    "ReferralsPage - displays referral code, copy/share buttons, stats ✓",
+    "PointsPage - displays points balance and stats ✓",
+    "API endpoint /api/customer/quotes returns customer quotes ✓",
+    "API endpoint /api/customer/invoices returns customer invoices ✓",
+    "API endpoint /api/customer/addresses - CRUD operations work ✓"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_customer_portal_apis.py",
+    "/app/test_reports/pytest/pytest_results_customer_portal.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/frontend/src/components/customer/ReferralPointsBanner.jsx",
+    "/app/frontend/src/pages/dashboard/ReferralsPage.jsx",
+    "/app/frontend/src/pages/dashboard/PointsPage.jsx",
+    "/app/backend/tests/test_customer_portal_apis.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% - all tested features working"
+  },
+  "test_credentials": {
+    "test_customer_email": "testcustomer@konekt.co.tz",
+    "test_customer_password": "TestPass123!",
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Test address created via UI testing - 'Test Office' at '123 Test Street, Dar es Salaam, Tanzania'",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["KwikPay payment integration - placeholder adapter"]
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 26 tested the new customer portal redesign. All major features working: login redirect to dashboard, sidebar navigation, all dashboard pages (orders, quotes, invoices, addresses, referrals, points). Three bugs were fixed during testing: (1) missing /api/orders/me endpoint, (2) incorrect API paths for referrals/points, (3) incorrect response field mapping. Backend has 14 passing tests for customer portal APIs."
+}
