@@ -60,6 +60,16 @@ from warehouse_routes import router as warehouse_router
 from raw_materials_routes import router as raw_materials_router
 from stock_movement_routes import router as stock_movement_router
 from warehouse_transfer_routes import router as warehouse_transfer_router
+from creative_project_collab_routes import router as creative_project_collab_router
+from creative_project_routes import router as creative_project_router
+from customer_statement_routes import router as customer_statement_router
+from affiliate_self_service_routes import router as affiliate_self_service_router
+from admin_setup_routes import router as admin_setup_router
+from public_product_variant_routes import router as public_product_variant_router
+from qa_routes import router as qa_router
+from health_routes import router as health_router
+from team_role_routes import router as team_role_router
+from security_headers_middleware import SecurityHeadersMiddleware
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -1997,6 +2007,17 @@ app.include_router(warehouse_router)
 app.include_router(raw_materials_router)
 app.include_router(stock_movement_router)
 app.include_router(warehouse_transfer_router)
+app.include_router(creative_project_collab_router)
+app.include_router(creative_project_router)
+app.include_router(customer_statement_router)
+app.include_router(affiliate_self_service_router)
+app.include_router(admin_setup_router)
+app.include_router(public_product_variant_router)
+app.include_router(qa_router)
+app.include_router(health_router)
+app.include_router(team_role_router)
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

@@ -79,6 +79,19 @@ import InventoryVariantsPage from "@/pages/admin/InventoryVariantsPage";
 import WarehousesPage from "@/pages/admin/WarehousesPage";
 import RawMaterialsPage from "@/pages/admin/RawMaterialsPage";
 import DocumentWorkflowPage from "@/pages/admin/DocumentWorkflowPage";
+import RecordPaymentPage from "@/pages/admin/RecordPaymentPage";
+import SetupPage from "@/pages/admin/SetupPage";
+import LaunchReadinessPage from "@/pages/admin/LaunchReadinessPage";
+import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
+import StockMovementsPage from "@/pages/admin/StockMovementsPage";
+
+// Dashboard pages (customer)
+import MyDesignProjectsPage from "@/pages/dashboard/MyDesignProjectsPage";
+import CreativeProjectDetailPage from "@/pages/dashboard/CreativeProjectDetailPage";
+import MyStatementPage from "@/pages/dashboard/MyStatementPage";
+
+// Affiliate pages
+import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -163,6 +176,11 @@ function App() {
           <Route path="affiliate-applications" element={<AffiliateApplicationsPage />} />
           <Route path="affiliate-commissions" element={<AffiliateCommissionsPage />} />
           <Route path="affiliate-payouts" element={<AffiliatePayoutsPage />} />
+          <Route path="payments/record" element={<RecordPaymentPage />} />
+          <Route path="setup" element={<SetupPage />} />
+          <Route path="launch-readiness" element={<LaunchReadinessPage />} />
+          <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
+          <Route path="inventory/movements" element={<StockMovementsPage />} />
         </Route>
         
         {/* Customer Routes */}
@@ -185,8 +203,10 @@ function App() {
                     <Route path="/dashboard" element={<CustomerDashboard />} />
                     <Route path="/dashboard/orders" element={<CustomerDashboard />} />
                     <Route path="/dashboard/quotes" element={<CustomerDashboard />} />
-                    <Route path="/dashboard/designs" element={<CustomerDashboard />} />
                     <Route path="/dashboard/invoices" element={<CustomerDashboard />} />
+                    <Route path="/dashboard/designs" element={<MyDesignProjectsPage />} />
+                    <Route path="/dashboard/designs/:projectId" element={<CreativeProjectDetailPage />} />
+                    <Route path="/dashboard/statement" element={<MyStatementPage />} />
                     <Route path="/orders/:orderId" element={<OrderTracking />} />
                     <Route path="/orders/:orderId/tracking" element={<OrderTrackingPage />} />
                     <Route path="/payment/select" element={<PaymentSelectionPage />} />
@@ -196,7 +216,7 @@ function App() {
                     <Route path="/a/:code" element={<AffiliateLandingPage />} />
                     <Route path="/partners/apply" element={<AffiliateApplyPage />} />
                     <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
-                    <Route path="/affiliate/dashboard" element={<AffiliatePortalPage />} />
+                    <Route path="/affiliate/dashboard" element={<AffiliateDashboardPage />} />
                     <Route path="/dashboard/referrals" element={<MyReferralsPage />} />
                     <Route path="/dashboard/points" element={<MyPointsPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />

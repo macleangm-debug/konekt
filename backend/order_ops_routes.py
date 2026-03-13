@@ -281,3 +281,154 @@ async def send_order_to_production(payload: ProductionQueueCreate):
 
     created = await db.production_queue.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
+
+
+@router.post("/{order_id}/reserve-stock")
+async def reserve_order_stock(order_id: str):
+    """Reserve stock for order variants"""
+    now = datetime.now(timezone.utc)
+    
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    line_items = order.get("line_items", []) or order.get("items", []) or []
+    
+    for item in line_items:
+        variant_id = item.get("variant_id")
+        quantity = int(item.get("quantity", 0) or 0)
+        if not variant_id or quantity <= 0:
+            continue
+        
+        try:
+            variant = await db.inventory_variants.find_one({"_id": ObjectId(variant_id)})
+        except Exception:
+            continue
+            
+        if not variant:
+            continue
+        
+        stock_on_hand = int(variant.get("stock_on_hand", 0) or 0)
+        reserved_stock = int(variant.get("reserved_stock", 0) or 0)
+        available = stock_on_hand - reserved_stock
+        
+        if available < quantity:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Insufficient stock for SKU {variant.get('sku')}. Available: {available}"
+            )
+        
+        await db.inventory_variants.update_one(
+            {"_id": ObjectId(variant_id)},
+            {
+                "$inc": {"reserved_stock": quantity},
+                "$set": {"updated_at": now.isoformat()},
+            },
+        )
+        
+        await db.stock_movements.insert_one({
+            "movement_type": "reserve",
+            "variant_id": variant_id,
+            "sku": variant.get("sku"),
+            "warehouse": variant.get("warehouse_location"),
+            "quantity": quantity,
+            "reference_type": "order",
+            "reference_id": order_id,
+            "created_at": now.isoformat(),
+        })
+    
+    await db.orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "stock_status": "reserved",
+                "updated_at": now.isoformat(),
+            },
+            "$push": {
+                "status_history": {
+                    "status": order.get("status", "pending"),
+                    "note": "Stock reserved for order",
+                    "timestamp": now.isoformat(),
+                }
+            },
+        },
+    )
+    
+    updated = await db.orders.find_one({"_id": ObjectId(order_id)})
+    return serialize_doc(updated)
+
+
+@router.post("/{order_id}/deduct-stock")
+async def deduct_order_stock(order_id: str):
+    """Deduct stock for order variants (goods issue)"""
+    now = datetime.now(timezone.utc)
+    
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    line_items = order.get("line_items", []) or order.get("items", []) or []
+    
+    for item in line_items:
+        variant_id = item.get("variant_id")
+        quantity = int(item.get("quantity", 0) or 0)
+        if not variant_id or quantity <= 0:
+            continue
+        
+        try:
+            variant = await db.inventory_variants.find_one({"_id": ObjectId(variant_id)})
+        except Exception:
+            continue
+            
+        if not variant:
+            continue
+        
+        await db.inventory_variants.update_one(
+            {"_id": ObjectId(variant_id)},
+            {
+                "$inc": {
+                    "stock_on_hand": -quantity,
+                    "reserved_stock": -quantity,
+                },
+                "$set": {"updated_at": now.isoformat()},
+            },
+        )
+        
+        await db.stock_movements.insert_one({
+            "movement_type": "deduct",
+            "variant_id": variant_id,
+            "sku": variant.get("sku"),
+            "warehouse": variant.get("warehouse_location"),
+            "quantity": -quantity,
+            "reference_type": "order",
+            "reference_id": order_id,
+            "created_at": now.isoformat(),
+        })
+    
+    await db.orders.update_one(
+        {"_id": ObjectId(order_id)},
+        {
+            "$set": {
+                "stock_status": "deducted",
+                "updated_at": now.isoformat(),
+            },
+            "$push": {
+                "status_history": {
+                    "status": order.get("status", "pending"),
+                    "note": "Stock deducted from order",
+                    "timestamp": now.isoformat(),
+                }
+            },
+        },
+    )
+    
+    updated = await db.orders.find_one({"_id": ObjectId(order_id)})
+    return serialize_doc(updated)
