@@ -22,8 +22,8 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 ### Core Modules Implemented
 
 #### 1. Inventory System
-- **Product Variants**: SKU-level stock tracking with attributes (size, color, etc.)
-- **Warehouses**: Full CRUD with capacity tracking and utilization stats
+- **Product Variants**: SKU-level stock tracking with attributes
+- **Warehouses**: Full CRUD with capacity tracking
 - **Raw Materials**: CRUD with stock adjustment functionality
 - **Stock Transfers**: Move stock between warehouses with movement tracking
 - **Stock Movement History**: Complete ledger of all stock changes
@@ -31,16 +31,16 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 #### 2. Financial System
 - **Central Payments**: Record payments and allocate to multiple invoices
-- **Multi-Invoice Payment Allocation**: Partial payments across invoices with UI
+- **Multi-Invoice Payment Allocation**: Partial payments across invoices
 - **Customer Statements**: Transaction history with running balance
-- **Statement PDF Export**: Professional PDF generation with ReportLab
+- **Statement PDF Export**: Professional PDF generation
 - **Customer-Facing Statement View**: Customers can view their own statements
 
 #### 3. Creative Services
 - **Dynamic Brief System**: Service-specific forms with custom fields
 - **Billable Add-ons**: Copywriting, rush delivery, source files
 - **Collaboration Portal**: Comments, revision requests, file deliverables
-- **Project Dashboard**: Customer and admin views of creative projects
+- **Project Dashboard**: Customer and admin views
 
 #### 4. Affiliate Program
 - **Partner Dashboard**: Self-service for affiliates
@@ -54,34 +54,86 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Production Queue**: Kanban with task visibility toggle
 - **Tasks Page**: My Tasks vs Team Overview toggle
 - **Setup Pages**: Industries, Sources, Payment Terms configuration
-- **Launch Readiness**: QA dashboard with readiness score
+- **Launch Readiness**: QA dashboard with PDF export
 
-#### 6. Deployment & Monitoring
+#### 6. Activity Logs / Audit Trail ✅ NEW
+- **Audit Log API**: Track user actions
+- **Audit Log Page**: Filter and view system activity
+- **Entity Audit Panel**: Reusable component for entity history
+
+#### 7. Deployment & Monitoring
 - **Health Endpoints**: /api/health, /api/health/ready
 - **Security Headers**: X-Frame-Options, CSP, etc.
 - **Team Role Management**: Staff role assignment API
+- **Launch Readiness PDF**: Go-live certification report
+
+---
+
+## Admin Navigation Structure (Simplified)
+
+The admin sidebar is now organized into logical groups:
+
+1. **Dashboard & Overview**
+   - Dashboard
+   - Launch Readiness
+
+2. **Sales**
+   - CRM Pipeline
+   - Quotes
+   - Customers
+
+3. **Operations**
+   - Orders
+   - Order Operations
+   - Production Queue
+   - Tasks
+
+4. **Inventory**
+   - Products
+   - Stock Items
+   - Stock Movements
+   - Transfers
+   - Warehouses
+   - Raw Materials
+
+5. **Finance**
+   - Invoices
+   - Central Payments
+   - Record Payment
+   - Statements
+   - Document Flow
+
+6. **Marketing**
+   - Hero Banners
+   - Creative Services
+   - Referral Settings
+   - Affiliates
+   - Applications
+
+7. **Settings**
+   - Company Settings
+   - Setup Lists
+   - Users
+   - Audit Log
 
 ---
 
 ## Testing Status
 
-### Iteration 24 (March 13, 2026) - Final Alignment Pack
-- **Backend**: 31/31 tests passed (100%)
+### Iteration 25 (March 13, 2026) - Menu & Audit Logs
+- **Backend**: 11/11 tests passed (100%)
 - **Frontend**: All pages verified working
-- **Test File**: `/app/backend/tests/test_final_alignment.py`
+- **Fixed**: PDF export now supports query param tokens
 
-### Iteration 23 (March 12, 2026) - Comprehensive Testing
-- **Backend**: 51/51 tests passed (100%)
-- **Frontend**: All pages verified working
-- **Test File**: `/app/backend/tests/test_inventory_finance_admin.py`
-
-### Launch Readiness Score: 6/6 (READY)
+### Launch Readiness Score: 7/8
 - has_products: OK
 - has_variants: OK
 - has_creative_services: OK
-- has_referral_settings: OK
 - has_banners: OK
 - has_warehouses: OK
+- has_company_name: OK (needs setup)
+- has_tax_config: Missing
+- has_currency: Missing
 
 ---
 
@@ -100,80 +152,33 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
-## New API Endpoints (Final Alignment Pack)
+## New API Endpoints (This Session)
 
-### Health & QA
-- `GET /api/health` - Health check
-- `GET /api/health/ready` - Readiness check
-- `GET /api/admin/qa/health-check` - Launch readiness dashboard
+### Audit Log
+- `GET /api/admin/audit` - List audit logs with filters
+- `GET /api/admin/audit/entity/{type}/{id}` - Entity-specific logs
+- `GET /api/admin/audit/actions` - Distinct action types
+- `GET /api/admin/audit/entity-types` - Distinct entity types
 
-### Team Roles
-- `GET /api/admin/team-roles/roles` - List staff roles
-- `GET /api/admin/team-roles/users` - List staff users
-- `POST /api/admin/team-roles/{user_id}/assign` - Assign role
-
-### Admin Setup
-- `GET/POST/DELETE /api/admin/setup/industries` - Industries CRUD
-- `GET/POST/DELETE /api/admin/setup/sources` - Lead sources CRUD
-- `GET/POST /api/admin/setup/payment-terms` - Payment terms
-
-### Creative Projects
-- `GET /api/creative-projects/my` - Customer's projects
-- `GET /api/creative-projects/admin` - All projects (admin)
-- `GET /api/creative-projects/{id}` - Project detail
-- `POST /api/creative-projects/admin/{id}/status` - Update status
-
-### Creative Collaboration
-- `GET/POST /api/creative-project-collab/{id}/comments` - Comments
-- `GET/POST /api/creative-project-collab/{id}/revisions` - Revisions
-- `GET/POST /api/creative-project-collab/{id}/deliverables` - Deliverables
-
-### Customer Statements
-- `GET /api/customer/statements/me` - Customer's statement
-
-### Affiliate Self-Service
-- `GET /api/affiliate-self/dashboard` - Affiliate dashboard
-- `POST /api/affiliate-self/payout-request` - Request payout
-
-### Stock Operations
-- `POST /api/admin/orders-ops/{id}/reserve-stock` - Reserve stock
-- `POST /api/admin/orders-ops/{id}/deduct-stock` - Deduct stock
-
-### Public Variants
-- `GET /api/products-public/{product_id}/variants` - Product variants
-
----
-
-## New Frontend Pages
-
-### Admin Pages
-- `/admin/setup` - Industries and Sources configuration
-- `/admin/launch-readiness` - Launch readiness dashboard
-- `/admin/payments/record` - Multi-invoice payment allocation
-- `/admin/inventory/transfers` - Warehouse transfers
-- `/admin/inventory/movements` - Stock movement history
-
-### Customer Dashboard Pages
-- `/dashboard/designs` - My design projects list
-- `/dashboard/designs/:projectId` - Project detail with collaboration
-- `/dashboard/statement` - Customer statement view
-
-### Affiliate Pages
-- `/affiliate/dashboard` - Affiliate self-service dashboard
+### Launch Report
+- `GET /api/admin/launch-report/json` - Readiness data as JSON
+- `GET /api/admin/launch-report/pdf` - PDF report (supports ?token= query param)
 
 ---
 
 ## Remaining Tasks
 
-### P1 - Role Cleanup & Menu Simplification
-- [x] Role cleanup by staff type (implemented)
-- [ ] Final menu grouping/simplification in admin sidebar
-
-### P2 - Document & Deployment
-- [ ] Document export polish pass (PDF formatting)
+### P1 - Integration & Polish
 - [ ] Finalize KwikPay integration with live API
-- [ ] Deployment hardening + production readiness checklist
 - [ ] Connect Resend email service
+- [ ] PDF document polish (quotes, invoices)
+- [ ] Configure company tax settings
+
+### P2 - Deployment
+- [ ] Deployment hardening + production readiness checklist
+- [ ] SSL/DNS verification
+- [ ] Backup configuration
+- [ ] Monitoring setup
 
 ### P3 - Future Enhancements
 - [ ] WhatsApp notifications
@@ -182,4 +187,4 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ---
 
-*Last updated: March 13, 2026 - Final Alignment Code Pack Complete*
+*Last updated: March 13, 2026 - Menu Simplification & Activity Logs Complete*

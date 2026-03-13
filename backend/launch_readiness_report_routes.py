@@ -3,7 +3,7 @@ Launch Readiness Report Routes
 Generate JSON and PDF reports for go-live certification
 """
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
@@ -23,12 +23,25 @@ db = client[db_name]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
 
 
-async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify admin user"""
-    if not credentials:
+async def get_admin_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Verify admin user - supports both Bearer token and query param token"""
+    token = None
+    
+    # Try Authorization header first
+    if credentials:
+        token = credentials.credentials
+    else:
+        # Try query param token (for PDF downloads via window.open)
+        token = request.query_params.get("token")
+    
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    
     try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
         user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")

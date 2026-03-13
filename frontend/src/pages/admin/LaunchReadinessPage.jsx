@@ -9,7 +9,8 @@ export default function LaunchReadinessPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get("/api/admin/qa/health-check");
+        // Use the same endpoint as the PDF report for consistency
+        const res = await api.get("/api/admin/launch-report/json");
         setData(res.data);
       } catch (error) {
         console.error("Failed to load readiness data:", error);
