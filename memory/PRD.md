@@ -56,7 +56,7 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Setup Pages**: Industries, Sources, Payment Terms configuration
 - **Launch Readiness**: QA dashboard with PDF export
 
-#### 6. Activity Logs / Audit Trail ✅ NEW
+#### 6. Activity Logs / Audit Trail
 - **Audit Log API**: Track user actions
 - **Audit Log Page**: Filter and view system activity
 - **Entity Audit Panel**: Reusable component for entity history
@@ -66,6 +66,20 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Security Headers**: X-Frame-Options, CSP, etc.
 - **Team Role Management**: Staff role assignment API
 - **Launch Readiness PDF**: Go-live certification report
+
+#### 8. Customer Portal Redesign ✅ NEW (March 13, 2026)
+- **CustomerPortalLayout**: New dedicated sidebar layout for logged-in customers, separate from public website
+- **CustomerDashboardHome**: Rich, action-driven dashboard with stats cards, referral banner, recent activity
+- **CustomerQuotesPage**: View/filter quotes (all/pending/approved/rejected)
+- **CustomerQuoteDetailPage**: Quote detail with approval workflow
+- **CustomerInvoicesPage**: View/filter invoices (all/unpaid/paid/overdue) with pay now buttons
+- **CustomerInvoiceDetailPage**: Invoice detail with payment button
+- **CustomerOrdersPage**: View/filter orders (all/active/completed/cancelled) with tracking links
+- **AddressesPage**: Full CRUD for customer addresses with dialog form
+- **ReferralsPage**: Referral code, copy/share buttons, stats, referral list
+- **PointsPage**: Points balance, earning methods, transaction history
+- **ReferralPointsBanner**: Reusable component showing referral code and points on dashboard
+- **EmptyStateCard**: Reusable empty state component with action buttons
 
 ---
 
