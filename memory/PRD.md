@@ -92,6 +92,26 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **ReferralPointsBanner**: Reusable component showing referral code and points on dashboard
 - **EmptyStateCard**: Reusable empty state component with action buttons
 
+#### 10. Codebase Pack 2 - Service-Specific Dynamic Forms ✅ NEW (March 15, 2026)
+- **Service Forms System**: 9 pre-configured service forms with dynamic schemas
+  - Creative Services: Logo Design, Flyer Design, Brochure Design, Company Profile Design, Banner Design
+  - Copywriting Services: Full business copywriting service
+  - Maintenance Services: Equipment Repair Request, Preventive Maintenance
+  - Support Services: Technical Support Request
+- **Dynamic Form Rendering**: DynamicServiceForm component handles text, textarea, select, radio, number, date fields
+- **Pricing Add-ons**: Each service has optional add-ons with individual pricing
+- **Service Request Engine**: Unified submission for all service categories
+- **Backend Routes**:
+  - `/api/service-forms/public` - List all active service forms (with category filter)
+  - `/api/service-forms/public/slug/{slug}` - Get service form by slug
+  - `/api/service-forms/admin` - Admin list (requires auth)
+  - `/api/service-requests` - Create service request with answers and add-ons
+- **Frontend Pages**:
+  - ServicesHubPage (`/services`) - Services grouped by category with cards
+  - ServiceRequestPage (`/services/:slug/request`) - Dynamic form based on service schema
+  - Admin ServiceFormsPage (`/admin/service-forms`) - Service form management
+- **Seed Script**: `seed_service_forms.py` for database population
+
 ---
 
 ## Admin Navigation Structure (Simplified)
@@ -212,4 +232,4 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-*Last updated: March 13, 2026 - Menu Simplification & Activity Logs Complete*
+*Last updated: March 15, 2026 - Codebase Pack 2: Service-Specific Dynamic Forms Complete*
