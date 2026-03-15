@@ -1,8 +1,10 @@
 """
 Affiliate Commission Service
 Create commissions ONLY on closed paid business (not on clicks/leads/signups)
+With fraud guard protection and campaign override support
 """
 from datetime import datetime
+from affiliate_fraud_guard import affiliate_conversion_allowed
 
 
 async def create_affiliate_commission_on_closed_business(
@@ -14,6 +16,9 @@ async def create_affiliate_commission_on_closed_business(
     sale_amount: float,
     affiliate_code: str | None = None,
     affiliate_email: str | None = None,
+    campaign_id: str | None = None,
+    campaign_name: str | None = None,
+    campaign_commission_override: dict | None = None,
 ):
     """
     Create an affiliate commission record when business is closed and paid.
@@ -21,6 +26,8 @@ async def create_affiliate_commission_on_closed_business(
     - Invoice is paid
     - Order is paid and fulfilled
     - NOT on signup, lead, or click
+    
+    Includes fraud protection and campaign override support.
     """
     settings = await db.affiliate_settings.find_one({})
     if not settings or not settings.get("enabled", True):
@@ -40,22 +47,30 @@ async def create_affiliate_commission_on_closed_business(
     if not affiliate:
         return None
 
-    # Check for existing commission to prevent duplicates
-    existing = await db.affiliate_commissions.find_one(
-        {
-            "affiliate_email": affiliate.get("email"),
-            "source_document": source_document,
-            "source_document_id": source_document_id,
-        }
+    # Fraud guard check
+    allowed, reason = await affiliate_conversion_allowed(
+        db,
+        affiliate_email=affiliate.get("email"),
+        customer_email=customer_email,
+        source_document=source_document,
+        source_document_id=source_document_id,
     )
-    if existing:
-        return existing
+    if not allowed:
+        return None
 
     # Calculate commission
     commission_type = settings.get("commission_type", "percentage")
     default_rate = float(settings.get("default_commission_rate", 10) or 0)
     default_fixed = float(settings.get("default_fixed_commission", 0) or 0)
     partner_rate = affiliate.get("commission_rate")
+
+    # Handle campaign commission overrides
+    if campaign_commission_override:
+        mode = campaign_commission_override.get("mode")
+        if mode == "no_commission":
+            return None
+        if mode == "override_rate":
+            partner_rate = float(campaign_commission_override.get("override_rate", 0) or 0)
 
     if commission_type == "fixed":
         commission_amount = float(partner_rate or default_fixed or 0)
@@ -80,6 +95,8 @@ async def create_affiliate_commission_on_closed_business(
         "commission_amount": commission_amount,
         "status": "pending",
         "triggered_by": "business_closed_paid",
+        "campaign_id": campaign_id,
+        "campaign_name": campaign_name,
         "created_at": datetime.utcnow(),
     }
 

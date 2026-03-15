@@ -12,6 +12,7 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
+from checkout_attribution_service import resolve_affiliate_attribution, log_campaign_usage
 
 router = APIRouter(tags=["Customer Orders"])
 
@@ -81,6 +82,7 @@ async def create_guest_order(
     doc["status"] = "pending"
     doc["current_status"] = "pending"
     doc["payment_status"] = "unpaid"
+    doc["total_amount"] = payload.total  # Also store as total_amount for analytics
     doc["status_history"] = [
         {
             "status": "pending",
@@ -92,18 +94,18 @@ async def create_guest_order(
     doc["created_at"] = now
     doc["updated_at"] = now
 
-    # Handle affiliate attribution - prefer payload, fallback to cookie
+    # Handle affiliate attribution - resolve using service
     effective_affiliate_code = payload.affiliate_code or affiliate_code
-    if effective_affiliate_code and not payload.affiliate_email:
-        # Look up affiliate by code to get email
-        affiliate = await db.affiliates.find_one({
-            "promo_code": effective_affiliate_code,
-            "status": "active"
-        })
-        if affiliate:
-            doc["affiliate_code"] = effective_affiliate_code
-            doc["affiliate_email"] = affiliate.get("email")
-            doc["affiliate_name"] = affiliate.get("name")
+    affiliate = await resolve_affiliate_attribution(
+        db,
+        affiliate_code=effective_affiliate_code,
+        customer_email=payload.customer_email,
+    )
+    
+    if affiliate:
+        doc["affiliate_code"] = affiliate.get("affiliate_code")
+        doc["affiliate_email"] = affiliate.get("affiliate_email")
+        doc["affiliate_name"] = affiliate.get("affiliate_name")
     elif payload.affiliate_email:
         doc["affiliate_email"] = payload.affiliate_email
         doc["affiliate_code"] = payload.affiliate_code
@@ -120,13 +122,26 @@ async def create_guest_order(
             original_total = doc.get("total", 0)
             doc["original_total"] = original_total
             doc["total"] = max(0, original_total - payload.campaign_discount)
+            doc["total_amount"] = doc["total"]
             doc["discount"] = (doc.get("discount") or 0) + payload.campaign_discount
 
     result = await db.orders.insert_one(doc)
+    order_id = str(result.inserted_id)
+
+    # Log campaign usage for tracking
+    await log_campaign_usage(
+        db,
+        campaign_id=payload.campaign_id,
+        campaign_name=payload.campaign_name,
+        customer_email=payload.customer_email,
+        order_id=order_id,
+        invoice_id=None,
+        discount_amount=payload.campaign_discount,
+    )
 
     return {
-        "id": str(result.inserted_id),
-        "order_id": str(result.inserted_id),
+        "id": order_id,
+        "order_id": order_id,
         "order_number": order_number,
         "status": "pending",
         "message": "Order created successfully",
