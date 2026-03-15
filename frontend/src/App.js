@@ -1,9 +1,11 @@
+import React, { useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
+import { bootstrapAffiliateAttribution } from "@/lib/attribution";
 
 // Components
 import Navbar from "@/components/Navbar";
@@ -162,6 +164,11 @@ function CustomerRoute({ children }) {
 }
 
 function App() {
+  // Bootstrap affiliate attribution from URL/localStorage on app load
+  useEffect(() => {
+    bootstrapAffiliateAttribution();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

@@ -95,6 +95,7 @@ from campaign_marketing_routes import router as campaign_marketing_router
 from affiliate_campaign_preview_routes import router as affiliate_campaign_preview_router
 from checkout_campaign_routes import router as checkout_campaign_router
 from campaign_performance_routes import router as campaign_performance_router
+from document_pdf_routes import router as document_pdf_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2073,6 +2074,7 @@ app.include_router(campaign_marketing_router)
 app.include_router(affiliate_campaign_preview_router)
 app.include_router(checkout_campaign_router)
 app.include_router(campaign_performance_router)
+app.include_router(document_pdf_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

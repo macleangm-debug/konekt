@@ -4,14 +4,7 @@ import { useCart } from "../contexts/CartContext";
 import { ShieldCheck, Truck, CreditCard, Tag, Gift, Sparkles } from "lucide-react";
 import api from "../lib/api";
 import AffiliatePerkPreviewBox from "../components/checkout/AffiliatePerkPreviewBox";
-
-// Helper to read cookie value
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return null;
-}
+import { bootstrapAffiliateAttribution, getStoredAffiliateCode } from "../lib/attribution";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -32,7 +25,8 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   
-  // Attribution state
+  // Attribution state - initialize from localStorage/URL
+  const [affiliateCode, setAffiliateCode] = useState(() => bootstrapAffiliateAttribution());
   const [affiliatePerk, setAffiliatePerk] = useState(null);
   const [appliedCampaign, setAppliedCampaign] = useState(null);
   const [availableCampaigns, setAvailableCampaigns] = useState([]);
@@ -49,14 +43,15 @@ export default function CheckoutPage() {
   // Detect affiliate attribution on mount
   useEffect(() => {
     const detectAttribution = async () => {
-      // Check URL param first
+      // Check URL param first, then localStorage
       const urlAffiliate = searchParams.get("affiliate");
-      const cookieAffiliate = getCookie("affiliate_code");
-      const affiliateCode = urlAffiliate || cookieAffiliate;
+      const storedCode = getStoredAffiliateCode();
+      const effectiveCode = urlAffiliate || storedCode || affiliateCode;
       
-      if (affiliateCode) {
+      if (effectiveCode) {
+        setAffiliateCode(effectiveCode);
         try {
-          const res = await api.get(`/api/checkout/detect-attribution?affiliate=${affiliateCode}`);
+          const res = await api.get(`/api/checkout/detect-attribution?affiliate=${effectiveCode}`);
           if (res.data.has_attribution) {
             setDetectedAffiliate(res.data);
           }
@@ -78,8 +73,8 @@ export default function CheckoutPage() {
         const res = await api.post("/api/checkout/evaluate-campaigns", {
           customer_email: form.email || null,
           order_amount: total,
-          category: null, // Could be derived from cart items
-          affiliate_code: detectedAffiliate?.affiliate_code || getCookie("affiliate_code") || null,
+          category: null,
+          affiliate_code: detectedAffiliate?.affiliate_code || affiliateCode || null,
         });
         
         setAvailableCampaigns(res.data.campaigns || []);
@@ -94,7 +89,7 @@ export default function CheckoutPage() {
     };
     
     evaluateCampaigns();
-  }, [total, form.email, detectedAffiliate]);
+  }, [total, form.email, detectedAffiliate, affiliateCode]);
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
