@@ -1,198 +1,163 @@
+"""
+Creative Service Routes V2
+Enhanced creative service order flow with address support
+"""
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
-import jwt
+from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import jwt
 
-from creative_service_models import CreativeServiceCreate, CreativeServiceUpdate, CreativeServiceOrderCreate
+from creative_service_models import CreativeServiceOrderCreate
 
 router = APIRouter(prefix="/api/creative-services-v2", tags=["Creative Services V2"])
 security = HTTPBearer(auto_error=False)
 
-# MongoDB connection
-mongo_url = os.environ.get('MONGO_URL')
+# Database connection
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+db_name = os.environ.get('DB_NAME', 'konekt_db')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'konekt')]
+db = client[db_name]
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
 
 
 def serialize_doc(doc):
+    if doc is None:
+        return None
+    doc = dict(doc)
     doc["id"] = str(doc["_id"])
     del doc["_id"]
     return doc
 
 
-async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify admin user"""
+async def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if not credentials:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        return None
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
         user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        role = user.get("role", "customer")
-        if role not in ["admin", "sales", "marketing", "production"]:
-            raise HTTPException(status_code=403, detail="Admin access required")
         return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@router.get("")
-async def list_services():
-    """List all active creative services"""
-    docs = await db.creative_services.find({"is_active": True}).sort("title", 1).to_list(length=100)
-    return [serialize_doc(doc) for doc in docs]
-
-
-@router.get("/all")
-async def list_all_services(user: dict = Depends(get_admin_user)):
-    """List all creative services including inactive (admin)"""
-    docs = await db.creative_services.find({}).sort("title", 1).to_list(length=100)
-    return [serialize_doc(doc) for doc in docs]
+    except Exception:
+        return None
 
 
 @router.get("/{slug}")
-async def get_service(slug: str):
+async def get_creative_service(slug: str):
     """Get a creative service by slug"""
-    doc = await db.creative_services.find_one({"slug": slug, "is_active": True})
-    if not doc:
-        raise HTTPException(status_code=404, detail="Service not found")
-    return serialize_doc(doc)
-
-
-@router.post("/admin")
-async def create_service(payload: CreativeServiceCreate, user: dict = Depends(get_admin_user)):
-    """Create a new creative service (admin)"""
-    now = datetime.utcnow()
-
-    existing = await db.creative_services.find_one({"slug": payload.slug})
-    if existing:
-        raise HTTPException(status_code=400, detail="Service slug already exists")
-
-    doc = payload.model_dump()
-    doc["created_at"] = now
-    doc["updated_at"] = now
-
-    result = await db.creative_services.insert_one(doc)
-    created = await db.creative_services.find_one({"_id": result.inserted_id})
-
-    return serialize_doc(created)
-
-
-@router.put("/admin/{service_id}")
-async def update_service(service_id: str, payload: CreativeServiceUpdate, user: dict = Depends(get_admin_user)):
-    """Update a creative service (admin)"""
-    existing = await db.creative_services.find_one({"_id": ObjectId(service_id)})
-    if not existing:
-        raise HTTPException(status_code=404, detail="Service not found")
-
-    update_data = {k: v for k, v in payload.model_dump().items() if v is not None}
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No update data provided")
-    
-    update_data["updated_at"] = datetime.utcnow()
-
-    await db.creative_services.update_one(
-        {"_id": ObjectId(service_id)},
-        {"$set": update_data}
-    )
-    
-    updated = await db.creative_services.find_one({"_id": ObjectId(service_id)})
-    return serialize_doc(updated)
-
-
-@router.delete("/admin/{service_id}")
-async def delete_service(service_id: str, user: dict = Depends(get_admin_user)):
-    """Soft delete a creative service (admin)"""
-    result = await db.creative_services.update_one(
-        {"_id": ObjectId(service_id)},
-        {"$set": {"is_active": False, "updated_at": datetime.utcnow()}}
-    )
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Service not found")
-    
-    return {"message": "Service deleted"}
+    service = await db.creative_services.find_one({"slug": slug, "is_active": True})
+    if not service:
+        raise HTTPException(status_code=404, detail="Creative service not found")
+    return serialize_doc(service)
 
 
 @router.post("/orders")
-async def create_service_order(payload: CreativeServiceOrderCreate):
-    """Create a new service order with brief"""
+async def create_creative_service_order(payload: CreativeServiceOrderCreate, user: dict = Depends(get_user)):
+    """Create a new creative service order with full customer details"""
+    
     service = await db.creative_services.find_one({"slug": payload.service_slug, "is_active": True})
     if not service:
-        raise HTTPException(status_code=404, detail="Service not found")
+        raise HTTPException(status_code=404, detail="Creative service not found")
 
-    selected_addons = [
-        addon for addon in service.get("addons", [])
-        if addon.get("code") in payload.selected_addons and addon.get("is_active", True)
-    ]
+    addons_catalog = service.get("addons", []) or []
+    selected_addons = []
+    add_on_total = 0.0
 
-    addon_total = sum(float(item.get("price", 0) or 0) for item in selected_addons)
-    total = float(service.get("base_price", 0) or 0) + addon_total
+    for add_on_id in payload.selected_addons:
+        # Try matching by id or code
+        add_on = next((a for a in addons_catalog if a.get("id") == add_on_id or a.get("code") == add_on_id), None)
+        if add_on:
+            selected_addons.append(add_on)
+            add_on_total += float(add_on.get("price", 0) or 0)
 
+    base_price = float(service.get("base_price", 0) or 0)
+    total_price = base_price + add_on_total
     now = datetime.utcnow()
-    doc = payload.model_dump()
-    doc["service_title"] = service.get("title")
-    doc["service_category"] = service.get("category")
-    doc["base_price"] = float(service.get("base_price", 0) or 0)
-    doc["selected_addons_details"] = selected_addons
-    doc["addon_total"] = addon_total
-    doc["total_price"] = total
-    doc["currency"] = service.get("currency", "TZS")
-    doc["status"] = "brief_submitted"
-    doc["status_history"] = [
-        {
-            "status": "brief_submitted",
-            "note": "Creative brief submitted by customer",
-            "timestamp": now.isoformat(),
-        }
-    ]
-    doc["created_at"] = now
-    doc["updated_at"] = now
+
+    # Generate project number
+    count = await db.creative_service_orders.count_documents({})
+    project_number = f"CSP-{str(count + 1).zfill(5)}"
+
+    doc = {
+        "project_number": project_number,
+        "service_slug": payload.service_slug,
+        "service_title": service.get("title"),
+        "customer_name": payload.customer_name,
+        "customer_email": payload.customer_email,
+        "customer_phone": payload.customer_phone,
+        "phone_prefix": payload.phone_prefix,
+        "country": payload.country,
+        "city": payload.city,
+        "address_line_1": payload.address_line_1,
+        "address_line_2": payload.address_line_2,
+        "company_name": payload.company_name,
+        "brief_answers": payload.brief_answers,
+        "selected_addons": selected_addons,
+        "uploaded_files": payload.uploaded_files,
+        "notes": payload.notes,
+        "payment_choice": payload.payment_choice,
+        "save_address": payload.save_address,
+        "base_price": base_price,
+        "add_on_total": add_on_total,
+        "total_price": total_price,
+        "currency": service.get("currency", "TZS"),
+        "status": "submitted",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Link to user if authenticated
+    if user:
+        doc["user_id"] = user.get("id")
 
     result = await db.creative_service_orders.insert_one(doc)
     created = await db.creative_service_orders.find_one({"_id": result.inserted_id})
+
+    # Save address if requested
+    if payload.save_address and payload.address_line_1:
+        existing_default = await db.customer_addresses.find_one({
+            "customer_email": payload.customer_email,
+            "is_default": True,
+        })
+
+        address_doc = {
+            "customer_email": payload.customer_email,
+            "user_id": user.get("id") if user else None,
+            "full_name": payload.customer_name,
+            "company_name": payload.company_name,
+            "country": payload.country,
+            "city": payload.city,
+            "address_line_1": payload.address_line_1,
+            "address_line_2": payload.address_line_2,
+            "phone_prefix": payload.phone_prefix,
+            "phone_number": payload.customer_phone,
+            "is_default": False if existing_default else True,
+            "type": "shipping",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.customer_addresses.insert_one(address_doc)
+
     return serialize_doc(created)
 
 
-@router.get("/orders/admin")
-async def list_service_orders(user: dict = Depends(get_admin_user), status: str = None):
-    """List all service orders (admin)"""
-    query = {}
-    if status:
-        query["status"] = status
+@router.get("/orders/my")
+async def get_my_creative_orders(user: dict = Depends(get_user)):
+    """Get creative service orders for the current user"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
     
-    docs = await db.creative_service_orders.find(query).sort("created_at", -1).to_list(length=200)
-    return [serialize_doc(doc) for doc in docs]
-
-
-@router.patch("/orders/admin/{order_id}/status")
-async def update_order_status(order_id: str, status: str, note: str = None, user: dict = Depends(get_admin_user)):
-    """Update service order status (admin)"""
-    now = datetime.utcnow()
-    history_entry = {
-        "status": status,
-        "note": note or f"Status changed to {status}",
-        "timestamp": now.isoformat(),
-        "updated_by": user.get("email")
-    }
+    user_email = user.get("email")
+    user_id = user.get("id")
     
-    result = await db.creative_service_orders.update_one(
-        {"_id": ObjectId(order_id)},
-        {
-            "$set": {"status": status, "updated_at": now},
-            "$push": {"status_history": history_entry}
-        }
-    )
+    # Find by user_id or email
+    orders = await db.creative_service_orders.find({
+        "$or": [
+            {"user_id": user_id},
+            {"customer_email": user_email}
+        ]
+    }).sort("created_at", -1).to_list(length=100)
     
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Order not found")
-    
-    return {"message": "Status updated", "status": status}
+    return [serialize_doc(o) for o in orders]

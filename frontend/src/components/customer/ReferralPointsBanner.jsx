@@ -4,21 +4,22 @@ import { Gift, Coins, ArrowRight, Copy, Check } from "lucide-react";
 import { Button } from "../ui/button";
 import api from "../../lib/api";
 
-export default function ReferralPointsBanner() {
+export default function ReferralPointsBanner({ points: propPoints, referralCode: propCode }) {
   const [referralData, setReferralData] = useState(null);
-  const [pointsData, setPointsData] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!propCode && !propPoints);
 
   useEffect(() => {
+    // Only fetch if props not provided
+    if (propCode || propPoints !== undefined) {
+      setLoading(false);
+      return;
+    }
+
     const load = async () => {
       try {
-        const [refRes, pointsRes] = await Promise.all([
-          api.get("/api/customer/referrals/me").catch(() => ({ data: null })),
-          api.get("/api/customer/points/me").catch(() => ({ data: null })),
-        ]);
-        setReferralData(refRes.data);
-        setPointsData(pointsRes.data);
+        const res = await api.get("/api/customer/referrals/overview").catch(() => ({ data: null }));
+        setReferralData(res.data);
       } catch (error) {
         console.error("Failed to load rewards data:", error);
       } finally {
@@ -26,11 +27,12 @@ export default function ReferralPointsBanner() {
       }
     };
     load();
-  }, []);
+  }, [propCode, propPoints]);
 
   const copyReferralCode = () => {
-    if (referralData?.referral_code) {
-      navigator.clipboard.writeText(referralData.referral_code);
+    const code = propCode || referralData?.referral_code;
+    if (code) {
+      navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -44,9 +46,9 @@ export default function ReferralPointsBanner() {
     );
   }
 
-  const referralCode = referralData?.referral_code || "---";
-  const referralCount = referralData?.total_referrals || 0;
-  const pointsBalance = pointsData?.wallet?.points_balance || 0;
+  const referralCode = propCode || referralData?.referral_code || "---";
+  const referralCount = referralData?.total_referrals || referralData?.referral_count || 0;
+  const pointsBalance = propPoints !== undefined ? propPoints : (referralData?.points_balance || referralData?.wallet?.points_balance || 0);
 
   return (
     <div
@@ -86,7 +88,7 @@ export default function ReferralPointsBanner() {
           </div>
           <div>
             <p className="text-sm text-white/70">Points Balance</p>
-            <p className="text-2xl font-bold mt-1">{pointsBalance.toLocaleString()}</p>
+            <p className="text-2xl font-bold mt-1">{Number(pointsBalance).toLocaleString()}</p>
             <p className="text-sm text-white/50 mt-1">Redeem for discounts</p>
           </div>
         </div>

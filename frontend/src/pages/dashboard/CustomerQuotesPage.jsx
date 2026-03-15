@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Clock, CheckCircle2, XCircle, ArrowRight, Eye } from "lucide-react";
+import { FileText, Clock, CheckCircle2, XCircle } from "lucide-react";
 import api from "../../lib/api";
 import EmptyStateCard from "../../components/customer/EmptyStateCard";
 import { Button } from "../../components/ui/button";
@@ -43,51 +43,52 @@ export default function CustomerQuotesPage() {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "sent":
-      case "pending":
-        return <Clock className="w-4 h-4" />;
-      case "approved":
-      case "converted":
-        return <CheckCircle2 className="w-4 h-4" />;
-      case "rejected":
-      case "expired":
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return <FileText className="w-4 h-4" />;
-    }
-  };
-
   const filteredQuotes = quotes.filter(q => {
     if (filter === "all") return true;
-    if (filter === "pending") return q.status === "sent" || q.status === "pending";
+    if (filter === "pending") return q.status === "sent" || q.status === "pending" || q.status === "draft";
     if (filter === "approved") return q.status === "approved" || q.status === "converted";
     return q.status === filter;
   });
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="p-6 md:p-8 space-y-6">
         <div className="animate-pulse">
-          <div className="h-8 w-32 bg-slate-200 rounded mb-2"></div>
+          <div className="h-10 w-32 bg-slate-200 rounded mb-2"></div>
           <div className="h-4 w-64 bg-slate-200 rounded"></div>
         </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="rounded-2xl bg-slate-200 h-24 animate-pulse"></div>
+        <div className="grid xl:grid-cols-2 gap-4">
+          {[1, 2].map(i => (
+            <div key={i} className="rounded-3xl bg-slate-200 h-40 animate-pulse"></div>
           ))}
         </div>
       </div>
     );
   }
 
+  if (!quotes.length) {
+    return (
+      <div className="p-6 md:p-8">
+        <EmptyStateCard
+          icon={FileText}
+          title="You have no quotes yet"
+          text="Need a custom solution, creative service, or branded products? Request a quote and keep your business moving."
+          ctaLabel="Explore services"
+          ctaHref="/creative-services"
+          testId="empty-quotes"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6" data-testid="customer-quotes-page">
+    <div className="p-6 md:p-8 space-y-6" data-testid="customer-quotes-page">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">My Quotes</h1>
-        <p className="mt-1 text-slate-600">Review and approve quotes from Konekt.</p>
+      <div className="text-left">
+        <h1 className="text-4xl font-bold text-[#2D3E50]">My Quotes</h1>
+        <p className="text-slate-600 mt-2">
+          Preview your quotes, approve them, and convert them into invoices for payment.
+        </p>
       </div>
 
       {/* Filters */}
@@ -111,104 +112,55 @@ export default function CustomerQuotesPage() {
         ))}
       </div>
 
-      {/* Quotes List */}
-      {filteredQuotes.length > 0 ? (
-        <div className="space-y-4">
-          {filteredQuotes.map(quote => (
-            <div
-              key={quote.id || quote.quote_number}
-              className="rounded-2xl border bg-white p-5 hover:shadow-md transition"
-              data-testid={`quote-card-${quote.quote_number}`}
-            >
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-6 h-6 text-[#2D3E50]" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-lg">{quote.quote_number}</p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      {quote.created_at
-                        ? new Date(quote.created_at).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })
-                        : "—"}
-                    </p>
-                    {quote.valid_until && (
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Valid until: {new Date(quote.valid_until).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-2xl font-bold">
-                      {quote.currency || "TZS"} {Number(quote.total || 0).toLocaleString()}
-                    </p>
-                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(quote.status)}`}>
-                      {getStatusIcon(quote.status)}
-                      <span className="capitalize">{quote.status}</span>
-                    </div>
-                  </div>
-
-                  <Link to={`/dashboard/quotes/${quote.id}`}>
-                    <Button
-                      variant={quote.status === "sent" || quote.status === "pending" ? "default" : "outline"}
-                      className={quote.status === "sent" || quote.status === "pending" ? "bg-[#D4A843] hover:bg-[#c49a3d]" : ""}
-                      data-testid={`view-quote-${quote.id}`}
-                    >
-                      {quote.status === "sent" || quote.status === "pending" ? (
-                        <>Review & Approve</>
-                      ) : (
-                        <>
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </>
-                      )}
-                    </Button>
-                  </Link>
-                </div>
+      {/* Quotes Grid */}
+      <div className="grid xl:grid-cols-2 gap-4">
+        {filteredQuotes.map(quote => (
+          <div
+            key={quote.id || quote.quote_number}
+            className="rounded-3xl border bg-white p-6"
+            data-testid={`quote-card-${quote.quote_number}`}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm text-slate-500">Quote Number</div>
+                <div className="text-xl font-bold mt-1 text-[#2D3E50]">{quote.quote_number}</div>
               </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusColor(quote.status)}`}>
+                {quote.status}
+              </span>
+            </div>
 
-              {/* Line items preview */}
-              {quote.line_items && quote.line_items.length > 0 && (
-                <div className="mt-4 pt-4 border-t">
-                  <p className="text-sm text-slate-500 mb-2">Items:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {quote.line_items.slice(0, 3).map((item, idx) => (
-                      <span key={idx} className="text-xs bg-slate-100 px-2 py-1 rounded">
-                        {item.description || item.name || `Item ${idx + 1}`}
-                      </span>
-                    ))}
-                    {quote.line_items.length > 3 && (
-                      <span className="text-xs text-slate-400">
-                        +{quote.line_items.length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div>
+            <div className="mt-4 text-slate-600">
+              {quote.currency || "TZS"} {Number(quote.total || 0).toLocaleString()}
+            </div>
+            
+            {quote.valid_until && (
+              <div className="mt-1 text-sm text-slate-500">
+                Valid until: {new Date(quote.valid_until).toLocaleDateString()}
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3 flex-wrap">
+              <Link to={`/dashboard/quotes/${quote.id}`}>
+                <Button variant="outline" data-testid={`preview-quote-${quote.id}`}>
+                  Preview
+                </Button>
+              </Link>
+
+              {["draft", "sent", "pending", "approved"].includes(quote.status) && (
+                <Link to={`/dashboard/quotes/${quote.id}`}>
+                  <Button 
+                    className="bg-[#2D3E50] hover:bg-[#253242]"
+                    data-testid={`approve-quote-${quote.id}`}
+                  >
+                    Approve / Continue
+                  </Button>
+                </Link>
               )}
             </div>
-          ))}
-        </div>
-      ) : (
-        <EmptyStateCard
-          icon={FileText}
-          title="No quotes found"
-          description={
-            filter === "all"
-              ? "You don't have any quotes yet. Request a quote for your next project."
-              : `No ${filter} quotes found.`
-          }
-          actionLabel="Request Quote"
-          actionHref="/creative-services"
-          testId="empty-quotes"
-        />
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -5,12 +5,19 @@ import { Button } from "../ui/button";
 export default function EmptyStateCard({
   icon: Icon,
   title,
+  text,
   description,
+  ctaLabel,
   actionLabel,
+  ctaHref,
   actionHref,
   onAction,
   testId = "empty-state",
 }) {
+  const label = ctaLabel || actionLabel;
+  const href = ctaHref || actionHref;
+  const desc = text || description;
+
   return (
     <div
       className="rounded-3xl border bg-white p-8 text-center"
@@ -22,26 +29,26 @@ export default function EmptyStateCard({
         </div>
       )}
       <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
-      {description && (
-        <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">{description}</p>
+      {desc && (
+        <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">{desc}</p>
       )}
-      {(actionLabel && actionHref) && (
-        <Link to={actionHref}>
+      {(label && href) && (
+        <Link to={href}>
           <Button
             className="mt-6 bg-[#D4A843] hover:bg-[#c49a3d]"
             data-testid={`${testId}-action`}
           >
-            {actionLabel}
+            {label}
           </Button>
         </Link>
       )}
-      {(actionLabel && onAction && !actionHref) && (
+      {(label && onAction && !href) && (
         <Button
           onClick={onAction}
           className="mt-6 bg-[#D4A843] hover:bg-[#c49a3d]"
           data-testid={`${testId}-action`}
         >
-          {actionLabel}
+          {label}
         </Button>
       )}
     </div>

@@ -75,6 +75,7 @@ from launch_readiness_report_routes import router as launch_report_router
 from customer_address_routes import router as customer_address_router
 from customer_invoice_routes import router as customer_invoice_router
 from customer_quote_actions_routes import router as customer_quote_actions_router
+from customer_orders_routes import router as customer_orders_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2032,6 +2033,7 @@ app.include_router(launch_report_router)
 app.include_router(customer_address_router)
 app.include_router(customer_invoice_router)
 app.include_router(customer_quote_actions_router)
+app.include_router(customer_orders_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

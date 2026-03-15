@@ -108,3 +108,25 @@ async def get_referral_stats(user: dict = Depends(get_current_user)):
         "credit_balance": user.get("credit_balance", 0),
         "points": user.get("points", 0)
     }
+
+
+@router.get("/overview")
+async def get_referral_overview(user: dict = Depends(get_current_user)):
+    """Get overview for dashboard - simplified referral and points data"""
+    user_id = user.get("id")
+    
+    # Get referral count
+    referral_count = await db.referral_transactions.count_documents({"referrer_id": user_id})
+    
+    # Get points balance
+    points_wallet = await db.points_wallets.find_one({"user_id": user_id}, {"_id": 0})
+    points_balance = points_wallet.get("points_balance", 0) if points_wallet else user.get("points", 0)
+    
+    return {
+        "referral_code": user.get("referral_code", ""),
+        "total_referrals": referral_count,
+        "points_balance": points_balance,
+        "wallet": {
+            "points_balance": points_balance
+        }
+    }

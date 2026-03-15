@@ -52,8 +52,15 @@ class CreativeServiceOrderCreate(BaseModel):
     customer_name: str
     customer_email: EmailStr
     customer_phone: Optional[str] = None
+    phone_prefix: Optional[str] = None
+    country: Optional[str] = None
+    city: Optional[str] = None
+    address_line_1: Optional[str] = None
+    address_line_2: Optional[str] = None
     company_name: Optional[str] = None
     brief_answers: dict = {}
     selected_addons: List[str] = []
     uploaded_files: List[str] = []
     notes: Optional[str] = None
+    payment_choice: Optional[str] = "quote_first"  # pay_now | quote_first
+    save_address: Optional[bool] = True

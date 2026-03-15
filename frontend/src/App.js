@@ -26,6 +26,7 @@ import EquipmentMaintenance from "@/pages/EquipmentMaintenance";
 import CreativeServicesPage from "@/pages/CreativeServicesPage";
 import CreativeServiceBriefPage from "@/pages/CreativeServiceBriefPage";
 import CreativeServiceDetailPage from "@/pages/CreativeServiceDetailPage";
+import CreativeServiceCheckoutPage from "@/pages/CreativeServiceCheckoutPage";
 import ServiceDetail from "@/pages/ServiceDetail";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmationPage from "@/pages/OrderConfirmationPage";
@@ -266,8 +267,9 @@ function App() {
                     <Route path="/affiliate/dashboard" element={<AffiliateDashboardPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
+                    <Route path="/creative-services/checkout" element={<CreativeServiceCheckoutPage />} />
                     <Route path="/creative-services/:slug" element={<CreativeServiceDetailPage />} />
-                    <Route path="/creative-services/:slug/brief" element={<CreativeServiceBriefPage />} />
+                    <Route path="/creative-services/:slug/brief" element={<Navigate to=".." replace />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
                   </Routes>
                 </main>
