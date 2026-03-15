@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -45,6 +45,9 @@ const navItems = [
   { path: '/admin/referral-settings', label: 'Referral Settings', icon: Gift },
   { path: '/admin/affiliates', label: 'Affiliates', icon: Percent },
   { path: '/admin/affiliate-applications', label: 'Applications', icon: UserPlus },
+  { path: '/admin/affiliate-settings', label: 'Affiliate Settings', icon: Settings },
+  { path: '/admin/affiliate-payouts', label: 'Affiliate Payouts', icon: DollarSign },
+  { path: '/admin/affiliate-campaigns', label: 'Promo Campaigns', icon: Megaphone },
   { type: 'divider', label: 'Settings' },
   { path: '/admin/settings/company', label: 'Company Settings', icon: Building2 },
   { path: '/admin/setup', label: 'Setup Lists', icon: Settings },

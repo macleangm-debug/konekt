@@ -72,6 +72,8 @@ import AffiliatesPage from "@/pages/admin/AffiliatesPage";
 import AffiliateCommissionsPage from "@/pages/admin/AffiliateCommissionsPage";
 import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
 import AffiliateApplicationsPage from "@/pages/admin/AffiliateApplicationsPage";
+import AffiliateSettingsPage from "@/pages/admin/AffiliateSettingsPage";
+import AffiliateCampaignsPage from "@/pages/admin/AffiliateCampaignsPage";
 import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
 import StatementPage from "@/pages/admin/StatementPage";
 import QuotePreviewPage from "@/pages/admin/QuotePreviewPage";
@@ -213,6 +215,8 @@ function App() {
           <Route path="affiliate-applications" element={<AffiliateApplicationsPage />} />
           <Route path="affiliate-commissions" element={<AffiliateCommissionsPage />} />
           <Route path="affiliate-payouts" element={<AffiliatePayoutsPage />} />
+          <Route path="affiliate-settings" element={<AffiliateSettingsPage />} />
+          <Route path="affiliate-campaigns" element={<AffiliateCampaignsPage />} />
           <Route path="payments/record" element={<RecordPaymentPage />} />
           <Route path="setup" element={<SetupPage />} />
           <Route path="launch-readiness" element={<LaunchReadinessPage />} />

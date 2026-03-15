@@ -86,6 +86,13 @@ from customer_address_routes import router as customer_address_router
 from customer_invoice_routes import router as customer_invoice_router
 from customer_quote_actions_routes import router as customer_quote_actions_router
 from customer_orders_routes import router as customer_orders_router
+from affiliate_settings_routes import router as affiliate_settings_router
+from affiliate_tracking_routes import router as affiliate_tracking_router
+from affiliate_payout_admin_routes import router as affiliate_payout_admin_router
+from affiliate_perk_routes import router as affiliate_perk_router
+from affiliate_campaign_routes import router as affiliate_campaign_router
+from campaign_marketing_routes import router as campaign_marketing_router
+from affiliate_campaign_preview_routes import router as affiliate_campaign_preview_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2055,6 +2062,13 @@ app.include_router(customer_address_router)
 app.include_router(customer_invoice_router)
 app.include_router(customer_quote_actions_router)
 app.include_router(customer_orders_router)
+app.include_router(affiliate_settings_router)
+app.include_router(affiliate_tracking_router)
+app.include_router(affiliate_payout_admin_router)
+app.include_router(affiliate_perk_router)
+app.include_router(affiliate_campaign_router)
+app.include_router(campaign_marketing_router)
+app.include_router(affiliate_campaign_preview_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from payment_reconciliation_service import reconcile_invoice_payment
+from affiliate_commission_service import create_affiliate_commission_on_closed_business
 
 router = APIRouter(prefix="/api/admin/payments", tags=["Payment Admin"])
 
@@ -89,6 +90,19 @@ async def verify_payment(payment_id: str):
             payment_method=payment.get("provider", "manual"),
             reference=payment.get("transaction_id") or payment.get("reference"),
         )
+        
+        # Create affiliate commission if applicable
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(payment["target_id"])})
+        if invoice:
+            await create_affiliate_commission_on_closed_business(
+                db,
+                source_document="invoice",
+                source_document_id=str(invoice["_id"]),
+                customer_email=invoice.get("customer_email"),
+                sale_amount=float(payment.get("amount", 0) or 0),
+                affiliate_code=invoice.get("affiliate_code"),
+                affiliate_email=invoice.get("affiliate_email"),
+            )
 
     return {"status": "paid", "message": "Payment verified successfully"}
 
