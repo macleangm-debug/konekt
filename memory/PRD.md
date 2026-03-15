@@ -237,7 +237,22 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 15. Attribution + Checkout Campaign Application Pack ✅ NEW (March 15, 2026)
+#### 16. Stabilization v3 - Campaign Performance Metrics ✅ NEW (March 15, 2026)
+- **Backend API**:
+  - `/api/admin/campaign-performance/summary` - Returns clicks, redemptions, revenue, commissions, conversion rate per campaign
+  - Aggregates data from orders, invoices_v2, affiliate_clicks, affiliate_commissions
+- **CampaignPerformanceWidget**:
+  - Displays real-time metrics: Clicks, Redemptions, Revenue, Conversion %
+  - Integrated into AdminDashboard, AffiliateCampaignsPage
+- **CurrentPromotionsWidget**:
+  - Shows active campaigns with dates and headlines
+  - Integrated into AffiliateSettingsPage and AffiliateCampaignsPage
+- **Affiliate Dashboard Consolidation**:
+  - `frontend/src/pages/dashboard/AffiliateDashboardPage.jsx` is now the source of truth
+  - `frontend/src/pages/affiliate/AffiliateDashboardPage.jsx` is a compatibility wrapper
+- **Testing**: 9/9 backend tests pass, all widgets verified
+
+#### 15. Attribution + Checkout Campaign Application Pack ✅ (March 15, 2026)
 - **Checkout Campaign Evaluation API**:
   - `/api/checkout/evaluate-campaigns` - Evaluates active campaigns against checkout data
   - `/api/checkout/evaluate-affiliate-perk` - Validates affiliate code and returns perk eligibility
@@ -285,6 +300,12 @@ The admin sidebar is now organized into logical groups:
 - **Customer Perk Preview**:
   - `/api/affiliate-perks/preview` - Preview perk at checkout
   - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 33 (March 15, 2026) - Stabilization v3: Campaign Performance
+- **Backend**: 9/9 tests passed (100%)
+- **Frontend**: All widgets verified (CampaignPerformanceWidget, CurrentPromotionsWidget)
+- **New API**: /api/admin/campaign-performance/summary
+- **Integrated**: Widgets into AdminDashboard, AffiliateCampaignsPage, AffiliateSettingsPage
 
 ### Iteration 32 (March 15, 2026) - Attribution + Checkout Campaign Pack
 - **Backend**: 21/21 tests passed (100%)
