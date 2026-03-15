@@ -14,8 +14,12 @@ export default function MaintenanceDashboardPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.get("/api/maintenance/my-requests");
-        setRequests(res.data || []);
+        // Get service requests and filter for maintenance category
+        const res = await api.get("/api/service-requests/my");
+        const maintenanceRequests = (res.data || []).filter(
+          r => r.category === "maintenance" || r.category === "support"
+        );
+        setRequests(maintenanceRequests);
       } catch (error) {
         console.error("Failed to load maintenance requests:", error);
       } finally {
@@ -89,7 +93,7 @@ export default function MaintenanceDashboardPage() {
           <h1 className="text-3xl font-bold text-slate-900">Equipment Maintenance</h1>
           <p className="mt-1 text-slate-600">Track your maintenance requests and service history.</p>
         </div>
-        <Link to="/services/maintenance">
+        <Link to="/services/equipment-repair-request/request">
           <Button className="bg-[#D4A843] hover:bg-[#c49a3d]" data-testid="new-request-btn">
             <Plus className="w-4 h-4 mr-2" />
             New Request
@@ -134,7 +138,7 @@ export default function MaintenanceDashboardPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-lg">
-                      {request.equipment_type || request.service_type || "Maintenance Request"}
+                      {request.service_title || request.equipment_type || request.service_type || "Maintenance Request"}
                     </p>
                     <p className="text-sm text-slate-500 mt-1">
                       {request.created_at
@@ -174,6 +178,16 @@ export default function MaintenanceDashboardPage() {
                   <p className="text-sm text-blue-800 mt-1">{request.technician_notes}</p>
                 </div>
               )}
+
+              <div className="mt-4 pt-4 border-t flex justify-end">
+                <Link
+                  to={`/dashboard/service-requests/${request.id}`}
+                  className="text-sm font-medium text-[#2D3E50] hover:underline"
+                  data-testid={`view-details-${request.id}`}
+                >
+                  View Details →
+                </Link>
+              </div>
             </div>
           ))}
         </div>

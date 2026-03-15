@@ -112,6 +112,24 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
   - Admin ServiceFormsPage (`/admin/service-forms`) - Service form management
 - **Seed Script**: `seed_service_forms.py` for database population
 
+#### 11. Codebase Pack 3 - Portal Polish & Conversion Optimization ✅ NEW (March 15, 2026)
+- **EmptyStateCard Enhancement**: Added secondary CTA support, improved styling with conversion-focused messaging
+- **PromoArtCards Component**: Upsell cards for design services, referrals, and maintenance on customer pages
+- **Service Request Tracking**:
+  - ServiceRequestsPage (`/dashboard/service-requests`) - Customer can view all service requests
+  - ServiceRequestDetailPage (`/dashboard/service-requests/:requestId`) - Detailed view with pricing summary
+  - Added Service Requests nav item in CustomerPortalLayout
+- **Stronger Referrals Commercialization**:
+  - ReferralPointsBanner upgraded with stronger messaging, "Use My Points" CTA
+  - ReferralsPage with WhatsApp share, how-it-works cards, referral list
+  - PointsPage with use case cards (Creative Services, Products, Growth Tips)
+- **Checkout Points Messaging**: PointsUsageHint component for checkout pages
+- **Better Empty States**:
+  - CustomerInvoicesPage: Secondary CTA to "View Quotes"
+  - CustomerQuotesPage: Secondary CTA to "Browse Products"  
+  - MaintenanceDashboardPage: PromoArtCards, better empty state with service links
+- **Portal Navigation**: CustomerDashboardHome now includes PromoArtCards section
+
 ---
 
 ## Admin Navigation Structure (Simplified)
@@ -232,4 +250,4 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-*Last updated: March 15, 2026 - Codebase Pack 2: Service-Specific Dynamic Forms Complete*
+*Last updated: March 15, 2026 - Codebase Pack 3: Portal Polish & Conversion Optimization Complete*
