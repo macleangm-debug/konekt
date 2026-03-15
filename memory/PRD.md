@@ -237,7 +237,31 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 16. Stabilization v3 - Campaign Performance Metrics ✅ NEW (March 15, 2026)
+#### 17. Campaign + Affiliate Tracking Engine ✅ NEW (March 15, 2026)
+- **Attribution Service** (`checkout_attribution_service.py`):
+  - `resolve_affiliate_attribution()` - Looks up affiliate by promo code
+  - `log_campaign_usage()` - Logs campaign redemptions to `campaign_usages` collection
+- **Fraud Guard** (`affiliate_fraud_guard.py`):
+  - `affiliate_conversion_allowed()` - Prevents duplicate commissions
+  - `check_velocity_fraud()` - Detects suspicious conversion rates
+- **Enhanced Commission Service**:
+  - Integrated fraud guard checks
+  - Campaign commission override support (`no_commission`, `override_rate`)
+- **Checkout Endpoints**:
+  - `POST /api/checkout/evaluate-campaign` - Returns best campaign + affiliate attribution
+  - `POST /api/checkout/evaluate-campaigns` - Returns all applicable campaigns
+  - `GET /api/checkout/detect-attribution` - Detects affiliate from cookie/URL
+- **Order Attribution**:
+  - Orders now store `affiliate_code`, `affiliate_email`, `affiliate_name`
+  - Orders store `campaign_id`, `campaign_name`, `campaign_discount`
+  - Campaign usage logged for analytics
+- **Enhanced Performance Metrics**:
+  - `campaign_usages` collection tracks all redemptions
+  - Revenue calculation from both orders and invoices_v2
+  - Commission totals aggregated per campaign
+- **Testing**: 17/17 backend tests pass, frontend widget verified
+
+#### 16. Stabilization v3 - Campaign Performance Metrics ✅ (March 15, 2026)
 - **Backend API**:
   - `/api/admin/campaign-performance/summary` - Returns clicks, redemptions, revenue, commissions, conversion rate per campaign
   - Aggregates data from orders, invoices_v2, affiliate_clicks, affiliate_commissions
@@ -300,6 +324,12 @@ The admin sidebar is now organized into logical groups:
 - **Customer Perk Preview**:
   - `/api/affiliate-perks/preview` - Preview perk at checkout
   - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 34 (March 15, 2026) - Campaign + Affiliate Tracking Engine
+- **Backend**: 17/17 tests passed (100%)
+- **Frontend**: CampaignPerformanceWidget verified
+- **New Services**: checkout_attribution_service.py, affiliate_fraud_guard.py
+- **Enhanced**: Commission service with fraud guard, order creation with campaign usage logging
 
 ### Iteration 33 (March 15, 2026) - Stabilization v3: Campaign Performance
 - **Backend**: 9/9 tests passed (100%)
