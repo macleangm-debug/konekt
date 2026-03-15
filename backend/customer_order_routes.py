@@ -1,12 +1,13 @@
 """
 Customer Order Routes - Public-facing order creation and retrieval
 Supports guest checkout without authentication
+Includes affiliate attribution and campaign discount application
 """
 from datetime import datetime
 from uuid import uuid4
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Cookie
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from bson import ObjectId
@@ -41,6 +42,14 @@ class GuestOrderCreate(BaseModel):
     tax: float = 0.0
     discount: float = 0.0
     total: float
+    # Affiliate attribution fields
+    affiliate_code: Optional[str] = None
+    affiliate_email: Optional[str] = None
+    # Campaign attribution fields
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    campaign_discount: float = 0.0
+    campaign_reward_type: Optional[str] = None
 
 
 def serialize_doc(doc):
@@ -51,10 +60,20 @@ def serialize_doc(doc):
 
 
 @router.post("/api/guest/orders")
-async def create_guest_order(payload: GuestOrderCreate):
-    """Create a new guest order (no authentication required)"""
+async def create_guest_order(
+    payload: GuestOrderCreate,
+    request: Request,
+    affiliate_code: Optional[str] = Cookie(default=None),
+):
+    """Create a new guest order (no authentication required)
+    
+    Supports affiliate attribution via:
+    1. Payload fields (affiliate_code, affiliate_email)
+    2. Cookie (affiliate_code) - auto-read from browser cookie
+    
+    Supports campaign discount application via campaign_id
+    """
     now = datetime.utcnow()
-
     order_number = f"ORD-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
     doc = payload.model_dump()
@@ -73,6 +92,36 @@ async def create_guest_order(payload: GuestOrderCreate):
     doc["created_at"] = now
     doc["updated_at"] = now
 
+    # Handle affiliate attribution - prefer payload, fallback to cookie
+    effective_affiliate_code = payload.affiliate_code or affiliate_code
+    if effective_affiliate_code and not payload.affiliate_email:
+        # Look up affiliate by code to get email
+        affiliate = await db.affiliates.find_one({
+            "promo_code": effective_affiliate_code,
+            "status": "active"
+        })
+        if affiliate:
+            doc["affiliate_code"] = effective_affiliate_code
+            doc["affiliate_email"] = affiliate.get("email")
+            doc["affiliate_name"] = affiliate.get("name")
+    elif payload.affiliate_email:
+        doc["affiliate_email"] = payload.affiliate_email
+        doc["affiliate_code"] = payload.affiliate_code
+
+    # Handle campaign attribution
+    if payload.campaign_id:
+        doc["campaign_id"] = payload.campaign_id
+        doc["campaign_name"] = payload.campaign_name
+        doc["campaign_discount"] = payload.campaign_discount
+        doc["campaign_reward_type"] = payload.campaign_reward_type
+        
+        # Apply campaign discount to total if provided
+        if payload.campaign_discount > 0:
+            original_total = doc.get("total", 0)
+            doc["original_total"] = original_total
+            doc["total"] = max(0, original_total - payload.campaign_discount)
+            doc["discount"] = (doc.get("discount") or 0) + payload.campaign_discount
+
     result = await db.orders.insert_one(doc)
 
     return {
@@ -81,6 +130,8 @@ async def create_guest_order(payload: GuestOrderCreate):
         "order_number": order_number,
         "status": "pending",
         "message": "Order created successfully",
+        "affiliate_attributed": bool(doc.get("affiliate_code") or doc.get("affiliate_email")),
+        "campaign_applied": bool(doc.get("campaign_id")),
     }
 
 

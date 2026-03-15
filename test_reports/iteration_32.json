@@ -1,0 +1,95 @@
+{
+  "summary": "Attribution + Checkout Campaign Application Pack testing completed. All 21 backend API tests pass (100%). Frontend UI verified with Playwright - CheckoutPage, AffiliatePerkPreviewBox component working correctly. Fixed React hooks error in CreativeServiceCheckoutPage.jsx.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "checkout_campaign_evaluation": {
+      "endpoint": "/api/checkout/evaluate-campaigns",
+      "status": "PASS",
+      "notes": "Returns campaigns array, affiliate_code_detected, best_campaign"
+    },
+    "checkout_affiliate_perk_evaluation": {
+      "endpoint": "/api/checkout/evaluate-affiliate-perk",
+      "status": "PASS",
+      "notes": "Returns eligibility status and discount details. Shows 'No perk configured' when no perks set up."
+    },
+    "checkout_detect_attribution": {
+      "endpoint": "/api/checkout/detect-attribution",
+      "status": "PASS",
+      "notes": "Detects affiliate code from URL query params or cookies"
+    },
+    "checkout_active_promotions": {
+      "endpoint": "/api/checkout/active-promotions",
+      "status": "PASS",
+      "notes": "Returns public promotions array"
+    },
+    "guest_order_with_affiliate_code": {
+      "endpoint": "/api/guest/orders",
+      "status": "PASS",
+      "notes": "Accepts affiliate_code, affiliate_email in payload. Order records attribution data."
+    },
+    "guest_order_with_campaign_discount": {
+      "endpoint": "/api/guest/orders",
+      "status": "PASS",
+      "notes": "Accepts campaign_id, campaign_name, campaign_discount, campaign_reward_type fields"
+    },
+    "affiliate_perk_preview": {
+      "endpoint": "/api/affiliate-perks/preview",
+      "status": "PASS",
+      "notes": "Validates affiliate code and returns perk eligibility"
+    },
+    "checkout_page_ui": {
+      "component": "CheckoutPage.jsx",
+      "status": "PASS",
+      "notes": "Displays cart items, order summary, AffiliatePerkPreviewBox component"
+    },
+    "affiliate_perk_preview_box_ui": {
+      "component": "AffiliatePerkPreviewBox.jsx",
+      "status": "PASS",
+      "notes": "Affiliate code input, Apply button, error/success messages all working with data-testids"
+    }
+  },
+  "fix_applied": {
+    "file": "/app/frontend/src/pages/CreativeServiceCheckoutPage.jsx",
+    "issue": "React hooks called after early return (violates Rules of Hooks)",
+    "fix": "Moved useEffect hooks before the early return, added null checks inside hooks"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_checkout_campaign_attribution.py",
+    "/app/test_reports/pytest/pytest_results_checkout_attribution.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All new checkout endpoints properly use module-level db connection",
+    "GuestOrderCreate model correctly accepts all attribution fields",
+    "Frontend correctly integrates AffiliatePerkPreviewBox in CheckoutPage and CreativeServiceCheckoutPage",
+    "All interactive elements have data-testid attributes for testing"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/CreativeServiceCheckoutPage.jsx",
+    "/app/backend/tests/test_checkout_campaign_attribution.py"
+  ],
+  "success_rate": {
+    "backend": "100% (21/21 tests pass)",
+    "frontend": "100% (all UI components verified)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Test orders created during testing with unique email addresses (prefixed with test_, affiliate_test_, etc.)",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Attribution + Checkout Campaign Pack fully implemented and tested. Checkout endpoints work correctly. AffiliatePerkPreviewBox shows 'No perk configured' when no customer perks are set up in affiliate settings - this is expected behavior. To test with actual perks, configure customer perks in /admin/affiliate-settings."
+}

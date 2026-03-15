@@ -67,19 +67,21 @@ export default function AffiliatePerkPreviewBox({
               value={affiliateCode}
               onChange={(e) => setAffiliateCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && previewPerk()}
+              data-testid="affiliate-code-input"
             />
             <Button
               type="button"
               onClick={previewPerk}
               disabled={loading || !affiliateCode.trim()}
               className="bg-[#2D3E50] hover:bg-[#1e2d3d]"
+              data-testid="affiliate-code-apply-btn"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
             </Button>
           </div>
 
           {preview && !preview.eligible && (
-            <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-red-50 text-red-700 text-sm">
+            <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-red-50 text-red-700 text-sm" data-testid="affiliate-code-error">
               <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
               <span>{preview.reason || "Code not eligible"}</span>
             </div>
@@ -87,7 +89,7 @@ export default function AffiliatePerkPreviewBox({
         </>
       ) : (
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-50" data-testid="affiliate-code-applied">
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-600" />
               <span className="font-medium text-emerald-700">Code Applied: {affiliateCode}</span>
@@ -95,13 +97,14 @@ export default function AffiliatePerkPreviewBox({
             <button
               onClick={clearCode}
               className="text-sm text-slate-500 hover:text-slate-700"
+              data-testid="affiliate-code-remove-btn"
             >
               Remove
             </button>
           </div>
 
           {preview?.eligible && (
-            <div className="p-3 rounded-xl bg-white border">
+            <div className="p-3 rounded-xl bg-white border" data-testid="affiliate-perk-details">
               <div className="flex items-center gap-2 text-[#D4A843]">
                 <Gift className="w-4 h-4" />
                 <span className="font-medium">Your Perk</span>
@@ -121,7 +124,7 @@ export default function AffiliatePerkPreviewBox({
                 )}
               </div>
               {preview.discount_amount > 0 && (
-                <div className="mt-2 text-lg font-bold text-emerald-600">
+                <div className="mt-2 text-lg font-bold text-emerald-600" data-testid="affiliate-perk-savings">
                   You save: TZS {Number(preview.discount_amount).toLocaleString()}
                 </div>
               )}

@@ -1,11 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
-import { ShieldCheck, Truck, CreditCard } from "lucide-react";
+import { ShieldCheck, Truck, CreditCard, Tag, Gift, Sparkles } from "lucide-react";
 import api from "../lib/api";
+import AffiliatePerkPreviewBox from "../components/checkout/AffiliatePerkPreviewBox";
+
+// Helper to read cookie value
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { items, total, clearCart } = useCart();
 
   const [form, setForm] = useState({
@@ -21,12 +31,93 @@ export default function CheckoutPage() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  
+  // Attribution state
+  const [affiliatePerk, setAffiliatePerk] = useState(null);
+  const [appliedCampaign, setAppliedCampaign] = useState(null);
+  const [availableCampaigns, setAvailableCampaigns] = useState([]);
+  const [detectedAffiliate, setDetectedAffiliate] = useState(null);
 
   const deliveryFee = 0;
-  const grandTotal = total + deliveryFee;
+  
+  // Calculate totals with discounts
+  const perkDiscount = affiliatePerk?.perk?.discount_amount || 0;
+  const campaignDiscount = appliedCampaign?.discount_amount || 0;
+  const totalDiscount = perkDiscount + campaignDiscount;
+  const grandTotal = Math.max(0, total + deliveryFee - totalDiscount);
+
+  // Detect affiliate attribution on mount
+  useEffect(() => {
+    const detectAttribution = async () => {
+      // Check URL param first
+      const urlAffiliate = searchParams.get("affiliate");
+      const cookieAffiliate = getCookie("affiliate_code");
+      const affiliateCode = urlAffiliate || cookieAffiliate;
+      
+      if (affiliateCode) {
+        try {
+          const res = await api.get(`/api/checkout/detect-attribution?affiliate=${affiliateCode}`);
+          if (res.data.has_attribution) {
+            setDetectedAffiliate(res.data);
+          }
+        } catch (err) {
+          console.error("Failed to detect attribution:", err);
+        }
+      }
+    };
+    
+    detectAttribution();
+  }, [searchParams]);
+
+  // Evaluate campaigns when total changes
+  useEffect(() => {
+    const evaluateCampaigns = async () => {
+      if (total <= 0) return;
+      
+      try {
+        const res = await api.post("/api/checkout/evaluate-campaigns", {
+          customer_email: form.email || null,
+          order_amount: total,
+          category: null, // Could be derived from cart items
+          affiliate_code: detectedAffiliate?.affiliate_code || getCookie("affiliate_code") || null,
+        });
+        
+        setAvailableCampaigns(res.data.campaigns || []);
+        
+        // Auto-select best campaign if available
+        if (res.data.best_campaign && !appliedCampaign) {
+          setAppliedCampaign(res.data.best_campaign);
+        }
+      } catch (err) {
+        console.error("Failed to evaluate campaigns:", err);
+      }
+    };
+    
+    evaluateCampaigns();
+  }, [total, form.email, detectedAffiliate]);
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleAffiliatePerkApplied = (perkData) => {
+    setAffiliatePerk(perkData);
+    // If perk is applied, it takes precedence over detected affiliate
+    if (perkData?.affiliateCode) {
+      setDetectedAffiliate({
+        affiliate_code: perkData.affiliateCode,
+        affiliate_name: perkData.perk?.affiliate_name,
+        has_attribution: true,
+      });
+    }
+  };
+
+  const selectCampaign = (campaign) => {
+    setAppliedCampaign(campaign);
+  };
+
+  const clearCampaign = () => {
+    setAppliedCampaign(null);
   };
 
   const handleSubmit = async (e) => {
@@ -65,9 +156,16 @@ export default function CheckoutPage() {
         })),
         subtotal: total,
         tax: 0,
-        discount: 0,
+        discount: totalDiscount,
         total: grandTotal,
         status: "pending",
+        // Attribution fields
+        affiliate_code: affiliatePerk?.affiliateCode || detectedAffiliate?.affiliate_code || null,
+        affiliate_email: null, // Will be looked up by backend
+        campaign_id: appliedCampaign?.campaign_id || null,
+        campaign_name: appliedCampaign?.campaign_name || null,
+        campaign_discount: campaignDiscount,
+        campaign_reward_type: appliedCampaign?.reward_type || null,
       };
 
       const res = await api.post("/api/guest/orders", payload);
@@ -104,6 +202,7 @@ export default function CheckoutPage() {
           <button
             onClick={() => navigate("/products")}
             className="mt-6 rounded-xl bg-[#2D3E50] text-white px-6 py-3 font-semibold"
+            data-testid="browse-products-btn"
           >
             Browse Products
           </button>
@@ -123,14 +222,30 @@ export default function CheckoutPage() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700">
+          <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700" data-testid="checkout-error">
             {error}
           </div>
         )}
 
+        {/* Detected Affiliate Banner */}
+        {detectedAffiliate?.has_attribution && !affiliatePerk && (
+          <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-4" data-testid="affiliate-detected-banner">
+            <div className="flex items-center gap-2 text-amber-800">
+              <Tag className="w-5 h-5" />
+              <span className="font-medium">
+                You were referred by {detectedAffiliate.affiliate_name || detectedAffiliate.affiliate_code}
+              </span>
+            </div>
+            <p className="text-sm text-amber-700 mt-1">
+              Special perks may apply to your order. Enter the code below to unlock your discount.
+            </p>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-[1fr_420px] gap-8">
-          <form onSubmit={handleSubmit} className="rounded-3xl border bg-white p-8 space-y-8">
-            <div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Customer Details Card */}
+            <div className="rounded-3xl border bg-white p-8">
               <h2 className="text-2xl font-bold flex items-center gap-3">
                 <ShieldCheck className="w-6 h-6 text-[#2D3E50]" />
                 Customer Details
@@ -171,7 +286,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div>
+            {/* Delivery Details Card */}
+            <div className="rounded-3xl border bg-white p-8">
               <h2 className="text-2xl font-bold flex items-center gap-3">
                 <Truck className="w-6 h-6 text-[#2D3E50]" />
                 Delivery Details
@@ -201,7 +317,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div>
+            {/* Order Notes Card */}
+            <div className="rounded-3xl border bg-white p-8">
               <h2 className="text-2xl font-bold flex items-center gap-3">
                 <CreditCard className="w-6 h-6 text-[#2D3E50]" />
                 Order Notes
@@ -214,6 +331,64 @@ export default function CheckoutPage() {
                 data-testid="checkout-notes"
               />
             </div>
+
+            {/* Affiliate Perk Box */}
+            <AffiliatePerkPreviewBox
+              customerEmail={form.email}
+              orderAmount={total}
+              category=""
+              onApplied={handleAffiliatePerkApplied}
+            />
+
+            {/* Available Campaigns */}
+            {availableCampaigns.length > 0 && (
+              <div className="rounded-3xl border bg-white p-6" data-testid="available-campaigns">
+                <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-[#D4A843]" />
+                  Available Promotions
+                </h3>
+                <div className="space-y-3">
+                  {availableCampaigns.map((campaign) => (
+                    <div
+                      key={campaign.campaign_id}
+                      className={`p-4 rounded-xl border cursor-pointer transition ${
+                        appliedCampaign?.campaign_id === campaign.campaign_id
+                          ? "border-emerald-500 bg-emerald-50"
+                          : "border-slate-200 hover:border-slate-300"
+                      }`}
+                      onClick={() => selectCampaign(campaign)}
+                      data-testid={`campaign-${campaign.campaign_id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold">{campaign.campaign_name}</div>
+                          <div className="text-sm text-slate-500">{campaign.campaign_headline}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-emerald-600">
+                            {campaign.reward_type === "percentage_discount"
+                              ? `${campaign.reward_value}% off`
+                              : `TZS ${Number(campaign.discount_amount).toLocaleString()} off`}
+                          </div>
+                          {appliedCampaign?.campaign_id === campaign.campaign_id && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                clearCampaign();
+                              }}
+                              className="text-xs text-slate-500 hover:text-slate-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -258,9 +433,31 @@ export default function CheckoutPage() {
                 <span className="text-slate-500">Delivery</span>
                 <span>{deliveryFee === 0 ? "Calculated later" : `TZS ${deliveryFee.toLocaleString()}`}</span>
               </div>
+              
+              {/* Show discounts */}
+              {perkDiscount > 0 && (
+                <div className="flex justify-between text-emerald-600" data-testid="perk-discount-row">
+                  <span className="flex items-center gap-1">
+                    <Gift className="w-4 h-4" />
+                    Affiliate Perk
+                  </span>
+                  <span>-TZS {perkDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              
+              {campaignDiscount > 0 && (
+                <div className="flex justify-between text-emerald-600" data-testid="campaign-discount-row">
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="w-4 h-4" />
+                    {appliedCampaign?.campaign_name || "Promotion"}
+                  </span>
+                  <span>-TZS {campaignDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              
               <div className="flex justify-between font-bold text-lg pt-3 border-t">
                 <span>Total</span>
-                <span>TZS {grandTotal.toLocaleString()}</span>
+                <span data-testid="checkout-total">TZS {grandTotal.toLocaleString()}</span>
               </div>
             </div>
 

@@ -93,6 +93,7 @@ from affiliate_perk_routes import router as affiliate_perk_router
 from affiliate_campaign_routes import router as affiliate_campaign_router
 from campaign_marketing_routes import router as campaign_marketing_router
 from affiliate_campaign_preview_routes import router as affiliate_campaign_preview_router
+from checkout_campaign_routes import router as checkout_campaign_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2069,6 +2070,7 @@ app.include_router(affiliate_perk_router)
 app.include_router(affiliate_campaign_router)
 app.include_router(campaign_marketing_router)
 app.include_router(affiliate_campaign_preview_router)
+app.include_router(checkout_campaign_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

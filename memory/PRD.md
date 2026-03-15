@@ -237,10 +237,41 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-### Iteration 30 (March 15, 2026) - Pack 6: Checkout Persistence & Launch Hardening
-- **Backend**: 22/22 tests passed (100%)
-- **Frontend**: All Pack 6 pages verified working
-- **Fixed**: Auth middleware in points_apply_routes.py and affiliate_dashboard_routes.py
+#### 14. Codebase Pack 8 - Launch Stabilization (Affiliate Platform) ✅ NEW (March 15, 2026)
+- **Affiliate Settings Admin**:
+  - Full configuration page at `/admin/affiliate-settings`
+  - Commission rules: type (percentage/fixed), default rate, trigger events
+  - Tracking: cookie window, promo codes, referral links
+  - Payout & Qualification: minimum payout, manual approval, terms URL
+  - Customer Perk: discount type, value, cap, min order, categories, first order only
+- **Click Tracking System**:
+  - `/affiliate-track/{code}` - Tracks clicks and sets attribution cookie
+  - Stores IP, user agent, timestamp for analytics
+- **Commission Attribution**:
+  - `create_affiliate_commission_on_closed_business()` - Only creates commission on paid business
+  - Patched into `payment_admin_routes.py` and `kwikpay_webhook_routes.py`
+  - No commission on clicks/leads/signups (configurable via settings)
+- **Payout Approval Workflow**:
+  - Admin page at `/admin/affiliate-payouts`
+  - Status filter: pending, approved, paid, rejected
+  - Approve → Mark Paid workflow with payment reference
+- **Campaign Marketing System**:
+  - Admin page at `/admin/affiliate-campaigns`
+  - Campaign builder with reward, eligibility, limits, stacking, marketing fields
+  - Auto-generated social share messages for WhatsApp, Instagram, Facebook, LinkedIn, X
+  - Current promotions widget for admin dashboard
+- **Campaign Evaluation Engine**:
+  - `evaluate_campaigns_for_checkout()` - Checks all eligibility rules
+  - Max uses per customer, total redemption limits
+  - Category/service slug restrictions
+- **Customer Perk Preview**:
+  - `/api/affiliate-perks/preview` - Preview perk at checkout
+  - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 31 (March 15, 2026) - Pack 8: Launch Stabilization
+- **Backend**: 16/16 tests passed (100%)
+- **Frontend**: All 3 new admin pages verified
+- **New Pages**: Affiliate Settings, Affiliate Payouts, Promo Campaigns
 
 ### Iteration 25 (March 13, 2026) - Menu & Audit Logs
 - **Backend**: 11/11 tests passed (100%)
