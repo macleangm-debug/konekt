@@ -130,6 +130,58 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
   - MaintenanceDashboardPage: PromoArtCards, better empty state with service links
 - **Portal Navigation**: CustomerDashboardHome now includes PromoArtCards section
 
+#### 12. Codebase Pack 4+6 Combined - Admin Service Operations, Points & Launch Hardening ✅ NEW (March 15, 2026)
+- **Admin Service Request Management**:
+  - ServiceRequestsAdminPage (`/admin/service-requests`) - List all service requests with filters
+  - ServiceRequestAdminDetailPage (`/admin/service-requests/:requestId`) - Full admin workflow
+  - Assign staff, update status, add comments (internal/customer), upload deliverables
+  - Timeline tracking for all service request changes
+- **File Upload System**:
+  - Upload route at `/api/uploads/service-request-file` for deliverables
+  - Static file serving via `/uploads` path
+  - Supports common file types (images, documents, PDFs)
+- **Points Persistence Service**:
+  - `apply_points_discount_to_document()` - Deduct points and record transaction
+  - `award_points_to_customer()` - Add points with transaction logging
+  - Transaction history stored in `referral_points_transactions` collection
+- **Invoice Points Application**:
+  - `/api/customer/points-apply/invoice/{invoice_id}` - Apply points to invoices
+  - PointsUsageBox component shows available points and discount value
+  - CustomerInvoiceDetailPage updated with points application UI
+  - 1 point = 1 TZS conversion rate
+- **Payment Reconciliation Service**:
+  - `reconcile_invoice_payment()` - Centralized invoice payment handling
+  - Used by payment admin verification and KwikPay webhook
+  - Properly tracks partial payments and payment history
+- **Launch Hardening**:
+  - `/api/admin/launch-hardening/checklist` - Environment config checks
+  - LaunchHardeningWidget component for admin dashboard
+  - Checks: MongoDB, JWT, Resend, KwikPay, Frontend URL, Sender Email, Bank Transfer
+- **PDF Document Labels**:
+  - `pdf_document_labels.py` - Helper for consistent PDF branding
+  - Tax label, business identity lines, currency formatting utilities
+
+#### 13. Codebase Pack 7 Core - Affiliate Platform ✅ NEW (March 15, 2026)
+- **Affiliate Application Review**:
+  - AffiliateApplicationsPage (`/admin/affiliate-applications`) - Review applications
+  - Approve/reject workflow with commission rate assignment
+  - Creates affiliate profile on approval
+- **Affiliate Dashboard**:
+  - AffiliateDashboardPage (`/dashboard/affiliate`) - Self-service dashboard
+  - Summary: total earned, approved, paid, payable balance
+  - Partner identity: promo code, referral link, commission rate
+  - Payout request submission
+- **Public Footer Component**:
+  - PublicFooter.jsx - Premium dark navy footer
+  - Pre-footer CTA strip with "Start a Request" and "Refer & Earn"
+  - 5-column layout: Brand, Products, Company, Support, Contact
+  - WhatsApp integration button
+- **Backend APIs**:
+  - `/api/admin/affiliates/applications` - List applications
+  - `/api/admin/affiliates/applications/{id}/review` - Approve/reject
+  - `/api/affiliate/me` - Dashboard data
+  - `/api/affiliate/me/payout-request` - Submit payout request
+
 ---
 
 ## Admin Navigation Structure (Simplified)
@@ -148,6 +200,7 @@ The admin sidebar is now organized into logical groups:
 3. **Operations**
    - Orders
    - Order Operations
+   - Service Requests ✅ NEW
    - Production Queue
    - Tasks
 
@@ -169,9 +222,10 @@ The admin sidebar is now organized into logical groups:
 6. **Marketing**
    - Hero Banners
    - Creative Services
+   - Service Forms ✅ NEW
    - Referral Settings
    - Affiliates
-   - Applications
+   - Affiliate Applications ✅ NEW
 
 7. **Settings**
    - Company Settings
@@ -183,20 +237,26 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
+### Iteration 30 (March 15, 2026) - Pack 6: Checkout Persistence & Launch Hardening
+- **Backend**: 22/22 tests passed (100%)
+- **Frontend**: All Pack 6 pages verified working
+- **Fixed**: Auth middleware in points_apply_routes.py and affiliate_dashboard_routes.py
+
 ### Iteration 25 (March 13, 2026) - Menu & Audit Logs
 - **Backend**: 11/11 tests passed (100%)
 - **Frontend**: All pages verified working
 - **Fixed**: PDF export now supports query param tokens
 
-### Launch Readiness Score: 7/8
-- has_products: OK
-- has_variants: OK
-- has_creative_services: OK
-- has_banners: OK
-- has_warehouses: OK
-- has_company_name: OK (needs setup)
-- has_tax_config: Missing
-- has_currency: Missing
+### Launch Readiness Score: 2/9 (new enhanced checklist)
+- mongo_url_configured: OK
+- jwt_secret_configured: OK
+- resend_configured: Missing
+- kwikpay_base_url_configured: Missing
+- kwikpay_api_key_configured: Missing
+- kwikpay_secret_configured: Missing
+- frontend_url_configured: Missing
+- sender_email_configured: Missing
+- bank_transfer_enabled: Missing
 
 ---
 
@@ -215,9 +275,36 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-## New API Endpoints (This Session)
+## New API Endpoints (Pack 6 Session)
 
-### Audit Log
+### Points & Checkout
+- `POST /api/customer/points-apply/invoice/{invoice_id}` - Apply points to invoice
+
+### Admin Service Requests
+- `GET /api/admin/service-requests` - List all service requests
+- `GET /api/admin/service-requests/{id}` - Get service request detail
+- `POST /api/admin/service-requests/{id}/assign` - Assign to staff
+- `POST /api/admin/service-requests/{id}/status` - Update status
+- `POST /api/admin/service-requests/{id}/comments` - Add comment
+- `POST /api/admin/service-requests/{id}/deliverables` - Add deliverable
+
+### Customer Service Requests
+- `GET /api/customer/service-requests/{id}` - Get customer's service request
+- `POST /api/customer/service-requests/{id}/revision` - Request revision
+
+### Affiliate Platform
+- `GET /api/admin/affiliates/applications` - List affiliate applications
+- `POST /api/admin/affiliates/applications/{id}/review` - Review application
+- `GET /api/affiliate/me` - Affiliate dashboard data
+- `POST /api/affiliate/me/payout-request` - Submit payout request
+
+### Launch Hardening
+- `GET /api/admin/launch-hardening/checklist` - Environment config checks
+
+### File Uploads
+- `POST /api/uploads/service-request-file` - Upload service request file
+
+### Audit Log (Previous Session)
 - `GET /api/admin/audit` - List audit logs with filters
 - `GET /api/admin/audit/entity/{type}/{id}` - Entity-specific logs
 - `GET /api/admin/audit/actions` - Distinct action types
@@ -231,10 +318,15 @@ The admin sidebar is now organized into logical groups:
 
 ## Remaining Tasks
 
+### P0 - Immediate (Next Pack)
+- [ ] Affiliate click/conversion tracking
+- [ ] Payout approval workflow for admins
+- [ ] Final PDF refinement (quotes, invoices)
+- [ ] Production launch checklist & E2E QA
+
 ### P1 - Integration & Polish
 - [ ] Finalize KwikPay integration with live API
 - [ ] Connect Resend email service
-- [ ] PDF document polish (quotes, invoices)
 - [ ] Configure company tax settings
 
 ### P2 - Deployment
@@ -243,11 +335,17 @@ The admin sidebar is now organized into logical groups:
 - [ ] Backup configuration
 - [ ] Monitoring setup
 
-### P3 - Future Enhancements
+### P3 - World-Class Affiliate Platform
+- [ ] Affiliate partner asset library
+- [ ] Partner tiers (Authorized, Premium, Strategic)
+- [ ] Fraud checks for affiliate conversions
+- [ ] Tracked clicks and conversions
+
+### P4 - Future Enhancements
 - [ ] WhatsApp notifications
 - [ ] Mobile app
 - [ ] 3D product customization
 
 ---
 
-*Last updated: March 15, 2026 - Codebase Pack 3: Portal Polish & Conversion Optimization Complete*
+*Last updated: March 15, 2026 - Codebase Pack 6: Final Checkout Persistence, Points Redemption, Launch Hardening & Pack 7 Affiliate Platform Complete*
