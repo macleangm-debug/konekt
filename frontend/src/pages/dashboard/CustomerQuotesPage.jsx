@@ -72,9 +72,11 @@ export default function CustomerQuotesPage() {
         <EmptyStateCard
           icon={FileText}
           title="You have no quotes yet"
-          text="Need a custom solution, creative service, or branded products? Request a quote and keep your business moving."
-          ctaLabel="Explore services"
-          ctaHref="/creative-services"
+          text="Request pricing for custom work, branded merchandise, design services, or technical support and manage approvals from your portal."
+          ctaLabel="Browse Services"
+          ctaHref="/services"
+          secondaryCtaLabel="Browse Products"
+          secondaryCtaHref="/products"
           testId="empty-quotes"
         />
       </div>

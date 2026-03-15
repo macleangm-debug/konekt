@@ -16,6 +16,7 @@ import {
   X,
   ShoppingBag,
   PenTool,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../ui/button";
@@ -30,6 +31,7 @@ const navItems = [
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { type: "divider", label: "Services" },
   { label: "Designs", href: "/dashboard/designs", icon: Palette },
+  { label: "Service Requests", href: "/dashboard/service-requests", icon: ClipboardList },
   { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
   { type: "divider", label: "Account" },
   { label: "Statement", href: "/dashboard/statement", icon: FileBarChart2 },

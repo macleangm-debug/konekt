@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Wrench, Clock, CheckCircle2, AlertCircle, Plus, Calendar } from "lucide-react";
 import api from "../../lib/api";
 import EmptyStateCard from "../../components/customer/EmptyStateCard";
+import PromoArtCards from "../../components/customer/PromoArtCards";
 import { Button } from "../../components/ui/button";
 
 export default function MaintenanceDashboardPage() {
@@ -179,17 +180,18 @@ export default function MaintenanceDashboardPage() {
       ) : (
         <EmptyStateCard
           icon={Wrench}
-          title="No maintenance requests"
-          description={
-            filter === "all"
-              ? "You haven't submitted any maintenance requests yet."
-              : `No ${filter} requests found.`
-          }
-          actionLabel="Submit Request"
-          actionHref="/services/maintenance"
+          title="No maintenance requests yet"
+          text="Need support for printers, photocopiers, scanners, or office equipment? Submit a request and manage it fully online."
+          ctaLabel="Book maintenance service"
+          ctaHref="/services/equipment-repair-request/request"
+          secondaryCtaLabel="Browse support services"
+          secondaryCtaHref="/services"
           testId="empty-maintenance"
         />
       )}
+
+      {/* Promo Cards */}
+      <PromoArtCards />
     </div>
   );
 }

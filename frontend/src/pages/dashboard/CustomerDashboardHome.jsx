@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../../lib/api";
 import ClientBannerCarousel from "../../components/ClientBannerCarousel";
 import ReferralPointsBanner from "../../components/customer/ReferralPointsBanner";
+import PromoArtCards from "../../components/customer/PromoArtCards";
 import {
   Palette,
   Wrench,
@@ -211,6 +212,9 @@ export default function CustomerDashboardHome() {
           testId="action-referrals"
         />
       </div>
+
+      {/* Promo Art Cards */}
+      <PromoArtCards />
     </div>
   );
 }

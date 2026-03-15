@@ -47,71 +47,53 @@ export default function ReferralPointsBanner({ points: propPoints, referralCode:
   }
 
   const referralCode = propCode || referralData?.referral_code || "---";
-  const referralCount = referralData?.total_referrals || referralData?.referral_count || 0;
   const pointsBalance = propPoints !== undefined ? propPoints : (referralData?.points_balance || referralData?.wallet?.points_balance || 0);
 
   return (
     <div
-      className="rounded-3xl border bg-gradient-to-r from-[#2D3E50] to-[#3d5269] p-6 text-white"
+      className="rounded-3xl bg-gradient-to-r from-[#20364D] to-[#2D3E50] text-white p-6"
       data-testid="referral-points-banner"
     >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        {/* Referral Section */}
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Gift className="w-6 h-6 text-[#D4A843]" />
-          </div>
-          <div>
-            <p className="text-sm text-white/70">Your Referral Code</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-xl font-bold tracking-wider">{referralCode}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/10"
-                onClick={copyReferralCode}
-                data-testid="copy-referral-code"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
-            </div>
-            <p className="text-sm text-white/50 mt-1">
-              {referralCount} {referralCount === 1 ? "referral" : "referrals"} so far
-            </p>
+      <div className="grid md:grid-cols-[1fr_auto] gap-6 items-center">
+        <div>
+          <div className="text-sm text-slate-200">Referral & Rewards</div>
+          <h3 className="text-2xl md:text-3xl font-bold mt-2">
+            You have {Number(pointsBalance || 0).toLocaleString()} points ready to use
+          </h3>
+          <p className="text-slate-200 mt-2 max-w-2xl">
+            Share your referral link, earn more points when your referrals complete purchases,
+            and use those points on creative services, products, and selected offers within Konekt.
+          </p>
+          <div className="flex items-center gap-2 text-sm text-[#F7E7B1] mt-3">
+            <span>Referral Code: {referralCode}</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-[#F7E7B1] hover:text-white hover:bg-white/10"
+              onClick={copyReferralCode}
+              data-testid="copy-referral-code"
+            >
+              {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+            </Button>
           </div>
         </div>
 
-        {/* Points Section */}
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Coins className="w-6 h-6 text-[#D4A843]" />
-          </div>
-          <div>
-            <p className="text-sm text-white/70">Points Balance</p>
-            <p className="text-2xl font-bold mt-1">{Number(pointsBalance).toLocaleString()}</p>
-            <p className="text-sm text-white/50 mt-1">Redeem for discounts</p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex gap-3 flex-wrap">
           <Link to="/dashboard/referrals">
             <Button
-              variant="outline"
-              className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10"
-              data-testid="view-referrals-btn"
+              className="bg-[#D4A843] hover:bg-[#c49a3d] text-[#20364D]"
+              data-testid="refer-friends-btn"
             >
-              View Referrals
-              <ArrowRight className="w-4 h-4 ml-2" />
+              Refer Friends
             </Button>
           </Link>
           <Link to="/dashboard/points">
             <Button
-              className="w-full sm:w-auto bg-[#D4A843] hover:bg-[#c49a3d] text-white"
-              data-testid="view-points-btn"
+              variant="outline"
+              className="border-white/20 text-white hover:bg-white/10"
+              data-testid="use-points-btn"
             >
-              View Points
-              <ArrowRight className="w-4 h-4 ml-2" />
+              Use My Points
             </Button>
           </Link>
         </div>

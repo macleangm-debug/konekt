@@ -87,6 +87,8 @@ import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
 import StockMovementsPage from "@/pages/admin/StockMovementsPage";
 import ServiceFormsPage from "@/pages/admin/ServiceFormsPage";
+import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
+import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -238,6 +240,8 @@ function App() {
           <Route path="statement" element={<MyStatementPage />} />
           <Route path="addresses" element={<AddressesPage />} />
           <Route path="maintenance" element={<MaintenanceDashboardPage />} />
+          <Route path="service-requests" element={<ServiceRequestsPage />} />
+          <Route path="service-requests/:requestId" element={<ServiceRequestDetailPage />} />
           <Route path="referrals" element={<ReferralsPage />} />
           <Route path="points" element={<PointsPage />} />
         </Route>

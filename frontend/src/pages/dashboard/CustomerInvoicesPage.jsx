@@ -88,9 +88,11 @@ export default function CustomerInvoicesPage() {
         <EmptyStateCard
           icon={Receipt}
           title="You have no invoices yet"
-          text="Approved quotes and completed service requests will appear here for payment and tracking."
-          ctaLabel="Browse services"
-          ctaHref="/creative-services"
+          text="Approved quotes and completed service requests will appear here. Once available, you can preview balances and pay online."
+          ctaLabel="Browse Services"
+          ctaHref="/services"
+          secondaryCtaLabel="View Quotes"
+          secondaryCtaHref="/dashboard/quotes"
           testId="empty-invoices"
         />
       </div>
