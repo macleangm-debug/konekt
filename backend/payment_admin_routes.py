@@ -10,6 +10,8 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from payment_reconciliation_service import reconcile_invoice_payment
+
 router = APIRouter(prefix="/api/admin/payments", tags=["Payment Admin"])
 
 # Database connection
@@ -79,9 +81,13 @@ async def verify_payment(payment_id: str):
             },
         )
     elif payment["target_type"] == "invoice":
-        await db.invoices.update_one(
-            {"_id": ObjectId(payment["target_id"])},
-            {"$set": {"status": "paid", "updated_at": now}},
+        # Use reconciliation service for consistent invoice payment handling
+        await reconcile_invoice_payment(
+            db,
+            invoice_id=payment["target_id"],
+            amount=float(payment.get("amount", 0) or 0),
+            payment_method=payment.get("provider", "manual"),
+            reference=payment.get("transaction_id") or payment.get("reference"),
         )
 
     return {"status": "paid", "message": "Payment verified successfully"}

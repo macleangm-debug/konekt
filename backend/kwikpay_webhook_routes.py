@@ -10,6 +10,7 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from kwikpay_service import verify_kwikpay_signature
+from payment_reconciliation_service import reconcile_invoice_payment
 
 router = APIRouter(prefix="/api/payments/kwikpay", tags=["KwikPay Webhook"])
 
@@ -69,9 +70,13 @@ async def kwikpay_webhook(
                 },
             )
         elif payment["target_type"] == "invoice":
-            await db.invoices.update_one(
-                {"_id": ObjectId(payment["target_id"])},
-                {"$set": {"status": "paid", "updated_at": now}},
+            # Use reconciliation service for consistent invoice payment handling
+            await reconcile_invoice_payment(
+                db,
+                invoice_id=payment["target_id"],
+                amount=float(payment.get("amount", 0) or 0),
+                payment_method="kwikpay",
+                reference=transaction_id or reference,
             )
 
     return {"received": True}

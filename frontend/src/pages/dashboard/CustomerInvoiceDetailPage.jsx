@@ -1,28 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Coins } from "lucide-react";
 import api from "../../lib/api";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
+import PointsUsageBox from "../../components/checkout/PointsUsageBox";
 
 export default function CustomerInvoiceDetailPage() {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pointsPreview, setPointsPreview] = useState(null);
+  const [requestedPoints, setRequestedPoints] = useState(0);
+  const [applyingPoints, setApplyingPoints] = useState(false);
+
+  const load = async () => {
+    try {
+      const res = await api.get(`/api/customer/invoices/${invoiceId}`);
+      setInvoice(res.data);
+    } catch (error) {
+      console.error("Failed to load invoice:", error);
+      toast.error("Failed to load invoice details");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get(`/api/customer/invoices/${invoiceId}`);
-        setInvoice(res.data);
-      } catch (error) {
-        console.error("Failed to load invoice:", error);
-        toast.error("Failed to load invoice details");
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, [invoiceId]);
 
@@ -51,6 +56,28 @@ export default function CustomerInvoiceDetailPage() {
         },
       }
     );
+  };
+
+  const applyPoints = async () => {
+    if (!requestedPoints || requestedPoints <= 0) {
+      toast.error("No points to apply");
+      return;
+    }
+    try {
+      setApplyingPoints(true);
+      const res = await api.post(`/api/customer/points-apply/invoice/${invoice.id}`, {
+        requested_points: requestedPoints,
+      });
+      setInvoice(res.data.invoice);
+      setPointsPreview(null);
+      setRequestedPoints(0);
+      toast.success(`Applied ${res.data.applied_points} points successfully! Saved TZS ${Number(res.data.discount_value).toLocaleString()}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.detail || "Failed to apply points");
+    } finally {
+      setApplyingPoints(false);
+    }
   };
 
   if (loading) {
@@ -130,7 +157,7 @@ export default function CustomerInvoiceDetailPage() {
       </div>
 
       {/* Summary Grid */}
-      <div className="grid md:grid-cols-[1fr_360px] gap-6">
+      <div className="grid md:grid-cols-[1fr_380px] gap-6">
         {/* Payment Details Card */}
         <div className="rounded-3xl border bg-white p-6">
           <h2 className="text-2xl font-bold text-[#2D3E50]">Payment Details</h2>
@@ -139,6 +166,33 @@ export default function CustomerInvoiceDetailPage() {
             <div>Due Date: {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : "-"}</div>
             <div>Issue Date: {invoice.created_at ? new Date(invoice.created_at).toLocaleDateString() : "-"}</div>
           </div>
+
+          {/* Points Usage Section */}
+          {canPay && (
+            <div className="mt-6">
+              <PointsUsageBox
+                subtotal={balanceDue}
+                onApplied={(preview) => {
+                  setPointsPreview(preview);
+                  setRequestedPoints(preview?.usable_points || 0);
+                }}
+              />
+
+              {pointsPreview?.usable_points > 0 && (
+                <Button
+                  type="button"
+                  onClick={applyPoints}
+                  disabled={applyingPoints}
+                  variant="outline"
+                  className="mt-4 w-full border-[#D4A843] text-[#D4A843] hover:bg-[#D4A843]/10"
+                  data-testid="apply-points-btn"
+                >
+                  <Coins className="w-4 h-4 mr-2" />
+                  {applyingPoints ? "Applying..." : `Apply ${pointsPreview.usable_points.toLocaleString()} Points`}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Totals Card */}
@@ -174,14 +228,50 @@ export default function CustomerInvoiceDetailPage() {
             <Button
               type="button"
               onClick={payNow}
-              className="w-full mt-6 bg-[#D4A843] hover:bg-[#c49a3d]"
+              className="w-full mt-6 bg-[#2D3E50] hover:bg-[#1e2d3d]"
               data-testid="pay-now-btn"
             >
               Pay Now
             </Button>
           )}
+
+          {invoice.status === "paid" && (
+            <div className="mt-6 p-4 rounded-xl bg-emerald-50 text-emerald-700 text-center">
+              <span className="font-semibold">Fully Paid</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Payment History */}
+      {(invoice.payments || []).length > 0 && (
+        <div className="rounded-3xl border bg-white p-6">
+          <h2 className="text-2xl font-bold text-[#2D3E50]">Payment History</h2>
+          <div className="mt-4 space-y-3">
+            {invoice.payments.map((payment, idx) => (
+              <div key={idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50">
+                <div>
+                  <div className="font-medium capitalize">{payment.type?.replace(/_/g, " ") || "Payment"}</div>
+                  <div className="text-sm text-slate-500">
+                    {payment.created_at ? new Date(payment.created_at).toLocaleDateString() : "-"}
+                  </div>
+                  {payment.reference && (
+                    <div className="text-xs text-slate-400 mt-1">Ref: {payment.reference}</div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <div className="font-semibold text-emerald-600">
+                    {invoice.currency || "TZS"} {Number(payment.amount || 0).toLocaleString()}
+                  </div>
+                  {payment.points_used && (
+                    <div className="text-xs text-slate-500">{payment.points_used} points used</div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

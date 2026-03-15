@@ -70,6 +70,14 @@ from qa_routes import router as qa_router
 from health_routes import router as health_router
 from service_form_routes import router as service_form_router
 from service_request_routes import router as service_request_router
+from service_request_admin_routes import router as service_request_admin_router
+from service_request_customer_routes import router as service_request_customer_router
+from upload_service_files_routes import router as upload_service_files_router
+from points_checkout_routes import router as points_checkout_router
+from points_apply_routes import router as points_apply_router
+from launch_hardening_routes import router as launch_hardening_router
+from affiliate_admin_routes import router as affiliate_admin_router
+from affiliate_dashboard_routes import router as affiliate_dashboard_router
 from team_role_routes import router as team_role_router
 from security_headers_middleware import SecurityHeadersMiddleware
 from audit_routes import router as audit_router
@@ -104,6 +112,7 @@ security = HTTPBearer(auto_error=False)
 STATIC_DIR = Path("/app/static")
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -2031,6 +2040,14 @@ app.include_router(qa_router)
 app.include_router(health_router)
 app.include_router(service_form_router)
 app.include_router(service_request_router)
+app.include_router(service_request_admin_router)
+app.include_router(service_request_customer_router)
+app.include_router(upload_service_files_router)
+app.include_router(points_checkout_router)
+app.include_router(points_apply_router)
+app.include_router(launch_hardening_router)
+app.include_router(affiliate_admin_router)
+app.include_router(affiliate_dashboard_router)
 app.include_router(team_role_router)
 app.include_router(audit_router)
 app.include_router(launch_report_router)

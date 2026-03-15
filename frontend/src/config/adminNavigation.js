@@ -25,6 +25,7 @@ export const adminNavigation = [
     children: [
       { label: "Orders", href: "/admin/orders", moduleKey: "orders" },
       { label: "Order Operations", href: "/admin/orders-ops", moduleKey: "orders" },
+      { label: "Service Requests", href: "/admin/service-requests", moduleKey: "orders" },
       { label: "Production", href: "/admin/production", moduleKey: "production" },
       { label: "Tasks", href: "/admin/tasks", moduleKey: "tasks" },
     ],

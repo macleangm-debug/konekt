@@ -87,6 +87,8 @@ import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
 import StockMovementsPage from "@/pages/admin/StockMovementsPage";
 import ServiceFormsPage from "@/pages/admin/ServiceFormsPage";
+import ServiceRequestsAdminPage from "@/pages/admin/ServiceRequestsAdminPage";
+import ServiceRequestAdminDetailPage from "@/pages/admin/ServiceRequestAdminDetailPage";
 import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
 import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
 
@@ -104,6 +106,7 @@ import AddressesPage from "@/pages/dashboard/AddressesPage";
 import MaintenanceDashboardPage from "@/pages/dashboard/MaintenanceDashboardPage";
 import ReferralsPage from "@/pages/dashboard/ReferralsPage";
 import PointsPage from "@/pages/dashboard/PointsPage";
+import DashboardAffiliatePage from "@/pages/dashboard/AffiliateDashboardPage";
 
 // Affiliate pages
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
@@ -217,6 +220,8 @@ function App() {
           <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
           <Route path="inventory/movements" element={<StockMovementsPage />} />
           <Route path="service-forms" element={<ServiceFormsPage />} />
+          <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
+          <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
         </Route>
         
         {/* Customer Portal Routes - Must be before catch-all */}
@@ -244,6 +249,7 @@ function App() {
           <Route path="service-requests/:requestId" element={<ServiceRequestDetailPage />} />
           <Route path="referrals" element={<ReferralsPage />} />
           <Route path="points" element={<PointsPage />} />
+          <Route path="affiliate" element={<DashboardAffiliatePage />} />
         </Route>
         
         {/* Public Customer Routes - Catch-all at the end */}
