@@ -237,7 +237,36 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 17. Campaign + Affiliate Tracking Engine ✅ NEW (March 15, 2026)
+#### 18. Final Commercial Stabilization Pack ✅ NEW (March 15, 2026)
+- **Attribution Capture Service** (`attribution_capture_service.py`):
+  - `extract_attribution_from_payload()` - Extracts affiliate/campaign fields
+  - `hydrate_affiliate_from_code()` - Looks up affiliate by promo code
+  - `build_attribution_block()` - Standard attribution for document storage
+  - `inherit_attribution_from_document()` - Quote → Invoice inheritance
+- **Premium PDF Generator** (`pdf_commercial_documents.py`):
+  - Modern layout with logo placeholder, From/Bill To blocks
+  - Clean line items table with proper styling
+  - Professional totals card with balance due
+  - Notes, payment terms, payment instructions blocks
+  - Uses reportlab with A4 format
+- **PDF Export Routes** (`document_pdf_routes.py`):
+  - `GET /api/documents/pdf/invoice/{id}` - Premium invoice PDF
+  - `GET /api/documents/pdf/quote/{id}` - Premium quote PDF
+  - Safe fallback: invoices_v2 → invoices collection
+- **Frontend Attribution Helper** (`lib/attribution.js`):
+  - `bootstrapAffiliateAttribution()` - Read from URL/localStorage
+  - `getStoredAffiliateCode()` - Read from localStorage
+  - `persistAffiliateCode()` - Store to localStorage
+  - SSR-safe with typeof window checks
+- **App.js Attribution Bootstrap**:
+  - Calls `bootstrapAffiliateAttribution()` on app load
+  - Affiliate codes survive browsing sessions
+- **Checkout Attribution**:
+  - CheckoutPage uses attribution helper
+  - Sends affiliate_code in order payload
+- **Testing**: 14/14 backend tests pass, frontend attribution flow verified
+
+#### 17. Campaign + Affiliate Tracking Engine ✅ (March 15, 2026)
 - **Attribution Service** (`checkout_attribution_service.py`):
   - `resolve_affiliate_attribution()` - Looks up affiliate by promo code
   - `log_campaign_usage()` - Logs campaign redemptions to `campaign_usages` collection
@@ -324,6 +353,13 @@ The admin sidebar is now organized into logical groups:
 - **Customer Perk Preview**:
   - `/api/affiliate-perks/preview` - Preview perk at checkout
   - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 35 (March 15, 2026) - Final Commercial Stabilization
+- **Backend**: 14/14 tests passed (100%)
+- **Frontend**: Attribution flow, checkout, admin PDF buttons verified
+- **New Services**: attribution_capture_service.py, pdf_commercial_documents.py
+- **New Routes**: /api/documents/pdf/invoice/{id}, /api/documents/pdf/quote/{id}
+- **New Helper**: frontend/src/lib/attribution.js
 
 ### Iteration 34 (March 15, 2026) - Campaign + Affiliate Tracking Engine
 - **Backend**: 17/17 tests passed (100%)
@@ -435,8 +471,11 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~Affiliate click/conversion tracking~~ DONE
 - [x] ~~Payout approval workflow for admins~~ DONE
 - [x] ~~Attribution + Checkout Campaign Application~~ DONE
-- [ ] Final PDF refinement (quotes, invoices)
-- [ ] Production launch checklist & E2E QA
+- [x] ~~Consistent attribution on signup/quote/invoice/order~~ DONE
+- [x] ~~Final PDF design polish~~ DONE
+- [ ] Connect Resend live (need `RESEND_API_KEY`)
+- [ ] Connect KwikPay live (need credentials)
+- [ ] Full end-to-end launch QA
 
 ### P1 - Integration & Polish
 - [ ] Finalize KwikPay integration with live API
