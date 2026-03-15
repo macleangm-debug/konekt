@@ -237,7 +237,25 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 14. Codebase Pack 8 - Launch Stabilization (Affiliate Platform) ✅ NEW (March 15, 2026)
+#### 15. Attribution + Checkout Campaign Application Pack ✅ NEW (March 15, 2026)
+- **Checkout Campaign Evaluation API**:
+  - `/api/checkout/evaluate-campaigns` - Evaluates active campaigns against checkout data
+  - `/api/checkout/evaluate-affiliate-perk` - Validates affiliate code and returns perk eligibility
+  - `/api/checkout/detect-attribution` - Detects affiliate from URL params or cookies
+  - `/api/checkout/active-promotions` - Returns public promotions for display
+- **Order Attribution**:
+  - Guest orders now accept `affiliate_code`, `affiliate_email`, `campaign_id`, `campaign_name`, `campaign_discount`, `campaign_reward_type`
+  - Attribution data stored on order documents
+  - Automatic affiliate lookup from code to email
+- **Frontend Checkout Integration**:
+  - `CheckoutPage.jsx` - Integrated AffiliatePerkPreviewBox and campaign display
+  - `CreativeServiceCheckoutPage.jsx` - Same integration for creative services
+  - Shows detected affiliate banner when attribution cookie exists
+  - Displays available campaigns with discount amounts
+  - Order summary shows perk and campaign discount rows
+- **Testing**: 21/21 backend tests pass, all frontend components verified
+
+#### 14. Codebase Pack 8 - Launch Stabilization (Affiliate Platform) ✅ (March 15, 2026)
 - **Affiliate Settings Admin**:
   - Full configuration page at `/admin/affiliate-settings`
   - Commission rules: type (percentage/fixed), default rate, trigger events
@@ -267,6 +285,12 @@ The admin sidebar is now organized into logical groups:
 - **Customer Perk Preview**:
   - `/api/affiliate-perks/preview` - Preview perk at checkout
   - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 32 (March 15, 2026) - Attribution + Checkout Campaign Pack
+- **Backend**: 21/21 tests passed (100%)
+- **Frontend**: CheckoutPage and CreativeServiceCheckoutPage verified
+- **New Endpoints**: /api/checkout/evaluate-campaigns, /api/checkout/detect-attribution, etc.
+- **Fixed**: React hooks violation in CreativeServiceCheckoutPage.jsx
 
 ### Iteration 31 (March 15, 2026) - Pack 8: Launch Stabilization
 - **Backend**: 16/16 tests passed (100%)
@@ -329,6 +353,13 @@ The admin sidebar is now organized into logical groups:
 - `GET /api/affiliate/me` - Affiliate dashboard data
 - `POST /api/affiliate/me/payout-request` - Submit payout request
 
+### Checkout Campaign Attribution (NEW)
+- `POST /api/checkout/evaluate-campaigns` - Evaluate active campaigns for checkout
+- `POST /api/checkout/evaluate-affiliate-perk` - Validate affiliate perk eligibility
+- `GET /api/checkout/detect-attribution` - Detect affiliate from cookies/URL
+- `GET /api/checkout/active-promotions` - Get public promotions
+- `POST /api/guest/orders` - Now accepts affiliate_code, campaign_id, etc.
+
 ### Launch Hardening
 - `GET /api/admin/launch-hardening/checklist` - Environment config checks
 
@@ -350,8 +381,9 @@ The admin sidebar is now organized into logical groups:
 ## Remaining Tasks
 
 ### P0 - Immediate (Next Pack)
-- [ ] Affiliate click/conversion tracking
-- [ ] Payout approval workflow for admins
+- [x] ~~Affiliate click/conversion tracking~~ DONE
+- [x] ~~Payout approval workflow for admins~~ DONE
+- [x] ~~Attribution + Checkout Campaign Application~~ DONE
 - [ ] Final PDF refinement (quotes, invoices)
 - [ ] Production launch checklist & E2E QA
 
@@ -370,7 +402,7 @@ The admin sidebar is now organized into logical groups:
 - [ ] Affiliate partner asset library
 - [ ] Partner tiers (Authorized, Premium, Strategic)
 - [ ] Fraud checks for affiliate conversions
-- [ ] Tracked clicks and conversions
+- [x] ~~Tracked clicks and conversions~~ DONE
 
 ### P4 - Future Enhancements
 - [ ] WhatsApp notifications
