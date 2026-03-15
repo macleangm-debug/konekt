@@ -3,6 +3,8 @@ import { Megaphone, Copy, Plus, Calendar, Target, Gift, X, Loader2, Check } from
 import api from "../../lib/api";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
+import CurrentPromotionsWidget from "../../components/admin/CurrentPromotionsWidget";
+import CampaignPerformanceWidget from "../../components/admin/CampaignPerformanceWidget";
 
 const initialForm = {
   name: "",
@@ -117,6 +119,9 @@ export default function AffiliateCampaignsPage() {
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen space-y-6" data-testid="affiliate-campaigns-page">
+      <CurrentPromotionsWidget />
+      <CampaignPerformanceWidget />
+
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold text-[#2D3E50]">Promotion Campaigns</h1>

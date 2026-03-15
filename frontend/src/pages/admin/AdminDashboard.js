@@ -9,6 +9,8 @@ import {
 import { Button } from '../../components/ui/button';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import axios from 'axios';
+import CurrentPromotionsWidget from '../../components/admin/CurrentPromotionsWidget';
+import CampaignPerformanceWidget from '../../components/admin/CampaignPerformanceWidget';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -73,6 +75,9 @@ export default function AdminDashboard() {
           </Button>
         </div>
       </div>
+
+      <CurrentPromotionsWidget />
+      <CampaignPerformanceWidget />
 
       {/* Stats Cards */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

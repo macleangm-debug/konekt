@@ -27,6 +27,8 @@ async def export_quote_pdf(quote_id: str):
         raise HTTPException(status_code=404, detail="Quote not found")
     
     if not quote:
+        quote = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)}) if hasattr(db, "quotes_v2") else None
+    if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
 
     settings = await db.company_settings.find_one({}) or {}
@@ -44,10 +46,12 @@ async def export_quote_pdf(quote_id: str):
 async def export_invoice_pdf(invoice_id: str):
     """Export an invoice as PDF"""
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
+    if not invoice:
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 

@@ -3,6 +3,7 @@ import { Settings, Percent, Gift, Users, Shield, DollarSign } from "lucide-react
 import api from "../../lib/api";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
+import CurrentPromotionsWidget from "../../components/admin/CurrentPromotionsWidget";
 
 export default function AffiliateSettingsPage() {
   const [form, setForm] = useState(null);
@@ -43,6 +44,8 @@ export default function AffiliateSettingsPage() {
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen space-y-6" data-testid="affiliate-settings-page">
+      <CurrentPromotionsWidget />
+
       <div className="text-left">
         <h1 className="text-4xl font-bold text-[#2D3E50]">Affiliate Settings</h1>
         <p className="mt-2 text-slate-600">
