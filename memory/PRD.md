@@ -67,17 +67,28 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Team Role Management**: Staff role assignment API
 - **Launch Readiness PDF**: Go-live certification report
 
-#### 8. Customer Portal Redesign ✅ NEW (March 13, 2026)
-- **CustomerPortalLayout**: New dedicated sidebar layout for logged-in customers, separate from public website
-- **CustomerDashboardHome**: Rich, action-driven dashboard with stats cards, referral banner, recent activity
-- **CustomerQuotesPage**: View/filter quotes (all/pending/approved/rejected)
-- **CustomerQuoteDetailPage**: Quote detail with approval workflow
-- **CustomerInvoicesPage**: View/filter invoices (all/unpaid/paid/overdue) with pay now buttons
-- **CustomerInvoiceDetailPage**: Invoice detail with payment button
-- **CustomerOrdersPage**: View/filter orders (all/active/completed/cancelled) with tracking links
-- **AddressesPage**: Full CRUD for customer addresses with dialog form
+#### 8. Customer Portal Redesign ✅ (March 13, 2026) + Pack 1 Enhancements (March 15, 2026)
+- **CustomerPortalLayout**: New dedicated sidebar layout with grouped navigation (Orders & Sales, Services, Account, Rewards)
+- **CustomerDashboardHome**: Rich dashboard with banner carousel, stats cards, action cards
+- **ClientBannerCarousel**: Rotating promotional banners with navigation
+- **ReferralPointsBanner**: Shows referral code with copy button and points balance
+- **CustomerQuotesPage**: View/filter quotes (all/pending/approved/rejected) with approve/convert flow
+- **CustomerQuoteDetailPage**: Quote detail with approval workflow and convert-to-invoice
+- **CustomerInvoicesPage**: View/filter invoices (all/unpaid/paid/overdue) with Pay Now buttons
+- **CustomerInvoiceDetailPage**: Invoice detail with line items, totals, Pay Now option
+- **CustomerOrdersPage**: View/filter orders (all/active/completed/cancelled)
+- **AddressesPage**: Full CRUD with country dropdown, phone prefix auto-selection
 - **ReferralsPage**: Referral code, copy/share buttons, stats, referral list
 - **PointsPage**: Points balance, earning methods, transaction history
+
+#### 9. Codebase Pack 1 - Service Flow Alignment ✅ NEW (March 15, 2026)
+- **COUNTRIES constant**: 11 countries with dial codes for Tanzania, Kenya, Uganda, Rwanda, etc.
+- **Phone prefix auto-selection**: Country dropdown automatically updates phone prefix
+- **Creative Service payment choice**: "Pay now" vs "Request quote first" options
+- **Save address checkbox**: Option to save delivery details for future orders
+- **Creative Service Checkout Page**: Review page before payment with completion options
+- **Customer Orders API**: New `/api/customer/orders` endpoint
+- **Referrals Overview API**: New `/api/customer/referrals/overview` endpoint
 - **ReferralPointsBanner**: Reusable component showing referral code and points on dashboard
 - **EmptyStateCard**: Reusable empty state component with action buttons
 
