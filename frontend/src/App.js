@@ -28,6 +28,8 @@ import CreativeServiceBriefPage from "@/pages/CreativeServiceBriefPage";
 import CreativeServiceDetailPage from "@/pages/CreativeServiceDetailPage";
 import CreativeServiceCheckoutPage from "@/pages/CreativeServiceCheckoutPage";
 import ServiceDetail from "@/pages/ServiceDetail";
+import ServicesHubPage from "@/pages/ServicesHubPage";
+import ServiceRequestPage from "@/pages/ServiceRequestPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import OrderConfirmationPage from "@/pages/OrderConfirmationPage";
 import OrderTrackingPage from "@/pages/OrderTrackingPage";
@@ -84,6 +86,7 @@ import LaunchReadinessPage from "@/pages/admin/LaunchReadinessPage";
 import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
 import StockMovementsPage from "@/pages/admin/StockMovementsPage";
+import ServiceFormsPage from "@/pages/admin/ServiceFormsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -211,6 +214,7 @@ function App() {
           <Route path="audit" element={<AuditLogPage />} />
           <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
           <Route path="inventory/movements" element={<StockMovementsPage />} />
+          <Route path="service-forms" element={<ServiceFormsPage />} />
         </Route>
         
         {/* Customer Portal Routes - Must be before catch-all */}
@@ -266,6 +270,8 @@ function App() {
                     <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
                     <Route path="/affiliate/dashboard" element={<AffiliateDashboardPage />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
+                    <Route path="/services" element={<ServicesHubPage />} />
+                    <Route path="/services/:slug/request" element={<ServiceRequestPage />} />
                     <Route path="/creative-services" element={<CreativeServicesPage />} />
                     <Route path="/creative-services/checkout" element={<CreativeServiceCheckoutPage />} />
                     <Route path="/creative-services/:slug" element={<CreativeServiceDetailPage />} />

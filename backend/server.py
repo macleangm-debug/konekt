@@ -68,6 +68,8 @@ from admin_setup_routes import router as admin_setup_router
 from public_product_variant_routes import router as public_product_variant_router
 from qa_routes import router as qa_router
 from health_routes import router as health_router
+from service_form_routes import router as service_form_router
+from service_request_routes import router as service_request_router
 from team_role_routes import router as team_role_router
 from security_headers_middleware import SecurityHeadersMiddleware
 from audit_routes import router as audit_router
@@ -2027,6 +2029,8 @@ app.include_router(admin_setup_router)
 app.include_router(public_product_variant_router)
 app.include_router(qa_router)
 app.include_router(health_router)
+app.include_router(service_form_router)
+app.include_router(service_request_router)
 app.include_router(team_role_router)
 app.include_router(audit_router)
 app.include_router(launch_report_router)
