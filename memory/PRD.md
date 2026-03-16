@@ -1076,6 +1076,61 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
+#### 21. Contract Clients + Billing Discipline Pack ✅ (March 16, 2026)
+Complete B2B management features for contract customers:
+
+**Backend Routes**:
+- `/api/admin/contract-clients` - Full CRUD for contract client management
+- `/api/admin/negotiated-pricing` - Customer-specific pricing rules (fixed price or discount %)
+- `/api/admin/contract-slas` - Service Level Agreement settings per client/service
+- `/api/admin/recurring-invoices/plans` - Recurring billing schedules with generate, pause, resume
+
+**Frontend Pages**:
+- `ContractClientsPage.jsx` - Manage contract customers with tiers (standard/premium/strategic)
+- `NegotiatedPricingPage.jsx` - Set customer-specific pricing by SKU, service, or category
+- `ContractSlasPage.jsx` - Configure response times, quote turnaround, delivery targets
+- `RecurringInvoicePlansPage.jsx` - Create recurring billing schedules with invoice generation
+
+**Key Features**:
+- Client tier management (Standard, Premium, Strategic)
+- Credit limit tracking and usage
+- Payment terms configuration (30/60/90 days)
+- Account manager assignment
+- Contract start/end dates
+- Automatic recurring invoice generation
+
+---
+
+#### 22. Admin Performance & Insights Pack ✅ (March 16, 2026)
+Comprehensive dashboards for operational visibility:
+
+**Backend Routes**:
+- `/api/admin/partner-performance/summary` - Partner reliability and completion rates
+- `/api/admin/partner-performance/queue-load` - Current workload per partner
+- `/api/admin/partner-performance/by-service` - Performance breakdown by service type
+- `/api/admin/product-insights/fast-moving` - Top products by quantity sold
+- `/api/admin/product-insights/top-revenue` - Products generating highest revenue
+- `/api/admin/product-insights/high-margin` - Products with best profit margins
+- `/api/admin/product-insights/in-house-opportunity` - Candidates for in-house production
+- `/api/admin/service-insights/demand` - Service request volumes
+- `/api/admin/service-insights/conversion` - Request → Quote → Approval funnel
+- `/api/admin/service-insights/partner-coverage` - Services needing more partners
+- `/api/admin/staff-performance/summary` - Account manager performance metrics
+- `/api/admin/staff-performance/workload` - Work distribution across staff
+
+**Frontend Pages**:
+- `PartnerPerformancePage.jsx` - Partner rankings, queue load, service breakdown
+- `ProductInsightsPage.jsx` - Fast moving, top revenue, high margin, repeat orders analysis
+- `ServiceInsightsPage.jsx` - Demand, conversion funnel, delays, partner coverage
+- `StaffPerformancePage.jsx` - Staff KPIs and workload distribution
+
+**Navigation Updates**:
+- New "Performance & Insights" section in admin navigation
+- Contract Clients added under Sales
+- Billing features (Negotiated Pricing, Contract SLAs, Recurring Invoices) under Finance
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1091,10 +1146,11 @@ Admin dashboard for reviewing and approving partner submissions:
 - Richer marketplace filters and search
 - Admin notes and feedback on rejections
 
-### Final Live Readiness Pack (P1)
-- Activate Resend with live API key
-- Activate KwikPay with live credentials
-- Full end-to-end QA test
+### Final Commercial Control Pack (P1)
+- Contract client detail page with full history
+- Client credit exposure dashboard
+- Overdue contract invoice alerts
+- Account manager portfolio dashboard
 
 ### World-Class Affiliate Platform Enhancements (P2)
 - Public affiliate application form
@@ -1104,7 +1160,12 @@ Admin dashboard for reviewing and approving partner submissions:
 ### Admin Notification Bell (P2)
 - Real-time UI notification system for admins
 
+### Settlement Workflow (P2)
+- Settlement periods configuration
+- Admin approval for partner payouts
+- Downloadable settlement statements
+
 ---
 
-*Last updated: March 16, 2026 - Partner Listings & Media Pack Complete*
+*Last updated: March 16, 2026 - Contract Clients + Billing Discipline Pack and Admin Performance & Insights Pack Complete*
 
