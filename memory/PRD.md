@@ -241,7 +241,29 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 20. Service Orchestration + Admin Service Builder Pack ✅ NEW (March 16, 2026)
+#### 21. Recurring Services + Reorder Pack ✅ NEW (March 16, 2026)
+- **Backend Routes Created & Registered**:
+  - `reorder_routes.py` - Repeat previous orders (POST /api/reorders/order/{id})
+  - `repeat_service_request_routes.py` - Repeat previous service requests
+  - `recurring_service_plan_routes.py` - CRUD for recurring service plans (cleaning, maintenance)
+  - `recurring_supply_plan_routes.py` - CRUD for recurring supply orders
+  - `account_manager_routes.py` - Assign account managers to key clients
+  - `sla_alerts_routes.py` - Monitor delayed orders, stale requests, at-risk assignments
+- **Frontend Updates**:
+  - `CustomerOrdersPage.jsx` - Added "Repeat Order" button for completed orders
+  - `ServiceRequestsPage.jsx` - Added "Repeat Request" button for completed requests
+  - `RecurringPlansPage.jsx` - New customer page for managing recurring plans
+  - `SlaAlertsPage.jsx` - Admin dashboard for SLA monitoring
+  - `CustomerPortalLayoutV2.jsx` - Added "Recurring Plans" navigation
+  - `adminNavigation.js` - Added "SLA & Quality" section
+- **Database Collections**:
+  - `recurring_service_plans`: Recurring service schedules
+  - `recurring_supply_plans`: Recurring supply delivery schedules
+  - `account_manager_logs`: Account manager assignment history
+  - `account_manager_notes`: Internal notes for key accounts
+- **Testing**: 32/32 backend tests passed, SLA Alerts datetime bug fixed
+
+#### 20. Service Orchestration + Admin Service Builder Pack ✅ (March 16, 2026)
 - **Backend Route Files Created & Registered**:
   - `service_catalog_routes.py` - Admin CRUD for service groups and types
   - `service_form_template_routes.py` - Dynamic form schema management
