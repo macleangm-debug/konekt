@@ -503,6 +503,7 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~Consistent attribution on signup/quote/invoice/order~~ DONE
 - [x] ~~Final PDF design polish~~ DONE
 - [x] ~~Attribution persistence + collection unification~~ DONE
+- [x] ~~PDF & Notification Integration Pack~~ DONE (March 16, 2026)
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
 - [ ] Full end-to-end launch QA
@@ -531,4 +532,33 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-*Last updated: March 15, 2026 - Codebase Pack 6: Final Checkout Persistence, Points Redemption, Launch Hardening & Pack 7 Affiliate Platform Complete*
+## Recent Changes
+
+### PDF & Notification Integration Pack (March 16, 2026)
+- **Premium PDF Export Routes** (`document_pdf_routes.py`):
+  - `GET /api/documents/pdf/quote/{quote_id}` - Export quote as polished PDF
+  - `GET /api/documents/pdf/invoice/{invoice_id}` - Export invoice as polished PDF
+- **Resend Email Service** (`resend_live_service.py`):
+  - Integrated with Resend API for transactional emails
+  - Graceful fallback when `RESEND_API_KEY` not configured
+- **Notification Events** (`notification_events.py`):
+  - `notify_quote_ready()` - Triggered on quote creation
+  - `notify_invoice_ready()` - Triggered on invoice creation from quote
+  - `notify_service_update()` - Triggered on service request status change
+  - `notify_payment_received()` - Triggered on payment verification
+- **Email Templates** (`email_templates_v2.py`):
+  - Premium branded HTML templates for all notification types
+- **Notification Test Routes** (`notification_test_routes.py`):
+  - `GET /api/admin/notifications-test/status` - Check Resend configuration
+  - `POST /api/admin/notifications-test/send` - Send test email
+- **Routes Updated with Notification Triggers**:
+  - `quote_routes.py` - notify_quote_ready, notify_invoice_ready
+  - `customer_quote_actions_routes.py` - notify_invoice_ready
+  - `service_request_admin_routes.py` - notify_service_update
+  - `kwikpay_webhook_routes.py` - notify_payment_received
+  - `payment_admin_routes.py` - notify_payment_received
+- **Campaign Performance Routes** registered in server.py
+
+---
+
+*Last updated: March 16, 2026 - PDF & Notification Integration Pack Complete*
