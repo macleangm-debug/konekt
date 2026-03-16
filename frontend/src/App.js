@@ -117,6 +117,17 @@ import ServiceCatalogPage from "@/pages/admin/ServiceCatalogPage";
 import BlankProductsPage from "@/pages/admin/BlankProductsPage";
 import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
 
+// Contract Clients + Billing Discipline Pack
+import ContractClientsPage from "@/pages/admin/ContractClientsPage";
+import NegotiatedPricingPage from "@/pages/admin/NegotiatedPricingPage";
+import ContractSlasPage from "@/pages/admin/ContractSlasPage";
+import RecurringInvoicePlansPage from "@/pages/admin/RecurringInvoicePlansPage";
+
+// Admin Performance & Insights Pack
+import PartnerPerformancePage from "@/pages/admin/PartnerPerformancePage";
+import ProductInsightsPage from "@/pages/admin/ProductInsightsPage";
+import ServiceInsightsPage from "@/pages/admin/ServiceInsightsPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -334,6 +345,15 @@ function App() {
           <Route path="blank-products" element={<BlankProductsPage />} />
           {/* SLA & Quality Routes */}
           <Route path="sla-alerts" element={<SlaAlertsPage />} />
+          {/* Contract Clients + Billing Discipline Routes */}
+          <Route path="contract-clients" element={<ContractClientsPage />} />
+          <Route path="negotiated-pricing" element={<NegotiatedPricingPage />} />
+          <Route path="contract-slas" element={<ContractSlasPage />} />
+          <Route path="recurring-invoice-plans" element={<RecurringInvoicePlansPage />} />
+          {/* Admin Performance & Insights Routes */}
+          <Route path="partner-performance" element={<PartnerPerformancePage />} />
+          <Route path="product-insights" element={<ProductInsightsPage />} />
+          <Route path="service-insights" element={<ServiceInsightsPage />} />
         </Route>
         
         {/* Partner Portal Routes */}

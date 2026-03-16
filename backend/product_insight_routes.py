@@ -164,3 +164,125 @@ async def regional_demand():
         })
 
     return results
+
+
+@router.get("/top-revenue")
+async def top_revenue_products(limit: int = 50):
+    """Get top revenue generating products"""
+    pipeline = [
+        {"$unwind": "$items"},
+        {
+            "$group": {
+                "_id": "$items.sku",
+                "name": {"$first": "$items.name"},
+                "revenue": {"$sum": {"$multiply": [
+                    {"$ifNull": ["$items.quantity", 1]},
+                    {"$ifNull": ["$items.unit_price", 0]}
+                ]}},
+                "orders": {"$sum": 1},
+                "quantity": {"$sum": {"$ifNull": ["$items.quantity", 1]}},
+            }
+        },
+        {"$sort": {"revenue": -1}},
+        {"$limit": limit},
+    ]
+
+    results = []
+    async for row in db.orders.aggregate(pipeline):
+        results.append({
+            "sku": row["_id"],
+            "name": row.get("name", ""),
+            "revenue": row.get("revenue", 0),
+            "orders": row.get("orders", 0),
+            "quantity": row.get("quantity", 0),
+        })
+
+    return results
+
+
+@router.get("/repeat-orders")
+async def top_repeat_order_products(limit: int = 30):
+    """Get products with highest repeat order rates"""
+    # Products ordered by multiple different customers
+    pipeline = [
+        {"$unwind": "$items"},
+        {
+            "$group": {
+                "_id": {"sku": "$items.sku", "customer_id": "$customer_id"},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id.sku",
+                "unique_customers": {"$sum": 1},
+            }
+        },
+        {"$sort": {"unique_customers": -1}},
+        {"$limit": limit},
+    ]
+
+    results = []
+    async for row in db.orders.aggregate(pipeline):
+        sku = row["_id"]
+        # Get product name
+        order = await db.orders.find_one({"items.sku": sku})
+        name = ""
+        if order:
+            for item in order.get("items", []):
+                if item.get("sku") == sku:
+                    name = item.get("name", "")
+                    break
+        
+        results.append({
+            "sku": sku,
+            "name": name,
+            "unique_customers": row.get("unique_customers", 0),
+        })
+
+    return results
+
+
+@router.get("/in-house-opportunity")
+async def product_in_house_opportunity(limit: int = 30):
+    """Calculate products best suited for in-house production"""
+    pipeline = [
+        {"$unwind": "$items"},
+        {
+            "$group": {
+                "_id": "$items.sku",
+                "name": {"$first": "$items.name"},
+                "total_orders": {"$sum": 1},
+                "total_quantity": {"$sum": {"$ifNull": ["$items.quantity", 1]}},
+                "revenue": {"$sum": {"$multiply": [
+                    {"$ifNull": ["$items.quantity", 1]},
+                    {"$ifNull": ["$items.unit_price", 0]}
+                ]}},
+            }
+        },
+        {"$match": {"total_orders": {"$gte": 3}}},  # Only products with enough data
+        {"$sort": {"total_orders": -1}},
+        {"$limit": limit},
+    ]
+
+    results = []
+    async for row in db.orders.aggregate(pipeline):
+        orders = row.get("total_orders", 0)
+        quantity = row.get("total_quantity", 0)
+        revenue = row.get("revenue", 0)
+        
+        # Calculate opportunity score based on volume and frequency
+        volume_score = min(quantity / 100, 5)  # Up to 5 points for volume
+        frequency_score = min(orders / 10, 5)  # Up to 5 points for frequency
+        opportunity_score = round(volume_score + frequency_score, 2)
+        
+        results.append({
+            "sku": row["_id"],
+            "name": row.get("name", ""),
+            "total_orders": orders,
+            "total_quantity": quantity,
+            "revenue": revenue,
+            "opportunity_score": opportunity_score,
+        })
+
+    results.sort(key=lambda x: -x["opportunity_score"])
+    return results

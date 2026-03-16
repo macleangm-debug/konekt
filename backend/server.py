@@ -149,6 +149,18 @@ from recurring_supply_plan_routes import router as recurring_supply_plan_router
 from account_manager_routes import router as account_manager_router
 from sla_alerts_routes import router as sla_alerts_router
 
+# Contract Clients + Billing Discipline Pack
+from contract_client_routes import router as contract_client_router
+from account_manager_note_routes import router as account_manager_note_router
+from negotiated_pricing_routes import router as negotiated_pricing_router
+from contract_sla_routes import router as contract_sla_router
+from recurring_invoice_routes import router as recurring_invoice_router
+
+# Admin Performance & Insights Pack
+from partner_performance_routes import router as partner_performance_router
+from service_insight_routes import router as service_insight_router
+from staff_performance_routes import router as staff_performance_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2195,6 +2207,18 @@ app.include_router(recurring_service_plan_router)
 app.include_router(recurring_supply_plan_router)
 app.include_router(account_manager_router)
 app.include_router(sla_alerts_router)
+
+# Contract Clients + Billing Discipline Pack
+app.include_router(contract_client_router)
+app.include_router(account_manager_note_router)
+app.include_router(negotiated_pricing_router)
+app.include_router(contract_sla_router)
+app.include_router(recurring_invoice_router)
+
+# Admin Performance & Insights Pack
+app.include_router(partner_performance_router)
+app.include_router(service_insight_router)
+app.include_router(staff_performance_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

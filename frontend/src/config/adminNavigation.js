@@ -18,6 +18,7 @@ export const adminNavigation = [
       { label: "Quotes", href: "/admin/quotes", moduleKey: "quotes" },
       { label: "Customers", href: "/admin/customers", moduleKey: "customers" },
       { label: "Customer Accounts", href: "/admin/customer-accounts", moduleKey: "customers" },
+      { label: "Contract Clients", href: "/admin/contract-clients", moduleKey: "customers" },
     ],
   },
   {
@@ -55,6 +56,9 @@ export const adminNavigation = [
       { label: "Record Payment", href: "/admin/payments/record", moduleKey: "finance" },
       { label: "Statements", href: "/admin/statements", moduleKey: "finance" },
       { label: "Document Flow", href: "/admin/workflow", moduleKey: "finance" },
+      { label: "Negotiated Pricing", href: "/admin/negotiated-pricing", moduleKey: "finance" },
+      { label: "Contract SLAs", href: "/admin/contract-slas", moduleKey: "finance" },
+      { label: "Recurring Invoices", href: "/admin/recurring-invoice-plans", moduleKey: "finance" },
     ],
   },
   {
@@ -76,6 +80,17 @@ export const adminNavigation = [
     children: [
       { label: "Service Catalog", href: "/admin/service-catalog", moduleKey: "services" },
       { label: "Blank Products", href: "/admin/blank-products", moduleKey: "services" },
+    ],
+  },
+  {
+    key: "performance_insights",
+    label: "Performance & Insights",
+    moduleKey: "reports",
+    children: [
+      { label: "Partner Performance", href: "/admin/partner-performance", moduleKey: "reports" },
+      { label: "Product Insights", href: "/admin/product-insights", moduleKey: "reports" },
+      { label: "Service Insights", href: "/admin/service-insights", moduleKey: "reports" },
+      { label: "Staff Performance", href: "/admin/staff-performance", moduleKey: "reports" },
     ],
   },
   {
