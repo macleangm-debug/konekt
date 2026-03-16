@@ -101,6 +101,11 @@ import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";
 import LeadDetailPage from "@/pages/admin/LeadDetailPage";
 import CustomerAccountSummaryPage from "@/pages/admin/CustomerAccountSummaryPage";
 import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
+import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
+import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
+
+// Staff pages
+import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -245,7 +250,18 @@ function App() {
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
           <Route path="customer-accounts" element={<CustomerAccountsPage />} />
           <Route path="customer-accounts/:customerEmail" element={<CustomerAccountSummaryPage />} />
+          <Route path="control-panel" element={<SuperAdminControlPanelPage />} />
+          <Route path="staff-performance" element={<StaffPerformancePage />} />
         </Route>
+        
+        {/* Staff Workspace Route */}
+        <Route path="/staff" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <StaffWorkspaceHomePage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
         
         {/* Customer Portal Routes - Must be before catch-all */}
         <Route path="/dashboard/*" element={

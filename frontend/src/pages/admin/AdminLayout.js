@@ -4,66 +4,100 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
 
+// Navigation items with moduleKey for filtering
 const navItems = [
-  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { path: '/admin/launch-readiness', label: 'Launch Readiness', icon: Zap },
-  { type: 'divider', label: 'Sales' },
-  { path: '/admin/crm', label: 'CRM Pipeline', icon: Target },
-  { path: '/admin/crm-intelligence', label: 'CRM Intelligence', icon: TrendingUp },
-  { path: '/admin/quotes', label: 'Quotes', icon: FileText },
-  { path: '/admin/customers', label: 'Customers', icon: Contact },
-  { path: '/admin/customer-accounts', label: 'Customer Accounts', icon: UsersRound },
-  { type: 'divider', label: 'Operations' },
-  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
-  { path: '/admin/orders-ops', label: 'Order Operations', icon: ClipboardList },
-  { path: '/admin/service-requests', label: 'Service Requests', icon: Briefcase },
-  { path: '/admin/production', label: 'Production Queue', icon: Factory },
-  { path: '/admin/tasks', label: 'Tasks', icon: CheckSquare },
-  { type: 'divider', label: 'Inventory' },
-  { path: '/admin/products', label: 'Products', icon: Package },
-  { path: '/admin/inventory', label: 'Stock Items', icon: Boxes },
-  { path: '/admin/inventory/movements', label: 'Stock Movements', icon: TrendingUp },
-  { path: '/admin/inventory/transfers', label: 'Transfers', icon: GitBranch },
-  { path: '/admin/warehouses', label: 'Warehouses', icon: Warehouse },
-  { path: '/admin/raw-materials', label: 'Raw Materials', icon: Layers },
-  { type: 'divider', label: 'Finance' },
-  { path: '/admin/invoices', label: 'Invoices', icon: Receipt },
-  { path: '/admin/central-payments', label: 'Central Payments', icon: CreditCard },
-  { path: '/admin/payments/record', label: 'Record Payment', icon: Coins },
-  { path: '/admin/statements', label: 'Statements', icon: FileText },
-  { path: '/admin/workflow', label: 'Document Flow', icon: Columns3 },
-  { type: 'divider', label: 'Marketing' },
-  { path: '/admin/hero-banners', label: 'Hero Banners', icon: Image },
-  { path: '/admin/creative-services', label: 'Creative Services', icon: Briefcase },
-  { path: '/admin/service-forms', label: 'Service Forms', icon: ClipboardList },
-  { path: '/admin/referral-settings', label: 'Referral Settings', icon: Gift },
-  { path: '/admin/affiliates', label: 'Affiliates', icon: Percent },
-  { path: '/admin/affiliate-applications', label: 'Applications', icon: UserPlus },
-  { path: '/admin/affiliate-settings', label: 'Affiliate Settings', icon: Settings },
-  { path: '/admin/affiliate-payouts', label: 'Affiliate Payouts', icon: DollarSign },
-  { path: '/admin/affiliate-campaigns', label: 'Promo Campaigns', icon: Megaphone },
-  { type: 'divider', label: 'Settings' },
-  { path: '/admin/business-settings', label: 'Business Settings', icon: Building2 },
-  { path: '/admin/crm-settings', label: 'CRM Settings', icon: Target },
-  { path: '/admin/settings/company', label: 'Company Settings', icon: Building2 },
-  { path: '/admin/setup', label: 'Setup Lists', icon: Settings },
-  { path: '/admin/users', label: 'Users', icon: Users },
-  { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList },
+  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
+  { path: '/admin/control-panel', label: 'Control Panel', icon: PanelTop, moduleKey: 'settings' },
+  { path: '/staff', label: 'Staff Workspace', icon: Briefcase, moduleKey: 'overview' },
+  { path: '/admin/staff-performance', label: 'Staff Performance', icon: BarChart3, moduleKey: 'reports' },
+  { path: '/admin/launch-readiness', label: 'Launch Readiness', icon: Zap, moduleKey: 'settings' },
+  { type: 'divider', label: 'Sales', moduleKey: 'crm' },
+  { path: '/admin/crm', label: 'CRM Pipeline', icon: Target, moduleKey: 'crm' },
+  { path: '/admin/crm-intelligence', label: 'CRM Intelligence', icon: TrendingUp, moduleKey: 'crm' },
+  { path: '/admin/quotes', label: 'Quotes', icon: FileText, moduleKey: 'quotes' },
+  { path: '/admin/customers', label: 'Customers', icon: Contact, moduleKey: 'crm' },
+  { path: '/admin/customer-accounts', label: 'Customer Accounts', icon: UsersRound, moduleKey: 'crm' },
+  { type: 'divider', label: 'Operations', moduleKey: 'tasks' },
+  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders' },
+  { path: '/admin/orders-ops', label: 'Order Operations', icon: ClipboardList, moduleKey: 'orders' },
+  { path: '/admin/service-requests', label: 'Service Requests', icon: Briefcase, moduleKey: 'support' },
+  { path: '/admin/production', label: 'Production Queue', icon: Factory, moduleKey: 'tasks' },
+  { path: '/admin/tasks', label: 'Tasks', icon: CheckSquare, moduleKey: 'tasks' },
+  { type: 'divider', label: 'Inventory', moduleKey: 'inventory' },
+  { path: '/admin/products', label: 'Products', icon: Package, moduleKey: 'inventory' },
+  { path: '/admin/inventory', label: 'Stock Items', icon: Boxes, moduleKey: 'inventory' },
+  { path: '/admin/inventory/movements', label: 'Stock Movements', icon: TrendingUp, moduleKey: 'inventory' },
+  { path: '/admin/inventory/transfers', label: 'Transfers', icon: GitBranch, moduleKey: 'inventory' },
+  { path: '/admin/warehouses', label: 'Warehouses', icon: Warehouse, moduleKey: 'inventory' },
+  { path: '/admin/raw-materials', label: 'Raw Materials', icon: Layers, moduleKey: 'inventory' },
+  { type: 'divider', label: 'Finance', moduleKey: 'finance' },
+  { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
+  { path: '/admin/central-payments', label: 'Central Payments', icon: CreditCard, moduleKey: 'finance' },
+  { path: '/admin/payments/record', label: 'Record Payment', icon: Coins, moduleKey: 'finance' },
+  { path: '/admin/statements', label: 'Statements', icon: FileText, moduleKey: 'finance' },
+  { path: '/admin/workflow', label: 'Document Flow', icon: Columns3, moduleKey: 'finance' },
+  { type: 'divider', label: 'Marketing', moduleKey: 'marketing' },
+  { path: '/admin/hero-banners', label: 'Hero Banners', icon: Image, moduleKey: 'marketing' },
+  { path: '/admin/creative-services', label: 'Creative Services', icon: Briefcase, moduleKey: 'marketing' },
+  { path: '/admin/service-forms', label: 'Service Forms', icon: ClipboardList, moduleKey: 'marketing' },
+  { path: '/admin/referral-settings', label: 'Referral Settings', icon: Gift, moduleKey: 'marketing' },
+  { path: '/admin/affiliates', label: 'Affiliates', icon: Percent, moduleKey: 'marketing' },
+  { path: '/admin/affiliate-applications', label: 'Applications', icon: UserPlus, moduleKey: 'marketing' },
+  { path: '/admin/affiliate-settings', label: 'Affiliate Settings', icon: Settings, moduleKey: 'marketing' },
+  { path: '/admin/affiliate-payouts', label: 'Affiliate Payouts', icon: DollarSign, moduleKey: 'finance' },
+  { path: '/admin/affiliate-campaigns', label: 'Promo Campaigns', icon: Megaphone, moduleKey: 'marketing' },
+  { type: 'divider', label: 'Settings', moduleKey: 'settings' },
+  { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
+  { path: '/admin/crm-settings', label: 'CRM Settings', icon: Target, moduleKey: 'crm' },
+  { path: '/admin/settings/company', label: 'Company Settings', icon: Building2, moduleKey: 'settings' },
+  { path: '/admin/setup', label: 'Setup Lists', icon: Settings, moduleKey: 'settings' },
+  { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
+  { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList, moduleKey: 'settings' },
 ];
+
+// Filter nav items based on user role
+function getFilteredNavItems(role) {
+  const normalizedRole = role === 'admin' ? 'super_admin' : (role || 'sales');
+  const allowedModules = ROLE_MODULE_ACCESS[normalizedRole] || ROLE_MODULE_ACCESS['sales'];
+  
+  const filtered = [];
+  let lastDivider = null;
+  
+  for (const item of navItems) {
+    if (item.type === 'divider') {
+      // Store divider, only add it if there are visible items in the section
+      lastDivider = item;
+    } else if (allowedModules.includes(item.moduleKey)) {
+      // Add pending divider if we're about to add an item
+      if (lastDivider && !filtered.find(f => f === lastDivider)) {
+        filtered.push(lastDivider);
+      }
+      filtered.push(item);
+    }
+  }
+  
+  return filtered;
+}
 
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { admin, logout } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  
+  // Get filtered navigation based on user role
+  const filteredNavItems = React.useMemo(() => {
+    return getFilteredNavItems(admin?.role);
+  }, [admin?.role]);
 
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path;
@@ -98,7 +132,7 @@ export default function AdminLayout() {
           
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item, index) => (
+            {filteredNavItems.map((item, index) => (
               item.type === 'divider' ? (
                 <div key={index} className="pt-4 pb-2">
                   <p className="px-4 text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</p>

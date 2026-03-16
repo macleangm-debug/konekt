@@ -1,0 +1,76 @@
+export const ADMIN_NAVIGATION_GROUPS = [
+  {
+    key: "overview",
+    label: "Overview",
+    items: [
+      { label: "Dashboard", href: "/admin", moduleKey: "overview" },
+      { label: "Staff Workspace", href: "/staff", moduleKey: "overview" },
+      { label: "Control Panel", href: "/admin/control-panel", moduleKey: "settings" },
+      { label: "Staff Performance", href: "/admin/staff-performance", moduleKey: "reports" },
+    ],
+  },
+  {
+    key: "crm_sales",
+    label: "CRM & Sales",
+    items: [
+      { label: "CRM", href: "/admin/crm", moduleKey: "crm" },
+      { label: "CRM Intelligence", href: "/admin/crm-intelligence", moduleKey: "crm" },
+      { label: "CRM Settings", href: "/admin/crm-settings", moduleKey: "crm" },
+      { label: "Quotes", href: "/admin/quotes", moduleKey: "quotes" },
+      { label: "Quote Pipeline", href: "/admin/quotes/kanban", moduleKey: "quotes" },
+      { label: "Invoices", href: "/admin/invoices", moduleKey: "invoices" },
+      { label: "Orders", href: "/admin/orders", moduleKey: "orders" },
+      { label: "Customer Accounts", href: "/admin/customer-accounts", moduleKey: "crm" },
+    ],
+  },
+  {
+    key: "operations",
+    label: "Operations",
+    items: [
+      { label: "Tasks", href: "/admin/tasks", moduleKey: "tasks" },
+      { label: "Production Queue", href: "/admin/production", moduleKey: "tasks" },
+      { label: "Service Requests", href: "/admin/service-requests", moduleKey: "support" },
+      { label: "Warehouse Transfers", href: "/admin/inventory/transfers", moduleKey: "inventory" },
+      { label: "Stock Movements", href: "/admin/inventory/movements", moduleKey: "inventory" },
+    ],
+  },
+  {
+    key: "inventory_finance",
+    label: "Inventory & Finance",
+    items: [
+      { label: "Products", href: "/admin/products", moduleKey: "inventory" },
+      { label: "Inventory", href: "/admin/inventory", moduleKey: "inventory" },
+      { label: "Warehouses", href: "/admin/warehouses", moduleKey: "inventory" },
+      { label: "Raw Materials", href: "/admin/raw-materials", moduleKey: "inventory" },
+      { label: "Central Payments", href: "/admin/central-payments", moduleKey: "finance" },
+      { label: "Record Payment", href: "/admin/payments/record", moduleKey: "finance" },
+      { label: "Statements", href: "/admin/statements", moduleKey: "finance" },
+      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", moduleKey: "finance" },
+    ],
+  },
+  {
+    key: "marketing_growth",
+    label: "Marketing & Growth",
+    items: [
+      { label: "Hero Banners", href: "/admin/hero-banners", moduleKey: "marketing" },
+      { label: "Affiliate Settings", href: "/admin/affiliate-settings", moduleKey: "marketing" },
+      { label: "Affiliate Campaigns", href: "/admin/affiliate-campaigns", moduleKey: "marketing" },
+      { label: "Affiliate Applications", href: "/admin/affiliate-applications", moduleKey: "marketing" },
+      { label: "Affiliates", href: "/admin/affiliates", moduleKey: "marketing" },
+      { label: "Referral Settings", href: "/admin/referral-settings", moduleKey: "marketing" },
+    ],
+  },
+  {
+    key: "settings",
+    label: "Settings",
+    items: [
+      { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
+      { label: "Company Settings", href: "/admin/settings/company", moduleKey: "settings" },
+      { label: "Team Management", href: "/admin/users", moduleKey: "settings" },
+      { label: "Setup Lists", href: "/admin/setup", moduleKey: "settings" },
+      { label: "Service Forms", href: "/admin/service-forms", moduleKey: "settings" },
+      { label: "Launch Readiness", href: "/admin/launch-readiness", moduleKey: "settings" },
+      { label: "Audit Log", href: "/admin/audit", moduleKey: "settings" },
+    ],
+  },
+];
