@@ -860,15 +860,61 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
+## Pack 4: Partner Listings & Media + Excel/CSV Import Pack (COMPLETED)
+*Completed: March 16, 2026*
+
+**What was built**:
+- Rich listing editor with Product/Service type selection
+- Product family and Service family dynamic forms
+- Media upload system for images and documents
+- CSV/Excel bulk import with preview and validation
+- Marketplace listings unified model
+- Public marketplace detail page with related items
+
+**Key Features**:
+- ✅ Partner can create rich listings with SKU, name, descriptions, pricing
+- ✅ Product/Service type selection with family-specific fields
+- ✅ Image upload (JPG, PNG, WebP, GIF) with hero image selection
+- ✅ Document upload (PDF, DOC, XLSX) for specs and catalogs
+- ✅ CSV template download with example data
+- ✅ Excel/CSV import with preview validation before commit
+- ✅ Catalog page with tabs for Basic Catalog and Rich Listings
+- ✅ Listing approval workflow (submitted → review → approved → published)
+- ✅ Public marketplace detail page with related items
+
+**New Backend Routes**:
+- `/api/partner-listings` - Partner listing submission CRUD
+- `/api/admin/marketplace-listings` - Admin marketplace management
+- `/api/public-marketplace/*` - Public marketplace APIs
+- `/api/media-upload/listing-media` - File upload for listings
+- `/api/partner-import/*` - CSV/Excel import preview and commit
+
+**New Frontend Pages**:
+- `/partner/catalog/new` - Rich listing editor
+- `/partner/catalog/:id/edit` - Edit existing listing
+- `/partner/bulk-upload` - CSV/Excel import with preview
+- `/marketplace/:slug` - Public product/service detail page
+
+**Security Verified**:
+- ✅ Public endpoints hide partner_id and base_partner_price
+- ✅ File type validation prevents malicious uploads
+- ✅ CSV import validates all required fields before commit
+- ✅ Listings require admin approval before publishing
+
+**Bug Fixed**: Empty images array caused IndexError when creating listing without images. Fixed by ensuring fallback to [None] when images array is empty.
+
+**Test Results**: 25/25 backend tests passed (100%), all partner portal pages verified
+
+---
+
 ## Upcoming Tasks
 
-### Partner Listings & Media Pack (P1)
-Enhance partner product submissions:
-- Product images and gallery upload
-- Product family/service family dynamic forms
-- Listing approval workflow (draft→submitted→under_review→approved→published)
-- Admin merchandising controls
-- Service partner support (printing, creative, maintenance)
+### Partner Approval & Marketplace Quality Pack (P1)
+Admin dashboard for reviewing and approving partner submissions:
+- Listing review interface with approve/reject actions
+- Duplicate SKU/slug validation
+- Richer marketplace filters and search
+- Admin notes and feedback on rejections
 
 ### Final Live Readiness Pack (P1)
 - Activate Resend with live API key
@@ -885,5 +931,5 @@ Enhance partner product submissions:
 
 ---
 
-*Last updated: March 16, 2026 - Partner Portal Pack Complete*
+*Last updated: March 16, 2026 - Partner Listings & Media Pack Complete*
 
