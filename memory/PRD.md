@@ -237,7 +237,30 @@ The admin sidebar is now organized into logical groups:
 
 ## Testing Status
 
-#### 18. Final Commercial Stabilization Pack ✅ NEW (March 15, 2026)
+#### 19. Attribution Persistence + Collection Unification Pack ✅ NEW (March 16, 2026)
+- **User Registration Attribution**:
+  - `UserCreate` model accepts `affiliate_code`, `campaign_id`
+  - Register route uses `attribution_capture_service` to hydrate affiliate
+  - Attribution fields stored on user document
+- **Quote Attribution**:
+  - `QuoteCreate` model includes full attribution fields
+  - Quote creation uses `quotes_v2` collection
+  - Attribution block: `affiliate_code`, `campaign_id`, `campaign_name`, `attribution_captured_at`
+- **Invoice Attribution**:
+  - Quote→Invoice conversion inherits all attribution fields
+  - Uses `invoices_v2` collection for new invoices
+  - `inherit_attribution_from_document()` preserves chain
+- **Collection Unification**:
+  - `quotes_v2` primary, `quotes` fallback
+  - `invoices_v2` primary, `invoices` fallback
+  - Listing endpoints dedupe by document number
+- **Frontend Attribution**:
+  - `App.js` calls `bootstrapAffiliateAttribution()` on load
+  - `Auth.js` sends `affiliate_code` from localStorage on registration
+  - URL params (`affiliate`, `ref`, `partner`) captured and persisted
+- **Testing**: 16/16 backend tests pass, frontend attribution flow verified
+
+#### 18. Final Commercial Stabilization Pack ✅ (March 15, 2026)
 - **Attribution Capture Service** (`attribution_capture_service.py`):
   - `extract_attribution_from_payload()` - Extracts affiliate/campaign fields
   - `hydrate_affiliate_from_code()` - Looks up affiliate by promo code
@@ -353,6 +376,12 @@ The admin sidebar is now organized into logical groups:
 - **Customer Perk Preview**:
   - `/api/affiliate-perks/preview` - Preview perk at checkout
   - `AffiliatePerkPreviewBox` component for checkout pages
+
+### Iteration 36 (March 16, 2026) - Attribution Persistence + Collection Unification
+- **Backend**: 16/16 tests passed (100%)
+- **Frontend**: Attribution bootstrap, auth page, admin panel verified
+- **Key Changes**: UserCreate with affiliate_code, QuoteCreate with attribution, quotes_v2/invoices_v2 collections
+- **New Tests**: /app/backend/tests/test_attribution_persistence.py
 
 ### Iteration 35 (March 15, 2026) - Final Commercial Stabilization
 - **Backend**: 14/14 tests passed (100%)
@@ -473,6 +502,7 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~Attribution + Checkout Campaign Application~~ DONE
 - [x] ~~Consistent attribution on signup/quote/invoice/order~~ DONE
 - [x] ~~Final PDF design polish~~ DONE
+- [x] ~~Attribution persistence + collection unification~~ DONE
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
 - [ ] Full end-to-end launch QA
