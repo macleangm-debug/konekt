@@ -227,7 +227,11 @@ The admin sidebar is now organized into logical groups:
    - Affiliates
    - Affiliate Applications ✅ NEW
 
-7. **Settings**
+7. **Service Orchestration** ✅ NEW
+   - Service Catalog (groups and types)
+   - Blank Products (promotional materials)
+
+8. **Settings**
    - Company Settings
    - Setup Lists
    - Users
@@ -236,6 +240,38 @@ The admin sidebar is now organized into logical groups:
 ---
 
 ## Testing Status
+
+#### 20. Service Orchestration + Admin Service Builder Pack ✅ NEW (March 16, 2026)
+- **Backend Route Files Created & Registered**:
+  - `service_catalog_routes.py` - Admin CRUD for service groups and types
+  - `service_form_template_routes.py` - Dynamic form schema management
+  - `blank_product_routes.py` - Promotional materials/uniforms catalog
+  - `site_visit_routes.py` - Site visit booking workflow
+  - `public_service_routes.py` - Public-facing service catalog APIs
+  - `partner_capability_routes.py` - Partner service mapping
+  - `delivery_partner_routes.py` - Logistics partner management
+  - `product_insight_routes.py` - Business intelligence analytics
+  - `partner_assignment_service.py` - Intelligent partner routing
+  - `partner_activity_log_service.py` - Partner action logging
+- **Frontend Service Pages**:
+  - `ServicesPageContent.jsx` - Dynamic services landing page (fetches from backend)
+  - `ServiceGroupDetailContent.jsx` - Service group detail with service list
+  - `ServiceDetailContent.jsx` - Service request form with dynamic rendering
+  - `DynamicFormRenderer.jsx` - Renders forms from JSON templates
+- **Admin Pages**:
+  - `ServiceCatalogPage.jsx` - Manage service groups and types
+  - `BlankProductsPage.jsx` - Manage promotional materials catalog
+- **API Helper**:
+  - `serviceCatalogApi.js` - Frontend API wrapper for all service catalog endpoints
+- **Database Collections**:
+  - `service_groups`: Group categories (printing, creative, uniforms, installation)
+  - `service_types`: Individual services with config (pricing mode, visit required, etc.)
+  - `service_form_templates`: Dynamic form JSON schemas
+  - `blank_products`: Promotional materials/uniforms catalog
+  - `site_visits`: Site visit bookings
+  - `partner_capabilities`: Partner-to-service mapping
+  - `delivery_partners`: Logistics partners
+- **Testing**: 28/28 backend tests pass, all frontend pages verified
 
 #### 19. Attribution Persistence + Collection Unification Pack ✅ NEW (March 16, 2026)
 - **User Registration Attribution**:
