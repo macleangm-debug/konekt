@@ -504,6 +504,7 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~Final PDF design polish~~ DONE
 - [x] ~~Attribution persistence + collection unification~~ DONE
 - [x] ~~PDF & Notification Integration Pack~~ DONE (March 16, 2026)
+- [x] ~~Go-Live Completion Pack~~ DONE (March 16, 2026)
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
 - [ ] Full end-to-end launch QA
@@ -511,10 +512,10 @@ The admin sidebar is now organized into logical groups:
 ### P1 - Integration & Polish
 - [ ] Finalize KwikPay integration with live API
 - [ ] Connect Resend email service
-- [ ] Configure company tax settings
+- [x] ~~Configure company tax settings~~ DONE (Business Settings)
 
 ### P2 - Deployment
-- [ ] Deployment hardening + production readiness checklist
+- [x] ~~Deployment hardening + production readiness checklist~~ DONE (Go-Live Readiness)
 - [ ] SSL/DNS verification
 - [ ] Backup configuration
 - [ ] Monitoring setup
@@ -533,6 +534,26 @@ The admin sidebar is now organized into logical groups:
 ---
 
 ## Recent Changes
+
+### Go-Live Completion Pack (March 16, 2026)
+- **Business Settings API** (`business_settings_routes.py`):
+  - `GET /api/admin/business-settings` - Get/seed company settings
+  - `PUT /api/admin/business-settings` - Update company settings
+  - Covers: Company identity, address, commercial, banking, inventory, collection modes
+- **Go-Live Readiness Validator** (`go_live_readiness_routes.py`):
+  - `GET /api/admin/go-live-readiness` - 19-check pre-launch validator
+  - Checks: Company info, banking, Resend, KwikPay configuration
+- **Collection Mode Service** (`collection_mode_service.py`):
+  - `get_quote_collection()` - Returns canonical quote collection based on settings
+  - `get_invoice_collection()` - Returns canonical invoice collection based on settings
+- **Routes Patched for Collection Mode**:
+  - `quote_routes.py` - Uses canonical collection with legacy fallback
+  - `invoice_routes.py` - Uses canonical collection with legacy fallback
+  - `customer_quote_actions_routes.py` - Uses canonical collection
+  - `document_pdf_routes.py` - Uses canonical collection with fallback
+- **Frontend** (`BusinessSettingsPage.jsx`):
+  - `/admin/business-settings` - Full settings form with readiness display
+  - Added to admin navigation under Settings
 
 ### PDF & Notification Integration Pack (March 16, 2026)
 - **Premium PDF Export Routes** (`document_pdf_routes.py`):
