@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from kwikpay_service import verify_kwikpay_signature
 from payment_reconciliation_service import reconcile_invoice_payment
 from affiliate_commission_service import create_affiliate_commission_on_closed_business
+from notification_events import notify_payment_received
 
 router = APIRouter(prefix="/api/payments/kwikpay", tags=["KwikPay Webhook"])
 
@@ -91,6 +92,15 @@ async def kwikpay_webhook(
                     sale_amount=float(payment.get("amount", 0) or 0),
                     affiliate_code=invoice.get("affiliate_code"),
                     affiliate_email=invoice.get("affiliate_email"),
+                )
+                
+                # Send payment received notification
+                notify_payment_received(
+                    customer_email=invoice.get("customer_email"),
+                    customer_name=invoice.get("customer_name"),
+                    document_number=invoice.get("invoice_number"),
+                    amount=float(payment.get("amount", 0) or 0),
+                    currency=invoice.get("currency", "TZS"),
                 )
 
     return {"received": True}

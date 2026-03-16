@@ -1,3 +1,7 @@
+"""
+Notification Configuration
+Environment variables for email and notification services
+"""
 import os
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")

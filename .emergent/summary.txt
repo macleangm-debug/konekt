@@ -1,36 +1,36 @@
 <analysis>**original_problem_statement:**
-The user is building a Business Operating System, Konekt. The primary goal is to implement a series of feature packs. After completing Packs 4, 5, 6, and 7, the user provided specifications for Codebase Pack 8 and a subsequent Campaign Marketing Pack.
+The user is building a Business Operating System, Konekt. The development is structured into feature packs. The primary goal is to build a comprehensive affiliate and promotions engine, ensure attribution is tracked across the entire customer lifecycle (visit, signup, quote, invoice, order), unify database collections, polish commercial documents (PDFs), and integrate live payment and email services.
 
-The user's latest request was to build a comprehensive and flexible promotions engine. This includes:
--   Admin-configurable affiliate program settings.
--   Affiliate click tracking and conversion attribution that creates commissions only on paid business.
--   A full payout approval workflow for affiliate earnings.
--   A flexible customer perk system (e.g., percentage discount, fixed discount, free add-on) that is configurable per campaign.
--   An admin-facing campaign builder to create and manage marketing promotions with specific eligibility rules, rewards, and limits.
--   A marketing message generator that creates share-ready content for social media platforms based on active campaigns.
+The user has been providing detailed code packs with specific implementation instructions and code snippets, which the agent is tasked with integrating, stabilizing, and testing.
+
+**PRODUCT REQUIREMENTS:**
+1.  **Campaign & Affiliate Engine:** Admin-configurable affiliate programs, click tracking, commission on paid business, and a flexible campaign builder.
+2.  **Attribution Persistence:** Capture affiliate/campaign data from the first touchpoint (URL) and persist it through signup, quote creation, invoice generation, and final order.
+3.  **Collection Unification:** Standardize on  and  as the primary database collections.
+4.  **PDF Polish:** Upgrade quote and invoice PDFs to a professional, Zoho-style standard with clear branding, layout, and data presentation.
+5.  **Live Integrations:** Activate Resend for email notifications and KwikPay for payments.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The agent has successfully implemented the comprehensive Campaign Marketing Pack (incorporating all of Pack 8 and subsequent user requests). The system now includes a full-featured affiliate and promotions engine.
+The application has a full-featured affiliate marketing and campaign promotions engine. The system can track affiliate codes and campaign data from the initial website visit through the entire commercial lifecycle, including user signup, quote creation, and orders. This attribution data is stored consistently in unified collections (, , , ).
 
--   **Backend:** Services for affiliate settings, click tracking, commission attribution, customer perks, and a flexible campaign management system are all in place. The necessary database schemas (, , ) have been implicitly created through the new routes. Payment routes (, ) have been patched to trigger commission creation upon successful payment.
--   **Frontend:** The admin dashboard now has pages for Affiliate Settings, Affiliate Payouts, and a powerful Promotion Campaigns builder. Components for previewing affiliate perks at checkout and displaying current promotions have been created.
--   The application is in a functional state and has passed a full suite of automated tests conducted by the testing agent.
+A professional PDF generation system has been built using ReportLab, capable of producing polished, branded quotes and invoices. A complete, but currently inactive, email notification system using Resend has also been implemented for key business events (e.g., quote ready, invoice paid). Both KwikPay and Resend integrations are in a mocked state, awaiting live API credentials.
 
 **Last working item**:
--   **Last item agent was working:** Implementing the Campaign Marketing Pack, which provides a flexible promotions engine, an admin-facing campaign builder, and a marketing message generator. The agent created all backend services and routes, built the corresponding frontend admin pages, and wired everything together.
--   **Status:** USER VERIFICATION PENDING
--   **Agent Testing Done:** Y
--   **Which testing method agent to use?** NA
+-   **Last item agent was working:** The agent was implementing two large code packs provided by the user: the **Final PDF Design Polish Pass** and the **Resend Live Integration Pack.** This involved creating a suite of new backend files for a modular PDF generator (, , etc.) and a reusable email notification service (, , etc.). The agent has created/updated the core files but has not yet finished wiring up all the notification triggers in the relevant business logic routes or performed testing.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** backend testing agent
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
 -   **Issue 1: Missing  attributes (P2)**
-    -   **Description:** The newly created frontend pages (, , ) and components (, ) are missing  attributes for interactive elements. This is a recurring low-priority issue.
-    -   **Attempted fixes:** None.
+    -   **Description:** A recurring low-priority issue where newly created frontend pages and components lack  attributes, which hinders automated testing.
+    -   **Attempted fixes:** None in the last session.
     -   **Next debug checklist:**
-        -   Add  to all interactive elements (buttons, inputs, selects, etc.) in the newly created files.
+        -   Review all new/modified frontend files from the last sessions (, , , , etc.).
+        -   Add unique  attributes to all interactive elements (buttons, inputs, links).
     -   **Why fix this issue and what will be achieved with the fix?** To improve testability and adhere to project standards.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
@@ -38,45 +38,48 @@ The agent has successfully implemented the comprehensive Campaign Marketing Pack
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   None.
+-   **Task 1: Complete and Test PDF & Resend Integration (P0)**
+    -   **Where to resume:** The core files for PDF generation and Resend integration have been created. The agent needs to:
+        1.  Integrate the notification trigger functions (, , , ) into their respective backend routes (, , , , ) as specified by the user's instructions.
+        2.  Add the required environment variables (, , etc.) to .
+        3.  Thoroughly test the new PDF generation endpoints ( and ) to ensure they produce the correct output.
+        4.  Run the testing agent to validate the entire implementation, including the new routes and mock notification triggers.
+    -   **What will be achieved with this?** The application will have a fully functional (though not yet live) email notification system and a polished, professional PDF document generator, completing two major user requirements.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **Attribution + Checkout Campaign Application Pack (P0):**
-    -   Automatically attach the  from cookies or URL query parameters when creating documents like quotes, invoices, or orders.
-    -   Integrate the  and  service into the actual checkout/service request pages.
-    -   Apply the selected campaign's discount/perk to the final invoice/order total.
-    -   Store the  on the paid document to track which promotion was used.
-    -   Ensure the  service correctly uses the campaign's commission override rules if applicable.
+-   **Activate Resend Live (P1):**
+    -   Prompt the user for the  and add it to the  file.
+    -   Implement the optional  to allow the user to easily verify the live integration.
+-   **Activate KwikPay Live (P1):**
+    -   Prompt the user for sandbox/live credentials (, , etc.).
+    -   Replace the mock logic in KwikPay adapters with live API calls.
+    -   Test the end-to-end payment flow in a sandbox environment.
+-   **Full End-to-End QA (P1):** Conduct a comprehensive quality assurance test of the entire application before considering it launch-ready.
 
 **Future Tasks:**
--   **Final PDF Refinement (P1):** Polish the quote/invoice PDF generation () to ensure consistency with the  collection and improve the visual layout.
--   **Live Integrations (P1):**
-    -   Activate live Resend integration using the .
-    -   Activate live KwikPay integration by swapping mock logic with real credentials and testing in a sandbox environment.
 -   **World-Class Affiliate Platform Enhancements (P2):**
     -   Build a public-facing form for affiliate applications.
-    -   Create an affiliate analytics dashboard for admins (clicks, attributed deals, commissions).
-    -   Implement a partner asset library.
-    -   Introduce partner tiers (e.g., Authorized, Premium).
-    -   Add fraud checks for affiliate conversions.
--   **Admin Notification Bell (P2):** Implement a real-time notification system for admins to see new service requests, pending payouts, etc.
+    -   Create an affiliate analytics dashboard.
+    -   Implement a partner asset library and partner tiers.
+-   **Admin Notification Bell (P2):** Implement a real-time UI notification system for administrators.
 
 **Completed work in this session**
--   **Campaign Marketing Pack Implementation (DONE):**
-    -   Created backend services and routes for affiliate settings, click tracking, commission on paid business, customer perks, and a full campaign engine (, , , , , , etc.).
-    -   Created frontend admin pages for , , and .
-    -   Created frontend components  and .
-    -   Patched  and  to trigger commission creation.
-    -   Fixed a critical database connection pattern bug across all new backend routes.
-    -   Updated  and  to integrate the new pages.
--   **Full System Test (DONE):**
-    -   Executed , which ran 16/16 backend tests and verified all 3 new admin frontend pages, achieving a 100% success rate.
--   **Documentation (DONE):**
-    -   Updated  to reflect the completion of Pack 8.
+-   **Attribution Persistence & Collection Unification (DONE):**
+    -   Implemented a shared helper  to standardize attribution logic.
+    -   Patched the entire commercial lifecycle (signup, quote, invoice, order) to ensure affiliate and campaign data is consistently captured and preserved in  and  collections.
+    -   Created  to capture affiliate codes from URLs and persist them in local storage.
+-   **Campaign Performance Analytics (DONE):**
+    -   Created  and  to provide administrators with visibility into campaign effectiveness.
+-   **Checkout & Attribution Integration (DONE):**
+    -   Integrated the campaign engine directly into the frontend checkout pages (, ).
+    -   Created backend services (, ) to evaluate and apply campaigns at checkout.
 
 **Earlier issues found/mentioned but not fixed**
--   **Issue 1: Missing  attributes.** A recurring low-priority issue across multiple sessions. New components should have s added.
+-   **Issue 1: Missing  attributes.** A recurring low-priority issue that needs a dedicated pass to resolve across all new components.
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Missing  attributes.
@@ -87,69 +90,62 @@ The agent has successfully implemented the comprehensive Campaign Marketing Pack
 
 
 **Key Technical Concepts**
--   **Promotions Engine:** A flexible system for creating and managing marketing campaigns with specific rules for eligibility, rewards, limits, and commission overrides.
--   **Affiliate Marketing:** Implemented core affiliate functionalities including click tracking (with cookies), conversion attribution (on paid business), and payout management.
--   **Dynamic Rule Evaluation:** The  dynamically evaluates active campaigns against checkout data to determine applicable promotions.
--   **Dynamic Marketing Content:** The  generates platform-specific marketing messages based on campaign data.
+-   **Attribution Persistence:** Capturing  and  at the first touchpoint (URL query param) and ensuring it's stored across the user lifecycle (local storage -> user profile -> quotes -> invoices -> orders).
+-   **Collection Unification:** Migrating primary operations to  and  for data consistency.
+-   **Modular PDF Generation:** A reusable, style-driven PDF generation service using ReportLab for professional-looking commercial documents.
+-   **Modular Notification Service:** A centralized service () for sending transactional emails via Resend, with graceful fallbacks if the API key is not configured.
 
 **key DB schema**
--   **affiliate_settings:** New collection. Stores global rules for the affiliate program, including commission defaults and customer perk settings.
--   **affiliate_campaigns:** New collection. Stores individual promotion campaigns with detailed rules for eligibility, rewards, limits, stacking, and commission overrides.
--   **affiliate_clicks:** New collection. Logs each click on an affiliate tracking link.
--   **affiliate_commissions:** Logic updated to trigger only on paid business closure and to factor in campaign-specific commission rates.
--   **, , :** These documents should now be designed to include fields like , ,  to track attribution.
+-   **users:** Extended with an attribution block (, , etc.).
+-   **quotes_v2**, **invoices_v2**: Now the primary collections for quotes and invoices, including full attribution blocks.
+-   **orders**: Updated to include a consistent attribution block.
+-   **campaign_usages**: A new collection to log every time a campaign discount is applied, used for performance analytics.
 
 **All files of reference**
--   **New Backend Files:** ,  as listed in the architecture.
--   **New Frontend Files:** , , , , .
--   **Updated Files:** , , , , , .
+-   **Backend (New):** , , , , , , .
+-   **Backend (Updated):** , , , , , .
+-   **Frontend (New):** .
+-   **Frontend (Updated):** , , , .
 
 **key api endpoints**
--   : (GET, PUT) Manage global affiliate settings.
--   : (GET) List payout requests.
--   : (POST) Approve or mark payouts as paid.
--   : (GET, POST, PUT) CRUD for promotion campaigns.
--   : (GET) Generate social media messages for a campaign.
--   : (GET) Public endpoint to track affiliate clicks and set a cookie.
--   : (POST) Preview a specific affiliate perk.
--   : (POST) Preview all applicable campaigns for a checkout.
+-   : (GET) New endpoint to export a polished invoice PDF.
+-   : (GET) New endpoint to export a polished quote PDF.
+-   : (GET) Provides performance metrics for all campaigns.
+-   : (POST) Evaluates and returns applicable campaigns for a given checkout context.
 
 **Critical Info for New Agent**
--   The Campaign Marketing Pack is fully implemented and has passed automated tests. The next step is to get user verification before proceeding.
--   The highest priority upcoming task is the Attribution + Checkout Campaign Application Pack. This will make the newly built campaign engine operational by integrating it into the user-facing checkout flow.
--   The correct database connection pattern for new routes is to import the  object from the central database module, not to use . All newly created routes follow this correct pattern now.
--   The  collection is the source of truth for all invoice-related operations.
--   Resend and KwikPay integrations remain in a mocked state and are pending live activation.
+-   The user is the primary driver of the implementation, providing detailed code packs. Your main role is to integrate these packs correctly, fix any inconsistencies (e.g., database connection patterns, missing imports), ensure adherence to existing architecture, and conduct thorough testing after each integration.
+-   The immediate task is to finish wiring up the  service into all the specified backend routes and then test the new PDF and notification functionality.
+-   Activating the Resend and KwikPay integrations is the next major step and will require you to prompt the user for API keys. Do not proceed with activation until the current in-progress task is complete and verified.
 
 **documents and test reports created in this job**
 -    (Updated)
--   
+-    (Latest test report)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Provided detailed specs for a Campaign Marketing Pack, including a campaign builder and social message generator.
-2.  **User:** Confirmed the system should support complex promotions like spend above 500K and get 50% off a specific service.
-3.  **User:** Agreed with the plan to structure the system with global defaults, affiliate-specific overrides, and flexible campaign rules.
-4.  **User:** Confirmed that the admin should be able to generate and copy shareable marketing messages for different social platforms.
-5.  **User:** Provided specs for a customer perk system, asking if it should be configurable.
-6.  **User:** Provided detailed specs for the core affiliate implementation (click tracking, attribution, payout approvals).
-7.  **User:** Confirmed to proceed with Codebase Pack 8 after the agent clarified that Pack 4 was already implemented.
-8.  **User:** Provided detailed specifications for Codebase Pack 4 Core + Pack 7 Core after the agent identified it as a missing dependency.
-9.  **User:** Provided specifications for Codebase Pack 6.
+1.  **User:** Provided the  codebase as the new source of truth.
+2.  **User:** Provided the Attribution Persistence + Collection Unification Pack code.
+3.  **User:** Confirmed that the agent should proceed with the  codebase.
+4.  **User:** Provided a detailed code pack for the Final PDF Design Polish Pass.
+5.  **User:** Provided a detailed code pack for the Resend Live Integration Pack.
+6.  **User:** Confirmed that after the PDF and Resend packs, the next step is activating KwikPay.
 
 **Project Health Check:**
--   **Broken:** No. The application is functional and passed automated testing.
--   **Mocked:** Resend and KwikPay integrations are still in a mocked state.
+-   **Broken:** No. The application is functional.
+-   **Mocked:**
+    -   **Resend:** The service is fully implemented but inactive, as it's missing the .
+    -   **KwikPay:** The integration is in a mocked state, awaiting live credentials.
 
 **3rd Party Integrations**
--   **Resend (Mocked):** A live service file () exists but is not yet activated with a live API key.
--   **KwikPay (Mocked):** A live adapter () exists, but it's not yet configured with real credentials or fully tested against a sandbox.
--   **ReportLab:** Actively used for PDF generation.
+-   **Resend (Implemented, Mocked):** For sending transactional emails. Requires a .
+-   **KwikPay (Implemented, Mocked):** For processing payments. Requires live credentials.
+-   **ReportLab (Active):** Used for all PDF generation.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. The agent ran  at the end of the session.
+-   **Testing agent used after significant changes:** YES. The agent ran  after each major pack integration, with all tests passing.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
--   **Test files created:** None manually, but the testing agent generated and ran its own tests. The results are in .
--   **Known regressions:** None. All 16 backend tests and 3 frontend page verifications passed.
+-   **Test files created:** None manually. The last test run generated .
+-   **Known regressions:** None.
 
 **Credentials to test flow:**
 | Account | Email | Password |
@@ -158,4 +154,5 @@ The agent has successfully implemented the comprehensive Campaign Marketing Pack
 | Test Customer |  |  |
 
 **What agent forgot to execute**
--   The agent did not add  attributes to the new frontend components and pages (, , , , ), continuing a recurring low-priority issue.</analysis>
+-   The agent has not yet finished wiring up all the notification triggers from  into the corresponding backend business logic routes (, , etc.) as instructed in the user's Resend Live Integration Pack.
+-   A comprehensive pass to add missing  attributes to new frontend components is still pending.</analysis>

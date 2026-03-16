@@ -10,6 +10,8 @@ import os
 import jwt
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from notification_events import notify_invoice_ready
+
 router = APIRouter(prefix="/api/customer/quotes", tags=["Customer Quote Actions"])
 security = HTTPBearer(auto_error=False)
 
@@ -143,6 +145,8 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
     }
     
     if created_invoice:
+        # Send invoice ready notification
+        notify_invoice_ready(created_invoice)
         response["invoice"] = serialize_doc(created_invoice)
     
     return response

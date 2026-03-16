@@ -1,3 +1,7 @@
+"""
+Resend Live Email Service
+Send emails via Resend API with graceful fallback
+"""
 import requests
 from notification_config import RESEND_API_KEY, SENDER_EMAIL
 
@@ -7,10 +11,12 @@ class ResendEmailError(Exception):
 
 
 def send_resend_email(to, subject, html, cc=None, bcc=None, reply_to=None):
+    """
+    Send email via Resend API.
+    Raises ResendEmailError if API key is missing or request fails.
+    """
     if not RESEND_API_KEY:
-        # Return mock response if no API key configured
-        print(f"[MOCK EMAIL] To: {to}, Subject: {subject}")
-        return {"id": "mock-email-id", "mock": True}
+        raise ResendEmailError("RESEND_API_KEY is not configured")
 
     payload = {
         "from": SENDER_EMAIL,

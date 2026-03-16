@@ -18,6 +18,7 @@ from attribution_capture_service import (
     build_attribution_block,
     inherit_attribution_from_document
 )
+from notification_events import notify_quote_ready, notify_invoice_ready
 
 router = APIRouter(prefix="/api/admin/quotes-v2", tags=["Quotes V2"])
 
@@ -83,6 +84,10 @@ async def create_quote(payload: QuoteCreate):
     # Use quotes_v2 collection
     result = await db.quotes_v2.insert_one(doc)
     created = await db.quotes_v2.find_one({"_id": result.inserted_id})
+    
+    # Send quote ready notification
+    notify_quote_ready(created)
+    
     return serialize_doc(created)
 
 
@@ -277,4 +282,8 @@ async def convert_quote_to_invoice_direct(quote_id: str):
     )
 
     created_invoice = await db.invoices_v2.find_one({"_id": result.inserted_id})
+    
+    # Send invoice ready notification
+    notify_invoice_ready(created_invoice)
+    
     return serialize_doc(created_invoice)

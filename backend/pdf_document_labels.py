@@ -1,5 +1,5 @@
 """
-PDF Document Label Helpers
+PDF Document Labels
 Identity blocks and tax labels for commercial documents
 """
 
@@ -46,13 +46,11 @@ def client_identity_lines(doc: dict):
     """Build client identity lines for PDF"""
     lines = []
 
-    client_name = doc.get("customer_name") or doc.get("client_name")
-    if client_name:
-        lines.append(client_name)
+    if doc.get("customer_name"):
+        lines.append(doc["customer_name"])
 
-    company = doc.get("customer_company") or doc.get("company_name")
-    if company:
-        lines.append(company)
+    if doc.get("customer_company"):
+        lines.append(doc["customer_company"])
 
     if doc.get("customer_email"):
         lines.append(doc["customer_email"])
@@ -60,14 +58,14 @@ def client_identity_lines(doc: dict):
     if doc.get("customer_phone"):
         lines.append(doc["customer_phone"])
 
-    if doc.get("client_tin"):
-        lines.append(f"TIN: {doc['client_tin']}")
+    if doc.get("customer_tin") or doc.get("client_tin"):
+        lines.append(f"TIN: {doc.get('customer_tin') or doc.get('client_tin')}")
 
-    if doc.get("client_brn"):
-        lines.append(f"BRN: {doc['client_brn']}")
+    if doc.get("customer_registration_number") or doc.get("client_brn"):
+        lines.append(f"BRN: {doc.get('customer_registration_number') or doc.get('client_brn')}")
 
     address_parts = [
-        doc.get("customer_address_line_1"),
+        doc.get("customer_address") or doc.get("customer_address_line_1"),
         doc.get("customer_address_line_2"),
         doc.get("customer_city"),
         doc.get("customer_country"),

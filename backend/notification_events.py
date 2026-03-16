@@ -1,24 +1,37 @@
+"""
+Notification Events Service
+Centralized notification handlers for all commercial events
+Safe fallback if RESEND_API_KEY is missing
+"""
 from resend_live_service import send_resend_email, ResendEmailError
 from email_templates_v2 import (
     quote_ready_email,
     invoice_ready_email,
     service_update_email,
     payment_received_email,
+    order_confirmation_email,
 )
 
 
 def safe_send_email(to, subject, html):
+    """
+    Safely send email with error handling.
+    Returns dict with ok status and error if failed.
+    """
+    if not to:
+        return {"ok": False, "error": "No recipient email provided"}
+    
     try:
-        return send_resend_email(to=to, subject=subject, html=html)
+        result = send_resend_email(to=to, subject=subject, html=html)
+        return {"ok": True, "result": result}
     except ResendEmailError as exc:
-        print(f"[EMAIL ERROR] {exc}")
         return {"ok": False, "error": str(exc)}
     except Exception as exc:
-        print(f"[EMAIL ERROR] {exc}")
-        return {"ok": False, "error": str(exc)}
+        return {"ok": False, "error": f"Unexpected error: {str(exc)}"}
 
 
 def notify_quote_ready(quote):
+    """Send quote ready notification to customer"""
     html = quote_ready_email(
         customer_name=quote.get("customer_name"),
         quote_number=quote.get("quote_number"),
@@ -34,6 +47,7 @@ def notify_quote_ready(quote):
 
 
 def notify_invoice_ready(invoice):
+    """Send invoice ready notification to customer"""
     html = invoice_ready_email(
         customer_name=invoice.get("customer_name"),
         invoice_number=invoice.get("invoice_number"),
@@ -49,24 +63,42 @@ def notify_invoice_ready(invoice):
 
 
 def notify_service_update(service_request, note=""):
+    """Send service request update notification to customer"""
     html = service_update_email(
         customer_name=service_request.get("customer_name"),
-        service_title=service_request.get("service_title"),
+        service_title=service_request.get("service_title") or service_request.get("title"),
         status=service_request.get("status"),
         request_id=str(service_request.get("_id") or service_request.get("id")),
         note=note,
     )
     return safe_send_email(
         to=service_request.get("customer_email"),
-        subject=f"Update on {service_request.get('service_title')}",
+        subject=f"Update on {service_request.get('service_title') or service_request.get('title')}",
         html=html,
     )
 
 
 def notify_payment_received(customer_email, customer_name, document_number, amount, currency):
+    """Send payment received notification to customer"""
     html = payment_received_email(customer_name, document_number, amount, currency)
     return safe_send_email(
         to=customer_email,
         subject=f"Payment Received for {document_number}",
+        html=html,
+    )
+
+
+def notify_order_confirmation(order):
+    """Send order confirmation notification to customer"""
+    html = order_confirmation_email(
+        customer_name=order.get("customer_name"),
+        order_number=order.get("order_number"),
+        total=float(order.get("total", 0) or order.get("total_amount", 0) or 0),
+        currency=order.get("currency", "TZS"),
+        order_id=str(order.get("_id") or order.get("id")),
+    )
+    return safe_send_email(
+        to=order.get("customer_email"),
+        subject=f"Order Confirmation: {order.get('order_number')}",
         html=html,
     )

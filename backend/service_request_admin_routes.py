@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException, Request
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from notification_events import notify_service_update
+
 router = APIRouter(prefix="/api/admin/service-requests", tags=["Admin Service Requests"])
 
 # Database connection
@@ -124,6 +126,10 @@ async def update_service_request_status(request_id: str, payload: dict, request:
     )
 
     updated = await db.service_requests.find_one({"_id": ObjectId(request_id)})
+    
+    # Send service update notification to customer
+    notify_service_update(updated, note=note)
+    
     return serialize_doc(updated)
 
 
