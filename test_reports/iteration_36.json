@@ -1,0 +1,111 @@
+{
+  "summary": "Attribution Persistence + Collection Unification Pack testing completed successfully. All 16 backend tests pass (100%). Frontend attribution bootstrap verified - localStorage persistence, URL param capture working. Admin quotes/invoices pages functional.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "user_registration_with_affiliate_code": {
+      "endpoint": "POST /api/auth/register",
+      "status": "PASS",
+      "tests": 3,
+      "notes": "Registration captures affiliate_code from payload, stores attribution fields, returns user with referral_code"
+    },
+    "quote_creation_with_attribution": {
+      "endpoint": "POST /api/admin/quotes-v2",
+      "status": "PASS",
+      "tests": 3,
+      "notes": "Quotes created in quotes_v2 collection with affiliate_code, campaign_id, campaign_name, attribution_captured_at"
+    },
+    "quote_listing_collection_unification": {
+      "endpoint": "GET /api/admin/quotes-v2",
+      "status": "PASS",
+      "tests": 2,
+      "notes": "Lists from quotes_v2 with fallback to legacy quotes collection. Status filtering works."
+    },
+    "quote_to_invoice_attribution_preservation": {
+      "endpoint": "POST /api/admin/quotes-v2/{id}/convert-to-invoice",
+      "status": "PASS",
+      "tests": 1,
+      "notes": "Invoice inherits affiliate_code, campaign_id, campaign_name, attribution_captured_at from source quote. Uses invoices_v2 collection."
+    },
+    "attribution_capture_service": {
+      "file": "/app/backend/attribution_capture_service.py",
+      "functions": ["extract_attribution_from_payload", "hydrate_affiliate_from_code", "build_attribution_block", "inherit_attribution_from_document"],
+      "status": "PASS",
+      "notes": "All attribution helper functions working correctly"
+    },
+    "frontend_attribution_helper": {
+      "file": "/app/frontend/src/lib/attribution.js",
+      "functions": ["bootstrapAffiliateAttribution", "getStoredAffiliateCode", "persistAffiliateCode"],
+      "status": "PASS",
+      "notes": "localStorage persistence verified. URL params (affiliate, ref, partner) captured."
+    },
+    "app_js_attribution_bootstrap": {
+      "file": "/app/frontend/src/App.js",
+      "status": "PASS",
+      "notes": "bootstrapAffiliateAttribution called on app load via useEffect"
+    },
+    "auth_js_affiliate_code_on_register": {
+      "file": "/app/frontend/src/pages/Auth.js",
+      "status": "PASS",
+      "notes": "Uses getStoredAffiliateCode() on registration, sends affiliate_code in register payload"
+    },
+    "admin_quotes_page": {
+      "page": "/admin/quotes",
+      "status": "PASS",
+      "notes": "Displays quotes with QTN- numbers, status badges, PDF/Send/Convert actions"
+    },
+    "admin_invoices_page": {
+      "page": "/admin/invoices",
+      "status": "PASS",
+      "notes": "Displays invoices with INV- numbers, status dropdown, PDF/Send actions"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_attribution_persistence.py",
+    "/app/test_reports/pytest/pytest_results_attribution_persistence.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "attribution_capture_service.py: Clean implementation with proper hydration from affiliates collection",
+    "quote_routes.py: Correctly uses quotes_v2 collection with attribution block",
+    "quote_models.py: QuoteCreate includes all attribution fields (affiliate_code, campaign_id, campaign_name, etc.)",
+    "App.js: bootstrapAffiliateAttribution properly called on mount",
+    "Auth.js: getStoredAffiliateCode used in handleRegister to pass affiliate_code"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_attribution_persistence.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests pass)",
+    "frontend": "100% (attribution bootstrap, auth page, admin panel verified)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!",
+    "test_customer": "testcustomer@konekt.com / password"
+  },
+  "seed_data_creation": "Test users and quotes created with TEST_ prefix for attribution verification",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Attribution Persistence + Collection Unification Pack fully tested. User registration captures affiliate_code. Quote creation uses quotes_v2 collection with full attribution fields. Quote→Invoice conversion preserves attribution. Frontend App.js bootstraps attribution from URL params into localStorage. Auth.js sends affiliate_code on registration. Admin quotes page shows quotes with status badges and PDF/Send/Convert actions.",
+  "attribution_fields_verified": {
+    "user_registration": ["affiliate_code", "campaign_id"],
+    "quote_creation": ["affiliate_code", "affiliate_email", "affiliate_name", "campaign_id", "campaign_name", "campaign_discount", "attribution_captured_at"],
+    "invoice_from_quote": ["affiliate_code", "affiliate_email", "affiliate_name", "campaign_id", "campaign_name", "campaign_discount", "attribution_captured_at"]
+  },
+  "collection_unification_verified": {
+    "quotes": "quotes_v2 (primary) with quotes (fallback)",
+    "invoices": "invoices_v2 for new invoices from quote conversion"
+  }
+}

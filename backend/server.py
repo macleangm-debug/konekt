@@ -76,7 +76,6 @@ from upload_service_files_routes import router as upload_service_files_router
 from points_checkout_routes import router as points_checkout_router
 from points_apply_routes import router as points_apply_router
 from launch_hardening_routes import router as launch_hardening_router
-from affiliate_admin_routes import router as affiliate_admin_router
 from affiliate_dashboard_routes import router as affiliate_dashboard_router
 from team_role_routes import router as team_role_router
 from security_headers_middleware import SecurityHeadersMiddleware
@@ -94,8 +93,6 @@ from affiliate_campaign_routes import router as affiliate_campaign_router
 from campaign_marketing_routes import router as campaign_marketing_router
 from affiliate_campaign_preview_routes import router as affiliate_campaign_preview_router
 from checkout_campaign_routes import router as checkout_campaign_router
-from campaign_performance_routes import router as campaign_performance_router
-from document_pdf_routes import router as document_pdf_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -164,6 +161,9 @@ class UserCreate(BaseModel):
     full_name: str
     phone: Optional[str] = None
     company: Optional[str] = None
+    # Attribution fields
+    affiliate_code: Optional[str] = None
+    campaign_id: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -681,9 +681,19 @@ def require_permission(permission: str):
 
 @api_router.post("/auth/register")
 async def register(data: UserCreate):
+    from attribution_capture_service import (
+        extract_attribution_from_payload,
+        hydrate_affiliate_from_code,
+        build_attribution_block
+    )
+    
     existing = await db.users.find_one({"email": data.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Extract and hydrate attribution
+    attribution = extract_attribution_from_payload(data.model_dump())
+    attribution = await hydrate_affiliate_from_code(db, attribution)
     
     user_id = str(uuid.uuid4())
     referral_code = generate_referral_code(user_id)
@@ -695,14 +705,16 @@ async def register(data: UserCreate):
         "phone": data.phone,
         "company": data.company,
         "points": 100,
-        "credit_balance": 0,  # Referral credits
+        "credit_balance": 0,
         "referral_code": referral_code,
         "referred_by": None,
         "referral_code_used": None,
         "total_referrals": 0,
         "role": "customer",
         "is_active": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        # Attribution fields
+        **build_attribution_block(attribution),
     }
     await db.users.insert_one(user_doc)
     
@@ -2073,8 +2085,6 @@ app.include_router(affiliate_campaign_router)
 app.include_router(campaign_marketing_router)
 app.include_router(affiliate_campaign_preview_router)
 app.include_router(checkout_campaign_router)
-app.include_router(campaign_performance_router)
-app.include_router(document_pdf_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

@@ -92,6 +92,13 @@ class QuoteCreate(BaseModel):
     payment_term_days: int = 0
     payment_term_label: Optional[str] = "Due on Receipt"
     payment_term_notes: Optional[str] = None
+    # Attribution fields
+    affiliate_code: Optional[str] = None
+    affiliate_email: Optional[str] = None
+    affiliate_name: Optional[str] = None
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    campaign_discount: float = 0.0
 
 
 class QuoteOut(QuoteCreate):
@@ -134,6 +141,13 @@ class InvoiceCreateNew(BaseModel):
     payment_term_days: int = 0
     payment_term_label: Optional[str] = "Due on Receipt"
     payment_term_notes: Optional[str] = None
+    # Attribution fields
+    affiliate_code: Optional[str] = None
+    affiliate_email: Optional[str] = None
+    affiliate_name: Optional[str] = None
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    campaign_discount: float = 0.0
 
 
 class InvoiceOut(InvoiceCreateNew):

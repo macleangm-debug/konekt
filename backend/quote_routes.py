@@ -1,5 +1,6 @@
 """
 Konekt Quotes Routes - Create, manage, convert quotes
+With attribution persistence
 """
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -11,6 +12,12 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from quote_models import QuoteCreate, ConvertQuoteToOrderRequest
 from payment_terms_utils import resolve_payment_terms
+from attribution_capture_service import (
+    extract_attribution_from_payload,
+    hydrate_affiliate_from_code,
+    build_attribution_block,
+    inherit_attribution_from_document
+)
 
 router = APIRouter(prefix="/api/admin/quotes-v2", tags=["Quotes V2"])
 
@@ -37,9 +44,13 @@ def serialize_doc(doc):
 
 @router.post("")
 async def create_quote(payload: QuoteCreate):
-    """Create a new quote with auto-applied customer payment terms"""
+    """Create a new quote with auto-applied customer payment terms and attribution"""
     now = datetime.now(timezone.utc)
     quote_number = f"QTN-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    # Extract and hydrate attribution
+    attribution = extract_attribution_from_payload(payload.model_dump())
+    attribution = await hydrate_affiliate_from_code(db, attribution)
 
     # Look up customer by email to auto-apply payment terms
     customer = await db.customers.find_one({"email": payload.customer_email})
@@ -49,6 +60,9 @@ async def create_quote(payload: QuoteCreate):
     doc["quote_number"] = quote_number
     doc["created_at"] = now.isoformat()
     doc["updated_at"] = now.isoformat()
+    
+    # Add attribution block
+    doc.update(build_attribution_block(attribution))
     
     # Auto-apply customer payment terms if not explicitly provided
     if not payload.payment_term_type or payload.payment_term_type == "due_on_receipt":
@@ -66,8 +80,9 @@ async def create_quote(payload: QuoteCreate):
     if doc.get("valid_until"):
         doc["valid_until"] = doc["valid_until"].isoformat() if hasattr(doc["valid_until"], "isoformat") else str(doc["valid_until"])
 
-    result = await db.quotes.insert_one(doc)
-    created = await db.quotes.find_one({"_id": result.inserted_id})
+    # Use quotes_v2 collection
+    result = await db.quotes_v2.insert_one(doc)
+    created = await db.quotes_v2.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
 
 
@@ -77,22 +92,37 @@ async def list_quotes(
     customer_email: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all quotes"""
+    """List all quotes (quotes_v2 first, then legacy)"""
     query = {}
     if status:
         query["status"] = status
     if customer_email:
         query["customer_email"] = customer_email
     
-    docs = await db.quotes.find(query).sort("created_at", -1).to_list(length=limit)
-    return [serialize_doc(doc) for doc in docs]
+    # Try quotes_v2 first
+    docs = await db.quotes_v2.find(query).sort("created_at", -1).to_list(length=limit)
+    # Also get from legacy quotes
+    legacy_docs = await db.quotes.find(query).sort("created_at", -1).to_list(length=limit)
+    
+    # Combine and dedupe by quote_number
+    seen = set()
+    combined = []
+    for doc in docs + legacy_docs:
+        qn = doc.get("quote_number")
+        if qn and qn not in seen:
+            seen.add(qn)
+            combined.append(serialize_doc(doc))
+    
+    return combined[:limit]
 
 
 @router.get("/{quote_id}")
 async def get_quote(quote_id: str):
-    """Get a specific quote"""
+    """Get a specific quote (quotes_v2 first, then legacy)"""
     try:
-        doc = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+        doc = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)})
+        if not doc:
+            doc = await db.quotes.find_one({"_id": ObjectId(quote_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Quote not found")
         return serialize_doc(doc)
@@ -182,9 +212,11 @@ async def convert_quote_to_order(payload: ConvertQuoteToOrderRequest):
 
 @router.post("/{quote_id}/convert-to-invoice")
 async def convert_quote_to_invoice_direct(quote_id: str):
-    """Convert a quote directly to an invoice"""
+    """Convert a quote directly to an invoice, preserving attribution"""
     try:
-        quote = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+        quote = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)})
+        if not quote:
+            quote = await db.quotes.find_one({"_id": ObjectId(quote_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -193,6 +225,9 @@ async def convert_quote_to_invoice_direct(quote_id: str):
 
     now = datetime.now(timezone.utc)
     invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    # Inherit attribution from quote
+    attribution = inherit_attribution_from_document(quote)
 
     invoice_doc = {
         "invoice_number": invoice_number,
@@ -204,22 +239,34 @@ async def convert_quote_to_invoice_direct(quote_id: str):
         "quote_number": quote.get("quote_number"),
         "currency": quote.get("currency", "TZS"),
         "line_items": quote.get("line_items", []),
-        "subtotal": quote.get("subtotal", 0),
-        "tax": quote.get("tax", 0),
-        "discount": quote.get("discount", 0),
-        "total": quote.get("total", 0),
+        "subtotal": float(quote.get("subtotal", 0) or 0),
+        "tax": float(quote.get("tax", 0) or 0),
+        "discount": float(quote.get("discount", 0) or 0),
+        "total": float(quote.get("total", 0) or 0),
         "notes": quote.get("notes"),
         "terms": quote.get("terms"),
         "status": "draft",
         "payments": [],
         "amount_paid": 0,
+        "balance_due": float(quote.get("total", 0) or 0),
         "created_at": now.isoformat(),
         "updated_at": now.isoformat(),
+        # Attribution inherited from quote
+        **attribution,
     }
 
-    result = await db.invoices.insert_one(invoice_doc)
+    # Use invoices_v2 collection
+    result = await db.invoices_v2.insert_one(invoice_doc)
 
-    # Update quote status
+    # Update quote status in both collections
+    await db.quotes_v2.update_one(
+        {"_id": quote["_id"]},
+        {"$set": {
+            "status": "converted",
+            "converted_invoice_number": invoice_number,
+            "updated_at": now.isoformat()
+        }}
+    )
     await db.quotes.update_one(
         {"_id": quote["_id"]},
         {"$set": {
@@ -229,5 +276,5 @@ async def convert_quote_to_invoice_direct(quote_id: str):
         }}
     )
 
-    created_invoice = await db.invoices.find_one({"_id": result.inserted_id})
+    created_invoice = await db.invoices_v2.find_one({"_id": result.inserted_id})
     return serialize_doc(created_invoice)

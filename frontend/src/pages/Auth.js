@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { getStoredAffiliateCode } from '../lib/attribution';
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -66,7 +67,12 @@ export default function Auth() {
     
     setLoading(true);
     try {
-      await register(registerData);
+      // Include affiliate code from localStorage
+      const affiliateCode = getStoredAffiliateCode();
+      await register({
+        ...registerData,
+        affiliate_code: affiliateCode || null
+      });
       toast.success('Welcome to Konekt! You earned 100 bonus points!');
       navigate(from, { replace: true });
     } catch (error) {
