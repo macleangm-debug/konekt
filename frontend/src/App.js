@@ -127,7 +127,26 @@ import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
 import MarketplaceBrowsePage from "@/pages/public/MarketplaceBrowsePage";
 
-// New Premium Homepage
+// New Premium Layouts & Pages
+import PublicSiteLayout from "@/layouts/PublicSiteLayout";
+import CustomerPortalLayoutV2 from "@/layouts/CustomerPortalLayoutV2";
+import HomepageV2Content from "@/pages/HomepageV2Content";
+import MarketplaceBrowsePageContent from "@/pages/public/MarketplaceBrowsePageContent";
+import MarketplaceListingDetailContent from "@/pages/public/MarketplaceListingDetailContent";
+import ServicesPageContent from "@/pages/public/ServicesPageContent";
+import TrackOrderPageContent from "@/pages/public/TrackOrderPageContent";
+import AboutPageContent from "@/pages/public/AboutPageContent";
+
+// New Premium Customer Pages
+import DashboardOverviewPageV2 from "@/pages/customer/DashboardOverviewPageV2";
+import OrdersPageV2 from "@/pages/customer/OrdersPageV2";
+import QuotesPageV2 from "@/pages/customer/QuotesPageV2";
+import InvoicesPageV2 from "@/pages/customer/InvoicesPageV2";
+import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
+import PointsPageV2 from "@/pages/customer/PointsPageV2";
+import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
+
+// Legacy Homepage
 import HomepageV2 from "@/pages/HomepageV2";
 
 // Partner Listing Editor
@@ -318,11 +337,34 @@ function App() {
         {/* Public Expansion Page */}
         <Route path="/launch-country" element={<CountryLaunchPage />} />
         
-        {/* New Premium Homepage (standalone - no old navbar/footer) */}
-        <Route path="/" element={<HomepageV2 />} />
+        {/* NEW: Premium Public Site Routes with unified layout */}
+        <Route path="/" element={<PublicSiteLayout />}>
+          <Route index element={<HomepageV2Content />} />
+          <Route path="marketplace" element={<MarketplaceBrowsePageContent />} />
+          <Route path="marketplace/:slug" element={<MarketplaceListingDetailContent />} />
+          <Route path="services" element={<ServicesPageContent />} />
+          <Route path="track-order" element={<TrackOrderPageContent />} />
+          <Route path="about" element={<AboutPageContent />} />
+        </Route>
         
-        {/* Marketplace Browse Page (standalone) */}
-        <Route path="/marketplace" element={<MarketplaceBrowsePage />} />
+        {/* NEW: Premium Customer Portal with unified layout */}
+        <Route path="/dashboard" element={
+          <AuthProvider>
+            <CartProvider>
+              <CustomerRoute>
+                <CustomerPortalLayoutV2 />
+              </CustomerRoute>
+            </CartProvider>
+          </AuthProvider>
+        }>
+          <Route index element={<DashboardOverviewPageV2 />} />
+          <Route path="orders" element={<OrdersPageV2 />} />
+          <Route path="quotes" element={<QuotesPageV2 />} />
+          <Route path="invoices" element={<InvoicesPageV2 />} />
+          <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
+          <Route path="points" element={<PointsPageV2 />} />
+          <Route path="statement" element={<MyStatementPageV2 />} />
+        </Route>
         
         {/* Staff Workspace Route */}
         <Route path="/staff" element={
@@ -333,8 +375,8 @@ function App() {
           </AdminAuthProvider>
         } />
         
-        {/* Customer Portal Routes - Must be before catch-all */}
-        <Route path="/dashboard/*" element={
+        {/* Legacy Customer Portal Routes - Keep for detailed pages */}
+        <Route path="/dashboard-legacy/*" element={
           <AuthProvider>
             <CartProvider>
               <CustomerRoute>
@@ -343,25 +385,19 @@ function App() {
             </CartProvider>
           </AuthProvider>
         }>
-          <Route index element={<CustomerDashboardHome />} />
-          <Route path="orders" element={<CustomerOrdersPage />} />
-          <Route path="quotes" element={<CustomerQuotesPage />} />
+          <Route path="orders/:orderId" element={<CustomerOrdersPage />} />
           <Route path="quotes/:quoteId" element={<CustomerQuoteDetailPage />} />
-          <Route path="invoices" element={<CustomerInvoicesPage />} />
           <Route path="invoices/:invoiceId" element={<CustomerInvoiceDetailPage />} />
           <Route path="designs" element={<MyDesignProjectsPage />} />
           <Route path="designs/:projectId" element={<CreativeProjectDetailPage />} />
-          <Route path="statement" element={<MyStatementPage />} />
           <Route path="addresses" element={<AddressesPage />} />
           <Route path="maintenance" element={<MaintenanceDashboardPage />} />
-          <Route path="service-requests" element={<ServiceRequestsPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestDetailPage />} />
           <Route path="referrals" element={<ReferralsPage />} />
-          <Route path="points" element={<PointsPage />} />
           <Route path="affiliate" element={<DashboardAffiliatePage />} />
         </Route>
         
-        {/* Public Customer Routes - Catch-all at the end */}
+        {/* Public Customer Routes - Legacy routes for backward compatibility */}
         <Route path="/*" element={
           <AuthProvider>
             <CartProvider>
