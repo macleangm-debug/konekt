@@ -630,4 +630,34 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-*Last updated: March 16, 2026 - Deal Linkage & Commercial Relationship Pack Complete*
+### Team UX & Permission Refinement Pack (March 16, 2026)
+- **Role-based Navigation Filtering** (`roleModuleAccess.js`, `AdminLayout.js`):
+  - Maps roles (super_admin, admin, supervisor, sales, production, finance, marketing, support) to allowed modules
+  - Filters sidebar navigation dynamically based on user role
+  - Admin/Super Admin see all 41+ items; other roles see only relevant modules
+- **Staff Dashboard Routes** (`staff_dashboard_routes.py`):
+  - `GET /api/staff-dashboard/me` - Returns role-specific dashboard cards and quick actions
+  - Supports all 8 staff roles with customized data views
+- **Supervisor Team Routes** (`supervisor_team_routes.py`):
+  - `GET /api/supervisor-team/overview` - Global operational metrics
+  - `GET /api/supervisor-team/performance` - Staff leaderboard with conversion rates
+  - `GET /api/supervisor-team/staff-list` - Staff listing for team management
+- **Staff Workspace Page** (`StaffWorkspaceHomePage.jsx`):
+  - Simplified homepage for staff members
+  - Role-specific stats cards and quick actions
+  - Daily focus guidance based on role
+- **Super Admin Control Panel** (`SuperAdminControlPanelPage.jsx`):
+  - Global visibility across all teams
+  - Key metrics: Leads, Quotes, Orders, Revenue
+  - Staff Performance leaderboard
+  - Quick navigation links
+- **Staff Performance Page** (`StaffPerformancePage.jsx`):
+  - Detailed performance metrics table
+  - Rankings, conversion rates, task completion
+- **Navigation Updates**:
+  - Added Control Panel, Staff Workspace, Staff Performance to sidebar
+  - Role-based filtering hides irrelevant modules from each role
+
+---
+
+*Last updated: March 16, 2026 - Team UX & Permission Refinement Pack Complete*
