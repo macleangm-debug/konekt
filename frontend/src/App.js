@@ -109,6 +109,21 @@ import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerCatalogPage from "@/pages/admin/PartnerCatalogPage";
 import CountryPricingPage from "@/pages/admin/CountryPricingPage";
 import RoutingRulesPage from "@/pages/admin/RoutingRulesPage";
+import CountryPartnerApplicationsPage from "@/pages/admin/CountryPartnerApplicationsPage";
+import CountryLaunchConfigPage from "@/pages/admin/CountryLaunchConfigPage";
+
+// Partner Portal Pages
+import PartnerLayout from "@/layouts/PartnerLayout";
+import PartnerLoginPage from "@/pages/partner/PartnerLoginPage";
+import PartnerDashboardPage from "@/pages/partner/PartnerDashboardPage";
+import PartnerCatalogPage2 from "@/pages/partner/PartnerCatalogPage";
+import PartnerStockTablePage from "@/pages/partner/PartnerStockTablePage";
+import PartnerBulkUploadPage from "@/pages/partner/PartnerBulkUploadPage";
+import PartnerFulfillmentPage from "@/pages/partner/PartnerFulfillmentPage";
+import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
+
+// Public Expansion Pages
+import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 
 // Inventory Operations Pages
 import InventoryOperationsPage from "@/pages/admin/InventoryOperationsPage";
@@ -275,7 +290,23 @@ function App() {
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
           <Route path="country-pricing" element={<CountryPricingPage />} />
           <Route path="routing-rules" element={<RoutingRulesPage />} />
+          <Route path="country-partner-applications" element={<CountryPartnerApplicationsPage />} />
+          <Route path="country-launch-config" element={<CountryLaunchConfigPage />} />
         </Route>
+        
+        {/* Partner Portal Routes */}
+        <Route path="/partner-login" element={<PartnerLoginPage />} />
+        <Route path="/partner" element={<PartnerLayout />}>
+          <Route index element={<PartnerDashboardPage />} />
+          <Route path="catalog" element={<PartnerCatalogPage2 />} />
+          <Route path="stock" element={<PartnerStockTablePage />} />
+          <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
+          <Route path="fulfillment" element={<PartnerFulfillmentPage />} />
+          <Route path="settlements" element={<PartnerSettlementsPage />} />
+        </Route>
+        
+        {/* Public Expansion Page */}
+        <Route path="/launch-country" element={<CountryLaunchPage />} />
         
         {/* Staff Workspace Route */}
         <Route path="/staff" element={
