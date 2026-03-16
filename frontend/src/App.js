@@ -125,6 +125,10 @@ import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
+import MarketplaceBrowsePage from "@/pages/public/MarketplaceBrowsePage";
+
+// New Premium Homepage
+import HomepageV2 from "@/pages/HomepageV2";
 
 // Partner Listing Editor
 import PartnerListingEditorPage from "@/pages/partner/PartnerListingEditorPage";
@@ -314,6 +318,12 @@ function App() {
         {/* Public Expansion Page */}
         <Route path="/launch-country" element={<CountryLaunchPage />} />
         
+        {/* New Premium Homepage (standalone - no old navbar/footer) */}
+        <Route path="/" element={<HomepageV2 />} />
+        
+        {/* Marketplace Browse Page (standalone) */}
+        <Route path="/marketplace" element={<MarketplaceBrowsePage />} />
+        
         {/* Staff Workspace Route */}
         <Route path="/staff" element={
           <AdminAuthProvider>
@@ -360,7 +370,7 @@ function App() {
                 <Navbar />
                 <main className="flex-1 pb-16 md:pb-0">
                   <Routes>
-                    <Route path="/" element={<Landing />} />
+                    <Route path="/old-home" element={<Landing />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/product/:productId" element={<ProductDetail />} />
                     <Route path="/customize/:productId" element={<Customize />} />
