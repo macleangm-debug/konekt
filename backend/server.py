@@ -125,6 +125,11 @@ from country_launch_routes import router as country_launch_router
 from country_expansion_routes import router as country_expansion_router
 from country_partner_admin_routes import router as country_partner_admin_router
 from public_country_catalog_routes import router as public_country_catalog_router
+from marketplace_listing_routes import router as marketplace_listing_router
+from partner_listing_submission_routes import router as partner_listing_submission_router
+from public_marketplace_routes import router as public_marketplace_router
+from media_upload_routes import router as media_upload_router
+from partner_excel_import_routes import router as partner_excel_import_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2149,6 +2154,15 @@ app.include_router(country_launch_router)
 app.include_router(country_expansion_router)
 app.include_router(country_partner_admin_router)
 app.include_router(public_country_catalog_router)
+app.include_router(marketplace_listing_router)
+app.include_router(partner_listing_submission_router)
+app.include_router(public_marketplace_router)
+app.include_router(media_upload_router)
+app.include_router(partner_excel_import_router)
+
+# Mount static directory for listing media uploads
+LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
+LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

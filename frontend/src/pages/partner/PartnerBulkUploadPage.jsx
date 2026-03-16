@@ -1,209 +1,304 @@
-import React, { useState } from "react";
-import { Upload, FileJson, Check, AlertCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Upload, FileSpreadsheet, Download, Check, AlertCircle, FileText, X, Eye } from "lucide-react";
 import partnerApi from "../../lib/partnerApi";
 
 export default function PartnerBulkUploadPage() {
-  const [jsonText, setJsonText] = useState("");
-  const [validationResult, setValidationResult] = useState(null);
+  const [file, setFile] = useState(null);
+  const [previewResult, setPreviewResult] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingType, setLoadingType] = useState(null); // 'preview' | 'commit'
+  const fileInputRef = useRef(null);
 
-  const templateJson = JSON.stringify([
-    {
-      sku: "SKU-001",
-      name: "Sample Product",
-      description: "Product description",
-      category: "promotional",
-      base_partner_price: 10000,
-      partner_available_qty: 100,
-      partner_status: "in_stock",
-      lead_time_days: 2,
-      min_order_qty: 10,
-      unit: "piece"
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setPreviewResult(null);
+      setUploadResult(null);
     }
-  ], null, 2);
-
-  const loadTemplate = () => {
-    setJsonText(templateJson);
-    setValidationResult(null);
-    setUploadResult(null);
   };
 
-  const validateUpload = async () => {
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) {
+      const ext = droppedFile.name.toLowerCase();
+      if (ext.endsWith('.csv') || ext.endsWith('.xlsx')) {
+        setFile(droppedFile);
+        setPreviewResult(null);
+        setUploadResult(null);
+      } else {
+        alert("Please upload a CSV or XLSX file");
+      }
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const downloadTemplate = async () => {
     try {
-      const rows = JSON.parse(jsonText);
-      setLoading(true);
-      const res = await partnerApi.post("/api/partner-bulk-upload/validate", { rows });
-      setValidationResult(res.data);
+      const res = await partnerApi.get("/api/partner-import/template/csv", {
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "konekt_listing_import_template.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Failed to download template");
+    }
+  };
+
+  const previewImport = async () => {
+    if (!file) return;
+    setLoading(true);
+    setLoadingType('preview');
+    
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await partnerApi.post("/api/partner-import/preview", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setPreviewResult(res.data);
       setUploadResult(null);
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        alert("Invalid JSON format. Please check your data.");
-      } else {
-        alert(err?.response?.data?.detail || "Validation failed");
-      }
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : "Preview failed. Please check your file format.");
     } finally {
       setLoading(false);
+      setLoadingType(null);
     }
   };
 
-  const performUpload = async () => {
+  const commitImport = async () => {
+    if (!file) return;
+    setLoading(true);
+    setLoadingType('commit');
+    
     try {
-      const rows = JSON.parse(jsonText);
-      setLoading(true);
-      const res = await partnerApi.post("/api/partner-bulk-upload/catalog", { rows });
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const res = await partnerApi.post("/api/partner-import/commit", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setUploadResult(res.data);
-      setValidationResult(null);
+      setPreviewResult(null);
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      if (err instanceof SyntaxError) {
-        alert("Invalid JSON format. Please check your data.");
+      const detail = err?.response?.data?.detail;
+      if (typeof detail === 'object' && detail.errors) {
+        alert(`Import failed: ${detail.message}\n\nFirst error: ${detail.errors[0]?.errors?.join(', ') || 'Unknown'}`);
       } else {
-        alert(err?.response?.data?.detail || "Upload failed");
+        alert(typeof detail === 'string' ? detail : "Import failed. Please preview first to check for errors.");
       }
     } finally {
       setLoading(false);
+      setLoadingType(null);
     }
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setPreviewResult(null);
+    setUploadResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen space-y-6" data-testid="partner-bulk-upload-page">
       <div>
         <h1 className="text-4xl font-bold text-[#20364D]">Bulk Upload</h1>
-        <p className="text-slate-600 mt-1">Upload multiple catalog items at once using JSON format</p>
+        <p className="text-slate-600 mt-1">Import multiple catalog items using CSV or Excel files</p>
       </div>
 
       {/* Instructions */}
       <div className="rounded-3xl border bg-white p-6">
         <h2 className="text-xl font-bold mb-3">How it works</h2>
         <ol className="list-decimal list-inside space-y-2 text-slate-600">
-          <li>Click "Load Template" to see the required JSON format</li>
-          <li>Replace the sample data with your items</li>
-          <li>Click "Validate" to check for errors before uploading</li>
-          <li>Click "Upload" to import your items</li>
+          <li>Download our CSV template with all required columns</li>
+          <li>Fill in your product/service data (one item per row)</li>
+          <li>Upload the file and click "Preview" to check for errors</li>
+          <li>Fix any validation errors shown in the preview</li>
+          <li>Click "Commit Import" to submit items for Konekt review</li>
         </ol>
-        <div className="mt-4 p-4 bg-slate-50 rounded-xl">
-          <p className="text-sm text-slate-500">
-            <strong>Note:</strong> Existing SKUs will be updated. New SKUs will be inserted.
-          </p>
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={downloadTemplate}
+            className="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium hover:bg-slate-200"
+            data-testid="download-template-btn"
+          >
+            <Download className="w-4 h-4" />
+            Download CSV Template
+          </button>
         </div>
       </div>
 
-      {/* JSON Input */}
+      {/* File Upload Area */}
       <div className="rounded-3xl border bg-white p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">JSON Data</h2>
-          <button
-            onClick={loadTemplate}
-            className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm hover:bg-slate-50"
-            data-testid="load-template-btn"
+        <h2 className="text-xl font-bold">Upload File</h2>
+        
+        {!file ? (
+          <div
+            className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center cursor-pointer hover:border-[#20364D] transition"
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            data-testid="file-drop-zone"
           >
-            <FileJson className="w-4 h-4" />
-            Load Template
-          </button>
-        </div>
+            <FileSpreadsheet className="w-12 h-12 mx-auto text-slate-400 mb-3" />
+            <p className="text-slate-600 font-medium">Drop your CSV or XLSX file here</p>
+            <p className="text-sm text-slate-400 mt-1">or click to browse</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx"
+              onChange={handleFileSelect}
+              className="hidden"
+              data-testid="file-input"
+            />
+          </div>
+        ) : (
+          <div className="border rounded-2xl p-4 flex items-center justify-between bg-slate-50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-slate-800">{file.name}</p>
+                <p className="text-sm text-slate-500">{(file.size / 1024).toFixed(1)} KB</p>
+              </div>
+            </div>
+            <button
+              onClick={clearFile}
+              className="p-2 hover:bg-slate-200 rounded-lg transition"
+              data-testid="clear-file-btn"
+            >
+              <X className="w-5 h-5 text-slate-500" />
+            </button>
+          </div>
+        )}
 
-        <textarea
-          className="w-full border rounded-xl px-4 py-3 min-h-[300px] font-mono text-sm"
-          value={jsonText}
-          onChange={(e) => {
-            setJsonText(e.target.value);
-            setValidationResult(null);
-            setUploadResult(null);
-          }}
-          placeholder="Paste your JSON array here or click Load Template..."
-          data-testid="json-input"
-        />
-
-        <div className="flex gap-3">
-          <button
-            onClick={validateUpload}
-            disabled={!jsonText.trim() || loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border px-5 py-3 font-semibold hover:bg-slate-50 disabled:opacity-50"
-            data-testid="validate-btn"
-          >
-            <AlertCircle className="w-5 h-5" />
-            {loading ? "Validating..." : "Validate"}
-          </button>
-          <button
-            onClick={performUpload}
-            disabled={!jsonText.trim() || loading}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#2a4a68] disabled:opacity-50"
-            data-testid="upload-btn"
-          >
-            <Upload className="w-5 h-5" />
-            {loading ? "Uploading..." : "Upload Items"}
-          </button>
-        </div>
+        {file && (
+          <div className="flex gap-3">
+            <button
+              onClick={previewImport}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl border px-5 py-3 font-semibold hover:bg-slate-50 disabled:opacity-50"
+              data-testid="preview-btn"
+            >
+              <Eye className="w-5 h-5" />
+              {loading && loadingType === 'preview' ? "Previewing..." : "Preview Import"}
+            </button>
+            <button
+              onClick={commitImport}
+              disabled={loading || !previewResult || previewResult.error_count > 0}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#2a4a68] disabled:opacity-50"
+              data-testid="commit-btn"
+            >
+              <Upload className="w-5 h-5" />
+              {loading && loadingType === 'commit' ? "Importing..." : "Commit Import"}
+            </button>
+          </div>
+        )}
+        
+        {!previewResult && file && (
+          <p className="text-sm text-slate-500 text-center">
+            Click "Preview Import" first to validate your data before committing
+          </p>
+        )}
       </div>
 
-      {/* Validation Result */}
-      {validationResult && (
-        <div className="rounded-3xl border bg-white p-6 space-y-4" data-testid="validation-result">
-          <h2 className="text-xl font-bold">Validation Result</h2>
+      {/* Preview Result */}
+      {previewResult && (
+        <div className="rounded-3xl border bg-white p-6 space-y-4" data-testid="preview-result">
+          <h2 className="text-xl font-bold">Preview Result</h2>
           
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="rounded-xl bg-slate-50 p-4">
-              <div className="text-sm text-slate-500">Valid Rows</div>
-              <div className="text-2xl font-bold text-green-600">{validationResult.valid_count}</div>
+              <div className="text-sm text-slate-500">Total Rows</div>
+              <div className="text-2xl font-bold">{previewResult.total_rows}</div>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <div className="text-sm text-slate-500">To Insert</div>
-              <div className="text-2xl font-bold text-blue-600">{validationResult.insert_count}</div>
+            <div className="rounded-xl bg-green-50 p-4">
+              <div className="text-sm text-green-600">Valid Rows</div>
+              <div className="text-2xl font-bold text-green-700">{previewResult.valid_count}</div>
             </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <div className="text-sm text-slate-500">To Update</div>
-              <div className="text-2xl font-bold text-amber-600">{validationResult.update_count}</div>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <div className="text-sm text-slate-500">Errors</div>
-              <div className="text-2xl font-bold text-red-600">{validationResult.error_count}</div>
+            <div className="rounded-xl bg-red-50 p-4">
+              <div className="text-sm text-red-600">Errors</div>
+              <div className="text-2xl font-bold text-red-700">{previewResult.error_count}</div>
             </div>
           </div>
 
-          {validationResult.errors?.length > 0 && (
+          {previewResult.errors?.length > 0 && (
             <div className="space-y-2">
-              <h3 className="font-semibold text-red-600">Errors</h3>
-              {validationResult.errors.map((err, idx) => (
-                <div key={idx} className="bg-red-50 text-red-700 px-4 py-2 rounded-xl text-sm">
-                  Row {err.row} {err.sku && `(${err.sku})`}: {err.errors?.join(", ") || err.error}
-                </div>
-              ))}
+              <h3 className="font-semibold text-red-600 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5" />
+                Validation Errors (fix these before importing)
+              </h3>
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {previewResult.errors.map((err, idx) => (
+                  <div key={idx} className="bg-red-50 text-red-700 px-4 py-2 rounded-xl text-sm">
+                    <span className="font-medium">Row {err.row_number}</span>
+                    {err.sku && <span className="text-red-500"> ({err.sku})</span>}
+                    : {err.errors?.join(", ")}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          {validationResult.preview?.length > 0 && (
+          {previewResult.preview_rows?.length > 0 && (
             <div className="space-y-2">
-              <h3 className="font-semibold">Preview (first 10 valid items)</h3>
+              <h3 className="font-semibold">Preview (first {previewResult.preview_count} rows)</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-slate-50">
                     <tr>
+                      <th className="text-left px-3 py-2">Type</th>
                       <th className="text-left px-3 py-2">SKU</th>
                       <th className="text-left px-3 py-2">Name</th>
                       <th className="text-left px-3 py-2">Category</th>
                       <th className="text-right px-3 py-2">Price</th>
                       <th className="text-right px-3 py-2">Qty</th>
-                      <th className="text-center px-3 py-2">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {validationResult.preview.map((item, idx) => (
+                    {previewResult.preview_rows.map((item, idx) => (
                       <tr key={idx}>
-                        <td className="px-3 py-2 font-mono">{item.sku}</td>
+                        <td className="px-3 py-2">
+                          <span className={`px-2 py-1 rounded text-xs ${item.listing_type === 'service' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                            {item.listing_type}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 font-mono text-xs">{item.sku}</td>
                         <td className="px-3 py-2">{item.name}</td>
                         <td className="px-3 py-2">{item.category || "-"}</td>
                         <td className="px-3 py-2 text-right">{Number(item.base_partner_price || 0).toLocaleString()}</td>
                         <td className="px-3 py-2 text-right">{item.partner_available_qty || 0}</td>
-                        <td className="px-3 py-2 text-center">
-                          <span className={`px-2 py-1 rounded text-xs ${item._action === "insert" ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"}`}>
-                            {item._action}
-                          </span>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+          
+          {previewResult.valid_count > 0 && previewResult.error_count === 0 && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+              <Check className="w-5 h-5 text-green-600" />
+              <span className="text-green-700 font-medium">
+                All {previewResult.valid_count} rows are valid and ready to import!
+              </span>
             </div>
           )}
         </div>
@@ -216,36 +311,53 @@ export default function PartnerBulkUploadPage() {
             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
               <Check className="w-5 h-5 text-green-600" />
             </div>
-            <h2 className="text-xl font-bold">Upload Complete</h2>
+            <h2 className="text-xl font-bold">Import Complete</h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="rounded-xl bg-green-50 p-4">
-              <div className="text-sm text-green-600">Inserted</div>
-              <div className="text-2xl font-bold text-green-700">{uploadResult.inserted}</div>
+              <div className="text-sm text-green-600">Items Imported</div>
+              <div className="text-2xl font-bold text-green-700">{uploadResult.inserted_count}</div>
             </div>
-            <div className="rounded-xl bg-blue-50 p-4">
-              <div className="text-sm text-blue-600">Updated</div>
-              <div className="text-2xl font-bold text-blue-700">{uploadResult.updated}</div>
-            </div>
-            <div className="rounded-xl bg-slate-50 p-4">
-              <div className="text-sm text-slate-500">Total Processed</div>
-              <div className="text-2xl font-bold">{uploadResult.total_processed}</div>
+            <div className="rounded-xl bg-amber-50 p-4">
+              <div className="text-sm text-amber-600">Status</div>
+              <div className="text-lg font-bold text-amber-700">Submitted for Review</div>
             </div>
           </div>
 
-          {uploadResult.errors?.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="font-semibold text-red-600">Errors during upload</h3>
-              {uploadResult.errors.map((err, idx) => (
-                <div key={idx} className="bg-red-50 text-red-700 px-4 py-2 rounded-xl text-sm">
-                  Row {err.row} {err.sku && `(${err.sku})`}: {err.error}
-                </div>
-              ))}
-            </div>
-          )}
+          <p className="text-slate-600">
+            Your listings have been submitted and are pending Konekt admin approval. 
+            You'll be able to see them in your catalog once approved.
+          </p>
         </div>
       )}
+
+      {/* Field Reference */}
+      <div className="rounded-3xl border bg-white p-6">
+        <h2 className="text-xl font-bold mb-4">Field Reference</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="text-left px-3 py-2">Field</th>
+                <th className="text-left px-3 py-2">Required</th>
+                <th className="text-left px-3 py-2">Description</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              <tr><td className="px-3 py-2 font-mono">listing_type</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">"product" or "service"</td></tr>
+              <tr><td className="px-3 py-2 font-mono">product_family</td><td className="px-3 py-2">For products</td><td className="px-3 py-2">promotional, office_equipment, stationery, consumables, spare_parts</td></tr>
+              <tr><td className="px-3 py-2 font-mono">service_family</td><td className="px-3 py-2">For services</td><td className="px-3 py-2">printing, creative, maintenance, branding, installation</td></tr>
+              <tr><td className="px-3 py-2 font-mono">sku</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Your unique product/service code</td></tr>
+              <tr><td className="px-3 py-2 font-mono">slug</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">URL-friendly identifier (e.g., branded-mug-white)</td></tr>
+              <tr><td className="px-3 py-2 font-mono">name</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Display name</td></tr>
+              <tr><td className="px-3 py-2 font-mono">category</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Main category</td></tr>
+              <tr><td className="px-3 py-2 font-mono">base_partner_price</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Your price to Konekt</td></tr>
+              <tr><td className="px-3 py-2 font-mono">partner_available_qty</td><td className="px-3 py-2">No</td><td className="px-3 py-2">Quantity allocated for Konekt orders</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

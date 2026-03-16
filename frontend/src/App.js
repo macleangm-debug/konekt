@@ -124,6 +124,10 @@ import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
 
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
+import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
+
+// Partner Listing Editor
+import PartnerListingEditorPage from "@/pages/partner/PartnerListingEditorPage";
 
 // Inventory Operations Pages
 import InventoryOperationsPage from "@/pages/admin/InventoryOperationsPage";
@@ -299,6 +303,8 @@ function App() {
         <Route path="/partner" element={<PartnerLayout />}>
           <Route index element={<PartnerDashboardPage />} />
           <Route path="catalog" element={<PartnerCatalogPage2 />} />
+          <Route path="catalog/new" element={<PartnerListingEditorPage />} />
+          <Route path="catalog/:listingId/edit" element={<PartnerListingEditorPage />} />
           <Route path="stock" element={<PartnerStockTablePage />} />
           <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
           <Route path="fulfillment" element={<PartnerFulfillmentPage />} />
@@ -380,6 +386,7 @@ function App() {
                     <Route path="/creative-services/:slug" element={<CreativeServiceDetailPage />} />
                     <Route path="/creative-services/:slug/brief" element={<Navigate to=".." replace />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
+                    <Route path="/marketplace/:slug" element={<MarketplaceListingDetailPage />} />
                   </Routes>
                 </main>
                 <Footer />

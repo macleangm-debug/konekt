@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus } from "lucide-react";
+import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus, PlusCircle } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 
 export default function PartnerLayout() {
@@ -32,6 +32,7 @@ export default function PartnerLayout() {
   const navItems = [
     { path: "/partner", label: "Dashboard", icon: LayoutDashboard },
     { path: "/partner/catalog", label: "My Catalog", icon: Package },
+    { path: "/partner/catalog/new", label: "Create Listing", icon: PlusCircle },
     { path: "/partner/stock", label: "Stock Table", icon: ListPlus },
     { path: "/partner/bulk-upload", label: "Bulk Upload", icon: Upload },
     { path: "/partner/fulfillment", label: "Fulfillment Queue", icon: Truck },
