@@ -535,6 +535,30 @@ The admin sidebar is now organized into logical groups:
 
 ## Recent Changes
 
+### CRM / Sales Intelligence Pack (March 16, 2026)
+- **CRM Intelligence Routes** (`crm_intelligence_routes.py`):
+  - `GET /api/admin/crm-intelligence/dashboard` - Pipeline health, follow-ups, sources
+  - `POST /api/admin/crm-intelligence/leads/{id}/note` - Add note to timeline
+  - `POST /api/admin/crm-intelligence/leads/{id}/follow-up` - Schedule follow-up
+  - `POST /api/admin/crm-intelligence/leads/{id}/status` - Update stage with win/lost reason
+- **Sales KPIs** (`sales_kpi_routes.py`):
+  - `GET /api/admin/sales-kpis/summary` - Lead count, won, lost, revenue, conversion rate
+- **Marketing Performance** (`marketing_performance_routes.py`):
+  - `GET /api/admin/marketing-performance/sources` - Source breakdown with leads, quotes, won
+- **CRM Settings Enhanced** (`crm_settings_routes.py`):
+  - Added: pipeline_stages, lost_reasons, win_reasons, default_follow_up_days, stale_lead_days
+- **Lead Scoring** (`lead_scoring_service.py`):
+  - Computes 0-100 score based on budget, urgency, company size, source, decision maker
+- **Timeline Service** (`crm_timeline_service.py`):
+  - Reusable helper for adding events to lead activity timeline
+- **Lead Creation Patched** (`admin_routes.py`):
+  - Auto-computes lead_score on creation
+  - Creates timeline "created" event
+  - Sets default next_follow_up_at
+- **Frontend**:
+  - `/admin/crm-intelligence` - Dashboard with KPIs, pipeline, sources
+  - `/admin/crm-settings` - Settings for stages, reasons, reminders
+
 ### Go-Live Completion Pack (March 16, 2026)
 - **Business Settings API** (`business_settings_routes.py`):
   - `GET /api/admin/business-settings` - Get/seed company settings
