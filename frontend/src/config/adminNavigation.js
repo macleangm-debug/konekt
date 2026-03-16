@@ -17,6 +17,7 @@ export const adminNavigation = [
       { label: "CRM", href: "/admin/crm", moduleKey: "crm" },
       { label: "Quotes", href: "/admin/quotes", moduleKey: "quotes" },
       { label: "Customers", href: "/admin/customers", moduleKey: "customers" },
+      { label: "Customer Accounts", href: "/admin/customer-accounts", moduleKey: "customers" },
     ],
   },
   {

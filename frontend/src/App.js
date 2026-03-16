@@ -98,6 +98,9 @@ import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage
 import BusinessSettingsPage from "@/pages/admin/BusinessSettingsPage";
 import CrmIntelligencePage from "@/pages/admin/CrmIntelligencePage";
 import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";
+import LeadDetailPage from "@/pages/admin/LeadDetailPage";
+import CustomerAccountSummaryPage from "@/pages/admin/CustomerAccountSummaryPage";
+import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -239,6 +242,9 @@ function App() {
           <Route path="business-settings" element={<BusinessSettingsPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
           <Route path="crm-settings" element={<CrmSettingsPage />} />
+          <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
+          <Route path="customer-accounts" element={<CustomerAccountsPage />} />
+          <Route path="customer-accounts/:customerEmail" element={<CustomerAccountSummaryPage />} />
         </Route>
         
         {/* Customer Portal Routes - Must be before catch-all */}

@@ -101,6 +101,9 @@ from go_live_readiness_routes import router as go_live_readiness_router
 from crm_intelligence_routes import router as crm_intelligence_router
 from sales_kpi_routes import router as sales_kpi_router
 from marketing_performance_routes import router as marketing_performance_router
+from crm_deal_routes import router as crm_deal_router
+from customer_account_routes import router as customer_account_router
+from crm_relationship_routes import router as crm_relationship_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2101,6 +2104,9 @@ app.include_router(go_live_readiness_router)
 app.include_router(crm_intelligence_router)
 app.include_router(sales_kpi_router)
 app.include_router(marketing_performance_router)
+app.include_router(crm_deal_router)
+app.include_router(customer_account_router)
+app.include_router(crm_relationship_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

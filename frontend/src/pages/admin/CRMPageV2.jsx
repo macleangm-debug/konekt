@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X, Eye } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 
@@ -398,14 +399,23 @@ export default function CRMPageV2() {
                           </select>
                         </td>
                         <td className="px-5 py-4">
-                          {lead.status === "won" && (
-                            <button
-                              onClick={() => convertToQuote(lead)}
-                              className="inline-flex items-center gap-1 text-sm text-[#D4A843] font-medium hover:text-[#c49933]"
+                          <div className="flex items-center gap-3">
+                            <Link
+                              to={`/admin/crm/leads/${lead.id}`}
+                              className="inline-flex items-center gap-1 text-sm text-slate-600 font-medium hover:text-[#2D3E50]"
+                              data-testid={`view-lead-${lead.id}`}
                             >
-                              Convert <ArrowRight className="w-4 h-4" />
-                            </button>
-                          )}
+                              <Eye className="w-4 h-4" /> View
+                            </Link>
+                            {lead.status === "won" && (
+                              <button
+                                onClick={() => convertToQuote(lead)}
+                                className="inline-flex items-center gap-1 text-sm text-[#D4A843] font-medium hover:text-[#c49933]"
+                              >
+                                Convert <ArrowRight className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -425,7 +435,7 @@ export default function CRMPageV2() {
               <div className="col-span-full text-center py-10 text-slate-500">No leads found</div>
             ) : (
               filteredLeads.map((lead) => (
-                <div key={lead.id} className="rounded-2xl border bg-white p-5 hover:shadow-md transition-shadow">
+                <Link key={lead.id} to={`/admin/crm/leads/${lead.id}`} className="rounded-2xl border bg-white p-5 hover:shadow-md transition-shadow block" data-testid={`lead-card-${lead.id}`}>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
                       <h3 className="font-bold">{lead.company_name}</h3>
@@ -462,7 +472,12 @@ export default function CRMPageV2() {
                   <div className="mt-4 pt-3 border-t flex items-center justify-between">
                     <select
                       value={lead.status}
-                      onChange={(e) => changeStatus(lead.id, e.target.value)}
+                      onChange={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        changeStatus(lead.id, e.target.value);
+                      }}
+                      onClick={(e) => e.preventDefault()}
                       className="text-sm border rounded-lg px-2 py-1"
                     >
                       {leadStatuses.map((s) => (
@@ -471,14 +486,18 @@ export default function CRMPageV2() {
                     </select>
                     {lead.status === "won" && (
                       <button
-                        onClick={() => convertToQuote(lead)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          convertToQuote(lead);
+                        }}
                         className="text-sm text-[#D4A843] font-medium"
                       >
                         Convert →
                       </button>
                     )}
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </div>

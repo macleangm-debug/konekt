@@ -1,0 +1,125 @@
+{
+  "summary": "Deal Linkage Pack & Commercial Relationship Pack testing completed - 16/16 backend tests passed (100%). All new features working: CRM Deal Routes (forecast, leaderboard, marketing ROI), Customer Account Routes (360-degree view), CRM Relationship Routes (create quote/invoice/task from lead, convert to won). Frontend pages (LeadDetailPage, CustomerAccountsPage, CustomerAccountSummaryPage) all load and function correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Navigation Sidebar",
+        "issues": ["Customer Accounts link is not in the sidebar navigation (AdminLayout.js navItems array) - page is accessible via direct URL /admin/customer-accounts but not visible in menu"]
+      }
+    ]
+  },
+  "features_tested": {
+    "admin_login": {
+      "endpoint": "POST /api/admin/auth/login",
+      "status": "PASS",
+      "notes": "Returns token and user with admin role"
+    },
+    "sales_forecast": {
+      "endpoint": "GET /api/admin/crm-deals/forecast",
+      "status": "PASS",
+      "notes": "Returns pipeline_value, weighted_forecast, lead_count, stage_weights. Stage weights: qualified=0.25, meeting_demo=0.40, quote_sent=0.60, negotiation=0.80, won=1.00"
+    },
+    "staff_leaderboard": {
+      "endpoint": "GET /api/admin/crm-deals/leaderboard",
+      "status": "PASS",
+      "notes": "Returns list of staff with lead_count, won_count, conversion_rate, pipeline_value, won_revenue"
+    },
+    "marketing_roi": {
+      "endpoint": "GET /api/admin/crm-deals/marketing-roi",
+      "status": "PASS",
+      "notes": "Returns list of sources with lead_count, won_count, pipeline_value, closed_revenue"
+    },
+    "customer_account_view": {
+      "endpoint": "GET /api/admin/customer-accounts/{email}",
+      "status": "PASS",
+      "notes": "Returns profile, summary (counts for quotes, invoices, orders, payments, service_requests, leads, plus invoice_total, invoice_paid, invoice_balance), and lists of all related documents"
+    },
+    "lead_detail": {
+      "endpoint": "GET /api/admin/crm-deals/leads/{id}",
+      "status": "PASS",
+      "notes": "Returns lead info and related documents (quotes, invoices, orders, payments, tasks) via deal_linkage_service"
+    },
+    "create_quote_from_lead": {
+      "endpoint": "POST /api/admin/crm-relationships/leads/{id}/create-quote",
+      "status": "PASS",
+      "notes": "Creates quote with lead_id, copies customer info from lead, adds timeline event, updates lead stage to quote_sent"
+    },
+    "create_invoice_from_lead": {
+      "endpoint": "POST /api/admin/crm-relationships/leads/{id}/create-invoice",
+      "status": "PASS",
+      "notes": "Creates invoice with lead_id, copies customer info from lead, adds timeline event"
+    },
+    "create_task_from_lead": {
+      "endpoint": "POST /api/admin/crm-relationships/leads/{id}/create-task",
+      "status": "PASS",
+      "notes": "Creates task with lead_id, adds timeline event"
+    },
+    "convert_lead_to_won": {
+      "endpoint": "POST /api/admin/crm-relationships/leads/{id}/convert-to-won",
+      "status": "PASS",
+      "notes": "Updates lead stage to won, captures win_reason, adds timeline event"
+    },
+    "lead_detail_page": {
+      "url": "/admin/crm/leads/:leadId",
+      "status": "PASS",
+      "notes": "Page loads with lead info, Open Customer Account link, Stage/Lead Score/Expected Value cards, Timeline section, Related Quotes/Invoices/Payments/Tasks panels, action panels (Add Note, Schedule Follow-up, Update Stage, Create Quote, Create Invoice, Create Task, Convert to Won)"
+    },
+    "customer_accounts_page": {
+      "url": "/admin/customer-accounts",
+      "status": "PASS",
+      "notes": "Page loads with search input, customer cards grid showing name/email/company/phone. 8 customers displayed in test."
+    },
+    "customer_account_summary_page": {
+      "url": "/admin/customer-accounts/:email",
+      "status": "PASS",
+      "notes": "Page loads with profile header, summary cards (Quotes/Invoices/Orders/Payments/Service Requests/Leads counts), Invoice Total/Paid/Balance cards, document list panels (Quotes, Invoices, Orders, Payments, Service Requests), Related Leads section"
+    },
+    "crm_page_v2": {
+      "url": "/admin/crm",
+      "status": "PASS",
+      "notes": "CRM Pipeline page with stats row (Total, New, Contacted, Qualified, Proposal, Negotiation, Won, Pipeline Value), search input, status filter, view mode toggle (List/Cards/Kanban), View links that navigate to LeadDetailPage"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_deal_linkage_commercial.py",
+    "/app/test_reports/pytest/pytest_results_deal_linkage.xml"
+  ],
+  "action_items": [
+    "Add Customer Accounts link to AdminLayout.js navItems array under Sales section (line ~21)"
+  ],
+  "critical_code_review_comments": [
+    "crm_deal_routes.py: Clean implementation with proper MongoDB aggregations for forecast/leaderboard/ROI",
+    "customer_account_routes.py: Comprehensive 360-degree view with all commercial document types",
+    "crm_relationship_routes.py: Proper lead-to-document conversion with timeline events via crm_timeline_service",
+    "deal_linkage_service.py: Flexible document linking by email, lead_id, or company_name",
+    "LeadDetailPage.jsx: Well-structured with all action panels and related document panels",
+    "CustomerAccountsPage.jsx: Clean grid layout with search functionality",
+    "CustomerAccountSummaryPage.jsx: Good use of summary cards and document panels",
+    "MISSING: Customer Accounts link not in AdminLayout.js sidebar navigation - only accessible via direct URL"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_deal_linkage_commercial.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests pass)",
+    "frontend": "100% (All pages load and function correctly)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Test quote, invoice, and task created from existing lead during testing. Timeline events recorded.",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["KwikPay payment service", "Resend email service"]
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Deal Linkage Pack and Commercial Relationship Pack fully tested and working. The Customer Accounts link needs to be added to AdminLayout.js sidebar navigation (navItems array) to make it discoverable. All API endpoints work correctly. Timeline events are properly recorded for quote/invoice/task creation and lead conversion. Lead stage auto-updates to 'quote_sent' when creating a quote from lead."
+}
