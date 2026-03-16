@@ -1,5 +1,6 @@
 """
 Konekt Invoice Routes - Create, manage, convert from orders
+With canonical collection mode
 """
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -12,6 +13,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from quote_models import InvoiceCreateNew, ConvertOrderToInvoiceRequest
 from payment_terms_utils import resolve_payment_terms, calculate_due_date
+from collection_mode_service import get_invoice_collection
 
 router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
 
@@ -77,8 +79,10 @@ async def create_invoice(payload: InvoiceCreateNew):
         settings = await db.company_settings.find_one({})
         doc["terms"] = resolved_terms["payment_term_notes"] or (settings.get("invoice_terms") if settings else None)
 
-    result = await db.invoices.insert_one(doc)
-    created = await db.invoices.find_one({"_id": result.inserted_id})
+    # Use canonical invoice collection
+    invoices_collection = await get_invoice_collection(db)
+    result = await invoices_collection.insert_one(doc)
+    created = await invoices_collection.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
 
 
@@ -88,22 +92,42 @@ async def list_invoices(
     customer_email: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all invoices"""
+    """List all invoices from canonical collection with fallback"""
     query = {}
     if status:
         query["status"] = status
     if customer_email:
         query["customer_email"] = customer_email
     
-    docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
-    return [serialize_doc(doc) for doc in docs]
+    # Get canonical collection
+    invoices_collection = await get_invoice_collection(db)
+    docs = await invoices_collection.find(query).sort("created_at", -1).to_list(length=limit)
+    
+    # Also get from fallback collection
+    fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+    legacy_docs = await fallback.find(query).sort("created_at", -1).to_list(length=limit)
+    
+    # Combine and dedupe by invoice_number
+    seen = set()
+    combined = []
+    for doc in docs + legacy_docs:
+        inv_num = doc.get("invoice_number")
+        if inv_num and inv_num not in seen:
+            seen.add(inv_num)
+            combined.append(serialize_doc(doc))
+    
+    return combined[:limit]
 
 
 @router.get("/{invoice_id}")
 async def get_invoice(invoice_id: str):
-    """Get a specific invoice"""
+    """Get a specific invoice from canonical collection with fallback"""
     try:
-        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoices_collection = await get_invoice_collection(db)
+        doc = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+        if not doc:
+            fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+            doc = await fallback.find_one({"_id": ObjectId(invoice_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return serialize_doc(doc)
@@ -115,7 +139,11 @@ async def get_invoice(invoice_id: str):
 async def get_invoice_payments(invoice_id: str):
     """Get payment history for an invoice"""
     try:
-        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoices_collection = await get_invoice_collection(db)
+        doc = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+        if not doc:
+            fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+            doc = await fallback.find_one({"_id": ObjectId(invoice_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return doc.get("payments", [])
@@ -131,13 +159,22 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
     now = datetime.now(timezone.utc)
-    result = await db.invoices.update_one(
+    invoices_collection = await get_invoice_collection(db)
+    result = await invoices_collection.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Invoice not found")
-    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+        result = await fallback.update_one(
+            {"_id": ObjectId(invoice_id)},
+            {"$set": {"status": status, "updated_at": now.isoformat()}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Invoice not found")
+        updated = await fallback.find_one({"_id": ObjectId(invoice_id)})
+    else:
+        updated = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
     return serialize_doc(updated)
 
 
@@ -155,8 +192,14 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     """Add a payment to an invoice"""
     now = datetime.now(timezone.utc)
     
+    invoices_collection = await get_invoice_collection(db)
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+        if not invoice:
+            fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+            invoice = await fallback.find_one({"_id": ObjectId(invoice_id)})
+            if invoice:
+                invoices_collection = fallback
     except Exception:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
@@ -178,7 +221,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     elif total_paid > 0:
         new_status = "partially_paid"
     
-    await db.invoices.update_one(
+    await invoices_collection.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$push": {"payments": payment},
@@ -190,7 +233,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
         }
     )
     
-    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    updated = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
     return serialize_doc(updated)
 
 
@@ -255,7 +298,9 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
         "updated_at": now.isoformat(),
     }
 
-    result = await db.invoices.insert_one(invoice_doc)
+    # Use canonical invoice collection
+    invoices_collection = await get_invoice_collection(db)
+    result = await invoices_collection.insert_one(invoice_doc)
     
     # Update order with invoice reference
     await db.orders.update_one(
@@ -267,5 +312,5 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
         }}
     )
     
-    created = await db.invoices.find_one({"_id": result.inserted_id})
+    created = await invoices_collection.find_one({"_id": result.inserted_id})
     return serialize_doc(created)

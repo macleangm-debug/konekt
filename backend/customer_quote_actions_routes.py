@@ -1,6 +1,7 @@
 """
 Customer Quote Actions Routes
 Customer-side quote viewing, approval, and conversion to invoice
+With canonical collection mode
 """
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
@@ -11,6 +12,7 @@ import jwt
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from notification_events import notify_invoice_ready
+from collection_mode_service import get_quote_collection, get_invoice_collection
 
 router = APIRouter(prefix="/api/customer/quotes", tags=["Customer Quote Actions"])
 security = HTTPBearer(auto_error=False)
@@ -50,7 +52,8 @@ async def list_my_quotes(user: dict = Depends(get_user)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     user_email = user.get("email")
-    docs = await db.quotes_v2.find({"customer_email": user_email}).sort("created_at", -1).to_list(length=500)
+    quotes_collection = await get_quote_collection(db)
+    docs = await quotes_collection.find({"customer_email": user_email}).sort("created_at", -1).to_list(length=500)
     return [serialize_doc(doc) for doc in docs]
 
 
@@ -60,7 +63,12 @@ async def get_my_quote(quote_id: str, user: dict = Depends(get_user)):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     user_email = user.get("email")
-    doc = await db.quotes_v2.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    quotes_collection = await get_quote_collection(db)
+    doc = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    if not doc:
+        # Try fallback collection
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        doc = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
     if not doc:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -73,7 +81,14 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     user_email = user.get("email")
-    quote = await db.quotes_v2.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    quotes_collection = await get_quote_collection(db)
+    quote = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    if not quote:
+        # Try fallback collection
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        quote = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+        if quote:
+            quotes_collection = fallback
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -81,7 +96,7 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
         raise HTTPException(status_code=400, detail="Quote cannot be approved")
     
     now = datetime.utcnow()
-    await db.quotes_v2.update_one(
+    await quotes_collection.update_one(
         {"_id": ObjectId(quote_id)},
         {
             "$set": {
@@ -123,10 +138,11 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
             "updated_at": now,
         }
         
-        result = await db.invoices_v2.insert_one(invoice_doc)
-        created_invoice = await db.invoices_v2.find_one({"_id": result.inserted_id})
+        invoices_collection = await get_invoice_collection(db)
+        result = await invoices_collection.insert_one(invoice_doc)
+        created_invoice = await invoices_collection.find_one({"_id": result.inserted_id})
         
-        await db.quotes_v2.update_one(
+        await quotes_collection.update_one(
             {"_id": ObjectId(quote_id)},
             {
                 "$set": {
@@ -137,7 +153,7 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
             },
         )
     
-    updated_quote = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)})
+    updated_quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
     
     response = {
         "quote": serialize_doc(updated_quote),

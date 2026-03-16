@@ -96,6 +96,8 @@ from checkout_campaign_routes import router as checkout_campaign_router
 from document_pdf_routes import router as document_pdf_router
 from notification_test_routes import router as notification_test_router
 from campaign_performance_routes import router as campaign_performance_router
+from business_settings_routes import router as business_settings_router
+from go_live_readiness_routes import router as go_live_readiness_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2091,6 +2093,8 @@ app.include_router(checkout_campaign_router)
 app.include_router(document_pdf_router)
 app.include_router(notification_test_router)
 app.include_router(campaign_performance_router)
+app.include_router(business_settings_router)
+app.include_router(go_live_readiness_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 

@@ -1,6 +1,6 @@
 """
 Konekt Quotes Routes - Create, manage, convert quotes
-With attribution persistence
+With attribution persistence and canonical collection mode
 """
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -19,6 +19,7 @@ from attribution_capture_service import (
     inherit_attribution_from_document
 )
 from notification_events import notify_quote_ready, notify_invoice_ready
+from collection_mode_service import get_quote_collection, get_invoice_collection
 
 router = APIRouter(prefix="/api/admin/quotes-v2", tags=["Quotes V2"])
 
@@ -81,9 +82,10 @@ async def create_quote(payload: QuoteCreate):
     if doc.get("valid_until"):
         doc["valid_until"] = doc["valid_until"].isoformat() if hasattr(doc["valid_until"], "isoformat") else str(doc["valid_until"])
 
-    # Use quotes_v2 collection
-    result = await db.quotes_v2.insert_one(doc)
-    created = await db.quotes_v2.find_one({"_id": result.inserted_id})
+    # Use canonical quote collection
+    quotes_collection = await get_quote_collection(db)
+    result = await quotes_collection.insert_one(doc)
+    created = await quotes_collection.find_one({"_id": result.inserted_id})
     
     # Send quote ready notification
     notify_quote_ready(created)
@@ -97,17 +99,20 @@ async def list_quotes(
     customer_email: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all quotes (quotes_v2 first, then legacy)"""
+    """List all quotes from canonical collection with legacy fallback"""
     query = {}
     if status:
         query["status"] = status
     if customer_email:
         query["customer_email"] = customer_email
     
-    # Try quotes_v2 first
-    docs = await db.quotes_v2.find(query).sort("created_at", -1).to_list(length=limit)
-    # Also get from legacy quotes
-    legacy_docs = await db.quotes.find(query).sort("created_at", -1).to_list(length=limit)
+    # Get canonical collection
+    quotes_collection = await get_quote_collection(db)
+    docs = await quotes_collection.find(query).sort("created_at", -1).to_list(length=limit)
+    
+    # Also get from fallback collection
+    fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+    legacy_docs = await fallback.find(query).sort("created_at", -1).to_list(length=limit)
     
     # Combine and dedupe by quote_number
     seen = set()
@@ -123,11 +128,13 @@ async def list_quotes(
 
 @router.get("/{quote_id}")
 async def get_quote(quote_id: str):
-    """Get a specific quote (quotes_v2 first, then legacy)"""
+    """Get a specific quote from canonical collection with fallback"""
     try:
-        doc = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)})
+        quotes_collection = await get_quote_collection(db)
+        doc = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
         if not doc:
-            doc = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+            fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+            doc = await fallback.find_one({"_id": ObjectId(quote_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Quote not found")
         return serialize_doc(doc)
@@ -143,21 +150,35 @@ async def update_quote_status(quote_id: str, status: str = Query(...)):
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
     now = datetime.now(timezone.utc)
-    result = await db.quotes.update_one(
+    quotes_collection = await get_quote_collection(db)
+    result = await quotes_collection.update_one(
         {"_id": ObjectId(quote_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Quote not found")
-    updated = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+        # Try fallback collection
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        result = await fallback.update_one(
+            {"_id": ObjectId(quote_id)},
+            {"$set": {"status": status, "updated_at": now.isoformat()}}
+        )
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Quote not found")
+        updated = await fallback.find_one({"_id": ObjectId(quote_id)})
+    else:
+        updated = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
     return serialize_doc(updated)
 
 
 @router.post("/convert-to-order")
 async def convert_quote_to_order(payload: ConvertQuoteToOrderRequest):
     """Convert an approved quote to an order"""
+    quotes_collection = await get_quote_collection(db)
     try:
-        quote = await db.quotes.find_one({"_id": ObjectId(payload.quote_id)})
+        quote = await quotes_collection.find_one({"_id": ObjectId(payload.quote_id)})
+        if not quote:
+            fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+            quote = await fallback.find_one({"_id": ObjectId(payload.quote_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -200,8 +221,20 @@ async def convert_quote_to_order(payload: ConvertQuoteToOrderRequest):
 
     result = await db.orders.insert_one(order_doc)
 
-    # Update quote status
-    await db.quotes.update_one(
+    # Update quote status in both collections for backwards compatibility
+    quotes_collection = await get_quote_collection(db)
+    await quotes_collection.update_one(
+        {"_id": quote["_id"]},
+        {"$set": {
+            "status": "converted", 
+            "converted_order_id": str(result.inserted_id),
+            "converted_order_number": order_number,
+            "updated_at": now.isoformat()
+        }}
+    )
+    # Also update fallback collection
+    fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+    await fallback.update_one(
         {"_id": quote["_id"]},
         {"$set": {
             "status": "converted", 
@@ -218,10 +251,12 @@ async def convert_quote_to_order(payload: ConvertQuoteToOrderRequest):
 @router.post("/{quote_id}/convert-to-invoice")
 async def convert_quote_to_invoice_direct(quote_id: str):
     """Convert a quote directly to an invoice, preserving attribution"""
+    quotes_collection = await get_quote_collection(db)
     try:
-        quote = await db.quotes_v2.find_one({"_id": ObjectId(quote_id)})
+        quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
         if not quote:
-            quote = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+            fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+            quote = await fallback.find_one({"_id": ObjectId(quote_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -260,11 +295,12 @@ async def convert_quote_to_invoice_direct(quote_id: str):
         **attribution,
     }
 
-    # Use invoices_v2 collection
-    result = await db.invoices_v2.insert_one(invoice_doc)
+    # Use canonical invoice collection
+    invoices_collection = await get_invoice_collection(db)
+    result = await invoices_collection.insert_one(invoice_doc)
 
-    # Update quote status in both collections
-    await db.quotes_v2.update_one(
+    # Update quote status in both collections for backwards compatibility
+    await quotes_collection.update_one(
         {"_id": quote["_id"]},
         {"$set": {
             "status": "converted",
@@ -272,7 +308,8 @@ async def convert_quote_to_invoice_direct(quote_id: str):
             "updated_at": now.isoformat()
         }}
     )
-    await db.quotes.update_one(
+    fallback_quotes = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+    await fallback_quotes.update_one(
         {"_id": quote["_id"]},
         {"$set": {
             "status": "converted",
@@ -281,7 +318,7 @@ async def convert_quote_to_invoice_direct(quote_id: str):
         }}
     )
 
-    created_invoice = await db.invoices_v2.find_one({"_id": result.inserted_id})
+    created_invoice = await invoices_collection.find_one({"_id": result.inserted_id})
     
     # Send invoice ready notification
     notify_invoice_ready(created_invoice)

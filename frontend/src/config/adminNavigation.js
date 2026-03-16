@@ -72,6 +72,7 @@ export const adminNavigation = [
     label: "Settings",
     moduleKey: "settings",
     children: [
+      { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
       { label: "Company Settings", href: "/admin/settings/company", moduleKey: "settings" },
       { label: "Setup", href: "/admin/setup", moduleKey: "settings" },
       { label: "Users", href: "/admin/users", moduleKey: "settings" },

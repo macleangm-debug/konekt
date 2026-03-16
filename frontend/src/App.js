@@ -95,6 +95,7 @@ import ServiceRequestsAdminPage from "@/pages/admin/ServiceRequestsAdminPage";
 import ServiceRequestAdminDetailPage from "@/pages/admin/ServiceRequestAdminDetailPage";
 import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
 import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
+import BusinessSettingsPage from "@/pages/admin/BusinessSettingsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -233,6 +234,7 @@ function App() {
           <Route path="service-forms" element={<ServiceFormsPage />} />
           <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
+          <Route path="business-settings" element={<BusinessSettingsPage />} />
         </Route>
         
         {/* Customer Portal Routes - Must be before catch-all */}
