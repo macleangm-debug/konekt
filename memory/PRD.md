@@ -660,4 +660,50 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
-*Last updated: March 16, 2026 - Team UX & Permission Refinement Pack Complete*
+### Inventory Operations Pack + UI Simplification (March 16, 2026)
+- **Inventory Movement Service** (`inventory_movement_service.py`):
+  - Centralized logging for all stock changes
+  - Supports movement types: reserved, issued, received, transfer, adjustment, returned, delivery_note_issue, goods_received
+  - Tracks direction (in/out), warehouse, reference documents, staff
+- **Inventory Balance Service** (`inventory_balance_service.py`):
+  - `reserve_inventory()` - Reserve stock for orders (reduces available, keeps on_hand)
+  - `release_reservation()` - Release reserved stock when order cancelled
+  - `issue_reserved_inventory()` - Issue reserved stock (reduces both on_hand and reserved)
+  - `issue_unreserved_inventory()` - Direct issue without reservation
+  - `receive_inventory()` - Receive stock (increases on_hand and available)
+  - `get_stock_balance()` - Get current balance for SKU
+- **Delivery Note Routes** (`delivery_note_routes.py`):
+  - `GET /api/admin/delivery-notes` - List all delivery notes
+  - `POST /api/admin/delivery-notes` - Create from order/invoice/direct
+  - `GET /api/admin/delivery-notes/{id}` - Get delivery note details
+  - `PATCH /api/admin/delivery-notes/{id}/status` - Update status (issued, in_transit, delivered, cancelled)
+- **Goods Receiving Routes** (`goods_receiving_routes.py`):
+  - `GET /api/admin/goods-receiving` - List goods receipts
+  - `POST /api/admin/goods-receiving` - Create goods receipt (GRN)
+  - Links to PO, updates PO status, records stock movements
+- **Supplier Routes** (`supplier_routes.py`):
+  - Full CRUD for supplier master data
+  - Fields: name, contact, email, phone, address, city, country, tax_number, payment_terms, lead_time_days, bank_details
+- **Procurement Routes** (`procurement_routes.py`):
+  - `GET/POST /api/admin/procurement/purchase-orders` - List/Create POs
+  - `PATCH /api/admin/procurement/purchase-orders/{id}/status` - Update status (draft, ordered, partially_received, received, cancelled)
+  - `POST /api/admin/procurement/purchase-orders/{id}/approve` - Approve and order
+- **Inventory Operations Dashboard** (`inventory_operations_dashboard_routes.py`):
+  - `GET /api/admin/inventory-ops-dashboard` - Aggregated metrics
+  - `GET /api/admin/inventory-ops-dashboard/low-stock` - Low stock items list
+- **Inventory Ledger Routes** (`inventory_ledger_routes.py`):
+  - `GET /api/admin/inventory-ledger` - All movements with filters
+  - `GET /api/admin/inventory-ledger/{sku}` - Movement history for SKU
+- **Frontend Pages**:
+  - `InventoryOperationsPage.jsx` - Unified workspace with metrics and action panels
+  - `DeliveryNotesPage.jsx` - Create/view delivery notes
+  - `GoodsReceivingPage.jsx` - Create/view goods receipts
+  - `SuppliersPage.jsx` - Manage supplier master
+  - `PurchaseOrdersPage.jsx` - Create/manage purchase orders
+- **Navigation Updates**:
+  - Reorganized into "Inventory & Procurement" section
+  - Added 5 new navigation items with moduleKey='inventory' for role filtering
+
+---
+
+*Last updated: March 16, 2026 - Inventory Operations Pack + UI Simplification Complete*
