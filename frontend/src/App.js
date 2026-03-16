@@ -104,6 +104,13 @@ import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
 import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 
+// Inventory Operations Pages
+import InventoryOperationsPage from "@/pages/admin/InventoryOperationsPage";
+import DeliveryNotesPage from "@/pages/admin/DeliveryNotesPage";
+import GoodsReceivingPage from "@/pages/admin/GoodsReceivingPage";
+import SuppliersPage from "@/pages/admin/SuppliersPage";
+import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
+
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 
@@ -252,6 +259,11 @@ function App() {
           <Route path="customer-accounts/:customerEmail" element={<CustomerAccountSummaryPage />} />
           <Route path="control-panel" element={<SuperAdminControlPanelPage />} />
           <Route path="staff-performance" element={<StaffPerformancePage />} />
+          <Route path="inventory-operations" element={<InventoryOperationsPage />} />
+          <Route path="delivery-notes" element={<DeliveryNotesPage />} />
+          <Route path="goods-receiving" element={<GoodsReceivingPage />} />
+          <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />
         </Route>
         
         {/* Staff Workspace Route */}
