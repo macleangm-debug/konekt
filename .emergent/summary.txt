@@ -1,0 +1,160 @@
+<analysis>**original_problem_statement:**
+The user is building a Business Operating System, Konekt, for the African market. The core objective is to create a multi-country, hidden-partner ecosystem allowing Konekt to scale. This involves building a sophisticated backend to manage partners, geographically-scoped product catalogs, country-specific pricing, and an intelligent routing engine. The platform must support B2C and B2B clients, handle product and service listings, and ensure partners remain invisible to the end customer.
+
+The most recent user requests focus on a major UI/UX overhaul and building a dynamic service orchestration engine:
+1.  **Frontend 10/10 Marketplace Polish Pack:** A complete redesign of the public-facing homepage to achieve a premium, conversion-focused marketplace standard.
+2.  **Brand Excellence & UI Unification Pack:** The creation of a unified design system with shared layouts (, ) and reusable premium components to ensure a consistent look and feel across all public and customer-facing pages.
+3.  **Uniform Services + Expansion Experience Pack:** A redesign of the Services and Country Expansion pages to match the new premium design and improve their functionality.
+4.  **Service Orchestration + Admin Service Builder Pack:** A foundational backend and frontend effort to make the platform's service offerings fully dynamic and configurable from an admin panel. This includes creating a service catalog, dynamic form builders, support for product blanks (e.g., for printing), a site-visit booking workflow, and partner capability mapping. This removes the need to hardcode services in the frontend.
+
+**User's preferred language**: English
+
+**what currently exists?**
+The application is a full-stack platform (React/FastAPI/MongoDB). In addition to the previously completed partner routing, portal, and country expansion packs, this session successfully implemented a massive frontend overhaul.
+- **Partner Listings & Media Pack:** Completed functionality for partners to submit rich-media listings for admin approval, including bulk CSV/Excel uploads.
+- **Premium Frontend:** The public-facing site and customer portal have been completely redesigned with a premium, unified design system. This includes a new homepage (), shared layouts (, ), and a library of reusable premium components (, , , etc.). All key public and customer pages now adhere to this new design, creating a consistent and professional user experience.
+
+**Last working item**:
+-   **Last item agent was working:** The agent was implementing the **Service Orchestration + Admin Service Builder Pack**. The goal is to transform the hardcoded services section into a dynamic, admin-configurable engine. This involves creating the backend infrastructure to manage a service catalog, dynamic form templates, blank products (for printing/uniforms), site-visit booking, and partner capability mapping.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** both
+-   **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+-   **Issue 1: Missing  attributes (P2)**
+    -   **Description:** A recurring low-priority issue. With the massive number of new premium frontend components and pages created (, , , , etc.), a full audit is needed to add missing  attributes to ensure testability.
+    -   **Attempted fixes:** None for the latest set of created files.
+    -   **Next debug checklist:** Review all files under , , and  created in this session and add  attributes to all interactive elements.
+    -   **Why fix this issue and what will be achieved with the fix?** To improve testability and adhere to project standards.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** None
+
+**In progress Task List**:
+-   **Task 1: Complete Service Orchestration + Admin Service Builder Pack (P0)**
+    -   **Where to resume:** The agent created the required backend route files but did not register them.
+        1.  **Register Backend Routes:** In , import and register all newly created routers: , , , , , , , .
+        2.  **Implement Partner Assignment Service:** Complete the logic in  to intelligently select the best partner for a service request based on capabilities, location, capacity, and performance score.
+        3.  **Refactor Frontend Service Pages:**
+            -   Update  to be fully data-driven by fetching service groups and types from the new  endpoints.
+            -   Update  to fetch service details and a dynamic form template from the backend.
+        4.  **Build Dynamic Form Renderer:** Create a frontend component () that can render a form based on the JSON template received from the backend, including specific flows for printing, tailoring/uniforms, and creative services.
+        5.  **Build Admin UI:** Create the new admin pages (, , etc.) that allow an administrator to manage the entire service catalog, form templates, blank products, and partner capabilities without touching code.
+        6.  **Test End-to-End:** Fully test the new dynamic service workflow, from creating a service in the admin panel to a user requesting it on the public site.
+    -   **What will be achieved with this?** This will make the platform's service offerings fully dynamic and scalable, a critical step for the business model. It decouples the frontend from the service catalog.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something:** None
+
+**Upcoming and Future Tasks**
+**Upcoming Tasks:**
+-   **Admin UI Builder Pack (P1):** Build the dashboards for  and  based on the new backend services.
+-   **Partner Approval & Marketplace Quality Pack (P1):** Build the admin dashboard for reviewing, editing, and approving/rejecting partner-submitted listings.
+-   **Final Live Readiness Pack (P1):** Activate Resend and KwikPay integrations with live keys and conduct a full end-to-end QA test.
+
+**Future Tasks:**
+-   **Partner Performance & Staff Accounts (P2):** Create a partner dashboard for performance metrics and support for multiple user accounts under a single partner entity.
+-   **Settlement Workflow (P2):** Implement settlement periods, admin approval for payouts, and downloadable settlement statements for partners.
+-   **Admin Notification Bell (P2):** Implement a real-time UI notification system for administrators.
+-   **World-Class Affiliate Platform Enhancements (P2):** Build a public-facing form for affiliate applications, an affiliate analytics dashboard, and a partner asset library.
+
+**Completed work in this session**
+-   **Partner Listings & Media + Excel/CSV Import Pack (DONE):** Completed the backend and frontend for partners to submit rich media listings and bulk upload via Excel/CSV. Tested and verified.
+-   **Frontend 10/10 Marketplace Polish & Unification Packs (DONE):** A massive frontend overhaul was completed. A new premium homepage and a unified design system with shared layouts (, ) and reusable components were implemented. All public and customer-facing pages were migrated to this new system, creating a consistent, professional, and modern user experience. Tested and verified.
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1: Missing **
+    -   **Debug checklist:** Create the file . It was referenced in the initial handoff's instructions for  but was never created.
+    -   **Why to solve this issue and what will be achieved with this?** To complete the originally intended implementation of the Excel/CSV import feature and prevent potential runtime errors.
+    -   **Should Test frontend/backend/both after fix:** backend
+    -   **Is recurring issue?** N
+
+**Known issue recurrence from previous fork**
+-   None.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **UI/UX Unification:** Using shared layouts (, ) and a design system of reusable components (, ) to create a consistent premium user experience.
+-   **Service Orchestration Engine (In Progress):** A backend system where services are defined in the database (groups, types, form templates), allowing an admin to configure service offerings without code changes.
+-   **Dynamic Form Generation (In Progress):** Frontend forms rendered based on a JSON schema fetched from the backend, tailored to the specific service being requested.
+-   **Partner Capability Matrix (In Progress):** A system to map partners to specific services and regions, enabling intelligent routing.
+
+**key DB schema**
+-   **(Existing):** , , , , etc.
+-   **(New, for Service Orchestration):**
+    -   : 
+    -   : 
+    -   : 
+    -   : 
+    -   : 
+    -   : 
+    -   : 
+
+**changes in tech stack**
+-    was installed and added to .
+
+**All files of reference**
+-   **Backend (New):** , , , , , , , , .
+-   **Frontend (New/Updated):** , , , , and numerous new components under  and , as well as new pages in  and .
+
+**key api endpoints**
+-   : (CRUD) for managing service groups and types.
+-   : (CRUD) for the dynamic form builder.
+-   : (CRUD) for managing promotional/uniform blanks.
+-   : (CRUD) for the site visit booking flow.
+-   : (GET) Publicly accessible service catalog data.
+-   : (CRUD) for mapping partners to services.
+-   : (CRUD) for managing delivery partners.
+-   : (GET) for business intelligence analytics.
+
+**Critical Info for New Agent**
+-   The application's frontend has been massively refactored into a premium, unified design system. All new frontend work must use the shared layouts (, ) and the library of reusable premium components.
+-   The immediate priority is to complete the in-progress Service Orchestration Pack. This is a foundational backend task. The route files have been created but need to be registered in  before the backend and frontend implementation can proceed.
+-   Adherence to the user's detailed, multi-step plans is critical. The user has a very clear vision for the architecture.
+
+**documents and test reports created in this job**
+-    (Updated)
+-   
+-   
+
+**Last 10 User Messages and any pending HUMAN messages**
+-   The last several user messages provided an extremely detailed, multi-phase plan to achieve a 10/10 premium user experience. This involved:
+    1.  **Marketplace Polish Pack:** A detailed spec for a new, conversion-focused homepage () with specific sections and components. (Completed)
+    2.  **Brand Excellence Pack:** A plan to create a system of reusable, premium UI components (, , etc.) to ensure visual consistency. (Completed)
+    3.  **UI Unification Pack:** A strategy to wrap all public and customer-facing pages in new, unified layouts (, ) to eliminate visual jumps between old and new designs. (Completed)
+    4.  **Uniform Services + Expansion Pack:** A plan to redesign the services and country expansion pages to match the new premium look and improve their functionality and information hierarchy. (Completed)
+    5.  **Service Orchestration Pack:** A detailed architectural plan to make the entire service catalog dynamic and admin-configurable. This includes specs for database models, API endpoints, and workflows for printing, tailoring, and site visits. (In Progress)
+
+**Project Health Check:**
+-   **Broken:** No. The application is stable.
+-   **Mocked:**
+    -   **Resend:** Awaiting .
+    -   **KwikPay:** Awaiting live credentials.
+    -   **Service Orchestration Backend:** The backend APIs are defined but not yet registered or fully implemented.
+
+**3rd Party Integrations**
+-   **Resend (Implemented, Mocked):** For transactional emails.
+-   **KwikPay (Implemented, Mocked):** For processing payments.
+-   **ReportLab (Active):** Used for PDF generation.
+-   **openpyxl (Active):** Used for Excel/CSV parsing.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES. The frontend unification work was successfully verified by the testing agent.
+-   **Troubleshoot agent used after agent stuck in loop:** NO.
+-   **Test files created:** , .
+-   **Known regressions:** None.
+
+**Credentials to test flow:**
+-   **Admin User:**
+    -   Email: 
+    -   Password: 
+-   **Partner User:** Created manually via admin UI and MongoDB. A test user  /  was created in this session.
+-   **Customer User:** A test user  /  was created in this session.
+
+**What agent forgot to execute**
+-   The agent did not register the newly created backend route files for the Service Orchestration Pack in .
+-   The agent did not create the  file, which was a minor omission from the previous task's instructions.</analysis>

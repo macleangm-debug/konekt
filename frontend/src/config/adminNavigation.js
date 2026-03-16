@@ -70,6 +70,15 @@ export const adminNavigation = [
     ],
   },
   {
+    key: "service_orchestration",
+    label: "Service Orchestration",
+    moduleKey: "services",
+    children: [
+      { label: "Service Catalog", href: "/admin/service-catalog", moduleKey: "services" },
+      { label: "Blank Products", href: "/admin/blank-products", moduleKey: "services" },
+    ],
+  },
+  {
     key: "settings",
     label: "Settings",
     moduleKey: "settings",

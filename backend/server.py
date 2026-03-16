@@ -131,6 +131,16 @@ from public_marketplace_routes import router as public_marketplace_router
 from media_upload_routes import router as media_upload_router
 from partner_excel_import_routes import router as partner_excel_import_router
 
+# Service Orchestration Routes
+from service_catalog_routes import router as service_catalog_router
+from service_form_template_routes import router as service_form_template_router
+from blank_product_routes import router as blank_product_router
+from site_visit_routes import router as site_visit_router
+from public_service_routes import router as public_service_router
+from partner_capability_routes import router as partner_capability_router
+from delivery_partner_routes import router as delivery_partner_router
+from product_insight_routes import router as product_insight_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2159,6 +2169,16 @@ app.include_router(partner_listing_submission_router)
 app.include_router(public_marketplace_router)
 app.include_router(media_upload_router)
 app.include_router(partner_excel_import_router)
+
+# Service Orchestration Routes
+app.include_router(service_catalog_router)
+app.include_router(service_form_template_router)
+app.include_router(blank_product_router)
+app.include_router(site_visit_router)
+app.include_router(public_service_router)
+app.include_router(partner_capability_router)
+app.include_router(delivery_partner_router)
+app.include_router(product_insight_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

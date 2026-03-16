@@ -112,6 +112,10 @@ import RoutingRulesPage from "@/pages/admin/RoutingRulesPage";
 import CountryPartnerApplicationsPage from "@/pages/admin/CountryPartnerApplicationsPage";
 import CountryLaunchConfigPage from "@/pages/admin/CountryLaunchConfigPage";
 
+// Service Orchestration Admin Pages
+import ServiceCatalogPage from "@/pages/admin/ServiceCatalogPage";
+import BlankProductsPage from "@/pages/admin/BlankProductsPage";
+
 // Partner Portal Pages
 import PartnerLayout from "@/layouts/PartnerLayout";
 import PartnerLoginPage from "@/pages/partner/PartnerLoginPage";
@@ -134,6 +138,8 @@ import HomepageV2Content from "@/pages/HomepageV2Content";
 import MarketplaceBrowsePageContent from "@/pages/public/MarketplaceBrowsePageContent";
 import MarketplaceListingDetailContent from "@/pages/public/MarketplaceListingDetailContent";
 import ServicesPageContent from "@/pages/public/ServicesPageContent";
+import ServiceGroupDetailContent from "@/pages/public/ServiceGroupDetailContent";
+import ServiceDetailContent from "@/pages/public/ServiceDetailContent";
 import TrackOrderPageContent from "@/pages/public/TrackOrderPageContent";
 import AboutPageContent from "@/pages/public/AboutPageContent";
 
@@ -319,6 +325,9 @@ function App() {
           <Route path="routing-rules" element={<RoutingRulesPage />} />
           <Route path="country-partner-applications" element={<CountryPartnerApplicationsPage />} />
           <Route path="country-launch-config" element={<CountryLaunchConfigPage />} />
+          {/* Service Orchestration Routes */}
+          <Route path="service-catalog" element={<ServiceCatalogPage />} />
+          <Route path="blank-products" element={<BlankProductsPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -343,6 +352,8 @@ function App() {
           <Route path="marketplace" element={<MarketplaceBrowsePageContent />} />
           <Route path="marketplace/:slug" element={<MarketplaceListingDetailContent />} />
           <Route path="services" element={<ServicesPageContent />} />
+          <Route path="services/:groupSlug" element={<ServiceGroupDetailContent />} />
+          <Route path="services/:groupSlug/:serviceSlug" element={<ServiceDetailContent />} />
           <Route path="track-order" element={<TrackOrderPageContent />} />
           <Route path="about" element={<AboutPageContent />} />
         </Route>
