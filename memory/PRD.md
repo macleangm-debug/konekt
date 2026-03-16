@@ -783,18 +783,92 @@ The admin sidebar is now organized into logical groups:
 
 ---
 
+### Pack 15: Partner Portal Pack ✅ (March 16, 2026)
+
+**Objective**: Build a secure, light-weight partner portal that allows suppliers and service providers to manage their Konekt allocation without exposing internal operations, other partners, or customer data.
+
+**Key Principles**:
+- **Partner Isolation**: Partners only see their own data (catalog, fulfillment jobs, settlements)
+- **Hidden Customer Model**: NO customer PII exposed to partners (email, name, phone, address)
+- **Separate Auth System**: Partner JWT token separate from main admin/customer auth
+- **Easy Data Management**: Quick form + stock table + bulk upload for easy partner operations
+
+**Backend Services Created**:
+- **partner_auth_routes.py**: Partner authentication system
+  - `POST /api/partner-auth/login` - Partner login, returns JWT token
+  - `GET /api/partner-auth/me` - Get current partner user
+  - `POST /api/partner-auth/admin/create-user` - Admin creates partner user account
+  - `GET /api/partner-auth/admin/partner-users/{partner_id}` - List partner users
+- **partner_access_service.py**: Token validation and partner isolation helpers
+- **partner_portal_dashboard_routes.py**: Partner portal core functionality
+  - `GET /api/partner-portal/dashboard` - Partner summary stats
+  - `GET/POST/PUT/DELETE /api/partner-portal/catalog` - Partner catalog CRUD
+  - `GET/POST /api/partner-portal/fulfillment-jobs` - View jobs, update status
+  - `GET /api/partner-portal/settlements` - Settlement summary
+  - `GET /api/partner-portal/stock-table` - Quick stock view
+  - `POST /api/partner-portal/stock-table/bulk-update` - Batch update stock
+- **partner_bulk_upload_routes.py**: Bulk catalog import
+  - `GET /api/partner-bulk-upload/template` - Get JSON template
+  - `POST /api/partner-bulk-upload/validate` - Validate before import
+  - `POST /api/partner-bulk-upload/catalog` - Bulk import items
+- **country_launch_routes.py**: Country expansion configuration
+  - Full CRUD for country launch configs (status, waitlist, recruitment)
+- **country_expansion_routes.py**: Public expansion endpoints
+  - `POST /api/expansion/waitlist` - Join country waitlist
+  - `POST /api/expansion/partner-application` - Apply as local partner
+- **country_partner_admin_routes.py**: Admin management of partner applications
+  - Review, approve, reject, convert to partner
+- **public_country_catalog_routes.py**: Public country availability API
+
+**Database Collections Added**:
+- `partner_users`: email, partner_id, password_hash, full_name, role, status
+- `country_launch_configs`: country_code, status, waitlist_enabled, partner_recruitment_enabled, headline, message
+- `country_waitlist_requests`: country_code, customer_type, name, email, company_name
+- `country_partner_applications`: country_code, company_name, contact_person, status, score, capabilities
+
+**Frontend Pages Created**:
+- **Partner Portal** (6 pages):
+  - `PartnerLoginPage.jsx` - Partner login form
+  - `PartnerDashboardPage.jsx` - Dashboard with stats, partner info, quick actions
+  - `PartnerCatalogPage.jsx` - Add/edit catalog items with modal form
+  - `PartnerStockTablePage.jsx` - Quick inline stock editing table
+  - `PartnerBulkUploadPage.jsx` - JSON bulk upload with validation preview
+  - `PartnerFulfillmentPage.jsx` - Fulfillment queue with status workflow
+  - `PartnerSettlementsPage.jsx` - Settlement summary and transaction history
+- **Admin Expansion** (2 pages):
+  - `CountryPartnerApplicationsPage.jsx` - Review partner applications
+  - `CountryLaunchConfigPage.jsx` - Configure country availability
+- **Public** (1 page):
+  - `CountryLaunchPage.jsx` - Waitlist signup + partner application forms
+
+**Components Created**:
+- `PartnerLayout.jsx` - Partner portal shell with sidebar navigation
+- `partnerApi.js` - Axios instance with partner token handling
+- `countryPreference.js` - Country/region localStorage helpers
+
+**Security Verifications**:
+- ✅ Fulfillment jobs strip all customer PII before returning to partners
+- ✅ Public catalog hides base_partner_price and partner_id
+- ✅ Partner auth uses separate JWT secret (PARTNER_JWT_SECRET)
+- ✅ All endpoints validate partner ownership before data access
+
+**Test Results**: 36/36 backend tests passed (100%), all 5 frontend pages verified
+
+**Test Credentials**:
+- Partner: demo@supplier.com / partner123 (Demo Supplier Co)
+- Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!
+
+---
+
 ## Upcoming Tasks
 
-### Partner Portal Pack (P1)
-Build a secure, separate portal for partners:
-- Partner login/authentication
-- Profile management
-- Product/service submission for approval
-- Availability updates (partner_available_qty)
-- View assigned fulfillment jobs
-- Update fulfillment status
-- Settlement summary
-- IMPORTANT: No end-customer PII exposed
+### Partner Listings & Media Pack (P1)
+Enhance partner product submissions:
+- Product images and gallery upload
+- Product family/service family dynamic forms
+- Listing approval workflow (draft→submitted→under_review→approved→published)
+- Admin merchandising controls
+- Service partner support (printing, creative, maintenance)
 
 ### Final Live Readiness Pack (P1)
 - Activate Resend with live API key
@@ -811,5 +885,5 @@ Build a secure, separate portal for partners:
 
 ---
 
-*Last updated: March 16, 2026 - Multi-Country Partner Routing Pack Complete*
+*Last updated: March 16, 2026 - Partner Portal Pack Complete*
 
