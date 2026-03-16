@@ -1,49 +1,33 @@
 <analysis>**original_problem_statement:**
-The user is building a Business Operating System, Konekt. The development is structured into feature packs provided by the user. The primary goals are to build a comprehensive affiliate and promotions engine, ensure attribution is tracked across the entire customer lifecycle, unify database collections, polish commercial documents (PDFs), integrate live payment (KwikPay) and email (Resend) services, and build out a world-class CRM/Sales/Marketing module.
+The user is building a Business Operating System, Konekt. The core objective is to evolve the platform into a multi-country, hidden-partner ecosystem, enabling Konekt to scale across Africa. This involves building a sophisticated backend to manage partners, geographically-scoped product catalogs, country-specific pricing, and an intelligent routing engine to orchestrate fulfillment while keeping partners invisible to the end customer. The platform must support both B2C (individual) and B2B (company) clients. The latest user request is to implement the Multi-Country Partner Routing Pack, which lays the architectural foundation for this vision.
 
 **PRODUCT REQUIREMENTS:**
-1.  **Campaign & Affiliate Engine:** Admin-configurable affiliate programs, click tracking, commission on paid business, and a flexible campaign builder.
-2.  **Attribution Persistence:** Capture affiliate/campaign data from the first touchpoint and persist it through the entire customer lifecycle.
-3.  **Collection Unification:** Standardize on  and  as the primary database collections, controlled via a central business setting.
-4.  **PDF Polish:** Professional, Zoho-style PDF generation for quotes and invoices.
-5.  **Live Integrations:** Activate Resend for email notifications and KwikPay for payments.
-6.  **CRM & Sales Intelligence:** Implement a full-featured CRM with lead timelines, follow-up tracking, deal linkage (quotes, invoices, payments), sales forecasting, and performance dashboards.
+1.  **Multi-Country Partner Ecosystem:** Onboard partners (suppliers, service providers) with specific geographical coverage (country, region).
+2.  **Hidden Supplier Model:** Partners must remain invisible to the end customer. Konekt owns the customer relationship, communication, and commercial control.
+3.  **Geographical Routing:** Develop a routing engine that allocates order fulfillment to the appropriate internal or partner source based on customer location, item availability, and configurable business rules (e.g., lead time, margin).
+4.  **Localized Commerce:** Support country-specific product catalogs, pricing, currency, and taxes. Implement an admin-controlled markup engine on top of partner base prices.
+5.  **Split Fulfillment Architecture:** A single customer order containing items from multiple sources must be split internally into separate, hidden fulfillment jobs for each fulfillment owner (internal or partner).
+6.  **Partner Portal:** (Future) Provide a simple, secure portal for partners to manage their product listings, availability, and assigned fulfillment jobs.
+7.  **Live Integrations:** Activate Resend for email and KwikPay for payments.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application has a full-stack architecture (React, FastAPI, MongoDB) with a feature-rich backend. It includes a complete affiliate and campaign engine with attribution tracking. A professional PDF generation system (ReportLab) is in place, and a modular email notification service (Resend) is integrated but not yet live. Key business logic has been refactored to use unified database collections (, ) controlled by a new central business settings module.
-
-Most recently, a foundational CRM / Sales Intelligence module was added, which includes dashboards, lead scoring, and configurable settings for the CRM. The core infrastructure for a go-live is largely complete, with mocked payment and email services awaiting live credentials.
+The application is a feature-rich full-stack platform (React/FastAPI/MongoDB). It includes a CRM, sales intelligence, a complete inventory operations module (procurement, delivery notes, stock ledger), and a role-based UI with grouped navigation. The last few sessions have focused on building out robust operational modules and refining the user experience for internal staff, setting the stage for the new partner ecosystem. All backend and frontend infrastructure for these features is complete and tested.
 
 **Last working item**:
--   **Last item agent was working:** The agent was implementing two large, combined code packs from the user: the **Deal Linkage Pack** and the **Commercial Relationship Pack.** This involves creating a suite of new backend services and routes to link leads to commercial documents (quotes, invoices) and provide a 360-degree customer account view. The agent attempted to create the new backend files but ran into  errors for several of them.
--   **Status:** BLOCKED
+-   **Last item agent was working:** The agent was in the process of implementing the **Multi-Country Partner Routing Pack.** This task involves creating the entire backend infrastructure and the initial frontend admin pages for managing the partner ecosystem.
+-   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
 -   **Which testing method agent to use?** both
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   **Issue 1: File creation errors for CRM packs (P0)**
-    -   **Description:** When attempting to create the files for the Deal Linkage and Commercial Relationship packs, the agent received  errors for , , and . This has blocked the implementation of the new CRM features. The user has repeatedly provided the same code packs, indicating frustration with the lack of progress on this specific task.
-    -   **Attempted fixes:** The agent retried the creation without investigating the root cause.
-    -   **Next debug checklist:**
-        1.  Verify if the files , , and  already exist in the  directory.
-        2.  If they exist, view their contents. If the content is incorrect or empty, overwrite them using  with  or use  to replace the entire content.
-        3.  If they do not exist, investigate the cause of the  failure.
-        4.  Once the files are correctly in place, proceed with the rest of the task.
-    -   **Why fix this issue and what will be achieved with the fix?** This is the primary blocker. Resolving it will allow the agent to complete the high-priority CRM enhancements requested by the user.
-    -   **Status:** BLOCKED
-    -   **Is recurring issue?** Y (The user has sent the instructions multiple times).
-    -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on other issue:** None
-
--   **Issue 2: Missing  attributes (P2)**
+-   **Issue 1: Missing  attributes (P2)**
     -   **Description:** A recurring low-priority issue where newly created frontend pages and components lack  attributes, which hinders automated testing.
-    -   **Attempted fixes:** None.
+    -   **Attempted fixes:** None for the latest set of created files.
     -   **Next debug checklist:**
-        -   Review all new frontend files created in the last two sessions: , , , and the pending , .
-        -   Add unique  attributes to all interactive elements.
+        1.  After creating the new frontend admin pages for the partner ecosystem, review them to ensure all interactive elements have unique  attributes.
     -   **Why fix this issue and what will be achieved with the fix?** To improve testability and adhere to project standards.
     -   **Status:** NOT STARTED
     -   **Is recurring issue?** Y
@@ -51,98 +35,99 @@ Most recently, a foundational CRM / Sales Intelligence module was added, which i
     -   **Blocked on other issue:** None
 
 **In progress Task List**:
--   **Task 1: Complete Deal Linkage & Commercial Relationship Packs (P0)**
-    -   **Where to resume:** Resume after resolving the file creation blocker (Issue 1).
-        1.  **Create/Verify Backend Files:** Ensure all new backend files are created correctly: , , , .
-        2.  **Register New Routers:** Add the , , and  to .
-        3.  **Patch Existing Models/Routes:** Update the lead creation logic () and quote/invoice creation logic to include linkage fields (, , , ).
-        4.  **Create Frontend Pages:** Create  and .
-        5.  **Add Frontend Routing:** Add the new routes (, ) to .
-        6.  **Update Navigation:** Update the admin CRM list page to link to the new  and add Customer Accounts to .
-        7.  **Test:** Perform comprehensive testing of all new CRM functionalities.
-    -   **What will be achieved with this?** The CRM will be significantly enhanced with a 360-degree view of leads and customers, including timelines, related documents (quotes, invoices, payments), sales forecasting, and a staff leaderboard.
+-   **Task 1: Complete Multi-Country Partner Routing Pack (P0)**
+    -   **Where to resume:** The agent has created all the necessary backend services and routes and has started on the frontend. Resume by creating the remaining frontend admin pages.
+        1.  **Create Frontend Admin Pages:** Create the following new pages using the existing admin page structure as a template:
+            -   
+            -   
+            -   
+            -   
+        2.  **Update Frontend Routing:** Add the new pages to .
+        3.  **Update Navigation:** Add the new Partner Ecosystem group and its links to .
+        4.  **Integrate Location Component:** Integrate the newly created  component into forms where customer location is captured (e.g., Lead/Customer creation, Quote creation).
+        5.  **Seed Initial Data:** Call the  endpoint once to populate the default countries and regions.
+        6.  **Test:** Perform a full end-to-end test of the partner routing flow. This includes creating partners, catalog items, pricing/routing rules, and a test order, then triggering the allocation endpoint and verifying the creation of hidden .
+    -   **What will be achieved with this?** This will establish the core database collections, services, and APIs required to operate a multi-country, hidden-partner fulfillment network.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** both
-    -   **Blocked on something:** Issue 1
+    -   **Blocked on something:** None
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
--   **Activate Resend Live (P1):** Prompt the user for the , add it to the  file, and test the live email integration.
--   **Activate KwikPay Live (P1):** Prompt the user for sandbox/live credentials, replace mock logic with live API calls, and test the end-to-end payment flow.
--   **Operational Conversion Pack (P1):** Implement workflows to create orders from quotes, reserve stock, and create tasks automatically based on deal progression.
--   **Full End-to-End QA (P1):** Conduct a comprehensive quality assurance test of the entire application before considering it launch-ready.
+-   **Partner Portal Pack (P1):** Build a secure, separate portal for partners. It should allow them to manage their profile, submit products/services for approval, update availability (), view their assigned fulfillment jobs, update fulfillment status, and see a summary of their settlements. The portal must not expose any end-customer PII.
+-   **Final Live Readiness Pack (P1):**
+    -   Activate Resend and KwikPay integrations by prompting the user for live API keys.
+    -   Conduct a full end-to-end quality assurance test of the entire application.
 
 **Future Tasks:**
 -   **World-Class Affiliate Platform Enhancements (P2):** Build a public-facing form for affiliate applications, an affiliate analytics dashboard, and a partner asset library.
 -   **Admin Notification Bell (P2):** Implement a real-time UI notification system for administrators.
 
 **Completed work in this session**
--   **PDF & Resend Integration (Wiring) (DONE):** Wired up notification triggers in all relevant backend routes and registered the new PDF generation endpoints. Tested successfully.
--   **Go-Live Completion Pack (DONE):** Implemented a central business settings module, a go-live readiness checker, and a service to unify database collection access (/). Tested successfully.
--   **CRM / Sales Intelligence Pack (DONE):** Added backend routes and frontend pages for CRM dashboards, sales KPIs, marketing performance, and configurable CRM settings. Tested successfully.
-
-**Earlier issues found/mentioned but not fixed**
--   **Issue 1: Missing  attributes.** This is a recurring, low-priority issue that has not been addressed.
-
-**Known issue recurrence from previous fork**
--   **Issue recurrence in previous fork:** Missing  attributes.
--   **Recurrence count:** 5+
--   **Status:** NOT STARTED
+-   **Deal Linkage & Commercial Relationship Packs (DONE):** Completed the CRM enhancement to link leads with commercial documents (quotes, invoices), providing a 360-degree customer view. Tested successfully.
+-   **Team UX & Permission Refinement Pack (DONE):** Implemented a role-based grouped sidebar, a simplified staff workspace, and a super-admin control panel to improve daily usability. Tested successfully.
+-   **Inventory Operations Pack + UI Simplification (DONE):** Built a robust inventory management system with a central movement ledger, delivery notes, goods receiving, procurement, and a simplified operational dashboard. Tested successfully.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Deal Linkage:** Connecting a single  document to all related commercial documents (quotes, invoices, orders, payments, tasks) based on email, company name, or .
--   **Account-Centric View:** Aggregating all commercial activities for a given customer email into a single summary page, providing a 360-degree view of the customer relationship.
--   **Sales Intelligence:** Using aggregation pipelines in MongoDB to calculate sales forecasts, staff leaderboards, and marketing ROI from  and  data.
--   **Collection Abstraction:** Using a service () to dynamically select the correct database collection ( vs ) based on a central business setting.
+-   **Partner Ecosystem:** A model where Konekt collaborates with a hidden network of third-party suppliers and service providers for fulfillment.
+-   **Hidden Supplier Model:** An architectural principle where the identity and details of the fulfillment partner are never exposed to the end customer. Konekt orchestrates the process and owns the customer relationship.
+-   **Geographical Routing:** Logic to determine the optimal fulfillment source (internal or partner) based on the customer's country and region, combined with business rules.
+-   **Localized Pricing:** A dynamic pricing engine where the final customer price is calculated from a partner's base price plus country- and category-specific markups controlled by Konekt's admin.
+-   **Split Fulfillment:** The process of breaking down a single customer order into multiple internal fulfillment jobs, one for each unique supplier/source, to be tracked independently.
 
 **key DB schema**
--   **crm_leads:** To be extended with , , , , , .
--   **quotes_v2, invoices_v2:** To be patched to include , ,  to enable linkage back to the CRM.
--   **business_settings:** (New) Central configuration for the application.
--   **crm_settings:** (New) Configurable settings for the CRM module (pipeline stages, win/loss reasons, etc.).
+-   **countries:** 
+-   **partners:** 
+-   **partner_catalog_items:** 
+-   **country_pricing_rules:** 
+-   **routing_rules:** 
+-   **fulfillment_jobs:**  (This must NOT contain customer PII).
+-   **orders:** To be patched to include , , and .
+-   **inventory_items / products:** To be patched to include .
 
 **All files of reference**
--   **Backend (In Progress):** , , , .
--   **Frontend (In Progress):** , .
--   **Backend (Completed):** , , , , , .
--   **Frontend (Completed):** , , .
+-   **Backend (Created):** , , , , , , , , , .
+-   **Frontend (Created):** .
+-    (all new routers were registered).
 
 **key api endpoints**
--   : (GET) Get detailed lead info plus all related documents.
--   : (GET) Get sales forecast data.
--   : (GET) Get the sales staff leaderboard.
--   : (GET) Get marketing source ROI data.
--   : (GET) Get a full summary for a customer account.
--   : (POST) Create a quote from a lead.
--   : (POST) Create an invoice from a lead.
+-   , : (GET) To populate location dropdowns.
+-   : (CRUD) Manage partners.
+-   : (CRUD) Manage partner-contributed products/services.
+-   : (CRUD) Manage country-specific markup rules.
+-   : (CRUD) Manage fulfillment routing logic.
+-   : (POST) Triggers the routing engine to create hidden fulfillment jobs for a given order.
 
 **Critical Info for New Agent**
--   **User Frustration:** The user has repeatedly sent the same instructions for the Deal Linkage and Commercial Relationship packs. This indicates they are frustrated with the lack of progress. Your absolute top priority is to resolve the file creation blocker and complete this task. Do not re-implement anything that is already marked as Completed.
--   **Follow the Plan:** The user has laid out a clear, multi-stage plan. Stick to it. The current task is the CRM enhancement packs. The next tasks are activating live integrations (Resend, KwikPay) and then end-to-end QA.
--   **Code Packs:** The user provides very detailed code packs. Your primary role is to integrate them, fix any environmental or logical inconsistencies you find, and test them thoroughly.
+-   The user has provided a clear, high-level architecture for a scalable, multi-country business model. Your primary task is to implement the packs as specified.
+-   The **Hidden Supplier Model** is the most critical design principle. No customer data (name, email, phone, full address) should ever be stored in the  collection or be visible to the partner. The partner receives only the necessary information for delivery (e.g., city, region, delivery notes).
+-   Pay close attention to the new database schemas. The system now distinguishes between Konekt's internal inventory () and a partner's contribution ().
+-   After completing the current Multi-Country Partner Routing Pack, the next logical step is to build the Partner Portal Pack.
 
 **documents and test reports created in this job**
--    (Updated)
--    (Result of testing the CRM Intelligence Pack)
--    (Result of testing the Go-Live Pack)
+-    (Continuously updated)
+-   Test reports from previous features are available up to .
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Provided the Go-Live Completion Pack. Agent implemented it.
-2.  **User:** Provided detailed suggestions for future CRM, Sales, and Marketing enhancements.
-3.  **User:** Provided the CRM / Sales Intelligence Pack. Agent implemented it.
-4.  **User:** Provided *another* set of suggestions for making the CRM very strong.
-5.  **User:** Provided the Deal Linkage Pack.
-6.  **User:** Provided the Commercial Relationship Pack.
-7.  **User (pending):** The last user message is a large block containing all the recent code packs again, starting with the explicit instruction IF SOMETHING IS DONE DO NOT REDO IT. This is a clear signal to stop re-doing work and to proceed with implementing the **new** Deal Linkage and Commercial Relationship packs. The user wants the agent to complete the current work and has already outlined the next steps.
+1.  **User:** Approved the plan for the Team UX & Permission Refinement Pack.
+2.  **Agent:** Implemented the pack.
+3.  **Agent:** Finished the task and provided a summary.
+4.  **User:** Provided the Inventory Operations Pack + UI Simplification.
+5.  **Agent:** Implemented the pack.
+6.  **Agent:** Finished the task and provided a summary.
+7.  **User:** Provided a detailed architectural vision for a partner ecosystem.
+8.  **User:** Confirmed the architecture should be a Multi-Country, Hidden-Supplier Fulfillment Network.
+9.  **User:** Provided the full Multi-Country Partner Routing Pack for implementation.
+10. **Agent (pending):** The agent is currently implementing this pack. The last action was creating the  component. The next step is to create the associated admin pages.
 
 **Project Health Check:**
--   **Broken:** No. The core application is functional but the latest feature implementation is blocked.
+-   **Broken:** No. The application is stable and functional.
 -   **Mocked:**
-    -   **Resend:** The service is fully implemented but inactive, as it's missing the .
-    -   **KwikPay:** The integration is in a mocked state, awaiting live credentials.
+    -   **Resend:** Awaiting .
+    -   **KwikPay:** Awaiting live credentials.
 
 **3rd Party Integrations**
 -   **Resend (Implemented, Mocked):** For sending transactional emails. Requires a .
@@ -150,17 +135,12 @@ Most recently, a foundational CRM / Sales Intelligence module was added, which i
 -   **ReportLab (Active):** Used for all PDF generation.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. The agent ran the testing agent after each of the three major completed packs, with all tests passing.
+-   **Testing agent used after significant changes:** YES. All major packs completed in this session were verified by the testing agent.
 -   **Troubleshoot agent used after agent stuck in loop:** NO.
--   **Test files created:** , .
+-   **Test files created:** Test reports were generated for all completed packs.
 -   **Known regressions:** None.
 
 **Credentials to test flow:**
 | Account | Email | Password |
 |---|---|---|
-| Primary Admin |  |  |
-| Test Customer |  |  |
-
-**What agent forgot to execute**
--   The agent has not resolved the file creation errors that are blocking the implementation of the Deal Linkage and Commercial Relationship packs.
--   The recurring task of adding  attributes to new frontend components is still pending.</analysis>
+| Primary Admin |  |  |</analysis>

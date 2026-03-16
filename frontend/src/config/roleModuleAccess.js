@@ -1,6 +1,6 @@
 export const ROLE_MODULE_ACCESS = {
-  super_admin: ["overview", "crm", "quotes", "invoices", "orders", "tasks", "inventory", "finance", "marketing", "support", "reports", "settings"],
-  admin: ["overview", "crm", "quotes", "invoices", "orders", "tasks", "inventory", "finance", "marketing", "support", "reports", "settings"],
+  super_admin: ["overview", "crm", "quotes", "invoices", "orders", "tasks", "inventory", "finance", "marketing", "support", "reports", "settings", "partners"],
+  admin: ["overview", "crm", "quotes", "invoices", "orders", "tasks", "inventory", "finance", "marketing", "support", "reports", "settings", "partners"],
   supervisor: ["overview", "crm", "quotes", "invoices", "orders", "tasks", "support", "reports"],
   sales: ["overview", "crm", "quotes", "orders", "tasks"],
   production: ["overview", "tasks", "inventory", "orders"],

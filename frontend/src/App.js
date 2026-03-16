@@ -104,6 +104,12 @@ import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
 import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 
+// Partner Ecosystem Pages
+import PartnersPage from "@/pages/admin/PartnersPage";
+import PartnerCatalogPage from "@/pages/admin/PartnerCatalogPage";
+import CountryPricingPage from "@/pages/admin/CountryPricingPage";
+import RoutingRulesPage from "@/pages/admin/RoutingRulesPage";
+
 // Inventory Operations Pages
 import InventoryOperationsPage from "@/pages/admin/InventoryOperationsPage";
 import DeliveryNotesPage from "@/pages/admin/DeliveryNotesPage";
@@ -264,6 +270,11 @@ function App() {
           <Route path="goods-receiving" element={<GoodsReceivingPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />
+          {/* Partner Ecosystem Routes */}
+          <Route path="partners" element={<PartnersPage />} />
+          <Route path="partner-catalog" element={<PartnerCatalogPage />} />
+          <Route path="country-pricing" element={<CountryPricingPage />} />
+          <Route path="routing-rules" element={<RoutingRulesPage />} />
         </Route>
         
         {/* Staff Workspace Route */}

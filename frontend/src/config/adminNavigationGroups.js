@@ -72,6 +72,16 @@ export const ADMIN_NAVIGATION_GROUPS = [
     ],
   },
   {
+    key: "partner_ecosystem",
+    label: "Partner Ecosystem",
+    items: [
+      { label: "Partners", href: "/admin/partners", moduleKey: "partners" },
+      { label: "Partner Catalog", href: "/admin/partner-catalog", moduleKey: "partners" },
+      { label: "Country Pricing", href: "/admin/country-pricing", moduleKey: "partners" },
+      { label: "Routing Rules", href: "/admin/routing-rules", moduleKey: "partners" },
+    ],
+  },
+  {
     key: "settings",
     label: "Settings",
     items: [

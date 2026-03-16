@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -44,6 +44,11 @@ const navItems = [
   { path: '/admin/raw-materials', label: 'Raw Materials', icon: Layers, moduleKey: 'inventory' },
   { path: '/admin/inventory/movements', label: 'Stock Movements', icon: TrendingUp, moduleKey: 'inventory' },
   { path: '/admin/inventory/transfers', label: 'Transfers', icon: GitBranch, moduleKey: 'inventory' },
+  { type: 'divider', label: 'Partner Ecosystem', moduleKey: 'partners' },
+  { path: '/admin/partners', label: 'Partners', icon: Network, moduleKey: 'partners' },
+  { path: '/admin/partner-catalog', label: 'Partner Catalog', icon: Package, moduleKey: 'partners' },
+  { path: '/admin/country-pricing', label: 'Country Pricing', icon: Globe, moduleKey: 'partners' },
+  { path: '/admin/routing-rules', label: 'Routing Rules', icon: Route, moduleKey: 'partners' },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
   { path: '/admin/central-payments', label: 'Central Payments', icon: CreditCard, moduleKey: 'finance' },

@@ -112,6 +112,12 @@ from supplier_routes import router as supplier_router
 from procurement_routes import router as procurement_router
 from inventory_operations_dashboard_routes import router as inventory_ops_dashboard_router
 from inventory_ledger_routes import router as inventory_ledger_router
+from geography_routes import router as geography_router
+from partner_routes import router as partner_router
+from partner_catalog_routes import router as partner_catalog_router
+from country_pricing_routes import router as country_pricing_router
+from routing_rules_routes import router as routing_rules_router
+from multi_country_order_routing_routes import router as multi_country_routing_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2123,6 +2129,12 @@ app.include_router(supplier_router)
 app.include_router(procurement_router)
 app.include_router(inventory_ops_dashboard_router)
 app.include_router(inventory_ledger_router)
+app.include_router(geography_router)
+app.include_router(partner_router)
+app.include_router(partner_catalog_router)
+app.include_router(country_pricing_router)
+app.include_router(routing_rules_router)
+app.include_router(multi_country_routing_router)
 
 app.add_middleware(SecurityHeadersMiddleware)
 
