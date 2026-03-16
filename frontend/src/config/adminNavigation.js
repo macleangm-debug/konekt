@@ -79,6 +79,14 @@ export const adminNavigation = [
     ],
   },
   {
+    key: "sla_quality",
+    label: "SLA & Quality",
+    moduleKey: "reports",
+    children: [
+      { label: "SLA Alerts", href: "/admin/sla-alerts", moduleKey: "reports" },
+    ],
+  },
+  {
     key: "settings",
     label: "Settings",
     moduleKey: "settings",

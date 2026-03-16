@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown
+  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw
 } from "lucide-react";
 
 const nav = [
@@ -11,6 +11,7 @@ const nav = [
   { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Service Requests", href: "/dashboard/service-requests", icon: Wrench },
+  { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
   { label: "Points & Referrals", href: "/dashboard/points", icon: Gift },
   { label: "My Statement", href: "/dashboard/statement", icon: CreditCard },
 ];

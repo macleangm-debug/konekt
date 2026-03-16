@@ -1,29 +1,45 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Package, Clock, CheckCircle2, Truck, Eye } from "lucide-react";
+import { Package, Clock, CheckCircle2, Truck, Eye, RotateCcw, Loader2 } from "lucide-react";
 import api from "../../lib/api";
 import EmptyStateCard from "../../components/customer/EmptyStateCard";
 import PaymentStatusBadge from "../../components/PaymentStatusBadge";
 import { Button } from "../../components/ui/button";
+import { toast } from "sonner";
 
 export default function CustomerOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [repeatingOrderId, setRepeatingOrderId] = useState(null);
+
+  const loadOrders = async () => {
+    try {
+      const res = await api.get("/api/orders/me");
+      setOrders(res.data || []);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/api/orders/me");
-        setOrders(res.data || []);
-      } catch (error) {
-        console.error("Failed to load orders:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadOrders();
   }, []);
+
+  const handleRepeatOrder = async (orderId) => {
+    setRepeatingOrderId(orderId);
+    try {
+      await api.post(`/api/reorders/order/${orderId}`);
+      toast.success("Order duplicated successfully! Check your new order.");
+      loadOrders();
+    } catch (error) {
+      toast.error("Failed to repeat order. Please try again.");
+    } finally {
+      setRepeatingOrderId(null);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -162,12 +178,31 @@ export default function CustomerOrdersPage() {
                     </div>
                   </div>
 
-                  <Link to={`/orders/${order.id}/tracking`}>
-                    <Button variant="outline" data-testid={`track-order-${order.id}`}>
-                      <Eye className="w-4 h-4 mr-2" />
-                      Track Order
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2">
+                    {/* Repeat Order Button - show for completed/delivered orders */}
+                    {["completed", "delivered"].includes(order.status) && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleRepeatOrder(order.id)}
+                        disabled={repeatingOrderId === order.id}
+                        data-testid={`repeat-order-${order.id}`}
+                      >
+                        {repeatingOrderId === order.id ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-4 h-4 mr-2" />
+                        )}
+                        Repeat Order
+                      </Button>
+                    )}
+                    <Link to={`/orders/${order.id}/tracking`}>
+                      <Button variant="outline" data-testid={`track-order-${order.id}`}>
+                        <Eye className="w-4 h-4 mr-2" />
+                        Track Order
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
 

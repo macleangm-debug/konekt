@@ -141,6 +141,14 @@ from partner_capability_routes import router as partner_capability_router
 from delivery_partner_routes import router as delivery_partner_router
 from product_insight_routes import router as product_insight_router
 
+# Recurring Services + Reorder Pack Routes
+from reorder_routes import router as reorder_router
+from repeat_service_request_routes import router as repeat_service_request_router
+from recurring_service_plan_routes import router as recurring_service_plan_router
+from recurring_supply_plan_routes import router as recurring_supply_plan_router
+from account_manager_routes import router as account_manager_router
+from sla_alerts_routes import router as sla_alerts_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2179,6 +2187,14 @@ app.include_router(public_service_router)
 app.include_router(partner_capability_router)
 app.include_router(delivery_partner_router)
 app.include_router(product_insight_router)
+
+# Recurring Services + Reorder Pack Routes
+app.include_router(reorder_router)
+app.include_router(repeat_service_request_router)
+app.include_router(recurring_service_plan_router)
+app.include_router(recurring_supply_plan_router)
+app.include_router(account_manager_router)
+app.include_router(sla_alerts_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

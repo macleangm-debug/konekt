@@ -3,25 +3,42 @@ import { Link } from "react-router-dom";
 import api from "../../lib/api";
 import EmptyStateCard from "../../components/customer/EmptyStateCard";
 import PromoArtCards from "../../components/customer/PromoArtCards";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, RotateCcw, Loader2 } from "lucide-react";
+import { Button } from "../../components/ui/button";
+import { toast } from "sonner";
 
 export default function ServiceRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [repeatingId, setRepeatingId] = useState(null);
+
+  const loadRequests = async () => {
+    try {
+      const res = await api.get("/api/service-requests/my");
+      setRequests(res.data || []);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await api.get("/api/service-requests/my");
-        setRequests(res.data || []);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadRequests();
   }, []);
+
+  const handleRepeatRequest = async (requestId) => {
+    setRepeatingId(requestId);
+    try {
+      await api.post(`/api/repeat-service-requests/${requestId}`);
+      toast.success("Service request duplicated! Check your new request.");
+      loadRequests();
+    } catch (error) {
+      toast.error("Failed to repeat request. Please try again.");
+    } finally {
+      setRepeatingId(null);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -129,6 +146,24 @@ export default function ServiceRequestsPage() {
               >
                 View Details
               </Link>
+
+              {/* Repeat Request Button - show for completed requests */}
+              {["completed", "delivered"].includes(item.status) && (
+                <Button
+                  variant="outline"
+                  onClick={() => handleRepeatRequest(item.id)}
+                  disabled={repeatingId === item.id}
+                  data-testid={`repeat-request-${item.id}`}
+                  className="rounded-xl"
+                >
+                  {repeatingId === item.id ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                  )}
+                  Repeat Request
+                </Button>
+              )}
 
               {item.requires_payment &&
                 item.payment_choice === "pay_now" &&

@@ -115,6 +115,10 @@ import CountryLaunchConfigPage from "@/pages/admin/CountryLaunchConfigPage";
 // Service Orchestration Admin Pages
 import ServiceCatalogPage from "@/pages/admin/ServiceCatalogPage";
 import BlankProductsPage from "@/pages/admin/BlankProductsPage";
+import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
+
+// Customer Recurring Plans
+import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
 // Partner Portal Pages
 import PartnerLayout from "@/layouts/PartnerLayout";
@@ -328,6 +332,8 @@ function App() {
           {/* Service Orchestration Routes */}
           <Route path="service-catalog" element={<ServiceCatalogPage />} />
           <Route path="blank-products" element={<BlankProductsPage />} />
+          {/* SLA & Quality Routes */}
+          <Route path="sla-alerts" element={<SlaAlertsPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -375,6 +381,7 @@ function App() {
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
           <Route path="statement" element={<MyStatementPageV2 />} />
+          <Route path="recurring-plans" element={<RecurringPlansPage />} />
         </Route>
         
         {/* Staff Workspace Route */}
