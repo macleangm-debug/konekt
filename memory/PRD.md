@@ -604,6 +604,30 @@ The admin sidebar is now organized into logical groups:
   - `payment_admin_routes.py` - notify_payment_received
 - **Campaign Performance Routes** registered in server.py
 
+### Deal Linkage & Commercial Relationship Pack (March 16, 2026)
+- **CRM Deal Routes** (`crm_deal_routes.py`):
+  - `GET /api/admin/crm-deals/leads/{lead_id}` - Lead detail with all related documents
+  - `GET /api/admin/crm-deals/forecast` - Sales forecast with weighted pipeline values
+  - `GET /api/admin/crm-deals/leaderboard` - Staff leaderboard with conversion rates
+  - `GET /api/admin/crm-deals/marketing-roi` - Marketing source ROI analysis
+- **Customer Account Routes** (`customer_account_routes.py`):
+  - `GET /api/admin/customer-accounts/{email}` - 360-degree customer view
+  - Returns profile, summary counts, and lists of quotes, invoices, orders, payments, service requests, leads
+- **CRM Relationship Routes** (`crm_relationship_routes.py`):
+  - `POST /api/admin/crm-relationships/leads/{id}/create-quote` - Create quote from lead
+  - `POST /api/admin/crm-relationships/leads/{id}/create-invoice` - Create invoice from lead
+  - `POST /api/admin/crm-relationships/leads/{id}/create-task` - Create task from lead
+  - `POST /api/admin/crm-relationships/leads/{id}/convert-to-won` - Convert lead to won
+- **Deal Linkage Service** (`deal_linkage_service.py`):
+  - Links leads to related documents by email, lead_id, or company name
+- **Frontend Pages**:
+  - `LeadDetailPage.jsx` - Full lead detail with timeline, related documents, action panels
+  - `CustomerAccountsPage.jsx` - Customer listing with search
+  - `CustomerAccountSummaryPage.jsx` - 360-degree customer summary
+- **Navigation Updates**:
+  - Added CRM Intelligence, Customer Accounts, Business Settings, CRM Settings to sidebar
+  - CRM Pipeline cards/list now link to LeadDetailPage
+
 ---
 
-*Last updated: March 16, 2026 - PDF & Notification Integration Pack Complete*
+*Last updated: March 16, 2026 - Deal Linkage & Commercial Relationship Pack Complete*
