@@ -707,3 +707,109 @@ The admin sidebar is now organized into logical groups:
 ---
 
 *Last updated: March 16, 2026 - Inventory Operations Pack + UI Simplification Complete*
+
+### Pack 14: Multi-Country Partner Routing Pack ✅ (March 16, 2026)
+
+**Objective**: Build the architectural foundation for a multi-country, hidden-supplier fulfillment ecosystem enabling Konekt to scale across Africa with partner networks while maintaining complete control of customer relationships.
+
+**Key Principles**:
+- **Hidden Supplier Model**: Partners remain invisible to end customers. Konekt owns all customer communication and commercial control.
+- **Geographical Routing**: Intelligent allocation based on customer location, partner availability, and business rules.
+- **Localized Pricing**: Country-specific pricing with configurable markup engine on top of partner base prices.
+
+**Backend Services Created**:
+- **geography_routes.py**: Countries and regions management with seed endpoint
+  - `GET /api/geography/countries` - List all countries with regions, currency
+  - `GET /api/geography/regions/{country_code}` - Get regions for a country
+  - `POST /api/geography/seed` - Seed default countries (TZ, KE, UG, RW, BI, CD)
+- **partner_routes.py**: Partner master data management
+  - Full CRUD: `GET/POST/PUT/DELETE /api/admin/partners`
+  - Fields: name, partner_type, contact, country_code, regions, coverage_mode, fulfillment_type, lead_time_days, settlement_terms
+  - Soft delete (sets status to inactive)
+- **partner_catalog_routes.py**: Partner product/service catalog
+  - Full CRUD: `GET/POST/PUT/DELETE /api/admin/partner-catalog`
+  - Fields: partner_id, sku, name, base_partner_price, partner_available_qty, partner_status, lead_time_days, min_order_qty
+  - Validates partner exists before creating
+- **country_pricing_routes.py**: Country-specific markup rules
+  - `GET/POST/DELETE /api/admin/country-pricing`
+  - Supports percentage or fixed markup types
+  - Upsert pattern for same country+category
+- **routing_rules_routes.py**: Fulfillment routing configuration
+  - Full CRUD: `GET/POST/PUT/DELETE /api/admin/routing-rules`
+  - Priority modes: lead_time, margin, cost, preferred_partner
+  - Optional region/category filters with cascading lookup
+- **partner_routing_service.py**: Core routing engine
+  - `route_partner_item()` - Route single item to best partner
+  - `calculate_customer_price()` - Apply markup/tax to partner price
+  - `find_eligible_partner_items()` - Find partners that can fulfill
+- **fulfillment_allocation_service.py**: Hidden fulfillment job creation
+  - `create_hidden_fulfillment_job()` - Creates partner-safe jobs (no customer PII)
+  - `get_fulfillment_jobs_for_partner()` - Partner view without sensitive data
+- **multi_country_order_routing_routes.py**: Order allocation
+  - `POST /api/admin/multi-country-routing/test-routing` - Test routing without allocation
+  - `POST /api/admin/multi-country-routing/allocate-order/{order_id}` - Create fulfillment jobs
+  - `GET /api/admin/multi-country-routing/fulfillment-jobs/{order_id}` - View jobs for order
+
+**Database Collections**:
+- `countries`: code, name, currency, phone_code, regions[], is_active
+- `partners`: name, partner_type, country_code, regions[], status, lead_time_days, settlement_terms
+- `partner_catalog_items`: partner_id, sku, name, base_partner_price, partner_available_qty, partner_status
+- `country_pricing_rules`: country_code, category, markup_type, markup_value, tax_rate, currency
+- `routing_rules`: country_code, region, category, priority_mode, preferred_partner_id, internal_first, fallback_allowed
+- `fulfillment_jobs`: parent_order_id, partner_id, sku, quantity, status, base_partner_price, customer_price (NO customer PII)
+
+**Frontend Pages Created**:
+- `PartnersPage.jsx` - Manage fulfillment partners
+- `PartnerCatalogPage.jsx` - Products/services from partners
+- `CountryPricingPage.jsx` - Country-specific markup rules
+- `RoutingRulesPage.jsx` - Fulfillment routing configuration
+
+**Components Created**:
+- `CustomerLocationFields.jsx` - Reusable country/region selector component
+
+**Navigation Updates**:
+- Added "Partner Ecosystem" group in sidebar with 4 items
+- moduleKey='partners' for role-based filtering (admin, super_admin only)
+
+**Geography Data Seeded**:
+- Tanzania (TZ): Dar es Salaam, Arusha, Mwanza, Dodoma, Mbeya, Morogoro, Tanga, Zanzibar, Kilimanjaro, Iringa
+- Kenya (KE): Nairobi, Mombasa, Kisumu, Nakuru, Eldoret, Thika, Malindi, Kitale
+- Uganda (UG): Kampala, Entebbe, Jinja, Mbarara, Gulu, Mbale, Fort Portal
+- Rwanda (RW): Kigali, Huye, Musanze, Rubavu, Muhanga, Rusizi
+- Burundi (BI): Bujumbura, Gitega, Ngozi, Rumonge
+- DR Congo (CD): Kinshasa, Lubumbashi, Goma, Bukavu, Mbuji-Mayi
+
+**Test Results**: 40/40 backend tests passed (100%), all 4 frontend pages verified
+
+---
+
+## Upcoming Tasks
+
+### Partner Portal Pack (P1)
+Build a secure, separate portal for partners:
+- Partner login/authentication
+- Profile management
+- Product/service submission for approval
+- Availability updates (partner_available_qty)
+- View assigned fulfillment jobs
+- Update fulfillment status
+- Settlement summary
+- IMPORTANT: No end-customer PII exposed
+
+### Final Live Readiness Pack (P1)
+- Activate Resend with live API key
+- Activate KwikPay with live credentials
+- Full end-to-end QA test
+
+### World-Class Affiliate Platform Enhancements (P2)
+- Public affiliate application form
+- Affiliate analytics dashboard
+- Partner asset library
+
+### Admin Notification Bell (P2)
+- Real-time UI notification system for admins
+
+---
+
+*Last updated: March 16, 2026 - Multi-Country Partner Routing Pack Complete*
+
