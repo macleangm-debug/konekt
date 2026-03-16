@@ -6,6 +6,7 @@ export const adminNavigation = [
     children: [
       { label: "Dashboard", href: "/admin", moduleKey: "dashboard" },
       { label: "Launch Readiness", href: "/admin/launch-readiness", moduleKey: "settings" },
+      { label: "CRM Intelligence", href: "/admin/crm-intelligence", moduleKey: "crm" },
     ],
   },
   {
@@ -73,6 +74,7 @@ export const adminNavigation = [
     moduleKey: "settings",
     children: [
       { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
+      { label: "CRM Settings", href: "/admin/crm-settings", moduleKey: "crm" },
       { label: "Company Settings", href: "/admin/settings/company", moduleKey: "settings" },
       { label: "Setup", href: "/admin/setup", moduleKey: "settings" },
       { label: "Users", href: "/admin/users", moduleKey: "settings" },

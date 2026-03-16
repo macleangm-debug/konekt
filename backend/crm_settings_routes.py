@@ -5,6 +5,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
 import os
 
+from crm_settings_defaults import DEFAULT_CRM_SETTINGS
+
 router = APIRouter(prefix="/api/admin/crm-settings", tags=["CRM Settings"])
 security = HTTPBearer(auto_error=False)
 
@@ -49,7 +51,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
 
 @router.get("")
 async def get_crm_settings(user: dict = Depends(get_admin_user)):
-    """Get CRM settings including industries and sources"""
+    """Get CRM settings including industries, sources, pipeline stages, and reasons"""
     doc = await db.crm_settings.find_one({})
     if not doc:
         now = datetime.utcnow()
@@ -57,11 +59,30 @@ async def get_crm_settings(user: dict = Depends(get_admin_user)):
             "industries": DEFAULT_INDUSTRIES,
             "sources": DEFAULT_SOURCES,
             "lead_statuses": ["new", "contacted", "qualified", "proposal", "negotiation", "won", "lost"],
+            # New CRM intelligence fields
+            "pipeline_stages": DEFAULT_CRM_SETTINGS["pipeline_stages"],
+            "lost_reasons": DEFAULT_CRM_SETTINGS["lost_reasons"],
+            "win_reasons": DEFAULT_CRM_SETTINGS["win_reasons"],
+            "default_follow_up_days": DEFAULT_CRM_SETTINGS["default_follow_up_days"],
+            "stale_lead_days": DEFAULT_CRM_SETTINGS["stale_lead_days"],
             "created_at": now,
             "updated_at": now,
         }
         result = await db.crm_settings.insert_one(default_doc)
         doc = await db.crm_settings.find_one({"_id": result.inserted_id})
+    
+    # Ensure new fields exist for backward compat
+    if "pipeline_stages" not in doc:
+        doc["pipeline_stages"] = DEFAULT_CRM_SETTINGS["pipeline_stages"]
+    if "lost_reasons" not in doc:
+        doc["lost_reasons"] = DEFAULT_CRM_SETTINGS["lost_reasons"]
+    if "win_reasons" not in doc:
+        doc["win_reasons"] = DEFAULT_CRM_SETTINGS["win_reasons"]
+    if "default_follow_up_days" not in doc:
+        doc["default_follow_up_days"] = DEFAULT_CRM_SETTINGS["default_follow_up_days"]
+    if "stale_lead_days" not in doc:
+        doc["stale_lead_days"] = DEFAULT_CRM_SETTINGS["stale_lead_days"]
+        
     doc["id"] = str(doc["_id"])
     del doc["_id"]
     return doc
@@ -76,12 +97,25 @@ async def update_crm_settings(payload: dict, user: dict = Depends(get_admin_user
         "updated_at": now
     }
     
+    # Original fields
     if "industries" in payload:
         update_data["industries"] = payload["industries"]
     if "sources" in payload:
         update_data["sources"] = payload["sources"]
     if "lead_statuses" in payload:
         update_data["lead_statuses"] = payload["lead_statuses"]
+    
+    # New CRM intelligence fields
+    if "pipeline_stages" in payload:
+        update_data["pipeline_stages"] = payload["pipeline_stages"]
+    if "lost_reasons" in payload:
+        update_data["lost_reasons"] = payload["lost_reasons"]
+    if "win_reasons" in payload:
+        update_data["win_reasons"] = payload["win_reasons"]
+    if "default_follow_up_days" in payload:
+        update_data["default_follow_up_days"] = int(payload["default_follow_up_days"])
+    if "stale_lead_days" in payload:
+        update_data["stale_lead_days"] = int(payload["stale_lead_days"])
     
     existing = await db.crm_settings.find_one({})
     if existing:
@@ -93,6 +127,11 @@ async def update_crm_settings(payload: dict, user: dict = Depends(get_admin_user
     else:
         update_data["industries"] = payload.get("industries", DEFAULT_INDUSTRIES)
         update_data["sources"] = payload.get("sources", DEFAULT_SOURCES)
+        update_data["pipeline_stages"] = payload.get("pipeline_stages", DEFAULT_CRM_SETTINGS["pipeline_stages"])
+        update_data["lost_reasons"] = payload.get("lost_reasons", DEFAULT_CRM_SETTINGS["lost_reasons"])
+        update_data["win_reasons"] = payload.get("win_reasons", DEFAULT_CRM_SETTINGS["win_reasons"])
+        update_data["default_follow_up_days"] = payload.get("default_follow_up_days", DEFAULT_CRM_SETTINGS["default_follow_up_days"])
+        update_data["stale_lead_days"] = payload.get("stale_lead_days", DEFAULT_CRM_SETTINGS["stale_lead_days"])
         update_data["created_at"] = now
         result = await db.crm_settings.insert_one(update_data)
         updated = await db.crm_settings.find_one({"_id": result.inserted_id})

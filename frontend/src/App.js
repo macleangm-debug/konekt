@@ -96,6 +96,8 @@ import ServiceRequestAdminDetailPage from "@/pages/admin/ServiceRequestAdminDeta
 import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
 import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
 import BusinessSettingsPage from "@/pages/admin/BusinessSettingsPage";
+import CrmIntelligencePage from "@/pages/admin/CrmIntelligencePage";
+import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -235,6 +237,8 @@ function App() {
           <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
           <Route path="business-settings" element={<BusinessSettingsPage />} />
+          <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
+          <Route path="crm-settings" element={<CrmSettingsPage />} />
         </Route>
         
         {/* Customer Portal Routes - Must be before catch-all */}

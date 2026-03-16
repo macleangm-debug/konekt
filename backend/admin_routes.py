@@ -93,16 +93,47 @@ async def admin_dashboard_summary():
 
 # ==================== CRM / LEADS ====================
 
+from lead_scoring_service import compute_lead_score
+from crm_timeline_service import add_lead_timeline_event
+
 @router.post("/crm/leads")
 async def create_lead(payload: CRMLeadCreate):
-    """Create a new CRM lead"""
+    """Create a new CRM lead with scoring and timeline"""
     now = datetime.now(timezone.utc)
+    
+    # Get CRM settings for default follow-up days
+    crm_settings = await db.crm_settings.find_one({}) or {}
+    default_follow_up_days = int(crm_settings.get("default_follow_up_days", 3) or 3)
+    
     doc = payload.model_dump()
     doc["created_at"] = now.isoformat()
     doc["updated_at"] = now.isoformat()
     doc["activities"] = []
+    doc["timeline"] = []
+    
+    # Set default follow-up date
+    from datetime import timedelta
+    doc["next_follow_up_at"] = (now + timedelta(days=default_follow_up_days)).isoformat()
+    
+    # Set default stage if not provided
+    if not doc.get("stage"):
+        doc["stage"] = doc.get("status", "new_lead")
+    
+    # Compute lead score
+    doc["lead_score"] = compute_lead_score(doc)
 
     result = await db.crm_leads.insert_one(doc)
+    
+    # Add creation event to timeline
+    await add_lead_timeline_event(
+        db,
+        lead_id=result.inserted_id,
+        event_type="created",
+        label="Lead created",
+        actor_email=doc.get("assigned_to"),
+        note="Lead added to CRM",
+    )
+    
     created = await db.crm_leads.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
 

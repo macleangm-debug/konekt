@@ -1,0 +1,121 @@
+{
+  "summary": "CRM Intelligence Pack testing completed - 21/21 backend tests passed (100%). All CRM intelligence features working: dashboard, lead timeline (notes, follow-ups, stage changes), sales KPIs, marketing performance, and CRM settings with auth. Frontend pages load and display data correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "crm_dashboard": {
+      "endpoint": "GET /api/admin/crm-intelligence/dashboard",
+      "status": "PASS",
+      "notes": "Returns summary (total_leads, won, lost, quote_sent, overdue_followups, stale_leads), by_stage breakdown, and by_source breakdown"
+    },
+    "add_lead_note": {
+      "endpoint": "POST /api/admin/crm-intelligence/leads/{id}/note",
+      "status": "PASS",
+      "notes": "Adds note to lead timeline. Validates note is required. Returns updated lead with timeline."
+    },
+    "schedule_follow_up": {
+      "endpoint": "POST /api/admin/crm-intelligence/leads/{id}/follow-up",
+      "status": "PASS",
+      "notes": "Sets next_follow_up_at on lead and adds timeline event. Validates date is required."
+    },
+    "update_lead_stage": {
+      "endpoint": "POST /api/admin/crm-intelligence/leads/{id}/status",
+      "status": "PASS",
+      "notes": "Updates stage and captures win/lost reasons. Adds stage_change event to timeline."
+    },
+    "sales_kpis": {
+      "endpoint": "GET /api/admin/sales-kpis/summary",
+      "status": "PASS",
+      "notes": "Returns lead_count, won_count, lost_count, quote_count, total_revenue, conversion_rate"
+    },
+    "marketing_performance": {
+      "endpoint": "GET /api/admin/marketing-performance/sources",
+      "status": "PASS",
+      "notes": "Returns by-source breakdown with leads, quotes, won counts per source"
+    },
+    "crm_settings_auth": {
+      "endpoint": "GET /api/admin/crm-settings",
+      "status": "PASS",
+      "notes": "Requires Bearer token auth. Returns settings with pipeline_stages, lost_reasons, win_reasons, default_follow_up_days, stale_lead_days"
+    },
+    "crm_settings_update": {
+      "endpoint": "PUT /api/admin/crm-settings",
+      "status": "PASS",
+      "notes": "Updates CRM settings. Data persistence verified."
+    },
+    "lead_creation_with_scoring": {
+      "endpoint": "POST /api/admin/crm/leads",
+      "status": "PASS",
+      "notes": "Creates lead with auto-computed lead_score (0-100), timeline creation event, and default next_follow_up_at"
+    },
+    "frontend_crm_intelligence": {
+      "url": "/admin/crm-intelligence",
+      "status": "PASS",
+      "notes": "Page loads with stat cards (Total Leads, Won, Lost, Quote Sent, Overdue Follow-ups, Stale Leads), Sales Summary panel, Pipeline by Stage panel, Lead Sources panel, Marketing Source Performance panel"
+    },
+    "frontend_crm_settings": {
+      "url": "/admin/crm-settings",
+      "status": "PASS",
+      "notes": "Page loads with all form elements: Pipeline Stages, Lost Reasons, Win Reasons, Default Follow-up Days, Stale Lead Days, Industries, Lead Sources, Save button"
+    }
+  },
+  "lead_scoring_details": {
+    "implementation": "lead_scoring_service.py computes score from 0-100 based on:",
+    "criteria": [
+      "Budget (up to 25 pts): 'high', '500', '1000000' in budget_range",
+      "Urgency (up to 25 pts): 'high', 'urgent', 'immediate'",
+      "Company size (up to 20 pts): 'enterprise', 'large', 'medium'",
+      "Source quality (up to 15 pts): 'referral', 'affiliate', 'returning_customer'",
+      "Decision maker (10 pts): if decision_maker_name provided",
+      "Expected close date (5 pts): if expected_close_date provided"
+    ],
+    "note": "String matching is case-insensitive via .lower()"
+  },
+  "timeline_events": {
+    "types": ["created", "note", "follow_up", "stage_change"],
+    "structure": "Each event has: event_type, label, actor_email, note, meta, created_at"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_crm_intelligence.py",
+    "/app/test_reports/pytest/pytest_results_crm_intelligence.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "crm_intelligence_routes.py: Clean implementation with timeline service integration. Proper validation on required fields.",
+    "crm_timeline_service.py: Reusable helper function for adding timeline events with proper $push and $set operations",
+    "lead_scoring_service.py: Simple scoring algorithm. Note: string matching could be improved with more flexible patterns",
+    "CRM settings properly requires auth - uses HTTPBearer security",
+    "Frontend pages have comprehensive data-testid attributes for testing",
+    "Minor: Pipeline Stages in settings shows multiple TEST_stage entries from test runs - consider cleanup"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_crm_intelligence.py"
+  ],
+  "success_rate": {
+    "backend": "100% (21/21 tests pass)",
+    "frontend": "100% (Both CRM Intelligence and CRM Settings pages load and function correctly)"
+  },
+  "test_credentials": {
+    "admin_email": "admin@konekt.co.tz",
+    "admin_password": "KnktcKk_L-hw1wSyquvd!",
+    "note": "Login returns 'token' field (not 'access_token')"
+  },
+  "seed_data_creation": "Test leads created with TEST_ prefix during testing. Pipeline stages may have TEST_stage entries from test runs.",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": [
+      "Resend email service",
+      "KwikPay payment service"
+    ]
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CRM Intelligence Pack fully tested. Lead status for creation endpoint uses LeadStatus enum: 'new', 'contacted', 'qualified', 'proposal_sent', 'won', 'lost' (not 'new_lead'). The stage field in crm-intelligence endpoints is different from status and accepts any string including the pipeline_stages from settings (new_lead, contacted, qualified, meeting_demo, quote_sent, negotiation, won, lost, dormant). CRM settings endpoint requires Bearer token auth."
+}
