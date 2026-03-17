@@ -81,28 +81,28 @@ export default function BusinessPricingAdminPage() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-          <SurfaceCard className="text-center">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4" data-testid="stats-grid">
+          <SurfaceCard className="text-center" data-testid="stat-total">
             <div className="text-3xl font-bold text-[#20364D]">{stats.total}</div>
             <div className="text-sm text-slate-500">Total</div>
           </SurfaceCard>
-          <SurfaceCard className="text-center bg-amber-50">
+          <SurfaceCard className="text-center bg-amber-50" data-testid="stat-pending">
             <div className="text-3xl font-bold text-amber-700">{stats.pending}</div>
             <div className="text-sm text-slate-500">Pending</div>
           </SurfaceCard>
-          <SurfaceCard className="text-center bg-blue-50">
+          <SurfaceCard className="text-center bg-blue-50" data-testid="stat-contacted">
             <div className="text-3xl font-bold text-blue-700">{stats.contacted}</div>
             <div className="text-sm text-slate-500">Contacted</div>
           </SurfaceCard>
-          <SurfaceCard className="text-center bg-emerald-50">
+          <SurfaceCard className="text-center bg-emerald-50" data-testid="stat-qualified">
             <div className="text-3xl font-bold text-emerald-700">{stats.qualified}</div>
             <div className="text-sm text-slate-500">Qualified</div>
           </SurfaceCard>
-          <SurfaceCard className="text-center bg-purple-50">
+          <SurfaceCard className="text-center bg-purple-50" data-testid="stat-converted">
             <div className="text-3xl font-bold text-purple-700">{stats.converted}</div>
             <div className="text-sm text-slate-500">Converted</div>
           </SurfaceCard>
-          <SurfaceCard className="text-center bg-red-50">
+          <SurfaceCard className="text-center bg-red-50" data-testid="stat-declined">
             <div className="text-3xl font-bold text-red-700">{stats.declined}</div>
             <div className="text-sm text-slate-500">Declined</div>
           </SurfaceCard>
@@ -176,12 +176,14 @@ export default function BusinessPricingAdminPage() {
                       <button
                         onClick={() => updateStatus(req.id, "contacted")}
                         className="px-3 py-2 rounded-lg bg-blue-100 text-blue-700 text-sm font-semibold hover:bg-blue-200 transition"
+                        data-testid={`btn-contacted-${req.id}`}
                       >
                         Mark Contacted
                       </button>
                       <button
                         onClick={() => updateStatus(req.id, "qualified")}
                         className="px-3 py-2 rounded-lg bg-emerald-100 text-emerald-700 text-sm font-semibold hover:bg-emerald-200 transition"
+                        data-testid={`btn-qualify-${req.id}`}
                       >
                         Qualify
                       </button>
@@ -191,6 +193,7 @@ export default function BusinessPricingAdminPage() {
                     <button
                       onClick={() => convertToLead(req.id)}
                       className="px-3 py-2 rounded-lg bg-purple-100 text-purple-700 text-sm font-semibold hover:bg-purple-200 transition flex items-center gap-1"
+                      data-testid={`btn-convert-${req.id}`}
                     >
                       <TrendingUp className="w-4 h-4" /> Convert to Lead
                     </button>
@@ -199,6 +202,7 @@ export default function BusinessPricingAdminPage() {
                     <button
                       onClick={() => updateStatus(req.id, "declined")}
                       className="px-3 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold hover:bg-red-200 transition"
+                      data-testid={`btn-decline-${req.id}`}
                     >
                       Decline
                     </button>

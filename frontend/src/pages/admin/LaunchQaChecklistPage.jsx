@@ -38,14 +38,14 @@ export default function LaunchQaChecklistPage() {
         subtitle="Use this checklist to verify launch-critical customer, staff, affiliate, and admin flows."
       />
 
-      <SurfaceCard className="bg-gradient-to-r from-[#20364D] to-[#2a4a66] text-white">
+      <SurfaceCard className="bg-gradient-to-r from-[#20364D] to-[#2a4a66] text-white" data-testid="progress-card">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-sm text-white/70">Progress</div>
-            <div className="text-3xl font-bold">{checkedCount} / {checks.length} checked</div>
+            <div className="text-3xl font-bold" data-testid="progress-count">{checkedCount} / {checks.length} checked</div>
           </div>
           <div className="text-right">
-            <div className="text-4xl font-bold">{progress}%</div>
+            <div className="text-4xl font-bold" data-testid="progress-percent">{progress}%</div>
             <div className="text-sm text-white/70">complete</div>
           </div>
         </div>
@@ -58,7 +58,7 @@ export default function LaunchQaChecklistPage() {
       </SurfaceCard>
 
       <SurfaceCard>
-        <div className="space-y-3">
+        <div className="space-y-3" data-testid="checklist-items">
           {checks.map((item) => (
             <button
               key={item.id}
@@ -68,6 +68,7 @@ export default function LaunchQaChecklistPage() {
                   ? "bg-emerald-50 border-emerald-200" 
                   : "bg-slate-50 hover:bg-slate-100"
               }`}
+              data-testid={`qa-item-${item.id}`}
             >
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                 checkedItems[item.id] 
