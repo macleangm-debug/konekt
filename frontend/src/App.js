@@ -103,6 +103,7 @@ import CustomerAccountSummaryPage from "@/pages/admin/CustomerAccountSummaryPage
 import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
 import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
+import PaymentSettingsPage from "@/pages/admin/PaymentSettingsPage";
 
 // Partner Ecosystem Pages
 import PartnersPage from "@/pages/admin/PartnersPage";
@@ -367,6 +368,7 @@ function App() {
           <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
           <Route path="business-settings" element={<BusinessSettingsPage />} />
+          <Route path="payment-settings" element={<PaymentSettingsPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
           <Route path="crm-settings" element={<CrmSettingsPage />} />
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />

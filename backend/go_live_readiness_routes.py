@@ -35,10 +35,10 @@ async def get_go_live_readiness():
         "bank_account_number": bool(settings.get("bank_account_number")),
         "sku_prefix": bool(settings.get("sku_prefix")),
         "resend_key": bool(os.getenv("RESEND_API_KEY")),
-        "sender_email": bool(os.getenv("SENDER_EMAIL")),
+        "sender_email": bool(os.getenv("SENDER_EMAIL") or os.getenv("RESEND_FROM_EMAIL")),
         "kwikpay_base_url": bool(os.getenv("KWIKPAY_BASE_URL")),
-        "kwikpay_api_key": bool(os.getenv("KWIKPAY_API_KEY")),
-        "kwikpay_secret": bool(os.getenv("KWIKPAY_API_SECRET")),
+        "kwikpay_api_key": bool(os.getenv("KWIKPAY_API_KEY") or os.getenv("KWIKPAY_PUBLIC_KEY")),
+        "kwikpay_secret": bool(os.getenv("KWIKPAY_API_SECRET") or os.getenv("KWIKPAY_SECRET_KEY")),
     }
 
     score = sum(1 for v in checks.values() if v)
@@ -49,4 +49,47 @@ async def get_go_live_readiness():
         "score": score,
         "total": total,
         "checks": checks,
+    }
+
+
+@router.get("/audit")
+async def launch_readiness_audit():
+    """Comprehensive launch readiness audit"""
+    settings = await db.business_settings.find_one({}) or {}
+    payment_settings_count = await db.payment_settings.count_documents({})
+    partner_count = await db.partners.count_documents({"status": "active"})
+    service_groups_count = await db.service_groups.count_documents({"is_active": True})
+    admin_count = await db.users.count_documents({"role": {"$in": ["admin", "super_admin"]}, "is_active": True})
+    sales_count = await db.users.count_documents({"role": "sales", "is_active": True})
+    operations_count = await db.users.count_documents({"role": "operations", "is_active": True})
+
+    collections = await db.list_collection_names()
+
+    return {
+        "business_identity": {
+            "company_name": bool(settings.get("company_name")),
+            "logo_url": bool(settings.get("company_logo_path")),
+            "tin": bool(settings.get("tax_number")),
+            "address": bool(settings.get("address_line_1")),
+            "support_email": bool(settings.get("email")),
+            "phone": bool(settings.get("phone")),
+        },
+        "payments": {
+            "payment_settings_count": payment_settings_count,
+            "bank_transfer_configured": payment_settings_count > 0 or bool(settings.get("bank_account_number")),
+            "kwikpay_configured": bool(os.getenv("KWIKPAY_PUBLIC_KEY")) and bool(os.getenv("KWIKPAY_SECRET_KEY")),
+            "resend_configured": bool(os.getenv("RESEND_API_KEY")) and bool(os.getenv("RESEND_FROM_EMAIL")),
+        },
+        "operations": {
+            "active_partners": partner_count,
+            "active_service_groups": service_groups_count,
+            "admin_accounts": admin_count,
+            "sales_accounts": sales_count,
+            "operations_accounts": operations_count,
+        },
+        "commercial": {
+            "has_default_markup_rules": await db.group_markup_rules.count_documents({}) > 0 if "group_markup_rules" in collections else False,
+            "has_commission_rules": await db.commission_rules.count_documents({}) > 0 if "commission_rules" in collections else False,
+            "has_country_configs": await db.country_launch_configs.count_documents({}) > 0 if "country_launch_configs" in collections else False,
+        },
     }

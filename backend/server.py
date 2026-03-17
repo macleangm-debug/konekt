@@ -63,6 +63,8 @@ from warehouse_transfer_routes import router as warehouse_transfer_router
 from creative_project_collab_routes import router as creative_project_collab_router
 from creative_project_routes import router as creative_project_router
 from customer_statement_routes import router as customer_statement_router
+from launch_email_routes import router as launch_email_router
+from payment_gateway_status_routes import router as payment_gateway_status_router
 from affiliate_self_service_routes import router as affiliate_self_service_router
 from admin_setup_routes import router as admin_setup_router
 from public_product_variant_routes import router as public_product_variant_router
@@ -99,6 +101,7 @@ from notification_test_routes import router as notification_test_router
 from campaign_performance_routes import router as campaign_performance_router
 from business_settings_routes import router as business_settings_router
 from go_live_readiness_routes import router as go_live_readiness_router
+from payment_settings_routes import router as payment_settings_router
 from crm_intelligence_routes import router as crm_intelligence_router
 from sales_kpi_routes import router as sales_kpi_router
 from marketing_performance_routes import router as marketing_performance_router
@@ -2186,6 +2189,9 @@ app.include_router(notification_test_router)
 app.include_router(campaign_performance_router)
 app.include_router(business_settings_router)
 app.include_router(go_live_readiness_router)
+app.include_router(payment_settings_router)
+app.include_router(launch_email_router)
+app.include_router(payment_gateway_status_router)
 app.include_router(crm_intelligence_router)
 app.include_router(sales_kpi_router)
 app.include_router(marketing_performance_router)
