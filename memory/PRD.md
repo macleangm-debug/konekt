@@ -1131,6 +1131,38 @@ Comprehensive dashboards for operational visibility:
 
 ---
 
+#### 23. Conversion + Visibility + Role Clarity Pack ✅ (March 17, 2026)
+Focused on making the system tighter, clearer, and more commercially useful:
+
+**New Components**:
+- `BusinessPricingCtaBox.jsx` - Reusable CTA for business pricing prompts
+- `StaffLoginPage.jsx` - Separate staff login at `/staff-login`
+- `ContactPageContent.jsx` - Contact page with business pricing CTA
+
+**Enhanced Pages**:
+- `PointsPageV2.jsx` → Renamed to "Referrals & Rewards" with hero card, copy/share buttons
+- `DashboardOverviewPageV2.jsx` - Added BusinessPricingCtaBox at bottom
+- `MarketplaceListingDetailContent.jsx` - Added business pricing CTA
+
+**Navigation Updates**:
+- Public navbar: "Request Quote" highlighted in gold, prominent CTA
+- Customer sidebar: "Referrals & Rewards" with EARN badge
+- Footer: Added "Referrals & Rewards" and "Staff Portal" links
+- FinalCtaSection: Added "Earn with Referrals" CTA
+
+**Routes Added**:
+- `/staff-login` - Staff-specific login portal
+- `/contact` - Contact page with form
+- `/dashboard/referrals` - Referrals & Rewards page
+
+**Key Features**:
+- Separate login experiences: Customer, Staff, Partner
+- Better-price prompts for B2B conversion
+- Viral referral growth anchor visible throughout
+- Professional staff portal design
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1152,6 +1184,15 @@ Admin dashboard for reviewing and approving partner submissions:
 - Overdue contract invoice alerts
 - Account manager portfolio dashboard
 
+### Controlled Affiliate + Campaign Engine (P1)
+- Affiliate promo code + referral link tracking
+- Campaign promotions visible to affiliates
+- Margin protection logic
+- Affiliate dashboard with sales + commission
+- Affiliate payout profile
+- Admin controls for affiliate caps
+- Checkout integration
+
 ### World-Class Affiliate Platform Enhancements (P2)
 - Public affiliate application form
 - Affiliate analytics dashboard
@@ -1167,5 +1208,5 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 16, 2026 - Contract Clients + Billing Discipline Pack and Admin Performance & Insights Pack Complete*
+*Last updated: March 17, 2026 - Conversion + Visibility + Role Clarity Pack Complete*
 
