@@ -1390,25 +1390,59 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-### Commercial Profiling + Reward Safety + Numbering Rules Pack (P0) - ✅ IN PROGRESS (March 17, 2026)
+### Commercial Profiling + Reward Safety + Numbering Rules Pack (P0) - ✅ COMPLETED (March 17, 2026)
 
 **Completed:**
 - ✅ **Auto-Numbering Configuration** - Admin UI at `/admin/auto-numbering` to configure formats for invoices, quotes, orders, SKUs, delivery notes, GRN
+- ✅ **Numbering Rules with Tokens** - Admin UI at `/admin/numbering-rules` for custom numbering formats with tokens like [CompanyCode], [YY], [SEQ], [AlphaNum]
 - ✅ **Business Pricing Request Flow** - Customer form at `/dashboard/business-pricing` for requesting commercial/B2B pricing
+- ✅ **Business Pricing Admin Management** - Admin UI at `/admin/business-pricing-requests` with stats, filters, status updates, qualify, and convert-to-lead actions
 - ✅ **First Order Discount Modal** - Exit-intent popup for email capture with 5% discount code issuance
+- ✅ **Welcome Rewards (Points)** - Safer alternative issuing 1000 welcome points to new customers instead of aggressive discounts
 - ✅ **Points Rules Validation API** - Backend logic for points redemption caps (10% of distributable margin after 40% protection)
-- ✅ **Sales Guided Questions** - Component and API for qualifying leads with structured questions
-- ✅ **Enhanced Landing Page Category Showcase** - More interactive, animated category cards with item stats
+- ✅ **Sales Guided Questions** - Component and API for qualifying leads with structured questions and scoring
+- ✅ **Enhanced Landing Page Category Showcase** - More interactive, animated category cards with item stats (6 categories)
+- ✅ **Home Business Solutions Section** - Premium two-column layout with "Browse, Request, Track" workflow and solution cards
 - ✅ **Standard Blank States** - AccountBlankState component applied to Orders, Quotes, Service Requests pages
 - ✅ **Guest Cart Enhancement** - Cart context updated with merge functionality for login
 - ✅ **Business Pricing CTA** - Added to customer dashboard sidebar
-
-**Remaining:**
-- Landing page polish (additional animations)
-- Admin-side business pricing request management UI
-- Full checkout integration with points validation
+- ✅ **Client Profile Page** - Customer business profiling at `/dashboard/profile/business`
+- ✅ **Launch QA Checklist** - Admin page at `/admin/launch-qa` with 15 checkable items and progress tracking
+- ✅ **Runtime Status Card** - Integration status display (Resend, KwikPay, Stripe, MongoDB) in Launch Readiness page
+- ✅ **QA Seed Endpoints** - APIs for seeding test data and checking QA readiness
 
 ---
 
-*Last updated: March 17, 2026 - Commercial Profiling + Reward Safety Pack Progress*
+### Sales Queue + Opportunity Visibility Pack (P1) - UPCOMING
+
+**To implement:**
+- Sales queue showing all opportunities (products, services, business pricing)
+- Source attribution (affiliate, campaign, direct)
+- Lead qualification scores and guided questions integration
+- Stage progression tracking
+
+---
+
+### Admin Verification Pass (P1) - UPCOMING
+
+**To verify:**
+- All admin pages load correctly
+- All save actions persist
+- Navigation links work
+- Seeded products/services display correctly
+- Payment settings affect checkout
+- Markup/commission rules affect pricing
+
+---
+
+### Backlog Items (P2)
+- Partner Approval & Marketplace Quality Pack
+- Final Commercial Control Pack
+- PWA for User Accounts
+- Notification System Pack
+- Advanced AI Assistant
+
+---
+
+*Last updated: March 17, 2026 - Commercial Operations Closeout Pack Complete*
 

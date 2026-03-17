@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
 import { FileDown } from "lucide-react";
+import RuntimeStatusCard from "../../components/admin/RuntimeStatusCard";
 
 export default function LaunchReadinessPage() {
   const [data, setData] = useState(null);
@@ -66,17 +67,19 @@ export default function LaunchReadinessPage() {
           </button>
         </div>
 
-        <div className="rounded-3xl border bg-white p-6" data-testid="readiness-score-card">
-          <div className="text-sm text-slate-500">Readiness Score</div>
-          <div className="text-4xl font-bold mt-2">
-            {data.ready_score}/{data.max_score}
-          </div>
-          <div className="mt-3">
-            <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-              data.status === "ready" ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"
-            }`}>
-              {data.status}
-            </span>
+        <div className="grid lg:grid-cols-[1fr_350px] gap-6">
+          <div className="space-y-6">
+            <div className="rounded-3xl border bg-white p-6" data-testid="readiness-score-card">
+              <div className="text-sm text-slate-500">Readiness Score</div>
+              <div className="text-4xl font-bold mt-2">
+                {data.ready_score}/{data.max_score}
+              </div>
+              <div className="mt-3">
+                <span className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  data.status === "ready" ? "bg-emerald-100 text-emerald-700" : "bg-yellow-100 text-yellow-700"
+                }`}>
+                  {data.status}
+                </span>
           </div>
         </div>
 
@@ -146,6 +149,13 @@ export default function LaunchReadinessPage() {
               <span className="text-slate-400">&#9633;</span>
               <span>Test customer dashboard and design project workflow</span>
             </div>
+          </div>
+        </div>
+          </div>
+          
+          {/* Runtime Integrations Sidebar */}
+          <div className="space-y-6">
+            <RuntimeStatusCard />
           </div>
         </div>
       </div>
