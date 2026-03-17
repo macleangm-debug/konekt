@@ -6,6 +6,7 @@ export const adminNavigation = [
     children: [
       { label: "Ecosystem Dashboard", href: "/admin/ecosystem-dashboard", moduleKey: "dashboard" },
       { label: "Supervisor Dashboard", href: "/admin/supervisor-dashboard", moduleKey: "dashboard" },
+      { label: "Launch QA", href: "/admin/launch-qa", moduleKey: "dashboard" },
     ],
   },
   {
@@ -17,6 +18,7 @@ export const adminNavigation = [
       { label: "Quotes", href: "/admin/quotes", moduleKey: "sales" },
       { label: "Invoices", href: "/admin/invoices", moduleKey: "finance" },
       { label: "Payment Proofs", href: "/admin/payment-proofs", moduleKey: "finance" },
+      { label: "Business Pricing Requests", href: "/admin/business-pricing-requests", moduleKey: "sales" },
     ],
   },
   {
@@ -81,6 +83,7 @@ export const adminNavigation = [
       { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
       { label: "Payment Settings", href: "/admin/payment-settings", moduleKey: "settings" },
       { label: "Auto-Numbering", href: "/admin/auto-numbering", moduleKey: "settings" },
+      { label: "Numbering Rules", href: "/admin/numbering-rules", moduleKey: "settings" },
       { label: "Markup Rules", href: "/admin/group-markups", moduleKey: "settings" },
       { label: "Commission Rules", href: "/admin/commission-rules", moduleKey: "settings" },
       { label: "Countries & Regions", href: "/admin/countries-regions", moduleKey: "geography" },

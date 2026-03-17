@@ -204,6 +204,24 @@ from auto_numbering_routes import router as auto_numbering_router
 # Sales Guided Questions
 from sales_guided_questions_routes import router as sales_guided_questions_router
 
+# Numbering Rules
+from numbering_rules_routes import router as numbering_rules_router
+
+# Client Profiles
+from client_profile_routes import router as client_profile_router
+
+# Welcome Rewards
+from welcome_rewards_routes import router as welcome_rewards_router
+
+# Runtime Settings
+from runtime_settings_routes import router as runtime_settings_router
+
+# QA Seed
+from qa_seed_routes import router as qa_seed_router
+
+# Business Pricing Admin
+from business_pricing_admin_routes import router as business_pricing_admin_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2305,6 +2323,24 @@ app.include_router(auto_numbering_router)
 
 # Sales Guided Questions
 app.include_router(sales_guided_questions_router)
+
+# Numbering Rules
+app.include_router(numbering_rules_router)
+
+# Client Profiles
+app.include_router(client_profile_router)
+
+# Welcome Rewards
+app.include_router(welcome_rewards_router)
+
+# Runtime Settings
+app.include_router(runtime_settings_router)
+
+# QA Seed
+app.include_router(qa_seed_router)
+
+# Business Pricing Admin
+app.include_router(business_pricing_admin_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

@@ -145,6 +145,15 @@ import CommissionRulesPage from "@/pages/admin/CommissionRulesPage";
 // Auto-Numbering Configuration
 import AutoNumberingPage from "@/pages/admin/AutoNumberingPage";
 
+// Numbering Rules Page
+import NumberingRulesPage from "@/pages/admin/NumberingRulesPage";
+
+// Launch QA Checklist
+import LaunchQaChecklistPage from "@/pages/admin/LaunchQaChecklistPage";
+
+// Business Pricing Admin
+import BusinessPricingAdminPage from "@/pages/admin/BusinessPricingAdminPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -185,6 +194,7 @@ import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
 import BusinessPricingRequestPage from "@/pages/customer/BusinessPricingRequestPage";
+import ClientProfilePage from "@/pages/customer/ClientProfilePage";
 
 // Auth Pages
 import StaffLoginPage from "@/pages/auth/StaffLoginPage";
@@ -419,6 +429,12 @@ function App() {
           <Route path="commission-rules" element={<CommissionRulesPage />} />
           {/* Auto-Numbering Configuration */}
           <Route path="auto-numbering" element={<AutoNumberingPage />} />
+          {/* Numbering Rules */}
+          <Route path="numbering-rules" element={<NumberingRulesPage />} />
+          {/* Launch QA Checklist */}
+          <Route path="launch-qa" element={<LaunchQaChecklistPage />} />
+          {/* Business Pricing Admin */}
+          <Route path="business-pricing-requests" element={<BusinessPricingAdminPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -475,6 +491,7 @@ function App() {
           <Route path="statement" element={<MyStatementPageV2 />} />
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
+          <Route path="profile/business" element={<ClientProfilePage />} />
         </Route>
         
         {/* Staff Workspace Route */}
