@@ -1,0 +1,128 @@
+{
+  "summary": "UX Alignment Pack Login Flow Testing completed. Fixed 2 critical bugs (CustomerLoginPage and StaffLoginPage not using auth contexts). All login flows now working correctly - Customer, Staff/Admin, and Partner logins redirect to their respective dashboards.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "login_chooser_page": {
+      "url": "/login",
+      "status": "PASS",
+      "notes": "Page loads with 3 role-based login cards (Customer, Staff, Partner). All cards have data-testid attributes. Register link works."
+    },
+    "customer_login_page": {
+      "url": "/login/customer",
+      "status": "PASS",
+      "notes": "Login form works correctly. Fixed bug where page used 'token' localStorage key instead of AuthContext's 'konekt_token'. Now uses useAuth() context properly."
+    },
+    "customer_login_flow": {
+      "credentials": "demo.customer@konekt.com / Demo123!",
+      "status": "PASS",
+      "redirect": "/dashboard",
+      "notes": "Login successful, redirects to customer dashboard. ?next= param redirect working correctly."
+    },
+    "staff_login_page": {
+      "url": "/staff-login",
+      "status": "PASS",
+      "notes": "Page loads with dark theme branding. Fixed bug where page used 'admin_token' localStorage key instead of AdminAuthContext's 'konekt_admin_token'. Now uses useAdminAuth() context properly."
+    },
+    "staff_login_flow": {
+      "credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+      "status": "PASS",
+      "redirect": "/admin",
+      "notes": "Admin login successful, redirects to admin dashboard with full navigation sidebar."
+    },
+    "partner_login_page": {
+      "url": "/partner-login",
+      "status": "PASS",
+      "notes": "Page loads with Partner Portal branding. Form elements have data-testid."
+    },
+    "partner_login_flow": {
+      "credentials": "demo.partner@konekt.com / Partner123!",
+      "status": "PASS",
+      "redirect": "/partner",
+      "notes": "Partner login successful, redirects to partner dashboard showing catalog items and fulfillment."
+    },
+    "register_page": {
+      "url": "/register",
+      "status": "PASS",
+      "notes": "Redirects to Auth page with Register tab selected. Form has Full Name, Email, Password, Phone, Company fields."
+    },
+    "homepage": {
+      "url": "/",
+      "status": "PASS",
+      "notes": "Loads with navigation, country selector modal, hero section."
+    },
+    "services_page": {
+      "url": "/services",
+      "status": "PASS",
+      "notes": "Displays service categories (Printing Services, Creative & Design, Uniforms & Workwear, Installation & Setup)."
+    },
+    "marketplace_page": {
+      "url": "/marketplace",
+      "status": "PASS",
+      "notes": "Loads with search and filter options. Product cards loading from API."
+    },
+    "customer_dashboard": {
+      "url": "/dashboard",
+      "status": "PASS",
+      "notes": "Loads correctly after customer login. Shows orders, quotes, invoices, loyalty points."
+    },
+    "navigation_from_login_chooser": {
+      "status": "PASS",
+      "notes": "Customer card → /login/customer, Staff card → /staff-login, Partner card → /partner-login, Register link → /register - all working."
+    },
+    "next_param_redirect": {
+      "status": "PASS",
+      "notes": "?next=/services parameter on /login/customer redirects to /services after successful login."
+    }
+  },
+  "bugs_fixed_during_testing": [
+    {
+      "file": "/app/frontend/src/pages/auth/CustomerLoginPage.jsx",
+      "issue": "Page made direct API call and stored token as 'token' instead of using AuthContext which expects 'konekt_token'",
+      "fix": "Changed to use useAuth() hook's login() method which properly stores token and updates context state",
+      "impact": "Customer login now persists session correctly and dashboard access works"
+    },
+    {
+      "file": "/app/frontend/src/pages/auth/StaffLoginPage.jsx",
+      "issue": "Page made direct API call and stored token as 'admin_token' instead of using AdminAuthContext which expects 'konekt_admin_token'",
+      "fix": "Changed to use useAdminAuth() hook's login() method which properly stores token and updates context state",
+      "impact": "Staff/Admin login now persists session correctly and admin dashboard access works"
+    }
+  ],
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "All login pages now properly use their respective auth contexts (useAuth, useAdminAuth)",
+    "LocalStorage token keys are consistent: 'konekt_token' for customers, 'konekt_admin_token' for admin/staff, 'partner_token' for partners",
+    "All login pages have proper data-testid attributes for automated testing",
+    "Route guards (CustomerRoute, AdminRoute) work correctly after context-based login"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/auth/CustomerLoginPage.jsx",
+    "/app/frontend/src/pages/auth/StaffLoginPage.jsx"
+  ],
+  "success_rate": {
+    "backend": "N/A (frontend-only testing)",
+    "frontend": "100% (14/14 features tested and passing)"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "staff_admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing demo accounts",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "note": "Resend email service and KwikPay payment service are MOCKED (awaiting credentials)"
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "UX Alignment Pack login flows fully tested and working. All 3 login types (Customer, Staff, Partner) redirect correctly. CustomerLoginPage and StaffLoginPage now use proper auth contexts. Register page shows Auth component with Register tab. Homepage, Services, and Marketplace pages load correctly."
+}

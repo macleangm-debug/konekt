@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function CustomerLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const nextPath = searchParams.get("next") || "/dashboard";
+  const { login } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -19,26 +19,13 @@ export default function CustomerLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.detail || "Login failed");
-        return;
-      }
-
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      await login(form.email, form.password);
       toast.success("Welcome back!");
       navigate(nextPath);
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong");
+      const errorMsg = error?.response?.data?.detail || "Login failed. Please check your credentials.";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

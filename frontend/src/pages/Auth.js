@@ -10,13 +10,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { getStoredAffiliateCode } from '../lib/attribution';
 
-export default function Auth() {
+export default function Auth({ defaultTab = 'login' }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, register } = useAuth();
   
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
+  const [activeTab, setActiveTab] = useState(defaultTab);
   
   // Login form
   const [loginEmail, setLoginEmail] = useState('');

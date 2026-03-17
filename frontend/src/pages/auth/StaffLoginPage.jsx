@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Shield, Users, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export default function StaffLoginPage() {
   const navigate = useNavigate();
+  const { login } = useAdminAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -15,28 +15,11 @@ export default function StaffLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API}/api/admin/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.detail || "Login failed");
-        setLoading(false);
-        return;
-      }
-
-      // Store token
-      localStorage.setItem("admin_token", data.access_token || data.token);
-      localStorage.setItem("admin_user", JSON.stringify(data.user || {}));
-
+      const user = await login(form.email, form.password);
       toast.success("Welcome back!");
 
       // Route based on role
-      const role = data.user?.role;
+      const role = user?.role;
       if (role === "super_admin" || role === "admin") {
         navigate("/admin");
       } else if (role === "supervisor") {
@@ -46,7 +29,8 @@ export default function StaffLoginPage() {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Connection error. Please try again.");
+      const errorMsg = error?.response?.data?.detail || "Login failed. Please check your credentials.";
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

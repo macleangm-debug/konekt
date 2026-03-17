@@ -180,8 +180,10 @@ import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
 
-// Staff Login
+// Auth Pages
 import StaffLoginPage from "@/pages/auth/StaffLoginPage";
+import LoginChooserPage from "@/pages/auth/LoginChooserPage";
+import CustomerLoginPage from "@/pages/auth/CustomerLoginPage";
 
 // Legacy Homepage
 import HomepageV2 from "@/pages/HomepageV2";
@@ -275,6 +277,22 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Login Chooser and Customer Login */}
+        <Route path="/login" element={<LoginChooserPage />} />
+        <Route path="/login/customer" element={
+          <AuthProvider>
+            <CustomerLoginPage />
+          </AuthProvider>
+        } />
+        {/* Register route - redirects to Auth page with register tab */}
+        <Route path="/register" element={
+          <AuthProvider>
+            <CartProvider>
+              <Auth defaultTab="register" />
+            </CartProvider>
+          </AuthProvider>
+        } />
+        
         {/* Staff Login (separate from admin) */}
         <Route path="/staff-login" element={
           <AdminAuthProvider>
