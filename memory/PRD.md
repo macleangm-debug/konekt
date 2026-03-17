@@ -1390,5 +1390,25 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 17, 2026 - Final Live Readiness Pack Complete (Email Service, Payment Settings, Launch Audit)*
+### Commercial Profiling + Reward Safety + Numbering Rules Pack (P0) - ✅ IN PROGRESS (March 17, 2026)
+
+**Completed:**
+- ✅ **Auto-Numbering Configuration** - Admin UI at `/admin/auto-numbering` to configure formats for invoices, quotes, orders, SKUs, delivery notes, GRN
+- ✅ **Business Pricing Request Flow** - Customer form at `/dashboard/business-pricing` for requesting commercial/B2B pricing
+- ✅ **First Order Discount Modal** - Exit-intent popup for email capture with 5% discount code issuance
+- ✅ **Points Rules Validation API** - Backend logic for points redemption caps (10% of distributable margin after 40% protection)
+- ✅ **Sales Guided Questions** - Component and API for qualifying leads with structured questions
+- ✅ **Enhanced Landing Page Category Showcase** - More interactive, animated category cards with item stats
+- ✅ **Standard Blank States** - AccountBlankState component applied to Orders, Quotes, Service Requests pages
+- ✅ **Guest Cart Enhancement** - Cart context updated with merge functionality for login
+- ✅ **Business Pricing CTA** - Added to customer dashboard sidebar
+
+**Remaining:**
+- Landing page polish (additional animations)
+- Admin-side business pricing request management UI
+- Full checkout integration with points validation
+
+---
+
+*Last updated: March 17, 2026 - Commercial Profiling + Reward Safety Pack Progress*
 

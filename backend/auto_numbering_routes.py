@@ -170,8 +170,16 @@ async def preview_number_format(
 ):
     """Preview what the next number would look like"""
     config = await db.auto_numbering_config.find_one({"type": "numbering"}, {"_id": 0})
+    default_config = get_default_config()
+    
+    # Merge with defaults - always have all formats available
     if not config:
-        config = get_default_config()
+        config = default_config
+    else:
+        # Fill in any missing formats from defaults
+        for key, value in default_config.items():
+            if key not in config:
+                config[key] = value
     
     format_key = f"{document_type}_format"
     if format_key not in config:

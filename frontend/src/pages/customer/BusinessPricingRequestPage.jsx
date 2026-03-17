@@ -57,7 +57,12 @@ export default function BusinessPricingRequestPage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
+      // Try both token keys for compatibility
+      const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
+      if (!token) {
+        alert("Please log in to submit a business pricing request");
+        return;
+      }
       const res = await fetch(`${API_URL}/api/customer/business-pricing-request`, {
         method: "POST",
         headers: {
