@@ -1,6 +1,7 @@
 """
 Notification Routes
 API endpoints for managing notifications
+Supports multiple auth contexts: main users, partners, affiliates
 """
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
@@ -17,23 +18,66 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
+PARTNER_JWT_SECRET = os.environ.get('PARTNER_JWT_SECRET', 'konekt-partner-secret-2024')
 JWT_ALGORITHM = "HS256"
 security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Multi-context auth handler that supports:
+    - Main users (customers, admin, sales, staff) via JWT_SECRET
+    - Partners (service/product partners) via PARTNER_JWT_SECRET
+    - Affiliates (in partner_users collection with role=affiliate)
+    """
     if not credentials:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = credentials.credentials
+    
+    # Try main JWT_SECRET first (customers, admin, sales, staff)
     try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        if user_id:
+            user = await db.users.find_one({"id": user_id}, {"_id": 0})
+            if user:
+                return user
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        pass
+    
+    # Try PARTNER_JWT_SECRET (partners and affiliates)
+    try:
+        payload = jwt.decode(token, PARTNER_JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        # Partner tokens have partner_user_id or partner_id
+        partner_user_id = payload.get("partner_user_id")
+        partner_id = payload.get("partner_id")
+        
+        if partner_user_id:
+            # Try to find by ObjectId first
+            from bson import ObjectId
+            try:
+                partner = await db.partner_users.find_one({"_id": ObjectId(partner_user_id)}, {"_id": 0})
+            except Exception:
+                partner = None
+            
+            # Fallback to string id
+            if not partner:
+                partner = await db.partner_users.find_one({"id": partner_user_id}, {"_id": 0})
+            
+            if partner:
+                # Normalize partner data to match user structure
+                return {
+                    "id": partner.get("id") or partner_user_id,
+                    "email": partner.get("email"),
+                    "name": partner.get("full_name") or partner.get("name"),
+                    "role": partner.get("role", "partner"),  # partner or affiliate
+                    "partner_id": partner_id or partner.get("partner_id"),
+                }
+    except jwt.InvalidTokenError:
+        pass
+    
+    raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
 @router.get("")
