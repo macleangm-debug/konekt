@@ -12,6 +12,7 @@ export default function PublicNavbarV2() {
     { label: "Request Quote", href: "/request-quote", highlight: true },
     { label: "Track Order", href: "/track-order" },
     { label: "Expansion", href: "/launch-country" },
+    { label: "Earn", href: "/earn" },
   ];
 
   return (

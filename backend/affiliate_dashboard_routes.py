@@ -120,3 +120,52 @@ async def create_payout_request(payload: dict, user: dict = Depends(get_user)):
     created["id"] = str(created["_id"])
     del created["_id"]
     return created
+
+
+@router.get("/dashboard/summary")
+async def affiliate_summary(user: dict = Depends(get_user)):
+    """Get affiliate dashboard summary with earnings and commissions"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    email = user.get("email")
+    affiliate = await db.affiliates.find_one({"email": email})
+    if not affiliate:
+        raise HTTPException(status_code=404, detail="Affiliate account not found")
+
+    commissions = await db.affiliate_commissions.find({
+        "$or": [
+            {"affiliate_code": affiliate.get("affiliate_code")},
+            {"affiliate_email": email}
+        ]
+    }).sort("created_at", -1).to_list(length=300)
+
+    total_sales = sum(float(x.get("sale_value", 0) or x.get("sale_amount", 0) or 0) for x in commissions)
+    total_commission = sum(float(x.get("commission", 0) or x.get("commission_amount", 0) or 0) for x in commissions)
+    pending_commission = sum(float(x.get("commission", 0) or x.get("commission_amount", 0) or 0) for x in commissions if x.get("status") == "pending")
+    paid_commission = sum(float(x.get("commission", 0) or x.get("commission_amount", 0) or 0) for x in commissions if x.get("status") == "paid")
+
+    # Get base URL from environment or use default
+    base_url = os.environ.get("REACT_APP_BACKEND_URL", "https://konekt.app")
+
+    return {
+        "affiliate_code": affiliate.get("affiliate_code") or affiliate.get("promo_code"),
+        "name": affiliate.get("name"),
+        "email": affiliate.get("email"),
+        "country": affiliate.get("country"),
+        "total_sales": round(total_sales, 2),
+        "total_commission": round(total_commission, 2),
+        "pending_commission": round(pending_commission, 2),
+        "paid_commission": round(paid_commission, 2),
+        "share_link": affiliate.get("referral_link") or f"{base_url}/?ref={affiliate.get('affiliate_code') or affiliate.get('promo_code')}",
+        "commissions": [
+            {
+                "order_id": x.get("order_id") or x.get("source_document"),
+                "sale_value": x.get("sale_value", 0) or x.get("sale_amount", 0),
+                "commission": x.get("commission", 0) or x.get("commission_amount", 0),
+                "status": x.get("status", "pending"),
+                "created_at": x.get("created_at"),
+            }
+            for x in commissions
+        ],
+    }

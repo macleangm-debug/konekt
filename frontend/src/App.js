@@ -184,6 +184,11 @@ import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
 import StaffLoginPage from "@/pages/auth/StaffLoginPage";
 import LoginChooserPage from "@/pages/auth/LoginChooserPage";
 import CustomerLoginPage from "@/pages/auth/CustomerLoginPage";
+import AffiliateRegisterPage from "@/pages/auth/AffiliateRegisterPage";
+
+// Affiliate Pages
+import AffiliateProgramLandingPage from "@/pages/public/AffiliateLandingPage";
+import AffiliateDashboardPageV2 from "@/pages/partner/AffiliateDashboardPage";
 
 // Legacy Homepage
 import HomepageV2 from "@/pages/HomepageV2";
@@ -417,7 +422,12 @@ function App() {
           <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
           <Route path="fulfillment" element={<PartnerFulfillmentPage />} />
           <Route path="settlements" element={<PartnerSettlementsPage />} />
+          <Route path="affiliate-dashboard" element={<AffiliateDashboardPageV2 />} />
         </Route>
+        
+        {/* Affiliate Public Routes */}
+        <Route path="/earn" element={<AffiliateProgramLandingPage />} />
+        <Route path="/register/affiliate" element={<AffiliateRegisterPage />} />
         
         {/* Public Expansion Page */}
         <Route path="/launch-country" element={<CountryLaunchPage />} />
