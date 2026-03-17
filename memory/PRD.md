@@ -1218,6 +1218,39 @@ Focused on making the system tighter, clearer, and more commercially useful:
 
 ---
 
+#### 26. Pre-Launch Operational Pack ✅ NEW (March 17, 2026)
+
+**Backend Routes Created & Registered**:
+- `commission_rules_routes.py` - Commission rules CRUD
+  - Configurable margin distribution by scope (product_group, service_group, country)
+  - Protected margin, sales, affiliate, promo, buffer percentages
+  - Validation ensures total <= 100%
+- `commission_rules_service.py` - Commission split logic and resolution
+- `dual_promotion_service.py` - Two promotion types:
+  - `display_uplift`: Fake compare price (margin untouched)
+  - `margin_discount`: Real discount from margin bucket
+- `campaign_pricing_routes.py` - Campaign pricing evaluation endpoints
+- `staff_assignment_service.py` - Staff performance scoring and smart assignment
+- `assignment_workflow_service.py` - Sales/Operations handoff workflow
+- `supervisor_dashboard_routes.py` - Team performance monitoring APIs
+- `staff_alerts_routes.py` - Automated underperformance alerts
+
+**Frontend Pages Created**:
+- `CommissionRulesPage.jsx` - Manage margin distribution rules
+- `SupervisorDashboardPage.jsx` - Team performance, alerts, leaderboard
+
+**Key Features**:
+- **Commission Rules Engine**: Configurable margin splits (Protected + Sales + Affiliate + Promo + Buffer = 100%)
+- **Dual Promotion Engine**: Safe display promotions vs real margin discounts
+- **Staff Performance Scoring**: +5 completed, -3 delayed, -4 issues, -2 active workload
+- **Smart Assignment**: Auto-assign based on performance score and specialization
+- **Supervisor Dashboard**: Team metrics, leaderboard, underperformance alerts
+- **Sale Source Tracking**: sales | affiliate | website | hybrid for commission calculation
+
+**Testing**: 18/18 backend tests passing, 2/2 frontend pages loading correctly
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1263,5 +1296,5 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 17, 2026 - Super Admin Ecosystem Control & Commercial Controls Pack Complete*
+*Last updated: March 17, 2026 - Pre-Launch Operational Pack Complete (Commission Rules, Dual Promotion, Staff Performance, Supervisor Dashboard)*
 
