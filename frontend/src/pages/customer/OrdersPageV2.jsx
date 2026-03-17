@@ -5,6 +5,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
+import AccountBlankState from "../../components/ui/AccountBlankState";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -133,18 +134,20 @@ export default function OrdersPageV2() {
           ))}
         </div>
       ) : (
-        <SurfaceCard className="text-center py-12">
-          <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-bold text-slate-600 mb-2">No orders found</h3>
-          <p className="text-slate-500 mb-6">
-            {searchValue || statusFilter 
-              ? "Try adjusting your search or filters."
-              : "Start shopping to see your orders here."}
-          </p>
-          <BrandButton href="/marketplace" variant="primary">
-            Browse Marketplace
-          </BrandButton>
-        </SurfaceCard>
+        <AccountBlankState
+          icon="orders"
+          title="No orders yet"
+          description="Your order history will appear here once you make your first purchase. Browse our marketplace to find what you need."
+          primaryLabel="Browse Marketplace"
+          primaryAction="/marketplace"
+          secondaryLabel="Request Quote"
+          secondaryAction="/services"
+          benefits={[
+            { title: "Track Everything", description: "Monitor order status from purchase to delivery in real-time." },
+            { title: "Easy Reorders", description: "Quickly repeat previous orders with a single click." },
+            { title: "Download Documents", description: "Access invoices and receipts for all completed orders." },
+          ]}
+        />
       )}
     </div>
   );

@@ -80,6 +80,7 @@ export const adminNavigation = [
     children: [
       { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
       { label: "Payment Settings", href: "/admin/payment-settings", moduleKey: "settings" },
+      { label: "Auto-Numbering", href: "/admin/auto-numbering", moduleKey: "settings" },
       { label: "Markup Rules", href: "/admin/group-markups", moduleKey: "settings" },
       { label: "Commission Rules", href: "/admin/commission-rules", moduleKey: "settings" },
       { label: "Countries & Regions", href: "/admin/countries-regions", moduleKey: "geography" },

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const CartContext = createContext(null);
 
@@ -50,11 +50,80 @@ export const CartProvider = ({ children }) => {
     setItems([]);
   };
 
+  /**
+   * Merge guest cart with existing user cart upon login.
+   * This is called after successful authentication.
+   * @param {Array} userServerCart - Cart items from user's server-side cart (if any)
+   */
+  const mergeGuestCart = useCallback((userServerCart = []) => {
+    if (!userServerCart || userServerCart.length === 0) {
+      // No server cart, keep guest cart as is
+      return items;
+    }
+
+    // Merge logic: combine guest items with server items
+    const mergedCart = [...userServerCart];
+    
+    items.forEach(guestItem => {
+      const existingIndex = mergedCart.findIndex(serverItem => 
+        serverItem.product_id === guestItem.product_id &&
+        serverItem.size === guestItem.size &&
+        serverItem.color === guestItem.color &&
+        serverItem.print_method === guestItem.print_method
+      );
+
+      if (existingIndex >= 0) {
+        // Item exists in server cart, add quantities
+        mergedCart[existingIndex] = {
+          ...mergedCart[existingIndex],
+          quantity: mergedCart[existingIndex].quantity + guestItem.quantity,
+          subtotal: (mergedCart[existingIndex].quantity + guestItem.quantity) * mergedCart[existingIndex].unit_price
+        };
+      } else {
+        // New item from guest cart
+        mergedCart.push(guestItem);
+      }
+    });
+
+    setItems(mergedCart);
+    return mergedCart;
+  }, [items]);
+
+  /**
+   * Check if there are items in the guest cart that need merging
+   */
+  const hasGuestCartItems = useCallback(() => {
+    const token = localStorage.getItem('token');
+    return !token && items.length > 0;
+  }, [items]);
+
+  /**
+   * Get the current cart for checkout - validates items still exist
+   */
+  const getCartForCheckout = useCallback(() => {
+    return {
+      items: items,
+      total: items.reduce((sum, item) => sum + item.subtotal, 0),
+      itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    };
+  }, [items]);
+
   const total = items.reduce((sum, item) => sum + item.subtotal, 0);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, total, itemCount }}>
+    <CartContext.Provider value={{ 
+      items, 
+      addItem, 
+      removeItem, 
+      updateQuantity, 
+      clearCart, 
+      total, 
+      itemCount,
+      mergeGuestCart,
+      hasGuestCartItems,
+      getCartForCheckout,
+    }}>
       {children}
     </CartContext.Provider>
   );

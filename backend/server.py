@@ -73,6 +73,9 @@ from health_routes import router as health_router
 from service_form_routes import router as service_form_router
 from service_request_routes import router as service_request_router
 from service_request_admin_routes import router as service_request_admin_router
+from points_rules_routes import router as points_rules_router
+from first_order_discount_routes import router as first_order_discount_router
+from seed_sample_catalog_routes import router as seed_sample_catalog_router
 from service_request_customer_routes import router as service_request_customer_router
 from upload_service_files_routes import router as upload_service_files_router
 from points_checkout_routes import router as points_checkout_router
@@ -191,6 +194,15 @@ from supervisor_dashboard_routes import router as supervisor_dashboard_router
 
 # Staff Alerts
 from staff_alerts_routes import router as staff_alerts_router
+
+# Business Pricing Request
+from business_pricing_request_routes import router as business_pricing_request_router
+
+# Auto-Numbering Configuration
+from auto_numbering_routes import router as auto_numbering_router
+
+# Sales Guided Questions
+from sales_guided_questions_routes import router as sales_guided_questions_router
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2192,6 +2204,9 @@ app.include_router(go_live_readiness_router)
 app.include_router(payment_settings_router)
 app.include_router(launch_email_router)
 app.include_router(payment_gateway_status_router)
+app.include_router(points_rules_router)
+app.include_router(first_order_discount_router)
+app.include_router(seed_sample_catalog_router)
 app.include_router(crm_intelligence_router)
 app.include_router(sales_kpi_router)
 app.include_router(marketing_performance_router)
@@ -2281,6 +2296,15 @@ app.include_router(supervisor_dashboard_router)
 
 # Staff Alerts
 app.include_router(staff_alerts_router)
+
+# Business Pricing Request
+app.include_router(business_pricing_request_router)
+
+# Auto-Numbering Configuration
+app.include_router(auto_numbering_router)
+
+# Sales Guided Questions
+app.include_router(sales_guided_questions_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

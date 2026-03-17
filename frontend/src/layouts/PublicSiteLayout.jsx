@@ -2,6 +2,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import PublicNavbarV2 from "../components/public/PublicNavbarV2";
 import PremiumFooterV2 from "../components/public/PremiumFooterV2";
+import FirstOrderDiscountModal from "../components/public/FirstOrderDiscountModal";
 
 export default function PublicSiteLayout() {
   return (
@@ -11,6 +12,7 @@ export default function PublicSiteLayout() {
         <Outlet />
       </main>
       <PremiumFooterV2 />
+      <FirstOrderDiscountModal />
     </div>
   );
 }

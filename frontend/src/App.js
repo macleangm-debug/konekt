@@ -96,6 +96,7 @@ import ServiceRequestAdminDetailPage from "@/pages/admin/ServiceRequestAdminDeta
 import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
 import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
 import BusinessSettingsPage from "@/pages/admin/BusinessSettingsPage";
+import AdminConfigurationHubPage from "@/pages/admin/AdminConfigurationHubPage";
 import CrmIntelligencePage from "@/pages/admin/CrmIntelligencePage";
 import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";
 import LeadDetailPage from "@/pages/admin/LeadDetailPage";
@@ -141,6 +142,9 @@ import PaymentProofsAdminPage from "@/pages/admin/PaymentProofsAdminPage";
 import SupervisorDashboardPage from "@/pages/admin/SupervisorDashboardPage";
 import CommissionRulesPage from "@/pages/admin/CommissionRulesPage";
 
+// Auto-Numbering Configuration
+import AutoNumberingPage from "@/pages/admin/AutoNumberingPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -180,6 +184,7 @@ import InvoicesPageV2 from "@/pages/customer/InvoicesPageV2";
 import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
+import BusinessPricingRequestPage from "@/pages/customer/BusinessPricingRequestPage";
 
 // Auth Pages
 import StaffLoginPage from "@/pages/auth/StaffLoginPage";
@@ -369,6 +374,7 @@ function App() {
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
           <Route path="business-settings" element={<BusinessSettingsPage />} />
           <Route path="payment-settings" element={<PaymentSettingsPage />} />
+          <Route path="configuration" element={<AdminConfigurationHubPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
           <Route path="crm-settings" element={<CrmSettingsPage />} />
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
@@ -411,6 +417,8 @@ function App() {
           {/* Staff Performance & Commission */}
           <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
           <Route path="commission-rules" element={<CommissionRulesPage />} />
+          {/* Auto-Numbering Configuration */}
+          <Route path="auto-numbering" element={<AutoNumberingPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -466,6 +474,7 @@ function App() {
           <Route path="referrals" element={<PointsPageV2 />} />
           <Route path="statement" element={<MyStatementPageV2 />} />
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
+          <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
         </Route>
         
         {/* Staff Workspace Route */}

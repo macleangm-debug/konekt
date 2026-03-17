@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users
+  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2
 } from "lucide-react";
 
 const nav = [
@@ -72,6 +72,18 @@ export default function CustomerPortalLayoutV2() {
             );
           })}
         </nav>
+
+        {/* Business Pricing CTA */}
+        <div className="px-4 py-4 border-t">
+          <Link
+            to="/dashboard/business-pricing"
+            className="flex items-center gap-3 w-full rounded-xl px-4 py-3 bg-gradient-to-r from-[#20364D] to-[#2a4a66] text-white font-medium hover:opacity-90 transition"
+            data-testid="business-pricing-cta"
+          >
+            <Building2 className="w-5 h-5" />
+            <span>Request Business Pricing</span>
+          </Link>
+        </div>
 
         <div className="px-4 py-4 border-t">
           <button

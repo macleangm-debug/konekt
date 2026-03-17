@@ -5,6 +5,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
+import AccountBlankState from "../../components/ui/AccountBlankState";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -124,16 +125,20 @@ export default function ServiceRequestsPageV2() {
           ))}
         </div>
       ) : (
-        <SurfaceCard className="text-center py-12">
-          <Wrench className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-bold text-slate-600 mb-2">No service requests</h3>
-          <p className="text-slate-500 mb-6">
-            Request a service to get started.
-          </p>
-          <BrandButton href="/services" variant="primary">
-            Request Service
-          </BrandButton>
-        </SurfaceCard>
+        <AccountBlankState
+          icon="services"
+          title="No service requests"
+          description="Request printing, branding, creative design, facilities services, and more. Our team handles everything from quote to delivery."
+          primaryLabel="Request a Service"
+          primaryAction="/services"
+          secondaryLabel="Browse Products"
+          secondaryAction="/marketplace"
+          benefits={[
+            { title: "Expert Team", description: "Dedicated professionals handle your requests from start to finish." },
+            { title: "Progress Tracking", description: "Stay updated on every step of your service fulfillment." },
+            { title: "Quality Guaranteed", description: "Satisfaction guaranteed with revision support included." },
+          ]}
+        />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
+import AccountBlankState from "../../components/ui/AccountBlankState";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -137,16 +138,20 @@ export default function QuotesPageV2() {
           ))}
         </div>
       ) : (
-        <SurfaceCard className="text-center py-12">
-          <FileText className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-bold text-slate-600 mb-2">No quotes found</h3>
-          <p className="text-slate-500 mb-6">
-            Request a quote for custom orders or services.
-          </p>
-          <BrandButton href="/services" variant="primary">
-            Request a Quote
-          </BrandButton>
-        </SurfaceCard>
+        <AccountBlankState
+          icon="quotes"
+          title="No quotes yet"
+          description="Request quotes for custom orders, bulk purchases, or specialized services. Our team will prepare a tailored proposal."
+          primaryLabel="Request a Quote"
+          primaryAction="/services"
+          secondaryLabel="Browse Products"
+          secondaryAction="/marketplace"
+          benefits={[
+            { title: "Custom Pricing", description: "Get competitive rates for bulk orders and special requirements." },
+            { title: "Valid for 30 Days", description: "Take your time to review and approve at your convenience." },
+            { title: "One-Click Convert", description: "Approve and convert to order instantly when ready." },
+          ]}
+        />
       )}
     </div>
   );

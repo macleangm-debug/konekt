@@ -1,0 +1,176 @@
+<analysis>**original_problem_statement:**
+The user is building Konekt, a comprehensive Business Operating System for the African market. The project's goal is to create a scalable, multi-country ecosystem. The application has evolved through multiple feature packs, including a premium frontend, B2B features, admin dashboards, and staff performance tools.
+
+Recent work has focused on preparing the application for a controlled launch by implementing several critical packs:
+1.  **UX Alignment Pack:** A major frontend overhaul to standardize user flows.
+2.  **Affiliate Growth Pack:** To enable open, public-facing affiliate registration and management, separating it from the controlled partner onboarding process.
+3.  **Final Live Readiness Pack:** To add final configuration pages for admins (payments, launch audit) and prepare for live integrations (Resend, KwikPay).
+4.  **Commercial Profiling + Reward Safety + Numbering Rules Pack:** A new, large pack requested by the user to implement critical business logic for launch. This includes rules for points redemption, first-order discounts, guest cart behavior, standard blank states for empty pages, and a flow for customers to request business pricing.
+
+**User's preferred language**: English
+
+**what currently exists?**
+The application is a full-stack platform using React, FastAPI, and MongoDB. It has a multi-role architecture for Customers, Partners, Staff, Supervisors, and Super Admins. The frontend has been significantly refactored and stabilized.
+
+Key completed and tested features include:
+- A dynamic service/product marketplace.
+- Super Admin and regular Admin dashboards for ecosystem management.
+- A Staff Performance Engine for scoring and task assignment.
+- A Dual Promotion Engine for marketing campaigns.
+- A complete, role-aware login system ( chooser, , , ).
+- A public-facing Affiliate Growth Pack with a landing page (), registration, and a dedicated affiliate dashboard.
+- A Final Live Readiness Pack with admin pages for Payment Settings () and a Launch Readiness Audit ().
+
+**Last working item**:
+-   **Last item agent was working:** The agent began implementing the **Commercial Profiling + Reward Safety + Numbering Rules Pack**. It successfully created and tested the initial backend services and API routes for points redemption caps, first-order discount eligibility, and seeding the database with sample catalog data. It also created the frontend admin configuration hub page.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** both
+-   **User Testing Done:** N
+
+**All Pending/In progress Issue list**:
+-   **Issue 1: Missing  attributes (P2)**
+    -   **Description:** Many new frontend components created across the last few feature packs (, , ) are missing  attributes, which are required for robust automated testing.
+    -   **Attempted fixes:** None recently.
+    -   **Next debug checklist:** After the Commercial Profiling... pack is functionally complete, audit all new  files and add  attributes to all interactive elements.
+    -   **Why fix this issue and what will be achieved with the fix?** Improves testability and long-term maintainability.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** frontend
+    -   **Blocked on other issue:** In progress Task 1
+
+**In progress Task List**:
+-   **Task 1: Complete Commercial Profiling + Reward Safety + Numbering Rules Pack (P0)**
+    -   **Where to resume:** The backend APIs are partially in place. The next step is to implement the frontend components and integrate the full business logic as per the user's specifications. The remaining work includes:
+        1.  **Guest Cart Flow:** Implement cart persistence in  for guests and ensure the cart is merged correctly upon login.
+        2.  **Reward Safety Logic:** Integrate the backend points cap and first-order discount validation APIs into the checkout/cart flow.
+        3.  **:** Create the exit-intent popup for capturing new user emails and issuing controlled (5%) discount offers.
+        4.  **Standard Blank States:** Implement and apply the  component to empty account pages (Orders, Quotes, Service Requests, Referrals, etc.).
+        5.  **Business Pricing Flow:** Create the Request Business Pricing form inside the customer dashboard to allow for commercial profiling.
+        6.  **Sales Guided Questions:** Develop the UI in the sales/staff workspace to display guided questions for new leads.
+        7.  **Auto-Numbering Configuration:** Build the admin UI to configure formats for SKUs, invoices, quotes, and orders.
+        8.  **Landing Page Polish:** Redesign the static Everything businesses need... card section to be more interactive.
+    -   **What will be achieved with this?** This pack will make the application commercially safe and intelligent for launch, protecting margins while enabling growth through controlled promotions. It will also significantly improve user experience and provide the sales team with structured lead information.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** both
+    -   **Blocked on something:** None
+
+**Upcoming and Future Tasks**
+-   **Upcoming Tasks:**
+    -   **Sales Queue + Opportunity Visibility Pack (P1):** Build the UI for the sales team to view and manage the full context of incoming leads (source, incentives, requested items, customer type).
+    -   **Admin Verification Pass (P1):** Conduct a full, systematic end-to-end test of all admin configuration pages and workflows as outlined by the user, ensuring all settings save and apply correctly.
+-   **Future Tasks:**
+    -   **Partner Approval & Marketplace Quality Pack (P2):** Build the admin dashboard for reviewing and approving partner-submitted product/service listings.
+    -   **Final Commercial Control Pack (P2):** Enhance B2B features with a contract client detail page and credit exposure dashboard.
+    -   **PWA for User Accounts (P2):** Implement a Progressive Web App layer for all portals.
+    -   **Notification System Pack (P2):** Add a real-time in-app notification bell and trigger alerts.
+    -   **Advanced AI Assistant (P2):** Evolve the current simple assistant to be more proactive.
+
+**Completed work in this session**
+-   **UX Alignment Pack (DONE & VERIFIED):** Fixed critical login and routing issues that were blocking all user flows. Tested with .
+-   **Affiliate Growth Pack (DONE & VERIFIED):** Implemented the full public-facing affiliate system, including landing page, registration, and dashboard. Tested with .
+-   **Final Live Readiness Pack (DONE & VERIFIED):** Implemented key admin configuration pages for payments and launch readiness, and added backend APIs for email and payment gateway status. Tested with .
+-   **Commercial Profiling + Reward Safety Pack (PARTIALLY DONE):** Implemented backend routes for points/discount rules and seeding test data, plus the admin configuration hub page. APIs were tested via curl.
+
+**Earlier issues found/mentioned but not fixed**
+-   The recurring issue of missing  attributes in new frontend components remains.
+
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork**: Missing  attributes.
+-   **Recurrence count**: 2
+-   **Status**: NOT STARTED
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+-   **Commercial Safety Guards:** Backend logic to enforce caps on points redemption (e.g., 10% of distributable margin) and control eligibility for first-order discounts based on margin rules, preventing revenue leakage.
+-   **Configuration-Driven Features:** Admin-configurable settings for payment methods, launch readiness checks, and (soon) auto-numbering formats, allowing business logic to be managed without code changes.
+-   **Test Data Seeding:** A dedicated API endpoint () to populate the database with a consistent set of sample products and services for reliable testing.
+-   **Role-Based UX Separation:** Strict separation between open registrations (Affiliates) and controlled, admin-led onboarding (Fulfillment Partners) to maintain ecosystem quality.
+
+**key DB schema**
+-   **New Collections:** , , , .
+
+**changes in tech stack**
+-   None.
+
+**All files of reference**
+-   **Backend (New/Updated):** , , , , , , , , , , , .
+-   **Frontend (New/Updated):** , , , , , , , .
+
+**Areas that need refactoring**:
+-    is becoming very large with many route definitions. It could be broken down into smaller, role-specific routing files for better maintainability after the current feature pack is complete.
+
+**key api endpoints**
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+-   
+
+**Critical Info for New Agent**
+-   Your immediate priority is to complete the **Commercial Profiling + Reward Safety + Numbering Rules Pack**. The user has provided detailed specifications. Focus on implementing the remaining frontend components and integrating the new backend logic. Refer to the In progress Task List for the specific items to build next.
+-   This phase is about making the application commercially safe and ready for launch. Do not introduce new features outside of the user's explicit requests.
+-   The user wants a clear distinction between the Affiliate (open growth) and Partner (controlled fulfillment) roles. Ensure all implementations respect this strategy.
+
+**documents and test reports created in this job**
+-   
+-   
+-   
+-    (updated multiple times)
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **User:** Asked for all login credentials and links. (Completed)
+2.  **Agent:** Provided a comprehensive list of URLs and credentials for all user roles. (Completed)
+3.  **User:** Provided a very large and detailed specification for the Commercial Profiling + Reward Safety + Numbering Rules Pack, covering blank states, browse flows, sales visibility, reward safety rules, and business pricing requests.
+4.  **User:** Provided clarification on the desired guest cart and checkout flow, emphasizing that the cart should persist in local storage and be merged upon login.
+5.  **Agent:** Acknowledged the pending work from the new specifications. (Pending Implementation)
+6.  **User:** Re-iterated the specifications for the full commercial/UX alignment pack.
+7.  **Agent:** Confirmed understanding and started implementation of the Commercial Profiling + Reward Safety... pack. (In Progress)
+8.  **User:** Provided specs for the Affiliate Growth Pack.
+9.  **User:** Provided specs for the Final Live Readiness Pack.
+10. **Agent:** Implemented the Affiliate and Readiness packs. (Completed)
+
+**Project Health Check:**
+-   **Broken:** No. The core application is stable and running. However, the latest feature pack is only partially implemented.
+-   **Mocked:**
+    -   **Resend:** Awaiting .
+    -   **KwikPay:** Awaiting live credentials. The UI is designed to toggle its availability based on these keys.
+
+**3rd Party Integrations**
+-   **Resend (Implemented, Mocked):** For transactional emails.
+-   **KwikPay (Implemented, Mocked):** For processing payments.
+-   **ReportLab (Active):** Used for PDF generation.
+-   **openpyxl (Active):** Used for Excel/CSV parsing.
+
+**Testing status**
+-   **Testing agent used after significant changes:** YES (for UX Alignment, Affiliate, and Readiness packs).
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** None new, but agent leveraged existing test infrastructure.
+-   **Known regressions:** None from the completed work.
+
+**Credentials to test flow:**
+-   **Super Admin / Admin:**
+    -   Login URL: 
+    -   Email: 
+    -   Password: 
+-   **Partner:**
+    -   Login URL: 
+    -   Email: 
+    -   Password: 
+-   **Customer:**
+    -   Login URL:  → 
+    -   Email: 
+    -   Password: 
+-   **Affiliate (Test Account):**
+    -   Login URL: 
+    -   Email: 
+    -   Password: (created via registration API with password )
+
+**What agent forgot to execute**
+The agent has been methodically implementing large, user-provided specifications in sequence. It has not forgotten any tasks but has only partially completed the latest and largest request, the Commercial Profiling + Reward Safety + Numbering Rules Pack. The remaining pieces of this pack are the highest priority for the next agent.</analysis>
