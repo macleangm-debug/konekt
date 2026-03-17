@@ -173,6 +173,9 @@ from partner_settlement_routes import router as partner_settlement_router
 # Payment Proof Workflow
 from payment_proof_routes import router as payment_proof_router
 
+# Pricing Validation
+from pricing_validation_routes import router as pricing_validation_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2243,6 +2246,9 @@ app.include_router(partner_settlement_router)
 
 # Payment Proof Workflow
 app.include_router(payment_proof_router)
+
+# Pricing Validation
+app.include_router(pricing_validation_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

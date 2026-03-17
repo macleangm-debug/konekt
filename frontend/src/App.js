@@ -131,6 +131,11 @@ import ServiceInsightsPage from "@/pages/admin/ServiceInsightsPage";
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
 
+// Super Admin Commercial Controls
+import GroupMarkupsPage from "@/pages/admin/GroupMarkupsPage";
+import PartnerSettlementsAdminPage from "@/pages/admin/PartnerSettlementsAdminPage";
+import PaymentProofsAdminPage from "@/pages/admin/PaymentProofsAdminPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -370,6 +375,10 @@ function App() {
           <Route path="service-insights" element={<ServiceInsightsPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />
+          {/* Super Admin Commercial Controls */}
+          <Route path="group-markups" element={<GroupMarkupsPage />} />
+          <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
+          <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
         </Route>
         
         {/* Partner Portal Routes */}

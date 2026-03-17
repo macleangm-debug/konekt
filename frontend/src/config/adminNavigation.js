@@ -5,6 +5,9 @@ export const adminNavigation = [
     moduleKey: "dashboard",
     children: [
       { label: "Ecosystem Dashboard", href: "/admin/ecosystem-dashboard", moduleKey: "dashboard" },
+      { label: "Group Markups", href: "/admin/group-markups", moduleKey: "settings" },
+      { label: "Partner Settlements", href: "/admin/partner-settlements", moduleKey: "finance" },
+      { label: "Payment Proofs", href: "/admin/payment-proofs", moduleKey: "finance" },
     ],
   },
   {

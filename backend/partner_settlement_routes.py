@@ -2,11 +2,18 @@
 Partner Settlement Routes
 Manage partner payout profiles and settlement workflow.
 """
+import os
 from datetime import datetime, timezone
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/admin/partner-settlements", tags=["Partner Settlements"])
+
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+db_name = os.environ.get('DB_NAME', 'konekt_db')
+client = AsyncIOMotorClient(mongo_url)
+db = client[db_name]
 
 
 def serialize_doc(doc):
@@ -21,17 +28,15 @@ def serialize_doc(doc):
 # ==================== PAYOUT PROFILES ====================
 
 @router.get("/payout-profiles")
-async def list_partner_payout_profiles(request: Request):
+async def list_partner_payout_profiles():
     """List all partner payout profiles."""
-    db = request.app.mongodb
     docs = await db.partner_payout_profiles.find({}).sort("created_at", -1).to_list(length=500)
     return [serialize_doc(doc) for doc in docs]
 
 
 @router.get("/payout-profiles/{partner_id}")
-async def get_partner_payout_profile(partner_id: str, request: Request):
+async def get_partner_payout_profile(partner_id: str):
     """Get a partner's payout profile."""
-    db = request.app.mongodb
     doc = await db.partner_payout_profiles.find_one({"partner_id": partner_id})
     if not doc:
         # Return empty profile structure
@@ -54,9 +59,8 @@ async def get_partner_payout_profile(partner_id: str, request: Request):
 
 
 @router.post("/payout-profiles")
-async def create_or_update_payout_profile(payload: dict, request: Request):
+async def create_or_update_payout_profile(payload: dict):
     """Create or update a partner payout profile."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
     partner_id = payload.get("partner_id")
 
@@ -97,9 +101,8 @@ async def create_or_update_payout_profile(payload: dict, request: Request):
 # ==================== SETTLEMENTS ====================
 
 @router.get("/settlements")
-async def list_settlements(request: Request, status: str = None, partner_id: str = None):
+async def list_settlements(status: str = None, partner_id: str = None):
     """List partner settlements."""
-    db = request.app.mongodb
     query = {}
     if status:
         query["status"] = status
@@ -111,9 +114,8 @@ async def list_settlements(request: Request, status: str = None, partner_id: str
 
 
 @router.get("/settlements/{settlement_id}")
-async def get_settlement(settlement_id: str, request: Request):
+async def get_settlement(settlement_id: str):
     """Get a specific settlement."""
-    db = request.app.mongodb
     doc = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Settlement not found")
@@ -121,9 +123,8 @@ async def get_settlement(settlement_id: str, request: Request):
 
 
 @router.post("/settlements")
-async def create_settlement(payload: dict, request: Request):
+async def create_settlement(payload: dict):
     """Create a new settlement record."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
 
     partner_id = payload.get("partner_id")
@@ -158,9 +159,8 @@ async def create_settlement(payload: dict, request: Request):
 
 
 @router.post("/settlements/{settlement_id}/mark-eligible")
-async def mark_settlement_eligible(settlement_id: str, request: Request):
+async def mark_settlement_eligible(settlement_id: str):
     """Mark a settlement as eligible for payout."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
@@ -176,9 +176,8 @@ async def mark_settlement_eligible(settlement_id: str, request: Request):
 
 
 @router.post("/settlements/{settlement_id}/approve")
-async def approve_settlement(settlement_id: str, request: Request):
+async def approve_settlement(settlement_id: str):
     """Approve a settlement for payout."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
@@ -194,9 +193,8 @@ async def approve_settlement(settlement_id: str, request: Request):
 
 
 @router.post("/settlements/{settlement_id}/mark-paid")
-async def mark_settlement_paid(settlement_id: str, payload: dict, request: Request):
+async def mark_settlement_paid(settlement_id: str, payload: dict):
     """Mark a settlement as paid."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
@@ -218,9 +216,8 @@ async def mark_settlement_paid(settlement_id: str, payload: dict, request: Reque
 
 
 @router.post("/settlements/{settlement_id}/hold")
-async def hold_settlement(settlement_id: str, payload: dict, request: Request):
+async def hold_settlement(settlement_id: str, payload: dict):
     """Put a settlement on hold."""
-    db = request.app.mongodb
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
@@ -242,10 +239,8 @@ async def hold_settlement(settlement_id: str, payload: dict, request: Request):
 # ==================== SUMMARY ====================
 
 @router.get("/summary")
-async def settlement_summary(request: Request):
+async def settlement_summary():
     """Get settlement summary statistics."""
-    db = request.app.mongodb
-
     pending = await db.partner_settlements.count_documents({"status": "pending"})
     eligible = await db.partner_settlements.count_documents({"status": "eligible"})
     approved = await db.partner_settlements.count_documents({"status": "approved"})
