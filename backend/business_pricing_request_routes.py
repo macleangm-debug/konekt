@@ -12,6 +12,8 @@ from typing import Optional, List
 import jwt
 import uuid
 
+from notification_service import create_business_pricing_notification
+
 router = APIRouter(prefix="/api/customer/business-pricing-request", tags=["Business Pricing"])
 
 # Database connection
@@ -96,6 +98,15 @@ async def submit_business_pricing_request(
     }
     
     await db.leads.insert_one(lead_doc)
+    
+    # Create notifications for admin and sales
+    await create_business_pricing_notification(
+        db,
+        company_name=data.company_name,
+        customer_name=user.get("full_name", ""),
+        customer_email=user.get("email", ""),
+        assigned_sales_id=None,  # Will be assigned later
+    )
     
     return {
         "ok": True,

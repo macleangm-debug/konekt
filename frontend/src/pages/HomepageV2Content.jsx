@@ -13,6 +13,7 @@ import TrustSignalsGrid from "../components/public/TrustSignalsGrid";
 import ExpansionSection from "../components/public/ExpansionSection";
 import TestimonialsSection from "../components/public/TestimonialsSection";
 import FinalCtaSection from "../components/public/FinalCtaSection";
+import HomeBusinessSolutionsSection from "../components/public/HomeBusinessSolutionsSection";
 
 export default function HomepageV2Content() {
   const [showCountryModal, setShowCountryModal] = useState(false);
@@ -67,6 +68,7 @@ export default function HomepageV2Content() {
       <TrustStrip />
       <ClientTrustStrip />
       <CategoryShowcase />
+      <HomeBusinessSolutionsSection />
       <FeaturedMarketplaceSection listings={Array.isArray(listings) ? listings.slice(0, 8) : []} />
       <div id="how-it-works">
         <HowItWorksSection />

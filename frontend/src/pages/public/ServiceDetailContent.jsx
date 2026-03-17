@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Clock, Package, MapPin, CheckCircle, AlertCircle, Send } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
@@ -10,16 +10,10 @@ import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
-// Safely try to use auth context
-const useAuthSafe = () => {
-  try {
-    // Dynamic import to avoid errors
-    const AuthContext = createContext(null);
-    const context = useContext(AuthContext);
-    return context || { user: null, token: null };
-  } catch {
-    return { user: null, token: null };
-  }
+// Helper to safely get auth from localStorage (no hooks needed)
+const getAuthFromStorage = () => {
+  const storedToken = localStorage.getItem('konekt_token');
+  return { user: null, token: storedToken };
 };
 
 export default function ServiceDetailContent() {

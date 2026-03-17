@@ -222,6 +222,12 @@ from qa_seed_routes import router as qa_seed_router
 # Business Pricing Admin
 from business_pricing_admin_routes import router as business_pricing_admin_router
 
+# Notification System
+from notification_routes import router as notification_router
+
+# Checkout Points Validation
+from checkout_points_routes import router as checkout_points_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2341,6 +2347,12 @@ app.include_router(qa_seed_router)
 
 # Business Pricing Admin
 app.include_router(business_pricing_admin_router)
+
+# Notification System
+app.include_router(notification_router)
+
+# Checkout Points Validation
+app.include_router(checkout_points_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
