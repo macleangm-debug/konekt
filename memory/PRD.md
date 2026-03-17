@@ -1251,6 +1251,40 @@ Focused on making the system tighter, clearer, and more commercially useful:
 
 ---
 
+## Completed: UX Alignment Pack (March 17, 2026) ✅
+
+**Objective**: Standardize login flows, improve navigation, and ensure all user actions are properly authenticated.
+
+### Components Implemented & Tested:
+
+#### Login Flow Redesign
+- **LoginChooserPage** (`/login`): New role-based login chooser with 3 cards (Customer, Staff, Partner)
+- **CustomerLoginPage** (`/login/customer`): Dedicated customer login with `?next=` redirect support
+- **Register Route** (`/register`): Redirects to Auth page with Register tab pre-selected
+- **Staff Login** (`/staff-login`): Full staff/admin login with role-based routing
+- **Partner Login** (`/partner-login`): Partner portal authentication
+
+#### Authentication Fixes
+- Fixed `CustomerLoginPage` to use `useAuth()` context (was using wrong localStorage key)
+- Fixed `StaffLoginPage` to use `useAdminAuth()` context (was using wrong localStorage key)
+- All login pages now properly persist sessions and work with route guards
+
+#### Navigation & Routing
+- Added routes for `/login`, `/login/customer`, `/register` in App.js
+- All login cards in chooser correctly link to their respective login pages
+- Post-login redirects working correctly for all user types:
+  - Customer → `/dashboard`
+  - Admin/Staff → `/admin`
+  - Partner → `/partner`
+
+**Testing**: 14/14 frontend features tested and passing (iteration_53.json)
+**Test Credentials Verified**:
+- Customer: `demo.customer@konekt.com` / `Demo123!`
+- Staff/Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
+- Partner: `demo.partner@konekt.com` / `Partner123!`
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1296,5 +1330,5 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 17, 2026 - Pre-Launch Operational Pack Complete (Commission Rules, Dual Promotion, Staff Performance, Supervisor Dashboard)*
+*Last updated: March 17, 2026 - UX Alignment Pack Complete (Login Chooser, Customer Login, Auth Context Fixes)*
 
