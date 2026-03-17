@@ -161,6 +161,18 @@ from partner_performance_routes import router as partner_performance_router
 from service_insight_routes import router as service_insight_router
 from staff_performance_routes import router as staff_performance_router
 
+# Super Admin Ecosystem Dashboard
+from super_admin_dashboard_routes import router as super_admin_dashboard_router
+
+# Group Markup & Margin Protection
+from group_markup_routes import router as group_markup_router
+
+# Partner Settlement
+from partner_settlement_routes import router as partner_settlement_router
+
+# Payment Proof Workflow
+from payment_proof_routes import router as payment_proof_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2219,6 +2231,18 @@ app.include_router(recurring_invoice_router)
 app.include_router(partner_performance_router)
 app.include_router(service_insight_router)
 app.include_router(staff_performance_router)
+
+# Super Admin Ecosystem Dashboard
+app.include_router(super_admin_dashboard_router)
+
+# Group Markup & Margin Protection
+app.include_router(group_markup_router)
+
+# Partner Settlement
+app.include_router(partner_settlement_router)
+
+# Payment Proof Workflow
+app.include_router(payment_proof_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

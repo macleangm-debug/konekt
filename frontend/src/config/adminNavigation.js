@@ -1,5 +1,13 @@
 export const adminNavigation = [
   {
+    key: "ecosystem",
+    label: "Ecosystem Control",
+    moduleKey: "dashboard",
+    children: [
+      { label: "Ecosystem Dashboard", href: "/admin/ecosystem-dashboard", moduleKey: "dashboard" },
+    ],
+  },
+  {
     key: "overview",
     label: "Overview",
     moduleKey: "dashboard",

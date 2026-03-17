@@ -128,6 +128,9 @@ import PartnerPerformancePage from "@/pages/admin/PartnerPerformancePage";
 import ProductInsightsPage from "@/pages/admin/ProductInsightsPage";
 import ServiceInsightsPage from "@/pages/admin/ServiceInsightsPage";
 
+// Super Admin Ecosystem Dashboard
+import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -365,6 +368,8 @@ function App() {
           <Route path="partner-performance" element={<PartnerPerformancePage />} />
           <Route path="product-insights" element={<ProductInsightsPage />} />
           <Route path="service-insights" element={<ServiceInsightsPage />} />
+          {/* Super Admin Ecosystem Dashboard */}
+          <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />
         </Route>
         
         {/* Partner Portal Routes */}
