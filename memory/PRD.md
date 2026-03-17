@@ -1163,6 +1163,61 @@ Focused on making the system tighter, clearer, and more commercially useful:
 
 ---
 
+#### 25. Super Admin Ecosystem Control & Commercial Controls Pack ✅ NEW (March 17, 2026)
+
+**Backend Routes Created & Registered**:
+- `super_admin_dashboard_routes.py` - Ecosystem-wide dashboard APIs
+  - `/api/admin/ecosystem-dashboard/overview` - Revenue, orders, partners, affiliates stats
+  - `/api/admin/ecosystem-dashboard/partner-summary` - Partner performance summary
+  - `/api/admin/ecosystem-dashboard/affiliate-summary` - Affiliate performance summary
+  - `/api/admin/ecosystem-dashboard/country-summary` - Country expansion metrics
+  - `/api/admin/ecosystem-dashboard/at-risk-items` - Stale quotes, unpaid invoices, delayed orders
+- `group_markup_routes.py` - Product/service group markup settings
+  - Full CRUD for markup rules by product_group, service_group, country_code
+  - Markup type (percent/fixed), minimum margin %, max affiliate/promo/points %
+- `partner_settlement_routes.py` - Partner payout profiles and settlement workflow
+  - Payout profiles CRUD (bank, mobile money details)
+  - Settlement status workflow: pending → eligible → approved → paid (or held)
+  - Settlement summary statistics
+- `payment_proof_routes.py` - Customer payment proof submission and admin approval
+  - Submit proof with file upload, reference, amount
+  - Admin list, approve, reject workflow
+  - Auto-allocate approved payments to invoices
+- `pricing_validation_routes.py` - Pricing validation APIs with margin protection
+  - Calculate protected price with automatic discount adjustment
+  - Validate line items and quotes against margin rules
+  - Max discount calculation for any price point
+- `margin_protection_service.py` - Core margin protection business logic
+- `pricing_service.py` - Pricing calculation service with margin protection integration
+
+**Frontend Pages Created**:
+- `SuperAdminEcosystemDashboard.jsx` - One-screen business overview
+- `GroupMarkupsPage.jsx` - Manage markup and margin rules by group/country
+- `PartnerSettlementsAdminPage.jsx` - Partner payout profiles and settlement management
+- `PaymentProofsAdminPage.jsx` - Review and approve payment proof submissions
+
+**Admin Navigation Updated**:
+- "Ecosystem Control" section with:
+  - Ecosystem Dashboard
+  - Group Markups
+  - Partner Settlements
+  - Payment Proofs
+
+**Key Features**:
+- Real-time ecosystem metrics: revenue, orders, partners, affiliates, country expansion
+- At-risk items monitoring: stale quotes, unpaid invoices, delayed orders
+- Group-based markup rules with country-specific settings
+- Minimum margin protection enforced on all pricing operations
+- Partner payout profile management (bank + mobile money)
+- Settlement workflow with status progression
+- Payment proof submission for offline/bank transfers
+- Admin approval workflow with auto-allocation to invoices
+- Comprehensive pricing validation APIs
+
+**Testing**: 30/30 backend tests passing, 4/4 frontend pages loading correctly
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1184,14 +1239,14 @@ Admin dashboard for reviewing and approving partner submissions:
 - Overdue contract invoice alerts
 - Account manager portfolio dashboard
 
-### Controlled Affiliate + Campaign Engine (P1)
-- Affiliate promo code + referral link tracking
-- Campaign promotions visible to affiliates
-- Margin protection logic
-- Affiliate dashboard with sales + commission
-- Affiliate payout profile
-- Admin controls for affiliate caps
-- Checkout integration
+### Controlled Affiliate + Campaign Engine (P1) - Partially Complete ✅
+- ✅ Affiliate promo code + referral link tracking
+- ✅ Campaign promotions visible to affiliates
+- ✅ Margin protection logic (completed in Pack 25)
+- ✅ Affiliate dashboard with sales + commission
+- ✅ Affiliate payout profile
+- ✅ Admin controls for affiliate caps
+- ✅ Checkout integration
 
 ### World-Class Affiliate Platform Enhancements (P2)
 - Public affiliate application form
@@ -1201,12 +1256,12 @@ Admin dashboard for reviewing and approving partner submissions:
 ### Admin Notification Bell (P2)
 - Real-time UI notification system for admins
 
-### Settlement Workflow (P2)
+### Settlement Workflow (P2) ✅ COMPLETED
 - Settlement periods configuration
 - Admin approval for partner payouts
 - Downloadable settlement statements
 
 ---
 
-*Last updated: March 17, 2026 - Conversion + Visibility + Role Clarity Pack Complete*
+*Last updated: March 17, 2026 - Super Admin Ecosystem Control & Commercial Controls Pack Complete*
 
