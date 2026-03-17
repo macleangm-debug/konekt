@@ -157,6 +157,7 @@ import ServiceGroupDetailContent from "@/pages/public/ServiceGroupDetailContent"
 import ServiceDetailContent from "@/pages/public/ServiceDetailContent";
 import TrackOrderPageContent from "@/pages/public/TrackOrderPageContent";
 import AboutPageContent from "@/pages/public/AboutPageContent";
+import ContactPageContent from "@/pages/public/ContactPageContent";
 
 // New Premium Customer Pages
 import DashboardOverviewPageV2 from "@/pages/customer/DashboardOverviewPageV2";
@@ -166,6 +167,9 @@ import InvoicesPageV2 from "@/pages/customer/InvoicesPageV2";
 import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
+
+// Staff Login
+import StaffLoginPage from "@/pages/auth/StaffLoginPage";
 
 // Legacy Homepage
 import HomepageV2 from "@/pages/HomepageV2";
@@ -259,6 +263,13 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Staff Login (separate from admin) */}
+        <Route path="/staff-login" element={
+          <AdminAuthProvider>
+            <StaffLoginPage />
+          </AdminAuthProvider>
+        } />
+        
         {/* Admin Routes */}
         <Route path="/admin/login" element={
           <AdminAuthProvider>
@@ -382,6 +393,7 @@ function App() {
           <Route path="services/:groupSlug/:serviceSlug" element={<ServiceDetailContent />} />
           <Route path="track-order" element={<TrackOrderPageContent />} />
           <Route path="about" element={<AboutPageContent />} />
+          <Route path="contact" element={<ContactPageContent />} />
         </Route>
         
         {/* NEW: Premium Customer Portal with unified layout */}
@@ -400,6 +412,7 @@ function App() {
           <Route path="invoices" element={<InvoicesPageV2 />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
+          <Route path="referrals" element={<PointsPageV2 />} />
           <Route path="statement" element={<MyStatementPageV2 />} />
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
         </Route>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import BrandButton from "../ui/BrandButton";
-import { Menu, X } from "lucide-react";
+import { Menu, X, FileText } from "lucide-react";
 
 export default function PublicNavbarV2() {
   const [open, setOpen] = useState(false);
@@ -9,9 +9,9 @@ export default function PublicNavbarV2() {
   const links = [
     { label: "Marketplace", href: "/marketplace" },
     { label: "Services", href: "/services" },
-    { label: "How It Works", href: "/#how-it-works" },
-    { label: "Expansion", href: "/launch-country" },
+    { label: "Request Quote", href: "/request-quote", highlight: true },
     { label: "Track Order", href: "/track-order" },
+    { label: "Expansion", href: "/launch-country" },
   ];
 
   return (
@@ -26,8 +26,13 @@ export default function PublicNavbarV2() {
             <Link
               key={link.href + link.label}
               to={link.href}
-              className="text-sm font-medium text-slate-700 hover:text-[#20364D] transition"
+              className={`text-sm font-medium transition ${
+                link.highlight 
+                  ? "text-[#D4A843] hover:text-[#b8923a] flex items-center gap-1"
+                  : "text-slate-700 hover:text-[#20364D]"
+              }`}
             >
+              {link.highlight && <FileText className="w-4 h-4" />}
               {link.label}
             </Link>
           ))}
@@ -37,8 +42,8 @@ export default function PublicNavbarV2() {
           <BrandButton href="/dashboard" variant="ghost">
             Login
           </BrandButton>
-          <BrandButton href="/marketplace" variant="gold">
-            Start Browsing
+          <BrandButton href="/request-quote" variant="gold">
+            Get Quote
           </BrandButton>
         </div>
 
@@ -59,7 +64,9 @@ export default function PublicNavbarV2() {
               <Link
                 key={link.href + link.label}
                 to={link.href}
-                className="rounded-xl px-3 py-3 hover:bg-slate-50 font-medium text-slate-700"
+                className={`rounded-xl px-3 py-3 hover:bg-slate-50 font-medium ${
+                  link.highlight ? "text-[#D4A843] bg-amber-50" : "text-slate-700"
+                }`}
                 onClick={() => setOpen(false)}
               >
                 {link.label}
@@ -69,8 +76,8 @@ export default function PublicNavbarV2() {
               <BrandButton href="/dashboard" variant="ghost" className="w-full">
                 Login
               </BrandButton>
-              <BrandButton href="/marketplace" variant="gold" className="w-full">
-                Start Browsing
+              <BrandButton href="/request-quote" variant="gold" className="w-full">
+                Get Quote
               </BrandButton>
             </div>
           </div>

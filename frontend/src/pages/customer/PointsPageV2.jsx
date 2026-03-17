@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Gift, Users, Copy, Check, TrendingUp, Award } from "lucide-react";
+import { Gift, Users, Copy, Check, TrendingUp, Award, Share2, MessageCircle } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import MetricCard from "../../components/ui/MetricCard";
 import BrandButton from "../../components/ui/BrandButton";
 import axios from "axios";
+import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -36,7 +37,7 @@ export default function PointsPageV2() {
         setLoyaltyData({
           points: loyaltyRes.data?.points || 0,
           tier: loyaltyRes.data?.tier || "Bronze",
-          referralCode: referralRes.data?.referral_code || "",
+          referralCode: referralRes.data?.referral_code || loyaltyRes.data?.referral_code || "",
           referralCount: referralRes.data?.total_referrals || 0,
           referralEarnings: referralRes.data?.total_earnings || 0,
         });
@@ -45,11 +46,18 @@ export default function PointsPageV2() {
       .finally(() => setLoading(false));
   }, []);
 
+  const getReferralLink = () => `${window.location.origin}/r/${loyaltyData.referralCode}`;
+
   const copyReferralLink = () => {
-    const link = `${window.location.origin}/r/${loyaltyData.referralCode}`;
-    navigator.clipboard.writeText(link);
+    navigator.clipboard.writeText(getReferralLink());
     setCopied(true);
+    toast.success("Referral link copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const shareOnWhatsApp = () => {
+    const text = encodeURIComponent(`Check out Konekt - Business products and services made easy! Use my referral link to get started: ${getReferralLink()}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const tierBenefits = {
@@ -60,11 +68,58 @@ export default function PointsPageV2() {
   };
 
   return (
-    <div data-testid="points-page">
+    <div data-testid="referrals-page">
       <PageHeader 
-        title="Points & Referrals"
-        subtitle="Earn rewards and invite friends to earn more."
+        title="Referrals & Rewards"
+        subtitle="Share Konekt with colleagues and friends. Earn rewards when they order."
       />
+
+      {/* Hero Referral Card */}
+      <SurfaceCard className="mb-8 bg-gradient-to-br from-[#20364D] to-[#1a2d40] text-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="w-6 h-6 text-[#D4A843]" />
+              <h2 className="text-xl font-bold">Invite & Earn</h2>
+            </div>
+            <p className="text-slate-200 max-w-md">
+              Share Konekt with colleagues, companies, and friends. Earn rewards when they order products or request services through your referral.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={copyReferralLink}
+              className="inline-flex items-center justify-center gap-2 bg-white text-[#20364D] font-semibold px-5 py-3 rounded-xl hover:bg-slate-100 transition"
+              data-testid="copy-referral-btn"
+            >
+              {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+              {copied ? "Copied!" : "Copy Referral Link"}
+            </button>
+            <button
+              onClick={shareOnWhatsApp}
+              className="inline-flex items-center justify-center gap-2 bg-green-500 text-white font-semibold px-5 py-3 rounded-xl hover:bg-green-600 transition"
+              data-testid="share-whatsapp-btn"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Share on WhatsApp
+            </button>
+          </div>
+        </div>
+        
+        {loyaltyData.referralCode && (
+          <div className="mt-6 pt-6 border-t border-white/20">
+            <p className="text-sm text-slate-300 mb-2">Your Referral Code</p>
+            <div className="flex items-center gap-4">
+              <span className="font-mono text-2xl font-bold tracking-wider text-[#D4A843]">
+                {loyaltyData.referralCode}
+              </span>
+              <span className="text-sm text-slate-400">
+                Share link: {getReferralLink()}
+              </span>
+            </div>
+          </div>
+        )}
+      </SurfaceCard>
 
       {/* Metrics */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -79,7 +134,7 @@ export default function PointsPageV2() {
           icon={Award}
         />
         <MetricCard 
-          label="Referrals" 
+          label="People Referred" 
           value={loyaltyData.referralCount} 
           icon={Users}
         />
@@ -91,38 +146,32 @@ export default function PointsPageV2() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Referral Section */}
+        {/* How It Works */}
         <SurfaceCard>
-          <h2 className="text-lg font-bold text-[#20364D] mb-4">Invite Friends & Earn</h2>
-          <p className="text-slate-600 mb-4">
-            Share your referral link and earn rewards when friends make their first purchase.
-          </p>
-          
-          {loyaltyData.referralCode ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={`${window.location.origin}/r/${loyaltyData.referralCode}`}
-                  readOnly
-                  className="flex-1 border rounded-xl px-4 py-3 bg-slate-50 text-sm"
-                />
-                <button
-                  onClick={copyReferralLink}
-                  className="p-3 rounded-xl border hover:bg-slate-50 transition"
-                >
-                  {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
-                </button>
+          <h2 className="text-lg font-bold text-[#20364D] mb-4">How Referrals Work</h2>
+          <div className="space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-[#D4A843] text-white flex items-center justify-center font-bold">1</div>
+              <div>
+                <p className="font-medium">Share Your Link</p>
+                <p className="text-sm text-slate-600">Send your unique referral link to colleagues, companies, and friends.</p>
               </div>
-              <p className="text-sm text-slate-500">
-                Your referral code: <span className="font-mono font-bold">{loyaltyData.referralCode}</span>
-              </p>
             </div>
-          ) : (
-            <div className="text-center py-4 text-slate-500">
-              Loading your referral code...
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-[#D4A843] text-white flex items-center justify-center font-bold">2</div>
+              <div>
+                <p className="font-medium">They Sign Up & Order</p>
+                <p className="text-sm text-slate-600">When they register and place their first order, you both earn rewards.</p>
+              </div>
             </div>
-          )}
+            <div className="flex items-start gap-4">
+              <div className="w-8 h-8 rounded-full bg-[#D4A843] text-white flex items-center justify-center font-bold">3</div>
+              <div>
+                <p className="font-medium">Earn Points & Commissions</p>
+                <p className="text-sm text-slate-600">Accumulate points for discounts and earn commissions on referred sales.</p>
+              </div>
+            </div>
+          </div>
         </SurfaceCard>
 
         {/* Tier Benefits */}
@@ -135,6 +184,11 @@ export default function PointsPageV2() {
                 <span>{benefit}</span>
               </div>
             ))}
+          </div>
+          <div className="mt-4 pt-4 border-t">
+            <p className="text-sm text-slate-500">
+              Earn more referrals to unlock Silver, Gold, and Platinum tiers with better rewards!
+            </p>
           </div>
         </SurfaceCard>
       </div>
@@ -160,7 +214,11 @@ export default function PointsPageV2() {
           </div>
         ) : (
           <div className="text-center py-8 text-slate-500">
-            No points history yet. Start shopping to earn points!
+            <Gift className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+            <p>No points history yet. Start referring friends or shopping to earn points!</p>
+            <BrandButton href="/marketplace" variant="primary" className="mt-4">
+              Browse Marketplace
+            </BrandButton>
           </div>
         )}
       </SurfaceCard>

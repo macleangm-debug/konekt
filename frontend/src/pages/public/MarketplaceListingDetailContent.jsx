@@ -9,6 +9,7 @@ import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import BrandButton from "../../components/ui/BrandButton";
 import BrandBadge from "../../components/ui/BrandBadge";
+import BusinessPricingCtaBox from "../../components/public/BusinessPricingCtaBox";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -234,6 +235,16 @@ export default function MarketplaceListingDetailContent() {
           </div>
         </SurfaceCard>
       )}
+
+      {/* Business Pricing CTA */}
+      <div className="mt-8">
+        <BusinessPricingCtaBox
+          compact
+          title="Buying for a company or in bulk?"
+          description="Talk to Konekt for better prices on bulk orders, recurring supply, contract supply, furniture, uniforms, and branded materials."
+          variant="light"
+        />
+      </div>
 
       {listing.documents?.length > 0 && (
         <SurfaceCard className="mt-8">

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, FileText, Receipt, Wrench, Gift, TrendingUp, ArrowRight, Clock } from "lucide-react";
+import { ShoppingBag, FileText, Receipt, Wrench, Gift, TrendingUp, ArrowRight, Clock, Building2 } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import MetricCard from "../../components/ui/MetricCard";
 import BrandButton from "../../components/ui/BrandButton";
+import BusinessPricingCtaBox from "../../components/public/BusinessPricingCtaBox";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -187,6 +188,15 @@ export default function DashboardOverviewPageV2() {
           </div>
         )}
       </SurfaceCard>
+
+      {/* Business Pricing CTA */}
+      <div className="mt-8">
+        <BusinessPricingCtaBox
+          title="Running a company account?"
+          description="Recurring clients, contract customers, and bulk buyers can request better prices, contract billing, and stronger service terms."
+          variant="dark"
+        />
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw
+  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users
 } from "lucide-react";
 
 const nav = [
@@ -12,7 +12,7 @@ const nav = [
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Service Requests", href: "/dashboard/service-requests", icon: Wrench },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
-  { label: "Points & Referrals", href: "/dashboard/points", icon: Gift },
+  { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users, highlight: true },
   { label: "My Statement", href: "/dashboard/statement", icon: CreditCard },
 ];
 
@@ -57,12 +57,17 @@ export default function CustomerPortalLayoutV2() {
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
                   active
                     ? "bg-[#20364D] text-white"
+                    : item.highlight
+                    ? "text-[#D4A843] bg-amber-50 hover:bg-amber-100"
                     : "text-slate-700 hover:bg-slate-100"
                 }`}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 <Icon className="w-5 h-5" />
                 {item.label}
+                {item.highlight && !active && (
+                  <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full">EARN</span>
+                )}
               </Link>
             );
           })}

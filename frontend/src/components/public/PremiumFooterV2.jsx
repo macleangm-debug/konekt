@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Gift, FileText, Users } from "lucide-react";
 
 export default function PremiumFooterV2() {
   return (
@@ -26,6 +26,9 @@ export default function PremiumFooterV2() {
           <div className="space-y-3 text-slate-300">
             <Link to="/marketplace" className="block hover:text-white transition">Browse listings</Link>
             <Link to="/services" className="block hover:text-white transition">Services</Link>
+            <Link to="/request-quote" className="block hover:text-white transition flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Request Quote
+            </Link>
             <Link to="/track-order" className="block hover:text-white transition">Track order</Link>
           </div>
         </div>
@@ -33,6 +36,9 @@ export default function PremiumFooterV2() {
         <div>
           <div className="font-bold mb-4">Business</div>
           <div className="space-y-3 text-slate-300">
+            <Link to="/dashboard/referrals" className="block hover:text-[#D4A843] transition flex items-center gap-2">
+              <Gift className="w-4 h-4 text-[#D4A843]" /> Referrals & Rewards
+            </Link>
             <Link to="/launch-country" className="block hover:text-white transition">Country expansion</Link>
             <Link to="/partner-login" className="block hover:text-white transition">Partner portal</Link>
             <Link to="/dashboard" className="block hover:text-white transition">Customer account</Link>
@@ -54,6 +60,11 @@ export default function PremiumFooterV2() {
               <MapPin className="w-4 h-4" />
               Dar es Salaam, Tanzania
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <Link to="/staff-login" className="text-xs text-slate-500 hover:text-slate-400 flex items-center gap-1">
+              <Users className="w-3 h-3" /> Staff Portal
+            </Link>
           </div>
         </div>
       </div>
