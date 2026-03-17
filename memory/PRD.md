@@ -1285,6 +1285,35 @@ Focused on making the system tighter, clearer, and more commercially useful:
 
 ---
 
+## Completed: Affiliate Growth Pack (March 17, 2026) ✅
+
+**Objective**: Open public affiliate registration, dedicated affiliate dashboard, visible promotions, and social sharing tools.
+
+### Backend APIs Implemented:
+- `POST /api/affiliates/public/register` - Public affiliate registration (creates user + affiliate docs)
+- `GET /api/affiliate/dashboard/summary` - Affiliate earnings summary with commissions
+- `GET /api/affiliate-promotions/available` - List active campaigns for affiliates
+- `GET /api/affiliates/code/{code}` - Lookup affiliate by code
+
+### Frontend Pages:
+- `/earn` - Affiliate Program landing page (how it works, benefits, CTAs)
+- `/register/affiliate` - Public affiliate registration form
+- `/partner/affiliate-dashboard` - Affiliate dashboard with metrics, referral link, share buttons
+- **Navigation**: "Earn" link added to PublicNavbarV2
+
+### Key Features:
+- Self-service affiliate registration (open to public)
+- Unique affiliate code generation
+- Copy-to-clipboard referral link
+- WhatsApp sharing integration
+- Commission tracking display
+- Campaign visibility for affiliates
+
+**Testing**: 9/9 backend + 100% frontend tests passing (iteration_54.json)
+**Bug Fixed**: affiliate_promotions_routes.py MongoDB connection issue
+
+---
+
 ## Upcoming Tasks
 
 ### Final Live Readiness Pack (P0)
@@ -1306,7 +1335,7 @@ Admin dashboard for reviewing and approving partner submissions:
 - Overdue contract invoice alerts
 - Account manager portfolio dashboard
 
-### Controlled Affiliate + Campaign Engine (P1) - Partially Complete ✅
+### Controlled Affiliate + Campaign Engine (P1) - ✅ COMPLETED
 - ✅ Affiliate promo code + referral link tracking
 - ✅ Campaign promotions visible to affiliates
 - ✅ Margin protection logic (completed in Pack 25)
@@ -1314,6 +1343,9 @@ Admin dashboard for reviewing and approving partner submissions:
 - ✅ Affiliate payout profile
 - ✅ Admin controls for affiliate caps
 - ✅ Checkout integration
+- ✅ Public affiliate registration (Affiliate Growth Pack)
+- ✅ Affiliate landing page at /earn
+- ✅ Social sharing (WhatsApp, copy link)
 
 ### World-Class Affiliate Platform Enhancements (P2)
 - Public affiliate application form
@@ -1330,5 +1362,5 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 17, 2026 - UX Alignment Pack Complete (Login Chooser, Customer Login, Auth Context Fixes)*
+*Last updated: March 17, 2026 - Affiliate Growth Pack Complete (Public Registration, Landing Page, Dashboard, Social Sharing)*
 
