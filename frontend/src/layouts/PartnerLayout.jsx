@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus, PlusCircle } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
+import NotificationBell from "../components/shared/NotificationBell";
 
 export default function PartnerLayout() {
   const [partner, setPartner] = useState(null);
@@ -61,10 +62,11 @@ export default function PartnerLayout() {
           <div className="w-10 h-10 rounded-xl bg-[#20364D] flex items-center justify-center text-white font-bold">
             K
           </div>
-          <div>
+          <div className="flex-1">
             <div className="text-xl font-bold text-[#20364D]">Partner Portal</div>
             <div className="text-xs text-slate-500">{partner?.name || "Loading..."}</div>
           </div>
+          <NotificationBell tokenKey="partner_token" defaultRedirect="/partner" />
         </div>
 
         <nav className="space-y-1">

@@ -1,6 +1,20 @@
 """
 Notification Service
 Creates notification documents for various events
+
+Priority levels:
+- normal: routine updates (campaign available, settlement generated)
+- high: action required (new assignment, payment submitted, quote approved)
+- urgent: time-sensitive (SLA breach, stalled delivery, overdue updates)
+
+Roles supported:
+- admin, super_admin: system-wide alerts
+- sales: assigned opportunities, customer updates
+- operations: handoffs, delivery tasks
+- supervisor: team alerts, performance issues
+- affiliate: commissions, campaigns
+- partner: jobs, settlements
+- customer: orders, quotes, invoices, services
 """
 from datetime import datetime, timezone
 import uuid
@@ -14,6 +28,12 @@ def build_notification_doc(
     target_url: str,
     recipient_role: str | None = None,
     recipient_user_id: str | None = None,
+    entity_type: str | None = None,
+    entity_id: str | None = None,
+    priority: str = "normal",  # normal | high | urgent
+    action_key: str | None = None,
+    triggered_by_user_id: str | None = None,
+    triggered_by_role: str | None = None,
 ):
     """Build a notification document for insertion"""
     return {
@@ -24,6 +44,12 @@ def build_notification_doc(
         "target_url": target_url,
         "recipient_role": recipient_role,
         "recipient_user_id": recipient_user_id,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "priority": priority,
+        "action_key": action_key,
+        "triggered_by_user_id": triggered_by_user_id,
+        "triggered_by_role": triggered_by_role,
         "is_read": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
@@ -32,7 +58,10 @@ def build_notification_doc(
 
 async def create_notification(db, *, notification_type: str, title: str, message: str, 
                                target_url: str, recipient_role: str = None, 
-                               recipient_user_id: str = None):
+                               recipient_user_id: str = None, entity_type: str = None,
+                               entity_id: str = None, priority: str = "normal",
+                               action_key: str = None, triggered_by_user_id: str = None,
+                               triggered_by_role: str = None):
     """Create and insert a notification"""
     doc = build_notification_doc(
         notification_type=notification_type,
@@ -41,6 +70,12 @@ async def create_notification(db, *, notification_type: str, title: str, message
         target_url=target_url,
         recipient_role=recipient_role,
         recipient_user_id=recipient_user_id,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        priority=priority,
+        action_key=action_key,
+        triggered_by_user_id=triggered_by_user_id,
+        triggered_by_role=triggered_by_role,
     )
     await db.notifications.insert_one(doc)
     return doc

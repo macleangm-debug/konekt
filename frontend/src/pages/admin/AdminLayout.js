@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
+import NotificationBell from '../../components/admin/NotificationBell';
 
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
 
@@ -239,10 +240,7 @@ export default function AdminLayout() {
               </div>
               
               {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </Button>
+              <NotificationBell />
             </div>
           </div>
         </header>

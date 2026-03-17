@@ -1,41 +1,38 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, X, Check, ExternalLink, AlertCircle, AlertTriangle } from "lucide-react";
+import { Bell, X, Check, ExternalLink, AlertCircle, AlertTriangle, Info } from "lucide-react";
 import api from "../../lib/api";
 
-// Priority styling helper
-const getPriorityStyles = (priority) => {
-  switch (priority) {
-    case "urgent":
-      return {
-        border: "border-l-4 border-red-500",
-        badge: "bg-red-100 text-red-700",
-      };
-    case "high":
-      return {
-        border: "border-l-4 border-amber-500",
-        badge: "bg-amber-100 text-amber-700",
-      };
-    default:
-      return {
-        border: "border-l-4 border-transparent",
-        badge: "",
-      };
-  }
-};
-
-export default function NotificationBell() {
+/**
+ * Universal NotificationBell Component
+ * Works for admin, staff, customer, partner, and affiliate roles
+ * Supports priority-based styling (urgent, high, normal)
+ * 
+ * @param {string} tokenKey - localStorage key for auth token (default: "token")
+ * @param {string} defaultRedirect - fallback URL when no target_url (default: "/")
+ */
+export default function NotificationBell({ 
+  tokenKey = "token", 
+  defaultRedirect = "/",
+}) {
   const [count, setCount] = useState(0);
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Get token from correct localStorage key
+  const getToken = useCallback(() => {
+    // Try multiple token keys for backward compatibility
+    return localStorage.getItem(tokenKey) || 
+           localStorage.getItem("admin_token") || 
+           localStorage.getItem("konekt_token") ||
+           localStorage.getItem("partner_token");
+  }, [tokenKey]);
+
   const load = useCallback(async () => {
     try {
-      // Support multiple token keys for backward compatibility
-      const token = localStorage.getItem("konekt_admin_token") || 
-                    localStorage.getItem("admin_token");
+      const token = getToken();
       if (!token) return;
       
       const headers = { Authorization: `Bearer ${token}` };
@@ -50,7 +47,7 @@ export default function NotificationBell() {
     } catch (err) {
       console.error("Failed to load notifications:", err);
     }
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     load();
@@ -61,13 +58,12 @@ export default function NotificationBell() {
 
   const openNotification = async (item) => {
     try {
-      const token = localStorage.getItem("konekt_admin_token") || 
-                    localStorage.getItem("admin_token");
+      const token = getToken();
       await api.put(`/api/notifications/${item.id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setOpen(false);
-      navigate(item.target_url || "/admin");
+      navigate(item.target_url || defaultRedirect);
       load();
     } catch (err) {
       console.error("Failed to mark notification read:", err);
@@ -77,8 +73,7 @@ export default function NotificationBell() {
   const markAllRead = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("konekt_admin_token") || 
-                    localStorage.getItem("admin_token");
+      const token = getToken();
       await api.put("/api/notifications/mark-all-read", {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -87,6 +82,33 @@ export default function NotificationBell() {
       console.error("Failed to mark all read:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Priority styling
+  const getPriorityStyles = (priority) => {
+    switch (priority) {
+      case "urgent":
+        return {
+          border: "border-l-4 border-red-500",
+          icon: AlertCircle,
+          iconColor: "text-red-500",
+          badge: "bg-red-100 text-red-700",
+        };
+      case "high":
+        return {
+          border: "border-l-4 border-amber-500",
+          icon: AlertTriangle,
+          iconColor: "text-amber-500",
+          badge: "bg-amber-100 text-amber-700",
+        };
+      default:
+        return {
+          border: "border-l-4 border-slate-200",
+          icon: Info,
+          iconColor: "text-slate-400",
+          badge: "bg-slate-100 text-slate-600",
+        };
     }
   };
 
@@ -112,10 +134,14 @@ export default function NotificationBell() {
           <div 
             className="fixed inset-0 z-40" 
             onClick={() => setOpen(false)}
+            data-testid="notification-backdrop"
           />
           
           {/* Dropdown */}
-          <div className="absolute right-0 mt-2 w-[380px] rounded-2xl border bg-white shadow-xl z-50 overflow-hidden">
+          <div 
+            className="absolute right-0 mt-2 w-[380px] rounded-2xl border bg-white shadow-xl z-50 overflow-hidden"
+            data-testid="notification-dropdown"
+          >
             <div className="px-4 py-4 border-b flex items-center justify-between bg-slate-50">
               <div className="font-bold text-[#20364D]">Notifications</div>
               <div className="flex items-center gap-2">
@@ -135,6 +161,7 @@ export default function NotificationBell() {
                   type="button"
                   onClick={() => setOpen(false)}
                   className="p-1 rounded hover:bg-slate-200 transition"
+                  data-testid="close-notifications-btn"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -145,6 +172,7 @@ export default function NotificationBell() {
               {items.length > 0 ? (
                 items.map((item) => {
                   const priorityStyle = getPriorityStyles(item.priority);
+                  const PriorityIcon = priorityStyle.icon;
                   
                   return (
                     <button
@@ -174,7 +202,7 @@ export default function NotificationBell() {
                               {new Date(item.created_at).toLocaleString()}
                             </span>
                             {item.action_key && (
-                              <span className="text-[10px] text-slate-300 uppercase tracking-wide">
+                              <span className="text-[10px] text-slate-300 uppercase">
                                 {item.action_key.replace(/_/g, " ")}
                               </span>
                             )}
@@ -186,7 +214,7 @@ export default function NotificationBell() {
                   );
                 })
               ) : (
-                <div className="px-4 py-10 text-center text-slate-500">
+                <div className="px-4 py-10 text-center text-slate-500" data-testid="empty-notifications">
                   <Bell className="w-10 h-10 mx-auto mb-3 text-slate-300" />
                   <div className="font-medium">No unread notifications</div>
                   <p className="text-sm mt-1">You're all caught up!</p>
@@ -199,9 +227,10 @@ export default function NotificationBell() {
                 <button
                   onClick={() => {
                     setOpen(false);
-                    navigate("/admin");
+                    navigate(defaultRedirect.includes("admin") ? "/admin" : "/dashboard");
                   }}
                   className="w-full text-center text-sm font-medium text-[#20364D] hover:underline"
+                  data-testid="view-all-notifications-btn"
                 >
                   View all notifications
                 </button>

@@ -4,6 +4,7 @@ import {
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
   Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2
 } from "lucide-react";
+import NotificationBell from "../components/shared/NotificationBell";
 
 const nav = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -122,6 +123,7 @@ export default function CustomerPortalLayoutV2() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <NotificationBell tokenKey="token" defaultRedirect="/dashboard" />
             <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100">
               <User className="w-4 h-4 text-slate-500" />
               <span className="text-sm font-medium text-slate-700 hidden sm:inline">

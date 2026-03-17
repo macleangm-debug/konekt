@@ -1,0 +1,118 @@
+{
+  "summary": "Notification Expansion Pack testing completed. Fixed 2 bugs: 1) AdminLayout was not using NotificationBell component (was using static Bell icon), 2) Admin NotificationBell was using wrong token key (admin_token instead of konekt_admin_token). Backend APIs verified working for admin/customer. Partner notifications fail due to JWT secret mismatch (PARTNER_JWT_SECRET vs JWT_SECRET) - this is a critical bug for partner notifications.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/notifications (Partner access)",
+        "issue": "Partner tokens (signed with PARTNER_JWT_SECRET) fail auth on notification routes which use JWT_SECRET. notification_routes.py only supports main JWT_SECRET and looks up users in db.users, not db.partner_users",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Partner Portal notifications",
+        "issue": "NotificationBell component present but API calls fail with 401 due to JWT secret mismatch",
+        "affected_selectors": ["[data-testid='notification-bell']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "features_tested": {
+    "notification_api_unread_count": {
+      "url": "/api/notifications/unread-count",
+      "status": "PASS for admin/customer, FAIL for partner",
+      "notes": "Returns {count: N} correctly for admin and customer tokens"
+    },
+    "notification_api_list": {
+      "url": "/api/notifications",
+      "status": "PASS for admin/customer, FAIL for partner",
+      "notes": "Returns list with priority, entity_type, action_key fields"
+    },
+    "notification_api_mark_read": {
+      "url": "/api/notifications/{id}/read",
+      "status": "PASS",
+      "notes": "Marks individual notification as read"
+    },
+    "notification_api_mark_all_read": {
+      "url": "/api/notifications/mark-all-read",
+      "status": "PASS",
+      "notes": "Marks all notifications as read for current user"
+    },
+    "customer_portal_notification_bell": {
+      "url": "/dashboard",
+      "status": "PASS",
+      "notes": "NotificationBell visible in header, dropdown works, shows empty state correctly"
+    },
+    "partner_portal_notification_bell": {
+      "url": "/partner",
+      "status": "PARTIAL - UI present but API fails",
+      "notes": "NotificationBell component present in sidebar but API calls return 401 due to JWT mismatch"
+    },
+    "admin_portal_notification_bell": {
+      "url": "/admin",
+      "status": "PASS (after fix)",
+      "notes": "NotificationBell integrated into AdminLayout header. Shows count badge, dropdown with priority styling"
+    },
+    "priority_styling": {
+      "status": "PASS",
+      "notes": "URGENT shows red badge (bg-red-100, text-red-700), HIGH shows amber badge (bg-amber-100, text-amber-700), NORMAL has no badge"
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_notification_expansion_pack.py",
+    "/app/test_reports/pytest/pytest_results_notification_pack.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix notification_routes.py to support partner tokens - needs to decode with PARTNER_JWT_SECRET and lookup in db.partner_users for partner roles",
+    "Alternatively: Create separate /api/partner-notifications routes that use partner auth"
+  ],
+  "critical_code_review_comments": [
+    "notification_routes.py uses single JWT_SECRET - needs multi-secret support for partner tokens",
+    "Partner auth uses different JWT secret (PARTNER_JWT_SECRET) and different user collection (partner_users) - notification routes need to handle this",
+    "AdminLayout was missing NotificationBell integration - was just showing a static Bell icon with no functionality",
+    "Admin NotificationBell was reading wrong localStorage key (admin_token instead of konekt_admin_token)"
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/admin/AdminLayout.js (added NotificationBell import and usage)",
+    "/app/frontend/src/components/admin/NotificationBell.jsx (fixed token key to support konekt_admin_token)",
+    "/app/backend/tests/test_notification_expansion_pack.py (new test file)"
+  ],
+  "success_rate": {
+    "backend": "85% (11/13 tests pass, 2 skipped for partner)",
+    "frontend": "90% (Customer and Admin NotificationBell working, Partner partial)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "Created 3 test notifications (urgent, high, normal priority) to verify styling - cleaned up after testing",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Resend email service", "KwikPay payment processing"]
+  },
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Partner notification routes need JWT secret fix. The notification_routes.py currently only supports the main JWT_SECRET. Partners use PARTNER_JWT_SECRET and are stored in partner_users collection. After fix, partner notification tests should pass. Admin and Customer notification flows are fully working now.",
+  "rca_of_the_issue": {
+    "issue_1": {
+      "problem": "AdminLayout not showing NotificationBell",
+      "root_cause": "AdminLayout.js line 242-245 was using a static Button with Bell icon instead of the NotificationBell component",
+      "fix": "Imported NotificationBell from components/admin and replaced static Button"
+    },
+    "issue_2": {
+      "problem": "Admin NotificationBell showing no notifications despite API returning data",
+      "root_cause": "NotificationBell.jsx was reading localStorage.getItem('admin_token') but AdminAuthContext stores token as 'konekt_admin_token'",
+      "fix": "Updated to check both 'konekt_admin_token' and 'admin_token' for backward compatibility"
+    },
+    "issue_3": {
+      "problem": "Partner Portal notifications fail with 401",
+      "root_cause": "notification_routes.py uses JWT_SECRET for token validation but partners use PARTNER_JWT_SECRET. Also looks up user in db.users instead of db.partner_users",
+      "fix": "PENDING - notification_routes.py needs to support multiple JWT secrets and user collections"
+    }
+  }
+}
