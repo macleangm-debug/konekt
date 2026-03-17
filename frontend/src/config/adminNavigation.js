@@ -8,6 +8,8 @@ export const adminNavigation = [
       { label: "Group Markups", href: "/admin/group-markups", moduleKey: "settings" },
       { label: "Partner Settlements", href: "/admin/partner-settlements", moduleKey: "finance" },
       { label: "Payment Proofs", href: "/admin/payment-proofs", moduleKey: "finance" },
+      { label: "Commission Rules", href: "/admin/commission-rules", moduleKey: "settings" },
+      { label: "Supervisor Dashboard", href: "/admin/supervisor-dashboard", moduleKey: "dashboard" },
     ],
   },
   {

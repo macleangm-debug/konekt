@@ -136,6 +136,10 @@ import GroupMarkupsPage from "@/pages/admin/GroupMarkupsPage";
 import PartnerSettlementsAdminPage from "@/pages/admin/PartnerSettlementsAdminPage";
 import PaymentProofsAdminPage from "@/pages/admin/PaymentProofsAdminPage";
 
+// Staff Performance & Supervisor
+import SupervisorDashboardPage from "@/pages/admin/SupervisorDashboardPage";
+import CommissionRulesPage from "@/pages/admin/CommissionRulesPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -379,6 +383,9 @@ function App() {
           <Route path="group-markups" element={<GroupMarkupsPage />} />
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
           <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
+          {/* Staff Performance & Commission */}
+          <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
+          <Route path="commission-rules" element={<CommissionRulesPage />} />
         </Route>
         
         {/* Partner Portal Routes */}

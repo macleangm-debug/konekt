@@ -176,6 +176,18 @@ from payment_proof_routes import router as payment_proof_router
 # Pricing Validation
 from pricing_validation_routes import router as pricing_validation_router
 
+# Commission Rules Engine
+from commission_rules_routes import router as commission_rules_router
+
+# Campaign Pricing (Dual Promotion)
+from campaign_pricing_routes import router as campaign_pricing_router
+
+# Supervisor Dashboard
+from supervisor_dashboard_routes import router as supervisor_dashboard_router
+
+# Staff Alerts
+from staff_alerts_routes import router as staff_alerts_router
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -2249,6 +2261,18 @@ app.include_router(payment_proof_router)
 
 # Pricing Validation
 app.include_router(pricing_validation_router)
+
+# Commission Rules Engine
+app.include_router(commission_rules_router)
+
+# Campaign Pricing (Dual Promotion)
+app.include_router(campaign_pricing_router)
+
+# Supervisor Dashboard
+app.include_router(supervisor_dashboard_router)
+
+# Staff Alerts
+app.include_router(staff_alerts_router)
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
