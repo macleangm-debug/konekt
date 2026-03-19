@@ -154,6 +154,9 @@ import LaunchQaChecklistPage from "@/pages/admin/LaunchQaChecklistPage";
 // Business Pricing Admin
 import BusinessPricingAdminPage from "@/pages/admin/BusinessPricingAdminPage";
 
+// Production Jobs Admin
+import ProductionJobsAdminPage from "@/pages/admin/ProductionJobsAdminPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -221,6 +224,7 @@ import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
+import ProductionJobsPage from "@/pages/staff/ProductionJobsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -435,6 +439,8 @@ function App() {
           <Route path="launch-qa" element={<LaunchQaChecklistPage />} />
           {/* Business Pricing Admin */}
           <Route path="business-pricing-requests" element={<BusinessPricingAdminPage />} />
+          {/* Production Jobs Admin */}
+          <Route path="production-jobs" element={<ProductionJobsAdminPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -499,6 +505,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <StaffWorkspaceHomePage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/production-jobs" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <ProductionJobsPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

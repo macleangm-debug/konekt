@@ -568,6 +568,8 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~Final Verification Pass complete~~ DONE (March 17, 2026)
 - [x] ~~Role-Wide Notification Expansion Pack~~ DONE (March 17, 2026)
 - [x] ~~Workflow-Linked Notification Wiring~~ DONE (March 19, 2026)
+- [x] ~~PWA + Confirmation Modal Pack~~ DONE (March 19, 2026)
+- [x] ~~Production & Job Progress Notification Pack~~ DONE (March 19, 2026)
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
 
@@ -1551,4 +1553,61 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 19, 2026 - Workflow-Linked Notification Wiring Complete*
+### PWA + Confirmation Modal Pack (March 19, 2026)
+
+**Completed:**
+- Created `ConfirmationModal.jsx` - reusable confirmation dialog with tone support (default, danger, success, warning)
+- Created `useConfirmationModal.js` hook for easy modal state management
+- Created `PwaInstallBanner.jsx` - role-aware PWA install prompt
+- Created `RoleQuickActionsBar.jsx` - mobile bottom nav with role-specific shortcuts
+- Created `pwaRegister.js` - service worker registration utility
+- Created `manifest.webmanifest` and `sw.js` for PWA support
+- Updated `index.html` with PWA meta tags
+
+**Usage Example:**
+```jsx
+const { modalState, openConfirmation, closeConfirmation } = useConfirmationModal();
+openConfirmation({
+  title: "Approve Payment?",
+  message: "This will mark the payment as approved.",
+  confirmLabel: "Approve",
+  tone: "success",
+  onConfirm: async () => { ... }
+});
+<ConfirmationModal {...modalState} onCancel={closeConfirmation} />
+```
+
+---
+
+### Production & Job Progress Notification Pack (March 19, 2026)
+
+**Completed:**
+- Created `production_progress_routes.py` with full CRUD + notification wiring
+- Created `ProductionJobsPage.jsx` for staff - job status updates with confirmation modals
+- Created `ProductionJobsAdminPage.jsx` for admin - monitoring + cost updates
+- Added routes to App.js and server.py
+
+**Notification Triggers:**
+| Job Status Change | Recipients |
+|-------------------|-----------|
+| in_production | Sales |
+| site_visit_scheduled | Customer + Sales |
+| ready_for_dispatch | Customer + Sales |
+| dispatched | Customer + Sales + Ops |
+| completed | Customer + Sales + Partner |
+| blocked/delayed | Admin (urgent) + Sales |
+| cost_update | Sales + Admin |
+
+**New Routes:**
+- `GET /api/production-progress` - List jobs
+- `POST /api/production-progress` - Create job
+- `PUT /api/production-progress/{id}/status` - Update status with notifications
+- `PUT /api/production-progress/{id}/cost` - Update cost with notifications
+
+**Frontend Routes:**
+- `/admin/production-jobs` - Admin monitoring page
+- `/staff/production-jobs` - Staff job management page
+
+---
+
+*Last updated: March 19, 2026 - PWA + Confirmation Modal + Production Progress Packs Complete*

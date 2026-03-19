@@ -2354,6 +2354,10 @@ app.include_router(notification_router)
 # Checkout Points Validation
 app.include_router(checkout_points_router)
 
+# Production Progress Tracking
+from production_progress_routes import router as production_progress_router
+app.include_router(production_progress_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
