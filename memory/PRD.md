@@ -567,6 +567,7 @@ The admin sidebar is now organized into logical groups:
 - [x] ~~RuntimeStatusCard integrated on Launch Readiness page~~ DONE (March 17, 2026)
 - [x] ~~Final Verification Pass complete~~ DONE (March 17, 2026)
 - [x] ~~Role-Wide Notification Expansion Pack~~ DONE (March 17, 2026)
+- [x] ~~Workflow-Linked Notification Wiring~~ DONE (March 19, 2026)
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
 
@@ -1509,4 +1510,45 @@ Admin dashboard for reviewing and approving partner submissions:
 
 ---
 
-*Last updated: March 17, 2026 - Role-Wide Notification Expansion Pack Complete*
+### Workflow-Linked Notification Wiring (March 19, 2026)
+
+**Completed:** Wired notification triggers into actual workflow action handlers.
+
+**Notifications now fire automatically when:**
+
+| Workflow Action | Route | Notification Recipients |
+|-----------------|-------|------------------------|
+| Payment proof approve | `POST /api/payment-proofs/admin/{id}/approve` | Customer |
+| Payment proof reject | `POST /api/payment-proofs/admin/{id}/reject` | Customer |
+| Quote sent (mark ready) | `PATCH /api/admin/quotes-v2/{id}/status?status=sent` | Customer |
+| Quote approved | `PATCH /api/admin/quotes-v2/{id}/status?status=approved` | Assigned Sales |
+| Invoice issued | `PATCH /api/admin/invoices-v2/{id}/status?status=sent` | Customer |
+| Order confirmed | `PATCH /api/admin/orders-ops/{id}/status?status=confirmed` | Customer |
+| Order dispatched | `PATCH /api/admin/orders-ops/{id}/status?status=dispatched` | Customer + Ops |
+| Service status update | `POST /api/admin/service-requests/{id}/status` | Customer + Sales |
+| Settlement approved | `POST /api/admin/partner-settlements/settlements/{id}/approve` | Partner |
+| Settlement paid | `POST /api/admin/partner-settlements/settlements/{id}/mark-paid` | Partner |
+
+**Key Implementation Details:**
+- All notifications include idempotency checks (don't re-notify if already in status)
+- All notifications include `action_key`, `triggered_by_user_id`, `triggered_by_role` for audit trail
+- Notifications only fire when recipient user_id is present on the entity
+
+**Files Updated:**
+- `payment_proof_routes.py` - approve/reject notifications
+- `quote_routes.py` - sent/approved notifications
+- `invoice_routes.py` - issued notifications
+- `order_ops_routes.py` - confirmed/dispatched notifications
+- `service_request_admin_routes.py` - status update notifications
+- `partner_settlement_routes.py` - approve/paid notifications
+
+**Test Report:** /app/test_reports/iteration_60.json
+- 93% backend tests pass
+- 17 notifications created during testing
+- All workflow triggers verified
+
+**Status:** Notification system is now fully operational. Action buttons trigger notifications automatically.
+
+---
+
+*Last updated: March 19, 2026 - Workflow-Linked Notification Wiring Complete*
