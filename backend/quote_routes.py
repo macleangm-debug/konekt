@@ -19,6 +19,10 @@ from attribution_capture_service import (
     inherit_attribution_from_document
 )
 from notification_events import notify_quote_ready, notify_invoice_ready
+from notification_trigger_service import (
+    notify_customer_quote_ready,
+    notify_sales_quote_approved,
+)
 from collection_mode_service import get_quote_collection, get_invoice_collection
 
 router = APIRouter(prefix="/api/admin/quotes-v2", tags=["Quotes V2"])
@@ -143,30 +147,58 @@ async def get_quote(quote_id: str):
 
 
 @router.patch("/{quote_id}/status")
-async def update_quote_status(quote_id: str, status: str = Query(...)):
-    """Update quote status"""
+async def update_quote_status(quote_id: str, status: str = Query(...), triggered_by_user_id: str = Query(default=None), triggered_by_role: str = Query(default="admin")):
+    """Update quote status with workflow-linked notifications"""
     valid_statuses = ["draft", "sent", "approved", "rejected", "expired", "converted"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
     now = datetime.now(timezone.utc)
     quotes_collection = await get_quote_collection(db)
-    result = await quotes_collection.update_one(
+    
+    # Get the quote first for notification data
+    quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
+    fallback_used = False
+    if not quote:
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        quote = await fallback.find_one({"_id": ObjectId(quote_id)})
+        fallback_used = True
+    
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    # Update the quote
+    target_collection = fallback if fallback_used else quotes_collection
+    await target_collection.update_one(
         {"_id": ObjectId(quote_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
-    if result.matched_count == 0:
-        # Try fallback collection
-        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
-        result = await fallback.update_one(
-            {"_id": ObjectId(quote_id)},
-            {"$set": {"status": status, "updated_at": now.isoformat()}}
+    
+    updated = await target_collection.find_one({"_id": ObjectId(quote_id)})
+    
+    # Send workflow-linked notifications based on status change
+    if status == "sent":
+        # Quote marked ready → notify customer
+        await notify_customer_quote_ready(
+            db,
+            customer_user_id=quote.get("customer_user_id") or quote.get("customer_id"),
+            quote_id=quote_id,
+            quote_number=quote.get("quote_number", "Quote"),
+            triggered_by_user_id=triggered_by_user_id,
+            triggered_by_role=triggered_by_role,
         )
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Quote not found")
-        updated = await fallback.find_one({"_id": ObjectId(quote_id)})
-    else:
-        updated = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
+    elif status == "approved":
+        # Quote approved by customer → notify assigned sales
+        await notify_sales_quote_approved(
+            db,
+            sales_user_id=quote.get("assigned_sales_id") or quote.get("assigned_to"),
+            quote_id=quote_id,
+            quote_number=quote.get("quote_number", "Quote"),
+            customer_name=quote.get("customer_name"),
+            triggered_by_user_id=triggered_by_user_id,
+            triggered_by_role=triggered_by_role,
+        )
+    
     return serialize_doc(updated)
 
 

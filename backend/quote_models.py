@@ -74,6 +74,8 @@ class QuoteCreate(BaseModel):
     customer_address: Optional[str] = None
     customer_tin: Optional[str] = None  # Client TIN
     customer_registration_number: Optional[str] = None  # Client Business Registration
+    customer_user_id: Optional[str] = None  # For notification routing
+    customer_id: Optional[str] = None  # Fallback for notification routing
     lead_id: Optional[str] = None
     order_reference: Optional[str] = None
     currency: str = "TZS"
@@ -123,6 +125,8 @@ class InvoiceCreateNew(BaseModel):
     customer_address: Optional[str] = None
     customer_tin: Optional[str] = None  # Client TIN
     customer_registration_number: Optional[str] = None  # Client Business Registration
+    customer_user_id: Optional[str] = None  # For notification routing
+    customer_id: Optional[str] = None  # Fallback for notification routing
     order_id: Optional[str] = None
     quote_id: Optional[str] = None
     currency: str = "TZS"

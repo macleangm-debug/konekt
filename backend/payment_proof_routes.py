@@ -1,12 +1,15 @@
 """
 Payment Proof Submission Routes
 Handle customer payment proof uploads and admin approval workflow.
+With workflow-linked notifications for customer updates.
 """
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from notification_trigger_service import notify_customer_payment_reviewed
 
 router = APIRouter(prefix="/api/payment-proofs", tags=["Payment Proofs"])
 
@@ -43,6 +46,8 @@ async def submit_payment_proof(payload: dict):
         "order_id": order_id,
         "customer_email": payload.get("customer_email"),
         "customer_name": payload.get("customer_name"),
+        "customer_user_id": payload.get("customer_user_id"),  # For notification routing
+        "customer_id": payload.get("customer_id"),  # Fallback for notification routing
         "amount_paid": float(payload.get("amount_paid", 0) or 0),
         "currency": payload.get("currency", "TZS"),
         "payment_date": payload.get("payment_date"),
@@ -173,6 +178,17 @@ async def approve_payment_proof(proof_id: str, payload: dict):
             )
 
     updated = await db.payment_proof_submissions.find_one({"_id": ObjectId(proof_id)})
+    
+    # Send notification to customer - payment approved
+    await notify_customer_payment_reviewed(
+        db,
+        customer_user_id=proof.get("customer_user_id") or proof.get("customer_id"),
+        payment_proof_id=proof_id,
+        approved=True,
+        triggered_by_user_id=payload.get("approved_by"),
+        triggered_by_role="admin",
+    )
+    
     return {"message": "Payment proof approved", "submission": serialize_doc(updated)}
 
 
@@ -197,4 +213,15 @@ async def reject_payment_proof(proof_id: str, payload: dict):
     )
 
     updated = await db.payment_proof_submissions.find_one({"_id": ObjectId(proof_id)})
+    
+    # Send notification to customer - payment rejected
+    await notify_customer_payment_reviewed(
+        db,
+        customer_user_id=proof.get("customer_user_id") or proof.get("customer_id"),
+        payment_proof_id=proof_id,
+        approved=False,
+        triggered_by_user_id=payload.get("rejected_by"),
+        triggered_by_role="admin",
+    )
+    
     return {"message": "Payment proof rejected", "submission": serialize_doc(updated)}

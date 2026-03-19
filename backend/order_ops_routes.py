@@ -5,6 +5,7 @@ Konekt Order Operations Routes
 - Reserve inventory for orders
 - Assign tasks from orders
 - Send orders to production
+With workflow-linked notifications for status changes
 """
 from datetime import datetime, timezone
 from typing import Optional
@@ -17,6 +18,11 @@ from order_ops_models import (
     ReserveInventoryRequest,
     AssignOrderTaskRequest,
     ProductionQueueCreate,
+)
+from notification_trigger_service import (
+    notify_customer_order_dispatched,
+    notify_customer_order_confirmed,
+    notify_ops_order_dispatched,
 )
 
 router = APIRouter(prefix="/api/admin/orders-ops", tags=["Order Operations"])
@@ -78,9 +84,11 @@ async def get_order(order_id: str):
 async def update_order_status(
     order_id: str, 
     status: str = Query(...), 
-    note: Optional[str] = Query(default=None)
+    note: Optional[str] = Query(default=None),
+    triggered_by_user_id: Optional[str] = Query(default=None),
+    triggered_by_role: str = Query(default="admin"),
 ):
-    """Update order status with history tracking"""
+    """Update order status with history tracking and workflow-linked notifications"""
     now = datetime.now(timezone.utc)
 
     try:
@@ -90,6 +98,9 @@ async def update_order_status(
     
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    # Check idempotency - track previous status
+    previous_status = order.get("current_status") or order.get("status")
 
     history_item = {
         "status": status,
@@ -110,6 +121,41 @@ async def update_order_status(
     )
 
     updated = await db.orders.find_one({"_id": ObjectId(order_id)})
+    
+    # Send workflow-linked notifications based on status change
+    customer_user_id = order.get("customer_user_id") or order.get("customer_id") or order.get("user_id")
+    order_number = order.get("order_number") or order.get("order_id") or f"ORD-{order_id[:8]}"
+    
+    # Only notify if status actually changed (idempotency)
+    if status != previous_status:
+        if status == "confirmed":
+            await notify_customer_order_confirmed(
+                db,
+                customer_user_id=customer_user_id,
+                order_id=order_id,
+                order_number=order_number,
+                triggered_by_user_id=triggered_by_user_id,
+                triggered_by_role=triggered_by_role,
+            )
+        elif status in ["dispatched", "shipped", "out_for_delivery"]:
+            await notify_customer_order_dispatched(
+                db,
+                customer_user_id=customer_user_id,
+                order_id=order_id,
+                order_number=order_number,
+                triggered_by_user_id=triggered_by_user_id,
+                triggered_by_role=triggered_by_role,
+            )
+            # Also notify operations if assigned
+            await notify_ops_order_dispatched(
+                db,
+                ops_user_id=order.get("assigned_operations_id") or order.get("assigned_to"),
+                order_id=order_id,
+                order_number=order_number,
+                triggered_by_user_id=triggered_by_user_id,
+                triggered_by_role=triggered_by_role,
+            )
+
     return serialize_doc(updated)
 
 

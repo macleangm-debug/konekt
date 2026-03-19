@@ -1,12 +1,18 @@
 """
 Partner Settlement Routes
 Manage partner payout profiles and settlement workflow.
+With workflow-linked notifications for settlement status changes.
 """
 import os
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
+
+from notification_trigger_service import (
+    notify_partner_settlement_approved,
+    notify_partner_settlement_paid,
+)
 
 router = APIRouter(prefix="/api/admin/partner-settlements", tags=["Partner Settlements"])
 
@@ -176,30 +182,50 @@ async def mark_settlement_eligible(settlement_id: str):
 
 
 @router.post("/settlements/{settlement_id}/approve")
-async def approve_settlement(settlement_id: str):
-    """Approve a settlement for payout."""
+async def approve_settlement(settlement_id: str, payload: dict = {}):
+    """Approve a settlement for payout with notification to partner."""
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
     if not settlement:
         raise HTTPException(status_code=404, detail="Settlement not found")
+
+    # Idempotency check
+    if settlement.get("status") == "approved":
+        return serialize_doc(settlement)
 
     await db.partner_settlements.update_one(
         {"_id": ObjectId(settlement_id)},
         {"$set": {"status": "approved", "approved_at": now, "updated_at": now}}
     )
     updated = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
+    
+    # Send notification to partner
+    await notify_partner_settlement_approved(
+        db,
+        partner_user_id=settlement.get("partner_user_id") or settlement.get("partner_id"),
+        settlement_id=settlement_id,
+        settlement_reference=settlement.get("settlement_reference") or settlement.get("settlement_number") or f"SET-{settlement_id[:8]}",
+        amount=float(settlement.get("net_amount") or settlement.get("amount") or 0),
+        triggered_by_user_id=payload.get("triggered_by_user_id"),
+        triggered_by_role=payload.get("triggered_by_role", "admin"),
+    )
+    
     return serialize_doc(updated)
 
 
 @router.post("/settlements/{settlement_id}/mark-paid")
 async def mark_settlement_paid(settlement_id: str, payload: dict):
-    """Mark a settlement as paid."""
+    """Mark a settlement as paid with notification to partner."""
     now = datetime.now(timezone.utc).isoformat()
 
     settlement = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
     if not settlement:
         raise HTTPException(status_code=404, detail="Settlement not found")
+
+    # Idempotency check
+    if settlement.get("status") == "paid":
+        return serialize_doc(settlement)
 
     await db.partner_settlements.update_one(
         {"_id": ObjectId(settlement_id)},
@@ -212,6 +238,18 @@ async def mark_settlement_paid(settlement_id: str, payload: dict):
         }}
     )
     updated = await db.partner_settlements.find_one({"_id": ObjectId(settlement_id)})
+    
+    # Send notification to partner
+    await notify_partner_settlement_paid(
+        db,
+        partner_user_id=settlement.get("partner_user_id") or settlement.get("partner_id"),
+        settlement_id=settlement_id,
+        settlement_reference=settlement.get("settlement_reference") or settlement.get("settlement_number") or f"SET-{settlement_id[:8]}",
+        amount=float(settlement.get("net_amount") or settlement.get("amount") or 0),
+        triggered_by_user_id=payload.get("triggered_by_user_id"),
+        triggered_by_role=payload.get("triggered_by_role", "admin"),
+    )
+    
     return serialize_doc(updated)
 
 

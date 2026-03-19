@@ -5,6 +5,10 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from notification_events import notify_service_update
+from notification_trigger_service import (
+    notify_customer_service_status_updated,
+    notify_sales_service_status_updated,
+)
 
 router = APIRouter(prefix="/api/admin/service-requests", tags=["Admin Service Requests"])
 
@@ -87,6 +91,8 @@ async def assign_service_request(request_id: str, payload: dict, request: Reques
 async def update_service_request_status(request_id: str, payload: dict, request: Request):
     status = payload.get("status")
     note = payload.get("note", "")
+    triggered_by_user_id = payload.get("triggered_by_user_id")
+    triggered_by_role = payload.get("triggered_by_role", "admin")
 
     allowed_statuses = {
         "submitted",
@@ -105,6 +111,9 @@ async def update_service_request_status(request_id: str, payload: dict, request:
     doc = await db.service_requests.find_one({"_id": ObjectId(request_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Service request not found")
+
+    # Check idempotency
+    previous_status = doc.get("status")
 
     now = datetime.utcnow()
     await db.service_requests.update_one(
@@ -127,8 +136,34 @@ async def update_service_request_status(request_id: str, payload: dict, request:
 
     updated = await db.service_requests.find_one({"_id": ObjectId(request_id)})
     
-    # Send service update notification to customer
+    # Send service update notification to customer (legacy)
     notify_service_update(updated, note=note)
+    
+    # Send workflow-linked notifications (new system) - only if status changed
+    if status != previous_status:
+        service_name = doc.get("service_name") or doc.get("category") or "Service Request"
+        
+        # Notify customer
+        await notify_customer_service_status_updated(
+            db,
+            customer_user_id=doc.get("customer_user_id") or doc.get("customer_id") or doc.get("user_id"),
+            service_request_id=request_id,
+            service_name=service_name,
+            status_label=status,
+            triggered_by_user_id=triggered_by_user_id,
+            triggered_by_role=triggered_by_role,
+        )
+        
+        # Notify assigned sales
+        await notify_sales_service_status_updated(
+            db,
+            sales_user_id=doc.get("assigned_to") or doc.get("assigned_sales_id"),
+            service_request_id=request_id,
+            service_name=service_name,
+            status_label=status,
+            triggered_by_user_id=triggered_by_user_id,
+            triggered_by_role=triggered_by_role,
+        )
     
     return serialize_doc(updated)
 

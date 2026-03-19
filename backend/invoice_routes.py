@@ -1,6 +1,6 @@
 """
 Konekt Invoice Routes - Create, manage, convert from orders
-With canonical collection mode
+With canonical collection mode and workflow-linked notifications
 """
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -14,6 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from quote_models import InvoiceCreateNew, ConvertOrderToInvoiceRequest
 from payment_terms_utils import resolve_payment_terms, calculate_due_date
 from collection_mode_service import get_invoice_collection
+from notification_trigger_service import notify_customer_invoice_issued
 
 router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
 
@@ -152,29 +153,49 @@ async def get_invoice_payments(invoice_id: str):
 
 
 @router.patch("/{invoice_id}/status")
-async def update_invoice_status(invoice_id: str, status: str = Query(...)):
-    """Update invoice status"""
+async def update_invoice_status(invoice_id: str, status: str = Query(...), triggered_by_user_id: str = Query(default=None), triggered_by_role: str = Query(default="admin")):
+    """Update invoice status with workflow-linked notifications"""
     valid_statuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
     now = datetime.now(timezone.utc)
     invoices_collection = await get_invoice_collection(db)
-    result = await invoices_collection.update_one(
+    
+    # Get the invoice first for notification data
+    invoice = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+    fallback_used = False
+    if not invoice:
+        fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
+        invoice = await fallback.find_one({"_id": ObjectId(invoice_id)})
+        fallback_used = True
+    
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    
+    # Check idempotency - don't re-notify if already in this status
+    previous_status = invoice.get("status")
+    
+    # Update the invoice
+    target_collection = fallback if fallback_used else invoices_collection
+    await target_collection.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
-    if result.matched_count == 0:
-        fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
-        result = await fallback.update_one(
-            {"_id": ObjectId(invoice_id)},
-            {"$set": {"status": status, "updated_at": now.isoformat()}}
+    
+    updated = await target_collection.find_one({"_id": ObjectId(invoice_id)})
+    
+    # Send notification only when status changes to "sent" (invoice issued)
+    if status == "sent" and previous_status != "sent":
+        await notify_customer_invoice_issued(
+            db,
+            customer_user_id=invoice.get("customer_user_id") or invoice.get("customer_id"),
+            invoice_id=invoice_id,
+            invoice_number=invoice.get("invoice_number", "Invoice"),
+            triggered_by_user_id=triggered_by_user_id,
+            triggered_by_role=triggered_by_role,
         )
-        if result.matched_count == 0:
-            raise HTTPException(status_code=404, detail="Invoice not found")
-        updated = await fallback.find_one({"_id": ObjectId(invoice_id)})
-    else:
-        updated = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+    
     return serialize_doc(updated)
 
 
