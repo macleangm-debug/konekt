@@ -1681,4 +1681,68 @@ openConfirmation({
 
 ---
 
-*Last updated: March 21, 2026 - UI Packs Implementation Complete*
+### P0 Pages Implementation (March 21, 2026)
+
+**Completed:**
+
+#### 1. CheckoutPageV2 (`/dashboard/checkout`)
+- Order summary with cart items display
+- Customer details form (prefilled for logged-in users)
+- Rewards & Totals section with points validation
+- Payment methods panel:
+  - **Bank Transfer** = Active (primary/only method)
+  - **Mobile Money** = Not available (disabled)
+  - **Card Payment** = Not available (disabled)
+  - **KwikPay** = Not available (disabled)
+- Tanzania bank details display
+- "Continue with Bank Transfer" submit button
+
+#### 2. InvoicePaymentPageV2 (`/dashboard/invoices/:invoiceId/pay`)
+- Invoice-driven payment flow (no manual invoice ID entry)
+- Invoice summary section (invoice number, customer, amount due, status)
+- Bank transfer details (hardcoded Tanzania)
+- Available Payment Methods grid (Bank=Active, others=Not available)
+- Upload Payment Proof button and form
+- Payment proof auto-links to invoice via `/api/payment-proofs/submit`
+- Success confirmation screen after submission
+
+#### 3. SalesQueuePage (`/staff/queue`)
+- Stage filter buttons (All, New, Contacted, Quote in Progress, Quote Sent, Approved, Handed to Ops, Won, Lost)
+- Queue items display with:
+  - Customer name, email, phone
+  - Company name (if available)
+  - Opportunity type badges (Guest Lead, Quote Request, Service Request, Business Pricing)
+  - Source and Stage tags
+  - Request Details preview
+  - "Open" action button
+- Fallback to guest leads if sales opportunities endpoint unavailable
+
+#### 4. ServiceDetailLeadAwarePage (`/service/:slug`)
+- **Guest user flow:**
+  - Full service details visible
+  - Guest lead capture form (name, email, phone, company, country, region, need summary)
+  - "Submit Details" creates guest lead via `/api/guest-leads`
+  - Links to login for full request submission
+- **Logged-in user flow:**
+  - "You're signed in" notice
+  - "Start Service Request" button → account-mode structured form
+  - "Request Business Quote" button → business pricing flow
+
+**New Components Created:**
+- `PaymentMethodOption.jsx` - Reusable payment method display with active/disabled states
+
+**New Routes Added to App.js:**
+- `/dashboard/checkout` → CheckoutPageV2
+- `/dashboard/invoices/:invoiceId/pay` → InvoicePaymentPageV2
+- `/staff/queue` → SalesQueuePage
+- `/service/:slug` → ServiceDetailLeadAwarePage
+
+**Testing:**
+- All tests passed (iteration_62.json)
+- Backend: 100% (14/14 tests)
+- Frontend: All P0 pages load and function correctly
+- Payment proof API endpoint fixed: `/api/payment-proofs/submit`
+
+---
+
+*Last updated: March 21, 2026 - P0 Pages Implementation Complete*
