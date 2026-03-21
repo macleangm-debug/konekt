@@ -1824,4 +1824,78 @@ efficiency_score = (close_rate * 40%) + (response_speed * 30%) + (customer_ratin
 
 ---
 
-*Last updated: March 21, 2026 - Sales Intelligence & Payment Timeline Complete*
+### Commission + Margin Distribution Engine & Services Improvement (March 21, 2026)
+
+**Completed:**
+
+#### 1. Commission + Margin Distribution Engine
+**Backend Service** (`commission_margin_engine_service.py`):
+```
+Margin Pool Calculation:
+- Gross Margin = Selling Price - Base Cost
+- Protected Company Margin = Selling Price × 8% (never distributed)
+- Distributable Margin = Gross Margin - Protected Company Margin
+
+Distribution Calculation:
+- Affiliate Commission = Distributable × affiliate_percent
+- Sales Commission = Distributable × sales_percent
+- Promo Discount = Distributable × promo_percent
+- Referral Bonus = Distributable × referral_percent
+- Country Bonus = Distributable × country_bonus_percent
+
+Critical Rule: If total allocation > 100%, auto-scale down proportionally
+```
+
+**Default Configuration:**
+- Protected Company Margin: 8%
+- Affiliate: 10%
+- Sales: 15%
+- Promo: 10%
+- Referral: 5%
+- Country Bonus: 5%
+
+**API Endpoints:**
+- `POST /api/commission-engine/preview` - Preview distribution for single item
+- `POST /api/commission-engine/calculate-order` - Calculate for entire order
+- `GET /api/commission-engine/default-config` - Get config with explanations
+- `POST /api/commission-engine/validate-config` - Validate allocation percentages
+
+#### 2. Services Page Improvements
+
+**Public Services Page** (`/services`):
+- Service Hero Panel with feature cards
+- 6 category tabs (Printing & Branding, Creative & Design, Facilities, Technical, Business Support, Uniforms)
+- Premium service cards with View Service and Request Quote CTAs
+- Guest-friendly discovery flow
+
+**Account Services Page** (`/dashboard/services`):
+- Account-mode hero panel
+- Request Business Pricing CTA for B2B clients
+- Same category grid with account-aware actions
+
+**New Components:**
+- `ServiceHeroPanel.jsx` - Hero section with feature cards
+- `ServiceCategoryGrid.jsx` - Category tabs and service cards grid
+- `ServiceRequestActions.jsx` - View Service / Request Quote buttons
+
+**Default Services Seeded (11 services across 6 categories):**
+- Printing & Branding: Printing, Office Branding, Signage Installation
+- Creative & Design: Graphic Design, Social Media Design
+- Facilities: Deep Cleaning, Fumigation
+- Technical: Printer Servicing, CCTV Installation
+- Business Support: Procurement Support
+- Uniforms: Uniform Tailoring
+
+**New Routes Added:**
+- `/services` → ServicesPageImproved
+- `/dashboard/services` → AccountServicesDiscoveryPage
+- `/api/commission-engine/*` → Commission Engine APIs
+
+**Testing:**
+- All tests passed (iteration_64.json)
+- Backend: 100% (19/19 tests)
+- Frontend: 100% (all components functional)
+
+---
+
+*Last updated: March 21, 2026 - Commission Engine & Services Improvement Complete*
