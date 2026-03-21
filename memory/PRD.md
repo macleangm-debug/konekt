@@ -1745,4 +1745,83 @@ openConfirmation({
 
 ---
 
-*Last updated: March 21, 2026 - P0 Pages Implementation Complete*
+### Sales Intelligence & Payment Timeline Implementation (March 21, 2026)
+
+**Completed:**
+
+#### 1. Payment Timeline (CRITICAL for trust & support reduction)
+**Backend:**
+- `payment_timeline_service.py` - Build timeline events with helper functions for each step
+- `payment_timeline_routes.py` - API endpoints for timeline retrieval
+- Timeline steps: Invoice Issued → Payment Submitted → Verification In Progress → Payment Confirmed → Processing / Fulfilled
+
+**Timeline Triggers (Backend Integration):**
+- `invoice_routes.py` - `trigger_invoice_issued()` when invoice created
+- `payment_proof_routes.py` - `trigger_payment_submitted()` when proof uploaded
+- `payment_proof_routes.py` - `trigger_payment_confirmed()` when proof approved
+
+**Frontend:**
+- `PaymentTimeline.jsx` - Visual timeline component with step indicators
+- Integrated into `InvoicePaymentPageV2.jsx` showing payment progress
+
+**API Endpoints:**
+- `GET /api/payment-timeline/steps` - Returns sequence of 5 steps
+- `GET /api/payment-timeline/invoice/:id` - Returns events for specific invoice
+
+#### 2. Sales Intelligence Engine
+**Backend:**
+- `assignment_engine_service.py` - Smart assignment based on efficiency scoring
+- `sales_intelligence_routes.py` - Leaderboard and assignment preview APIs
+
+**Efficiency Scoring Formula:**
+```
+efficiency_score = (close_rate * 40%) + (response_speed * 30%) + (customer_rating * 30%)
+```
+
+**Smart Assignment Logic:**
+- Base score from efficiency
+- Specialty bonus (+10 for category match)
+- Workload penalty (up to -30 for high workload)
+
+**API Endpoints:**
+- `GET /api/sales-intelligence/leaderboard` - Staff ranked by efficiency
+- `POST /api/sales-intelligence/assign-preview` - Preview assignment without committing
+- `GET /api/sales-intelligence/efficiency-breakdown/:id` - Detailed breakdown for staff member
+
+#### 3. Staff Performance Dashboard (`/staff/performance`)
+- Summary cards: Team Avg Efficiency, Active Sales Staff, Total Open Opportunities, Total Wins
+- Sales Leaderboard with ranking and efficiency progress bars
+- Metrics: Close rate, Speed score, Rating score, Workload
+
+#### 4. Supervisor Performance Dashboard (`/admin/supervisor-performance`)
+- Team overview: Team Size, Avg Efficiency, At Risk count, Overloaded count
+- Top Performer card with key metrics
+- Needs Attention card highlighting lowest performer
+- At-Risk Staff section (efficiency < 50)
+- Overloaded Staff section (workload > 15)
+- Full Team Leaderboard table
+
+#### 5. Sales Queue Intelligence (`/staff/queue-intelligence`)
+- Enhanced queue with Top Performers strip
+- SLA indicators (time since created)
+- Assigned sales person display
+- Efficiency-aware opportunity cards
+
+**New Routes Added to App.js:**
+- `/staff/queue-intelligence` → SalesQueueIntelligencePage
+- `/staff/performance` → StaffPerformanceDashboardPage
+- `/admin/supervisor-performance` → SupervisorPerformanceDashboardPage
+
+**Backend Routes Registered:**
+- `/api/payment-timeline` - Payment Timeline API
+- `/api/sales-intelligence` - Sales Intelligence API
+- `/api/staff-performance` - Staff Performance API
+
+**Testing:**
+- All tests passed (iteration_63.json)
+- Backend: 100% (13/13 tests)
+- Frontend: 100% (all components load correctly)
+
+---
+
+*Last updated: March 21, 2026 - Sales Intelligence & Payment Timeline Complete*
