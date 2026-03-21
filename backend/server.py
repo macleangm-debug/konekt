@@ -2358,6 +2358,18 @@ app.include_router(checkout_points_router)
 from production_progress_routes import router as production_progress_router
 app.include_router(production_progress_router)
 
+# Guest Lead Capture
+from guest_lead_routes import router as guest_lead_router
+app.include_router(guest_lead_router)
+
+# Invoice Payment Flow
+from invoice_payment_routes import router as invoice_payment_router
+app.include_router(invoice_payment_router)
+
+# Sales Queue
+from sales_queue_routes import router as sales_queue_router
+app.include_router(sales_queue_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
