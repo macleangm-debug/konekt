@@ -24,7 +24,6 @@ export default function PublicNavbarV2() {
   const links = [
     { label: "Marketplace", href: "/marketplace" },
     { label: "Services", href: "/services", hasDropdown: true },
-    { label: "Request Quote", href: "/request-quote", highlight: true },
     { label: "Track Order", href: "/track-order" },
     { label: "Expansion", href: "/launch-country" },
     { label: "Earn", href: "/earn" },

@@ -204,6 +204,9 @@ import AccountServicesDiscoveryPage from "@/pages/customer/AccountServicesDiscov
 import DynamicServiceDetailPage from "@/pages/public/DynamicServiceDetailPage";
 import AccountServiceDetailPage from "@/pages/customer/AccountServiceDetailPage";
 
+// Quote Request Page
+import QuoteRequestPage from "@/pages/public/QuoteRequestPage";
+
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import CustomerPortalLayoutV2 from "@/layouts/CustomerPortalLayoutV2";
@@ -508,6 +511,9 @@ function App() {
         
         {/* Dynamic Service Detail Page (New Service Pages Pack) */}
         <Route path="/services/:slug" element={<DynamicServiceDetailPage />} />
+        
+        {/* Quote Request Page */}
+        <Route path="/request-quote" element={<QuoteRequestPage />} />
         
         {/* NEW: Premium Public Site Routes with unified layout */}
         <Route path="/" element={<PublicSiteLayout />}>

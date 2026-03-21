@@ -29,13 +29,20 @@ export default function SalesQueuePage() {
       try {
         const query = stage ? `?stage=${encodeURIComponent(stage)}` : "";
         
-        // Try sales opportunities endpoint first, fall back to guest leads
+        // Use sales-queue endpoint which contains all sales opportunities
         let data = [];
         try {
-          const res = await api.get(`/api/sales-opportunities/my-queue${query}`);
-          data = res.data || [];
+          const res = await api.get(`/api/sales-queue${query}`);
+          data = (res.data || []).map(opp => ({
+            ...opp,
+            // Parse intent_payload from notes if it's a string
+            intent_payload: typeof opp.notes === 'string' && opp.notes.startsWith('{') 
+              ? (() => { try { return JSON.parse(opp.notes.replace(/'/g, '"')); } catch { return {}; } })()
+              : opp.intent_payload || {},
+          }));
         } catch (err) {
-          // Fall back to guest leads
+          console.log("Sales queue endpoint error:", err);
+          // Fall back to guest leads if sales-queue fails
           try {
             const leadsRes = await api.get(`/api/guest-leads${query ? `?status=${stage || 'new'}` : ''}`);
             data = (leadsRes.data || []).map(lead => ({
