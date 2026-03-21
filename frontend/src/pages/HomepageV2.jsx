@@ -7,7 +7,7 @@ import PremiumHero from "../components/public/PremiumHero";
 import TrustStrip from "../components/public/TrustStrip";
 import ClientTrustStrip from "../components/public/ClientTrustStrip";
 import CategoryShowcase from "../components/public/CategoryShowcase";
-import HomeBusinessSolutionsSection from "../components/public/HomeBusinessSolutionsSection";
+import LandingBusinessProofSection from "../components/public/LandingBusinessProofSection";
 import FeaturedMarketplaceSection from "../components/public/FeaturedMarketplaceSection";
 import HowItWorksSection from "../components/public/HowItWorksSection";
 import WhyChooseSection from "../components/public/WhyChooseSection";
@@ -70,7 +70,7 @@ export default function HomepageV2() {
       <TrustStrip />
       <ClientTrustStrip />
       <CategoryShowcase />
-      <HomeBusinessSolutionsSection />
+      <LandingBusinessProofSection />
       <FeaturedMarketplaceSection listings={Array.isArray(listings) ? listings.slice(0, 8) : []} />
       <div id="how-it-works">
         <HowItWorksSection />
