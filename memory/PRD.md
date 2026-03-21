@@ -1898,4 +1898,51 @@ Critical Rule: If total allocation > 100%, auto-scale down proportionally
 
 ---
 
-*Last updated: March 21, 2026 - Commission Engine & Services Improvement Complete*
+### Codebase Pack 25 - Service Pages Pack ✅ (March 21, 2026)
+
+**Dynamic Service Detail Pages:**
+
+**Public Service Detail Page** (`/services/:slug`):
+- Full-featured service page template with hero, includes, who-it's-for, process steps, FAQs
+- Guest lead capture form for non-logged-in users
+- Fallback service data for core services (printing-promotional-materials, office-branding, showroom-design, billboard-signs)
+- "Start Service Request" and "Request Quote" CTAs
+- Back to Services navigation
+
+**Account Service Detail Page** (`/dashboard/services/:slug`):
+- Same rich template within customer dashboard layout
+- Account-mode messaging and direct access to service request/business pricing flows
+- Integrated with customer portal sidebar navigation
+
+**Services Navigation Dropdown:**
+- `ServiceNavigationDropdownData.js` - 6 categories with 22 services:
+  - Printing & Branding (5 services)
+  - Creative & Design (3 services)
+  - Facilities Services (3 services)
+  - Technical Support (4 services)
+  - Business Support (3 services)
+  - Uniforms & Workwear (3 services)
+- Desktop dropdown with multi-column layout
+- Mobile expandable menu with all categories
+- "View All Services →" footer link
+
+**New Components:**
+- `DynamicServiceDetailPage.jsx` - Public service page
+- `AccountServiceDetailPage.jsx` - Dashboard service page
+- `ServicePageTemplate.jsx` - Shared template component
+- `ServiceProcessSteps.jsx` - Visual process timeline
+- `ServiceFaqBlock.jsx` - Expandable FAQ section
+- `ServiceNavigationDropdownData.js` - Navigation data
+
+**Routes Added:**
+- `/services/:slug` → DynamicServiceDetailPage (public)
+- `/dashboard/services/:slug` → AccountServiceDetailPage (customer portal)
+
+**Testing:**
+- All tests passed (iteration_65.json)
+- Frontend: 100% success rate
+- Features verified: routing, dropdown navigation, mobile menu, guest lead form, button flows
+
+---
+
+*Last updated: March 21, 2026 - Service Pages Pack Complete*
