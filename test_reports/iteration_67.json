@@ -1,0 +1,127 @@
+{
+  "summary": "Iteration 67 - Service Partner Capabilities Admin UI testing complete. All CRUD operations, filtering, and routing/best endpoint working correctly. Backend: 13/13 tests passed. Frontend: All form fields present, create/edit/delete working, filters functional, preferred routing checkbox works.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "Page Load": {
+      "route": "/admin/service-partner-capabilities",
+      "status": "PASS",
+      "tests": [
+        "Page loads with form and table",
+        "Service-Partner Mapping form visible",
+        "Existing Mappings section visible",
+        "Filters section visible"
+      ]
+    },
+    "Form Fields": {
+      "status": "PASS",
+      "tests": [
+        "partner_id input present",
+        "partner_name input present",
+        "service_key input present",
+        "service_name input present",
+        "country_code input present",
+        "regions (comma separated) input present",
+        "capability_status select (active/inactive/probation)",
+        "priority_rank number input present",
+        "quality_score number input present",
+        "avg_turnaround_days number input present",
+        "success_rate number input present",
+        "current_active_queue number input present",
+        "preferred_routing checkbox present",
+        "notes textarea present"
+      ]
+    },
+    "Backend CRUD APIs": {
+      "status": "PASS",
+      "tests": [
+        "POST /api/admin/service-partner-capabilities creates mapping",
+        "GET /api/admin/service-partner-capabilities lists all mappings",
+        "GET /api/admin/service-partner-capabilities?service_key=X filters by service",
+        "GET /api/admin/service-partner-capabilities?country_code=X filters by country",
+        "PUT /api/admin/service-partner-capabilities/:id updates mapping",
+        "DELETE /api/admin/service-partner-capabilities/:id removes mapping",
+        "DELETE nonexistent returns 404",
+        "PUT nonexistent returns 404"
+      ]
+    },
+    "Routing Best Endpoint": {
+      "status": "PASS",
+      "tests": [
+        "GET /api/admin/service-partner-capabilities/routing/best?service_key=X&country_code=Y returns best partner",
+        "Sorts by preferred_routing, priority_rank, quality_score, current_active_queue, success_rate",
+        "Returns null when no matching capabilities"
+      ]
+    },
+    "Preferred Routing Logic": {
+      "status": "PASS",
+      "tests": [
+        "Setting preferred_routing=true clears other preferred for same service/country",
+        "routing/best prefers partner with preferred_routing=true over better stats"
+      ]
+    },
+    "UI Interactions": {
+      "status": "PASS",
+      "tests": [
+        "Form submission creates new mapping",
+        "New mapping appears in Existing Mappings list",
+        "Edit button loads mapping into form",
+        "Remove button deletes mapping",
+        "Filter by Service Key works",
+        "Filter by Country Code works"
+      ]
+    },
+    "Table Display": {
+      "status": "PASS",
+      "tests": [
+        "Partner name displayed",
+        "Service name, country code, status displayed",
+        "Priority tag visible",
+        "Quality tag visible",
+        "Turnaround tag visible (added)",
+        "Success rate tag visible",
+        "Queue tag visible",
+        "Preferred Routing tag visible when true",
+        "Regions displayed",
+        "Notes displayed when present"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_service_partner_capabilities.py",
+    "/app/test_reports/pytest/pytest_results_service_partner_capabilities.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/components/admin/ServicePartnerCapabilityForm.jsx",
+    "/app/frontend/src/components/admin/ServicePartnerCapabilityTable.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "100% (all features working)"
+  },
+  "test_credentials": {
+    "admin": {"url": "/admin/login", "email": "admin@konekt.co.tz", "password": "KnktcKk_L-hw1wSyquvd!"}
+  },
+  "seed_data_creation": "Test data created and cleaned up during pytest execution. Existing mapping: PrintMax Tanzania (printing_branding, TZ)",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Service Partner Capabilities Admin UI fully functional at /admin/service-partner-capabilities. All CRUD operations work. Filters by service_key and country_code work. routing/best endpoint returns best partner based on preferred_routing > priority_rank > quality_score > current_active_queue > success_rate. Added data-testid attributes to form and table components. Added missing Turnaround tag to table display. Collection name is partner_service_capabilities.",
+  "improvements_made": [
+    "Added data-testid attributes to ServicePartnerCapabilityForm.jsx for better testability",
+    "Added data-testid attributes to ServicePartnerCapabilityTable.jsx for better testability",
+    "Added missing Turnaround tag display in table (was in form but not shown in table)"
+  ]
+}

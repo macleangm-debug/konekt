@@ -160,6 +160,9 @@ import ProductionJobsAdminPage from "@/pages/admin/ProductionJobsAdminPage";
 // Admin UX Overview
 import AdminUxOverviewPage from "@/pages/admin/AdminUxOverviewPage";
 
+// Service Partner Capabilities
+import ServicePartnerCapabilitiesPage from "@/pages/admin/ServicePartnerCapabilitiesPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -477,6 +480,8 @@ function App() {
           <Route path="ux-overview" element={<AdminUxOverviewPage />} />
           {/* Supervisor Performance Dashboard */}
           <Route path="supervisor-performance" element={<SupervisorPerformanceDashboardPage />} />
+          {/* Service Partner Capabilities */}
+          <Route path="service-partner-capabilities" element={<ServicePartnerCapabilitiesPage />} />
         </Route>
         
         {/* Partner Portal Routes */}

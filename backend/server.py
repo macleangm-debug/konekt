@@ -2386,6 +2386,10 @@ app.include_router(staff_performance_router)
 from commission_margin_engine_routes import router as commission_margin_engine_router
 app.include_router(commission_margin_engine_router)
 
+# Service Partner Capability Mapping
+from service_partner_capability_routes import router as service_partner_capability_router
+app.include_router(service_partner_capability_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
