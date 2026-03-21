@@ -2382,6 +2382,10 @@ app.include_router(sales_intelligence_router)
 from staff_performance_routes import router as staff_performance_router
 app.include_router(staff_performance_router)
 
+# Commission + Margin Distribution Engine
+from commission_margin_engine_routes import router as commission_margin_engine_router
+app.include_router(commission_margin_engine_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)

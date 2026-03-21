@@ -196,6 +196,10 @@ import SalesQueueIntelligencePage from "@/pages/staff/SalesQueueIntelligencePage
 import StaffPerformanceDashboardPage from "@/pages/staff/StaffPerformanceDashboardPage";
 import SupervisorPerformanceDashboardPage from "@/pages/admin/SupervisorPerformanceDashboardPage";
 
+// Services Pages (Improved)
+import ServicesPageImproved from "@/pages/public/ServicesPageImproved";
+import AccountServicesDiscoveryPage from "@/pages/customer/AccountServicesDiscoveryPage";
+
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import CustomerPortalLayoutV2 from "@/layouts/CustomerPortalLayoutV2";
@@ -492,6 +496,9 @@ function App() {
         {/* Services Discovery Page */}
         <Route path="/services-discover" element={<ServicesDiscoveryPage />} />
         
+        {/* Services Page (Improved) */}
+        <Route path="/services" element={<ServicesPageImproved />} />
+        
         {/* Service Detail Lead-Aware Page (Guest/Logged-in flow) */}
         <Route path="/service/:slug" element={<ServiceDetailLeadAwarePage />} />
         
@@ -524,6 +531,7 @@ function App() {
           <Route path="invoices" element={<InvoicesPageV2 />} />
           <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
           <Route path="checkout" element={<CheckoutPageV2 />} />
+          <Route path="services" element={<AccountServicesDiscoveryPage />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
           <Route path="referrals" element={<PointsPageV2 />} />
