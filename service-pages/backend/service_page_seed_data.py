@@ -1,0 +1,135 @@
+SERVICE_PAGE_DATA = [
+    {
+        "key": "printing-promotional-materials",
+        "slug": "printing-promotional-materials",
+        "group_key": "printing_branding",
+        "group_name": "Printing & Branding",
+        "name": "Printing & Promotional Materials",
+        "description": "Structured printing support for marketing, corporate, and event materials including branded collateral and promotional items.",
+        "includes": [
+            "Business cards, flyers, brochures, and booklets",
+            "Promotional items such as lanyards, name tags, diaries, and branded giveaways",
+            "Artwork coordination, revisions, and print production follow-up",
+        ],
+        "for_who": [
+            "Businesses launching campaigns or events",
+            "Teams that need recurring branded materials",
+            "Organizations that want structured print coordination",
+        ],
+        "process_steps": [
+            {"title": "Submit brief", "description": "Share quantities, sizes, deadlines, and branding requirements."},
+            {"title": "Commercial review", "description": "Konekt aligns pricing, feasibility, and production path."},
+            {"title": "Production", "description": "Printing or branding execution starts with monitored follow-up."},
+            {"title": "Delivery", "description": "Completed items are delivered or handed over according to plan."},
+        ],
+        "why_konekt": [
+            "Coordinated handling from brief to production",
+            "Support across one-off and recurring needs",
+            "Better visibility for business clients and teams",
+        ],
+        "pricing_guidance": "Pricing depends on item type, quantity, finishing, branding complexity, and delivery requirements.",
+        "faqs": [
+            {"q": "Can Konekt handle both design and printing?", "a": "Yes, Konekt can coordinate design support and the printing workflow together."},
+            {"q": "Can I request multiple item types in one brief?", "a": "Yes, especially for campaign or event-related requirements."},
+        ],
+    },
+    {
+        "key": "office-branding",
+        "slug": "office-branding",
+        "group_key": "printing_branding",
+        "group_name": "Printing & Branding",
+        "name": "Office Branding",
+        "description": "End-to-end coordination for workspace branding, graphics, directional signs, and branded visual identity inside the office.",
+        "includes": [
+            "Wall branding and reception branding",
+            "Directional graphics and internal signage",
+            "Brand placement planning and installation support",
+        ],
+        "for_who": [
+            "Offices setting up or refreshing workspace identity",
+            "Companies with branches and customer-facing premises",
+            "Organizations needing coordinated branding execution",
+        ],
+        "process_steps": [
+            {"title": "Discovery", "description": "Konekt captures the office context and branding objective."},
+            {"title": "Site review", "description": "Measurements, location context, and branding surfaces are reviewed."},
+            {"title": "Design + quote", "description": "Commercial and design direction are aligned."},
+            {"title": "Installation", "description": "Approved branding is produced and installed."},
+        ],
+        "why_konekt": [
+            "Structured coordination across design, production, and installation",
+            "Suitable for one office or multiple branches",
+            "Clearer client communication throughout the process",
+        ],
+        "pricing_guidance": "Pricing depends on site size, materials, installation complexity, and branding coverage.",
+        "faqs": [
+            {"q": "Is a site visit required?", "a": "In most office branding projects, yes — site review helps quote accurately."},
+        ],
+    },
+    {
+        "key": "showroom-design",
+        "slug": "showroom-design",
+        "group_key": "printing_branding",
+        "group_name": "Printing & Branding",
+        "name": "Showroom Design",
+        "description": "Design and execution support for branded showrooms and display environments that present products or services more effectively.",
+        "includes": [
+            "Showroom layout thinking and branding direction",
+            "Display structures and branded surfaces",
+            "Installation and finishing coordination",
+        ],
+        "for_who": [
+            "Retail and corporate environments",
+            "Brands with physical display spaces",
+            "Teams that want more professional merchandising presentation",
+        ],
+        "process_steps": [
+            {"title": "Brief", "description": "Discuss space purpose, customer journey, and display goals."},
+            {"title": "Site + design review", "description": "Konekt aligns concept direction with physical context."},
+            {"title": "Commercial alignment", "description": "Scope, pricing, materials, and timeline are confirmed."},
+            {"title": "Execution", "description": "Production and installation are coordinated to completion."},
+        ],
+        "why_konekt": [
+            "Good fit for design + execution workflows",
+            "Better coordination between branding and physical setup",
+            "Useful for launch, refresh, or campaign spaces",
+        ],
+        "pricing_guidance": "Pricing depends on concept scope, fabrication needs, materials, and installation conditions.",
+        "faqs": [
+            {"q": "Can this include signage and printed display material?", "a": "Yes, showroom design can be combined with printing, signage, and branded materials."},
+        ],
+    },
+    {
+        "key": "billboard-signs",
+        "slug": "billboard-signs",
+        "group_key": "printing_branding",
+        "group_name": "Printing & Branding",
+        "name": "Billboard Signs",
+        "description": "Large-format billboard signage coordination including branding, fabrication support, installation, and maintenance-oriented execution planning.",
+        "includes": [
+            "Billboard sign production coordination",
+            "Branding artwork and print surface handling",
+            "Installation workflow and execution planning",
+        ],
+        "for_who": [
+            "Businesses with outdoor visibility needs",
+            "Campaign teams and location-based promotions",
+            "Organizations requiring branded public-facing signage",
+        ],
+        "process_steps": [
+            {"title": "Requirement capture", "description": "Discuss location, size, branding, and installation context."},
+            {"title": "Technical review", "description": "Site conditions and structural needs are reviewed."},
+            {"title": "Quote + approval", "description": "Commercial and execution scope is agreed."},
+            {"title": "Fabrication + install", "description": "Billboard assets are produced and installed."},
+        ],
+        "why_konekt": [
+            "Combines branding coordination with execution planning",
+            "Better visibility over outdoor signage workflow",
+            "Useful for one-off campaign or long-term placement",
+        ],
+        "pricing_guidance": "Pricing depends on billboard size, fabrication complexity, site location, and installation conditions.",
+        "faqs": [
+            {"q": "Does this require a site visit?", "a": "In most cases yes, because billboard work is location and structure-dependent."},
+        ],
+    },
+]
