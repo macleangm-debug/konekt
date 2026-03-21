@@ -15,6 +15,7 @@ from quote_models import InvoiceCreateNew, ConvertOrderToInvoiceRequest
 from payment_terms_utils import resolve_payment_terms, calculate_due_date
 from collection_mode_service import get_invoice_collection
 from notification_trigger_service import notify_customer_invoice_issued
+from payment_timeline_service import trigger_invoice_issued
 
 router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
 
@@ -84,6 +85,18 @@ async def create_invoice(payload: InvoiceCreateNew):
     invoices_collection = await get_invoice_collection(db)
     result = await invoices_collection.insert_one(doc)
     created = await invoices_collection.find_one({"_id": result.inserted_id})
+    
+    # Trigger Payment Timeline event for invoice issued
+    try:
+        await trigger_invoice_issued(
+            db,
+            invoice_id=str(result.inserted_id),
+            invoice_number=invoice_number,
+            customer_user_id=doc.get("customer_user_id"),
+        )
+    except Exception as e:
+        print(f"Warning: Failed to create payment timeline event: {e}")
+    
     return serialize_doc(created)
 
 

@@ -10,6 +10,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from notification_trigger_service import notify_customer_payment_reviewed
+from payment_timeline_service import trigger_payment_submitted, trigger_verification_started, trigger_payment_confirmed
 
 router = APIRouter(prefix="/api/payment-proofs", tags=["Payment Proofs"])
 
@@ -63,6 +64,21 @@ async def submit_payment_proof(payload: dict):
 
     result = await db.payment_proof_submissions.insert_one(doc)
     created = await db.payment_proof_submissions.find_one({"_id": result.inserted_id})
+    
+    # Trigger Payment Timeline event for payment submitted
+    try:
+        invoice_number = payload.get("invoice_number", "")
+        await trigger_payment_submitted(
+            db,
+            invoice_id=invoice_id or "",
+            invoice_number=invoice_number,
+            customer_user_id=payload.get("customer_user_id"),
+            triggered_by_user_id=payload.get("customer_user_id"),
+            note=f"Payment proof submitted: {payload.get('bank_reference') or payload.get('transaction_reference', 'N/A')}"
+        )
+    except Exception as e:
+        print(f"Warning: Failed to create payment timeline event: {e}")
+    
     return {"message": "Payment proof submitted successfully", "submission": serialize_doc(created)}
 
 
@@ -188,6 +204,20 @@ async def approve_payment_proof(proof_id: str, payload: dict):
         triggered_by_user_id=payload.get("approved_by"),
         triggered_by_role="admin",
     )
+    
+    # Trigger Payment Timeline event for payment confirmed
+    try:
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)}) if invoice_id and len(invoice_id) == 24 else None
+        invoice_number = invoice.get("invoice_number", "") if invoice else proof.get("invoice_number", "")
+        await trigger_payment_confirmed(
+            db,
+            invoice_id=invoice_id or "",
+            invoice_number=invoice_number,
+            customer_user_id=proof.get("customer_user_id"),
+            triggered_by_user_id=payload.get("approved_by"),
+        )
+    except Exception as e:
+        print(f"Warning: Failed to create payment timeline event: {e}")
     
     return {"message": "Payment proof approved", "submission": serialize_doc(updated)}
 

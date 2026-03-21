@@ -2370,6 +2370,18 @@ app.include_router(invoice_payment_router)
 from sales_queue_routes import router as sales_queue_router
 app.include_router(sales_queue_router)
 
+# Payment Timeline
+from payment_timeline_routes import router as payment_timeline_router
+app.include_router(payment_timeline_router)
+
+# Sales Intelligence (leaderboard, smart assignment)
+from sales_intelligence_routes import router as sales_intelligence_router
+app.include_router(sales_intelligence_router)
+
+# Staff Performance (staff + supervisor dashboards)
+from staff_performance_routes import router as staff_performance_router
+app.include_router(staff_performance_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)

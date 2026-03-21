@@ -191,6 +191,11 @@ import CheckoutPageV2 from "@/pages/checkout/CheckoutPageV2";
 import SalesQueuePage from "@/pages/staff/SalesQueuePage";
 import ServiceDetailLeadAwarePage from "@/pages/services/ServiceDetailLeadAwarePage";
 
+// Sales Intelligence & Performance Dashboards
+import SalesQueueIntelligencePage from "@/pages/staff/SalesQueueIntelligencePage";
+import StaffPerformanceDashboardPage from "@/pages/staff/StaffPerformanceDashboardPage";
+import SupervisorPerformanceDashboardPage from "@/pages/admin/SupervisorPerformanceDashboardPage";
+
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import CustomerPortalLayoutV2 from "@/layouts/CustomerPortalLayoutV2";
@@ -459,6 +464,8 @@ function App() {
           <Route path="production-jobs" element={<ProductionJobsAdminPage />} />
           {/* Admin UX Overview */}
           <Route path="ux-overview" element={<AdminUxOverviewPage />} />
+          {/* Supervisor Performance Dashboard */}
+          <Route path="supervisor-performance" element={<SupervisorPerformanceDashboardPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -538,6 +545,20 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <SalesQueuePage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/queue-intelligence" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesQueueIntelligencePage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/performance" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <StaffPerformanceDashboardPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

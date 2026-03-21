@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import PaymentMethodOption from "../../components/payments/PaymentMethodOption";
+import PaymentTimeline from "../../components/payments/PaymentTimeline";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 
@@ -11,6 +12,7 @@ export default function InvoicePaymentPageV2() {
   const { invoiceId } = useParams();
   const navigate = useNavigate();
   const [invoice, setInvoice] = useState(null);
+  const [timelineEvents, setTimelineEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -57,6 +59,16 @@ export default function InvoicePaymentPageV2() {
             ...prev,
             amount_paid: String(invoiceData.amount_due || invoiceData.total || invoiceData.total_amount || ""),
           }));
+          
+          // Fetch payment timeline events
+          try {
+            const timelineRes = await api.get(`/api/payment-timeline/invoice/${invoiceId}`);
+            if (timelineRes.data?.events) {
+              setTimelineEvents(timelineRes.data.events);
+            }
+          } catch (err) {
+            console.log("Payment timeline not available for this invoice");
+          }
         }
       } catch (err) {
         console.error("Failed to fetch invoice:", err);
@@ -231,6 +243,18 @@ export default function InvoicePaymentPageV2() {
           </div>
         </div>
       </div>
+
+      {/* Payment Timeline */}
+      <SurfaceCard>
+        <div className="text-lg font-bold text-[#20364D] mb-4">Payment Progress</div>
+        <p className="text-slate-600 text-sm mb-6">
+          Track your payment status from invoice issuance to order fulfillment.
+        </p>
+        <PaymentTimeline 
+          events={timelineEvents} 
+          currentStatus={invoice?.status === "paid" ? "confirmed" : (timelineEvents.length > 0 ? undefined : "issued")}
+        />
+      </SurfaceCard>
 
       {/* Payment Methods Overview */}
       <SurfaceCard>
