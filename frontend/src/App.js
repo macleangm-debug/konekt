@@ -184,6 +184,12 @@ import ServicesDiscoveryPage from "@/pages/public/ServicesDiscoveryPage";
 
 // Customer Invoice Payment
 import InvoicePaymentPage from "@/pages/customer/InvoicePaymentPage";
+import InvoicePaymentPageV2 from "@/pages/customer/InvoicePaymentPageV2";
+
+// P0 Pages - Checkout, Sales Queue, Service Detail
+import CheckoutPageV2 from "@/pages/checkout/CheckoutPageV2";
+import SalesQueuePage from "@/pages/staff/SalesQueuePage";
+import ServiceDetailLeadAwarePage from "@/pages/services/ServiceDetailLeadAwarePage";
 
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
@@ -479,6 +485,9 @@ function App() {
         {/* Services Discovery Page */}
         <Route path="/services-discover" element={<ServicesDiscoveryPage />} />
         
+        {/* Service Detail Lead-Aware Page (Guest/Logged-in flow) */}
+        <Route path="/service/:slug" element={<ServiceDetailLeadAwarePage />} />
+        
         {/* NEW: Premium Public Site Routes with unified layout */}
         <Route path="/" element={<PublicSiteLayout />}>
           <Route index element={<HomepageV2Content />} />
@@ -506,7 +515,8 @@ function App() {
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />
-          <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPage />} />
+          <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
+          <Route path="checkout" element={<CheckoutPageV2 />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
           <Route path="referrals" element={<PointsPageV2 />} />
@@ -521,6 +531,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <StaffWorkspaceHomePage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/queue" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesQueuePage />
             </AdminRoute>
           </AdminAuthProvider>
         } />
