@@ -200,6 +200,10 @@ import SupervisorPerformanceDashboardPage from "@/pages/admin/SupervisorPerforma
 import ServicesPageImproved from "@/pages/public/ServicesPageImproved";
 import AccountServicesDiscoveryPage from "@/pages/customer/AccountServicesDiscoveryPage";
 
+// Dynamic Service Pages Pack
+import DynamicServiceDetailPage from "@/pages/public/DynamicServiceDetailPage";
+import AccountServiceDetailPage from "@/pages/customer/AccountServiceDetailPage";
+
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
 import CustomerPortalLayoutV2 from "@/layouts/CustomerPortalLayoutV2";
@@ -502,6 +506,9 @@ function App() {
         {/* Service Detail Lead-Aware Page (Guest/Logged-in flow) */}
         <Route path="/service/:slug" element={<ServiceDetailLeadAwarePage />} />
         
+        {/* Dynamic Service Detail Page (New Service Pages Pack) */}
+        <Route path="/services/:slug" element={<DynamicServiceDetailPage />} />
+        
         {/* NEW: Premium Public Site Routes with unified layout */}
         <Route path="/" element={<PublicSiteLayout />}>
           <Route index element={<HomepageV2Content />} />
@@ -532,6 +539,7 @@ function App() {
           <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
           <Route path="checkout" element={<CheckoutPageV2 />} />
           <Route path="services" element={<AccountServicesDiscoveryPage />} />
+          <Route path="services/:slug" element={<AccountServiceDetailPage />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
           <Route path="referrals" element={<PointsPageV2 />} />
