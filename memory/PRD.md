@@ -1946,3 +1946,44 @@ Critical Rule: If total allocation > 100%, auto-scale down proportionally
 ---
 
 *Last updated: March 21, 2026 - Service Pages Pack Complete*
+
+---
+
+### Codebase Pack 26 - Quote Request Flow ✅ (March 21, 2026)
+
+**Quote Request Page (`/request-quote`):**
+- Complete form with contact details (name, email, phone, company, country, region)
+- Service requirements section (category, details, urgency, budget range)
+- "What happens next?" info box explaining the process
+- Success page with confirmation and next steps
+- Mobile responsive design
+
+**Backend Integration:**
+- Form submits to `/api/guest-leads` endpoint
+- Auto-creates `sales_opportunity` for sales team follow-up
+- Guest lead stored with full intent payload
+
+**Admin Visibility:**
+- Quote requests appear in Sales Queue (`/staff/queue`)
+- Shows customer details, service category, details, urgency
+- "Guest Lead" badge and "Source: website_quote_form" tags
+- "Open" button for sales to take action
+
+**Navbar Update:**
+- Removed "Request Quote" nav link from main navigation
+- Kept "Get Quote" gold button in header actions
+
+**Files Created/Modified:**
+- `QuoteRequestPage.jsx` - New quote request form page
+- `PublicNavbarV2.jsx` - Removed Request Quote nav link
+- `App.js` - Added /request-quote route
+- `SalesQueuePage.jsx` - Fixed to use correct API endpoint
+
+**Testing:**
+- All tests passed (iteration_66.json)
+- Backend: 100% (11/11 tests)
+- Frontend: 100% (all features working)
+
+---
+
+*Last updated: March 21, 2026 - Quote Request Flow Complete*
