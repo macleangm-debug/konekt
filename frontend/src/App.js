@@ -157,6 +157,9 @@ import BusinessPricingAdminPage from "@/pages/admin/BusinessPricingAdminPage";
 // Production Jobs Admin
 import ProductionJobsAdminPage from "@/pages/admin/ProductionJobsAdminPage";
 
+// Admin UX Overview
+import AdminUxOverviewPage from "@/pages/admin/AdminUxOverviewPage";
+
 // Customer Recurring Plans
 import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
@@ -174,6 +177,13 @@ import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
 import MarketplaceBrowsePage from "@/pages/public/MarketplaceBrowsePage";
+
+// Premium UI Pages
+import ExpansionPremiumPage from "@/pages/public/ExpansionPremiumPage";
+import ServicesDiscoveryPage from "@/pages/public/ServicesDiscoveryPage";
+
+// Customer Invoice Payment
+import InvoicePaymentPage from "@/pages/customer/InvoicePaymentPage";
 
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
@@ -441,6 +451,8 @@ function App() {
           <Route path="business-pricing-requests" element={<BusinessPricingAdminPage />} />
           {/* Production Jobs Admin */}
           <Route path="production-jobs" element={<ProductionJobsAdminPage />} />
+          {/* Admin UX Overview */}
+          <Route path="ux-overview" element={<AdminUxOverviewPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -462,7 +474,10 @@ function App() {
         <Route path="/register/affiliate" element={<AffiliateRegisterPage />} />
         
         {/* Public Expansion Page */}
-        <Route path="/launch-country" element={<CountryLaunchPage />} />
+        <Route path="/launch-country" element={<ExpansionPremiumPage />} />
+        
+        {/* Services Discovery Page */}
+        <Route path="/services-discover" element={<ServicesDiscoveryPage />} />
         
         {/* NEW: Premium Public Site Routes with unified layout */}
         <Route path="/" element={<PublicSiteLayout />}>
@@ -491,6 +506,7 @@ function App() {
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />
+          <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPage />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
           <Route path="referrals" element={<PointsPageV2 />} />

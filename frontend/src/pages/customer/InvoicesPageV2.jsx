@@ -133,8 +133,8 @@ export default function InvoicesPageV2() {
                   </div>
                   <div className="flex gap-2">
                     {invoice.status !== "paid" && (
-                      <BrandButton href={`/payment/select?invoice=${invoice.id}`} variant="gold" className="text-sm py-2">
-                        Pay
+                      <BrandButton href={`/dashboard/invoices/${invoice.id || invoice._id}/pay`} variant="gold" className="text-sm py-2">
+                        Pay Invoice
                       </BrandButton>
                     )}
                     {invoice.pdf_url && (

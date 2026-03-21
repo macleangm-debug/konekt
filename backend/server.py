@@ -2387,6 +2387,8 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
+    # Make MongoDB accessible via request.app.mongodb
+    app.mongodb = db
     # Initialize automation engine
     automation = init_automation_engine(db, EmailService)
     # Start automation engine in background (uncomment for production)
