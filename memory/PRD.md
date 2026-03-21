@@ -1987,3 +1987,45 @@ Critical Rule: If total allocation > 100%, auto-scale down proportionally
 ---
 
 *Last updated: March 21, 2026 - Quote Request Flow Complete*
+
+---
+
+### Codebase Pack 27 - Service Partner Capability Mapping ✅ (March 21, 2026)
+
+**Admin UI for Service-Partner Capability Mapping (`/admin/service-partner-capabilities`):**
+- Create/Edit/Remove partner-service mappings
+- Map one partner to multiple services
+- Map multiple partners to one service
+- Country/region coverage configuration
+- Routing priority ranking per service
+- Quality, turnaround, and success indicators
+- Active queue tracking
+- Preferred routing partner designation
+
+**Backend API (`/api/admin/service-partner-capabilities`):**
+- `GET /` - List all mappings with filters (service_key, country_code, partner_id)
+- `POST /` - Create new mapping
+- `PUT /:id` - Update mapping
+- `DELETE /:id` - Remove mapping
+- `GET /routing/best` - Get best partner for service/country
+
+**Routing Algorithm:**
+Sorts by: preferred_routing → priority_rank → quality_score → current_active_queue → success_rate
+
+**Data Model (partner_service_capabilities):**
+- partner_id, partner_name
+- service_key, service_name
+- country_code, regions[]
+- capability_status (active/inactive/probation)
+- priority_rank, quality_score, avg_turnaround_days, success_rate
+- current_active_queue, preferred_routing
+- notes
+
+**Testing:**
+- All tests passed (iteration_67.json)
+- Backend: 100% (13/13 tests)
+- Frontend: 100% (all features working)
+
+---
+
+*Last updated: March 21, 2026 - Service Partner Capability Mapping Complete*
