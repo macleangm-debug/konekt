@@ -2421,3 +2421,94 @@ APIs:
 ---
 
 *Last updated: March 22, 2026 - Pre-Launch Operations Checklist Complete*
+
+---
+
+### Codebase Pack 34 - GTM + Partner Management + Onboarding Pack ✅ (March 22, 2026)
+
+**1. Go-To-Market Configuration Admin UI:**
+- Route: `/admin/go-to-market`
+- Controls the entire commercial system from one place
+- Settings include:
+  - Minimum Company Margin % (20% default - protected)
+  - Distribution Layer % (10%)
+  - Affiliate % (10%)
+  - Sales % Self-Generated (15%)
+  - Sales % Affiliate-Generated (10%)
+  - Promo % (10%)
+  - Referral % (5%)
+  - Country Bonus % (5%)
+  - Payout Threshold (50,000 TZS)
+  - Payout Cycle (monthly/weekly)
+  - Attribution Window Days (30)
+  - AI Handoff After Messages (3)
+  - Payment Verification Mode (manual/auto)
+  - Assignment Mode (auto/manual)
+  - Bank-only Payments toggle
+  - AI Enabled toggle
+
+**2. Affiliate Partner Manager UI:**
+- Route: `/admin/affiliate-partners`
+- List view with status filter (all/active/watchlist/paused/suspended)
+- Shows: Name, Email, Promo Code, Clicks, Sales, Commission, Status
+- "View Detail" button for each affiliate
+- Detail page (`/admin/affiliate-partners/:affiliateId`):
+  - Metrics: Clicks, Sales, Commission, Promo Code, Status
+  - Actions: Activate, Watchlist, Pause, Suspend
+  - Edit Promo Code
+  - Masked Sales list
+
+**3. Vendor / Supplier Dashboard:**
+- Route: `/partner/vendor-dashboard`
+- Performance metrics: Total Jobs, Completed, Completion Rate, Avg Quality
+- Job list with internal status and progress notes
+- Update Progress action for each job
+
+**4. Role-based Help Pages:**
+- `/admin/help` - Admin help with onboarding wizard
+- `/dashboard/help` - Customer help
+- `/partner/affiliate-help` - Affiliate help
+- `/partner/vendor-help` - Vendor help
+- `/staff/help` - Sales help
+
+**5. Onboarding Wizard Component:**
+- Reusable component (`OnboardingWizard.jsx`)
+- Role-specific steps for: admin, affiliate, vendor, sales, finance, customer
+- Step-by-step guidance for each role
+
+**Backend APIs Added:**
+- `GET /api/admin/go-to-market/settings` - Get GTM settings
+- `PUT /api/admin/go-to-market/settings` - Update GTM settings
+- `GET /api/admin/affiliates` - List affiliates with metrics
+- `GET /api/admin/affiliates/:id` - Affiliate detail
+- `PUT /api/admin/affiliates/:id/status` - Update status
+- `PUT /api/admin/affiliates/:id/promo-code` - Update promo code
+- `GET /api/partner/vendor/jobs` - Vendor assigned jobs
+- `GET /api/partner/vendor/performance` - Vendor metrics
+- `POST /api/partner/vendor/jobs/:id/progress` - Update job progress
+
+**Files Added:**
+- `/app/backend/go_to_market_settings_routes.py`
+- `/app/backend/affiliate_partner_manager_routes.py`
+- `/app/backend/vendor_partner_portal_routes.py`
+- `/app/backend/onboarding_content_notes.py`
+- `/app/frontend/src/pages/admin/GoToMarketConfigPage.jsx`
+- `/app/frontend/src/pages/admin/AffiliatePartnerManagerPage.jsx`
+- `/app/frontend/src/pages/admin/AffiliatePartnerDetailPage.jsx`
+- `/app/frontend/src/pages/partner/VendorDashboardPage.jsx`
+- `/app/frontend/src/components/onboarding/OnboardingWizard.jsx`
+- `/app/frontend/src/components/onboarding/HelpPageTemplate.jsx`
+- `/app/frontend/src/pages/help/HelpCustomerPage.jsx`
+- `/app/frontend/src/pages/help/HelpAdminPage.jsx`
+- `/app/frontend/src/pages/help/HelpAffiliatePage.jsx`
+- `/app/frontend/src/pages/help/HelpSalesPage.jsx`
+- `/app/frontend/src/pages/help/HelpVendorPage.jsx`
+
+**Testing:**
+- All backend tests passed (iteration_76.json)
+- Backend: 100% (11/11 tests)
+- Frontend: 100% (all pages rendering correctly)
+
+---
+
+*Last updated: March 22, 2026 - GTM + Partner Management + Onboarding Pack Complete*
