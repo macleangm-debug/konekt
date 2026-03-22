@@ -1,0 +1,160 @@
+{
+  "summary": "Growth Engine Pack Testing Complete. Backend: 18/18 tests passed (100%). Frontend: All 4 pages load correctly with proper content.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "Commission Engine Admin (/admin/commission-engine)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Unified Commission Engine'",
+        "Control goals section displayed",
+        "Goal: 'Protect minimum company markup first'",
+        "Goal: 'Generate commission only after payment approval'",
+        "Goal: 'Track affiliate and sales commission in one ledger'",
+        "Goal: 'Prevent over-allocation beyond the distribution layer'"
+      ]
+    },
+    "Promotion Engine Admin (/admin/promotion-engine)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Promotion Engine'",
+        "Campaign Title input field present",
+        "Scope Key input field present",
+        "Scope Type dropdown (product_group, product, service_group, service)",
+        "Discount percent input field present",
+        "Recommendation text: 'up to ~5% where distribution layer supports it'"
+      ]
+    },
+    "Payout Engine Admin (/admin/payout-engine)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Payout Engine'",
+        "Recommended rules section displayed",
+        "Rule: 'Minimum payout threshold: 50,000 TZS or higher'",
+        "Rule: 'Payout cycle: monthly'",
+        "Rule: 'Only approved commissions are eligible for payout'",
+        "Rule: 'Admin approval before funds are released'"
+      ]
+    },
+    "Sales Commission Dashboard (/staff/commission-dashboard)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Sales Commission Dashboard'",
+        "Metrics displayed: Assigned Opportunities (34), Closed Deals (11)",
+        "Commission Earned: TZS 248,000",
+        "Pending Payout: TZS 96,000",
+        "Conversion Rate: 32%",
+        "Referral Tools card with link and promo code (SALE123)",
+        "Commission explanation: 'Sales commission is generated only from the protected extra distributable layer'"
+      ]
+    },
+    "Promotion Engine API (/api/promotion-engine/preview)": {
+      "status": "PASS",
+      "tests": [
+        "POST calculates safe promotion budget correctly",
+        "Base 100000 with 20% markup = 20000 protected",
+        "10% extra sell = 10000 distributable layer",
+        "Selling price = 130000",
+        "Max safe promotion = 10000 (distributable only)",
+        "Handles zero base amount",
+        "Uses default markup values (20% markup, 10% extra)"
+      ]
+    },
+    "Promotion Engine Campaigns API": {
+      "status": "PASS",
+      "tests": [
+        "GET /api/promotion-engine/campaigns lists campaigns",
+        "POST /api/promotion-engine/campaigns creates campaign"
+      ]
+    },
+    "Payout Engine API (/api/payout-engine/summary)": {
+      "status": "PASS",
+      "tests": [
+        "Returns payout eligibility for affiliate beneficiary type",
+        "Returns payout eligibility for sales beneficiary type",
+        "Minimum payout threshold: 50,000 TZS",
+        "Payout cycle: monthly",
+        "Returns pending_total, paid_total, eligible_for_payout"
+      ]
+    },
+    "Unified Commission Engine API (/api/commission-engine-unified/create)": {
+      "status": "PASS",
+      "tests": [
+        "Creates affiliate commission record",
+        "Creates sales commission for self-generated lead (full commission)",
+        "Creates sales commission for affiliate lead (reduced commission)",
+        "Handles hybrid source type"
+      ]
+    },
+    "Attribution Engine API (/api/attribution-engine/capture)": {
+      "status": "PASS",
+      "tests": [
+        "Captures website attribution",
+        "Captures affiliate attribution with affiliate_code and affiliate_user_id",
+        "Captures sales attribution with sales_user_id",
+        "Captures hybrid attribution (both affiliate and sales)",
+        "GET /api/attribution-engine/by-order/{order_id} retrieves attribution"
+      ]
+    },
+    "Margin Protection Verification": {
+      "status": "PASS",
+      "tests": [
+        "20% company markup is always protected",
+        "Max safe promotion never exceeds distributable layer",
+        "Promotions only come from distributable layer, not protected markup"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_growth_engine_pack.py",
+    "/app/test_reports/pytest/pytest_results_growth_engine.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Note: Attribution engine endpoint is /capture not /track - documentation should be updated if needed",
+    "Frontend pages use static/hardcoded data for display metrics - consider connecting to backend APIs for real-time data"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_growth_engine_pack.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100% (All 4 pages loading correctly)"
+  },
+  "test_credentials": {
+    "admin": {"email": "admin@konekt.co.tz", "password": "KnktcKk_L-hw1wSyquvd!"}
+  },
+  "seed_data_creation": "Created test commission records and campaigns with TEST_ prefix",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "All APIs are functional and return real data. Frontend pages use static data for display."
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Growth Engine Pack fully tested. All 4 pages load correctly: /admin/commission-engine (control goals), /admin/promotion-engine (campaign form), /admin/payout-engine (recommended rules), /staff/commission-dashboard (metrics + referral tools). All APIs working: promotion-engine/preview calculates safe budget from distributable layer only, payout-engine/summary returns eligibility with 50K TZS minimum, commission-engine-unified/create creates records, attribution-engine/capture tracks source_type. Key business rule verified: 20% company markup protected, only extra distributable layer is shared.",
+  "business_rules_verified": {
+    "margin_protection": {
+      "company_markup_percent": 20,
+      "protected_markup_never_touched": true,
+      "promotions_from_distributable_only": true
+    },
+    "commission_rules": {
+      "affiliate_lead_reduces_sales_commission": "Implemented via source_type tracking",
+      "self_generated_lead_full_commission": "Implemented via source_type='sales'",
+      "commission_after_payment_approval": "Status field tracks pending/approved/paid"
+    },
+    "payout_rules": {
+      "minimum_threshold": "50,000 TZS",
+      "payout_cycle": "monthly",
+      "requires_admin_approval": true
+    }
+  }
+}

@@ -184,6 +184,14 @@ import AffiliateEarningsPage from "@/pages/partner/AffiliateEarningsPage";
 import PartnerAffiliatePayoutsPage from "@/pages/partner/AffiliatePayoutsPage";
 import AffiliateProfilePage from "@/pages/partner/AffiliateProfilePage";
 
+// Growth Engine Admin Pages
+import CommissionEngineAdminPage from "@/pages/admin/CommissionEngineAdminPage";
+import PromotionEngineAdminPage from "@/pages/admin/PromotionEngineAdminPage";
+import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
+
+// Sales Commission Dashboard
+import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -491,6 +499,10 @@ function App() {
           <Route path="supervisor-performance" element={<SupervisorPerformanceDashboardPage />} />
           {/* Service Partner Capabilities */}
           <Route path="service-partner-capabilities" element={<ServicePartnerCapabilitiesPage />} />
+          {/* Growth Engine Admin Pages */}
+          <Route path="commission-engine" element={<CommissionEngineAdminPage />} />
+          <Route path="promotion-engine" element={<PromotionEngineAdminPage />} />
+          <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -601,6 +613,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <StaffPerformanceDashboardPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/commission-dashboard" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesCommissionDashboardPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

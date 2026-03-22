@@ -2394,6 +2394,19 @@ app.include_router(service_partner_capability_router)
 from affiliate_margin_rules_routes import router as affiliate_margin_rules_router
 app.include_router(affiliate_margin_rules_router)
 
+# Growth Engine - Unified Commission, Promotion, Payout, Attribution
+from unified_commission_engine_routes import router as unified_commission_router
+app.include_router(unified_commission_router)
+
+from promotion_engine_routes import router as promotion_engine_router
+app.include_router(promotion_engine_router)
+
+from payout_engine_routes import router as payout_engine_router
+app.include_router(payout_engine_router)
+
+from attribution_engine_routes import router as attribution_engine_router
+app.include_router(attribution_engine_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
