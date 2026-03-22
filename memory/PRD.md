@@ -2281,3 +2281,80 @@ Distribution from 10,000 distributable:
 ---
 
 *Last updated: March 22, 2026 - Growth Pack Complete*
+
+---
+
+### Codebase Pack 32 - Final Operations + Growth Pack ✅ (March 22, 2026)
+
+**1. Progress Engine (Customer-Safe Status Translation):**
+
+Product External Statuses (customer-facing):
+- Order Received → Payment Pending → Payment Under Verification → Order Confirmed → Preparing Your Order → Packed → Dispatched → Delivered → Completed
+
+Service External Statuses (customer-facing):
+- Request Received → Under Review → Quote in Preparation → Quote Sent → Approved → Payment Pending → Payment Confirmed → Scheduled → In Progress → Final Review → Completed
+
+**Key Rule:** "partner_assigned" and other internal statuses are HIDDEN from customers - translated to generic "In Progress".
+
+API: `GET /api/progress-engine/translate?item_type=product&internal_status=sourcing`
+
+---
+
+**2. Sales Follow-Up & Provider Coordination (Internal Only):**
+- Sales follow-up panel
+- Provider progress visibility (internal)
+- Notes and nudges
+- Overdue alerts
+- Hybrid model: Sales owns relationship, Provider executes
+
+APIs:
+- `POST /api/sales-provider-coordination/follow-ups`
+- `GET /api/sales-provider-coordination/follow-ups`
+- `POST /api/sales-provider-coordination/nudges`
+
+---
+
+**3. AI Assistant V2 (Upgraded):**
+- Explains how to order (products and services)
+- Explains payment and payment proof upload
+- Answers order/service progress questions
+- Uses customer-safe statuses only
+- Escalates to human/sales when needed
+
+API: `POST /api/ai-assistant-v2/chat`
+
+---
+
+**4. Affiliate Performance & Code Governance:**
+- Personal promo codes (e.g., MIKE, MIKE10)
+- Performance metrics: clicks, leads, sales, commission, conversion rate
+- Affiliate statuses: pending, active, watchlist, paused, suspended
+- Top performers leaderboard
+- Suggested promo code generation
+
+Pages:
+- `/partner/affiliate-performance` - Affiliate's own performance view
+- `/admin/affiliate-performance-governance` - Admin governance panel
+
+APIs:
+- `GET /api/affiliate-performance/leaderboard`
+- `GET /api/affiliate-performance/me`
+- `POST /api/affiliate-performance/status`
+
+---
+
+**Components Created:**
+- `CustomerProgressTimeline.jsx` - Customer-safe progress display
+- `SalesProviderFollowUpPanel.jsx` - Internal sales coordination
+- `AIHelpWidgetV2.jsx` - Upgraded AI widget
+- `AffiliatePerformancePage.jsx` - Partner performance view
+- `AffiliatePerformanceGovernancePage.jsx` - Admin governance
+
+**Testing:**
+- All tests passed (iteration_74.json)
+- Backend: 100% (20/20 tests)
+- Frontend: 100%
+
+---
+
+*Last updated: March 22, 2026 - Final Operations + Growth Pack Complete*
