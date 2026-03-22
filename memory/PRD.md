@@ -2358,3 +2358,66 @@ APIs:
 ---
 
 *Last updated: March 22, 2026 - Final Operations + Growth Pack Complete*
+
+---
+
+### Codebase Pack 33 - Pre-Launch Operations Checklist ✅ (March 22, 2026)
+
+**1. Payment → Commission Chain (Wired):**
+- `commission_trigger_service.py` now integrated into `payment_proof_routes.py`
+- When admin approves payment proof → commission records auto-created for affiliates/sales
+- Notification sent to beneficiaries ("You just earned TZS X!")
+- Commission status transitions: pending → approved → paid
+
+**2. Affiliate Payout Progress Tracker:**
+- New API: `GET /api/affiliate/payout-progress`
+- Returns: current_balance, threshold, remaining_to_threshold, progress_percent, ready_for_payout
+- Default payout threshold: TZS 50,000
+- Frontend: `PayoutProgressCard.jsx` component with progress bar and status
+
+**3. "You Just Earned" Notifications:**
+- New API: `GET /api/affiliate/recent-earnings` - Earnings in last 24 hours
+- Frontend: `EarnedNotificationBanner.jsx` component with sparkle animation
+- Auto-dismissible per earning notification
+- Shows commission type (affiliate vs sales)
+
+**4. AI → Human Handoff:**
+- New API: `POST /api/ai/request-handoff`
+- Creates `support_handoff_requests` document in MongoDB
+- Sends notification to staff for follow-up
+- Frontend: `AIChatWidget.jsx` updated with handoff button (appears after 3+ exchanges)
+- User can click "Would you like a sales advisor to assist you?"
+
+**5. First Order Guidance:**
+- New component: `FirstOrderGuidanceCard.jsx`
+- Shows ONLY for new users with 0 orders and 0 service requests
+- Three-step guide: Browse Products → Request Service → Get Quote
+- Pro tip about referral rewards
+- Integrated into `DashboardOverviewPageV2.jsx`
+
+**Files Created/Modified:**
+- `/app/backend/commission_trigger_service.py` - Commission trigger logic (completed)
+- `/app/backend/payment_proof_routes.py` - Wired commission trigger on approval
+- `/app/backend/affiliate_dashboard_routes.py` - Added payout-progress and recent-earnings endpoints
+- `/app/backend/ai_services.py` - Added request-handoff endpoint
+- `/app/frontend/src/components/AIChatWidget.jsx` - Added human handoff UI
+- `/app/frontend/src/components/affiliate/PayoutProgressCard.jsx` - New component
+- `/app/frontend/src/components/affiliate/EarnedNotificationBanner.jsx` - New component
+- `/app/frontend/src/components/customer/FirstOrderGuidanceCard.jsx` - New component
+- `/app/frontend/src/pages/partner/AffiliateDashboardHomePage.jsx` - Integrated new components
+- `/app/frontend/src/pages/customer/DashboardOverviewPageV2.jsx` - Integrated guidance card
+
+**Testing:**
+- All backend tests passed (iteration_75.json)
+- Backend: 100% (16/16 tests)
+- Frontend: Components rendering correctly
+
+**Remaining Pre-Launch Checks (User to Verify):**
+1. Attribution Lock verification - Ensure attribution captured correctly
+2. Status Consistency review - All dashboards showing correct statuses
+3. Sales Behavior tracking - Sales commission calculations correct
+4. Affiliate Experience validation - Full flow working end-to-end
+
+---
+
+*Last updated: March 22, 2026 - Pre-Launch Operations Checklist Complete*

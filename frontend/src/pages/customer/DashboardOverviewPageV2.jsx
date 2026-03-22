@@ -23,6 +23,7 @@ export default function DashboardOverviewPageV2() {
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -40,10 +41,10 @@ export default function DashboardOverviewPageV2() {
           axios.get(`${API_URL}/api/customer/loyalty`, { headers }).catch(() => ({ data: { points: 0 } })),
         ]);
 
-        const orders = ordersRes.data || [];
-        const quotes = quotesRes.data || [];
-        const invoices = invoicesRes.data || [];
-        const serviceRequests = serviceRes.data || [];
+        const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+        const quotes = Array.isArray(quotesRes.data) ? quotesRes.data : [];
+        const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
+        const serviceRequests = Array.isArray(serviceRes.data) ? serviceRes.data : [];
 
         setStats({
           totalOrders: orders.length,
@@ -56,8 +57,10 @@ export default function DashboardOverviewPageV2() {
         });
 
         setRecentOrders(orders.slice(0, 5));
+        setDataLoaded(true);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
+        setDataLoaded(true); // Mark as loaded even on error to show empty state
       } finally {
         setLoading(false);
       }
@@ -81,7 +84,7 @@ export default function DashboardOverviewPageV2() {
       />
 
       {/* First Order Guidance for New Users */}
-      {!loading && stats.totalOrders === 0 && stats.activeServiceRequests === 0 && (
+      {dataLoaded && stats.totalOrders === 0 && stats.activeServiceRequests === 0 && (
         <div className="mb-8">
           <FirstOrderGuidanceCard 
             hasOrders={stats.totalOrders > 0} 

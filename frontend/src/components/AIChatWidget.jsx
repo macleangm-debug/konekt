@@ -49,8 +49,9 @@ export default function AIChatWidget() {
       const data = await res.json();
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       
-      // After 3+ exchanges, show handoff option
-      if (messages.length >= 4 && !handoffRequested) {
+      // After 2+ user messages (4+ total messages including initial greeting), show handoff option
+      // This provides a helpful prompt for users who might need human assistance
+      if (messages.length >= 3 && !handoffRequested) {
         setShowHandoffOption(true);
       }
     } catch (err) {
