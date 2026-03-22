@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus, PlusCircle } from "lucide-react";
+import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
 
@@ -30,7 +30,12 @@ export default function PartnerLayout() {
     navigate("/partner-login");
   };
 
-  const navItems = [
+  // Determine partner type from partner data
+  const isAffiliate = partner?.type === "affiliate" || partner?.role === "affiliate";
+  const isVendor = partner?.type === "vendor" || partner?.role === "vendor";
+
+  // Base nav items for product partners
+  const productPartnerItems = [
     { path: "/partner", label: "Dashboard", icon: LayoutDashboard },
     { path: "/partner/catalog", label: "My Catalog", icon: Package },
     { path: "/partner/catalog/new", label: "Create Listing", icon: PlusCircle },
@@ -39,6 +44,35 @@ export default function PartnerLayout() {
     { path: "/partner/fulfillment", label: "Fulfillment Queue", icon: Truck },
     { path: "/partner/settlements", label: "Settlements", icon: Receipt },
   ];
+
+  // Affiliate-specific nav items
+  const affiliateItems = [
+    { path: "/partner/affiliate-dashboard", label: "Affiliate Dashboard", icon: LayoutDashboard },
+    { path: "/partner/affiliate-promotions", label: "Promotions", icon: TrendingUp },
+    { path: "/partner/affiliate-sales", label: "Sales", icon: Award },
+    { path: "/partner/affiliate-earnings", label: "Earnings", icon: DollarSign },
+    { path: "/partner/affiliate-payouts", label: "Payouts", icon: Wallet },
+    { path: "/partner/affiliate-performance", label: "Performance", icon: BarChart3 },
+    { path: "/partner/affiliate-profile", label: "Profile", icon: User },
+    { path: "/partner/affiliate-help", label: "Help", icon: HelpCircle },
+  ];
+
+  // Vendor-specific nav items
+  const vendorItems = [
+    { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
+    { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
+  ];
+
+  // Combine items based on partner type, defaulting to showing all options
+  let navItems = [...productPartnerItems];
+  
+  // Add affiliate section
+  navItems = [...navItems, { divider: true, label: "Affiliate" }, ...affiliateItems];
+  
+  // Add vendor section if applicable
+  if (isVendor || !isAffiliate) {
+    navItems = [...navItems, { divider: true, label: "Vendor" }, ...vendorItems];
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="partner-layout">
@@ -69,8 +103,15 @@ export default function PartnerLayout() {
           <NotificationBell tokenKey="partner_token" defaultRedirect="/partner" />
         </div>
 
-        <nav className="space-y-1">
-          {navItems.map((item) => {
+        <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+          {navItems.map((item, idx) => {
+            if (item.divider) {
+              return (
+                <div key={`divider-${idx}`} className="pt-4 pb-2 px-4">
+                  <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.label}</div>
+                </div>
+              );
+            }
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
             return (

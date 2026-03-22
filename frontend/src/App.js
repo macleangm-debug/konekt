@@ -208,6 +208,12 @@ import HelpAffiliatePage from "@/pages/help/HelpAffiliatePage";
 import HelpSalesPage from "@/pages/help/HelpSalesPage";
 import HelpVendorPage from "@/pages/help/HelpVendorPage";
 
+// Navigation Audit
+import NavigationAuditPage from "@/pages/system/NavigationAuditPage";
+
+// HelpMenuCard Component
+import HelpMenuCard from "@/components/navigation/HelpMenuCard";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -579,6 +585,13 @@ function App() {
         {/* Quote Request Page */}
         <Route path="/request-quote" element={<QuoteRequestPage />} />
         
+        {/* Public Help Routes */}
+        <Route path="/help/customer" element={<HelpCustomerPage />} />
+        <Route path="/help/sales" element={<HelpSalesPage />} />
+        <Route path="/help/affiliate" element={<HelpAffiliatePage />} />
+        <Route path="/help/vendor" element={<HelpVendorPage />} />
+        <Route path="/help/admin" element={<HelpAdminPage />} />
+        
         {/* NEW: Premium Public Site Routes with unified layout */}
         <Route path="/" element={<PublicSiteLayout />}>
           <Route index element={<HomepageV2Content />} />
@@ -674,6 +687,15 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <HelpSalesPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        
+        {/* System Pages - Navigation Audit */}
+        <Route path="/system/navigation-audit" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <NavigationAuditPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

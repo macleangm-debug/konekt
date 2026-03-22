@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2
+  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2, HelpCircle
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 
@@ -15,6 +15,7 @@ const nav = [
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
   { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users, highlight: true },
   { label: "My Statement", href: "/dashboard/statement", icon: CreditCard },
+  { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
 
 export default function CustomerPortalLayoutV2() {

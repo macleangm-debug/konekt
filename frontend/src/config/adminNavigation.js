@@ -42,6 +42,7 @@ export const adminNavigation = [
       { label: "Partner Settlements", href: "/admin/partner-settlements", moduleKey: "finance" },
       { label: "Delivery Partners", href: "/admin/delivery-partners", moduleKey: "partners" },
       { label: "Partner Performance", href: "/admin/partner-performance", moduleKey: "reports" },
+      { label: "Service Partner Capabilities", href: "/admin/service-partner-capabilities", moduleKey: "partners" },
     ],
   },
   {
@@ -49,6 +50,12 @@ export const adminNavigation = [
     label: "Growth",
     moduleKey: "affiliates",
     children: [
+      { label: "Go-To-Market Config", href: "/admin/go-to-market", moduleKey: "affiliates" },
+      { label: "Commission Engine", href: "/admin/commission-engine", moduleKey: "affiliates" },
+      { label: "Promotion Engine", href: "/admin/promotion-engine", moduleKey: "affiliates" },
+      { label: "Payout Engine", href: "/admin/payout-engine", moduleKey: "affiliates" },
+      { label: "Affiliate Partners", href: "/admin/affiliate-partners", moduleKey: "affiliates" },
+      { label: "Affiliate Governance", href: "/admin/affiliate-performance-governance", moduleKey: "affiliates" },
       { label: "Affiliates & Campaigns", href: "/admin/affiliate-campaigns", moduleKey: "affiliates" },
       { label: "Product Insights", href: "/admin/product-insights", moduleKey: "reports" },
       { label: "Service Insights", href: "/admin/service-insights", moduleKey: "reports" },
@@ -97,6 +104,15 @@ export const adminNavigation = [
       { label: "Products", href: "/admin/products", moduleKey: "inventory" },
       { label: "Warehouses", href: "/admin/warehouses", moduleKey: "inventory" },
       { label: "Stock Levels", href: "/admin/stock-levels", moduleKey: "inventory" },
+    ],
+  },
+  {
+    key: "help",
+    label: "Help & System",
+    moduleKey: "settings",
+    children: [
+      { label: "Admin Help", href: "/admin/help", moduleKey: "settings" },
+      { label: "Navigation Audit", href: "/system/navigation-audit", moduleKey: "settings" },
     ],
   },
 ];
