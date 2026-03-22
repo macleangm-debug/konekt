@@ -260,6 +260,7 @@ import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 import ProductionJobsPage from "@/pages/staff/ProductionJobsPage";
+import OpportunityDetailPage from "@/pages/staff/OpportunityDetailPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -593,6 +594,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <ProductionJobsPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/opportunities/:id" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <OpportunityDetailPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />
