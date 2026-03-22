@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route
+  TrendingUp, Target, FileText, Zap, UsersRound, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -59,6 +59,14 @@ const navItems = [
   { path: '/admin/payments/record', label: 'Record Payment', icon: Coins, moduleKey: 'finance' },
   { path: '/admin/statements', label: 'Statements', icon: FileText, moduleKey: 'finance' },
   { path: '/admin/workflow', label: 'Document Flow', icon: Columns3, moduleKey: 'finance' },
+  { type: 'divider', label: 'Growth Engine', moduleKey: 'marketing' },
+  { path: '/admin/go-to-market', label: 'Go-To-Market Config', icon: Rocket, moduleKey: 'settings' },
+  { path: '/admin/commission-engine', label: 'Commission Engine', icon: Coins, moduleKey: 'finance' },
+  { path: '/admin/promotion-engine', label: 'Promotion Engine', icon: Megaphone, moduleKey: 'marketing' },
+  { path: '/admin/payout-engine', label: 'Payout Engine', icon: Wallet, moduleKey: 'finance' },
+  { path: '/admin/affiliate-partners', label: 'Affiliate Partners', icon: UsersRound, moduleKey: 'marketing' },
+  { path: '/admin/affiliate-performance-governance', label: 'Affiliate Governance', icon: Shield, moduleKey: 'marketing' },
+  { path: '/admin/service-partner-capabilities', label: 'Service Capabilities', icon: Network, moduleKey: 'partners' },
   { type: 'divider', label: 'Marketing', moduleKey: 'marketing' },
   { path: '/admin/hero-banners', label: 'Hero Banners', icon: Image, moduleKey: 'marketing' },
   { path: '/admin/creative-services', label: 'Creative Services', icon: Briefcase, moduleKey: 'marketing' },
@@ -76,6 +84,7 @@ const navItems = [
   { path: '/admin/setup', label: 'Setup Lists', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList, moduleKey: 'settings' },
+  { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
 ];
 
 // Filter nav items based on user role

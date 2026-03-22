@@ -2512,3 +2512,67 @@ APIs:
 ---
 
 *Last updated: March 22, 2026 - GTM + Partner Management + Onboarding Pack Complete*
+
+---
+
+### Codebase Pack 35 - Launch Navigation Cleanup Pack ✅ (March 22, 2026)
+
+**1. Admin Sidebar - Growth Engine Section:**
+- Go-To-Market Config (`/admin/go-to-market`)
+- Commission Engine (`/admin/commission-engine`)
+- Promotion Engine (`/admin/promotion-engine`)
+- Payout Engine (`/admin/payout-engine`)
+- Affiliate Partners (`/admin/affiliate-partners`)
+- Affiliate Governance (`/admin/affiliate-performance-governance`)
+- Service Capabilities (`/admin/service-partner-capabilities`)
+- Help (`/admin/help`)
+
+**2. Partner Portal Sidebar - Expanded Sections:**
+- **Product Partner Section:** Dashboard, My Catalog, Create Listing, Stock Table, Bulk Upload, Fulfillment Queue, Settlements
+- **Affiliate Section:** Affiliate Dashboard, Promotions, Sales, Earnings, Payouts, Performance, Profile, Help
+- **Vendor Section:** Vendor Dashboard, Help
+
+**3. Customer Portal Sidebar:**
+- Added Help link (`/help/customer`)
+
+**4. Public Help Routes:**
+- `/help/customer` - Customer help page
+- `/help/admin` - Admin help page
+- `/help/affiliate` - Affiliate help page
+- `/help/sales` - Sales help page
+- `/help/vendor` - Vendor help page
+
+**5. Navigation Audit Page:**
+- Route: `/system/navigation-audit`
+- Shows all navigation links organized by portal
+- Sections: Public Navbar, Customer Sidebar, Staff Sidebar, Partner Sidebar, Admin Sidebar
+
+**6. HelpMenuCard Component:**
+- Reusable component for displaying help links
+- Role-specific help links
+
+**Files Modified:**
+- `/app/frontend/src/pages/admin/AdminLayout.js` - Added Growth Engine section
+- `/app/frontend/src/layouts/PartnerLayout.jsx` - Added Affiliate and Vendor sections
+- `/app/frontend/src/layouts/CustomerPortalLayoutV2.jsx` - Added Help link
+- `/app/frontend/src/config/adminNavigation.js` - Updated Growth section
+- `/app/frontend/src/App.js` - Added help routes and navigation audit route
+
+**Files Added:**
+- `/app/frontend/src/config/admin-sidebar-links.js`
+- `/app/frontend/src/config/staff-sidebar-links.js`
+- `/app/frontend/src/config/partner-sidebar-links.js`
+- `/app/frontend/src/config/customer-sidebar-links.js`
+- `/app/frontend/src/config/public-navbar-links.js`
+- `/app/frontend/src/components/navigation/HelpMenuCard.jsx`
+- `/app/frontend/src/pages/system/NavigationAuditPage.jsx`
+
+**Testing:**
+- All navigation tests passed (iteration_77.json)
+- Frontend: 100% - All navigation features working
+- All help pages accessible
+- Navigation audit page shows all links
+
+---
+
+*Last updated: March 22, 2026 - Launch Navigation Cleanup Pack Complete*
