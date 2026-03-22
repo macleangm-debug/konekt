@@ -13,6 +13,7 @@ import Footer from "@/components/Footer";
 import ChatWidget from "@/components/ChatWidget";
 import ExitIntentPopup from "@/components/ExitIntentPopup";
 import PromoBanner from "@/components/PromoBanner";
+import AIChatWidget from "@/components/AIChatWidget";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 
 // Customer Pages
@@ -707,6 +708,7 @@ function App() {
         } />
       </Routes>
       <Toaster position="top-center" richColors />
+      <AIChatWidget />
     </BrowserRouter>
   );
 }

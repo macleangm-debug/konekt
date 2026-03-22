@@ -2407,6 +2407,16 @@ app.include_router(payout_engine_router)
 from attribution_engine_routes import router as attribution_engine_router
 app.include_router(attribution_engine_router)
 
+# Growth Pack - Notifications, Analytics, AI Assistant
+from notifications_routes import router as notifications_router
+app.include_router(notifications_router)
+
+from analytics_routes import router as analytics_router
+app.include_router(analytics_router)
+
+from ai_assistant_routes import router as ai_assistant_router
+app.include_router(ai_assistant_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
