@@ -2,6 +2,7 @@
 Payment Proof Submission Routes
 Handle customer payment proof uploads and admin approval workflow.
 With workflow-linked notifications for customer updates.
+Triggers commission creation on payment approval.
 """
 import os
 from datetime import datetime, timezone
@@ -11,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from notification_trigger_service import notify_customer_payment_reviewed
 from payment_timeline_service import trigger_payment_submitted, trigger_verification_started, trigger_payment_confirmed
+from commission_trigger_service import trigger_commission_on_payment_approval
 
 router = APIRouter(prefix="/api/payment-proofs", tags=["Payment Proofs"])
 
@@ -218,6 +220,14 @@ async def approve_payment_proof(proof_id: str, payload: dict):
         )
     except Exception as e:
         print(f"Warning: Failed to create payment timeline event: {e}")
+    
+    # Trigger commission creation for affiliates/sales team
+    try:
+        commission_result = await trigger_commission_on_payment_approval(db, invoice_id, proof)
+        if commission_result:
+            print(f"Commission triggered: {commission_result}")
+    except Exception as e:
+        print(f"Warning: Failed to trigger commission: {e}")
     
     return {"message": "Payment proof approved", "submission": serialize_doc(updated)}
 

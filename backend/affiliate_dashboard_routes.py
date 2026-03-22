@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorClient
 import jwt
+from commission_trigger_service import get_payout_progress
 
 router = APIRouter(prefix="/api/affiliate", tags=["Affiliate Dashboard"])
 security = HTTPBearer(auto_error=False)
@@ -169,3 +170,44 @@ async def affiliate_summary(user: dict = Depends(get_user)):
             for x in commissions
         ],
     }
+
+
+@router.get("/payout-progress")
+async def affiliate_payout_progress(user: dict = Depends(get_user)):
+    """Get payout progress - how much more needed to reach threshold"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_id = user.get("id")
+    progress = await get_payout_progress(db, user_id, "affiliate")
+    return progress
+
+
+@router.get("/recent-earnings")
+async def affiliate_recent_earnings(user: dict = Depends(get_user)):
+    """Get recent commission earnings for 'You just earned' notifications"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_id = user.get("id")
+    
+    # Fetch commissions created in the last 24 hours for this user
+    from datetime import timedelta
+    cutoff = datetime.utcnow() - timedelta(hours=24)
+    
+    recent = await db.commission_records.find({
+        "beneficiary_user_id": user_id,
+        "created_at": {"$gte": cutoff}
+    }).sort("created_at", -1).to_list(length=10)
+    
+    return [
+        {
+            "id": str(r.get("_id", "")),
+            "amount": r.get("amount", 0),
+            "currency": r.get("currency", "TZS"),
+            "commission_type": r.get("beneficiary_type", "affiliate"),
+            "status": r.get("status", "pending"),
+            "created_at": r.get("created_at"),
+        }
+        for r in recent
+    ]

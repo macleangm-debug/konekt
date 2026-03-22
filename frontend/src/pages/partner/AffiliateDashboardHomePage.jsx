@@ -1,19 +1,15 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AffiliateTopSummary from "../../components/affiliate/AffiliateTopSummary";
 import AffiliateReferralToolsCard from "../../components/affiliate/AffiliateReferralToolsCard";
 import AffiliateCampaignCard from "../../components/affiliate/AffiliateCampaignCard";
 import AffiliateSalesTable from "../../components/affiliate/AffiliateSalesTable";
+import PayoutProgressCard from "../../components/affiliate/PayoutProgressCard";
+import EarnedNotificationBanner from "../../components/affiliate/EarnedNotificationBanner";
 
-const metrics = {
-  clicks: 1240,
-  leads: 84,
-  sales: 16,
-  earned: "TZS 184,000",
-  pending: "TZS 72,000",
-  paid: "TZS 112,000",
-};
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
-const campaigns = [
+// Static fallback campaigns
+const fallbackCampaigns = [
   {
     title: "Office Branding Campaign",
     category: "Printing & Branding",
@@ -32,30 +28,90 @@ const campaigns = [
   },
 ];
 
-const sales = [
-  {
-    id: "1",
-    date: "2026-03-10",
-    customer_masked: "Ac*** Ltd",
-    item_name: "Office Branding",
-    order_value: "TZS 650,000",
-    commission: "TZS 18,000",
-    status: "pending",
-  },
-  {
-    id: "2",
-    date: "2026-03-08",
-    customer_masked: "Be*** Group",
-    item_name: "Branded Lanyards",
-    order_value: "TZS 220,000",
-    commission: "TZS 8,500",
-    status: "paid",
-  },
-];
-
 export default function AffiliateDashboardHomePage() {
+  const [metrics, setMetrics] = useState({
+    clicks: 0,
+    leads: 0,
+    sales: 0,
+    earned: "TZS 0",
+    pending: "TZS 0",
+    paid: "TZS 0",
+  });
+  const [payoutProgress, setPayoutProgress] = useState(null);
+  const [referralLink, setReferralLink] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [sales, setSales] = useState([]);
+  const [campaigns, setCampaigns] = useState(fallbackCampaigns);
+  const [loading, setLoading] = useState(true);
+
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch affiliate dashboard data
+        const dashRes = await fetch(`${API_URL}/api/affiliate/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (dashRes.ok) {
+          const data = await dashRes.json();
+          
+          // Update metrics
+          setMetrics({
+            clicks: data.summary?.total_clicks || 0,
+            leads: data.summary?.total_leads || 0,
+            sales: data.commissions?.length || 0,
+            earned: `TZS ${(data.summary?.total_earned || 0).toLocaleString()}`,
+            pending: `TZS ${(data.summary?.payable_balance || 0).toLocaleString()}`,
+            paid: `TZS ${(data.summary?.total_paid || 0).toLocaleString()}`,
+          });
+
+          // Set referral info
+          setReferralLink(data.profile?.referral_link || `https://konekt.co.tz/?ref=${data.profile?.promo_code || ''}`);
+          setPromoCode(data.profile?.promo_code || '');
+
+          // Transform commissions to sales table format
+          if (data.commissions && data.commissions.length > 0) {
+            setSales(data.commissions.map((c, idx) => ({
+              id: c.id || String(idx),
+              date: c.created_at?.split('T')[0] || '',
+              customer_masked: "Cust***",
+              item_name: c.source_document || "Order",
+              order_value: `TZS ${(c.sale_amount || 0).toLocaleString()}`,
+              commission: `TZS ${(c.commission_amount || 0).toLocaleString()}`,
+              status: c.status || "pending",
+            })));
+          }
+        }
+
+        // Fetch payout progress
+        const progressRes = await fetch(`${API_URL}/api/affiliate/payout-progress`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (progressRes.ok) {
+          const progressData = await progressRes.json();
+          setPayoutProgress(progressData);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch affiliate data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [token]);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-testid="affiliate-dashboard">
       <div>
         <div className="text-4xl font-bold text-[#20364D]">Affiliate Dashboard</div>
         <div className="text-slate-600 mt-2">
@@ -63,14 +119,25 @@ export default function AffiliateDashboardHomePage() {
         </div>
       </div>
 
+      {/* "You Just Earned" Notifications */}
+      <EarnedNotificationBanner token={token} />
+
+      {/* Key Metrics */}
       <AffiliateTopSummary metrics={metrics} />
 
       <div className="grid xl:grid-cols-[0.95fr_1.05fr] gap-6">
-        <AffiliateReferralToolsCard
-          referralLink="https://konekt.co.tz/?ref=AFF123"
-          promoCode="AFF123"
-        />
+        {/* Left Column - Tools + Payout Progress */}
+        <div className="space-y-6">
+          <AffiliateReferralToolsCard
+            referralLink={referralLink || "https://konekt.co.tz/?ref=AFF123"}
+            promoCode={promoCode || "AFF123"}
+          />
+          
+          {/* Payout Progress Card */}
+          <PayoutProgressCard progress={payoutProgress} />
+        </div>
 
+        {/* Right Column - Campaigns */}
         <div className="space-y-6">
           {campaigns.map((campaign) => (
             <AffiliateCampaignCard key={campaign.title} campaign={campaign} />
@@ -78,6 +145,7 @@ export default function AffiliateDashboardHomePage() {
         </div>
       </div>
 
+      {/* Sales Table */}
       <AffiliateSalesTable rows={sales} />
     </div>
   );

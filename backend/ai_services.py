@@ -4,12 +4,18 @@ Konekt AI Services - Product Recommendations, Design Briefs, Pricing Suggestions
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import datetime, timezone
 import os
+from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/ai", tags=["AI Services"])
 
 # Check for LLM key
 EMERGENT_LLM_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
+
+# Database connection
+client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+db = client[os.environ.get('DB_NAME', 'konekt_db')]
 
 
 class ProductRecommendationRequest(BaseModel):
@@ -454,3 +460,47 @@ async def get_service_packages(service_type: str):
         raise HTTPException(status_code=404, detail=f"Service type '{service_type}' not found")
     
     return {"service_type": service_type, "packages": packages[service_key]}
+
+
+@router.post("/request-handoff")
+async def request_ai_handoff(payload: dict):
+    """
+    Request human handoff from AI chat.
+    Creates a support ticket/lead for sales team follow-up.
+    """
+    conversation = payload.get("conversation", "")
+    customer_email = payload.get("customer_email")
+    customer_name = payload.get("customer_name")
+    
+    now = datetime.now(timezone.utc).isoformat()
+    
+    # Create a support handoff request
+    handoff_doc = {
+        "type": "ai_handoff",
+        "conversation_summary": conversation[:2000],  # Limit to 2000 chars
+        "customer_email": customer_email,
+        "customer_name": customer_name,
+        "status": "pending",
+        "priority": "high",  # AI handoffs are high priority
+        "created_at": now,
+        "notes": "Customer requested human assistance during AI chat"
+    }
+    
+    await db.support_handoff_requests.insert_one(handoff_doc)
+    
+    # Also create a notification for staff
+    notification_doc = {
+        "user_id": "staff_all",  # For all staff
+        "type": "handoff_request",
+        "title": "AI Chat Handoff Request",
+        "message": f"A customer requested human assistance. Review the conversation and reach out.",
+        "action_url": "/admin/support-requests",
+        "status": "unread",
+        "created_at": now,
+    }
+    await db.notifications.insert_one(notification_doc)
+    
+    return {
+        "success": True,
+        "message": "Great! I've notified our sales team. A human advisor will reach out to you shortly. You can also reach us directly at sales@konekt.co.tz or +255 xxx xxx xxx."
+    }

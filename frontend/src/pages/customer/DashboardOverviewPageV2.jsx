@@ -6,6 +6,7 @@ import SurfaceCard from "../../components/ui/SurfaceCard";
 import MetricCard from "../../components/ui/MetricCard";
 import BrandButton from "../../components/ui/BrandButton";
 import BusinessPricingCtaBox from "../../components/public/BusinessPricingCtaBox";
+import FirstOrderGuidanceCard from "../../components/customer/FirstOrderGuidanceCard";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -78,6 +79,16 @@ export default function DashboardOverviewPageV2() {
         title="Welcome back"
         subtitle="Here's an overview of your account activity."
       />
+
+      {/* First Order Guidance for New Users */}
+      {!loading && stats.totalOrders === 0 && stats.activeServiceRequests === 0 && (
+        <div className="mb-8">
+          <FirstOrderGuidanceCard 
+            hasOrders={stats.totalOrders > 0} 
+            hasServiceRequests={stats.activeServiceRequests > 0} 
+          />
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, UserCheck } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -20,6 +20,8 @@ export default function AIChatWidget() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showHandoffOption, setShowHandoffOption] = useState(false);
+  const [handoffRequested, setHandoffRequested] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -46,10 +48,45 @@ export default function AIChatWidget() {
       });
       const data = await res.json();
       setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+      
+      // After 3+ exchanges, show handoff option
+      if (messages.length >= 4 && !handoffRequested) {
+        setShowHandoffOption(true);
+      }
     } catch (err) {
       setMessages(prev => [...prev, { 
         role: "assistant", 
         content: "I'm having trouble connecting. Please try again or contact support." 
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHandoffRequest = async () => {
+    setHandoffRequested(true);
+    setShowHandoffOption(false);
+    setLoading(true);
+
+    try {
+      // Request human handoff via the backend
+      const res = await fetch(`${API_URL}/api/ai-assistant/request-handoff`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          conversation: messages.map(m => `${m.role}: ${m.content}`).join("\n")
+        }),
+      });
+      const data = await res.json();
+      
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: data.message || "Great! I've notified our sales team. A human advisor will reach out to you shortly via email or phone. In the meantime, feel free to continue asking questions!"
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: "I've noted your request for human assistance. Our team will reach out to you soon. You can also call us directly at +255 xxx xxx xxx or email sales@konekt.co.tz."
       }]);
     } finally {
       setLoading(false);
@@ -152,6 +189,20 @@ export default function AIChatWidget() {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Human Handoff Option */}
+      {showHandoffOption && !handoffRequested && (
+        <div className="px-4 pb-2">
+          <button
+            onClick={handleHandoffRequest}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4A843]/10 hover:bg-[#D4A843]/20 border border-[#D4A843]/30 text-[#20364D] transition"
+            data-testid="ai-handoff-button"
+          >
+            <UserCheck className="w-4 h-4 text-[#D4A843]" />
+            <span className="text-sm font-medium">Would you like a sales advisor to assist you?</span>
+          </button>
         </div>
       )}
 

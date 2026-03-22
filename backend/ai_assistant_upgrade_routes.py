@@ -1,7 +1,14 @@
 from fastapi import APIRouter
 from progress_engine_service import translate_status
+from datetime import datetime, timezone
+from motor.motor_asyncio import AsyncIOMotorClient
+import os
 
 router = APIRouter(prefix="/api/ai-assistant-v2", tags=["AI Assistant Upgrade"])
+
+# Database connection
+client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+db = client[os.environ.get('DB_NAME', 'konekt_db')]
 
 @router.post("/chat")
 async def chat(payload: dict):
