@@ -2131,3 +2131,47 @@ Replaced the old generic business solutions block with a more premium, conversio
 ---
 
 *Last updated: March 22, 2026 - E2E Verification Pass Complete*
+
+---
+
+### Codebase Pack 29 - Affiliate Dashboard + Margin Protection ✅ (March 22, 2026)
+
+**Affiliate Dashboard Pages (under /partner/affiliate-*):**
+- **Dashboard Home** - Metrics (clicks, leads, sales), earnings (earned, pending, paid), referral tools, campaign cards
+- **Promotions** - Active campaigns with affiliate earning rates
+- **Sales** - Sales history table with order details and commission status
+- **Earnings** - Earnings breakdown with margin protection explanation
+- **Payouts** - Payout summary, pending/paid amounts, payout account info
+- **Profile** - Affiliate details, status, promo code
+
+**Margin Protection Backend Logic:**
+Rule: Company NEVER earns less than 20% markup on base amount. Only the distributable layer is shared.
+
+Example (base_amount: 100,000 TZS):
+- Protected company markup (20%): 20,000
+- Distributable layer (10%): 10,000
+- **Selling price: 130,000**
+
+Distribution from 10,000 distributable:
+- Affiliate (10%): 1,000
+- Sales (15%): 1,500
+- Promo (10%): 1,000
+- Referral (5%): 500
+- Country bonus (5%): 500
+- **Total allocated: 4,500 (45%)**
+- **Retained by company: 5,500 (55%)**
+- **Company total kept: 25,500**
+
+**API Endpoint:**
+- `POST /api/affiliate-margin-rules/preview` - Calculate margin-protected distribution
+
+**Testing:**
+- All tests passed (iteration_71.json)
+- Backend: 100% (8/8 tests)
+- Frontend: 100% (all 6 pages working)
+
+**Note:** Frontend pages currently use static/demo data. Backend APIs can be connected for real-time data.
+
+---
+
+*Last updated: March 22, 2026 - Affiliate Dashboard + Margin Protection Complete*
