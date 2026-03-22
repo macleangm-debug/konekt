@@ -176,6 +176,14 @@ import PartnerBulkUploadPage from "@/pages/partner/PartnerBulkUploadPage";
 import PartnerFulfillmentPage from "@/pages/partner/PartnerFulfillmentPage";
 import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
 
+// Affiliate Dashboard Pages
+import AffiliateDashboardHomePage from "@/pages/partner/AffiliateDashboardHomePage";
+import AffiliatePromotionsPage from "@/pages/partner/AffiliatePromotionsPage";
+import AffiliateSalesPage from "@/pages/partner/AffiliateSalesPage";
+import AffiliateEarningsPage from "@/pages/partner/AffiliateEarningsPage";
+import PartnerAffiliatePayoutsPage from "@/pages/partner/AffiliatePayoutsPage";
+import AffiliateProfilePage from "@/pages/partner/AffiliateProfilePage";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -496,7 +504,13 @@ function App() {
           <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
           <Route path="fulfillment" element={<PartnerFulfillmentPage />} />
           <Route path="settlements" element={<PartnerSettlementsPage />} />
-          <Route path="affiliate-dashboard" element={<AffiliateDashboardPageV2 />} />
+          {/* Affiliate Dashboard Routes */}
+          <Route path="affiliate-dashboard" element={<AffiliateDashboardHomePage />} />
+          <Route path="affiliate-promotions" element={<AffiliatePromotionsPage />} />
+          <Route path="affiliate-sales" element={<AffiliateSalesPage />} />
+          <Route path="affiliate-earnings" element={<AffiliateEarningsPage />} />
+          <Route path="affiliate-payouts" element={<PartnerAffiliatePayoutsPage />} />
+          <Route path="affiliate-profile" element={<AffiliateProfilePage />} />
         </Route>
         
         {/* Affiliate Public Routes */}

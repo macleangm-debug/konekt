@@ -1,0 +1,144 @@
+{
+  "summary": "Affiliate Dashboard + Margin Protection Pack Testing Complete. Backend: 8/8 tests passed (100%). Frontend: All 6 affiliate dashboard pages loading correctly with proper data display.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Partner Sidebar",
+        "issues": ["Affiliate-specific navigation links (affiliate-dashboard, affiliate-promotions, etc.) not visible in sidebar - pages accessible via direct URL only"]
+      }
+    ]
+  },
+  "features_tested": {
+    "Affiliate Dashboard Home (/partner/affiliate-dashboard)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Affiliate Dashboard'",
+        "Metrics displayed: Total Clicks (1240), Leads (84), Successful Sales (16)",
+        "Earnings displayed: Commission Earned (TZS 184,000), Pending Payout (TZS 72,000), Paid Out (TZS 112,000)",
+        "Referral Tools card with link and promo code (AFF123)",
+        "Campaign cards displayed (Office Branding Campaign, Printing & Promotional Materials)",
+        "Sales History table with order data"
+      ]
+    },
+    "Affiliate Promotions (/partner/affiliate-promotions)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Promotions'",
+        "Campaign cards displayed with Active badges",
+        "Office Branding Campaign - TZS 12,000 per successful sale",
+        "Deep Cleaning Push - 10% of distributable layer"
+      ]
+    },
+    "Affiliate Sales (/partner/affiliate-sales)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Affiliate Sales'",
+        "Sales History table displayed",
+        "Office Branding sale: TZS 650,000 order, TZS 18,000 commission, pending",
+        "Branded Lanyards sale: TZS 220,000 order, TZS 8,500 commission, paid"
+      ]
+    },
+    "Affiliate Earnings (/partner/affiliate-earnings)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Earnings'",
+        "Metrics summary displayed",
+        "Margin protection explanation: 'Company margin is protected first using a minimum 20% markup on the base amount. Affiliate commission is then calculated only from the extra distributable layer on top of that.'"
+      ]
+    },
+    "Affiliate Payouts (/partner/affiliate-payouts)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Payouts'",
+        "Payout Summary displayed",
+        "Pending: TZS 72,000, Paid: TZS 112,000",
+        "Next Payout Cycle: Month End",
+        "Payout Account: Mary K. - CRDB, Account ending 4721"
+      ]
+    },
+    "Affiliate Profile (/partner/affiliate-profile)": {
+      "status": "PASS",
+      "tests": [
+        "Page loads with title 'Affiliate Profile'",
+        "Affiliate Name: Mary Konekt Growth",
+        "Status: Active",
+        "Promo Code: AFF123",
+        "Payout Frequency: Monthly"
+      ]
+    },
+    "Margin Rules API (/api/affiliate-margin-rules/preview)": {
+      "status": "PASS",
+      "tests": [
+        "Basic calculation: base 100000 → selling price 130000",
+        "Protected markup: 20% of base = 20000",
+        "Distributable layer: 10% of base = 10000",
+        "Affiliate amount: 10% of distributable = 1000",
+        "Sales amount: 15% of distributable = 1500",
+        "Promo amount: 10% of distributable = 1000",
+        "Referral amount: 5% of distributable = 500",
+        "Country bonus: 5% of distributable = 500",
+        "Total allocated: 4500 (45% of distributable)",
+        "Company retained: 5500 (55% of distributable)",
+        "Company total kept: 25500 (protected + retained)",
+        "Over-allocation scaling works correctly",
+        "Zero base amount handled correctly"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_affiliate_margin_rules.py",
+    "/app/test_reports/pytest/pytest_results_affiliate_margin_rules.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Affiliate dashboard pages use static/mock data - consider connecting to backend APIs for real-time data",
+    "Sidebar navigation doesn't include affiliate-specific links - users must navigate via direct URLs"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_affiliate_margin_rules.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (All 6 affiliate pages loading correctly)"
+  },
+  "test_credentials": {
+    "partner": {"email": "demo.partner@konekt.com", "password": "Partner123!"}
+  },
+  "seed_data_creation": "None - used existing demo data",
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "Frontend affiliate pages use static/hardcoded data for display, not fetching from backend APIs"
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Affiliate Dashboard + Margin Protection Pack fully tested. All 6 affiliate pages (/partner/affiliate-dashboard, affiliate-promotions, affiliate-sales, affiliate-earnings, affiliate-payouts, affiliate-profile) load correctly. Margin rules API calculates correctly: base 100000 with 20% markup = 120000 protected, 10% distributable = 10000 extra layer, selling price = 130000. Affiliate gets 1000 (10% of distributable). Company protected markup is never touched. Note: Frontend pages use static data, not connected to backend APIs.",
+  "margin_protection_verification": {
+    "base_amount": 100000,
+    "company_markup_percent": 20,
+    "protected_company_markup_amount": 20000,
+    "extra_sell_percent": 10,
+    "distributable_layer_amount": 10000,
+    "selling_price": 130000,
+    "distribution": {
+      "affiliate_amount": 1000,
+      "sales_amount": 1500,
+      "promo_amount": 1000,
+      "referral_amount": 500,
+      "country_bonus_amount": 500,
+      "allocated_distributable_amount": 4500,
+      "remaining_distributable_retained": 5500,
+      "company_total_kept": 25500
+    },
+    "rules_verified": {
+      "company_never_below_markup_percent": 20,
+      "distribution_only_from_extra_layer": true
+    }
+  }
+}
