@@ -197,6 +197,17 @@ import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboard
 import AffiliatePerformancePage from "@/pages/partner/AffiliatePerformancePage";
 import AffiliatePerformanceGovernancePage from "@/pages/admin/AffiliatePerformanceGovernancePage";
 
+// GTM + Partner Management + Onboarding Pack
+import GoToMarketConfigPage from "@/pages/admin/GoToMarketConfigPage";
+import AffiliatePartnerManagerPage from "@/pages/admin/AffiliatePartnerManagerPage";
+import AffiliatePartnerDetailPage from "@/pages/admin/AffiliatePartnerDetailPage";
+import VendorDashboardPage from "@/pages/partner/VendorDashboardPage";
+import HelpCustomerPage from "@/pages/help/HelpCustomerPage";
+import HelpAdminPage from "@/pages/help/HelpAdminPage";
+import HelpAffiliatePage from "@/pages/help/HelpAffiliatePage";
+import HelpSalesPage from "@/pages/help/HelpSalesPage";
+import HelpVendorPage from "@/pages/help/HelpVendorPage";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -510,6 +521,12 @@ function App() {
           <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
           {/* Affiliate Performance Governance */}
           <Route path="affiliate-performance-governance" element={<AffiliatePerformanceGovernancePage />} />
+          {/* GTM + Partner Management */}
+          <Route path="go-to-market" element={<GoToMarketConfigPage />} />
+          <Route path="affiliate-partners" element={<AffiliatePartnerManagerPage />} />
+          <Route path="affiliate-partners/:affiliateId" element={<AffiliatePartnerDetailPage />} />
+          {/* Admin Help */}
+          <Route path="help" element={<HelpAdminPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -532,6 +549,12 @@ function App() {
           <Route path="affiliate-profile" element={<AffiliateProfilePage />} />
           {/* Affiliate Performance Page */}
           <Route path="affiliate-performance" element={<AffiliatePerformancePage />} />
+          {/* Affiliate Help */}
+          <Route path="affiliate-help" element={<HelpAffiliatePage />} />
+          {/* Vendor Dashboard */}
+          <Route path="vendor-dashboard" element={<VendorDashboardPage />} />
+          {/* Vendor Help */}
+          <Route path="vendor-help" element={<HelpVendorPage />} />
         </Route>
         
         {/* Affiliate Public Routes */}
@@ -594,6 +617,7 @@ function App() {
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
           <Route path="profile/business" element={<ClientProfilePage />} />
+          <Route path="help" element={<HelpCustomerPage />} />
         </Route>
         
         {/* Staff Workspace Route */}
@@ -643,6 +667,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <OpportunityDetailPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/help" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <HelpSalesPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

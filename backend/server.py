@@ -2430,6 +2430,16 @@ app.include_router(ai_assistant_upgrade_router)
 from affiliate_performance_routes import router as affiliate_performance_router
 app.include_router(affiliate_performance_router)
 
+# GTM + Partner Management + Onboarding Pack
+from go_to_market_settings_routes import router as gtm_settings_router
+app.include_router(gtm_settings_router)
+
+from affiliate_partner_manager_routes import router as affiliate_partner_manager_router
+app.include_router(affiliate_partner_manager_router)
+
+from vendor_partner_portal_routes import router as vendor_partner_portal_router
+app.include_router(vendor_partner_portal_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
