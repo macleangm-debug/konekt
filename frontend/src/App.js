@@ -193,6 +193,10 @@ import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
 
+// Final Operations + Growth Pack
+import AffiliatePerformancePage from "@/pages/partner/AffiliatePerformancePage";
+import AffiliatePerformanceGovernancePage from "@/pages/admin/AffiliatePerformanceGovernancePage";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -504,6 +508,8 @@ function App() {
           <Route path="commission-engine" element={<CommissionEngineAdminPage />} />
           <Route path="promotion-engine" element={<PromotionEngineAdminPage />} />
           <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
+          {/* Affiliate Performance Governance */}
+          <Route path="affiliate-performance-governance" element={<AffiliatePerformanceGovernancePage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -524,6 +530,8 @@ function App() {
           <Route path="affiliate-earnings" element={<AffiliateEarningsPage />} />
           <Route path="affiliate-payouts" element={<PartnerAffiliatePayoutsPage />} />
           <Route path="affiliate-profile" element={<AffiliateProfilePage />} />
+          {/* Affiliate Performance Page */}
+          <Route path="affiliate-performance" element={<AffiliatePerformancePage />} />
         </Route>
         
         {/* Affiliate Public Routes */}

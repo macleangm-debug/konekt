@@ -2417,6 +2417,19 @@ app.include_router(analytics_router)
 from ai_assistant_routes import router as ai_assistant_router
 app.include_router(ai_assistant_router)
 
+# Final Operations + Growth Pack
+from progress_engine_routes import router as progress_engine_router
+app.include_router(progress_engine_router)
+
+from sales_provider_coordination_routes import router as sales_provider_coordination_router
+app.include_router(sales_provider_coordination_router)
+
+from ai_assistant_upgrade_routes import router as ai_assistant_upgrade_router
+app.include_router(ai_assistant_upgrade_router)
+
+from affiliate_performance_routes import router as affiliate_performance_router
+app.include_router(affiliate_performance_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
