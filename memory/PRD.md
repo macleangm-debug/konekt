@@ -2703,3 +2703,54 @@ APIs:
 ---
 
 *Last updated: March 23, 2026 - Settings Navigation Integration Pack Complete*
+
+---
+
+### Codebase Pack 38 - Partner UX + Profile Dropdown Pack ✅ (March 23, 2026)
+
+**1. Table/Card Toggle for Partner Display:**
+- `PartnerViewToggle` component with Table/Cards buttons
+- `/admin/partner-ecosystem-v2` page with toggle
+- Table view: Operational control with all columns
+- Card view: Quick browsing with key info
+
+**2. Specific Services Field Support:**
+- `PartnerSpecificServicesField` component
+- Comma-separated services input (e.g., "Garment Printing, T-Shirt Printing")
+- Live preview of parsed services
+- Used for service partners capability mapping
+
+**3. Service Partners Without SKU/Catalog Dependency:**
+- Clear rule: Service partners do not need SKU catalog fields
+- Guidance: SKU belongs under Konekt admin product settings
+- Quantity tracked per product line, not partner-global
+- Amber warning for service-only partners
+
+**4. Profile Dropdown Logout (All Portals):**
+- **Partner Portal**: PartnerAccountTopbar with dropdown
+  - Menu: Affiliate Dashboard, Vendor Dashboard, Help, Log Out
+- **Customer Portal**: Profile dropdown replacing sidebar logout
+  - Menu: Orders, Invoices, Help, Log Out
+- **Admin/Staff**: AdminAccountTopbar, StaffAccountTopbar components ready
+
+**Files Added:**
+- `/app/frontend/src/components/partners/PartnerProfileDropdown.jsx`
+- `/app/frontend/src/components/partners/PartnerViewToggle.jsx`
+- `/app/frontend/src/components/partners/PartnerSpecificServicesField.jsx`
+- `/app/frontend/src/components/layout/AdminAccountTopbar.jsx`
+- `/app/frontend/src/components/layout/CustomerAccountTopbar.jsx`
+- `/app/frontend/src/components/layout/StaffAccountTopbar.jsx`
+- `/app/frontend/src/components/layout/PartnerAccountTopbar.jsx`
+- `/app/frontend/src/pages/admin/PartnerEcosystemPageV2.jsx`
+
+**Files Modified:**
+- `/app/frontend/src/layouts/PartnerLayout.jsx` - Added topbar, removed sidebar logout
+- `/app/frontend/src/layouts/CustomerPortalLayoutV2.jsx` - Added profile dropdown
+
+**Testing:**
+- Frontend: 100% - All features working
+- Testing agent added data-testid attributes for better testability
+
+---
+
+*Last updated: March 23, 2026 - Partner UX + Profile Dropdown Pack Complete*
