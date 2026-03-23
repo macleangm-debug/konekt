@@ -2872,3 +2872,70 @@ Everything about partners is now handled in ONE unified page at `/admin/partner-
 ---
 
 *Last updated: March 23, 2026 - Unified Partner Ecosystem Master Pack Complete*
+
+---
+
+### Codebase Pack 41 - Customer Experience Simplification Pack ✅ (March 23, 2026)
+
+**🎯 Simplified Customer Flow**
+Everything now happens inside the account shell — no context switching.
+
+**Two Ordering Paths:**
+
+| Path | Flow |
+|------|------|
+| **Self-Service** | Browse marketplace → Add to cart → Checkout → Pay → Track in My Orders |
+| **Assisted** | Click "Let Sales Assist Me" → Sales prepares quote → Customer approves → Pay → Track |
+
+**New Account Shell Routes:**
+- `/account/marketplace` - Browse products inside account shell
+- `/account/services` - Service discovery and request
+- `/account/assisted-quote` - Let Sales Assist Me flow
+- `/account/orders` - Unified My Orders (All / Products / Services tabs)
+
+**Updated Customer Sidebar:**
+- Dashboard
+- **Marketplace** (highlighted, inside account)
+- **Services**
+- **Let Sales Assist** (new!)
+- **My Orders** (unified)
+- Quotes
+- Invoices
+- Recurring Plans
+- Referrals & Rewards
+- My Statement
+- Help
+
+**Backend-Driven Service Capability Selection:**
+- `GET /api/service-catalog/tree` - Returns service groups → services → sub-services
+- `ServiceCapabilitySelector` component can pull services from backend
+- Admin no longer types services manually
+
+**Account Marketplace Page Features:**
+1. "Browse Marketplace" button
+2. "Request a Service" button
+3. "Let Sales Assist Me" button
+4. Placeholder for embedded marketplace grid
+
+**Files Added:**
+- `/app/backend/service_catalog_tree_routes.py`
+- `/app/frontend/src/pages/account/AccountMarketplacePage.jsx`
+- `/app/frontend/src/pages/account/AccountServicesPage.jsx`
+- `/app/frontend/src/pages/account/AssistedQuoteRequestPage.jsx`
+- `/app/frontend/src/pages/account/MyOrdersUnifiedPage.jsx`
+- `/app/frontend/src/pages/account/CustomerDashboardV2.jsx`
+- `/app/frontend/src/components/account/CustomerPrimaryActions.jsx`
+- `/app/frontend/src/components/account/CustomerEmptyStateCard.jsx`
+- `/app/frontend/src/components/partners/ServiceCapabilitySelector.jsx`
+
+**Testing:**
+- Backend: 100% (7/7 tests passed)
+- Frontend: 100% - All account pages render correctly
+
+**Next Step:**
+- Embed actual marketplace grid into `/account/marketplace`
+- Connect cart and checkout inside account shell
+
+---
+
+*Last updated: March 23, 2026 - Customer Experience Simplification Pack Complete*
