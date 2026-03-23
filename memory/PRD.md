@@ -19,97 +19,87 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 
 ## Latest Session Updates (March 23, 2026)
 
-### Progressive Input & Checkout-to-Quote Pack ✅ COMPLETED
+### Design Pack Implementation ✅ COMPLETED
 
-**What was built:**
+**New UI Components Implemented:**
 
-#### 1. Fixed "Submit Request" Button (P0 🔴)
-- **File**: `/app/frontend/src/components/account/ServiceDynamicRequestForm.jsx`
-- Added `onClick` handler with form validation
-- Calls `POST /api/customer/in-account-service-requests`
-- Shows success state with "Request Submitted!" message
-- "Submit Another Request" button to reset form
+#### 1. LoginPageV2 (`/app/frontend/src/pages/auth/LoginPageV2.jsx`)
+- Split-screen branded login design
+- Left side: KONEKT branding, welcome message, feature highlights
+- Right side: Clean login form with email/password inputs
+- Stores `konekt_token` for AuthContext compatibility
+- Full page reload redirect to `/dashboard` after login
+- Auto-redirect to `/dashboard` if already logged in
 
-#### 2. Progressive Input Checkout Page (P0 🔴)
-- **File**: `/app/frontend/src/pages/account/AccountCheckoutPage.jsx`
-- Multi-field delivery address form:
-  - Street Address *
-  - City *
-  - Region * (dropdown with all Tanzania regions)
-  - Postal Code
-  - Contact Phone *
-  - Landmark / Additional Info
-  - Delivery Notes
-- "Save this address for future orders" checkbox
-- VAT calculation (18% configurable)
-- **Delivery Disclaimer**: "This cost does not include delivery. On delivery, you will be contacted."
-- Creates **Quote** (not Invoice) on submit
+#### 2. HelpPageV3 (`/app/frontend/src/pages/help/HelpPageV3.jsx`)
+- CTA-driven support center design
+- Hero section with "How can we help you?" messaging
+- Action buttons: Browse Products, Request Service
+- Help cards: Ordering Products, Requesting Services, Payments & Tracking
+- FAQ section with common questions
+- Quick Actions sidebar
+- Talk to Sales + Email Support CTAs
 
-#### 3. Customer Checkout Quote API
-- **File**: `/app/backend/customer_checkout_quote_routes.py`
-- `POST /api/customer/checkout-quote` - Creates quote with:
-  - Line items, subtotal, VAT %, VAT amount, total
-  - Delivery address (multi-field)
-  - Status: "pending"
-  - Stores in `quotes_v2` collection
+#### 3. DashboardCommandCenter (`/app/frontend/src/pages/dashboard/DashboardCommandCenter.jsx`)
+- Action-driven dashboard replacing passive overview
+- Welcome header with user's name
+- Stats cards: Quotes, Orders, Invoices, Quick Order
+- Badges for pending/active counts
+- Recent Activity feed with quote/order history
+- Quick Actions section with navigation links
 
-#### 4. Admin Catalog Setup Page (P0 🔴)
-- **File**: `/app/frontend/src/pages/admin/AdminCatalogSetupPage.jsx`
-- Route: `/admin/catalog-setup`
-- **Services Tab**: Add/Edit/Delete services with sub-services
-- **Products Tab**: Add/Edit/Delete product categories with variants
-- Modal form for creating/editing items
-- Single source of truth for all dropdowns
+#### 4. QuoteDetailWithPayment (`/app/frontend/src/pages/quotes/QuoteDetailWithPayment.jsx`)
+- Full quote detail view with line items, VAT, totals
+- Delivery address display
+- Bank transfer payment information
+- "Pay Now" button for pending quotes
+- Payment modal with bank transfer instructions
+- Status update after payment confirmation
 
-#### 5. Admin Catalog API
-- **File**: `/app/backend/admin_catalog_routes.py`
-- `GET/POST/PUT/DELETE /api/admin/catalog/services`
-- `GET/POST/PUT/DELETE /api/admin/catalog/products`
-- `GET /api/admin/catalog/tree` - Combined tree for dropdowns
-
-#### 6. Admin Deliveries Page (P1 🟠)
-- **File**: `/app/frontend/src/pages/admin/AdminDeliveriesPage.jsx`
-- Route: `/admin/deliveries`
-- Stats cards: Pending, Ready for Pickup, In Transit, Delivered
-- Filter tabs for each status
-- Delivery detail modal with status workflow:
-  - pending → ready_for_pickup → in_transit → delivered
-  - Can cancel at any stage
-
-#### 7. Admin Deliveries API
-- **File**: `/app/backend/admin_deliveries_routes.py`
-- `GET /api/admin/deliveries` - List with status filter
-- `GET /api/admin/deliveries/{id}` - Single delivery
-- `PATCH /api/admin/deliveries/{id}/status` - Update status
-- `POST /api/admin/deliveries` - Create manual delivery
-
-#### 8. VAT Configuration
-- Added `vat_percent: 18.0` to Admin Settings Hub
-- **File**: `/app/backend/admin_settings_hub_routes.py` - `commercial.vat_percent`
-- **File**: `/app/frontend/src/pages/admin/AdminSettingsHubPage.jsx` - VAT % field
+#### 5. EmptyState Component (`/app/frontend/src/components/empty/EmptyState.jsx`)
+- Reusable empty state with icon, title, message, CTA button
+- Variants: default, minimal
+- Specialized exports: EmptyQuotes, EmptyOrders, EmptyInvoices, EmptyCart
 
 ---
 
-## Admin Navigation Updates
-New items added:
-- **Catalog Setup** (under Settings) - `/admin/catalog-setup` - highlighted
-- **Deliveries** (under Operations) - `/admin/deliveries` - highlighted
+### Route Fixes ✅ COMPLETED
+
+1. **CustomerRoute** - Now redirects to `/login` instead of `/auth`
+2. **Navbar.js** - Desktop Login button goes to `/login`
+3. **Navbar.js** - Mobile bottom nav Account link goes to `/login`
+4. **Route Configuration** - `/login` renders LoginPageV2, `/dashboard/help` and `/account/help` render HelpPageV3
 
 ---
 
-## Test Results (Iteration 85)
-- **Backend**: 21/21 tests passed (100%)
-- **Frontend**: All UI tests passed
-- **Test File**: `/app/backend/tests/test_checkout_catalog_deliveries.py`
+### Previous Session: Progressive Input & Checkout Pack ✅ COMPLETED
+
+- Fixed "Submit Request" button on Customer Services page
+- Progressive Input Checkout with multi-field address
+- Checkout-to-Quote flow with VAT (18%)
+- Admin Catalog Setup (`/admin/catalog-setup`)
+- Admin Deliveries page (`/admin/deliveries`)
+- VAT configuration in Admin Settings Hub
+
+---
+
+## Test Results
+
+### Iteration 85 - Checkout/Catalog/Deliveries
+- Backend: 21/21 tests passed (100%)
+- Frontend: All UI tests passed
+
+### Iteration 86 - Design Pack UI
+- Frontend: 100% - All UI tests passed
+- Fixes applied: Navbar routing to /login
 
 ---
 
 ## Remaining Tasks
 
 ### P1 - High Priority
-- [ ] Customer Help Page redesign (make it engaging with CTAs)
-- [ ] Empty State designs for Quotes and Invoices pages
-- [ ] Global Confirmation Modal component
+- [ ] Global Confirmation Modal component (reusable warnings/deletions)
+- [ ] Apply Empty States to Quotes, Invoices, Orders pages when data arrays are empty
 - [ ] TIN Number collection during Invoice creation
 
 ### P2 - Medium Priority
@@ -137,25 +127,22 @@ New items added:
 
 ## Key Architectural Decisions
 
+### Login Flow
+1. User visits `/login` → sees LoginPageV2
+2. Submits credentials → API validates
+3. Token stored as `konekt_token` (AuthContext compatibility)
+4. Full page reload to `/dashboard`
+
 ### Checkout-to-Quote Flow
 1. Customer adds items to cart
-2. Goes to `/account/checkout`
-3. Fills multi-field delivery address
-4. Sees subtotal + VAT (18%) + total
-5. Clicks "Proceed to Checkout" → Creates **Quote** (not Invoice)
-6. Customer reviews Quote → Clicks "Pay" → Quote converts to Invoice
-7. Payment completes the order
+2. Checkout with multi-field address + delivery disclaimer
+3. Creates **Quote** (not Invoice) with VAT
+4. Customer reviews Quote → clicks "Pay" → converts to Invoice
 
 ### Catalog Single Source of Truth
 - Admin manages Services + Products at `/admin/catalog-setup`
-- Data stored in `catalog_services` and `catalog_products` collections
-- Dropdowns in customer flows pull from `/api/admin/catalog/tree`
-
-### Delivery Tracking
-- Deliveries auto-created from quotes with delivery_address
-- Courier partner uses `/admin/deliveries` to manage shipments
-- Status workflow: pending → ready_for_pickup → in_transit → delivered
+- Dropdowns pull from `/api/admin/catalog/tree`
 
 ---
 
-*Last updated: March 23, 2026 - Progressive Input & Checkout-to-Quote Pack Complete*
+*Last updated: March 23, 2026 - Design Pack Implementation Complete*
