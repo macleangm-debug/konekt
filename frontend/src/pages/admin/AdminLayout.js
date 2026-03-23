@@ -17,7 +17,8 @@ const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/art
 // Navigation items with moduleKey for filtering
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
-  { path: '/admin/control-panel', label: 'Control Panel', icon: PanelTop, moduleKey: 'settings' },
+  { path: '/admin/settings-hub', label: 'Settings Hub', icon: Settings, moduleKey: 'settings', highlight: true },
+  { path: '/admin/control-center', label: 'Control Center', icon: PanelTop, moduleKey: 'settings' },
   { path: '/staff', label: 'Staff Workspace', icon: Briefcase, moduleKey: 'overview' },
   { path: '/admin/staff-performance', label: 'Staff Performance', icon: BarChart3, moduleKey: 'reports' },
   { path: '/admin/launch-readiness', label: 'Launch Readiness', icon: Zap, moduleKey: 'settings' },
@@ -84,7 +85,6 @@ const navItems = [
   { path: '/admin/setup', label: 'Setup Lists', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList, moduleKey: 'settings' },
-  { path: '/admin/settings-hub', label: 'Settings Hub', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
 ];
 
@@ -169,12 +169,17 @@ export default function AdminLayout() {
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                     isActive(item.path, item.exact) 
                       ? 'bg-white/20 text-white' 
+                      : item.highlight
+                      ? 'bg-[#D4A843]/20 text-[#D4A843] hover:bg-[#D4A843]/30'
                       : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
+                  {item.highlight && !isActive(item.path, item.exact) && (
+                    <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full">NEW</span>
+                  )}
                 </Link>
               )
             ))}

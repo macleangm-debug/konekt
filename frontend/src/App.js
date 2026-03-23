@@ -214,6 +214,9 @@ import NavigationAuditPage from "@/pages/system/NavigationAuditPage";
 // Admin Settings Hub
 import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
 
+// Admin Control Center
+import AdminControlCenterPage from "@/pages/admin/AdminControlCenterPage";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -538,6 +541,8 @@ function App() {
           <Route path="help" element={<HelpAdminPage />} />
           {/* Admin Settings Hub */}
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
+          {/* Admin Control Center */}
+          <Route path="control-center" element={<AdminControlCenterPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
