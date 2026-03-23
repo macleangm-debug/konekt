@@ -1,14 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Gift, FileText, Users } from "lucide-react";
+import BrandLogoFinal from "../branding/BrandLogoFinal";
 
 export default function PremiumFooterV2() {
   return (
-    <footer className="bg-[#0f172a] text-white" data-testid="premium-footer">
+    <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white" data-testid="premium-footer">
       <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-2 xl:grid-cols-5 gap-10">
         <div className="xl:col-span-2">
-          <div className="text-2xl font-bold">Konekt</div>
-          <p className="text-slate-300 mt-4 max-w-md leading-7">
+          <BrandLogoFinal size="lg" light className="mb-4" />
+          <p className="text-white/60 mt-0 max-w-md leading-relaxed text-sm">
             Business products, services, and fulfillment support through one connected ecosystem.
           </p>
           <div className="flex gap-4 mt-6">

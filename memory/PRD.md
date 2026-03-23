@@ -1,120 +1,64 @@
 # Konekt - B2B Commerce Platform PRD
 
 ## Overview
-Konekt is a B2B e-commerce platform for promotional materials, office equipment, and design services. Based in Dar es Salaam, Tanzania.
+Konekt is a premium B2B e-commerce platform for promotional materials, office equipment, and design services. Based in Dar es Salaam, Tanzania.
 
 **Vision**: The biggest B2B branding platform in East Africa
 
 ---
 
-## Logo Branding System (Updated March 23, 2026)
+## UI Polish Pack (Completed March 23, 2026)
 
-### Logo Files
-| File | Content | Usage |
-|------|---------|-------|
-| `konekt-logo-full.png` | Dark/black wordmark on transparent bg | White/light backgrounds |
-| `konekt-icon.png` | Dark/black K icon on transparent bg | White/light backgrounds |
-| `konekt-logo-white.png` | White wordmark on transparent bg | Dark backgrounds |
-| `konekt-icon-white.png` | White K icon on transparent bg | Dark backgrounds |
+### Phase 1: Logo System
+- **BrandLogoFinal** component (`/components/branding/BrandLogoFinal.jsx`)
+  - Single image source: `/branding/konekt-logo-full.png` (dark content on transparent bg)
+  - `light` prop adds CSS `brightness-0 invert` for dark backgrounds
+  - Size variants: sm (h-8), md (h-12), lg (h-16), xl (h-24)
+- Replaced ALL BrandLogoV2/BrandLogo references across entire app
+- Logo files: `konekt-logo-full.png` (dark), `konekt-icon.png` (dark icon), `konekt-logo-white.png` (white), `konekt-icon-white.png` (white icon)
 
-### BrandLogoV2 Component
-- `variant="dark"` → dark content for light backgrounds
-- `variant="light"` → white content for dark backgrounds
-- `kind="full"` → full wordmark, `kind="icon"` → K icon only
-- `size="xs|sm|md|lg|xl"` → height presets
+### Phase 2: Design System
+- Consistent color palette: `#0f172a` (primary text), `#64748b` (muted), `#94a3b8` (light muted), `#f8fafc` (background), `#1f3a5f` (brand)
+- Typography: tighter tracking, semibold headings, text-sm body text
+- Card system: `rounded-xl border border-gray-200 bg-white` everywhere
+- Spacing: `gap-4`, `p-5`, `mb-6` standardized
 
----
+### Phase 3: Layout Upgrades
+- **Sidebar**: Clean white with prominent logo at top, rounded-lg nav items, gold Marketplace badge
+- **Dashboard Hero**: Gradient from-[#1f3a5f] to-[#162c47], tighter text, better CTAs
+- **Stats Cards**: Cleaner with badges and hover lift effects
+- **Activity/Notifications/Timeline**: Tighter, smaller text, consistent borders
+- **Marketplace**: Upgraded cards, filter bar, page headers
 
-## Session Summary (March 23, 2026)
+### Phase 4: Polish
+- **Buttons**: `rounded-lg`, `text-sm`, `hover:-translate-y-0.5 hover:shadow-md`
+- **Badges**: `rounded-md`, smaller padding
+- **Micro-interactions**: All interactive elements have hover transitions
+- **Footer**: Gradient background with BrandLogoFinal
 
-### Sales Rating + Feedback Pack - FULLY IMPLEMENTED
-
-#### New Backend APIs
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/sales-ratings/leaderboard` | Top rated sales advisors |
-| `GET /api/sales-ratings/pending-for-customer` | Pending rating tasks for customer |
-| `GET /api/sales-ratings/summary` | Rating stats for a sales advisor |
-| `POST /api/sales-ratings/submit` | Submit rating with stars (1-5) and feedback |
-
-#### New Frontend Components
-| Component | File | Purpose |
-|-----------|------|---------|
-| StarRatingInput | `/components/ratings/StarRatingInput.jsx` | 5-star rating input |
-| SalesRatingModal | `/components/ratings/SalesRatingModal.jsx` | Rating submission modal |
-| CompletedOrderRatingTaskCard | `/components/ratings/CompletedOrderRatingTaskCard.jsx` | Rating task card |
-| SalespersonScoreCard | `/components/ratings/SalespersonScoreCard.jsx` | Sales advisor rating display |
-| SalesRatingLeaderboardCard | `/components/ratings/SalesRatingLeaderboardCard.jsx` | Top rated leaderboard |
-| CustomerSalesRatingTasksPage | `/pages/account/CustomerSalesRatingTasksPage.jsx` | Customer rating tasks |
-| SalesDashboardQualityV3 | `/pages/dashboard/SalesDashboardQualityV3.jsx` | Sales quality dashboard |
-
----
-
-### Branding + Enterprise PDF Pack - FULLY IMPLEMENTED
-
-#### New Backend APIs
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/admin/branding-settings` | Get company branding configuration |
-| `PUT /api/admin/branding-settings` | Update branding settings |
-| `GET /api/enterprise-docs/quote/{id}/pdf` | Enterprise-branded quote PDF |
-| `GET /api/enterprise-docs/invoice/{id}/pdf` | Enterprise-branded invoice PDF |
-| `GET /api/enterprise-docs/order/{id}/pdf` | Enterprise-branded order PDF |
-
-#### New Frontend Components
-| Component | File | Purpose |
-|-----------|------|---------|
-| BrandLogo | `/components/branding/BrandLogo.jsx` | Branded logo component (API-driven) |
-| BrandLogoV2 | `/components/branding/BrandLogoV2.jsx` | Static context-aware logo component |
-| AccountBrandHeader | `/components/layout/AccountBrandHeader.jsx` | Branded account header |
-| EnterprisePdfActions | `/components/docs/EnterprisePdfActions.jsx` | PDF download buttons |
-| BrandingSettingsPage | `/pages/admin/BrandingSettingsPage.jsx` | Admin branding configuration |
-| useBrandingSettings | `/hooks/useBrandingSettings.js` | Branding settings hook |
-
----
-
-### PDF Generation + Real Dashboard Metrics Pack - FULLY IMPLEMENTED
-
-#### New Backend APIs (PDF Generation)
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/pdf/quotes/{id}` | Download quote as PDF |
-| `GET /api/pdf/quotes/{id}/preview` | HTML preview of quote |
-| `GET /api/pdf/invoices/{id}` | Download invoice as PDF |
-| `GET /api/pdf/invoices/{id}/preview` | HTML preview of invoice |
-
-#### New Backend APIs (Dashboard Metrics)
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/dashboard-metrics/customer` | Customer metrics |
-| `GET /api/dashboard-metrics/admin` | Admin metrics |
-| `GET /api/dashboard-metrics/sales` | Sales metrics |
-| `GET /api/dashboard-metrics/affiliate` | Affiliate metrics |
-| `GET /api/dashboard-metrics/partner` | Partner metrics |
-
----
-
-### Launch Critical Completion Pack - FULLY IMPLEMENTED
-
-#### New Backend APIs (WhatsApp Twilio Integration)
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /api/whatsapp/status` | Check Twilio configuration status |
-| `POST /api/whatsapp/send-live` | Send WhatsApp message via Twilio |
-| `POST /api/whatsapp/event/payment-approved-live` | Payment approval notification |
-| `POST /api/whatsapp/event/quote-ready-live` | Quote ready notification |
-| `POST /api/whatsapp/event/order-shipped-live` | Shipping notification |
-| `GET /api/whatsapp/logs` | View message logs (admin) |
-
----
-
-### Unified Commerce Fixes Pack - FULLY IMPLEMENTED
-- Cart Drawer, Marketplace Filters, Explore Page, Sales Assist
-
----
-
-### Growth Engine Pack - FULLY IMPLEMENTED
-- Activity Feed, Notifications, Order Timeline, WhatsApp Share, Onboarding Wizard
+### Updated Components
+| Component | File | Change |
+|-----------|------|--------|
+| BrandLogoFinal | `/components/branding/BrandLogoFinal.jsx` | NEW - single logo component |
+| CustomerPortalLayoutV2 | `/layouts/CustomerPortalLayoutV2.jsx` | Polished sidebar + header |
+| LoginPageV2 | `/pages/auth/LoginPageV2.jsx` | Redesigned split layout |
+| AdminLogin | `/pages/admin/AdminLogin.js` | Polished centered card |
+| AdminLayout | `/pages/admin/AdminLayout.js` | Updated logo + text |
+| PublicNavbarV2 | `/components/public/PublicNavbarV2.jsx` | BrandLogoFinal at md |
+| Footer | `/components/Footer.js` | Gradient bg + BrandLogoFinal |
+| PremiumFooterV2 | `/components/public/PremiumFooterV2.jsx` | BrandLogoFinal + gradient |
+| CustomerDashboardV3 | `/pages/dashboard/CustomerDashboardV3.jsx` | Hero + stats + spacing |
+| MarketplaceCardV2 | `/components/public/MarketplaceCardV2.jsx` | Premium card styling |
+| BrandButton | `/components/ui/BrandButton.jsx` | Rounded-lg + hover lift |
+| BrandBadge | `/components/ui/BrandBadge.jsx` | Rounded-md + smaller |
+| PageHeader | `/components/ui/PageHeader.jsx` | Tighter typography |
+| FilterBar | `/components/ui/FilterBar.jsx` | Cleaner inputs |
+| PremiumEmptyState | `/components/ui/PremiumEmptyState.jsx` | Consistent styling |
+| AccountBrandHeader | `/components/layout/AccountBrandHeader.jsx` | BrandLogoFinal |
+| RecentActivityFeed | `/components/growth/RecentActivityFeed.jsx` | Tighter layout |
+| QuickNotificationsPanel | `/components/growth/QuickNotificationsPanel.jsx` | Consistent styling |
+| OrderStatusTimelineCard | `/components/growth/OrderStatusTimelineCard.jsx` | Cleaner progress |
+| ListingGridSkeleton | `/components/public/ListingGridSkeleton.jsx` | Match card styling |
 
 ---
 
@@ -133,25 +77,43 @@ Konekt is a B2B e-commerce platform for promotional materials, office equipment,
 - [ ] Configure Twilio credentials for live WhatsApp messaging (blocked on user providing keys)
 
 ### P1 - Launch Critical
-- [x] Upload actual logo files to `/public/branding/` - DONE
-- [x] Logo visibility polish (dark/light variants) - DONE
+- [x] Logo system fix + UI Polish Pack - DONE (March 23, 2026)
 - [ ] Final Launch Verification Checklist execution
 - [ ] Connect live payment gateway
 - [ ] DNS/SSL setup for production domain
 
 ### P2 - Growth
-- [ ] Advanced analytics
+- [ ] Dashboard visual upgrade (further spacing + hierarchy refinement)
+- [ ] Typography system (further fine-tuning)
+- [ ] Button styling consistency audit
 - [ ] Mobile-first optimization
+- [ ] Advanced analytics
 - [ ] Push notifications
 - [ ] One-click reorder
 
 ---
 
-## Launch Readiness Status: READY FOR CONTROLLED LAUNCH
+## Architecture
+```
+/app
+├── backend/        (FastAPI + MongoDB)
+├── frontend/
+│   ├── public/branding/   (4 logo files)
+│   └── src/
+│       ├── components/
+│       │   ├── branding/BrandLogoFinal.jsx  (primary logo component)
+│       │   ├── growth/     (activity, notifications, timeline)
+│       │   ├── public/     (navbar, footer, marketplace cards)
+│       │   └── ui/         (buttons, badges, filters, headers)
+│       ├── layouts/CustomerPortalLayoutV2.jsx
+│       └── pages/
+│           ├── auth/LoginPageV2.jsx
+│           ├── admin/AdminLogin.js, AdminLayout.js
+│           └── dashboard/CustomerDashboardV3.jsx
+```
 
-All core features implemented and tested:
-- 5 major packs complete (Unified Commerce, Launch Critical, PDF + Metrics, Sales Rating, Branding)
-- Real logo branding deployed with context-aware dark/light variants
-- WhatsApp hooks ready (awaiting Twilio credentials)
+## Testing
+- Test reports: `/app/test_reports/iteration_87.json` through `iteration_92.json`
+- Latest (UI Polish): iteration_92 - 100% pass rate
 
-*Last updated: March 23, 2026*
+*Last updated: March 23, 2026 - UI POLISH PACK COMPLETE*
