@@ -2576,3 +2576,84 @@ APIs:
 ---
 
 *Last updated: March 22, 2026 - Launch Navigation Cleanup Pack Complete*
+
+---
+
+### Codebase Pack 36 - Admin Settings Hub Pack ✅ (March 23, 2026)
+
+**Central Settings Hub - 12 Sections:**
+
+1. **Commercial Rules** - Core company protection
+   - Minimum Company Margin %, Distribution Layer %
+   - Commission Mode (Fair Balanced/Sales Priority/Affiliate Priority/Fixed Split)
+   - Affiliate attribution reduces sales commission toggle
+
+2. **Margin Rules** - Override controls
+   - Product/Service group margin override toggles
+   - Pricing below minimum requires admin override
+
+3. **Promotions** - Campaign controls
+   - Default Promo Type, Max Public Promo Discount %
+   - Allow margin touching promos, Affiliate visible campaigns
+
+4. **Affiliate Settings** - Economics & governance
+   - Default Commission %, Attribution Window Days
+   - Commission Trigger, Payout Cycle, Minimum Payout Threshold
+   - Watchlist/Paused/Suspend logic toggles
+
+5. **Sales Settings** - Commission & assignment
+   - Sales Commission % (Self/Affiliate Lead)
+   - Assignment Mode, Smart assignment, Lead source visibility
+
+6. **Payment Settings** - Payment methods
+   - Bank-only, Card, Mobile Money, KwikPay toggles
+   - Payment proof required, Verification mode
+
+7. **Payment Account Settings** - Bank details
+   - Account Name, Number, Bank Name, SWIFT Code, Currency
+   - Show on invoice/checkout toggles
+
+8. **Progress Workflows** - Customer-safe statuses
+   - Hide internal provider details
+   - Customer-safe external statuses only
+
+9. **AI Assistant** - Chat & handoff
+   - AI enabled, Human handoff enabled
+   - Handoff after X unresolved exchanges
+
+10. **Notifications** - Per-role notifications
+    - Customer/Sales/Affiliate/Admin/Vendor notification toggles
+
+11. **Vendors / Partners** - Data protection
+    - Vendor progress update, Assigned jobs only
+    - Cannot see financials/commissions
+
+12. **Numbering Rules** - Document formats
+    - SKU auto-numbering, Quote/Invoice/Order format patterns
+
+13. **Launch Controls** - Go-live defaults
+    - System Mode (Controlled Launch/Full Live)
+    - Manual verification toggles
+
+**Route:** `/admin/settings-hub`
+
+**API Endpoints:**
+- `GET /api/admin/settings-hub` - Get all settings with defaults
+- `PUT /api/admin/settings-hub` - Update settings, persists to MongoDB
+
+**Files Added:**
+- `/app/backend/admin_settings_hub_routes.py`
+- `/app/frontend/src/pages/admin/AdminSettingsHubPage.jsx`
+- `/app/frontend/src/components/admin/settings/SettingsSectionCard.jsx`
+- `/app/frontend/src/components/admin/settings/SettingsNumberField.jsx`
+- `/app/frontend/src/components/admin/settings/SettingsToggleField.jsx`
+- `/app/frontend/src/components/admin/settings/SettingsSelectField.jsx`
+- `/app/frontend/src/components/admin/settings/SettingsTextField.jsx`
+
+**Testing:**
+- Backend: 100% (9/9 tests passed)
+- Frontend: 100% - All sections render, save works
+
+---
+
+*Last updated: March 23, 2026 - Admin Settings Hub Pack Complete*
