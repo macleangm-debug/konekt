@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2, HelpCircle, Store, Headphones
+  Wrench, LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store, Headphones
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
-import BrandLogoV2 from "../components/branding/BrandLogoV2";
+import BrandLogoFinal from "../components/branding/BrandLogoFinal";
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -19,7 +19,7 @@ const nav = [
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
   { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users },
-  { label: "My Statement", href: "/dashboard/statement", icon: CreditCard },
+  { label: "My Statement", href: "/dashboard/statement", icon: LayoutDashboard },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
 
@@ -44,17 +44,18 @@ export default function CustomerPortalLayoutV2() {
   })();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex" data-testid="customer-portal-layout">
+    <div className="min-h-screen bg-[#f8fafc] flex" data-testid="customer-portal-layout">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-[280px] min-h-screen bg-white border-r">
-        <div className="px-6 py-5 border-b">
-          <Link to="/" className="flex items-center gap-2">
-            {/* DARK logo on white sidebar - VISIBLE */}
-            <BrandLogoV2 variant="dark" kind="full" size="md" />
+      <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-white border-r border-gray-200">
+        {/* Logo */}
+        <div className="px-5 py-6 border-b border-gray-100">
+          <Link to="/" className="flex items-center" data-testid="sidebar-logo-link">
+            <BrandLogoFinal size="md" />
           </Link>
         </div>
         
-        <nav className="flex-1 px-4 py-6 space-y-1">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {nav.map((item) => {
             const Icon = item.icon;
             const active =
@@ -64,19 +65,19 @@ export default function CustomerPortalLayoutV2() {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ${
                   active
-                    ? "bg-[#20364D] text-white"
+                    ? "bg-[#1f3a5f] text-white shadow-sm"
                     : item.highlight
-                    ? "text-[#D4A843] bg-amber-50 hover:bg-amber-100"
-                    : "text-slate-700 hover:bg-slate-100"
+                    ? "text-[#D4A843] hover:bg-amber-50"
+                    : "text-slate-600 hover:bg-gray-100 hover:text-slate-900"
                 }`}
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="w-[18px] h-[18px]" />
                 {item.label}
                 {item.highlight && !active && (
-                  <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full">EARN</span>
+                  <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full font-semibold">EARN</span>
                 )}
               </Link>
             );
@@ -84,14 +85,14 @@ export default function CustomerPortalLayoutV2() {
         </nav>
 
         {/* Business Pricing CTA */}
-        <div className="px-4 py-4 border-t">
+        <div className="px-3 py-4 border-t border-gray-100">
           <Link
             to="/dashboard/business-pricing"
-            className="flex items-center gap-3 w-full rounded-xl px-4 py-3 bg-gradient-to-r from-[#20364D] to-[#2a4a66] text-white font-medium hover:opacity-90 transition"
+            className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 bg-[#1f3a5f] text-white text-sm font-medium hover:bg-[#162c47] transition-colors"
             data-testid="business-pricing-cta"
           >
-            <Building2 className="w-5 h-5" />
-            <span>Request Business Pricing</span>
+            <Building2 className="w-[18px] h-[18px]" />
+            Request Business Pricing
           </Link>
         </div>
       </aside>
@@ -99,25 +100,26 @@ export default function CustomerPortalLayoutV2() {
       {/* Main Content */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+        <header className="h-16 bg-white border-b border-gray-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
           {/* Mobile Menu Toggle */}
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-slate-100"
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             data-testid="mobile-menu-toggle"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
           <div className="hidden lg:block">
-            <div className="font-semibold text-[#20364D]">Customer Portal</div>
-            <div className="text-sm text-slate-500">
+            <div className="text-sm font-semibold text-[#0f172a]">Customer Portal</div>
+            <div className="text-xs text-[#64748b]">
               Manage orders, services, invoices, and rewards
             </div>
           </div>
 
-          <Link to="/" className="lg:hidden text-xl font-bold text-[#20364D]">
-            Konekt
+          {/* Mobile Logo */}
+          <Link to="/" className="lg:hidden">
+            <BrandLogoFinal size="sm" />
           </Link>
 
           <div className="flex items-center gap-3">
@@ -136,7 +138,7 @@ export default function CustomerPortalLayoutV2() {
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-white border-b p-4 space-y-1" data-testid="mobile-nav">
+          <div className="lg:hidden bg-white border-b border-gray-200 p-3 space-y-1" data-testid="mobile-nav">
             {nav.map((item) => {
               const Icon = item.icon;
               const active =
@@ -147,22 +149,22 @@ export default function CustomerPortalLayoutV2() {
                   key={item.href}
                   to={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-[#20364D] text-white"
-                      : "text-slate-700 hover:bg-slate-100"
+                      ? "bg-[#1f3a5f] text-white"
+                      : "text-slate-600 hover:bg-gray-100"
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-[18px] h-[18px]" />
                   {item.label}
                 </Link>
               );
             })}
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-red-600 hover:bg-red-50 transition font-medium"
+              className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-[18px] h-[18px]" />
               Sign Out
             </button>
           </div>

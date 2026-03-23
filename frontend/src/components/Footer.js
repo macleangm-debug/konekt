@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
-import BrandLogoV2 from './branding/BrandLogoV2';
+import BrandLogoFinal from './branding/BrandLogoFinal';
 
 export default function Footer() {
   return (
-    <footer className="bg-primary text-white mt-auto" data-testid="footer">
+    <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white mt-auto" data-testid="footer">
       <div className="container mx-auto px-6 md:px-12 lg:px-24 py-12">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Brand - LIGHT logo on dark footer */}
+          {/* Brand */}
           <div>
-            <BrandLogoV2 variant="light" kind="full" size="lg" className="mb-4" />
+            <BrandLogoFinal size="lg" light className="mb-4" />
             <p className="text-white/70 text-sm mb-4 leading-relaxed">
               Connecting the Future, Today. Premium promotional products with professional quality and AI-powered design assistance.
             </p>

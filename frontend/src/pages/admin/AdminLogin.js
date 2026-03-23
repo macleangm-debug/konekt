@@ -7,8 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { toast } from 'sonner';
-
-const LOGO_URL = "/branding/konekt-logo-full.png";
+import BrandLogoFinal from '../../components/branding/BrandLogoFinal';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -41,7 +40,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4" data-testid="admin-login-page">
+    <div className="min-h-screen bg-gradient-to-br from-[#0f172a] to-[#1e293b] flex items-center justify-center p-4" data-testid="admin-login-page">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -49,7 +48,7 @@ export default function AdminLogin() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={LOGO_URL} alt="Konekt" className="h-16 mx-auto mb-4 brightness-0 invert" />
+          <BrandLogoFinal size="lg" light className="mx-auto mb-4" />
           <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-4 py-2 rounded-full text-sm">
             <Shield className="w-4 h-4" />
             Admin Portal
@@ -57,8 +56,8 @@ export default function AdminLogin() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl p-8 shadow-2xl">
-          <h1 className="text-2xl font-bold text-center mb-6 text-primary">Sign In</h1>
+        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200">
+          <h1 className="text-2xl font-bold text-center mb-6 text-[#0f172a]">Sign In</h1>
           
           {error && (
             <motion.div 
@@ -71,34 +70,34 @@ export default function AdminLogin() {
             </motion.div>
           )}
           
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <Label htmlFor="email">Email</Label>
-              <div className="relative mt-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Label htmlFor="email" className="text-sm font-medium text-[#0f172a]">Email</Label>
+              <div className="relative mt-1.5">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@konekt.co.tz"
-                  className="pl-10"
+                  className="pl-10 h-11 border-gray-200"
                   data-testid="admin-email"
                 />
               </div>
             </div>
             
             <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Label htmlFor="password" className="text-sm font-medium text-[#0f172a]">Password</Label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94a3b8]" />
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10"
+                  placeholder="Enter password"
+                  className="pl-10 h-11 border-gray-200"
                   data-testid="admin-password"
                 />
               </div>
@@ -106,12 +105,12 @@ export default function AdminLogin() {
             
             <Button 
               type="submit" 
-              className="w-full h-12 text-lg"
+              className="w-full h-11 bg-[#0f172a] hover:bg-[#1e293b] text-sm font-semibold"
               disabled={loading}
               data-testid="admin-login-btn"
             >
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>Sign In <ArrowRight className="w-4 h-4 ml-2" /></>
               )}
@@ -119,14 +118,14 @@ export default function AdminLogin() {
           </form>
           
           <div className="mt-6 text-center">
-            <a href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-              ← Back to Website
+            <a href="/" className="text-sm text-[#64748b] hover:text-[#0f172a] transition-colors">
+              Back to Website
             </a>
           </div>
         </div>
         
-        <p className="text-center mt-6 text-white/50 text-sm">
-          © {new Date().getFullYear()} Konekt Limited. Admin Portal.
+        <p className="text-center mt-6 text-white/40 text-xs">
+          {new Date().getFullYear()} Konekt Limited. Admin Portal.
         </p>
       </motion.div>
     </div>

@@ -9,14 +9,14 @@ export default function PremiumEmptyState({
   ctaHref,
 }) {
   return (
-    <div className="rounded-3xl border bg-white p-10 text-center" data-testid="premium-empty-state">
-      <div className="w-14 h-14 mx-auto rounded-2xl bg-slate-100 mb-5 flex items-center justify-center">
-        <Package className="w-7 h-7 text-slate-400" />
+    <div className="rounded-xl border border-gray-200 bg-white py-16 px-6 text-center" data-testid="premium-empty-state">
+      <div className="w-12 h-12 mx-auto rounded-xl bg-[#f8fafc] mb-4 flex items-center justify-center">
+        <Package className="w-6 h-6 text-[#94a3b8]" />
       </div>
-      <h3 className="text-2xl font-bold text-[#20364D]">{title}</h3>
-      <p className="text-slate-600 mt-3 max-w-xl mx-auto">{description}</p>
+      <h3 className="text-lg font-semibold text-[#0f172a]">{title}</h3>
+      <p className="text-sm text-[#64748b] mt-2 max-w-md mx-auto">{description}</p>
       {ctaLabel && ctaHref ? (
-        <div className="mt-6">
+        <div className="mt-5">
           <BrandButton href={ctaHref} variant="primary">
             {ctaLabel}
           </BrandButton>

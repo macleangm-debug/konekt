@@ -35,14 +35,14 @@ export default function RecentActivityFeed({ items = [] }) {
   };
 
   return (
-    <div className="rounded-[2rem] border bg-white p-6">
-      <div className="text-2xl font-bold text-[#20364D]">Recent Activity</div>
-      <div className="space-y-4 mt-5">
+    <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="text-lg font-semibold text-[#0f172a]">Recent Activity</div>
+      <div className="space-y-3 mt-4">
         {items.length === 0 ? (
-          <div className="text-center py-6">
-            <Clock className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <div className="text-slate-500">No recent activity yet.</div>
-            <div className="text-sm text-slate-400 mt-1">Your updates will appear here</div>
+          <div className="text-center py-8">
+            <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+            <div className="text-sm text-[#64748b]">No recent activity yet.</div>
+            <div className="text-xs text-[#94a3b8] mt-1">Your updates will appear here</div>
           </div>
         ) : (
           items.map((item, index) => {
@@ -50,13 +50,13 @@ export default function RecentActivityFeed({ items = [] }) {
             const colorClass = getColor(item.type);
             
             return (
-              <div key={index} className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
-                  <IconComponent className="w-5 h-5" />
+              <div key={index} className="flex items-start gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
+                  <IconComponent className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-[#20364D]">{item.title}</div>
-                  <div className="text-sm text-slate-500 mt-1">{item.time}</div>
+                  <div className="text-sm font-medium text-[#0f172a]">{item.title}</div>
+                  <div className="text-xs text-[#94a3b8] mt-0.5">{item.time}</div>
                 </div>
               </div>
             );

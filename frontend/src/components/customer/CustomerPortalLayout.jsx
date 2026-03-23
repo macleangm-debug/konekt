@@ -20,8 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../ui/button";
-
-const LOGO_URL = "/branding/konekt-logo-full.png";
+import BrandLogoFinal from "../branding/BrandLogoFinal";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
@@ -61,11 +60,10 @@ export default function CustomerPortalLayout() {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-6 py-6 border-b">
+          <div className="px-5 py-6 border-b border-gray-100">
             <Link to="/">
-              <img src={LOGO_URL} alt="Konekt" className="h-10" />
+              <BrandLogoFinal size="md" />
             </Link>
-            <div className="text-sm text-slate-500 mt-2">Your business workspace</div>
           </div>
 
           {/* Navigation */}

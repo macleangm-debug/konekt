@@ -7,10 +7,10 @@ export default function MarketplaceCardV2({ item }) {
   return (
     <Link
       to={`/marketplace/${item.slug}`}
-      className="group rounded-3xl border bg-white overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition duration-200"
+      className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
       data-testid={`marketplace-card-${item.id}`}
     >
-      <div className="h-56 bg-slate-100 overflow-hidden">
+      <div className="h-44 bg-[#f8fafc] overflow-hidden">
         {item.images?.[0] || item.hero_image ? (
           <img
             src={item.images?.[0] || item.hero_image}
@@ -18,35 +18,35 @@ export default function MarketplaceCardV2({ item }) {
             className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400">
-            <Package className="w-12 h-12" />
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <Package className="w-10 h-10" />
           </div>
         )}
       </div>
 
-      <div className="p-5 space-y-3">
-        <div className="flex items-center justify-between gap-3">
+      <div className="p-4">
+        <div className="flex items-center gap-2 mb-2">
           <BrandBadge tone="dark">{item.category || "General"}</BrandBadge>
           {item.listing_type === "service" && (
             <BrandBadge tone="gold">Service</BrandBadge>
           )}
         </div>
 
-        <div className="text-lg font-bold text-[#20364D] line-clamp-2">
+        <h3 className="text-sm font-semibold text-[#0f172a] line-clamp-2 mb-1">
           {item.name}
-        </div>
+        </h3>
 
-        <div className="text-sm text-slate-600 line-clamp-2 min-h-[40px]">
+        <p className="text-xs text-[#64748b] line-clamp-2 min-h-[32px]">
           {item.short_description || item.description || "No description available"}
-        </div>
+        </p>
 
-        <div className="flex items-center justify-between pt-2">
-          <div className="font-bold text-[#20364D] text-lg">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <span className="font-semibold text-[#0f172a]">
             {item.currency || "TZS"} {Number(item.customer_price || 0).toLocaleString()}
-          </div>
-          <div className="text-sm font-semibold text-slate-500 group-hover:text-[#20364D] transition">
-            View →
-          </div>
+          </span>
+          <span className="text-xs font-medium text-[#94a3b8] group-hover:text-[#1f3a5f] transition-colors">
+            View Details
+          </span>
         </div>
       </div>
     </Link>

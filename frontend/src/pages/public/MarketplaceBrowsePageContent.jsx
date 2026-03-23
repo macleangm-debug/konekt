@@ -106,7 +106,7 @@ export default function MarketplaceBrowsePageContent() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10" data-testid="marketplace-browse-content">
+    <div className="max-w-7xl mx-auto px-6 py-8" data-testid="marketplace-browse-content">
       <PageHeader 
         title="Marketplace"
         subtitle={`Discover products and services available in ${countryCode || "your location"}.`}
@@ -117,17 +117,17 @@ export default function MarketplaceBrowsePageContent() {
         onSearchChange={handleSearch}
         searchPlaceholder="Search products and services..."
         filters={filterConfig}
-        className="mb-8"
+        className="mb-6"
       />
 
       {loading ? (
         <ListingGridSkeleton />
       ) : items.length > 0 ? (
         <>
-          <div className="text-sm text-slate-500 mb-4">
+          <div className="text-xs text-[#94a3b8] mb-3">
             {items.length} item{items.length !== 1 ? "s" : ""} found
           </div>
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
             {items.map((item) => (
               <MarketplaceCardV2 key={item.id} item={item} />
             ))}

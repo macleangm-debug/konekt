@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
-import BrandLogoV2 from "../../components/branding/BrandLogoV2";
+import BrandLogoFinal from "../../components/branding/BrandLogoFinal";
+import { Check } from "lucide-react";
 
 export default function LoginPageV2() {
   const navigate = useNavigate();
@@ -10,7 +11,6 @@ export default function LoginPageV2() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
     if (token) {
@@ -30,17 +30,14 @@ export default function LoginPageV2() {
       const res = await api.post("/api/auth/login", { email, password });
       const { token, user } = res.data;
       
-      // Store token with the key used by AuthContext
       localStorage.setItem("konekt_token", token);
-      localStorage.setItem("token", token); // Legacy support
+      localStorage.setItem("token", token);
       localStorage.setItem("userRole", user.role || "customer");
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", user.full_name || user.email);
       
       toast.success("Welcome back!");
-      
-      // Force full page reload to ensure auth context picks up the token
       window.location.href = "/dashboard";
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Invalid credentials");
@@ -49,61 +46,55 @@ export default function LoginPageV2() {
     }
   };
 
+  const features = [
+    "Order Products Easily",
+    "Request Services in Minutes",
+    "Track Everything in One Place",
+  ];
+
   return (
     <div className="min-h-screen grid md:grid-cols-2" data-testid="login-page-v2">
-      {/* Left Side - Branding (DARK background - use LIGHT logo) */}
-      <div className="bg-[#20364D] text-white p-10 md:p-16 flex flex-col justify-center">
-        <div className="max-w-md mx-auto">
-          {/* WHITE LOGO on dark background - VISIBLE */}
-          <BrandLogoV2 variant="light" kind="full" size="xl" className="mb-10" />
+      {/* Left Side - Branding */}
+      <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white p-10 md:p-16 flex flex-col justify-center relative overflow-hidden">
+        {/* Subtle texture overlay */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+        
+        <div className="max-w-md mx-auto relative z-10">
+          <BrandLogoFinal size="xl" light className="mb-12" />
           
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight">Welcome to Konekt</h1>
-          <p className="mt-4 text-slate-200 text-lg leading-7">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight">
+            Welcome to Konekt
+          </h1>
+          <p className="mt-4 text-white/70 text-lg leading-relaxed">
             Buy products, request services, and manage everything from one platform.
           </p>
 
           <div className="mt-10 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#F4E7BF] flex items-center justify-center">
-                <svg className="w-4 h-4 text-[#8B6A10]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+            {features.map((feature) => (
+              <div key={feature} className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-[#f4c430]/20 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-[#f4c430]" />
+                </div>
+                <span className="text-white/80 text-sm">{feature}</span>
               </div>
-              <span className="text-slate-200">Order Products Easily</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#F4E7BF] flex items-center justify-center">
-                <svg className="w-4 h-4 text-[#8B6A10]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-slate-200">Request Services in Minutes</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#F4E7BF] flex items-center justify-center">
-                <svg className="w-4 h-4 text-[#8B6A10]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-slate-200">Track Everything in One Place</span>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="flex items-center justify-center p-10 bg-slate-50">
+      <div className="flex items-center justify-center p-10 bg-[#f8fafc]">
         <div className="w-full max-w-md">
-          <div className="border rounded-2xl p-8 bg-white shadow-sm">
-            <h2 className="text-2xl font-bold text-[#20364D] mb-2">Sign In</h2>
-            <p className="text-slate-500 text-sm mb-6">Enter your credentials to access your account</p>
+          <div className="bg-white rounded-xl border border-gray-200 p-8 shadow-sm">
+            <h2 className="text-2xl font-bold text-[#0f172a] mb-1">Sign In</h2>
+            <p className="text-[#64748b] text-sm mb-6">Enter your credentials to access your account</p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm text-slate-600 mb-2">Email Address</label>
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Email Address</label>
                 <input 
                   type="email"
-                  className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D] focus:border-transparent outline-none transition" 
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition" 
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -112,11 +103,11 @@ export default function LoginPageV2() {
               </div>
               
               <div>
-                <label className="block text-sm text-slate-600 mb-2">Password</label>
+                <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Password</label>
                 <input 
                   type="password"
-                  className="w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D] focus:border-transparent outline-none transition" 
-                  placeholder="••••••••"
+                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition" 
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   data-testid="password-input"
@@ -126,12 +117,12 @@ export default function LoginPageV2() {
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#20364D] text-white py-3 rounded-xl font-semibold hover:bg-[#2a4563] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-[#0f172a] text-white py-3 rounded-lg text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="login-submit-btn"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -141,18 +132,18 @@ export default function LoginPageV2() {
               </button>
             </form>
 
-            <div className="mt-6 pt-6 border-t">
-              <div className="text-sm text-center text-slate-500">
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <div className="text-sm text-center text-[#64748b]">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-[#20364D] font-semibold hover:underline">
+                <Link to="/register" className="text-[#1f3a5f] font-semibold hover:underline">
                   Sign up
                 </Link>
               </div>
             </div>
           </div>
           
-          <div className="text-center mt-6 text-sm text-slate-400">
-            <Link to="/" className="hover:text-slate-600">← Back to Home</Link>
+          <div className="text-center mt-6 text-sm text-[#94a3b8]">
+            <Link to="/" className="hover:text-[#64748b] transition-colors">Back to Home</Link>
           </div>
         </div>
       </div>

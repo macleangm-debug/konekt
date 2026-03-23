@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import api from "../../lib/api";
 import { 
   Package, Palette, FileText, ShoppingCart, Receipt, 
-  TrendingUp, Clock, ArrowRight, Bell, CheckCircle
+  TrendingUp, ArrowRight, CheckCircle
 } from "lucide-react";
 
-// Import growth components
 import RecentActivityFeed from "../../components/growth/RecentActivityFeed";
 import QuickNotificationsPanel from "../../components/growth/QuickNotificationsPanel";
 import OrderStatusTimelineCard from "../../components/growth/OrderStatusTimelineCard";
@@ -50,7 +49,6 @@ export default function CustomerDashboardV3() {
         activeOrders: orders.filter(o => o.status !== "delivered" && o.status !== "completed").length,
       });
 
-      // Format activities for the feed
       const formattedActivities = (activityRes.data || []).map(a => ({
         title: a.message,
         time: formatTime(a.created_at),
@@ -58,7 +56,6 @@ export default function CustomerDashboardV3() {
       }));
       setActivities(formattedActivities);
 
-      // Format notifications
       const formattedNotifs = (notifRes.data || []).map(n => ({
         title: n.message,
         text: n.reference || "",
@@ -66,7 +63,6 @@ export default function CustomerDashboardV3() {
       }));
       setNotifications(formattedNotifs);
 
-      // Get current order for timeline
       const activeOrder = orders.find(o => o.status !== "delivered" && o.status !== "completed");
       if (activeOrder) {
         setCurrentOrder(activeOrder);
@@ -96,29 +92,31 @@ export default function CustomerDashboardV3() {
   };
 
   return (
-    <div className="space-y-8" data-testid="customer-dashboard-v3">
+    <div className="space-y-6" data-testid="customer-dashboard-v3">
       {/* Hero Header */}
-      <div className="rounded-[2.5rem] bg-gradient-to-r from-[#0E1A2B] to-[#20364D] text-white p-8 md:p-10">
+      <div className="bg-gradient-to-r from-[#1f3a5f] to-[#162c47] text-white p-6 md:p-8 rounded-xl">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <div className="text-4xl font-bold">Welcome back, {userName}!</div>
-            <div className="text-slate-200 mt-3 max-w-2xl">
-              Track activity, manage quotes, and follow your order progress in one place.
-            </div>
+            <h2 className="text-xl md:text-2xl font-semibold tracking-tight">Welcome back, {userName}!</h2>
+            <p className="text-white/60 text-sm mt-1">
+              Manage everything in one place
+            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link 
               to="/account/marketplace" 
-              className="flex items-center gap-2 bg-white text-[#20364D] px-5 py-3 rounded-xl font-semibold hover:bg-slate-100 transition"
+              className="flex items-center gap-2 bg-white text-[#0f172a] px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              data-testid="browse-products-btn"
             >
-              <Package className="w-5 h-5" />
+              <Package className="w-4 h-4" />
               Browse Products
             </Link>
             <Link 
               to="/account/services" 
-              className="flex items-center gap-2 bg-[#F4E7BF] text-[#8B6A10] px-5 py-3 rounded-xl font-semibold hover:bg-[#e8dbb3] transition"
+              className="flex items-center gap-2 bg-[#f4c430] text-[#0f172a] px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#e8b82a] transition-all hover:-translate-y-0.5 hover:shadow-md"
+              data-testid="request-service-btn"
             >
-              <Palette className="w-5 h-5" />
+              <Palette className="w-4 h-4" />
               Request Service
             </Link>
           </div>
@@ -126,51 +124,51 @@ export default function CustomerDashboardV3() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Link to="/dashboard/quotes" className="p-5 border rounded-2xl bg-white hover:shadow-lg transition group">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Link to="/dashboard/quotes" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-quotes">
           <div className="flex items-center justify-between">
-            <FileText className="w-8 h-8 text-blue-600" />
+            <FileText className="w-6 h-6 text-blue-600" />
             {stats.pendingQuotes > 0 && (
-              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+              <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
                 {stats.pendingQuotes} pending
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 mt-3">Quotes</p>
-          <h2 className="text-3xl font-bold text-[#20364D]">{stats.quotes}</h2>
+          <p className="text-sm text-[#64748b] mt-3">Quotes</p>
+          <h3 className="text-2xl font-semibold text-[#0f172a]">{stats.quotes}</h3>
         </Link>
 
-        <Link to="/account/orders" className="p-5 border rounded-2xl bg-white hover:shadow-lg transition group">
+        <Link to="/account/orders" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-orders">
           <div className="flex items-center justify-between">
-            <ShoppingCart className="w-8 h-8 text-purple-600" />
+            <ShoppingCart className="w-6 h-6 text-purple-600" />
             {stats.activeOrders > 0 && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
                 {stats.activeOrders} active
               </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 mt-3">Orders</p>
-          <h2 className="text-3xl font-bold text-[#20364D]">{stats.orders}</h2>
+          <p className="text-sm text-[#64748b] mt-3">Orders</p>
+          <h3 className="text-2xl font-semibold text-[#0f172a]">{stats.orders}</h3>
         </Link>
 
-        <Link to="/dashboard/invoices" className="p-5 border rounded-2xl bg-white hover:shadow-lg transition group">
-          <Receipt className="w-8 h-8 text-green-600" />
-          <p className="text-sm text-slate-500 mt-3">Invoices</p>
-          <h2 className="text-3xl font-bold text-[#20364D]">{stats.invoices}</h2>
+        <Link to="/dashboard/invoices" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-invoices">
+          <Receipt className="w-6 h-6 text-green-600" />
+          <p className="text-sm text-[#64748b] mt-3">Invoices</p>
+          <h3 className="text-2xl font-semibold text-[#0f172a]">{stats.invoices}</h3>
         </Link>
 
-        <Link to="/account/marketplace" className="p-5 border rounded-2xl bg-gradient-to-br from-[#20364D] to-[#2a4563] text-white hover:shadow-lg transition">
-          <TrendingUp className="w-8 h-8" />
-          <p className="text-sm text-slate-200 mt-3">Quick Order</p>
+        <Link to="/account/marketplace" className="bg-[#0f172a] rounded-xl p-5 text-white hover:shadow-md transition-all hover:-translate-y-0.5" data-testid="stat-quick-order">
+          <TrendingUp className="w-6 h-6" />
+          <p className="text-sm text-white/60 mt-3">Quick Order</p>
           <div className="flex items-center gap-2 mt-1">
-            <span className="font-bold">Start Shopping</span>
+            <span className="font-semibold text-sm">Start Shopping</span>
             <ArrowRight className="w-4 h-4" />
           </div>
         </Link>
       </div>
 
       {/* Growth Components Grid */}
-      <div className="grid xl:grid-cols-3 gap-6">
+      <div className="grid xl:grid-cols-3 gap-4">
         <RecentActivityFeed items={activities} />
         <QuickNotificationsPanel items={notifications} />
         {currentOrder ? (
@@ -180,39 +178,39 @@ export default function CustomerDashboardV3() {
             steps={["Received", "Payment", "In Progress", "Shipped", "Delivered"]}
           />
         ) : (
-          <div className="rounded-[2rem] border bg-white p-6 flex flex-col items-center justify-center text-center">
-            <CheckCircle className="w-12 h-12 text-green-500 mb-3" />
-            <div className="text-xl font-bold text-[#20364D]">All Caught Up!</div>
-            <p className="text-slate-500 mt-2">No active orders to track</p>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col items-center justify-center text-center">
+            <CheckCircle className="w-10 h-10 text-green-500 mb-3" />
+            <div className="text-lg font-semibold text-[#0f172a]">All Caught Up!</div>
+            <p className="text-sm text-[#64748b] mt-1">No active orders to track</p>
             <Link 
               to="/account/marketplace" 
-              className="mt-4 text-[#20364D] font-semibold hover:underline"
+              className="mt-4 text-sm text-[#1f3a5f] font-semibold hover:underline"
             >
-              Browse Products →
+              Browse Products
             </Link>
           </div>
         )}
       </div>
 
       {/* Quick Actions */}
-      <div className="rounded-[2rem] border bg-white p-6">
-        <h3 className="text-xl font-bold text-[#20364D] mb-4">Quick Actions</h3>
-        <div className="grid md:grid-cols-4 gap-3">
-          <Link to="/account/marketplace" className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
-            <Package className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Browse Marketplace</span>
+      <div className="rounded-xl border border-gray-200 bg-white p-5">
+        <h3 className="text-lg font-semibold text-[#0f172a] mb-4">Quick Actions</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link to="/account/marketplace" className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-lg hover:bg-gray-100 transition-colors text-sm" data-testid="qa-marketplace">
+            <Package className="w-4 h-4 text-[#1f3a5f]" />
+            <span className="font-medium text-[#0f172a]">Marketplace</span>
           </Link>
-          <Link to="/account/services" className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
-            <Palette className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Request Service</span>
+          <Link to="/account/services" className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-lg hover:bg-gray-100 transition-colors text-sm" data-testid="qa-services">
+            <Palette className="w-4 h-4 text-[#1f3a5f]" />
+            <span className="font-medium text-[#0f172a]">Services</span>
           </Link>
-          <Link to="/account/assisted-quote" className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
-            <FileText className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Talk to Sales</span>
+          <Link to="/account/assisted-quote" className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-lg hover:bg-gray-100 transition-colors text-sm" data-testid="qa-sales">
+            <FileText className="w-4 h-4 text-[#1f3a5f]" />
+            <span className="font-medium text-[#0f172a]">Talk to Sales</span>
           </Link>
-          <Link to="/account/help" className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
-            <Bell className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Get Help</span>
+          <Link to="/account/help" className="flex items-center gap-3 p-3 bg-[#f8fafc] rounded-lg hover:bg-gray-100 transition-colors text-sm" data-testid="qa-help">
+            <ArrowRight className="w-4 h-4 text-[#1f3a5f]" />
+            <span className="font-medium text-[#0f172a]">Get Help</span>
           </Link>
         </div>
       </div>
