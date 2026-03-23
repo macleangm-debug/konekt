@@ -2514,6 +2514,18 @@ app.include_router(pdf_generation_router)
 from dashboard_metrics_routes import router as dashboard_metrics_router
 app.include_router(dashboard_metrics_router)
 
+# Sales Rating Routes
+from sales_rating_routes import router as sales_rating_router
+app.include_router(sales_rating_router)
+
+# Branding Settings Routes
+from branding_settings_routes import router as branding_settings_router
+app.include_router(branding_settings_router)
+
+# Enterprise PDF Routes
+from enterprise_pdf_routes import router as enterprise_pdf_router
+app.include_router(enterprise_pdf_router)
+
 
 
 

@@ -268,6 +268,22 @@ import AdminDashboardMetricsWired from "@/pages/dashboard/AdminDashboardMetricsW
 import RealPdfDownloadActions from "@/components/docs/RealPdfDownloadActions";
 import useDashboardMetrics from "@/hooks/useDashboardMetrics";
 
+// Sales Rating + Feedback Pack
+import CustomerSalesRatingTasksPage from "@/pages/account/CustomerSalesRatingTasksPage";
+import SalesDashboardQualityV3 from "@/pages/dashboard/SalesDashboardQualityV3";
+import StarRatingInput from "@/components/ratings/StarRatingInput";
+import SalesRatingModal from "@/components/ratings/SalesRatingModal";
+import CompletedOrderRatingTaskCard from "@/components/ratings/CompletedOrderRatingTaskCard";
+import SalespersonScoreCard from "@/components/ratings/SalespersonScoreCard";
+import SalesRatingLeaderboardCard from "@/components/ratings/SalesRatingLeaderboardCard";
+
+// Branding + Enterprise PDF Pack
+import BrandingSettingsPage from "@/pages/admin/BrandingSettingsPage";
+import BrandLogo from "@/components/branding/BrandLogo";
+import AccountBrandHeader from "@/components/layout/AccountBrandHeader";
+import EnterprisePdfActions from "@/components/docs/EnterprisePdfActions";
+import useBrandingSettings from "@/hooks/useBrandingSettings";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -619,6 +635,10 @@ function App() {
           <Route path="partner-ecosystem" element={<PartnerEcosystemUnifiedPage />} />
           {/* Product Sub-Groups Manager */}
           <Route path="product-subgroups" element={<ProductSubgroupsManagerPage />} />
+          {/* Branding Settings */}
+          <Route path="branding-settings" element={<BrandingSettingsPage />} />
+          {/* Sales Rating Leaderboard */}
+          <Route path="sales-quality" element={<SalesDashboardQualityV3 />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -726,6 +746,8 @@ function App() {
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
           <Route path="profile/business" element={<ClientProfilePage />} />
           <Route path="help" element={<HelpPageV3 />} />
+          {/* Sales Rating Tasks */}
+          <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
         </Route>
         
         {/* Account shell routes - simplified customer experience */}
@@ -754,6 +776,8 @@ function App() {
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
           <Route path="help" element={<HelpPageV3 />} />
+          {/* Sales Rating Tasks */}
+          <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
         </Route>
         
         {/* Staff Workspace Route */}
