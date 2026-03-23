@@ -120,6 +120,10 @@ import ServiceCatalogPage from "@/pages/admin/ServiceCatalogPage";
 import BlankProductsPage from "@/pages/admin/BlankProductsPage";
 import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
 
+// Admin Catalog & Deliveries
+import AdminCatalogSetupPage from "@/pages/admin/AdminCatalogSetupPage";
+import AdminDeliveriesPage from "@/pages/admin/AdminDeliveriesPage";
+
 // Contract Clients + Billing Discipline Pack
 import ContractClientsPage from "@/pages/admin/ContractClientsPage";
 import NegotiatedPricingPage from "@/pages/admin/NegotiatedPricingPage";
@@ -567,6 +571,10 @@ function App() {
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
           {/* Admin Control Center */}
           <Route path="control-center" element={<AdminControlCenterPage />} />
+          {/* Admin Catalog Setup */}
+          <Route path="catalog-setup" element={<AdminCatalogSetupPage />} />
+          {/* Admin Deliveries */}
+          <Route path="deliveries" element={<AdminDeliveriesPage />} />
           {/* Partner Ecosystem V2 */}
           <Route path="partner-ecosystem-v2" element={<PartnerEcosystemPageV2 />} />
           {/* Smart Partner Ecosystem (Unified) */}

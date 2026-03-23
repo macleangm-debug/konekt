@@ -9,6 +9,7 @@ DEFAULT_SETTINGS = {
         "distribution_layer_percent": 10.0,
         "commission_mode": "fair_balanced",
         "affiliate_attribution_reduces_sales_commission": True,
+        "vat_percent": 18.0,
     },
     "margin_rules": {
         "allow_product_group_margin_override": True,

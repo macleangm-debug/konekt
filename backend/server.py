@@ -2456,6 +2456,25 @@ app.include_router(service_catalog_tree_router)
 from service_request_templates_routes import router as service_request_templates_router
 app.include_router(service_request_templates_router)
 
+# Customer In-Account Service Requests
+from customer_in_account_service_routes import router as customer_in_account_service_router
+
+# Customer Checkout Quote
+from customer_checkout_quote_routes import router as customer_checkout_quote_router
+
+# Admin Catalog Setup
+from admin_catalog_routes import router as admin_catalog_router
+app.include_router(admin_catalog_router)
+
+# Admin Deliveries
+from admin_deliveries_routes import router as admin_deliveries_router
+app.include_router(admin_deliveries_router)
+
+app.include_router(customer_checkout_quote_router)
+
+app.include_router(customer_in_account_service_router)
+
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)

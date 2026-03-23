@@ -7,7 +7,7 @@ import SettingsSelectField from "../../components/admin/settings/SettingsSelectF
 import SettingsTextField from "../../components/admin/settings/SettingsTextField";
 
 const defaultState = {
-  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true },
+  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18 },
   margin_rules: { allow_product_group_margin_override: true, allow_product_margin_override: true, allow_service_group_margin_override: true, allow_service_margin_override: true, pricing_below_minimum_margin_requires_admin_override: true },
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
   affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, minimum_payout_threshold: 50000, payout_cycle: "monthly", manual_payout_approval: true, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
@@ -45,9 +45,10 @@ export default function AdminSettingsHubPage() {
       </div>
 
       <SettingsSectionCard title="Commercial Rules" description="Core company protection and distribution settings.">
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
           <SettingsNumberField label="Minimum Company Margin %" value={state.commercial.minimum_company_margin_percent} onChange={(v) => setState({ ...state, commercial: { ...state.commercial, minimum_company_margin_percent: v } })} />
           <SettingsNumberField label="Distribution Layer %" value={state.commercial.distribution_layer_percent} onChange={(v) => setState({ ...state, commercial: { ...state.commercial, distribution_layer_percent: v } })} />
+          <SettingsNumberField label="VAT %" value={state.commercial.vat_percent} onChange={(v) => setState({ ...state, commercial: { ...state.commercial, vat_percent: v } })} />
           <SettingsSelectField label="Commission Mode" value={state.commercial.commission_mode} onChange={(v) => setState({ ...state, commercial: { ...state.commercial, commission_mode: v } })} options={[{ value: "fair_balanced", label: "Fair Balanced" }, { value: "sales_priority", label: "Sales Priority" }, { value: "affiliate_priority", label: "Affiliate Priority" }, { value: "fixed_split", label: "Fixed Split" }]} />
           <SettingsToggleField label="Affiliate attribution reduces sales commission" checked={state.commercial.affiliate_attribution_reduces_sales_commission} onChange={(v) => setState({ ...state, commercial: { ...state.commercial, affiliate_attribution_reduces_sales_commission: v } })} />
         </div>

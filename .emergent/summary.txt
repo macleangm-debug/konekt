@@ -1,141 +1,162 @@
-<analysis>**original_problem_statement:** The user is building Konekt, a B2B e-commerce platform for promotional materials and design services. The platform is in its final preparation phase for a controlled launch. The recent goal was to execute a full E2E verification pass and implement the final layers: Affiliate Dashboard, Margin Protection Rules, Growth Engine (Promotions, Payouts, Attributions), Progress Engine (Customer-safe statuses), and an AI Assistant.
+<analysis>**original_problem_statement:** The user is finalizing Konekt, a B2B e-commerce platform for promotional materials and design services. The platform is shifting toward a highly simplified, in-account customer experience. The user's latest request requires implementing Progressive Input (deferring data collection like TIN and split delivery addresses until necessary), overhauling the Checkout flow (Checkout -> Auto-create Quote with VAT -> Pay -> Invoice), adding an Admin UI for dynamically managing the Service/Product Catalog (as the single source of truth), fixing a broken Submit Request button, creating a standard global confirmation modal, adding empty states to Quotes/Invoices, and redesigning the Customer Help page.
 
 **User's preferred language:** English (INSTRUCT next agent to respond in English only)
 
 **what currently exists?** 
-A robust, feature-complete B2B platform operating as a full Commercial Operating System. It includes dynamic service pages, a quote request flow, an E-commerce marketplace, a Service-Partner mapping Admin UI, an AI Chat Assistant, and a complete Affiliate/Sales Growth Engine. The Growth engine strictly enforces margin-protection rules (company base markup is protected at 20%; commissions pull only from the extra distributable layer). A Progress Engine translates internal partner statuses into safe external customer-facing statuses.
+A robust, feature-complete B2B platform operating as a full Commercial Operating System. In the current session, the app was significantly upgraded with: a Unified Admin Settings Hub, an Admin Control Center, a Unified Partner Ecosystem (merging product/service partner logic into one smart type-aware form), and an In-Account Customer Shell (embedding the marketplace, cart, checkout, and dynamic service requests entirely inside the authenticated customer layout to prevent context switching). 
 
 **Last working item**: 
-- **Last item agent was working:** Implementing the 5 Critical Pre-Launch Checks requested by the user. The agent specifically started Check 1: *Payment → Commission → Payout Chain*. The agent created  to trigger commission approval when a payment proof is approved, but the session ended before it could be wired into the payment proof routes.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** backend testing agent/curl (to verify that approving a payment automatically updates commission records).
-- **User Testing Done:** N
+    - **Last item agent was working:** The agent acknowledged the user's latest large feature request (Progressive input, Checkout-to-Quote flow with VAT, Dynamic Admin Catalog, UI fixes) and attempted to run an initial bash command which failed. Implementation of these requests has not yet started.
+    - **Status:** IN PROGRESS
+    - **Agent Testing Done:** N
+    - **Which testing method agent to use?** both (Testing agent recommended due to the heavy backend quote/VAT logic + frontend checkout UI changes)
+    - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-Issue 1: Payment → Commission Chain Wiring (P0 🔴)
-- **Attempted fixes:** Created  but hasn't integrated it into the payment approval flow.
-- **Next debug checklist:** 
-  1. Open .
-  2. Inside the payment proof  logic, import and call the logic from .
-  3. Ensure that when an invoice is fully paid, the associated commission records change from 'pending' to 'approved'.
-- **Why fix this issue and what will be achieved with the fix?** Crucial for revenue tracking. Ensures affiliates and sales teams actually get credited in their dashboards when the company receives real money.
-- **Status:** IN PROGRESS
-- **Is recurring issue?** N
-- **Should Test frontend/backend/both after fix?** backend
-- **Blocked on other issue:** None
+  - Issue 1: Submit Request button not working (Customer Services Page) (P0 🔴)
+     - Attempted fixes: None.
+     - Next debug checklist: Check  or related components. Verify the form has an  handler or the button has an  action mapped to the backend API.
+     - Why fix this issue and what will be achieved with the fix? Core functionality blocking customers from requesting services inside their account shell.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: None
 
-Issue 2: Implement Remaining Pre-Launch Additions & Checks (P1 🔴)
-- **Attempted fixes:** None yet.
-- **Next debug checklist:** 
-  1. Add You just earned TZS X notification for affiliates upon commission creation.
-  2. Add Next payout progress (e.g., You need TZS X more to reach payout) to the Affiliate Dashboard.
-  3. Add AI → Human handoff in the AI widget (Would you like a sales advisor to assist you?).
-  4. Add First order guidance prompt for new users.
-  5. Verify Attribution Lock and Status Consistency across dashboards.
-- **Why fix this issue and what will be achieved with the fix?** These were explicitly requested by the user as final high-impact features needed before flipping the switch to live.
-- **Status:** NOT STARTED
-- **Is recurring issue?** N
-- **Should Test frontend/backend/both after fix?** both
+  - Issue 2: Customer Help Page Redesign (P1 🔴)
+     - Attempted fixes: None.
+     - Next debug checklist: Modify . Add engaging UI elements, strong Call-To-Actions (CTAs), and escalation approaches (e.g., Talk to Sales, Open a Ticket) if the user is unsatisfied.
+     - Why fix this issue and what will be achieved with the fix? User explicitly stated the current help page is too boring and needs an upgrade.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: None
+
+  - Issue 3: Empty State Designs for Quotes and Invoices (P1 🔴)
+     - Attempted fixes: None.
+     - Next debug checklist: Check  and Invoices page. Utilize  to render engaging states when the data arrays are empty.
+     - Why fix this issue and what will be achieved with the fix? Improves UX for new accounts with no transaction history.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on other issue: None
 
 **In progress Task List**:
-Task 1: Complete Pre-Launch Operations Checklist (P0 🔴)
-- **Where to resume:** Finish the  wiring. Then proceed down the list of 5 checks and 4 additions provided in the very last user message.
-- **What will be achieved with this?** The platform will be fully verified for commercial readiness (Phase 1 controlled launch).
-- **Status:** IN PROGRESS
-- **Should Test frontend/backend/both after fix?** both
-- **Blocked on something:** None
+  - Task 1: Progressive Input & Checkout-to-Quote Flow (with VAT) (P0 🔴)
+     - Where to resume: 
+       1. Update the  (frontend and backend APIs) to include a  field (default 18%).
+       2. Update  to collect Delivery Address using proper separated fields (Street, City, Region, etc.) and save it for future use.
+       3. Modify the checkout submission logic so clicking Proceed to Checkout auto-creates a **Quote** (rather than going straight to payment/invoice).
+       4. Apply the VAT percentage to the quote *after* the subtotal.
+       5. Provide UI logic so the user views the Quote, clicks Pay, which then converts it to an Invoice and finalizes the order for the sales team.
+     - What will be achieved with this? Aligns the system exactly with the B2B progressive checkout flow requested by the user.
+     - Status: NOT STARTED
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on something: None
+
+  - Task 2: Dynamic Service & Product Catalog Admin Setup (P0 🔴)
+     - Where to resume: Create an Admin UI (e.g., ) allowing admins to add/edit/delete Services, Sub-services, and Product categories. Map this data to the  backend endpoint so that the Customer Services dropdowns and public-facing pages dynamically pull from this single source of truth.
+     - What will be achieved with this? Replaces hardcoded mock arrays with an admin-controlled catalog.
+     - Status: NOT STARTED
+     - Should Test frontend/backend/both after fix? both
+     - Blocked on something: None
+
+  - Task 3: Global Standard Confirmation Modal (P1 🔴)
+     - Where to resume: Create a reusable component (e.g., ) designed to handle warnings, deletions, or major state changes. Integrate it into Admin, Client, Partner, Staff, and Affiliate layouts where necessary.
+     - What will be achieved with this? Unifies the UX across all portals.
+     - Status: NOT STARTED
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on something: None
 
 **Upcoming and Future Tasks**
-Upcoming Tasks:
-- (P0 🔴) Complete the remaining real-world checks: Attribution Lock verification, Status Consistency review, Sales Behavior tracking, and Affiliate Experience UI validation.
-- (P0 🔴) High Impact UI Additions: Affiliate earning notifications, payout progress tracker, AI-to-human handoff, first order guidance.
-Future Tasks:
-- (P2 🟡) Go-To-Market strategy and activation (Phase 1 launch with small group).
-- (P2 🟡) Scale marketing and add WhatsApp automation.
-- (P2 🟡) Upgrade AI to a GPT-powered intelligent assistant.
+    Upcoming Tasks:
+    - (P1 🔴) Add TIN Number collection progressively during Invoice creation.
+    - (P2 🟡) Convert Specific Services to structured backend tags (e.g., ) for smart routing.
+    Future Tasks:
+    - (P2 🟡) Partner Intelligence Engine (auto-routing jobs by quality/turnaround/workload).
+    - (P2 🟡) Partner performance scoring system.
+    - (P2 🟡) WhatsApp automation integration.
+    - (P2 🟡) GPT-powered AI Assistant upgrade.
 
 **Completed work in this session**
-- Wired Service Pages Pack routes (, ).
-- Implemented  flow end-to-end (connecting guest leads to the sales queue).
-- Service-Partner Capability Admin Mapping ().
-- Landing Page UI Redesign ().
-- Conducted full E2E Pass (Customer, Staff, Admin, Partner flows).
-- Seeded marketplace products and validated checkout/invoice flows.
-- Implemented Affiliate Dashboard + Margin Protection Engine.
-- Implemented Growth Engine (Admin Commission Engine, Promotion Engine, Payout Engine, Sales Dashboard).
-- Implemented Growth Pack (AI Assistant v1, WhatsApp Sharing, Notification Bell).
-- Implemented Final Operations Pack (Progress Engine with customer-safe statuses, Sales/Provider Follow-up, Affiliate Governance).
+- Payment → Commission Chain wired () (DONE)
+- Applied GTM + Partner Management + Onboarding Pack (DONE)
+- Admin Navigation Cleanup & Settings Hub unification (DONE)
+- Partner UX updates (Table/Card toggle, specific services field, global profile dropdown) (DONE)
+- Unified Partner Ecosystem Master Pack ( with smart, type-aware form) (DONE)
+- Customer Experience Simplification Pack (In-account Marketplace, Cart, Checkout, Services, My Orders) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-None.
+None (All user-mentioned issues have been logged in Pending/In Progress sections).
 
 **Known issue recurrence from previous fork**
-- **Issue recurrence in previous fork**: None.
-- **Recurrence count**: 0
-- **Status**: N/A
+  - Issue recurrence in previous fork: None.
+  - Recurrence count: 0
+  - Status: N/A
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Margin Protection Engine:** Hard rule: Company minimum markup is protected at 20%. Any affiliate, promo, or sales commissions *must* be deducted exclusively from the distributable layer on top of that base.
-- **Customer-Safe Progress Engine:** Products and Services have distinct status pipelines. Crucially, internal statuses (like partner_assigned) translate to generic customer-safe statuses (like In Progress) to mask internal operational routing from the buyer.
-- **Attribution Logic:** If a lead comes from an affiliate, the sales commission is reduced to balance the payout.
+- **In-Account Customer Shell:** The marketplace, cart, checkout, and services are fully embedded inside the authenticated user layout. Do not build flows that kick the user out to public pages once logged in.
+- **Settings Hub:** Central place for Admin configs. Needs to be the source of truth for the newly requested VAT calculation (18% default for Tanzania).
+- **Progressive Input:** Avoid monolithic forms. Ask for address multi-fields at checkout; ask for TIN at invoice creation.
 
 **key DB schema**
-- : Tracks pending/approved payouts.
-- : Tracks sales follow-ups to external service partners.
-- : Invoices lifecycle tracking.
+  - : {name, partner_type (service/product/hybrid), services, status}
+  - : {commercial, launch_controls, ... (needs vat_settings added)}
+  -  (Proposed): Needs a new schema to hold the Dynamic Service/Product tree for admin management.
 
 **changes in tech stack**
-- None.
+  - None 
 
-**All files of reference**
--  (Created just before cutoff; needs logic completion)
--  (Target for wiring the commission trigger)
--  (Handles translation logic)
--  (Needs AI - handoff addition)
+**All files of reference** 
+  -  (Checkout flow needs overhaul)
+  -  (Submit button fix)
+  -  (Add VAT inputs here)
+  -  (Redesign target)
+  -  (Must link to new DB collection instead of mock data)
 
-**Areas that need refactoring**:
-- None currently, but ensure the  and new  don't visually overlap or cause conflicting DOM issues (z-index was tweaked previously to avoid emergent-badge).
+**Areas that need refactoring**: 
+- Help pages need UX enhancement. Quotes and Invoices pages need Empty State implementations.
 
 **key api endpoints**
-- 
-- 
-- 
+-  (To be built/modified for checkout)
+-  (Needs real DB wiring)
+-  (Needs VAT inclusion)
 
-**Critical Info for New Agent**
-1. You are resuming right in the middle of executing 5 Critical Pre-Launch Checks. 
-2. **Current specific task:** Wire up the  into the  so that commissions transition from pending to approved upon successful payment proof approval.
-3. **Strict Business Rule:** Never expose backend partners or internal operational statuses to customers. Use the  to safely translate states.
+**Critical Info for New Agent** 
+The user has completely redefined the B2B checkout workflow in their latest message. 
+1. DO NOT process standard direct-to-invoice checkouts. 
+2. Clicking Proceed to checkout must collect multi-field address data, auto-create a **Quote** that adds VAT *after* the subtotal (reading VAT % from Admin Settings). 
+3. The customer reviews this Quote, clicks Pay, which converts it to an Invoice. 
+4. Furthermore, you must create a dynamic Admin Setup UI for Services and Products so the dropdowns in the customer flow populate from a real database source of truth.
 
-**documents and test reports created in this job**
--  through  (Extensive modular and E2E testing history)
--  (Updated regularly with completed milestones)
+**documents and test reports created in this job** 
+  - /app/test_reports/iteration_75.json up to iteration_84.json
+  - /app/memory/PRD.md
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- **Latest Message:** User explicitly instructed Complete all of them referring to a list of 5 critical real-world pre-launch checks and 4 high-impact additions.
-- **Previous Messages:** User detailed the exact checks needed: Payment->Commission chain, Attribution Lock, Status Consistency, Sales Behavior, and Affiliate Experience tests. Additions requested: You just earned notifications, Next payout progress metrics, AI-to-Human handoff, and First order guidance.
+ - *Message 646*: User answered Proceed to agent's ask_human, specifically emphasizing that Quote auto-creation needs to top up VAT after the subtotal, and that the VAT percentage must be configurable in the admin settings (default 18% for Tanzania).
+ - *Message 643*: User provided a massive list of requirements: Progressive Input (Delivery address multi-fields, TIN at invoicing), Auto-create quote on checkout, Admin Dynamic Catalog manager, fix Submit Request button, global confirmation modal, empty state designs, and Help page redesign.
 
 **Project Health Check:**
-- **Broken:**  is created but unlinked.
-- **Mocked:** Static initial states on some newer admin dashboards, but APIs are wired.
+- Broken:  button in customer services.
+- Mocked:  (needs to be connected to the new dynamic Admin catalog).
 
-**3rd Party Integrations**:
-- Resend (Transactional emails) — requires User API Key
-- KwikPay (Payments) — requires User API Key 
+**3rd Party Integrations** 
+ - Resend (Emails) — requires User API Key
+ - KwikPay (Payments) — requires User API Key 
 
-**Testing status**:
-- Testing agent used after significant changes: YES (Tested heavily iterations 65-74)
-- Troubleshoot agent used after agent stuck in loop: NO
-- Test files created: Yes, in 
-- Known regressions: None currently.
+**Testing status**
+  - Testing agent used after significant changes: YES (Heavily used for all UX packs)
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: [/app/test_reports/iteration_75.json to 84.json]
+  - Known regressions: Submit Request button on services page is broken.
 
 **Credentials to test flow:**
-- Admin: URL:  |  / 
-- Customer: URL:  |  / 
-- Partner: URL:  |  / 
+- Admin:  |  / 
+- Customer:  |  / 
+- Partner:  |  / 
 
-**What agent forgot to execute**:
-The previous agent successfully created  but the session ended before they could import it and invoke it inside the payment approval logic of . Furthermore, the 4 UI additions (notifications, AI handoff, etc.) still need to be implemented.</analysis>
+**What agent forgot to execute**
+The previous agent acknowledged the massive feature list in Messages 643/646 (Checkout-to-quote flow, VAT in settings, progressive input, dynamic admin catalog, UI fixes) and attempted to start, but ran an invalid bash command and stopped. ALL of these requests from the last user messages remain entirely un-implemented.</analysis>
