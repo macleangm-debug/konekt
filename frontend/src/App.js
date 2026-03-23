@@ -211,6 +211,9 @@ import HelpVendorPage from "@/pages/help/HelpVendorPage";
 // Navigation Audit
 import NavigationAuditPage from "@/pages/system/NavigationAuditPage";
 
+// Admin Settings Hub
+import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -533,6 +536,8 @@ function App() {
           <Route path="affiliate-partners/:affiliateId" element={<AffiliatePartnerDetailPage />} />
           {/* Admin Help */}
           <Route path="help" element={<HelpAdminPage />} />
+          {/* Admin Settings Hub */}
+          <Route path="settings-hub" element={<AdminSettingsHubPage />} />
         </Route>
         
         {/* Partner Portal Routes */}

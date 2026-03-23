@@ -84,6 +84,7 @@ const navItems = [
   { path: '/admin/setup', label: 'Setup Lists', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList, moduleKey: 'settings' },
+  { path: '/admin/settings-hub', label: 'Settings Hub', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
 ];
 
