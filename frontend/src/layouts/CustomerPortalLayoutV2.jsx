@@ -2,19 +2,21 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2, HelpCircle
+  Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2, HelpCircle, Store, Headphones
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
 
 const nav = [
-  { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Marketplace", href: "/account/marketplace", icon: Store, highlight: true },
+  { label: "Services", href: "/account/services", icon: Wrench },
+  { label: "Let Sales Assist", href: "/account/assisted-quote", icon: Headphones },
+  { label: "My Orders", href: "/account/orders", icon: ShoppingBag },
   { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
-  { label: "Service Requests", href: "/dashboard/service-requests", icon: Wrench },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
-  { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users, highlight: true },
+  { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users },
   { label: "My Statement", href: "/dashboard/statement", icon: CreditCard },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];

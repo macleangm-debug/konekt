@@ -226,6 +226,13 @@ import PartnerEcosystemSmart from "@/pages/admin/PartnerEcosystemSmart";
 // Unified Partner Ecosystem
 import PartnerEcosystemUnifiedPage from "@/pages/admin/PartnerEcosystemUnifiedPage";
 
+// Customer Experience Simplification Pack
+import CustomerDashboardV2 from "@/pages/account/CustomerDashboardV2";
+import AccountMarketplacePage from "@/pages/account/AccountMarketplacePage";
+import AccountServicesPage from "@/pages/account/AccountServicesPage";
+import AssistedQuoteRequestPage from "@/pages/account/AssistedQuoteRequestPage";
+import MyOrdersUnifiedPage from "@/pages/account/MyOrdersUnifiedPage";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -654,6 +661,23 @@ function App() {
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
           <Route path="profile/business" element={<ClientProfilePage />} />
           <Route path="help" element={<HelpCustomerPage />} />
+        </Route>
+        
+        {/* Account shell routes - simplified customer experience */}
+        <Route path="/account" element={
+          <AuthProvider>
+            <CartProvider>
+              <CustomerRoute>
+                <CustomerPortalLayoutV2 />
+              </CustomerRoute>
+            </CartProvider>
+          </AuthProvider>
+        }>
+          <Route index element={<CustomerDashboardV2 />} />
+          <Route path="marketplace" element={<AccountMarketplacePage />} />
+          <Route path="services" element={<AccountServicesPage />} />
+          <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
+          <Route path="orders" element={<MyOrdersUnifiedPage />} />
         </Route>
         
         {/* Staff Workspace Route */}
