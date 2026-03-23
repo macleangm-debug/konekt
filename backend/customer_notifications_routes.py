@@ -43,11 +43,11 @@ async def get_activity_feed(
     
     # Get recent quotes
     quotes = await db.quotes_v2.find(
-        {"customer_email": user["email"]},
-        {"_id": 0, "id": 1, "quote_number": 1, "status": 1, "total": 1, "created_at": 1}
+        {"customer_email": user["email"]}
     ).sort("created_at", -1).to_list(limit // 2)
     
     for q in quotes:
+        q_id = q.get("id") or str(q.get("_id", ""))
         status_messages = {
             "pending": "Quote created - awaiting review",
             "approved": "Quote approved! Ready for payment",
@@ -55,21 +55,21 @@ async def get_activity_feed(
             "converted": "Quote converted to order",
         }
         activities.append({
-            "id": f"quote_{q['id']}",
+            "id": f"quote_{q_id}",
             "type": f"quote_{q.get('status', 'created')}",
             "message": status_messages.get(q.get('status'), "New quote created"),
-            "reference": f"Quote #{q.get('quote_number', q['id'][:8])} - TZS {q.get('total', 0):,}",
+            "reference": f"Quote #{q.get('quote_number', q_id[:8])} - TZS {q.get('total', 0):,}",
             "created_at": q.get("created_at", datetime.now(timezone.utc).isoformat()),
-            "link": f"/dashboard/quotes/{q['id']}"
+            "link": f"/dashboard/quotes/{q_id}"
         })
     
     # Get recent orders
     orders = await db.orders.find(
-        {"customer_email": user["email"]},
-        {"_id": 0, "id": 1, "order_number": 1, "status": 1, "total": 1, "created_at": 1}
+        {"customer_email": user["email"]}
     ).sort("created_at", -1).to_list(limit // 2)
     
     for o in orders:
+        o_id = o.get("id") or str(o.get("_id", ""))
         status_messages = {
             "pending": "Order placed",
             "confirmed": "Order confirmed",
@@ -78,10 +78,10 @@ async def get_activity_feed(
             "delivered": "Order delivered!",
         }
         activities.append({
-            "id": f"order_{o['id']}",
+            "id": f"order_{o_id}",
             "type": f"order_{o.get('status', 'confirmed')}",
             "message": status_messages.get(o.get('status'), "Order update"),
-            "reference": f"Order #{o.get('order_number', o['id'][:8])}",
+            "reference": f"Order #{o.get('order_number', o_id[:8])}",
             "created_at": o.get("created_at", datetime.now(timezone.utc).isoformat()),
             "link": f"/account/orders"
         })
