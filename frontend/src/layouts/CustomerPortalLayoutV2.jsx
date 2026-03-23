@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
+import BrandLogoV2 from "../components/branding/BrandLogoV2";
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -48,16 +49,8 @@ export default function CustomerPortalLayoutV2() {
       <aside className="hidden lg:flex flex-col w-[280px] min-h-screen bg-white border-r">
         <div className="px-6 py-5 border-b">
           <Link to="/" className="flex items-center gap-2">
-            <img 
-              src="/branding/konekt-logo-full.png" 
-              alt="Konekt" 
-              className="h-10 w-auto"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
-              }}
-            />
-            <span className="hidden text-2xl font-bold text-[#20364D]">Konekt</span>
+            {/* DARK logo on white sidebar - VISIBLE */}
+            <BrandLogoV2 variant="dark" kind="full" size="md" />
           </Link>
         </div>
         

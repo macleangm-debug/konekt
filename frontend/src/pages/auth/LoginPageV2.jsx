@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
+import BrandLogoV2 from "../../components/branding/BrandLogoV2";
 
 export default function LoginPageV2() {
   const navigate = useNavigate();
@@ -50,32 +51,18 @@ export default function LoginPageV2() {
 
   return (
     <div className="min-h-screen grid md:grid-cols-2" data-testid="login-page-v2">
-      {/* Left Side - Branding */}
-      <div className="bg-[#20364D] text-white p-10 flex flex-col justify-center">
+      {/* Left Side - Branding (DARK background - use LIGHT logo) */}
+      <div className="bg-[#20364D] text-white p-10 md:p-16 flex flex-col justify-center">
         <div className="max-w-md mx-auto">
-          {/* Logo */}
-          <div className="mb-8">
-            <img 
-              src="/branding/konekt-logo-full.png" 
-              alt="Konekt" 
-              className="h-14 w-auto"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'block';
-              }}
-            />
-            <div className="hidden">
-              <div className="text-3xl font-bold tracking-tight">KONEKT</div>
-              <div className="text-sm text-slate-300 mt-1">Business Solutions Platform</div>
-            </div>
-          </div>
+          {/* WHITE LOGO on dark background - VISIBLE */}
+          <BrandLogoV2 variant="light" kind="full" size="xl" className="mb-10" />
           
-          <h1 className="text-4xl font-bold leading-tight">Welcome to Konekt</h1>
-          <p className="mt-4 text-slate-200 text-lg">
+          <h1 className="text-4xl md:text-5xl font-bold leading-tight">Welcome to Konekt</h1>
+          <p className="mt-4 text-slate-200 text-lg leading-7">
             Buy products, request services, and manage everything from one platform.
           </p>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-10 space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-[#F4E7BF] flex items-center justify-center">
                 <svg className="w-4 h-4 text-[#8B6A10]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

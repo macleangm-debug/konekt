@@ -11,8 +11,7 @@ import { Input } from '../../components/ui/input';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 import NotificationBell from '../../components/admin/NotificationBell';
-
-const LOGO_URL = "/branding/konekt-logo-full.png";
+import BrandLogoV2 from '../../components/branding/BrandLogoV2';
 
 // Navigation items with moduleKey for filtering
 const navItems = [
@@ -147,9 +146,9 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
-          {/* Logo */}
+          {/* Logo - LIGHT on dark sidebar (admin has dark sidebar) */}
           <div className="p-6 border-b border-white/10">
-            <img src={LOGO_URL} alt="Konekt" className="h-10 brightness-0 invert" />
+            <BrandLogoV2 variant="light" kind="full" size="lg" />
             <p className="text-white/50 text-xs mt-2">Admin Portal</p>
           </div>
           

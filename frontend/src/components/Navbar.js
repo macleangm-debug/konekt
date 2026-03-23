@@ -8,8 +8,7 @@ import {
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-
-const LOGO_URL = "/branding/konekt-logo-full.png";
+import BrandLogoV2 from './branding/BrandLogoV2';
 
 // Main product branches with their sub-categories
 const productBranches = [
@@ -77,13 +76,9 @@ export default function Navbar() {
       <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-100" data-testid="navbar">
         <div className="container mx-auto px-6 md:px-12 lg:px-24">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
+            {/* Logo - DARK on white navbar background */}
             <Link to="/" className="flex items-center gap-3" data-testid="logo">
-              <img 
-                src={LOGO_URL} 
-                alt="Konekt Limited" 
-                className="h-12 w-auto object-contain"
-              />
+              <BrandLogoV2 variant="dark" kind="full" size="lg" />
             </Link>
 
             {/* Desktop Links */}
