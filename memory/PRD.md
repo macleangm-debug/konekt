@@ -9,6 +9,49 @@ Konekt is a B2B e-commerce platform for promotional materials, office equipment,
 
 ## Session Summary (March 23, 2026)
 
+### 🛒 Unified Commerce Fixes Pack - FULLY IMPLEMENTED
+
+#### New Frontend Components
+| Component | File | Purpose |
+|-----------|------|---------|
+| CartDrawerV2 | `/components/cart/CartDrawerV2.jsx` | In-flow cart drawer with items, total, checkout/sales assist |
+| SalesAssistModalV2 | `/components/modals/SalesAssistModalV2.jsx` | Sales assist request form with context |
+| MarketplaceSearchAndFilters | `/components/marketplace/MarketplaceSearchAndFilters.jsx` | Search + product group/subgroup filtering |
+| TableCardToggle | `/components/common/TableCardToggle.jsx` | Toggle between table and card views |
+| InAccountDocumentActions | `/components/docs/InAccountDocumentActions.jsx` | PDF download hooks for quotes/invoices |
+| GuidedServiceRequestPanel | `/components/account/GuidedServiceRequestPanel.jsx` | Guided service request form |
+| ExplorePageV2 | `/pages/account/ExplorePageV2.jsx` | Unified Explore with Marketplace/Services tabs |
+| AccountServicesPageV2 | `/pages/account/AccountServicesPageV2.jsx` | Enhanced services page |
+| InvoiceDetailInAccountPage | `/pages/account/InvoiceDetailInAccountPage.jsx` | In-account invoice detail view |
+| ProductSubgroupsManagerPage | `/pages/admin/ProductSubgroupsManagerPage.jsx` | Admin subgroup taxonomy management |
+| VendorProductsManagerPage | `/pages/vendor/VendorProductsManagerPage.jsx` | Vendor product creation |
+| CartDrawerContext | `/contexts/CartDrawerContext.jsx` | Global cart drawer state |
+
+#### New Backend APIs
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/marketplace/filters` | Get product groups and subgroups for filtering |
+| `GET /api/marketplace/products/search` | Search products with q, group_slug, subgroup_slug |
+| `GET /api/admin/product-groups` | List all product groups |
+| `POST /api/admin/product-groups` | Create new product group |
+| `GET /api/admin/product-subgroups` | List all product subgroups |
+| `POST /api/admin/product-subgroups` | Create new product subgroup |
+| `POST /api/vendor/products` | Vendor product creation |
+| `GET /api/docs/quote/{id}/pdf` | Get quote PDF download URL |
+| `GET /api/docs/invoice/{id}/pdf` | Get invoice PDF download URL |
+| `POST /api/sales/assist-requests` | Create sales assist request |
+| `GET /api/sales/assist-requests` | List all assist requests (for sales team) |
+
+#### Routes Added
+- `/dashboard/explore` - Unified Explore page
+- `/dashboard/invoices/:invoiceId` - Invoice detail in account
+- `/account/explore` - Explore page (account shell)
+- `/account/services` - Services page V2
+- `/admin/product-subgroups` - Admin subgroups manager
+- `/partner/vendor-products` - Vendor products manager
+
+---
+
 ### 🚀 Growth Engine Pack - FULLY IMPLEMENTED
 
 #### Frontend Components
@@ -85,13 +128,14 @@ Konekt is a B2B e-commerce platform for promotional materials, office equipment,
 
 ### P1 - Launch Critical
 - [ ] WhatsApp Business API (Twilio) integration
-- [ ] Integrate OnboardingWizard into first login
+- [ ] Real data wiring for V2/V3 dashboards (replace static placeholders)
 - [ ] Mobile optimization
 
 ### P2 - Growth
 - [ ] Advanced analytics
 - [ ] Push notifications
 - [ ] One-click reorder
+- [ ] PDF generation service integration
 
 ### P3 - Deployment
 - [ ] Connect live payment gateway
@@ -99,4 +143,4 @@ Konekt is a B2B e-commerce platform for promotional materials, office equipment,
 
 ---
 
-*Last updated: March 23, 2026 - Growth Engine Pack Complete*
+*Last updated: March 23, 2026 - Unified Commerce Fixes Pack Complete*
