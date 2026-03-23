@@ -254,6 +254,7 @@ import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 import LoginPageV2 from "@/pages/auth/LoginPageV2";
 import HelpPageV3 from "@/pages/help/HelpPageV3";
 import DashboardCommandCenter from "@/pages/dashboard/DashboardCommandCenter";
+import CustomerDashboardV3 from "@/pages/dashboard/CustomerDashboardV3";
 import QuoteDetailWithPayment from "@/pages/quotes/QuoteDetailWithPayment";
 import EmptyState, { EmptyQuotes, EmptyOrders, EmptyInvoices } from "@/components/empty/EmptyState";
 
@@ -677,7 +678,7 @@ function App() {
             </CartProvider>
           </AuthProvider>
         }>
-          <Route index element={<DashboardCommandCenter />} />
+          <Route index element={<CustomerDashboardV3 />} />
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
@@ -706,7 +707,7 @@ function App() {
             </CartProvider>
           </AuthProvider>
         }>
-          <Route index element={<DashboardCommandCenter />} />
+          <Route index element={<CustomerDashboardV3 />} />
           <Route path="marketplace" element={<AccountMarketplacePageV2 />} />
           <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
           <Route path="cart" element={<AccountCartPage />} />

@@ -2482,6 +2482,11 @@ app.include_router(customer_notifications_router)
 from affiliate_growth_routes import router as affiliate_growth_router
 app.include_router(affiliate_growth_router)
 
+# WhatsApp Automation
+from whatsapp_automation_routes import router as whatsapp_automation_router
+app.include_router(whatsapp_automation_router)
+
+
 
 
 # Mount static directory for listing media uploads
