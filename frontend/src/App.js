@@ -233,6 +233,14 @@ import AccountServicesPage from "@/pages/account/AccountServicesPage";
 import AssistedQuoteRequestPage from "@/pages/account/AssistedQuoteRequestPage";
 import MyOrdersUnifiedPage from "@/pages/account/MyOrdersUnifiedPage";
 
+// Account Marketplace + Service Request Pack
+import AccountMarketplacePageV2 from "@/pages/account/AccountMarketplacePageV2";
+import AccountProductDetailPage from "@/pages/account/AccountProductDetailPage";
+import AccountCartPage from "@/pages/account/AccountCartPage";
+import AccountCheckoutPage from "@/pages/account/AccountCheckoutPage";
+import AccountServiceRequestPage from "@/pages/account/AccountServiceRequestPage";
+import AssistedSalesRequestFromCartPage from "@/pages/account/AssistedSalesRequestFromCartPage";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -674,9 +682,13 @@ function App() {
           </AuthProvider>
         }>
           <Route index element={<CustomerDashboardV2 />} />
-          <Route path="marketplace" element={<AccountMarketplacePage />} />
-          <Route path="services" element={<AccountServicesPage />} />
+          <Route path="marketplace" element={<AccountMarketplacePageV2 />} />
+          <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
+          <Route path="cart" element={<AccountCartPage />} />
+          <Route path="checkout" element={<AccountCheckoutPage />} />
+          <Route path="services" element={<AccountServiceRequestPage />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
+          <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<MyOrdersUnifiedPage />} />
         </Route>
         

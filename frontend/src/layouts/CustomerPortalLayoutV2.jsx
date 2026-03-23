@@ -10,9 +10,10 @@ import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdow
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Marketplace", href: "/account/marketplace", icon: Store, highlight: true },
+  { label: "Cart", href: "/account/cart", icon: ShoppingBag },
   { label: "Services", href: "/account/services", icon: Wrench },
   { label: "Let Sales Assist", href: "/account/assisted-quote", icon: Headphones },
-  { label: "My Orders", href: "/account/orders", icon: ShoppingBag },
+  { label: "My Orders", href: "/account/orders", icon: Receipt },
   { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },

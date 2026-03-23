@@ -2452,6 +2452,10 @@ app.include_router(smart_partner_ecosystem_router)
 from service_catalog_tree_routes import router as service_catalog_tree_router
 app.include_router(service_catalog_tree_router)
 
+# Service Request Templates
+from service_request_templates_routes import router as service_request_templates_router
+app.include_router(service_request_templates_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
