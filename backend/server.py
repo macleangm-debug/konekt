@@ -2506,6 +2506,14 @@ app.include_router(sales_assist_router)
 from whatsapp_twilio_integration_routes import router as whatsapp_twilio_router
 app.include_router(whatsapp_twilio_router)
 
+# PDF Generation Routes
+from pdf_generation_routes import router as pdf_generation_router
+app.include_router(pdf_generation_router)
+
+# Dashboard Metrics Routes
+from dashboard_metrics_routes import router as dashboard_metrics_router
+app.include_router(dashboard_metrics_router)
+
 
 
 

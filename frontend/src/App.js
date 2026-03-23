@@ -262,6 +262,12 @@ import OnboardingGate from "@/components/onboarding/OnboardingGate";
 import OrderDetailTimelineSection from "@/components/orders/OrderDetailTimelineSection";
 import AppCommerceMounts from "@/components/app/AppCommerceMounts";
 
+// PDF + Dashboard Metrics Pack
+import CustomerDashboardMetricsWired from "@/pages/dashboard/CustomerDashboardMetricsWired";
+import AdminDashboardMetricsWired from "@/pages/dashboard/AdminDashboardMetricsWired";
+import RealPdfDownloadActions from "@/components/docs/RealPdfDownloadActions";
+import useDashboardMetrics from "@/hooks/useDashboardMetrics";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
