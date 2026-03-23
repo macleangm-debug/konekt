@@ -256,6 +256,12 @@ import InvoiceDetailInAccountPage from "@/pages/account/InvoiceDetailInAccountPa
 import ProductSubgroupsManagerPage from "@/pages/admin/ProductSubgroupsManagerPage";
 import VendorProductsManagerPage from "@/pages/vendor/VendorProductsManagerPage";
 
+// Launch Critical Pack - New Components
+import OrderDetailPageV2 from "@/pages/account/OrderDetailPageV2";
+import OnboardingGate from "@/components/onboarding/OnboardingGate";
+import OrderDetailTimelineSection from "@/components/orders/OrderDetailTimelineSection";
+import AppCommerceMounts from "@/components/app/AppCommerceMounts";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -697,6 +703,7 @@ function App() {
           <Route index element={<CustomerDashboardV3 />} />
           <Route path="explore" element={<ExplorePageV2 />} />
           <Route path="orders" element={<OrdersPageV2 />} />
+          <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />
@@ -738,6 +745,7 @@ function App() {
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<MyOrdersUnifiedPage />} />
+          <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
           <Route path="help" element={<HelpPageV3 />} />
         </Route>

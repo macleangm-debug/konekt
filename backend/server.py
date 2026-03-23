@@ -2502,6 +2502,10 @@ app.include_router(marketplace_router)
 app.include_router(docs_router)
 app.include_router(sales_assist_router)
 
+# WhatsApp Twilio Integration (Live)
+from whatsapp_twilio_integration_routes import router as whatsapp_twilio_router
+app.include_router(whatsapp_twilio_router)
+
 
 
 
