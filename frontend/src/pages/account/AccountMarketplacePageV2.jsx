@@ -1,32 +1,79 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import AccountProductGrid from "../../components/account/AccountProductGrid";
+import MarketplaceSearchAndFilters from "../../components/marketplace/MarketplaceSearchAndFilters";
+import { useCartDrawer } from "../../contexts/CartDrawerContext";
 
-const products = [
-  { id: "p1", name: "Executive Office Chair", category: "Office Furniture", price: "TZS 450,000", numericPrice: 450000, description: "Ergonomic office chair for executive workspaces." },
-  { id: "p2", name: "A4 Copier Paper Box", category: "Office Supplies", price: "TZS 95,000", numericPrice: 95000, description: "High-quality A4 copier paper, box of reams." },
-  { id: "p3", name: "Reception Desk", category: "Furniture", price: "TZS 850,000", numericPrice: 850000, description: "Professional front-office reception desk." },
-];
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
-export default function AccountMarketplacePageV2() {
-  const [cart, setCart] = useState([]);
+export default function AccountMarketplacePageV2({ embedded = false }) {
+  const { addItem, cartCount } = useCartDrawer();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ q: "", group_slug: "", subgroup_slug: "" });
 
-  const addToCart = (product) => {
-    setCart((prev) => [...prev, product]);
-    alert(`${product.name} added to cart.`);
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (filters.q) params.append("q", filters.q);
+        if (filters.group_slug) params.append("group_slug", filters.group_slug);
+        if (filters.subgroup_slug) params.append("subgroup_slug", filters.subgroup_slug);
+        
+        const res = await axios.get(`${API_URL}/api/marketplace/products/search?${params.toString()}`);
+        setProducts(res.data || []);
+      } catch (err) {
+        console.error("Failed to load products:", err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProducts();
+  }, [filters]);
+
+  const handleAddToCart = (product) => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.base_price || product.price || product.numericPrice || 0,
+      category: product.category,
+      branch: product.branch,
+      group_name: product.group_name,
+    });
   };
 
+  // Transform products for AccountProductGrid
+  const gridProducts = products.map((p) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category || p.branch || "",
+    price: `TZS ${Number(p.base_price || p.price || 0).toLocaleString()}`,
+    numericPrice: p.base_price || p.price || 0,
+    description: p.description || "",
+    image_url: p.image_url,
+    base_price: p.base_price || p.price || 0,
+  }));
+
   return (
-    <div className="space-y-8">
-      <div>
-        <div className="text-4xl font-bold text-[#20364D]">Marketplace</div>
-        <div className="text-slate-600 mt-2">Browse and add products to cart without leaving your account shell.</div>
-      </div>
+    <div className="space-y-8" data-testid="account-marketplace-page">
+      {!embedded && (
+        <div>
+          <div className="text-4xl font-bold text-[#20364D]">Marketplace</div>
+          <div className="text-slate-600 mt-2">Browse and add products to cart without leaving your account shell.</div>
+        </div>
+      )}
 
-      <div className="rounded-[2rem] border bg-white p-5 text-sm text-slate-600">
-        Cart Preview: {cart.length} item(s)
-      </div>
+      <MarketplaceSearchAndFilters value={filters} onChange={setFilters} />
 
-      <AccountProductGrid products={products} onAddToCart={addToCart} />
+      {loading ? (
+        <div className="text-center py-12 text-slate-500">Loading products...</div>
+      ) : gridProducts.length > 0 ? (
+        <AccountProductGrid products={gridProducts} onAddToCart={handleAddToCart} />
+      ) : (
+        <div className="text-center py-12 text-slate-500">No products found. Try adjusting your filters.</div>
+      )}
     </div>
   );
 }

@@ -3,11 +3,15 @@ import { Link } from "react-router-dom";
 
 export default function AccountProductGrid({ products = [], onAddToCart }) {
   return (
-    <div className="grid xl:grid-cols-3 md:grid-cols-2 gap-6">
+    <div className="grid xl:grid-cols-3 md:grid-cols-2 gap-6" data-testid="product-grid">
       {products.map((product) => (
-        <div key={product.id} className="rounded-[2rem] border bg-white p-5">
-          <div className="aspect-[4/3] rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
-            Product Image
+        <div key={product.id} className="rounded-[2rem] border bg-white p-5" data-testid={`product-card-${product.id}`}>
+          <div className="aspect-[4/3] rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden">
+            {product.image_url ? (
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+            ) : (
+              "Product Image"
+            )}
           </div>
 
           <div className="mt-5">
@@ -20,7 +24,12 @@ export default function AccountProductGrid({ products = [], onAddToCart }) {
             <Link to={`/account/marketplace/${product.id}`} className="flex-1 rounded-xl border px-4 py-3 text-center font-semibold text-[#20364D]">
               View
             </Link>
-            <button type="button" onClick={() => onAddToCart?.(product)} className="flex-1 rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold">
+            <button 
+              type="button" 
+              onClick={() => onAddToCart?.(product)} 
+              className="flex-1 rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold"
+              data-testid={`add-to-cart-${product.id}`}
+            >
               Add to Cart
             </button>
           </div>

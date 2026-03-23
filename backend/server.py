@@ -2486,6 +2486,22 @@ app.include_router(affiliate_growth_router)
 from whatsapp_automation_routes import router as whatsapp_automation_router
 app.include_router(whatsapp_automation_router)
 
+# Unified Commerce Filters and Docs Routes
+from commerce_filters_and_docs_routes import (
+    admin_subgroups_router,
+    admin_groups_router,
+    vendor_products_router,
+    marketplace_router,
+    docs_router,
+    sales_assist_router
+)
+app.include_router(admin_subgroups_router)
+app.include_router(admin_groups_router)
+app.include_router(vendor_products_router)
+app.include_router(marketplace_router)
+app.include_router(docs_router)
+app.include_router(sales_assist_router)
+
 
 
 

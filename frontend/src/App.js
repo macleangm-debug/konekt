@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { CartDrawerProvider } from "@/contexts/CartDrawerContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 import { bootstrapAffiliateAttribution } from "@/lib/attribution";
 
@@ -15,6 +16,7 @@ import ExitIntentPopup from "@/components/ExitIntentPopup";
 import PromoBanner from "@/components/PromoBanner";
 import AIChatWidget from "@/components/AIChatWidget";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
+import CartDrawerV2 from "@/components/cart/CartDrawerV2";
 
 // Customer Pages
 import Landing from "@/pages/LandingNew";
@@ -246,6 +248,13 @@ import AccountCartPage from "@/pages/account/AccountCartPage";
 import AccountCheckoutPage from "@/pages/account/AccountCheckoutPage";
 import AccountServiceRequestPage from "@/pages/account/AccountServiceRequestPage";
 import AssistedSalesRequestFromCartPage from "@/pages/account/AssistedSalesRequestFromCartPage";
+
+// Unified Commerce Pack - New Pages
+import ExplorePageV2 from "@/pages/account/ExplorePageV2";
+import AccountServicesPageV2 from "@/pages/account/AccountServicesPageV2";
+import InvoiceDetailInAccountPage from "@/pages/account/InvoiceDetailInAccountPage";
+import ProductSubgroupsManagerPage from "@/pages/admin/ProductSubgroupsManagerPage";
+import VendorProductsManagerPage from "@/pages/vendor/VendorProductsManagerPage";
 
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
@@ -596,6 +605,8 @@ function App() {
           <Route path="partner-ecosystem-v2" element={<PartnerEcosystemPageV2 />} />
           {/* Smart Partner Ecosystem (Unified) */}
           <Route path="partner-ecosystem" element={<PartnerEcosystemUnifiedPage />} />
+          {/* Product Sub-Groups Manager */}
+          <Route path="product-subgroups" element={<ProductSubgroupsManagerPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
@@ -622,6 +633,8 @@ function App() {
           <Route path="affiliate-help" element={<HelpAffiliatePage />} />
           {/* Vendor Dashboard */}
           <Route path="vendor-dashboard" element={<VendorDashboardPage />} />
+          {/* Vendor Products */}
+          <Route path="vendor-products" element={<VendorProductsManagerPage />} />
           {/* Vendor Help */}
           <Route path="vendor-help" element={<HelpVendorPage />} />
         </Route>
@@ -672,17 +685,22 @@ function App() {
         <Route path="/dashboard" element={
           <AuthProvider>
             <CartProvider>
-              <CustomerRoute>
-                <CustomerPortalLayoutV2 />
-              </CustomerRoute>
+              <CartDrawerProvider>
+                <CustomerRoute>
+                  <CustomerPortalLayoutV2 />
+                  <CartDrawerV2 />
+                </CustomerRoute>
+              </CartDrawerProvider>
             </CartProvider>
           </AuthProvider>
         }>
           <Route index element={<CustomerDashboardV3 />} />
+          <Route path="explore" element={<ExplorePageV2 />} />
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />
+          <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
           <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
           <Route path="checkout" element={<CheckoutPageV2 />} />
           <Route path="services" element={<AccountServicesDiscoveryPage />} />
@@ -701,21 +719,26 @@ function App() {
         <Route path="/account" element={
           <AuthProvider>
             <CartProvider>
-              <CustomerRoute>
-                <CustomerPortalLayoutV2 />
-              </CustomerRoute>
+              <CartDrawerProvider>
+                <CustomerRoute>
+                  <CustomerPortalLayoutV2 />
+                  <CartDrawerV2 />
+                </CustomerRoute>
+              </CartDrawerProvider>
             </CartProvider>
           </AuthProvider>
         }>
           <Route index element={<CustomerDashboardV3 />} />
+          <Route path="explore" element={<ExplorePageV2 />} />
           <Route path="marketplace" element={<AccountMarketplacePageV2 />} />
           <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
           <Route path="cart" element={<AccountCartPage />} />
           <Route path="checkout" element={<AccountCheckoutPage />} />
-          <Route path="services" element={<AccountServiceRequestPage />} />
+          <Route path="services" element={<AccountServicesPageV2 />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<MyOrdersUnifiedPage />} />
+          <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
           <Route path="help" element={<HelpPageV3 />} />
         </Route>
         
