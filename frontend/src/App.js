@@ -223,6 +223,9 @@ import PartnerEcosystemPageV2 from "@/pages/admin/PartnerEcosystemPageV2";
 // Smart Partner Ecosystem
 import PartnerEcosystemSmart from "@/pages/admin/PartnerEcosystemSmart";
 
+// Unified Partner Ecosystem
+import PartnerEcosystemUnifiedPage from "@/pages/admin/PartnerEcosystemUnifiedPage";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -552,7 +555,7 @@ function App() {
           {/* Partner Ecosystem V2 */}
           <Route path="partner-ecosystem-v2" element={<PartnerEcosystemPageV2 />} />
           {/* Smart Partner Ecosystem (Unified) */}
-          <Route path="partner-ecosystem" element={<PartnerEcosystemSmart />} />
+          <Route path="partner-ecosystem" element={<PartnerEcosystemUnifiedPage />} />
         </Route>
         
         {/* Partner Portal Routes */}
