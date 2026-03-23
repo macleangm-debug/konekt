@@ -13,136 +13,126 @@ Konekt is a B2B e-commerce platform for ordering customized promotional material
 - **Email**: Resend API (MOCKED - ready for integration)
 - **PDF**: ReportLab for premium professional documents
 - **Authentication**: JWT with role-based permissions
-- **Deployment**: Docker Compose + Nginx
 
 ---
 
 ## Latest Session Updates (March 23, 2026)
 
-### Design Pack Implementation ✅ COMPLETED
+### Full Dashboard System Implementation ✅ COMPLETE
 
-**New UI Components Implemented:**
-
-#### 1. LoginPageV2 (`/app/frontend/src/pages/auth/LoginPageV2.jsx`)
-- Split-screen branded login design
-- Left side: KONEKT branding, welcome message, feature highlights
-- Right side: Clean login form with email/password inputs
-- Stores `konekt_token` for AuthContext compatibility
-- Full page reload redirect to `/dashboard` after login
-- Auto-redirect to `/dashboard` if already logged in
-
-#### 2. HelpPageV3 (`/app/frontend/src/pages/help/HelpPageV3.jsx`)
-- CTA-driven support center design
-- Hero section with "How can we help you?" messaging
-- Action buttons: Browse Products, Request Service
-- Help cards: Ordering Products, Requesting Services, Payments & Tracking
-- FAQ section with common questions
-- Quick Actions sidebar
-- Talk to Sales + Email Support CTAs
-
-#### 3. DashboardCommandCenter (`/app/frontend/src/pages/dashboard/DashboardCommandCenter.jsx`)
-- Action-driven dashboard replacing passive overview
-- Welcome header with user's name
-- Stats cards: Quotes, Orders, Invoices, Quick Order
-- Badges for pending/active counts
+#### 1. Customer Dashboard (DashboardCommandCenter)
+- Action-driven design with welcome header
+- Stats cards: Quotes, Orders, Invoices with pending/active badges
 - Recent Activity feed with quote/order history
-- Quick Actions section with navigation links
+- Quick Actions section
+- Route: `/dashboard`
 
-#### 4. QuoteDetailWithPayment (`/app/frontend/src/pages/quotes/QuoteDetailWithPayment.jsx`)
-- Full quote detail view with line items, VAT, totals
-- Delivery address display
-- Bank transfer payment information
-- "Pay Now" button for pending quotes
-- Payment modal with bank transfer instructions
-- Status update after payment confirmation
+#### 2. Sales Dashboard V2 (SalesDashboardV2)
+- "Sales Command Center" header
+- Action cards with priority colors:
+  - 🔴 Needs Immediate Action (urgent leads)
+  - 🟡 Quotes Pending (follow-ups needed)
+  - 🟢 Ready to Close (approved deals)
+- Quick stats: Total Leads, Total Quotes, Conversion Rate, Monthly Revenue
+- Urgent Leads and Pending Quotes lists
+- Quick Actions: Create Quote, Add Lead, CRM Pipeline
+- Route: `/staff`
 
-#### 5. EmptyState Component (`/app/frontend/src/components/empty/EmptyState.jsx`)
-- Reusable empty state with icon, title, message, CTA button
-- Variants: default, minimal
-- Specialized exports: EmptyQuotes, EmptyOrders, EmptyInvoices, EmptyCart
+#### 3. Admin Dashboard V2 (AdminDashboardV2)
+- "Admin Control Center" header
+- Key metrics: Revenue, Orders, Active Partners, Affiliates
+- Orders Pipeline: Pending, In Progress, Completed
+- System Alerts: Delayed orders, Overloaded partners
+- Recent Orders table
+- Quick Actions: Manage Orders, Partners, Deliveries, Catalog
+- Route: `/admin`
+
+#### 4. Partner Dashboard V2 (PartnerDashboardV2)
+- Job management focused design
+- Key metrics: Assigned Jobs, In Progress, Completed, Total Earnings
+- Jobs Requiring Attention (alerts for delayed/urgent)
+- Urgent Jobs and Active Jobs lists
+- Quick Actions: View All Jobs, Upload Deliverables, View Earnings
+- Route: `/partner/dashboard`
+
+#### 5. Affiliate Dashboard V2 (AffiliateDashboardV2)
+- Earnings and referral focused design
+- Key metrics: Total Earnings, Pending Payout, Clicks, Conversions
+- Referral link section with copy/share functionality
+- Performance chart placeholder
+- Recent Referrals list
+- Quick Links: Payout History, Marketing Resources
+- Route: `/affiliate/dashboard`
 
 ---
 
-### Route Fixes ✅ COMPLETED
+### Previous Session: Design Pack Implementation ✅
 
-1. **CustomerRoute** - Now redirects to `/login` instead of `/auth`
-2. **Navbar.js** - Desktop Login button goes to `/login`
-3. **Navbar.js** - Mobile bottom nav Account link goes to `/login`
-4. **Route Configuration** - `/login` renders LoginPageV2, `/dashboard/help` and `/account/help` render HelpPageV3
+- LoginPageV2 - Split-screen branded login
+- HelpPageV3 - CTA-driven help center
+- QuoteDetailWithPayment - Quote to Pay flow
+- EmptyState component - Reusable empty states
+- Auth flow fixes - `/login` instead of `/auth`
 
----
+### Previous Session: Progressive Input & Checkout Pack ✅
 
-### Previous Session: Progressive Input & Checkout Pack ✅ COMPLETED
-
-- Fixed "Submit Request" button on Customer Services page
+- Fixed "Submit Request" button
 - Progressive Input Checkout with multi-field address
 - Checkout-to-Quote flow with VAT (18%)
 - Admin Catalog Setup (`/admin/catalog-setup`)
 - Admin Deliveries page (`/admin/deliveries`)
-- VAT configuration in Admin Settings Hub
+
+---
+
+## Complete Dashboard System Summary
+
+| Portal | Dashboard | Route | Key Focus |
+|--------|-----------|-------|-----------|
+| Customer | DashboardCommandCenter | `/dashboard` | Buying + Tracking |
+| Sales | SalesDashboardV2 | `/staff` | Leads + Closing |
+| Admin | AdminDashboardV2 | `/admin` | Control + Visibility |
+| Partner | PartnerDashboardV2 | `/partner/dashboard` | Jobs + Fulfillment |
+| Affiliate | AffiliateDashboardV2 | `/affiliate/dashboard` | Earnings + Growth |
 
 ---
 
 ## Test Results
 
-### Iteration 85 - Checkout/Catalog/Deliveries
-- Backend: 21/21 tests passed (100%)
-- Frontend: All UI tests passed
-
-### Iteration 86 - Design Pack UI
-- Frontend: 100% - All UI tests passed
-- Fixes applied: Navbar routing to /login
+All dashboards tested and working:
+- ✅ Admin Dashboard V2 - Revenue, Orders Pipeline, System Alerts
+- ✅ Sales Dashboard V2 - Action cards, Urgent Leads, Pending Quotes
+- ✅ Partner Dashboard V2 - Jobs management, Earnings tracking
+- ✅ Affiliate Dashboard V2 - Referral links, Performance metrics
 
 ---
 
 ## Remaining Tasks
 
 ### P1 - High Priority
-- [ ] Global Confirmation Modal component (reusable warnings/deletions)
-- [ ] Apply Empty States to Quotes, Invoices, Orders pages when data arrays are empty
+- [ ] Global Confirmation Modal (warnings/deletions)
+- [ ] Apply EmptyState to Quotes/Invoices/Orders pages
 - [ ] TIN Number collection during Invoice creation
 
 ### P2 - Medium Priority
-- [ ] Convert Specific Services to structured backend tags
-- [ ] Partner Intelligence Engine (auto-routing)
-- [ ] Partner performance scoring system
-- [ ] WhatsApp automation integration
+- [ ] Connect dashboards to real-time notifications
+- [ ] Advanced analytics charts for dashboards
+- [ ] Mobile optimization for all dashboards
 
 ### P3 - Deployment
 - [ ] Connect Resend live (need `RESEND_API_KEY`)
 - [ ] Connect KwikPay live (need credentials)
-- [ ] SSL/DNS verification
-- [ ] Monitoring setup
+- [ ] WhatsApp automation integration
 
 ---
 
 ## Admin Credentials
-| Account | Email | Password |
-|---------|-------|----------|
-| Primary Admin | admin@konekt.co.tz | KnktcKk_L-hw1wSyquvd! |
-| Demo Customer | demo.customer@konekt.com | Demo123! |
-| Demo Partner | demo.partner@konekt.com | Partner123! |
+| Account | Email | Password | URL |
+|---------|-------|----------|-----|
+| Admin | admin@konekt.co.tz | KnktcKk_L-hw1wSyquvd! | `/admin/login` |
+| Customer | demo.customer@konekt.com | Demo123! | `/login` |
+| Partner | demo.partner@konekt.com | Partner123! | `/partner-login` |
+| Staff | admin@konekt.co.tz | KnktcKk_L-hw1wSyquvd! | `/staff-login` |
 
 ---
 
-## Key Architectural Decisions
-
-### Login Flow
-1. User visits `/login` → sees LoginPageV2
-2. Submits credentials → API validates
-3. Token stored as `konekt_token` (AuthContext compatibility)
-4. Full page reload to `/dashboard`
-
-### Checkout-to-Quote Flow
-1. Customer adds items to cart
-2. Checkout with multi-field address + delivery disclaimer
-3. Creates **Quote** (not Invoice) with VAT
-4. Customer reviews Quote → clicks "Pay" → converts to Invoice
-
-### Catalog Single Source of Truth
-- Admin manages Services + Products at `/admin/catalog-setup`
-- Dropdowns pull from `/api/admin/catalog/tree`
-
----
-
-*Last updated: March 23, 2026 - Design Pack Implementation Complete*
+*Last updated: March 23, 2026 - Full Dashboard System Implementation Complete*

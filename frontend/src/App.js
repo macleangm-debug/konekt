@@ -48,6 +48,7 @@ import AffiliatePortalPage from "@/pages/AffiliatePortalPage";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import AdminDashboardV2 from "@/pages/admin/AdminDashboardV2";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminStock from "@/pages/admin/AdminStock";
@@ -175,6 +176,7 @@ import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 import PartnerLayout from "@/layouts/PartnerLayout";
 import PartnerLoginPage from "@/pages/partner/PartnerLoginPage";
 import PartnerDashboardPage from "@/pages/partner/PartnerDashboardPage";
+import PartnerDashboardV2 from "@/pages/partner/PartnerDashboardV2";
 import PartnerCatalogPage2 from "@/pages/partner/PartnerCatalogPage";
 import PartnerStockTablePage from "@/pages/partner/PartnerStockTablePage";
 import PartnerBulkUploadPage from "@/pages/partner/PartnerBulkUploadPage";
@@ -338,6 +340,7 @@ import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
+import SalesDashboardV2 from "@/pages/staff/SalesDashboardV2";
 import ProductionJobsPage from "@/pages/staff/ProductionJobsPage";
 import OpportunityDetailPage from "@/pages/staff/OpportunityDetailPage";
 
@@ -359,6 +362,7 @@ import DashboardAffiliatePage from "@/pages/dashboard/AffiliateDashboardPage";
 
 // Affiliate pages
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
+import AffiliateDashboardV2 from "@/pages/affiliate/AffiliateDashboardV2";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -458,7 +462,7 @@ function App() {
             </AdminRoute>
           </AdminAuthProvider>
         }>
-          <Route index element={<AdminDashboard />} />
+          <Route index element={<AdminDashboardV2 />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="stock" element={<AdminStock />} />
@@ -596,7 +600,7 @@ function App() {
         {/* Partner Portal Routes */}
         <Route path="/partner-login" element={<PartnerLoginPage />} />
         <Route path="/partner" element={<PartnerLayout />}>
-          <Route index element={<PartnerDashboardPage />} />
+          <Route index element={<PartnerDashboardV2 />} />
           <Route path="catalog" element={<PartnerCatalogPage2 />} />
           <Route path="catalog/new" element={<PartnerListingEditorPage />} />
           <Route path="catalog/:listingId/edit" element={<PartnerListingEditorPage />} />
@@ -718,6 +722,13 @@ function App() {
         <Route path="/staff" element={
           <AdminAuthProvider>
             <AdminRoute>
+              <SalesDashboardV2 />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/home" element={
+          <AdminAuthProvider>
+            <AdminRoute>
               <StaffWorkspaceHomePage />
             </AdminRoute>
           </AdminAuthProvider>
@@ -829,7 +840,7 @@ function App() {
                     <Route path="/a/:code" element={<AffiliateLandingPage />} />
                     <Route path="/partners/apply" element={<AffiliateApplyPage />} />
                     <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
-                    <Route path="/affiliate/dashboard" element={<AffiliateDashboardPage />} />
+                    <Route path="/affiliate/dashboard" element={<AffiliateDashboardV2 />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/services" element={<ServicesHubPage />} />
                     <Route path="/services/:slug/request" element={<ServiceRequestPage />} />
