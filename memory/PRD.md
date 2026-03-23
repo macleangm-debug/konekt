@@ -2657,3 +2657,49 @@ APIs:
 ---
 
 *Last updated: March 23, 2026 - Admin Settings Hub Pack Complete*
+
+---
+
+### Codebase Pack 37 - Settings Navigation Integration Pack ✅ (March 23, 2026)
+
+**1. Admin Sidebar Updates:**
+- **Settings Hub** now highlighted with gold color (#D4A843) and "NEW" badge
+- **Control Center** added as second-level entry point
+- Clear visual hierarchy: Dashboard → Settings Hub → Control Center → Operations
+
+**2. Admin Control Center Page (`/admin/control-center`):**
+- Central control surface for launch operations
+- **Quick Settings Card** with 4 shortcuts:
+  - Commercial Rules
+  - Payment Accounts
+  - Launch Controls
+  - Notifications
+- **4 Control Cards:**
+  - Settings Hub - All go-live defaults
+  - Affiliate Manager - Status, codes, governance
+  - Go-To-Market - Launch commercial behavior
+  - Launch QA - Final operational verification
+
+**3. Reusable Components:**
+- `AdminSidebarSection.jsx` - Grouped sidebar sections with highlight support
+- `AdminQuickSettingsCard.jsx` - Quick access to key settings sections
+
+**Route:** `/admin/control-center`
+
+**Files Added:**
+- `/app/frontend/src/pages/admin/AdminControlCenterPage.jsx`
+- `/app/frontend/src/components/navigation/AdminSidebarSection.jsx`
+- `/app/frontend/src/components/navigation/AdminQuickSettingsCard.jsx`
+- `/app/frontend/src/config/admin-sidebar-final-links.js`
+
+**Files Modified:**
+- `/app/frontend/src/pages/admin/AdminLayout.js` - Added highlight styling for Settings Hub
+- `/app/frontend/src/App.js` - Added Control Center route
+
+**Testing:**
+- Frontend: 100% - All features working
+- Bug fixed: Duplicate Settings Hub entry removed
+
+---
+
+*Last updated: March 23, 2026 - Settings Navigation Integration Pack Complete*
