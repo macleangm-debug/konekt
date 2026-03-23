@@ -217,6 +217,9 @@ import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
 // Admin Control Center
 import AdminControlCenterPage from "@/pages/admin/AdminControlCenterPage";
 
+// Partner Ecosystem V2
+import PartnerEcosystemPageV2 from "@/pages/admin/PartnerEcosystemPageV2";
+
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
@@ -543,6 +546,8 @@ function App() {
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
           {/* Admin Control Center */}
           <Route path="control-center" element={<AdminControlCenterPage />} />
+          {/* Partner Ecosystem V2 */}
+          <Route path="partner-ecosystem-v2" element={<PartnerEcosystemPageV2 />} />
         </Route>
         
         {/* Partner Portal Routes */}

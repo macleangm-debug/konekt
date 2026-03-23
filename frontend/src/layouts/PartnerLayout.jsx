@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Upload, Truck, Receipt, LogOut, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
+import PartnerAccountTopbar from "../components/layout/PartnerAccountTopbar";
 
 export default function PartnerLayout() {
   const [partner, setPartner] = useState(null);
@@ -132,17 +133,6 @@ export default function PartnerLayout() {
             );
           })}
         </nav>
-
-        <div className="absolute bottom-6 left-5 right-5">
-          <button
-            onClick={logout}
-            className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition"
-            data-testid="partner-logout-btn"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        </div>
       </aside>
 
       {/* Overlay for mobile */}
@@ -155,7 +145,10 @@ export default function PartnerLayout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <Outlet />
+        <PartnerAccountTopbar onLogout={logout} />
+        <div className="p-6 lg:p-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

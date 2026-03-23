@@ -5,6 +5,7 @@ import {
   Wrench, Gift, CreditCard, LogOut, Menu, X, User, ChevronDown, RefreshCcw, Users, Building2, HelpCircle
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
+import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
 
 const nav = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
@@ -86,17 +87,6 @@ export default function CustomerPortalLayoutV2() {
             <span>Request Business Pricing</span>
           </Link>
         </div>
-
-        <div className="px-4 py-4 border-t">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full rounded-xl px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 transition font-medium"
-            data-testid="logout-btn"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        </div>
       </aside>
 
       {/* Main Content */}
@@ -125,12 +115,15 @@ export default function CustomerPortalLayoutV2() {
 
           <div className="flex items-center gap-3">
             <NotificationBell tokenKey="token" defaultRedirect="/dashboard" />
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100">
-              <User className="w-4 h-4 text-slate-500" />
-              <span className="text-sm font-medium text-slate-700 hidden sm:inline">
-                {customerName}
-              </span>
-            </div>
+            <PartnerProfileDropdown
+              name={customerName}
+              onLogout={handleLogout}
+              menu={[
+                { label: "Orders", href: "/dashboard/orders" },
+                { label: "Invoices", href: "/dashboard/invoices" },
+                { label: "Help", href: "/help/customer" },
+              ]}
+            />
           </div>
         </header>
 
