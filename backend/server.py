@@ -2444,6 +2444,10 @@ app.include_router(vendor_partner_portal_router)
 from admin_settings_hub_routes import router as admin_settings_hub_router
 app.include_router(admin_settings_hub_router)
 
+# Smart Partner Ecosystem
+from smart_partner_ecosystem_routes import router as smart_partner_ecosystem_router
+app.include_router(smart_partner_ecosystem_router)
+
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
