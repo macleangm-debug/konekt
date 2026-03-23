@@ -9,7 +9,7 @@ import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
+const LOGO_URL = "/branding/konekt-logo-full.png";
 
 // Main product branches with their sub-categories
 const productBranches = [

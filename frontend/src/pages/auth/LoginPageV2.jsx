@@ -55,8 +55,19 @@ export default function LoginPageV2() {
         <div className="max-w-md mx-auto">
           {/* Logo */}
           <div className="mb-8">
-            <div className="text-3xl font-bold tracking-tight">KONEKT</div>
-            <div className="text-sm text-slate-300 mt-1">Business Solutions Platform</div>
+            <img 
+              src="/branding/konekt-logo-full.png" 
+              alt="Konekt" 
+              className="h-14 w-auto"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'block';
+              }}
+            />
+            <div className="hidden">
+              <div className="text-3xl font-bold tracking-tight">KONEKT</div>
+              <div className="text-sm text-slate-300 mt-1">Business Solutions Platform</div>
+            </div>
           </div>
           
           <h1 className="text-4xl font-bold leading-tight">Welcome to Konekt</h1>

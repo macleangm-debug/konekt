@@ -32,8 +32,17 @@ export default function PublicNavbarV2() {
   return (
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm" data-testid="public-navbar">
       <div className="max-w-7xl mx-auto px-6 h-18 min-h-[72px] flex items-center justify-between">
-        <Link to="/" className="text-2xl font-bold text-[#20364D]">
-          Konekt
+        <Link to="/" className="flex items-center" data-testid="navbar-logo">
+          <img 
+            src="/branding/konekt-logo-full.png" 
+            alt="Konekt" 
+            className="h-10 w-auto"
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'block';
+            }}
+          />
+          <span className="hidden text-2xl font-bold text-[#20364D]">Konekt</span>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">

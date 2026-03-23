@@ -12,7 +12,7 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 import NotificationBell from '../../components/admin/NotificationBell';
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
+const LOGO_URL = "/branding/konekt-logo-full.png";
 
 // Navigation items with moduleKey for filtering
 const navItems = [

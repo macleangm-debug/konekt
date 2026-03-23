@@ -8,7 +8,7 @@ import { Label } from '../../components/ui/label';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { toast } from 'sonner';
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
+const LOGO_URL = "/branding/konekt-logo-full.png";
 
 export default function AdminLogin() {
   const navigate = useNavigate();

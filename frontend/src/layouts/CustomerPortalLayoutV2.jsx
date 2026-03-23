@@ -47,7 +47,18 @@ export default function CustomerPortalLayoutV2() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-[280px] min-h-screen bg-white border-r">
         <div className="px-6 py-5 border-b">
-          <Link to="/" className="text-2xl font-bold text-[#20364D]">Konekt</Link>
+          <Link to="/" className="flex items-center gap-2">
+            <img 
+              src="/branding/konekt-logo-full.png" 
+              alt="Konekt" 
+              className="h-10 w-auto"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'block';
+              }}
+            />
+            <span className="hidden text-2xl font-bold text-[#20364D]">Konekt</span>
+          </Link>
         </div>
         
         <nav className="flex-1 px-4 py-6 space-y-1">

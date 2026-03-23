@@ -21,7 +21,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../ui/button";
 
-const LOGO_URL = "https://customer-assets.emergentagent.com/job_konekt-promo/artifacts/ul37fyug_Konekt%20Logo-04.jpg";
+const LOGO_URL = "/branding/konekt-logo-full.png";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
