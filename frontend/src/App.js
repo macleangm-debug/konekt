@@ -248,6 +248,13 @@ import AssistedSalesRequestFromCartPage from "@/pages/account/AssistedSalesReque
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
+// New Design Pack - V2 Pages
+import LoginPageV2 from "@/pages/auth/LoginPageV2";
+import HelpPageV3 from "@/pages/help/HelpPageV3";
+import DashboardCommandCenter from "@/pages/dashboard/DashboardCommandCenter";
+import QuoteDetailWithPayment from "@/pages/quotes/QuoteDetailWithPayment";
+import EmptyState, { EmptyQuotes, EmptyOrders, EmptyInvoices } from "@/components/empty/EmptyState";
+
 // Public Expansion Pages
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
@@ -395,7 +402,7 @@ function CustomerRoute({ children }) {
   }
   
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
@@ -410,11 +417,16 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login Chooser and Customer Login */}
-        <Route path="/login" element={<LoginChooserPage />} />
+        {/* Main Login Page - V2 Branded Design */}
+        <Route path="/login" element={
+          <AuthProvider>
+            <LoginPageV2 />
+          </AuthProvider>
+        } />
+        {/* Legacy Customer Login Route */}
         <Route path="/login/customer" element={
           <AuthProvider>
-            <CustomerLoginPage />
+            <LoginPageV2 />
           </AuthProvider>
         } />
         {/* Register route - redirects to Auth page with register tab */}
@@ -661,9 +673,10 @@ function App() {
             </CartProvider>
           </AuthProvider>
         }>
-          <Route index element={<DashboardOverviewPageV2 />} />
+          <Route index element={<DashboardCommandCenter />} />
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
+          <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />
           <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
           <Route path="checkout" element={<CheckoutPageV2 />} />
@@ -676,7 +689,7 @@ function App() {
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
           <Route path="profile/business" element={<ClientProfilePage />} />
-          <Route path="help" element={<HelpCustomerPage />} />
+          <Route path="help" element={<HelpPageV3 />} />
         </Route>
         
         {/* Account shell routes - simplified customer experience */}
@@ -689,7 +702,7 @@ function App() {
             </CartProvider>
           </AuthProvider>
         }>
-          <Route index element={<CustomerDashboardV2 />} />
+          <Route index element={<DashboardCommandCenter />} />
           <Route path="marketplace" element={<AccountMarketplacePageV2 />} />
           <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
           <Route path="cart" element={<AccountCartPage />} />
@@ -698,6 +711,7 @@ function App() {
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<MyOrdersUnifiedPage />} />
+          <Route path="help" element={<HelpPageV3 />} />
         </Route>
         
         {/* Staff Workspace Route */}

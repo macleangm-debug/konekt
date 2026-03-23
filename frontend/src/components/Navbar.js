@@ -200,7 +200,7 @@ export default function Navbar() {
                 </Button>
               ) : (
                 <Button 
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate('/login')}
                   className="btn-primary-pill"
                   data-testid="login-nav-btn"
                 >
@@ -292,7 +292,7 @@ export default function Navbar() {
                   </>
                 ) : (
                   <Link
-                    to="/auth"
+                    to="/login"
                     onClick={() => setMobileMenuOpen(false)}
                     className="flex items-center gap-3 p-3 rounded-xl bg-primary text-primary-foreground"
                   >
@@ -334,8 +334,8 @@ export default function Navbar() {
           <span className="text-xs">Cart</span>
         </Link>
         <Link 
-          to={user ? '/dashboard' : '/auth'} 
-          className={`mobile-nav-item ${isActive('/dashboard') || isActive('/auth') ? 'active' : ''}`}
+          to={user ? '/dashboard' : '/login'} 
+          className={`mobile-nav-item ${isActive('/dashboard') || isActive('/login') ? 'active' : ''}`}
         >
           <User className="w-5 h-5" />
           <span className="text-xs">{user ? 'Account' : 'Login'}</span>

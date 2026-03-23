@@ -64,11 +64,25 @@ async def get_my_quote(quote_id: str, user: dict = Depends(get_user)):
     
     user_email = user.get("email")
     quotes_collection = await get_quote_collection(db)
-    doc = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    
+    # Try by _id first
+    try:
+        doc = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    except:
+        doc = None
+    
+    # Try by id field
+    if not doc:
+        doc = await quotes_collection.find_one({"id": quote_id, "customer_email": user_email})
+    
     if not doc:
         # Try fallback collection
         fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
-        doc = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+        try:
+            doc = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+        except:
+            doc = await fallback.find_one({"id": quote_id, "customer_email": user_email})
+    
     if not doc:
         raise HTTPException(status_code=404, detail="Quote not found")
     
@@ -166,3 +180,128 @@ async def approve_my_quote(quote_id: str, payload: dict, user: dict = Depends(ge
         response["invoice"] = serialize_doc(created_invoice)
     
     return response
+
+
+
+@router.patch("/{quote_id}/status")
+async def update_quote_status(quote_id: str, payload: dict, user: dict = Depends(get_user)):
+    """Update quote status (e.g., mark as paid)"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_email = user.get("email")
+    new_status = payload.get("status")
+    
+    if new_status not in ["pending", "approved", "paid", "cancelled"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    quotes_collection = await get_quote_collection(db)
+    
+    # Find quote by _id or id field
+    try:
+        doc = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    except:
+        doc = await quotes_collection.find_one({"id": quote_id, "customer_email": user_email})
+    
+    if not doc:
+        # Try fallback collection
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        try:
+            doc = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+            if doc:
+                quotes_collection = fallback
+        except:
+            doc = await fallback.find_one({"id": quote_id, "customer_email": user_email})
+            if doc:
+                quotes_collection = fallback
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    now = datetime.utcnow()
+    
+    # Update by whichever field was used
+    if doc.get("id"):
+        await quotes_collection.update_one(
+            {"id": doc["id"]},
+            {"$set": {"status": new_status, "updated_at": now}}
+        )
+    else:
+        await quotes_collection.update_one(
+            {"_id": doc["_id"]},
+            {"$set": {"status": new_status, "updated_at": now}}
+        )
+    
+    return {"message": f"Quote status updated to {new_status}", "status": new_status}
+
+
+@router.post("/{quote_id}/convert-to-invoice")
+async def convert_quote_to_invoice(quote_id: str, user: dict = Depends(get_user)):
+    """Convert a pending quote to an invoice"""
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    
+    user_email = user.get("email")
+    quotes_collection = await get_quote_collection(db)
+    
+    # Find quote
+    try:
+        doc = await quotes_collection.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+    except:
+        doc = await quotes_collection.find_one({"id": quote_id, "customer_email": user_email})
+    
+    if not doc:
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        try:
+            doc = await fallback.find_one({"_id": ObjectId(quote_id), "customer_email": user_email})
+            if doc:
+                quotes_collection = fallback
+        except:
+            doc = await fallback.find_one({"id": quote_id, "customer_email": user_email})
+            if doc:
+                quotes_collection = fallback
+    
+    if not doc:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    now = datetime.utcnow()
+    
+    # Create invoice from quote
+    invoice_doc = {
+        "quote_id": quote_id,
+        "quote_number": doc.get("quote_number"),
+        "invoice_number": f"INV-{now.strftime('%Y%m%d')}-{str(ObjectId())[-6:].upper()}",
+        "customer_id": doc.get("customer_id"),
+        "customer_name": doc.get("customer_name"),
+        "customer_email": doc.get("customer_email"),
+        "customer_company": doc.get("customer_company"),
+        "customer_phone": doc.get("customer_phone"),
+        "items": doc.get("items", doc.get("line_items", [])),
+        "subtotal": doc.get("subtotal", 0),
+        "vat_percent": doc.get("vat_percent", 0),
+        "vat_amount": doc.get("vat_amount", 0),
+        "discount": doc.get("discount", 0),
+        "total": doc.get("total", 0),
+        "delivery_address": doc.get("delivery_address"),
+        "delivery_notes": doc.get("delivery_notes"),
+        "status": "pending_payment",
+        "source": "quote_conversion",
+        "created_at": now,
+        "updated_at": now,
+    }
+    
+    invoices_collection = await get_invoice_collection(db)
+    result = await invoices_collection.insert_one(invoice_doc)
+    
+    # Update quote status
+    update_query = {"id": doc["id"]} if doc.get("id") else {"_id": doc["_id"]}
+    await quotes_collection.update_one(
+        update_query,
+        {"$set": {"status": "converted", "invoice_id": str(result.inserted_id), "updated_at": now}}
+    )
+    
+    return {
+        "message": "Quote converted to invoice",
+        "invoice_id": str(result.inserted_id),
+        "invoice_number": invoice_doc["invoice_number"]
+    }
