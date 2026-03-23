@@ -2474,6 +2474,15 @@ app.include_router(customer_checkout_quote_router)
 
 app.include_router(customer_in_account_service_router)
 
+# Customer Notifications & Activity Feed
+from customer_notifications_routes import router as customer_notifications_router
+app.include_router(customer_notifications_router)
+
+# Affiliate Growth Routes
+from affiliate_growth_routes import router as affiliate_growth_router
+app.include_router(affiliate_growth_router)
+
+
 
 # Mount static directory for listing media uploads
 LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")

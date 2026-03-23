@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import { 
   DollarSign, MousePointerClick, ShoppingCart, Share2, 
   TrendingUp, Copy, ExternalLink, Gift, ArrowRight,
-  BarChart3, Calendar
+  BarChart3, Calendar, MessageCircle
 } from "lucide-react";
+import { ReferralShareCard, WhatsAppShareButton } from "../../components/growth/WhatsAppShare";
 
 export default function AffiliateDashboardV2() {
   const [stats, setStats] = useState({
@@ -146,41 +147,12 @@ export default function AffiliateDashboardV2() {
         </div>
       </div>
 
-      {/* Referral Link Section */}
-      <div className="bg-gradient-to-br from-[#20364D] to-[#2a4563] text-white rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <Share2 className="w-6 h-6" />
-          <h3 className="text-xl font-bold">Your Referral Link</h3>
-        </div>
-        <p className="text-slate-200 text-sm mb-4">
-          Share this link and earn commission on every successful order!
-        </p>
-        <div className="flex gap-3">
-          <input 
-            type="text"
-            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50"
-            value={referralLink}
-            readOnly
-          />
-          <button 
-            onClick={copyReferralLink}
-            className="flex items-center gap-2 bg-white text-[#20364D] px-5 py-3 rounded-xl font-semibold hover:bg-slate-100 transition"
-            data-testid="copy-link-btn"
-          >
-            <Copy className="w-5 h-5" />
-            Copy
-          </button>
-          <a 
-            href={referralLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-[#F4E7BF] text-[#8B6A10] px-5 py-3 rounded-xl font-semibold hover:bg-[#e8dbb3] transition"
-          >
-            <ExternalLink className="w-5 h-5" />
-            Preview
-          </a>
-        </div>
-      </div>
+      {/* Referral Share Card - Using Growth Component */}
+      <ReferralShareCard 
+        referralCode={referralLink.split('/').pop() || "KONEKT"}
+        referralUrl={referralLink}
+        commission="10%"
+      />
 
       {/* Performance & Recent Referrals */}
       <div className="grid lg:grid-cols-2 gap-6">
