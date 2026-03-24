@@ -19,7 +19,6 @@ const nav = [
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
   { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users },
-  { label: "Instant Quote", href: "/account/instant-quote", icon: Receipt, highlight: true },
   { label: "My Statement", href: "/dashboard/statement", icon: LayoutDashboard },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];

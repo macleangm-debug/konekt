@@ -25,7 +25,7 @@ function QueueItem({ row, actionLabel = "Open", onAction }) {
   );
 }
 
-export default function SalesDispatchQueueBoard({ salesOwnerId = "" }) {
+export default function SalesDispatchQueueBoard({ salesOwnerId = "", onSelectLead }) {
   const { data, loading, reload } = useSalesDispatchBoard(salesOwnerId);
 
   const handleClaim = async (lead) => {
@@ -73,13 +73,13 @@ export default function SalesDispatchQueueBoard({ salesOwnerId = "" }) {
     <div className="grid xl:grid-cols-4 gap-4" data-testid="sales-dispatch-board">
       <SalesPriorityCard title="New Leads" count={data?.counts?.new_leads} tone="blue">
         {(data?.new_leads || []).slice(0, 3).map((row) => (
-          <QueueItem key={row.id} row={row} actionLabel="Claim" onAction={handleClaim} />
+          <QueueItem key={row.id} row={row} actionLabel="Claim" onAction={(lead) => { handleClaim(lead); if (onSelectLead) onSelectLead(lead); }} />
         ))}
       </SalesPriorityCard>
 
       <SalesPriorityCard title="Follow-ups Due" count={data?.counts?.followups_due} tone="yellow">
         {(data?.followups_due || []).slice(0, 3).map((row) => (
-          <QueueItem key={row.id} row={row} actionLabel="Follow Up" onAction={handleFollowUp} />
+          <QueueItem key={row.id} row={row} actionLabel="Quote" onAction={(item) => { if (onSelectLead) onSelectLead(item); }} />
         ))}
       </SalesPriorityCard>
 

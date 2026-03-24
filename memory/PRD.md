@@ -7,71 +7,41 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Instant Quote Engine (Implemented March 24, 2026)
+## Sales Command Center (Updated March 24, 2026)
 
-### Customer-Facing Real-Time Pricing
-**Route**: `/account/instant-quote`  
-**API**: `POST /api/instant-quote/preview`
+### Uber-Style Dispatch Board + Instant Quote Builder
+**Route**: `/staff/command-center` (Staff/Admin only)
 
+**Layout**:
+1. **Hero** — Title, refresh button
+2. **Dispatch Board** — 4 priority columns (New Leads, Follow-ups Due, Overdue, Ready to Close)
+3. **Instant Quote Builder** — Embedded below dispatch. Click a lead → auto-fills builder
+
+**APIs**:
+- `GET /api/sales-command/dispatch-summary` — Returns counts + lists
+- `POST /api/sales-command/claim-lead` — Assign lead
+- `POST /api/sales-command/mark-followup` — Mark followed up
+- `POST /api/instant-quote/preview` — Calculate pricing with margin/buffer/VAT
+
+**Pricing Engine**:
 | Component | Value |
 |-----------|-------|
 | Company Margin | 20% |
 | Distribution Buffer | 10% |
 | VAT | 18% |
 
-**Example**: Base TZS 500,000 → Margin 100K + Buffer 50K + VAT 117K = **Total TZS 767,000**
-
-### Components
-- `InstantQuotePage.jsx` — Page wrapper
-- `InstantQuoteBuilderPanel.jsx` — Input + preview layout
-- `InstantQuotePreviewCard.jsx` — Breakdown display with gradient total
-- `useInstantQuotePreview.js` — API hook
+**Key Decision**: Instant Quote moved from customer-facing (`/account/instant-quote`) to sales-only tool embedded in Command Center. Customers see "Request Quote" → Sales builds quote internally.
 
 ---
 
-## Sales Command Center (Implemented March 24, 2026)
-
-### Uber-Style Dispatch Board
-**Route**: `/staff/command-center`  
-**API**: `GET /api/sales-command/dispatch-summary`
-
-| Column | Color | Data Source |
-|--------|-------|-------------|
-| New Leads | Blue | `leads` collection, status=new |
-| Follow-ups Due | Yellow | `quotes` collection, status=pending |
-| Overdue | Red | Leads > 24h without action |
-| Ready to Close | Green | `quotes` collection, status=approved |
-
-### Action APIs
-- `POST /api/sales-command/claim-lead` — Assign lead to salesperson
-- `POST /api/sales-command/mark-followup` — Mark quote as followed up
-
-### Components
-- `SalesCommandCenterV4.jsx` — Page with hero + dispatch board
-- `SalesDispatchQueueBoard.jsx` — 4-column Kanban board
-- `SalesPriorityCard.jsx` — Color-coded priority column
-- `useSalesDispatchBoard.js` — API hook
+## Checkout Flow (March 23, 2026)
+Cart Drawer → Checkout Panel (slide-in) → Quote Submitted  
+`POST /api/customer/checkout-quote`
 
 ---
 
-## Checkout Flow (Implemented March 23, 2026)
-
-### Stripe-Level In-Flow Checkout
-**Flow**: Cart Drawer → Checkout Panel (slide-in) → Quote Submitted  
-**API**: `POST /api/customer/checkout-quote`
-
-- Auto-fill user info, VAT calculation (18%)
-- Trust element: "No payment required now"
-- Sales Assist link, animated success screen
-
----
-
-## UI Polish Pack (Implemented March 23, 2026)
-
-- **BrandLogoFinal** — Single image, CSS invert for dark backgrounds
-- **Design System** — Consistent colors, typography, spacing
-- **Layout Upgrades** — Sidebar, dashboard hero, marketplace cards
-- **Micro-interactions** — Hover lift, transitions
+## UI Polish Pack (March 23, 2026)
+BrandLogoFinal, Design System, Layout Upgrades, Micro-interactions
 
 ---
 
@@ -87,12 +57,12 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ## Remaining Tasks
 
 ### P0 - Immediate
-- [ ] Configure Twilio credentials for WhatsApp (blocked on user keys)
+- [ ] Configure Twilio credentials for WhatsApp
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack - DONE
 - [x] Checkout Flow - DONE
-- [x] Instant Quote Engine - DONE
+- [x] Instant Quote Engine (sales-only) - DONE
 - [x] Sales Command Center - DONE
 - [ ] Final Launch Verification Checklist
 - [ ] Connect live payment gateway
@@ -101,6 +71,8 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ### P2 - Growth
 - [ ] One-click reorder
 - [ ] Saved addresses
+- [ ] Auto Quote Suggestions (AI-assisted pricing)
+- [ ] One-click Quote Templates per service
 - [ ] WhatsApp checkout trigger
 - [ ] Mobile-first optimization
 - [ ] Advanced analytics
@@ -112,7 +84,7 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 | Iteration | Feature | Result |
 |-----------|---------|--------|
 | 92 | UI Polish Pack | 100% pass |
-| 93 | Checkout Flow | 100% pass (backend 7/7) |
-| 94 | Instant Quote + Sales Command | 100% pass (backend 14/14) |
+| 93 | Checkout Flow | 100% pass |
+| 94 | Instant Quote + Sales Command | 100% pass (14/14 backend) |
 
 *Last updated: March 24, 2026*

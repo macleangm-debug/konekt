@@ -319,7 +319,6 @@ import StaffPerformanceDashboardPage from "@/pages/staff/StaffPerformanceDashboa
 import SupervisorPerformanceDashboardPage from "@/pages/admin/SupervisorPerformanceDashboardPage";
 
 // Instant Quote Engine & Sales Command Center
-import InstantQuotePage from "@/pages/account/InstantQuotePage";
 import SalesCommandCenterV4 from "@/pages/dashboard/SalesCommandCenterV4";
 
 // Services Pages (Improved)
@@ -782,8 +781,6 @@ function App() {
           <Route path="help" element={<HelpPageV3 />} />
           {/* Sales Rating Tasks */}
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
-          {/* Instant Quote Engine */}
-          <Route path="instant-quote" element={<InstantQuotePage />} />
         </Route>
         
         {/* Staff Workspace Route */}

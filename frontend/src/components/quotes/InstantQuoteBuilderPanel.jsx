@@ -1,11 +1,21 @@
-import React, { useState } from "react";
-import { Calculator, Loader2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import useInstantQuotePreview from "../../hooks/useInstantQuotePreview";
 import InstantQuotePreviewCard from "./InstantQuotePreviewCard";
 
-export default function InstantQuoteBuilderPanel() {
+export default function InstantQuoteBuilderPanel({ lead = null }) {
   const [baseAmount, setBaseAmount] = useState("");
   const { data, loading, preview } = useInstantQuotePreview();
+
+  // Auto-fill base amount from lead data
+  useEffect(() => {
+    if (lead) {
+      const amount = lead.estimated_value || lead.subtotal || lead.total || "";
+      if (amount && Number(amount) > 0) {
+        setBaseAmount(String(amount));
+      }
+    }
+  }, [lead]);
 
   const handlePreview = async () => {
     if (!baseAmount || Number(baseAmount) <= 0) return;
@@ -17,20 +27,23 @@ export default function InstantQuoteBuilderPanel() {
   };
 
   return (
-    <div className="grid xl:grid-cols-[400px_1fr] gap-6" data-testid="instant-quote-builder">
+    <div className="grid xl:grid-cols-[1fr_1fr] gap-6" data-testid="instant-quote-builder">
       {/* Input Panel */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6">
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-9 h-9 rounded-lg bg-[#1f3a5f]/10 flex items-center justify-center">
-            <Calculator className="w-4 h-4 text-[#1f3a5f]" />
+      <div>
+        {lead && (
+          <div className="rounded-lg bg-blue-50 border border-blue-100 p-3 mb-4">
+            <div className="text-xs font-medium text-blue-700">Selected Lead</div>
+            <div className="text-sm font-semibold text-[#0f172a] mt-0.5">
+              {lead.name || lead.customer_name || "Unknown"}
+            </div>
+            <div className="text-xs text-[#64748b] mt-0.5">
+              {lead.email || lead.customer_email || ""} {lead.phone || lead.customer_phone ? `• ${lead.phone || lead.customer_phone}` : ""}
+            </div>
+            {lead.company && <div className="text-xs text-[#94a3b8] mt-0.5">{lead.company}</div>}
           </div>
-          <h3 className="text-lg font-semibold text-[#0f172a]">Quote Builder</h3>
-        </div>
-        <p className="text-sm text-[#64748b] mt-2">
-          Preview a margin-safe estimate before sales finalizes the quote.
-        </p>
+        )}
 
-        <div className="mt-6">
+        <div>
           <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Base Amount (TZS)</label>
           <input
             type="number"
@@ -60,7 +73,7 @@ export default function InstantQuoteBuilderPanel() {
         </button>
 
         <p className="text-xs text-[#94a3b8] mt-3 text-center">
-          Pricing includes margin, distribution buffer, and VAT
+          Includes margin, distribution buffer, and VAT
         </p>
       </div>
 
