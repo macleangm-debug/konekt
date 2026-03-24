@@ -7,6 +7,49 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
+## Customer Payment Flow (Implemented March 24, 2026)
+
+### My Account (`/account/my-account`)
+- Personal/Business account type toggle
+- Contact fields (name, phone, email)
+- Business fields (business name, TIN, VAT number) — shown when Business selected
+- Default Delivery Details (recipient, phone, address, city, region)
+- Default Invoice Details (client name, phone, email, TIN)
+- Save persists to `customer_profiles` collection
+
+### Cart Drawer Complete Flow (`CartDrawerCompleteFlow`)
+- Replaces old CartDrawerV2 on `/account/*` routes
+- Quantity +/- controls with editable input
+- VAT (18%) breakdown: Subtotal, VAT, Total
+- Two-step flow: Cart → Checkout
+- Checkout step prefills Contact, Delivery, Invoice details from saved profile
+- Complete Payment creates Order + Invoice + Payment in one API call
+- `POST /api/customer-payment/checkout-fixed-price`
+
+### Quote Approval → Invoice
+- `POST /api/customer-payment/approve-quote-create-invoice`
+- Creates invoice from approved quote, updates quote status
+
+### New Backend Routes
+- `GET /api/customer-account/profile?customer_id=<id>`
+- `PUT /api/customer-account/profile`
+- `GET /api/customer-account/prefill?customer_id=<id>`
+- `POST /api/customer-payment/checkout-fixed-price`
+- `POST /api/customer-payment/approve-quote-create-invoice`
+
+### New Frontend Components
+| Component | Purpose |
+|-----------|---------|
+| `MyAccountProfilePage.jsx` | Personal/Business profile form |
+| `CartDrawerCompleteFlow.jsx` | Full payment cart drawer |
+| `MarketplaceTabsV4.jsx` | Products + Services + Promo tabs |
+| `AdaptiveMarketplaceSearch.jsx` | Tab-aware search |
+| `EmptyQuotesStateRestored.jsx` | Empty quotes state |
+| `EmptyInvoicesStateRestored.jsx` | Empty invoices state |
+| `useCustomerProfile.js` | Profile data hook |
+
+---
+
 ## Customer Account Unification (Implemented March 24, 2026)
 
 ### Unified Marketplace (`/account/marketplace`)
@@ -18,22 +61,6 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 - Cart page (replaced by Cart Drawer + topbar button)
 - Services page (merged into Marketplace Services tab)
 - Let Sales Assist page (available as link in Cart Drawer checkout)
-
-### New Components
-| Component | Purpose |
-|-----------|---------|
-| `MarketplaceUnifiedPageV3.jsx` | Products + Services tabs |
-| `ProductCardCompact.jsx` | Compact product card with Add button |
-| `ServiceCardGrid.jsx` | Service template cards |
-| `ServiceDetailShowcase.jsx` | Service detail with hero + highlights |
-| `ServiceQuoteRequestFormV2.jsx` | Contact + Invoice Details + Brief form |
-| `CartTopbarButton.jsx` | Header cart button with badge counter |
-| `EmptyQuotesStateV2.jsx` | Empty state for quotes page |
-| `EmptyInvoicesStateV2.jsx` | Empty state for invoices page |
-| `ApproveQuoteToInvoiceButton.jsx` | Quote approval action |
-
-### Backend API
-- `POST /api/service-requests-quick` — Simplified service quote request (contact, invoice details, brief)
 
 ---
 
@@ -56,21 +83,23 @@ Cart Drawer → Checkout Panel (slide-in) → Quote Submitted
 | Admin | admin@konekt.co.tz | KnktcKk_L-hw1wSyquvd! | `/admin/login` |
 | Customer | demo.customer@konekt.com | Demo123! | `/login` |
 | Partner | demo.partner@konekt.com | Partner123! | `/partner-login` |
+| Staff/Sales | admin@konekt.co.tz | KnktcKk_L-hw1wSyquvd! | `/staff-login` |
 
 ---
 
 ## Remaining Tasks
 
 ### P0
-- [ ] Configure Twilio WhatsApp credentials
+- [ ] Configure Twilio WhatsApp credentials (deferred — waiting for user keys)
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack
 - [x] Checkout Flow
 - [x] Sales Command Center + Quote Engine
 - [x] Customer Account Unification
+- [x] Customer Payment Flow Completion
 - [ ] Final Launch Verification Checklist
-- [ ] Live payment gateway
+- [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
 
 ### P2 - Growth
@@ -91,6 +120,7 @@ Cart Drawer → Checkout Panel (slide-in) → Quote Submitted
 | 92 | UI Polish | 100% |
 | 93 | Checkout Flow | 100% |
 | 94 | Quote Engine + Sales Command | 100% |
-| 95 | Customer Account Unification | 100% (12/12 backend, all frontend) |
+| 95 | Customer Account Unification | 100% |
+| 96 | Customer Payment Flow Completion | 100% (13/13 backend, all frontend) |
 
 *Last updated: March 24, 2026*
