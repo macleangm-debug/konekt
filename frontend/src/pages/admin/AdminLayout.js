@@ -31,6 +31,7 @@ const navItems = [
   { type: 'divider', label: 'Operations', moduleKey: 'tasks' },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders' },
   { path: '/admin/service-leads', label: 'Service Leads', icon: Briefcase, moduleKey: 'support' },
+  { path: '/admin/affiliate-manager', label: 'Affiliates', icon: Megaphone, moduleKey: 'crm' },
   { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', highlight: true },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
   { path: '/admin/finance-queue', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },

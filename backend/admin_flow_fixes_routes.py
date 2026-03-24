@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import APIRouter, Request, HTTPException
+from referral_commission_governance_routes import create_commissions_for_order
 
 router = APIRouter(prefix="/api/admin-flow-fixes", tags=["Admin Flow Fixes"])
 
@@ -152,6 +153,20 @@ async def finance_approve_proof(payload: dict, request: Request):
             "customer_id": invoice.get("customer_id"),
             "event": "payment_approved_order_created", "created_at": now,
         })
+        # Trigger non-margin-touching commissions after payment approval
+        try:
+            sales_assignment = await db.sales_assignments.find_one({"order_id": order_id})
+            sales_owner_id = sales_assignment.get("sales_owner_id") if sales_assignment else payload.get("assigned_sales_id")
+            await create_commissions_for_order(
+                db, order_id=order_id, invoice_id=invoice.get("id"),
+                customer_id=invoice.get("customer_id"),
+                commissionable_base=float(invoice.get("total_amount", 0)),
+                affiliate_id=invoice.get("affiliate_id"),
+                promo_code=invoice.get("promo_code"),
+                sales_owner_id=sales_owner_id,
+            )
+        except Exception:
+            pass  # Commission creation should not block order approval
     return {"ok": True, "order": order_doc}
 
 @router.post("/finance/reject-proof")

@@ -131,6 +131,9 @@ import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
 // Service Leads CRM Table
 import ServiceLeadsCrmTable from "@/components/services/ServiceLeadsCrmTable";
 
+// Referral + Commission Governance Components
+import AdminAffiliateManagerSimple from "@/components/admin/AdminAffiliateManagerSimple";
+
 // Admin Catalog & Deliveries
 import AdminCatalogSetupPage from "@/pages/admin/AdminCatalogSetupPage";
 import AdminDeliveriesPage from "@/pages/admin/AdminDeliveriesPage";
@@ -606,6 +609,8 @@ function App() {
           <Route path="finance-queue" element={<FinancePaymentsQueuePage />} />
           {/* Service Leads CRM */}
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
+          {/* Affiliate Manager */}
+          <Route path="affiliate-manager" element={<AdminAffiliateManagerSimple />} />
           {/* Staff Performance & Commission */}
           <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
           <Route path="commission-rules" element={<CommissionRulesPage />} />

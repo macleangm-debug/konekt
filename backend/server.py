@@ -2591,6 +2591,12 @@ app.include_router(payments_governance_router)
 from admin_flow_fixes_routes import router as admin_flow_fixes_router
 app.include_router(admin_flow_fixes_router)
 
+from referral_commission_governance_routes import router as referral_commission_router
+app.include_router(referral_commission_router)
+
+from payment_submission_fixes_routes import router as payment_submission_fixes_router
+app.include_router(payment_submission_fixes_router)
+
 
 
 
