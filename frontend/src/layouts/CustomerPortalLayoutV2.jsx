@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store
+  LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store, UserCircle
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
@@ -18,6 +18,7 @@ const nav = [
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
   { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users },
   { label: "My Statement", href: "/dashboard/statement", icon: LayoutDashboard },
+  { label: "My Account", href: "/account/my-account", icon: UserCircle },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
 

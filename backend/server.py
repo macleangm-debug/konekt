@@ -2574,6 +2574,11 @@ app.include_router(branding_settings_router)
 from enterprise_pdf_routes import router as enterprise_pdf_router
 app.include_router(enterprise_pdf_router)
 
+# Customer Account & Payment Routes
+from customer_account_and_payment_routes import router as customer_account_router, payment_router as customer_payment_router
+app.include_router(customer_account_router)
+app.include_router(customer_payment_router)
+
 
 
 

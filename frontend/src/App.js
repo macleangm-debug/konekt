@@ -17,6 +17,8 @@ import PromoBanner from "@/components/PromoBanner";
 import AIChatWidget from "@/components/AIChatWidget";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 import CartDrawerV2 from "@/components/cart/CartDrawerV2";
+import CartDrawerCompleteFlow from "@/components/cart/CartDrawerCompleteFlow";
+import MyAccountProfilePage from "@/components/account/MyAccountProfilePage";
 
 // Customer Pages
 import Landing from "@/pages/LandingNew";
@@ -760,7 +762,7 @@ function App() {
               <CartDrawerProvider>
                 <CustomerRoute>
                   <CustomerPortalLayoutV2 />
-                  <CartDrawerV2 />
+                  <CartDrawerCompleteFlow />
                 </CustomerRoute>
               </CartDrawerProvider>
             </CartProvider>
@@ -778,6 +780,7 @@ function App() {
           <Route path="orders" element={<MyOrdersUnifiedPage />} />
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
+          <Route path="my-account" element={<MyAccountProfilePage />} />
           <Route path="help" element={<HelpPageV3 />} />
           {/* Sales Rating Tasks */}
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
