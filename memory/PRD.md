@@ -7,36 +7,47 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Architecture: Live Commerce Engine (Go-Live Facade)
+## Architecture: Live Commerce Engine
 
 ### Single Source of Truth
-All production-critical commerce logic lives in `backend/core/live_commerce_service.py`. Old route packs remain intact but the go-live path uses:
+`backend/core/live_commerce_service.py` — centralized facade for production commerce.
 
 ```
 /api/live-commerce/*  →  LiveCommerceService  →  MongoDB
 ```
 
-### Master Flow (Centralized)
+### Master Flow
 ```
-Product Checkout → Invoice Created
-    ↓
-Payment Intent (full or deposit)
-    ↓
-Proof Upload → Status: under_review
-    ↓
-Finance Queue (admin/finance only)
-    ↓
-Approve → Order + Vendor Orders + Sales Assignment + Commissions
-   OR
-Reject → Invoice reverts to pending_payment
+Product Checkout → Invoice → Payment Intent → Proof Upload (with payer name)
+    → Finance Queue → Approve/Reject → Order + Vendor Orders + Commissions
 ```
 
-### Key Design Rules
-- **No order before approval** — enforced at service level
-- **Idempotency** — approving same proof twice doesn't duplicate orders
-- **Role gating** — only finance/admin can approve (sales gets 403)
-- **Partial payment** — correctly detected, no order until fully paid
-- **Commission trigger** — non-margin-touching, fires after order creation
+---
+
+## Customer UX (Go-Live Fix Pack)
+
+### Pass 1: Payment Proof Validation (BankTransferPage)
+- "Name on Bank Transfer" field ABOVE proof upload
+- Helper text explaining why it's needed
+- Inline error states (red border + message)
+- Submit disabled until payer name + proof filled
+
+### Pass 2: Quotes (Table-First)
+- Columns: Quote #, Date, Valid Until, Type, Amount, Status, Payment, Actions
+- Explicit action labels: View, Accept, Pay Invoice
+- Expired quotes retained as history with disabled actions
+- Search + status filter
+
+### Pass 3: Invoices (Enhanced)
+- Columns: Invoice #, Source, Type, Amount, Payment Status, Rejection Reason, Actions
+- Unpaid total alert banner
+- Resubmit Proof link for rejected invoices
+- Navigate to Order from paid invoices
+
+### Pass 4: Orders (Responsive Drawer)
+- Table: Order #, Date, Items, Total, Status, Payment
+- Click row → detail drawer with items, totals, delivery, status banner
+- Desktop: slide-in drawer | Mobile-ready
 
 ---
 
@@ -45,61 +56,20 @@ Reject → Invoice reverts to pending_payment
 ### Live Commerce (`/api/live-commerce/*`) — PRIMARY
 | Endpoint | Description |
 |----------|-------------|
-| `GET /health` | Health check |
-| `POST /product-checkout` | Create invoice from cart items |
-| `POST /quotes/{id}/accept` | Accept quote → create invoice |
-| `POST /invoices/{id}/payment-intent` | Create payment intent (full/deposit) |
-| `POST /payments/{id}/proof` | Submit payment proof |
+| `POST /product-checkout` | Create invoice from cart |
+| `POST /quotes/{id}/accept` | Accept quote → invoice |
+| `POST /invoices/{id}/payment-intent` | Create payment intent |
+| `POST /payments/{id}/proof` | Submit proof (payer name required) |
 | `GET /finance/queue` | Finance review queue |
-| `POST /finance/proofs/{id}/approve` | Approve → create order if fully paid |
+| `POST /finance/proofs/{id}/approve` | Approve → order if fully paid |
 | `POST /finance/proofs/{id}/reject` | Reject → revert to pending |
-| `GET /customers/{id}/workspace` | Customer invoices/payments/orders |
+| `GET /customers/{id}/workspace` | Customer dashboard data |
 
-### Multi-Request (`/api/multi-request/*`)
-| Endpoint | Description |
-|----------|-------------|
-| `GET /service-taxonomy` | Service groups with subgroups |
-| `POST /promo-bundle` | Multi-item promo request |
-| `POST /service-bundle` | Multi-service request |
-
-### Referral + Commission (`/api/referral-commission/*`)
-| Endpoint | Description |
-|----------|-------------|
-| `GET /rules` | Commission rules |
-| `PUT /rules` | Update commission rules |
-| `POST /affiliate/create` | Create affiliate |
-| `GET /admin/affiliates` | Affiliate list with stats |
-
-### Legacy Routes (Still Active)
-- `/api/payments-governance/*` — original governance routes
-- `/api/admin-flow-fixes/*` — admin flow fixes
-- `/api/payment-submission-fixes/*` — payment submission fixes
-
----
-
-## Frontend Architecture
-
-### Go-Live Payment Flow Pages
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/checkout` | CheckoutPage | Cart → Invoice via live commerce |
-| `/checkout/v2` | CheckoutPageV2 | Alternative checkout flow |
-| `/payment/select` | PaymentSelectionPage | Payment method selection |
-| `/payment/bank-transfer` | BankTransferPage | Bank details + proof upload |
-| `/payment/pending` | PaymentPendingPage | "Payment Under Review" status |
-
-### Admin Pages
-| Route | Component |
-|-------|-----------|
-| `/admin/affiliate-manager` | 3-tab: Affiliates, Commission Rules, Promo Benefit |
-| `/admin/service-taxonomy` | Service groups/subgroups management |
-| `/admin/service-leads` | CRM for leads |
-| `/admin/finance-queue` | Approve/reject proofs |
-| `/admin/orders` | Orders split view |
-
-### Cart Flow
-- `CartDrawerCompleteFlow` — 4-step cart with LockedSavedDetailsSection + ConfirmActionModal
-- Uses `liveCommerceApi` for checkout and `uploadApi` for proof uploads
+### Other Active Routes
+- `/api/multi-request/*` — Service taxonomy, promo/service bundles
+- `/api/referral-commission/*` — Affiliate + commission management
+- `/api/admin-flow-fixes/*` — Admin operations
+- `/api/uploads/*` — File uploads
 
 ---
 
@@ -112,41 +82,27 @@ Reject → Invoice reverts to pending_payment
 
 ---
 
-## Bank Details (Go-Live)
-| Field | Value |
-|-------|-------|
-| Bank | CRDB BANK |
-| Account | KONEKT LIMITED |
-| Number | 015C8841347002 |
-| Branch | Main Branch |
-| SWIFT | CORUTZTZ |
-| Currency | TZS |
-
----
-
 ## Task Status
 
 ### Completed
 - [x] UI Polish Pack
-- [x] Checkout Flow
-- [x] Sales Command Center + Quote Engine
-- [x] Customer Account Unification
-- [x] Customer Payment Flow
-- [x] Final Commercial Flow Pack
-- [x] Payments + Fulfillment Governance Pack
-- [x] Admin Simplification + Payments Fixes Pack
-- [x] Referral + Sales Commission Governance Pack
-- [x] Payment Confirmation + Affiliate Promo Pack
-- [x] Multi-Service + Promo Taxonomy Pack
+- [x] Checkout Flow + Sales Command Center + Quote Engine
+- [x] Customer Account Unification + Payment Flow
+- [x] Final Commercial Flow + Payments Governance
+- [x] Admin Simplification + Payments Fixes
+- [x] Referral + Sales Commission Governance
+- [x] Payment Confirmation + Affiliate Promo
+- [x] Multi-Service + Promo Taxonomy
 - [x] **Go-Live Commerce Engine** (centralized facade)
+- [x] **Customer UX Go-Live Fix Pack** (4 passes)
 
 ### Remaining
 - [ ] Configure Twilio WhatsApp credentials (P0)
+- [ ] Finance/Admin bug-fix pass (P1)
 - [ ] Final Launch Verification Checklist (P1)
 - [ ] Live payment gateway — KwikPay/Stripe (P1)
 - [ ] DNS/SSL setup (P1)
 - [ ] One-click reorder / Saved Carts (P2)
-- [ ] AI-assisted quote suggestions (P2)
 - [ ] Mobile-first optimization (P2)
 - [ ] Advanced analytics (P2)
 
@@ -158,6 +114,7 @@ Reject → Invoice reverts to pending_payment
 | 99 | Admin Simplification | 100% |
 | 100 | Referral + Commission | 100% (27/27) |
 | 101 | Multi-Service + Taxonomy | 100% (16/16) |
-| 102 | **Go-Live Commerce Engine** | **100% (15/15 backend, 100% frontend)** |
+| 102 | Go-Live Commerce Engine | 100% (15/15) |
+| 103 | **Customer UX Go-Live Fix Pack** | **100% (15/15 backend, 100% frontend)** |
 
 *Last updated: March 24, 2026*
