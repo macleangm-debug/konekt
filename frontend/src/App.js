@@ -242,7 +242,7 @@ import AssistedQuoteRequestPage from "@/pages/account/AssistedQuoteRequestPage";
 import MyOrdersUnifiedPage from "@/pages/account/MyOrdersUnifiedPage";
 
 // Account Marketplace + Service Request Pack
-import AccountMarketplacePageV2 from "@/pages/account/AccountMarketplacePageV2";
+import MarketplaceUnifiedPageV3 from "@/pages/account/MarketplaceUnifiedPageV3";
 import AccountProductDetailPage from "@/pages/account/AccountProductDetailPage";
 import AccountCartPage from "@/pages/account/AccountCartPage";
 import AccountCheckoutPage from "@/pages/account/AccountCheckoutPage";
@@ -768,7 +768,7 @@ function App() {
         }>
           <Route index element={<CustomerDashboardV3 />} />
           <Route path="explore" element={<ExplorePageV2 />} />
-          <Route path="marketplace" element={<AccountMarketplacePageV2 />} />
+          <Route path="marketplace" element={<MarketplaceUnifiedPageV3 />} />
           <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
           <Route path="cart" element={<AccountCartPage />} />
           <Route path="checkout" element={<AccountCheckoutPage />} />

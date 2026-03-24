@@ -20,7 +20,7 @@ export function CartDrawerProvider({ children }) {
   };
 
   const value = useMemo(() => ({
-    open, items, setOpen, addItem, removeItem, clearCart,
+    open, items, setOpen, setItems, addItem, removeItem, clearCart,
     openCart: () => setOpen(true),
     closeCart: () => setOpen(false),
     cartCount: items.length,

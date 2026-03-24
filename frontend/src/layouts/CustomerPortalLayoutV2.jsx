@@ -2,19 +2,17 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  Wrench, LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store, Headphones
+  LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
 import BrandLogoFinal from "../components/branding/BrandLogoFinal";
+import CartTopbarButton from "../components/topbar/CartTopbarButton";
 
 const nav = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Marketplace", href: "/account/marketplace", icon: Store, highlight: true },
-  { label: "Cart", href: "/account/cart", icon: ShoppingBag },
-  { label: "Services", href: "/account/services", icon: Wrench },
-  { label: "Let Sales Assist", href: "/account/assisted-quote", icon: Headphones },
-  { label: "My Orders", href: "/account/orders", icon: Receipt },
+  { label: "Marketplace", href: "/account/marketplace", icon: Store },
+  { label: "My Orders", href: "/account/orders", icon: ShoppingBag },
   { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
   { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
   { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
@@ -123,6 +121,7 @@ export default function CustomerPortalLayoutV2() {
           </Link>
 
           <div className="flex items-center gap-3">
+            <CartTopbarButton />
             <NotificationBell tokenKey="token" defaultRedirect="/dashboard" />
             <PartnerProfileDropdown
               name={customerName}

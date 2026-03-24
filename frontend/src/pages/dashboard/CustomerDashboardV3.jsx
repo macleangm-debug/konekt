@@ -112,7 +112,7 @@ export default function CustomerDashboardV3() {
               Browse Products
             </Link>
             <Link 
-              to="/account/services" 
+              to="/account/marketplace?tab=services" 
               className="flex items-center gap-2 bg-[#f4c430] text-[#0f172a] px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#e8b82a] transition-all hover:-translate-y-0.5 hover:shadow-md"
               data-testid="request-service-btn"
             >

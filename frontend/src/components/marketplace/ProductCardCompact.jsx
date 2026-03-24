@@ -1,0 +1,37 @@
+import React from "react";
+import { Package } from "lucide-react";
+import { useCartDrawer } from "../../contexts/CartDrawerContext";
+
+function money(v) {
+  return `TZS ${Number(v || 0).toLocaleString()}`;
+}
+
+export default function ProductCardCompact({ product }) {
+  const { addItem } = useCartDrawer();
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group" data-testid={`product-card-${product?.id}`}>
+      <div className="aspect-[4/3] bg-[#f8fafc] overflow-hidden flex items-center justify-center">
+        {product?.image_url ? (
+          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300" />
+        ) : (
+          <Package className="w-8 h-8 text-gray-300" />
+        )}
+      </div>
+      <div className="p-3">
+        <div className="text-sm font-semibold text-[#0f172a] leading-5 line-clamp-2">{product?.name}</div>
+        <div className="text-xs text-[#94a3b8] mt-1">{product?.category || product?.branch || ""}</div>
+        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <span className="text-sm font-semibold text-[#0f172a]">{money(product?.base_price || product?.price || 0)}</span>
+          <button
+            onClick={() => addItem({ ...product, price: product?.base_price || product?.price, quantity: 1 })}
+            className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors"
+            data-testid={`add-to-cart-${product?.id}`}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

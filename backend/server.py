@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -2479,6 +2479,45 @@ app.include_router(instant_quote_router)
 # Sales Command Center
 from sales_command_center_routes import router as sales_command_router
 app.include_router(sales_command_router)
+
+# Unified Service Quote Request (simplified)
+@app.post("/api/service-requests-quick", tags=["Service Requests"])
+async def create_quick_service_request(payload: dict, request: Request):
+    from datetime import datetime, timezone
+    import uuid
+    db = request.app.mongodb
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    user = None
+    if token:
+        try:
+            import jwt, os
+            decoded = jwt.decode(token, os.environ.get("JWT_SECRET", "konekt-secret-key"), algorithms=["HS256"])
+            user = decoded
+        except Exception:
+            pass
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "service_key": payload.get("service_key"),
+        "service_name": payload.get("service_name"),
+        "client_name": payload.get("client_name"),
+        "client_phone": payload.get("client_phone"),
+        "client_email": payload.get("client_email"),
+        "invoice_client_name": payload.get("invoice_client_name"),
+        "invoice_client_phone": payload.get("invoice_client_phone"),
+        "invoice_client_email": payload.get("invoice_client_email"),
+        "invoice_client_tin": payload.get("invoice_client_tin"),
+        "brief": payload.get("brief"),
+        "delivery_or_site_address": payload.get("delivery_or_site_address"),
+        "status": "new",
+        "source": "unified_marketplace",
+        "customer_id": user.get("user_id") if user else None,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.service_requests_quick.insert_one(doc)
+    doc.pop("_id", None)
+    return {"ok": True, "request_id": doc["id"], "message": "Service request submitted successfully"}
+
 
 
 app.include_router(customer_in_account_service_router)
