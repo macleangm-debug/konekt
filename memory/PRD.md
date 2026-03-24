@@ -18,14 +18,15 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 4. Customer uploads payment proof (camera/file, no transaction reference)
 5. Finance/Admin reviews proof in Finance Queue
 6. **On approval**: Order + Vendor Orders + Sales Assignment created
-7. On rejection: Invoice reverts to pending, customer can resubmit
+7. **Commission trigger**: Non-margin-touching commissions created post-approval
+8. On rejection: Invoice reverts to pending, customer can resubmit
 
 **Services / Custom Work Flow:**
 1. Customer or Sales creates quote request
 2. Sales prepares quote via Instant Quote Builder
 3. Customer or Sales accepts quote
 4. Invoice created from accepted quote
-5. Same payment -> proof -> approval flow as above
+5. Same payment -> proof -> approval -> commission flow
 
 **Promotional Materials Flow (Lead Gen):**
 1. Promo items shown in marketplace under "Promotional Materials" tab
@@ -33,11 +34,21 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 3. Opens ProductPromoDetailModalV2 with "Request Customization Quote"
 4. Creates a lead in Service Leads CRM for sales team follow-up
 
+### Commission Model (Non-Margin-Touching)
+- Price is built first: base cost + protected company margin + VAT
+- Commission triggered ONLY after approved payment
+- Commission calculated from commissionable pool (total amount), NOT by reducing margin
+- Affiliate commission: 5% default (configurable)
+- Sales commission: 3% default (configurable)
+- Both can coexist on same order (configurable)
+- No commission on unpaid/pending deals
+
 ### Payment Proof Rules
 - **No transaction reference field** — payer name + amount + file only
 - Camera capture or file upload supported
 - **Finance/Admin**: Can approve or reject
 - **Sales**: Can view but CANNOT approve (403 blocked)
+- **Guarded submission**: Confirmation modal + single-click protection
 
 ---
 
@@ -62,10 +73,29 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 | `POST /promo/request-customization-quote` | Creates promo lead |
 | `POST /leads/update-status` | Update lead CRM status |
 | `GET /finance/queue` | Finance queue with enriched data |
-| `POST /finance/approve-proof` | Approve proof -> create order |
+| `POST /finance/approve-proof` | Approve proof -> create order + commissions |
 | `POST /finance/reject-proof` | Reject proof with reason |
 | `GET /admin/orders-split` | Orders for split view |
 | `GET /sales/service-leads` | Service + promo leads CRM |
+
+### Referral + Sales Commission (`/api/referral-commission/*`)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /rules` | Get commission rules |
+| `PUT /rules` | Save commission rules |
+| `POST /affiliate/create` | Create affiliate with promo code |
+| `GET /admin/affiliates` | Admin affiliates list with stats |
+| `GET /affiliate/dashboard` | Affiliate performance dashboard |
+| `POST /track` | Track referral click/lead events |
+| `POST /trigger-after-payment-approval` | Create commissions post-approval |
+
+### Payment Submission Fixes (`/api/payment-submission-fixes/*`)
+| Endpoint | Description |
+|----------|-------------|
+| `POST /submit-payment` | Submit payment proof (guarded) |
+| `POST /approve-payment-and-distribute` | Admin approve -> create order |
+| `POST /affiliate-promo-benefit` | Save affiliate promo benefit text |
+| `GET /affiliate-promo-benefit` | Get affiliate promo benefit text |
 
 ### Customer Account (`/api/customer-account/*`)
 | Endpoint | Description |
@@ -84,61 +114,23 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 - **Step 3 (Payment)**: Bank details with copy, camera/file proof upload
 - **Step 4 (Done)**: "Payment Under Review" — order created after approval
 - TZS comma formatting on all amounts
-- Saves missing details back to profile
+- LockedSavedDetailsSection for read-only saved details with "Change" toggle
+- SubmitPaymentGuarded for single-click submission protection
+- ConfirmActionModal for payment submission confirmation
 - Hides AI assistant when open
 
-### Product Detail Modal V2
-- Price display with TZS formatting
-- Color variant selector
-- Size variant selector
-- Image carousel with thumbnails
-- Quantity selector
-- **Regular products**: "Add to Cart" button
-- **Promo items**: "Request Customization Quote" with brief textarea
-
-### Finance Payments Queue (`/admin/finance-queue`)
-- Split-view: proof list (left) + detail panel (right)
-- Approve/Reject with reason
-- Shows invoice items, amounts, payer details
-
-### Admin Orders Split View (`/admin/orders`)
-- Table/Card toggle (table default on desktop)
-- Split-view: order list (left) + detail (right)
-- Customer info, delivery, items, totals, timeline
+### Admin Affiliate Manager (`/admin/affiliate-manager`)
+- Table with Name, Code, Status, Clicks, Leads, Sales, Unpaid Commission
+- Create new affiliate form with promo code
+- Tracks referral performance
 
 ### Service Leads CRM (`/admin/service-leads`)
 - Table with Date, Client, Lead, Type, Status columns
 - Status dropdown with CRM pipeline stages
-- Search functionality
-- Combines leads and service_requests collections
-
-### Marketplace V5 (`/account/marketplace`)
-- **3 Tabs**: Products, Services, Promotional Materials
-- Adaptive search + group filter
-- Skeleton loading + "Load More" lazy pagination
-- Product detail modal with variants (colors, sizes)
 
 ### Admin Sidebar (Simplified)
-Core sections only: Dashboard, Sales, Operations, Finance, Inventory, Settings
-22 nav items with role-based filtering via ROLE_MODULE_ACCESS
-
-### My Account (`/account/my-account`)
-- Personal/Business toggle
-- Phone prefix dropdowns
-- Up to 3 delivery addresses with default
-- Quote/Invoice client defaults
-
----
-
-## Status Labels
-| Raw Status | Display Label |
-|-----------|---------------|
-| pending | Awaiting Your Approval |
-| pending_payment | Unpaid |
-| payment_under_review | Payment Under Review |
-| paid | Paid |
-| processing | Processing |
-| proof_rejected | Proof Rejected |
+Core sections: Dashboard, Sales, Operations, Finance, Inventory, Settings
+Includes: Affiliates link, Service Leads, Payments Queue
 
 ---
 
@@ -166,6 +158,8 @@ Core sections only: Dashboard, Sales, Operations, Finance, Inventory, Settings
 - [x] Final Commercial Flow Pack
 - [x] Payments + Fulfillment Governance Pack
 - [x] Admin Simplification + Payments Fixes Pack
+- [x] Referral + Sales Commission Governance Pack
+- [x] Payment Confirmation + Affiliate Promo Pack
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
@@ -188,7 +182,8 @@ Core sections only: Dashboard, Sales, Operations, Finance, Inventory, Settings
 | 95 | Customer Account Unification | 100% |
 | 96 | Customer Payment Flow | 100% |
 | 97 | Final Commercial Flow | 100% |
-| 98 | Payments + Fulfillment Governance | 94.7% backend (18/19), 100% frontend |
+| 98 | Payments + Fulfillment Governance | 94.7% backend, 100% frontend |
 | 99 | Admin Simplification + Payments Fixes | 100% backend (18/18), 100% frontend |
+| 100 | Referral + Commission + Payment Packs | 100% backend (27/27), 100% frontend |
 
 *Last updated: March 24, 2026*
