@@ -12,6 +12,7 @@ const QUICK_ACTIONS = [
 
 export default function AIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [messages, setMessages] = useState([
     { 
       role: "assistant", 
@@ -23,6 +24,12 @@ export default function AIChatWidget() {
   const [showHandoffOption, setShowHandoffOption] = useState(false);
   const [handoffRequested, setHandoffRequested] = useState(false);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => setCartOpen(e.detail?.open ?? false);
+    window.addEventListener("konekt-cart-state", handler);
+    return () => window.removeEventListener("konekt-cart-state", handler);
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,6 +107,8 @@ export default function AIChatWidget() {
       sendMessage();
     }
   };
+
+  if (cartOpen) return null;
 
   if (!isOpen) {
     return (

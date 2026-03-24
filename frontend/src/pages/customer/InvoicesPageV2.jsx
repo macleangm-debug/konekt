@@ -5,15 +5,37 @@ import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
+import TableCardToggle from "../../components/common/TableCardToggle";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+const INV_STATUS_LABELS = {
+  pending_payment: "Unpaid",
+  pending: "Unpaid",
+  payment_proof_uploaded: "Payment Under Review",
+  paid: "Paid",
+  overdue: "Overdue",
+  partially_paid: "Partially Paid",
+  cancelled: "Cancelled",
+};
+
+const INV_STATUS_COLORS = {
+  pending_payment: "bg-amber-100 text-amber-800",
+  pending: "bg-amber-100 text-amber-800",
+  payment_proof_uploaded: "bg-blue-100 text-blue-800",
+  paid: "bg-green-100 text-green-800",
+  overdue: "bg-red-100 text-red-700",
+  partially_paid: "bg-orange-100 text-orange-800",
+  cancelled: "bg-slate-100 text-slate-700",
+};
 
 export default function InvoicesPageV2() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [view, setView] = useState("table");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -35,24 +57,23 @@ export default function InvoicesPageV2() {
   });
 
   const getStatusBadge = (status) => {
-    const styles = {
-      paid: "bg-green-100 text-green-700",
-      pending: "bg-amber-100 text-amber-700",
-      overdue: "bg-red-100 text-red-700",
-      cancelled: "bg-slate-100 text-slate-700",
-    };
-    return styles[status] || styles.pending;
+    return INV_STATUS_COLORS[status] || "bg-amber-100 text-amber-700";
+  };
+
+  const getStatusLabel = (status) => {
+    return INV_STATUS_LABELS[status] || (status || "pending").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   };
 
   const unpaidTotal = invoices
     .filter(i => i.status !== "paid")
-    .reduce((sum, i) => sum + (i.total || 0), 0);
+    .reduce((sum, i) => sum + (i.total || i.total_amount || 0), 0);
 
   return (
     <div data-testid="invoices-page">
       <PageHeader 
         title="My Invoices"
         subtitle="View and pay your invoices."
+        actions={<TableCardToggle view={view} setView={setView} />}
       />
 
       {unpaidTotal > 0 && (
@@ -128,7 +149,7 @@ export default function InvoicesPageV2() {
                       TZS {Number(invoice.total || 0).toLocaleString()}
                     </div>
                     <span className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusBadge(invoice.status)}`}>
-                      {(invoice.status || "pending").toUpperCase()}
+                      {getStatusLabel(invoice.status)}
                     </span>
                   </div>
                   <div className="flex gap-2">
@@ -162,10 +183,13 @@ export default function InvoicesPageV2() {
       ) : (
         <SurfaceCard className="text-center py-12">
           <Receipt className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <h3 className="text-xl font-bold text-slate-600 mb-2">No invoices found</h3>
-          <p className="text-slate-500">
-            Your invoices will appear here after you place orders.
+          <h3 className="text-xl font-bold text-[#20364D] mb-2">No invoices yet</h3>
+          <p className="text-slate-500 mb-6">
+            Paid product orders and approved service quotes create invoices here.
           </p>
+          <Link to="/account/marketplace?tab=products" className="inline-block rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#2a4a66] transition-colors">
+            Continue Shopping
+          </Link>
         </SurfaceCard>
       )}
     </div>

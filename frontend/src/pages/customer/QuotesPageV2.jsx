@@ -6,15 +6,31 @@ import SurfaceCard from "../../components/ui/SurfaceCard";
 import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
 import AccountBlankState from "../../components/ui/AccountBlankState";
+import TableCardToggle from "../../components/common/TableCardToggle";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+const QUOTE_STATUS_LABELS = {
+  pending: "Awaiting Your Approval",
+  approved: "Accepted",
+  rejected: "Rejected",
+  expired: "Expired",
+};
+
+const QUOTE_STATUS_COLORS = {
+  pending: "bg-amber-100 text-amber-800",
+  approved: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-700",
+  expired: "bg-slate-100 text-slate-700",
+};
 
 export default function QuotesPageV2() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [view, setView] = useState("table");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -36,13 +52,11 @@ export default function QuotesPageV2() {
   });
 
   const getStatusBadge = (status) => {
-    const styles = {
-      approved: "bg-green-100 text-green-700",
-      pending: "bg-amber-100 text-amber-700",
-      rejected: "bg-red-100 text-red-700",
-      expired: "bg-slate-100 text-slate-700",
-    };
-    return styles[status] || styles.pending;
+    return QUOTE_STATUS_COLORS[status] || "bg-amber-100 text-amber-700";
+  };
+
+  const getStatusLabel = (status) => {
+    return QUOTE_STATUS_LABELS[status] || (status || "pending").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
   };
 
   return (
@@ -51,10 +65,13 @@ export default function QuotesPageV2() {
         title="My Quotes"
         subtitle="View quotes and convert them to orders."
         actions={
-          <BrandButton href="/services" variant="primary">
-            <FileText className="w-5 h-5 mr-2" />
-            Request Quote
-          </BrandButton>
+          <div className="flex items-center gap-3">
+            <TableCardToggle view={view} setView={setView} />
+            <BrandButton href="/account/marketplace?tab=services" variant="primary">
+              <FileText className="w-5 h-5 mr-2" />
+              Request Quote
+            </BrandButton>
+          </div>
         }
       />
 
@@ -116,7 +133,7 @@ export default function QuotesPageV2() {
                       TZS {Number(quote.total || 0).toLocaleString()}
                     </div>
                     <span className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusBadge(quote.status)}`}>
-                      {(quote.status || "pending").toUpperCase()}
+                      {getStatusLabel(quote.status)}
                     </span>
                   </div>
                   <div className="flex gap-2">

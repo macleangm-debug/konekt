@@ -19,6 +19,7 @@ import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 import CartDrawerV2 from "@/components/cart/CartDrawerV2";
 import CartDrawerCompleteFlow from "@/components/cart/CartDrawerCompleteFlow";
 import MyAccountProfilePage from "@/components/account/MyAccountProfilePage";
+import MyAccountPageV2 from "@/components/account/MyAccountPageV2";
 
 // Customer Pages
 import Landing from "@/pages/LandingNew";
@@ -242,6 +243,7 @@ import AccountMarketplacePage from "@/pages/account/AccountMarketplacePage";
 import AccountServicesPage from "@/pages/account/AccountServicesPage";
 import AssistedQuoteRequestPage from "@/pages/account/AssistedQuoteRequestPage";
 import MyOrdersUnifiedPage from "@/pages/account/MyOrdersUnifiedPage";
+import OrdersSplitView from "@/components/orders/OrdersSplitView";
 
 // Account Marketplace + Service Request Pack
 import MarketplaceUnifiedPageV3 from "@/pages/account/MarketplaceUnifiedPageV3";
@@ -777,10 +779,10 @@ function App() {
           <Route path="services" element={<AccountServicesPageV2 />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
-          <Route path="orders" element={<MyOrdersUnifiedPage />} />
+          <Route path="orders" element={<OrdersSplitView />} />
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
-          <Route path="my-account" element={<MyAccountProfilePage />} />
+          <Route path="my-account" element={<MyAccountPageV2 />} />
           <Route path="help" element={<HelpPageV3 />} />
           {/* Sales Rating Tasks */}
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />

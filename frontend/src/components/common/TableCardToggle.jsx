@@ -1,30 +1,22 @@
 import React from "react";
-import { LayoutGrid, List } from "lucide-react";
+import { LayoutList, LayoutGrid } from "lucide-react";
 
-export default function TableCardToggle({ value = "table", onChange }) {
+export default function TableCardToggle({ view, setView }) {
   return (
-    <div className="inline-flex rounded-xl border bg-white p-1" data-testid="table-card-toggle">
-      <button 
-        type="button" 
-        onClick={() => onChange("table")} 
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-          value === "table" ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"
-        }`}
-        data-testid="toggle-table"
+    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1" data-testid="table-card-toggle">
+      <button
+        data-testid="view-table"
+        onClick={() => setView("table")}
+        className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1.5 transition-colors ${view === "table" ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"}`}
       >
-        <List className="w-4 h-4" />
-        Table
+        <LayoutList size={14} /> Table
       </button>
-      <button 
-        type="button" 
-        onClick={() => onChange("card")} 
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${
-          value === "card" ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"
-        }`}
-        data-testid="toggle-card"
+      <button
+        data-testid="view-cards"
+        onClick={() => setView("card")}
+        className={`px-3 py-1.5 rounded-lg font-medium text-sm flex items-center gap-1.5 transition-colors ${view === "card" ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"}`}
       >
-        <LayoutGrid className="w-4 h-4" />
-        Cards
+        <LayoutGrid size={14} /> Cards
       </button>
     </div>
   );
