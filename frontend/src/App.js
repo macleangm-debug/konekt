@@ -128,6 +128,9 @@ import ServiceCatalogPage from "@/pages/admin/ServiceCatalogPage";
 import BlankProductsPage from "@/pages/admin/BlankProductsPage";
 import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
 
+// Service Leads CRM Table
+import ServiceLeadsCrmTable from "@/components/services/ServiceLeadsCrmTable";
+
 // Admin Catalog & Deliveries
 import AdminCatalogSetupPage from "@/pages/admin/AdminCatalogSetupPage";
 import AdminDeliveriesPage from "@/pages/admin/AdminDeliveriesPage";
@@ -601,6 +604,8 @@ function App() {
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
           <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
           <Route path="finance-queue" element={<FinancePaymentsQueuePage />} />
+          {/* Service Leads CRM */}
+          <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
           {/* Staff Performance & Commission */}
           <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
           <Route path="commission-rules" element={<CommissionRulesPage />} />
