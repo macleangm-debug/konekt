@@ -1,174 +1,162 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FileText, Eye, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { FileText, Eye, CreditCard, CheckCircle, XCircle, Clock, Search, AlertCircle } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
-import SurfaceCard from "../../components/ui/SurfaceCard";
-import FilterBar from "../../components/ui/FilterBar";
 import BrandButton from "../../components/ui/BrandButton";
-import AccountBlankState from "../../components/ui/AccountBlankState";
-import TableCardToggle from "../../components/common/TableCardToggle";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
-const QUOTE_STATUS_LABELS = {
-  pending: "Awaiting Your Approval",
-  approved: "Accepted",
-  rejected: "Rejected",
-  expired: "Expired",
+function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
+
+const STATUS_CONFIG = {
+  pending:    { label: "Awaiting Your Approval", color: "bg-amber-100 text-amber-800", icon: Clock },
+  approved:   { label: "Accepted",              color: "bg-green-100 text-green-800", icon: CheckCircle },
+  rejected:   { label: "Rejected",              color: "bg-red-100 text-red-700",     icon: XCircle },
+  expired:    { label: "Expired",               color: "bg-slate-100 text-slate-600", icon: AlertCircle },
+  converted_to_invoice: { label: "Invoiced", color: "bg-blue-100 text-blue-800", icon: CreditCard },
+  payment_submitted:    { label: "Payment Submitted", color: "bg-indigo-100 text-indigo-800", icon: CreditCard },
 };
 
-const QUOTE_STATUS_COLORS = {
-  pending: "bg-amber-100 text-amber-800",
-  approved: "bg-green-100 text-green-800",
-  rejected: "bg-red-100 text-red-700",
-  expired: "bg-slate-100 text-slate-700",
+const PAYMENT_STATUS_CONFIG = {
+  pending:       { label: "Unpaid",           color: "bg-slate-100 text-slate-600" },
+  paid:          { label: "Paid",             color: "bg-green-100 text-green-800" },
+  under_review:  { label: "Under Review",     color: "bg-blue-100 text-blue-800" },
+  approved:      { label: "Paid",             color: "bg-green-100 text-green-800" },
 };
+
+function StatusBadge({ status, config = STATUS_CONFIG }) {
+  const cfg = config[status] || { label: (status || "").replace(/_/g, " "), color: "bg-slate-100 text-slate-600" };
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium ${cfg.color}`} data-testid={`status-${status}`}>
+      {cfg.label}
+    </span>
+  );
+}
 
 export default function QuotesPageV2() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchValue, setSearchValue] = useState("");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [view, setView] = useState("table");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) return;
-
-    axios.get(`${API_URL}/api/customer/quotes`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => setQuotes(res.data || []))
-      .catch(err => console.error("Failed to load quotes:", err))
+    axios.get(`${API_URL}/api/customer/quotes`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => setQuotes(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredQuotes = quotes.filter(quote => {
-    const matchesSearch = !searchValue || 
-      (quote.quote_number || "").toLowerCase().includes(searchValue.toLowerCase());
-    const matchesStatus = !statusFilter || quote.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusBadge = (status) => {
-    return QUOTE_STATUS_COLORS[status] || "bg-amber-100 text-amber-700";
+  const isExpired = (q) => {
+    if (q.status === "expired") return true;
+    if (q.valid_until && new Date(q.valid_until) < new Date() && q.status === "pending") return true;
+    return false;
   };
 
-  const getStatusLabel = (status) => {
-    return QUOTE_STATUS_LABELS[status] || (status || "pending").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  const filtered = quotes.filter(q => {
+    const matchSearch = !search || (q.quote_number || q.id || "").toLowerCase().includes(search.toLowerCase());
+    const effectiveStatus = isExpired(q) ? "expired" : q.status;
+    const matchStatus = !statusFilter || effectiveStatus === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const getActions = (quote) => {
+    const effectiveStatus = isExpired(quote) ? "expired" : quote.status;
+    const actions = [];
+    actions.push(
+      <Link key="view" to={`/dashboard/quotes/${quote.id}`} className="text-xs font-medium text-[#20364D] hover:underline" data-testid={`view-quote-${quote.id}`}>View</Link>
+    );
+    if (effectiveStatus === "pending") {
+      actions.push(
+        <Link key="accept" to={`/dashboard/quotes/${quote.id}`} className="text-xs font-semibold text-green-700 hover:underline" data-testid={`accept-quote-${quote.id}`}>Accept</Link>
+      );
+    }
+    if (effectiveStatus === "approved" && quote.invoice_id) {
+      actions.push(
+        <Link key="pay" to={`/dashboard/invoices/${quote.invoice_id}/pay`} className="text-xs font-semibold text-[#D4A843] hover:underline" data-testid={`pay-invoice-${quote.id}`}>Pay Invoice</Link>
+      );
+    }
+    if (effectiveStatus === "expired") {
+      actions.push(<span key="expired" className="text-xs text-slate-400">No actions</span>);
+    }
+    return actions;
   };
 
   return (
     <div data-testid="quotes-page">
-      <PageHeader 
+      <PageHeader
         title="My Quotes"
         subtitle="View quotes and convert them to orders."
         actions={
-          <div className="flex items-center gap-3">
-            <TableCardToggle view={view} setView={setView} />
-            <BrandButton href="/account/marketplace?tab=services" variant="primary">
-              <FileText className="w-5 h-5 mr-2" />
-              Request Quote
-            </BrandButton>
-          </div>
+          <BrandButton href="/account/marketplace?tab=services" variant="primary">
+            <FileText className="w-4 h-4 mr-2" /> Request Quote
+          </BrandButton>
         }
       />
 
-      <FilterBar
-        searchValue={searchValue}
-        onSearchChange={setSearchValue}
-        searchPlaceholder="Search quotes..."
-        filters={[
-          {
-            name: "status",
-            value: statusFilter,
-            onChange: setStatusFilter,
-            placeholder: "All Statuses",
-            options: [
-              { value: "pending", label: "Pending" },
-              { value: "approved", label: "Approved" },
-              { value: "rejected", label: "Rejected" },
-              { value: "expired", label: "Expired" },
-            ],
-          },
-        ]}
-        className="mb-6"
-      />
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" placeholder="Search quotes..." value={search} onChange={(e) => setSearch(e.target.value)} data-testid="quotes-search" />
+        </div>
+        <select className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} data-testid="quotes-status-filter">
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Accepted</option>
+          <option value="rejected">Rejected</option>
+          <option value="expired">Expired</option>
+        </select>
+      </div>
 
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-slate-100 rounded-3xl animate-pulse" />
-          ))}
-        </div>
-      ) : filteredQuotes.length > 0 ? (
-        <div className="space-y-4">
-          {filteredQuotes.map((quote) => (
-            <SurfaceCard key={quote.id || quote._id} className="hover:shadow-md transition">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#20364D]/10 flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-[#20364D]" />
-                  </div>
-                  <div>
-                    <div className="font-bold text-[#20364D]">
-                      Quote #{quote.quote_number || quote.id?.slice(-8)}
-                    </div>
-                    <div className="text-sm text-slate-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(quote.created_at).toLocaleDateString()}
-                    </div>
-                    {quote.valid_until && (
-                      <div className="text-sm text-slate-500">
-                        Valid until: {new Date(quote.valid_until).toLocaleDateString()}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-[#20364D]">
-                      TZS {Number(quote.total || 0).toLocaleString()}
-                    </div>
-                    <span className={`text-xs px-3 py-1 rounded-full font-medium ${getStatusBadge(quote.status)}`}>
-                      {getStatusLabel(quote.status)}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    {quote.status === "approved" && (
-                      <BrandButton href={`/dashboard/quotes/${quote.id}/convert`} variant="gold" className="text-sm py-2">
-                        Convert to Order
-                      </BrandButton>
-                    )}
-                    <Link
-                      to={`/dashboard/quotes/${quote.id || quote._id}`}
-                      className="p-3 rounded-xl border hover:bg-slate-50 transition"
-                    >
-                      <Eye className="w-5 h-5 text-slate-500" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </SurfaceCard>
-          ))}
+        <div className="space-y-3 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 rounded-xl" />)}</div>
+      ) : filtered.length > 0 ? (
+        <div className="rounded-[2rem] border border-slate-200 bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" data-testid="quotes-table">
+              <thead>
+                <tr className="text-left border-b border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Quote #</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Valid Until</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Type</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payment</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((q) => {
+                  const effectiveStatus = isExpired(q) ? "expired" : q.status;
+                  const isDisabled = effectiveStatus === "expired" || effectiveStatus === "rejected";
+                  return (
+                    <tr key={q.id} className={`transition-colors ${isDisabled ? "opacity-60" : "hover:bg-slate-50"}`} data-testid={`quote-row-${q.id}`}>
+                      <td className="px-4 py-3 font-semibold text-[#20364D]">{q.quote_number || `#${(q.id || "").slice(-8)}`}</td>
+                      <td className="px-4 py-3 text-slate-600">{q.created_at ? new Date(q.created_at).toLocaleDateString() : "-"}</td>
+                      <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{q.valid_until ? new Date(q.valid_until).toLocaleDateString() : "-"}</td>
+                      <td className="px-4 py-3 text-slate-600 hidden lg:table-cell capitalize">{q.type || "service"}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(q.total || q.total_amount)}</td>
+                      <td className="px-4 py-3"><StatusBadge status={effectiveStatus} /></td>
+                      <td className="px-4 py-3 hidden md:table-cell"><StatusBadge status={q.payment_status || "pending"} config={PAYMENT_STATUS_CONFIG} /></td>
+                      <td className="px-4 py-3"><div className="flex items-center gap-3">{getActions(q)}</div></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
-        <AccountBlankState
-          icon="quotes"
-          title="No quotes yet"
-          description="Request quotes for custom orders, bulk purchases, or specialized services. Our team will prepare a tailored proposal."
-          primaryLabel="Request a Quote"
-          primaryAction="/services"
-          secondaryLabel="Browse Products"
-          secondaryAction="/marketplace"
-          benefits={[
-            { title: "Custom Pricing", description: "Get competitive rates for bulk orders and special requirements." },
-            { title: "Valid for 30 Days", description: "Take your time to review and approve at your convenience." },
-            { title: "One-Click Convert", description: "Approve and convert to order instantly when ready." },
-          ]}
-        />
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-10 text-center">
+          <FileText size={40} className="text-slate-300 mx-auto" />
+          <h2 className="text-xl font-bold text-[#20364D] mt-4">No quotes yet</h2>
+          <p className="text-slate-500 mt-2 mb-6">Request quotes for custom orders, bulk purchases, or specialized services.</p>
+          <Link to="/account/marketplace?tab=services" className="inline-block rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#2a4a66] transition-colors">Request a Quote</Link>
+        </div>
       )}
     </div>
   );

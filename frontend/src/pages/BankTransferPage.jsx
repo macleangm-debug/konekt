@@ -91,13 +91,20 @@ export default function BankTransferPage() {
     setProofFilename("");
   };
 
-  const markSubmitted = async () => {
-    if (!proofUrl) {
-      alert("Please upload your payment proof first.");
-      return;
-    }
+  const [payerName, setPayerName] = useState("");
+  const [errors, setErrors] = useState({});
+  const payerNameRef = React.useRef(null);
 
-    if (!window.confirm("Submit this payment proof for finance review?")) {
+  const markSubmitted = async () => {
+    const newErrors = {};
+    if (!payerName.trim()) newErrors.payerName = "Enter the name used when making the transfer so Finance can verify your payment.";
+    if (!proofUrl) newErrors.proof = "Upload your payment proof before submitting.";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      if (newErrors.payerName && payerNameRef.current) {
+        payerNameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        payerNameRef.current.focus();
+      }
       return;
     }
 
@@ -107,7 +114,7 @@ export default function BankTransferPage() {
         await liveCommerceApi.submitPaymentProof(payment.id, {
           amount_paid: amountToPay,
           file_url: proofUrl,
-          payer_name: payment.customer_name || data?.invoice?.customer_name || "",
+          payer_name: payerName.trim(),
           customer_email: payment.customer_email || data?.invoice?.customer_email || "",
         });
       } else {
@@ -115,6 +122,7 @@ export default function BankTransferPage() {
           payment_id: payment.id || payment._id,
           proof_url: proofUrl || null,
           proof_filename: proofFilename || null,
+          payer_name: payerName.trim(),
         });
       }
 
@@ -207,11 +215,27 @@ export default function BankTransferPage() {
           </div>
 
           <div className="space-y-5">
+            {/* Payer Name - above proof upload per spec */}
+            <div ref={payerNameRef}>
+              <label className="block text-sm font-bold text-[#20364D] mb-1">Name on Bank Transfer</label>
+              <p className="text-xs text-slate-500 mb-2">Enter the name used when making the transfer so Finance can verify your payment.</p>
+              <input
+                type="text"
+                value={payerName}
+                onChange={(e) => { setPayerName(e.target.value); setErrors((p) => ({ ...p, payerName: "" })); }}
+                placeholder="e.g. John M. Kassim / ABC Ltd"
+                className={`w-full border rounded-xl px-4 py-3 text-sm outline-none transition-colors focus:ring-2 focus:ring-[#20364D]/20 ${errors.payerName ? "border-red-400 bg-red-50" : "border-slate-200"}`}
+                data-testid="payer-name-input"
+              />
+              {errors.payerName && <p className="text-xs text-red-600 mt-1">{errors.payerName}</p>}
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-2">
                 <Upload className="w-4 h-4 inline mr-2" />
                 Upload Proof of Payment
               </label>
+              {errors.proof && !proofUrl && <p className="text-xs text-red-600 mb-2">{errors.proof}</p>}
 
               {!proofFile && !proofUrl && (
                 <div className="relative">
@@ -278,8 +302,8 @@ export default function BankTransferPage() {
             <button
               type="button"
               onClick={markSubmitted}
-              disabled={submitting || !proofUrl}
-              className="w-full rounded-xl bg-[#2D3E50] text-white px-5 py-4 font-semibold disabled:opacity-50"
+              disabled={submitting || !proofUrl || !payerName.trim()}
+              className="w-full rounded-xl bg-[#2D3E50] text-white px-5 py-4 font-semibold disabled:opacity-50 transition-colors hover:bg-[#1e2d3d]"
               data-testid="confirm-transfer-btn"
             >
               {submitting ? "Submitting..." : "Submit for Finance Review"}
