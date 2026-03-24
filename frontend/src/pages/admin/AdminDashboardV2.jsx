@@ -37,9 +37,9 @@ export default function AdminDashboardV2() {
         api.get("/api/admin/alerts").catch(() => ({ data: [] }))
       ]);
 
-      const orders = ordersRes.data || [];
-      const partners = partnersRes.data || [];
-      const affiliates = affiliatesRes.data || [];
+      const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+      const partners = Array.isArray(partnersRes.data) ? partnersRes.data : [];
+      const affiliates = Array.isArray(affiliatesRes.data) ? affiliatesRes.data : [];
 
       // Calculate order pipeline
       const pending = orders.filter(o => o.status === "pending" || o.status === "confirmed");
@@ -55,7 +55,7 @@ export default function AdminDashboardV2() {
       const activePartners = partners.filter(p => p.status === "active");
 
       // Get alerts/issues
-      const systemAlerts = alertsRes.data || [];
+      const systemAlerts = Array.isArray(alertsRes.data) ? alertsRes.data : [];
       const delayedOrders = orders.filter(o => {
         if (!o.estimated_delivery) return false;
         const dueDate = new Date(o.estimated_delivery);

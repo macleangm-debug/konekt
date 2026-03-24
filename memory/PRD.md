@@ -25,7 +25,13 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 2. Sales prepares quote via Instant Quote Builder
 3. Customer or Sales accepts quote
 4. Invoice created from accepted quote
-5. Same payment → proof → approval flow as above
+5. Same payment -> proof -> approval flow as above
+
+**Promotional Materials Flow (Lead Gen):**
+1. Promo items shown in marketplace under "Promotional Materials" tab
+2. Cannot be added to cart directly
+3. Opens ProductPromoDetailModalV2 with "Request Customization Quote"
+4. Creates a lead in Service Leads CRM for sales team follow-up
 
 ### Payment Proof Rules
 - **No transaction reference field** — payer name + amount + file only
@@ -44,11 +50,22 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 | `POST /invoice/payment-intent` | Creates payment intent (full/deposit) |
 | `POST /payment-proof` | Upload proof (no reference field) |
 | `GET /finance/queue` | Pending proofs for finance review |
-| `POST /finance/approve` | Approve → creates order + assignments |
+| `POST /finance/approve` | Approve -> creates order + assignments |
 | `POST /finance/reject` | Reject with reason |
-| `POST /quote/accept` | Accept quote → create invoice |
+| `POST /quote/accept` | Accept quote -> create invoice |
 | `GET /customer/invoices` | Customer's invoices |
 | `GET /customer/payments` | Customer's payments |
+
+### Admin Flow Fixes (`/api/admin-flow-fixes/*`)
+| Endpoint | Description |
+|----------|-------------|
+| `POST /promo/request-customization-quote` | Creates promo lead |
+| `POST /leads/update-status` | Update lead CRM status |
+| `GET /finance/queue` | Finance queue with enriched data |
+| `POST /finance/approve-proof` | Approve proof -> create order |
+| `POST /finance/reject-proof` | Reject proof with reason |
+| `GET /admin/orders-split` | Orders for split view |
+| `GET /sales/service-leads` | Service + promo leads CRM |
 
 ### Customer Account (`/api/customer-account/*`)
 | Endpoint | Description |
@@ -66,8 +83,18 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 - **Step 2 (Checkout)**: Contact + "Same as contact" toggle + Delivery + Invoice details
 - **Step 3 (Payment)**: Bank details with copy, camera/file proof upload
 - **Step 4 (Done)**: "Payment Under Review" — order created after approval
+- TZS comma formatting on all amounts
 - Saves missing details back to profile
 - Hides AI assistant when open
+
+### Product Detail Modal V2
+- Price display with TZS formatting
+- Color variant selector
+- Size variant selector
+- Image carousel with thumbnails
+- Quantity selector
+- **Regular products**: "Add to Cart" button
+- **Promo items**: "Request Customization Quote" with brief textarea
 
 ### Finance Payments Queue (`/admin/finance-queue`)
 - Split-view: proof list (left) + detail panel (right)
@@ -79,11 +106,21 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 - Split-view: order list (left) + detail (right)
 - Customer info, delivery, items, totals, timeline
 
+### Service Leads CRM (`/admin/service-leads`)
+- Table with Date, Client, Lead, Type, Status columns
+- Status dropdown with CRM pipeline stages
+- Search functionality
+- Combines leads and service_requests collections
+
 ### Marketplace V5 (`/account/marketplace`)
 - **3 Tabs**: Products, Services, Promotional Materials
 - Adaptive search + group filter
 - Skeleton loading + "Load More" lazy pagination
 - Product detail modal with variants (colors, sizes)
+
+### Admin Sidebar (Simplified)
+Core sections only: Dashboard, Sales, Operations, Finance, Inventory, Settings
+22 nav items with role-based filtering via ROLE_MODULE_ACCESS
 
 ### My Account (`/account/my-account`)
 - Personal/Business toggle
@@ -118,7 +155,7 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ## Remaining Tasks
 
 ### P0
-- [ ] Configure Twilio WhatsApp credentials
+- [ ] Configure Twilio WhatsApp credentials (user needs to provide keys)
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack
@@ -128,6 +165,7 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 - [x] Customer Payment Flow
 - [x] Final Commercial Flow Pack
 - [x] Payments + Fulfillment Governance Pack
+- [x] Admin Simplification + Payments Fixes Pack
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
@@ -151,5 +189,6 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 | 96 | Customer Payment Flow | 100% |
 | 97 | Final Commercial Flow | 100% |
 | 98 | Payments + Fulfillment Governance | 94.7% backend (18/19), 100% frontend |
+| 99 | Admin Simplification + Payments Fixes | 100% backend (18/18), 100% frontend |
 
 *Last updated: March 24, 2026*
