@@ -7,121 +7,99 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Governance Model
+## Architecture: Live Commerce Engine (Go-Live Facade)
 
-### Core Rule: Orders Created ONLY After Payment Approval
+### Single Source of Truth
+All production-critical commerce logic lives in `backend/core/live_commerce_service.py`. Old route packs remain intact but the go-live path uses:
 
-**Fixed-Price Products Flow:**
-1. Customer adds products to cart
-2. Checkout creates **Invoice** (no order yet)
-3. Payment intent created (full or deposit)
-4. Customer uploads payment proof (camera/file, no transaction reference)
-5. Confirmation modal + single-click protection on submit
-6. Finance/Admin reviews proof in Finance Queue
-7. **On approval**: Order + Vendor Orders + Sales Assignment + Commissions created
-8. On rejection: Invoice reverts to pending, customer can resubmit
+```
+/api/live-commerce/*  →  LiveCommerceService  →  MongoDB
+```
 
-**Multi-Service Request Flow:**
-1. Customer selects multiple service lines (group + subgroup from taxonomy)
-2. Enters shared brief/requirements
-3. Submits bundled service request → lead created
-4. Sales receives one lead with multiple service lines → prepares quote
+### Master Flow (Centralized)
+```
+Product Checkout → Invoice Created
+    ↓
+Payment Intent (full or deposit)
+    ↓
+Proof Upload → Status: under_review
+    ↓
+Finance Queue (admin/finance only)
+    ↓
+Approve → Order + Vendor Orders + Sales Assignment + Commissions
+   OR
+Reject → Invoice reverts to pending_payment
+```
 
-**Multi-Promo Customization Flow:**
-1. Customer selects multiple blank/promotional items
-2. Chooses variants (color, size, quantity) per item
-3. Enters one shared customization brief
-4. Submits bundled customization request → lead created
-5. Sales receives one lead with multiple line items
-
-### Commission Model (Non-Margin-Touching)
-- Price is built first: base cost + protected company margin + VAT
-- Commission triggered ONLY after approved payment
-- Commission calculated from commissionable pool (total amount)
-- Affiliate commission: 5% default (configurable via admin)
-- Sales commission: 3% default (configurable via admin)
-- Both can coexist on same order (configurable)
-- Minimum payout threshold: TZS 50,000 (configurable)
-
-### Service Taxonomy (Admin-Managed)
-Single source of truth for service groups and subgroups:
-- Printing & Branding (9 subgroups)
-- Creative & Design (10 subgroups)
-- Photography & Videography (10 subgroups)
-- Facilities Services (8 subgroups)
-- Technical Support (8 subgroups)
-- Business Support (6 subgroups)
-- Uniforms & Workwear (6 subgroups)
-- Promotional Materials (11 subgroups)
+### Key Design Rules
+- **No order before approval** — enforced at service level
+- **Idempotency** — approving same proof twice doesn't duplicate orders
+- **Role gating** — only finance/admin can approve (sales gets 403)
+- **Partial payment** — correctly detected, no order until fully paid
+- **Commission trigger** — non-margin-touching, fires after order creation
 
 ---
 
 ## Backend API Endpoints
 
-### Payments Governance (`/api/payments-governance/*`)
+### Live Commerce (`/api/live-commerce/*`) — PRIMARY
 | Endpoint | Description |
 |----------|-------------|
-| `POST /product-checkout` | Creates invoice only (no order) |
-| `POST /invoice/payment-intent` | Creates payment intent |
-| `POST /payment-proof` | Upload proof |
-| `GET /finance/queue` | Pending proofs for finance review |
-| `POST /finance/approve` | Approve -> creates order + commissions |
-| `POST /finance/reject` | Reject with reason |
+| `GET /health` | Health check |
+| `POST /product-checkout` | Create invoice from cart items |
+| `POST /quotes/{id}/accept` | Accept quote → create invoice |
+| `POST /invoices/{id}/payment-intent` | Create payment intent (full/deposit) |
+| `POST /payments/{id}/proof` | Submit payment proof |
+| `GET /finance/queue` | Finance review queue |
+| `POST /finance/proofs/{id}/approve` | Approve → create order if fully paid |
+| `POST /finance/proofs/{id}/reject` | Reject → revert to pending |
+| `GET /customers/{id}/workspace` | Customer invoices/payments/orders |
 
 ### Multi-Request (`/api/multi-request/*`)
 | Endpoint | Description |
 |----------|-------------|
-| `GET /service-taxonomy` | Get all service groups with subgroups |
-| `POST /service-group` | Upsert a service group |
-| `DELETE /service-group/{key}` | Delete a service group |
-| `POST /seed-service-taxonomy` | Seed taxonomy data |
-| `POST /promo-bundle` | Multi-item promo customization request |
-| `POST /service-bundle` | Multi-service bundle request |
+| `GET /service-taxonomy` | Service groups with subgroups |
+| `POST /promo-bundle` | Multi-item promo request |
+| `POST /service-bundle` | Multi-service request |
 
-### Referral + Sales Commission (`/api/referral-commission/*`)
+### Referral + Commission (`/api/referral-commission/*`)
 | Endpoint | Description |
 |----------|-------------|
-| `GET /rules` | Get commission rules |
-| `PUT /rules` | Save commission rules |
-| `POST /affiliate/create` | Create affiliate with promo code |
-| `GET /admin/affiliates` | Admin affiliates list with stats |
-| `GET /affiliate/dashboard` | Affiliate performance dashboard |
-| `POST /track` | Track referral events |
-| `POST /trigger-after-payment-approval` | Create commissions |
+| `GET /rules` | Commission rules |
+| `PUT /rules` | Update commission rules |
+| `POST /affiliate/create` | Create affiliate |
+| `GET /admin/affiliates` | Affiliate list with stats |
 
-### Payment Submission Fixes (`/api/payment-submission-fixes/*`)
-| Endpoint | Description |
-|----------|-------------|
-| `POST /submit-payment` | Guarded payment submission |
-| `POST /approve-payment-and-distribute` | Admin approve -> create order |
-| `POST /affiliate-promo-benefit` | Save affiliate promo benefit |
-| `GET /affiliate-promo-benefit` | Get affiliate promo benefit |
+### Legacy Routes (Still Active)
+- `/api/payments-governance/*` — original governance routes
+- `/api/admin-flow-fixes/*` — admin flow fixes
+- `/api/payment-submission-fixes/*` — payment submission fixes
 
 ---
 
-## Frontend Pages & Components
+## Frontend Architecture
+
+### Go-Live Payment Flow Pages
+| Route | Component | Purpose |
+|-------|-----------|---------|
+| `/checkout` | CheckoutPage | Cart → Invoice via live commerce |
+| `/checkout/v2` | CheckoutPageV2 | Alternative checkout flow |
+| `/payment/select` | PaymentSelectionPage | Payment method selection |
+| `/payment/bank-transfer` | BankTransferPage | Bank details + proof upload |
+| `/payment/pending` | PaymentPendingPage | "Payment Under Review" status |
 
 ### Admin Pages
-| Route | Component | Description |
-|-------|-----------|-------------|
-| `/admin/affiliate-manager` | AdminAffiliateManagerSimple | 3-tab: Affiliates, Commission Rules, Promo Benefit |
-| `/admin/service-taxonomy` | ServiceTaxonomyAdminSetup | Manage service groups/subgroups |
-| `/admin/service-leads` | ServiceLeadsCrmTable | CRM for promo+service leads |
-| `/admin/finance-queue` | FinancePaymentsQueuePage | Approve/reject payment proofs |
-| `/admin/orders` | AdminOrdersSplitViewV2 | Orders split view |
+| Route | Component |
+|-------|-----------|
+| `/admin/affiliate-manager` | 3-tab: Affiliates, Commission Rules, Promo Benefit |
+| `/admin/service-taxonomy` | Service groups/subgroups management |
+| `/admin/service-leads` | CRM for leads |
+| `/admin/finance-queue` | Approve/reject proofs |
+| `/admin/orders` | Orders split view |
 
-### Customer Pages
-| Route | Component | Description |
-|-------|-----------|-------------|
-| `/account/marketplace` | MarketplaceUnifiedPageV3 | 3-tab marketplace with multi-builders |
-| `/account/my-account` | MyAccount | Profile with addresses |
-
-### Cart Flow Components
-- `CartDrawerCompleteFlow` — 4-step cart (cart → checkout → payment → done)
-- `LockedSavedDetailsSection` — Read-only saved details with "Change" toggle
-- `ConfirmActionModal` — Payment submission confirmation modal
-- `MultiPromoCustomizationBuilder` — Multi-item promo request
-- `MultiServiceRequestBuilder` — Multi-service request with taxonomy dropdowns
+### Cart Flow
+- `CartDrawerCompleteFlow` — 4-step cart with LockedSavedDetailsSection + ConfirmActionModal
+- Uses `liveCommerceApi` for checkout and `uploadApi` for proof uploads
 
 ---
 
@@ -134,12 +112,21 @@ Single source of truth for service groups and subgroups:
 
 ---
 
-## Remaining Tasks
+## Bank Details (Go-Live)
+| Field | Value |
+|-------|-------|
+| Bank | CRDB BANK |
+| Account | KONEKT LIMITED |
+| Number | 015C8841347002 |
+| Branch | Main Branch |
+| SWIFT | CORUTZTZ |
+| Currency | TZS |
 
-### P0
-- [ ] Configure Twilio WhatsApp credentials
+---
 
-### P1 - Launch Critical
+## Task Status
+
+### Completed
 - [x] UI Polish Pack
 - [x] Checkout Flow
 - [x] Sales Command Center + Quote Engine
@@ -151,24 +138,26 @@ Single source of truth for service groups and subgroups:
 - [x] Referral + Sales Commission Governance Pack
 - [x] Payment Confirmation + Affiliate Promo Pack
 - [x] Multi-Service + Promo Taxonomy Pack
-- [ ] Final Launch Verification Checklist
-- [ ] Live payment gateway (KwikPay/Stripe)
-- [ ] DNS/SSL setup
+- [x] **Go-Live Commerce Engine** (centralized facade)
 
-### P2 - Growth
-- [ ] One-click reorder / Saved Carts
-- [ ] AI-assisted quote suggestions
-- [ ] Mobile-first optimization
-- [ ] Advanced analytics
-- [ ] Push notifications
+### Remaining
+- [ ] Configure Twilio WhatsApp credentials (P0)
+- [ ] Final Launch Verification Checklist (P1)
+- [ ] Live payment gateway — KwikPay/Stripe (P1)
+- [ ] DNS/SSL setup (P1)
+- [ ] One-click reorder / Saved Carts (P2)
+- [ ] AI-assisted quote suggestions (P2)
+- [ ] Mobile-first optimization (P2)
+- [ ] Advanced analytics (P2)
 
 ---
 
 ## Testing History
 | Iter | Feature | Result |
 |------|---------|--------|
-| 99 | Admin Simplification + Payments Fixes | 100% |
-| 100 | Referral + Commission + Payment Packs | 100% (27/27 backend) |
-| 101 | Multi-Service + Promo Taxonomy + Cart Integrations | 100% (16/16 backend) |
+| 99 | Admin Simplification | 100% |
+| 100 | Referral + Commission | 100% (27/27) |
+| 101 | Multi-Service + Taxonomy | 100% (16/16) |
+| 102 | **Go-Live Commerce Engine** | **100% (15/15 backend, 100% frontend)** |
 
 *Last updated: March 24, 2026*
