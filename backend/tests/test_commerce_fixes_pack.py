@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://konekt-go-live.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://checkout-integration-7.preview.emergentagent.com')
 
 class TestMarketplaceFilters:
     """Tests for GET /api/marketplace/filters endpoint"""
