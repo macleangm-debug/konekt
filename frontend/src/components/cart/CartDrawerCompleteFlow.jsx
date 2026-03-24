@@ -3,6 +3,8 @@ import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../lib/api";
 import { Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy, Camera, Image } from "lucide-react";
+import LockedSavedDetailsSection from "./LockedSavedDetailsSection";
+import ConfirmActionModal from "../common/ConfirmActionModal";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
@@ -36,6 +38,7 @@ export default function CartDrawerCompleteFlow() {
     invoice_client_phone: "", invoice_client_email: "", invoice_client_tin: "",
   });
   const [proof, setProof] = useState({ payer_name: "", amount_paid: "", file_url: "", file_name: "" });
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
 
   const loadPrefill = useCallback(async () => {
     if (!open) return;
@@ -244,49 +247,53 @@ export default function CartDrawerCompleteFlow() {
           {/* STEP: CHECKOUT */}
           {step === "checkout" && (
             <div className="space-y-5">
-              <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
-                <h3 className="text-base font-bold text-[#20364D]">Contact Details</h3>
-                <input data-testid="checkout-client-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Contact Name" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-                <div className="flex gap-2">
-                  <PrefixSelect value={form.client_phone_prefix} onChange={(v) => setForm({ ...form, client_phone_prefix: v })} />
-                  <input data-testid="checkout-client-phone" className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.client_phone} onChange={(e) => setForm({ ...form, client_phone: e.target.value })} />
+              <LockedSavedDetailsSection title="Contact Details"
+                values={[form.client_name, `${form.client_phone_prefix} ${form.client_phone}`, form.client_email].filter(Boolean)}>
+                <div className="space-y-3">
+                  <input data-testid="checkout-client-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Contact Name" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
+                  <div className="flex gap-2">
+                    <PrefixSelect value={form.client_phone_prefix} onChange={(v) => setForm({ ...form, client_phone_prefix: v })} />
+                    <input data-testid="checkout-client-phone" className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.client_phone} onChange={(e) => setForm({ ...form, client_phone: e.target.value })} />
+                  </div>
+                  <input data-testid="checkout-client-email" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.client_email} onChange={(e) => setForm({ ...form, client_email: e.target.value })} />
                 </div>
-                <input data-testid="checkout-client-email" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.client_email} onChange={(e) => setForm({ ...form, client_email: e.target.value })} />
-              </div>
+              </LockedSavedDetailsSection>
 
-              <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-[#20364D]">Delivery Details</h3>
+              <LockedSavedDetailsSection title="Delivery Details"
+                values={[form.recipient_name, `${form.recipient_phone_prefix} ${form.recipient_phone}`, form.address_line, `${form.city} ${form.region}`].filter(v => v && v.trim())}>
+                <div className="space-y-3">
                   <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer" data-testid="same-as-contact-toggle">
                     <input type="checkbox" checked={sameAsContact} onChange={(e) => setSameAsContact(e.target.checked)}
                       className="rounded border-slate-300 text-[#20364D] focus:ring-[#20364D]" />
                     Same as contact
                   </label>
+                  <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Recipient Name" value={form.recipient_name}
+                    onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_name: e.target.value }); }} />
+                  <div className="flex gap-2">
+                    <PrefixSelect value={form.recipient_phone_prefix} onChange={(v) => { setSameAsContact(false); setForm({ ...form, recipient_phone_prefix: v }); }} />
+                    <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.recipient_phone}
+                      onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_phone: e.target.value }); }} />
+                  </div>
+                  <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Address Line" value={form.address_line} onChange={(e) => setForm({ ...form, address_line: e.target.value })} />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                    <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Region" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
+                  </div>
                 </div>
-                <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Recipient Name" value={form.recipient_name}
-                  onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_name: e.target.value }); }} />
-                <div className="flex gap-2">
-                  <PrefixSelect value={form.recipient_phone_prefix} onChange={(v) => { setSameAsContact(false); setForm({ ...form, recipient_phone_prefix: v }); }} />
-                  <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.recipient_phone}
-                    onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_phone: e.target.value }); }} />
-                </div>
-                <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Address Line" value={form.address_line} onChange={(e) => setForm({ ...form, address_line: e.target.value })} />
-                <div className="grid grid-cols-2 gap-2">
-                  <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-                  <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Region" value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} />
-                </div>
-              </div>
+              </LockedSavedDetailsSection>
 
-              <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
-                <h3 className="text-base font-bold text-[#20364D]">Invoice Client Details</h3>
-                <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Client Name" value={form.invoice_client_name} onChange={(e) => setForm({ ...form, invoice_client_name: e.target.value })} />
-                <div className="flex gap-2">
-                  <PrefixSelect value={form.invoice_client_phone_prefix} onChange={(v) => setForm({ ...form, invoice_client_phone_prefix: v })} />
-                  <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.invoice_client_phone} onChange={(e) => setForm({ ...form, invoice_client_phone: e.target.value })} />
+              <LockedSavedDetailsSection title="Invoice Client Details"
+                values={[form.invoice_client_name, `${form.invoice_client_phone_prefix} ${form.invoice_client_phone}`, form.invoice_client_email, form.invoice_client_tin ? `TIN: ${form.invoice_client_tin}` : ""].filter(v => v && v.trim())}>
+                <div className="space-y-3">
+                  <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Client Name" value={form.invoice_client_name} onChange={(e) => setForm({ ...form, invoice_client_name: e.target.value })} />
+                  <div className="flex gap-2">
+                    <PrefixSelect value={form.invoice_client_phone_prefix} onChange={(v) => setForm({ ...form, invoice_client_phone_prefix: v })} />
+                    <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.invoice_client_phone} onChange={(e) => setForm({ ...form, invoice_client_phone: e.target.value })} />
+                  </div>
+                  <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.invoice_client_email} onChange={(e) => setForm({ ...form, invoice_client_email: e.target.value })} />
+                  <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="TIN" value={form.invoice_client_tin} onChange={(e) => setForm({ ...form, invoice_client_tin: e.target.value })} />
                 </div>
-                <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.invoice_client_email} onChange={(e) => setForm({ ...form, invoice_client_email: e.target.value })} />
-                <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="TIN" value={form.invoice_client_tin} onChange={(e) => setForm({ ...form, invoice_client_tin: e.target.value })} />
-              </div>
+              </LockedSavedDetailsSection>
             </div>
           )}
 
@@ -408,10 +415,21 @@ export default function CartDrawerCompleteFlow() {
           )}
 
           {step === "payment" && (
-            <button data-testid="submit-proof-btn" onClick={submitProof} disabled={submitting || !proof.payer_name}
-              className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-              <Upload size={16} /> {submitting ? "Submitting..." : "Submit Payment Proof"}
-            </button>
+            <>
+              <button data-testid="submit-proof-btn" onClick={() => setShowPayConfirm(true)} disabled={submitting || proofSubmitted || !proof.payer_name}
+                className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                <Upload size={16} /> {proofSubmitted ? "Payment Submitted" : submitting ? "Submitting..." : "Submit Payment Proof"}
+              </button>
+              <ConfirmActionModal
+                open={showPayConfirm}
+                title="Submit Payment Proof?"
+                message="Please confirm you want to submit this payment proof. After submission, the button will be locked to avoid duplicate submissions."
+                confirmLabel="Yes, Submit"
+                onConfirm={() => { setShowPayConfirm(false); submitProof(); }}
+                onClose={() => setShowPayConfirm(false)}
+                loading={submitting}
+              />
+            </>
           )}
 
           {step === "done" && (

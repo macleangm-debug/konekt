@@ -2597,6 +2597,9 @@ app.include_router(referral_commission_router)
 from payment_submission_fixes_routes import router as payment_submission_fixes_router
 app.include_router(payment_submission_fixes_router)
 
+from multi_request_routes import router as multi_request_router
+app.include_router(multi_request_router)
+
 
 
 

@@ -134,6 +134,9 @@ import ServiceLeadsCrmTable from "@/components/services/ServiceLeadsCrmTable";
 // Referral + Commission Governance Components
 import AdminAffiliateManagerSimple from "@/components/admin/AdminAffiliateManagerSimple";
 
+// Service Taxonomy Admin
+import ServiceTaxonomyAdminSetup from "@/components/admin/ServiceTaxonomyAdminSetup";
+
 // Admin Catalog & Deliveries
 import AdminCatalogSetupPage from "@/pages/admin/AdminCatalogSetupPage";
 import AdminDeliveriesPage from "@/pages/admin/AdminDeliveriesPage";
@@ -611,6 +614,8 @@ function App() {
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
           {/* Affiliate Manager */}
           <Route path="affiliate-manager" element={<AdminAffiliateManagerSimple />} />
+          {/* Service Taxonomy */}
+          <Route path="service-taxonomy" element={<ServiceTaxonomyAdminSetup />} />
           {/* Staff Performance & Commission */}
           <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
           <Route path="commission-rules" element={<CommissionRulesPage />} />

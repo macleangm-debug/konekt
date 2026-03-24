@@ -7,7 +7,10 @@ import ProductPromoDetailModalV2 from "../../components/products/ProductPromoDet
 import ServiceCardGrid from "../../components/services/ServiceCardGrid";
 import ServiceDetailShowcase from "../../components/services/ServiceDetailShowcase";
 import ServiceQuoteRequestFormV2 from "../../components/services/ServiceQuoteRequestFormV2";
+import MultiPromoCustomizationBuilder from "../../components/promotions/MultiPromoCustomizationBuilder";
+import MultiServiceRequestBuilder from "../../components/services/MultiServiceRequestBuilder";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 const TABS = [
   { key: "products", label: "Products", icon: Package },
@@ -43,6 +46,9 @@ export default function MarketplaceUnifiedPageV3() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [detailItem, setDetailItem] = useState(null);
   const { addItem } = useCartDrawer();
+  const { user } = useAuth();
+  const [showPromoBuilder, setShowPromoBuilder] = useState(false);
+  const [showServiceBuilder, setShowServiceBuilder] = useState(false);
 
   useEffect(() => {
     api.get("/api/service-request-templates").then((res) => {
@@ -86,6 +92,8 @@ export default function MarketplaceUnifiedPageV3() {
     setSelectedService(null);
     setSearchQuery("");
     setGroupFilter("");
+    setShowPromoBuilder(false);
+    setShowServiceBuilder(false);
   };
 
   const isPromo = tab === "promo";
@@ -162,7 +170,25 @@ export default function MarketplaceUnifiedPageV3() {
       {/* Products Content */}
       {(tab === "products" || tab === "promo") && (
         <>
-          {loading ? (
+          {/* Multi-item promo builder toggle */}
+          {tab === "promo" && (
+            <div className="flex items-center gap-3">
+              <button onClick={() => setShowPromoBuilder(!showPromoBuilder)} data-testid="toggle-promo-builder"
+                className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${showPromoBuilder ? "bg-[#20364D] text-white" : "border border-slate-200 text-[#20364D] hover:bg-slate-50"}`}>
+                {showPromoBuilder ? "Browse Items" : "Build Multi-Item Quote"}
+              </button>
+            </div>
+          )}
+
+          {tab === "promo" && showPromoBuilder ? (
+            <MultiPromoCustomizationBuilder
+              customerId={user?.id || "guest"}
+              promoProducts={filteredProducts}
+              onSubmitted={() => setShowPromoBuilder(false)}
+            />
+          ) : (
+            <>
+              {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
@@ -195,17 +221,30 @@ export default function MarketplaceUnifiedPageV3() {
               )}
             </div>
           )}
+            </>
+          )}
         </>
       )}
 
       {/* Services Content */}
       {tab === "services" && (
-        selectedService ? (
+        showServiceBuilder ? (
+          <MultiServiceRequestBuilder
+            customerId={user?.id || "guest"}
+            onSubmitted={() => setShowServiceBuilder(false)}
+          />
+        ) : selectedService ? (
           <ServiceDetailShowcase service={selectedService} onBack={() => setSelectedService(null)}>
             <ServiceQuoteRequestFormV2 service={selectedService} />
           </ServiceDetailShowcase>
         ) : (
-          <ServiceCardGrid services={services} onOpen={setSelectedService} />
+          <div className="space-y-4">
+            <button onClick={() => setShowServiceBuilder(true)} data-testid="toggle-service-builder"
+              className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-[#20364D] hover:bg-slate-50 transition-colors">
+              Build Multi-Service Request
+            </button>
+            <ServiceCardGrid services={services} onOpen={setSelectedService} />
+          </div>
         )
       )}
 

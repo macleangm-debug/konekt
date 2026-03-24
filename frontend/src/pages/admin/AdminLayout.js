@@ -40,6 +40,7 @@ const navItems = [
   { path: '/admin/products', label: 'Products', icon: Package, moduleKey: 'inventory' },
   { path: '/admin/inventory', label: 'Stock Items', icon: Boxes, moduleKey: 'inventory' },
   { type: 'divider', label: 'Settings', moduleKey: 'settings' },
+  { path: '/admin/service-taxonomy', label: 'Service Taxonomy', icon: Layers, moduleKey: 'settings' },
   { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
