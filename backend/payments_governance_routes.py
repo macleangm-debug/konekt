@@ -18,6 +18,8 @@ def _stamp():
 async def accept_quote_create_invoice(payload: dict, request: Request):
     db = request.app.mongodb
     quote_id = payload.get("quote_id")
+    if not quote_id:
+        raise HTTPException(status_code=400, detail="quote_id is required")
     accepted_by_role = payload.get("accepted_by_role", "customer")
     if accepted_by_role not in ["customer", "sales"]:
         raise HTTPException(status_code=400, detail="accepted_by_role must be customer or sales")

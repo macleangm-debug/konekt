@@ -7,86 +7,101 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Final Commercial Flow Pack (Implemented March 24, 2026)
+## Governance Model (Implemented March 24, 2026)
 
-### My Account (`/account/my-account`) — MyAccountPageV2
-- Personal/Business account type toggle
-- Phone prefix dropdown (+255, +254, +256, +250, +257)
-- Contact fields: name, phone (with prefix), email
-- Business fields: business name, TIN, VAT number (shown when Business selected)
-- Default Quote & Invoice Details: client name, phone, email, TIN
-- Up to 3 delivery addresses with labels, default selection, add/remove
-- Save persists to `customer_profiles` collection
+### Core Rule: Orders Created ONLY After Payment Approval
 
-### Cart → Checkout → Payment → Proof Flow (CartDrawerCompleteFlow)
-- **Step 1 (Cart)**: Quantity +/- controls, VAT (18%) breakdown, Remove items
-- **Step 2 (Checkout)**: Contact details, "Same as contact details" toggle for delivery, delivery address, invoice client details — all prefilled from profile
-- **Step 3 (Payment)**: Order confirmation, bank transfer details with copy-to-clipboard, payment proof upload form (payer name, reference number, amount)
-- **Step 4 (Done)**: Confirmation with order/invoice numbers, "Payment Under Review" status
-- Saves missing checkout details back to My Account profile
-- Creates: checkout + invoice + order + vendor orders + sales assignment + order events
-- AI Chat widget hides when cart is open
+**Fixed-Price Products Flow:**
+1. Customer adds products to cart
+2. Checkout creates **Invoice** (no order yet)
+3. Payment intent created (full or deposit)
+4. Customer uploads payment proof (camera/file, no transaction reference)
+5. Finance/Admin reviews proof in Finance Queue
+6. **On approval**: Order + Vendor Orders + Sales Assignment created
+7. On rejection: Invoice reverts to pending, customer can resubmit
 
-### Marketplace V5 (`/account/marketplace`) — MarketplaceUnifiedPageV3
-- **3 Tabs**: Products, Services, Promotional Materials
-- Adaptive search/filter with group dropdown
-- Skeleton loading + "Load More" lazy pagination (20 per page)
-- Products → Cart → Checkout (no quotes)
-- Services → Quote Request Form (via ServiceDetailShowcase)
-- Promotional Materials → filtered product view
+**Services / Custom Work Flow:**
+1. Customer or Sales creates quote request
+2. Sales prepares quote via Instant Quote Builder
+3. Customer or Sales accepts quote
+4. Invoice created from accepted quote
+5. Same payment → proof → approval flow as above
 
-### Orders Split View (`/account/orders`) — OrdersSplitView
-- **Table view** (default): Left list + right detail preview with items, totals, timeline
-- **Card view**: Grid of order cards with status badges
-- TableCardToggle component (reusable)
-- Human-readable status labels: Unpaid, Payment Under Review, Paid, Processing, Ready to Fulfill
-
-### Status Labels (Unified)
-| Raw Status | Display Label |
-|-----------|---------------|
-| pending | Awaiting Your Approval |
-| pending_payment | Unpaid |
-| payment_proof_uploaded | Payment Under Review |
-| paid | Paid |
-| approved | Accepted |
-| processing | Processing |
-
-### Payment Proof Approval Rules
-- **Uploadable by**: Customer
-- **Visible to**: Admin, Finance, Sales
-- **Approvable by**: Admin, Finance ONLY (Sales cannot approve)
-
-### Invoices & Quotes Pages
-- Updated with TableCardToggle
-- Status labels use human-readable mapping
-- Restored empty states with links back to marketplace
+### Payment Proof Rules
+- **No transaction reference field** — payer name + amount + file only
+- Camera capture or file upload supported
+- **Finance/Admin**: Can approve or reject
+- **Sales**: Can view but CANNOT approve (403 blocked)
 
 ---
 
 ## Backend API Endpoints
 
-### Customer Account (`profile_router`)
-- `GET /api/customer-account/profile?customer_id=<id>` — Returns profile with phone_prefix_options
-- `PUT /api/customer-account/profile` — Saves profile (addresses, business info, etc.)
-- `GET /api/customer-account/prefill?customer_id=<id>` — Returns saved details for checkout prefill
+### Payments Governance (`/api/payments-governance/*`)
+| Endpoint | Description |
+|----------|-------------|
+| `POST /product-checkout` | Creates invoice only (no order) |
+| `POST /invoice/payment-intent` | Creates payment intent (full/deposit) |
+| `POST /payment-proof` | Upload proof (no reference field) |
+| `GET /finance/queue` | Pending proofs for finance review |
+| `POST /finance/approve` | Approve → creates order + assignments |
+| `POST /finance/reject` | Reject with reason |
+| `POST /quote/accept` | Accept quote → create invoice |
+| `GET /customer/invoices` | Customer's invoices |
+| `GET /customer/payments` | Customer's payments |
 
-### Commercial Flow (`flow_router`)
-- `POST /api/commercial-flow/create-product-checkout` — Full checkout: order + invoice + vendor orders + sales assignment + event
-- `POST /api/commercial-flow/payment-proof` — Upload payment proof
-- `POST /api/commercial-flow/payment-proof/approve` — Finance/Admin only approval
-- `POST /api/commercial-flow/quote/accept-and-create-invoice` — Quote → Invoice (full or deposit)
-- `GET /api/commercial-flow/orders/split-view?customer_id=<id>` — Orders with timeline
-- `GET /api/commercial-flow/invoices?customer_id=<id>` — Invoices with status labels
-- `GET /api/commercial-flow/payment-proofs?invoice_id=<id>` — Payment proofs for invoice
+### Customer Account (`/api/customer-account/*`)
+| Endpoint | Description |
+|----------|-------------|
+| `GET /profile` | Profile with phone prefixes + addresses |
+| `PUT /profile` | Save profile |
+| `GET /prefill` | Prefill for checkout |
 
 ---
 
-## Business Rules
-- **Fixed-price products**: Cart → Checkout → Payment → Proof (NO quotes)
-- **Services / Custom items**: Quote Request → Quote Approval → Invoice
-- **Instant Quote Builder**: Sales-side only (never visible to customers)
-- **Payment types**: Full Payment or Deposit + Balance
-- **Deposit flow**: Quote accepted → deposit invoice → deposit paid → service starts → balance invoice later
+## Frontend Components
+
+### Cart Drawer (4-step governance flow)
+- **Step 1 (Cart)**: Items, qty +/-, VAT breakdown
+- **Step 2 (Checkout)**: Contact + "Same as contact" toggle + Delivery + Invoice details
+- **Step 3 (Payment)**: Bank details with copy, camera/file proof upload
+- **Step 4 (Done)**: "Payment Under Review" — order created after approval
+- Saves missing details back to profile
+- Hides AI assistant when open
+
+### Finance Payments Queue (`/admin/finance-queue`)
+- Split-view: proof list (left) + detail panel (right)
+- Approve/Reject with reason
+- Shows invoice items, amounts, payer details
+
+### Admin Orders Split View (`/admin/orders`)
+- Table/Card toggle (table default on desktop)
+- Split-view: order list (left) + detail (right)
+- Customer info, delivery, items, totals, timeline
+
+### Marketplace V5 (`/account/marketplace`)
+- **3 Tabs**: Products, Services, Promotional Materials
+- Adaptive search + group filter
+- Skeleton loading + "Load More" lazy pagination
+- Product detail modal with variants (colors, sizes)
+
+### My Account (`/account/my-account`)
+- Personal/Business toggle
+- Phone prefix dropdowns
+- Up to 3 delivery addresses with default
+- Quote/Invoice client defaults
+
+---
+
+## Status Labels
+| Raw Status | Display Label |
+|-----------|---------------|
+| pending | Awaiting Your Approval |
+| pending_payment | Unpaid |
+| payment_under_review | Payment Under Review |
+| paid | Paid |
+| processing | Processing |
+| proof_rejected | Proof Rejected |
 
 ---
 
@@ -103,24 +118,23 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ## Remaining Tasks
 
 ### P0
-- [ ] Configure Twilio WhatsApp credentials (deferred — waiting for user keys)
+- [ ] Configure Twilio WhatsApp credentials
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack
 - [x] Checkout Flow
 - [x] Sales Command Center + Quote Engine
 - [x] Customer Account Unification
-- [x] Customer Payment Flow Completion
-- [x] Final Commercial Flow Pack (My Account, Cart/Checkout/Payment, Marketplace V5, Orders Split View, Status Labels)
+- [x] Customer Payment Flow
+- [x] Final Commercial Flow Pack
+- [x] Payments + Fulfillment Governance Pack
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
 
 ### P2 - Growth
-- [ ] One-click reorder
+- [ ] One-click reorder / Saved Carts
 - [ ] AI-assisted quote suggestions
-- [ ] Quote templates per service
-- [ ] WhatsApp checkout trigger
 - [ ] Mobile-first optimization
 - [ ] Advanced analytics
 - [ ] Push notifications
@@ -128,13 +142,14 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ---
 
 ## Testing History
-| Iteration | Feature | Result |
-|-----------|---------|--------|
+| Iter | Feature | Result |
+|------|---------|--------|
 | 92 | UI Polish | 100% |
 | 93 | Checkout Flow | 100% |
 | 94 | Quote Engine + Sales Command | 100% |
 | 95 | Customer Account Unification | 100% |
-| 96 | Customer Payment Flow (simple) | 100% (13/13 backend) |
-| 97 | Final Commercial Flow Pack | 100% backend (19/19), 95% frontend |
+| 96 | Customer Payment Flow | 100% |
+| 97 | Final Commercial Flow | 100% |
+| 98 | Payments + Fulfillment Governance | 94.7% backend (18/19), 100% frontend |
 
 *Last updated: March 24, 2026*
