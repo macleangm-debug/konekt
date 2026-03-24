@@ -7,56 +7,71 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Checkout Flow (Implemented March 23, 2026)
+## Instant Quote Engine (Implemented March 24, 2026)
 
-### Stripe-Level In-Flow Checkout
-**Flow**: Cart Drawer → Checkout Panel (slide-in) → Quote Submitted
+### Customer-Facing Real-Time Pricing
+**Route**: `/account/instant-quote`  
+**API**: `POST /api/instant-quote/preview`
 
-| Step | Component | Behavior |
-|------|-----------|----------|
-| 1 | Add to Cart | Item added, stays on page |
-| 2 | Cart Drawer | Right panel (z-50), shows items + total |
-| 3 | Checkout | Click → Checkout Panel slides in (z-60) |
-| 4 | Fill Details | Contact (auto-filled), Delivery, Notes |
-| 5 | Submit | Creates quote via `POST /api/customer/checkout-quote` |
-| 6 | Success | "Quote Submitted!" screen, clears cart |
+| Component | Value |
+|-----------|-------|
+| Company Margin | 20% |
+| Distribution Buffer | 10% |
+| VAT | 18% |
+
+**Example**: Base TZS 500,000 → Margin 100K + Buffer 50K + VAT 117K = **Total TZS 767,000**
 
 ### Components
-- `CheckoutPanel.jsx` — `/components/checkout/CheckoutPanel.jsx`
-- `CartDrawerV2.jsx` — `/components/cart/CartDrawerV2.jsx` (updated)
-- Backend: `customer_checkout_quote_routes.py` — `POST /api/customer/checkout-quote`
-
-### Features
-- Auto-fill user name from localStorage
-- VAT calculation (18%)
-- Trust element: "No payment required now"
-- Sales Assist link inside checkout
-- Form validation (phone + address required)
-- Animated success screen with green checkmark
+- `InstantQuotePage.jsx` — Page wrapper
+- `InstantQuoteBuilderPanel.jsx` — Input + preview layout
+- `InstantQuotePreviewCard.jsx` — Breakdown display with gradient total
+- `useInstantQuotePreview.js` — API hook
 
 ---
 
-## UI Polish Pack (Completed March 23, 2026)
+## Sales Command Center (Implemented March 24, 2026)
 
-### Phase 1: Logo System
-- **BrandLogoFinal** — Single image, CSS `brightness-0 invert` for dark backgrounds
-- Sizes: sm (h-8), md (h-12), lg (h-16), xl (h-24)
-- Replaced all legacy BrandLogoV2/BrandLogo references
+### Uber-Style Dispatch Board
+**Route**: `/staff/command-center`  
+**API**: `GET /api/sales-command/dispatch-summary`
 
-### Phase 2: Design System
-- Colors: `#0f172a` text, `#64748b` muted, `#f8fafc` bg, `#1f3a5f` brand
-- Cards: `rounded-xl border border-gray-200 bg-white`
-- Spacing: `gap-4`, `p-5`, `mb-6`
+| Column | Color | Data Source |
+|--------|-------|-------------|
+| New Leads | Blue | `leads` collection, status=new |
+| Follow-ups Due | Yellow | `quotes` collection, status=pending |
+| Overdue | Red | Leads > 24h without action |
+| Ready to Close | Green | `quotes` collection, status=approved |
 
-### Phase 3: Layout Upgrades
-- Sidebar: Clean white, prominent logo, rounded-lg nav
-- Dashboard Hero: Gradient, CTAs
-- Marketplace: Premium cards, sticky filters
+### Action APIs
+- `POST /api/sales-command/claim-lead` — Assign lead to salesperson
+- `POST /api/sales-command/mark-followup` — Mark quote as followed up
 
-### Phase 4: Polish
-- Buttons: `rounded-lg`, hover lift
-- Micro-interactions everywhere
-- Consistent typography
+### Components
+- `SalesCommandCenterV4.jsx` — Page with hero + dispatch board
+- `SalesDispatchQueueBoard.jsx` — 4-column Kanban board
+- `SalesPriorityCard.jsx` — Color-coded priority column
+- `useSalesDispatchBoard.js` — API hook
+
+---
+
+## Checkout Flow (Implemented March 23, 2026)
+
+### Stripe-Level In-Flow Checkout
+**Flow**: Cart Drawer → Checkout Panel (slide-in) → Quote Submitted  
+**API**: `POST /api/customer/checkout-quote`
+
+- Auto-fill user info, VAT calculation (18%)
+- Trust element: "No payment required now"
+- Sales Assist link, animated success screen
+
+---
+
+## UI Polish Pack (Implemented March 23, 2026)
+
+- **BrandLogoFinal** — Single image, CSS invert for dark backgrounds
+- **Design System** — Consistent colors, typography, spacing
+- **Layout Upgrades** — Sidebar, dashboard hero, marketplace cards
+- **Micro-interactions** — Hover lift, transitions
 
 ---
 
@@ -69,30 +84,6 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Architecture
-```
-/app
-├── backend/
-│   ├── customer_checkout_quote_routes.py  (checkout API)
-│   ├── server.py
-│   └── ...
-├── frontend/
-│   ├── public/branding/   (logo files)
-│   └── src/
-│       ├── components/
-│       │   ├── branding/BrandLogoFinal.jsx
-│       │   ├── cart/CartDrawerV2.jsx
-│       │   ├── checkout/CheckoutPanel.jsx  (NEW)
-│       │   ├── growth/
-│       │   ├── public/
-│       │   └── ui/
-│       ├── contexts/CartDrawerContext.jsx
-│       ├── layouts/CustomerPortalLayoutV2.jsx
-│       └── pages/
-```
-
----
-
 ## Remaining Tasks
 
 ### P0 - Immediate
@@ -100,7 +91,9 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack - DONE
-- [x] Stripe-level Checkout Flow - DONE
+- [x] Checkout Flow - DONE
+- [x] Instant Quote Engine - DONE
+- [x] Sales Command Center - DONE
 - [ ] Final Launch Verification Checklist
 - [ ] Connect live payment gateway
 - [ ] DNS/SSL setup
@@ -108,9 +101,7 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ### P2 - Growth
 - [ ] One-click reorder
 - [ ] Saved addresses
-- [ ] Auto quote preview (instant pricing)
 - [ ] WhatsApp checkout trigger
-- [ ] Sales Command Center (Uber-style dispatch)
 - [ ] Mobile-first optimization
 - [ ] Advanced analytics
 - [ ] Push notifications
@@ -118,7 +109,10 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ---
 
 ## Testing
-- iteration_92.json — UI Polish (100% pass)
-- iteration_93.json — Checkout Flow (100% pass, backend 7/7, frontend all flows)
+| Iteration | Feature | Result |
+|-----------|---------|--------|
+| 92 | UI Polish Pack | 100% pass |
+| 93 | Checkout Flow | 100% pass (backend 7/7) |
+| 94 | Instant Quote + Sales Command | 100% pass (backend 14/14) |
 
-*Last updated: March 23, 2026*
+*Last updated: March 24, 2026*
