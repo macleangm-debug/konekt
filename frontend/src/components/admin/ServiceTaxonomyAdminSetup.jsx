@@ -87,8 +87,8 @@ export default function ServiceTaxonomyAdminSetup() {
         </div>
       ) : (
         <div className="space-y-3">
-          {rows.map((row) => (
-            <div key={row.group_key} className="rounded-2xl border border-slate-200 bg-white overflow-hidden" data-testid={`group-${row.group_key}`}>
+          {rows.map((row, idx) => (
+            <div key={`${row.group_key}-${idx}`} className="rounded-2xl border border-slate-200 bg-white overflow-hidden" data-testid={`group-${row.group_key}`}>
               <button onClick={() => toggleExpand(row.group_key)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors text-left">
                 <div className="flex items-center gap-3">
                   <Layers size={18} className="text-[#20364D]" />
