@@ -318,6 +318,10 @@ import SalesQueueIntelligencePage from "@/pages/staff/SalesQueueIntelligencePage
 import StaffPerformanceDashboardPage from "@/pages/staff/StaffPerformanceDashboardPage";
 import SupervisorPerformanceDashboardPage from "@/pages/admin/SupervisorPerformanceDashboardPage";
 
+// Instant Quote Engine & Sales Command Center
+import InstantQuotePage from "@/pages/account/InstantQuotePage";
+import SalesCommandCenterV4 from "@/pages/dashboard/SalesCommandCenterV4";
+
 // Services Pages (Improved)
 import ServicesPageImproved from "@/pages/public/ServicesPageImproved";
 import AccountServicesDiscoveryPage from "@/pages/customer/AccountServicesDiscoveryPage";
@@ -778,6 +782,8 @@ function App() {
           <Route path="help" element={<HelpPageV3 />} />
           {/* Sales Rating Tasks */}
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
+          {/* Instant Quote Engine */}
+          <Route path="instant-quote" element={<InstantQuotePage />} />
         </Route>
         
         {/* Staff Workspace Route */}
@@ -827,6 +833,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <ProductionJobsPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/command-center" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesCommandCenterV4 />
             </AdminRoute>
           </AdminAuthProvider>
         } />

@@ -2472,6 +2472,15 @@ app.include_router(admin_deliveries_router)
 
 app.include_router(customer_checkout_quote_router)
 
+# Instant Quote Engine
+from instant_quote_engine_routes import router as instant_quote_router
+app.include_router(instant_quote_router)
+
+# Sales Command Center
+from sales_command_center_routes import router as sales_command_router
+app.include_router(sales_command_router)
+
+
 app.include_router(customer_in_account_service_router)
 
 # Customer Notifications & Activity Feed
