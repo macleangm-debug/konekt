@@ -7,41 +7,46 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 
 ---
 
-## Sales Command Center (Updated March 24, 2026)
+## Customer Account Unification (Implemented March 24, 2026)
 
-### Uber-Style Dispatch Board + Instant Quote Builder
-**Route**: `/staff/command-center` (Staff/Admin only)
+### Unified Marketplace (`/account/marketplace`)
+- **Products Tab** (default): 41 products in compact 5-column grid with Add button → Cart Drawer
+- **Services Tab**: 4 service templates → Detail Showcase → Quote Request Form
+- Tab state synced via URL params (`?tab=products` / `?tab=services`)
 
-**Layout**:
-1. **Hero** — Title, refresh button
-2. **Dispatch Board** — 4 priority columns (New Leads, Follow-ups Due, Overdue, Ready to Close)
-3. **Instant Quote Builder** — Embedded below dispatch. Click a lead → auto-fills builder
+### Removed from Customer Side
+- Cart page (replaced by Cart Drawer + topbar button)
+- Services page (merged into Marketplace Services tab)
+- Let Sales Assist page (available as link in Cart Drawer checkout)
 
-**APIs**:
-- `GET /api/sales-command/dispatch-summary` — Returns counts + lists
-- `POST /api/sales-command/claim-lead` — Assign lead
-- `POST /api/sales-command/mark-followup` — Mark followed up
-- `POST /api/instant-quote/preview` — Calculate pricing with margin/buffer/VAT
+### New Components
+| Component | Purpose |
+|-----------|---------|
+| `MarketplaceUnifiedPageV3.jsx` | Products + Services tabs |
+| `ProductCardCompact.jsx` | Compact product card with Add button |
+| `ServiceCardGrid.jsx` | Service template cards |
+| `ServiceDetailShowcase.jsx` | Service detail with hero + highlights |
+| `ServiceQuoteRequestFormV2.jsx` | Contact + Invoice Details + Brief form |
+| `CartTopbarButton.jsx` | Header cart button with badge counter |
+| `EmptyQuotesStateV2.jsx` | Empty state for quotes page |
+| `EmptyInvoicesStateV2.jsx` | Empty state for invoices page |
+| `ApproveQuoteToInvoiceButton.jsx` | Quote approval action |
 
-**Pricing Engine**:
-| Component | Value |
-|-----------|-------|
-| Company Margin | 20% |
-| Distribution Buffer | 10% |
-| VAT | 18% |
-
-**Key Decision**: Instant Quote moved from customer-facing (`/account/instant-quote`) to sales-only tool embedded in Command Center. Customers see "Request Quote" → Sales builds quote internally.
+### Backend API
+- `POST /api/service-requests-quick` — Simplified service quote request (contact, invoice details, brief)
 
 ---
 
-## Checkout Flow (March 23, 2026)
+## Sales Command Center (`/staff/command-center`)
+- 4-column dispatch board (New Leads, Follow-ups, Overdue, Ready to Close)
+- Instant Quote Builder (embedded, sales-only)
+- Lead auto-fill when clicking from dispatch board
+
+---
+
+## Checkout Flow
 Cart Drawer → Checkout Panel (slide-in) → Quote Submitted  
 `POST /api/customer/checkout-quote`
-
----
-
-## UI Polish Pack (March 23, 2026)
-BrandLogoFinal, Design System, Layout Upgrades, Micro-interactions
 
 ---
 
@@ -56,23 +61,23 @@ BrandLogoFinal, Design System, Layout Upgrades, Micro-interactions
 
 ## Remaining Tasks
 
-### P0 - Immediate
-- [ ] Configure Twilio credentials for WhatsApp
+### P0
+- [ ] Configure Twilio WhatsApp credentials
 
 ### P1 - Launch Critical
-- [x] UI Polish Pack - DONE
-- [x] Checkout Flow - DONE
-- [x] Instant Quote Engine (sales-only) - DONE
-- [x] Sales Command Center - DONE
+- [x] UI Polish Pack
+- [x] Checkout Flow
+- [x] Sales Command Center + Quote Engine
+- [x] Customer Account Unification
 - [ ] Final Launch Verification Checklist
-- [ ] Connect live payment gateway
+- [ ] Live payment gateway
 - [ ] DNS/SSL setup
 
 ### P2 - Growth
 - [ ] One-click reorder
 - [ ] Saved addresses
-- [ ] Auto Quote Suggestions (AI-assisted pricing)
-- [ ] One-click Quote Templates per service
+- [ ] AI-assisted quote suggestions
+- [ ] Quote templates per service
 - [ ] WhatsApp checkout trigger
 - [ ] Mobile-first optimization
 - [ ] Advanced analytics
@@ -83,8 +88,9 @@ BrandLogoFinal, Design System, Layout Upgrades, Micro-interactions
 ## Testing
 | Iteration | Feature | Result |
 |-----------|---------|--------|
-| 92 | UI Polish Pack | 100% pass |
-| 93 | Checkout Flow | 100% pass |
-| 94 | Instant Quote + Sales Command | 100% pass (14/14 backend) |
+| 92 | UI Polish | 100% |
+| 93 | Checkout Flow | 100% |
+| 94 | Quote Engine + Sales Command | 100% |
+| 95 | Customer Account Unification | 100% (12/12 backend, all frontend) |
 
 *Last updated: March 24, 2026*
