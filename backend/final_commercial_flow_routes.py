@@ -136,20 +136,26 @@ async def create_product_checkout(payload: dict, request: Request):
     }
     invoice_doc = {
         "id": invoice_id, "invoice_number": f"KON-INV-{ts_stamp}",
-        "customer_id": customer_id, "checkout_id": checkout_id,
+        "customer_id": customer_id, "user_id": customer_id,
+        "checkout_id": checkout_id,
         "status": "pending_payment", "payment_status": "pending", "type": "product",
         "items": normalized_items, "subtotal_amount": subtotal,
-        "vat_amount": vat_amount, "total_amount": total_amount,
+        "vat_amount": vat_amount, "total_amount": total_amount, "total": total_amount,
         "quote_details": quote_details, "created_at": now,
     }
     order_doc = {
         "id": order_id, "order_number": f"KON-ORD-{ts_stamp}",
-        "customer_id": customer_id, "invoice_id": invoice_id, "checkout_id": checkout_id,
+        "customer_id": customer_id, "user_id": customer_id,
+        "invoice_id": invoice_id, "checkout_id": checkout_id,
         "assigned_sales_id": assigned_sales_id, "assigned_sales_name": assigned_sales_name,
-        "status": "pending_payment_confirmation", "type": "product",
+        "status": "pending_payment_confirmation",
+        "current_status": "pending_payment",
+        "type": "product",
         "items": normalized_items, "subtotal_amount": subtotal,
-        "vat_amount": vat_amount, "total_amount": total_amount,
-        "delivery": delivery, "vendor_ids": list(vendor_ids),
+        "vat_amount": vat_amount, "total_amount": total_amount, "total": total_amount,
+        "delivery": delivery,
+        "delivery_phone": delivery.get("phone", ""),
+        "vendor_ids": list(vendor_ids),
         "created_at": now, "updated_at": now,
     }
     await db.product_checkouts.insert_one(checkout_doc)
@@ -203,13 +209,26 @@ async def upload_payment_proof(payload: dict, request: Request):
     }
     await db.payment_proofs.insert_one(doc)
     doc.pop("_id", None)
+    admin_proof = {
+        **doc,
+        "customer_email": payload.get("customer_email", ""),
+        "payment_method": "bank_transfer",
+        "payment_date": now,
+        "invoice_number": "",
+    }
+    inv = await db.invoices.find_one({"id": invoice_id})
+    if inv:
+        admin_proof["invoice_number"] = inv.get("invoice_number", "")
+        admin_proof["invoice_id"] = invoice_id
+    await db.payment_proof_submissions.insert_one(admin_proof)
+    admin_proof.pop("_id", None)
     await db.invoices.update_one(
         {"id": invoice_id},
         {"$set": {"payment_status": "proof_uploaded", "status": "payment_proof_uploaded"}}
     )
     order = await db.orders.find_one({"invoice_id": invoice_id})
     if order:
-        await db.orders.update_one({"id": order["id"]}, {"$set": {"status": "payment_under_review"}})
+        await db.orders.update_one({"id": order["id"]}, {"$set": {"status": "payment_under_review", "current_status": "payment_proof_submitted"}})
     return {"ok": True, "payment_proof": doc}
 
 @flow_router.post("/payment-proof/approve")
@@ -227,6 +246,10 @@ async def approve_payment_proof(payload: dict, request: Request):
         {"id": proof_id},
         {"$set": {"status": "approved", "approved_at": now, "approved_by_role": approver_role}}
     )
+    await db.payment_proof_submissions.update_one(
+        {"id": proof_id},
+        {"$set": {"status": "approved", "approved_at": now, "approved_by": approver_role, "updated_at": now}}
+    )
     await db.invoices.update_one(
         {"id": proof["invoice_id"]},
         {"$set": {"status": "paid", "payment_status": "paid"}}
@@ -235,7 +258,7 @@ async def approve_payment_proof(payload: dict, request: Request):
     if order:
         await db.orders.update_one(
             {"id": order["id"]},
-            {"$set": {"status": "processing", "payment_status": "paid"}}
+            {"$set": {"status": "processing", "current_status": "processing", "payment_status": "paid"}}
         )
         await db.vendor_orders.update_many(
             {"order_id": order["id"]},

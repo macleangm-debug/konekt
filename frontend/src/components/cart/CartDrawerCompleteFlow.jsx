@@ -151,6 +151,7 @@ export default function CartDrawerCompleteFlow() {
       await api.post("/api/commercial-flow/payment-proof", {
         invoice_id: orderResult.invoice.id,
         customer_id: customerId,
+        customer_email: user?.email || form.client_email || "",
         payer_name: proof.payer_name,
         reference_number: proof.reference_number,
         amount_paid: Number(proof.amount_paid || total),
