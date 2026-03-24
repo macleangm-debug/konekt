@@ -2587,6 +2587,10 @@ app.include_router(commercial_flow_router)
 from payments_governance_routes import router as payments_governance_router
 app.include_router(payments_governance_router)
 
+# Admin Flow Fixes Routes
+from admin_flow_fixes_routes import router as admin_flow_fixes_router
+app.include_router(admin_flow_fixes_router)
+
 
 
 

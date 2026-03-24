@@ -127,7 +127,7 @@ export default function CartDrawerCompleteFlow() {
         payment_mode: "full",
       });
       setPaymentIntent(payRes.data.payment);
-      setProof((p) => ({ ...p, amount_paid: total.toString() }));
+      setProof((p) => ({ ...p, amount_paid: Math.round(total).toLocaleString() }));
       setStep("payment");
       await saveProfileIfMissing();
     } catch (err) {
@@ -152,7 +152,7 @@ export default function CartDrawerCompleteFlow() {
         customer_id: customerId,
         customer_email: user?.email || form.client_email || "",
         payer_name: proof.payer_name,
-        amount_paid: Number(proof.amount_paid || total),
+        amount_paid: Number(String(proof.amount_paid).replace(/,/g, "") || total),
         file_url: proof.file_url,
       });
       setProofSubmitted(true);
@@ -322,7 +322,20 @@ export default function CartDrawerCompleteFlow() {
                 <h3 className="text-base font-bold text-[#20364D]">Upload Payment Proof</h3>
                 <p className="text-xs text-slate-500">Capture or upload your bank transfer confirmation.</p>
                 <input data-testid="proof-payer-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Payer Name" value={proof.payer_name} onChange={(e) => setProof({ ...proof, payer_name: e.target.value })} />
-                <input data-testid="proof-amount" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Amount Paid" type="number" value={proof.amount_paid} onChange={(e) => setProof({ ...proof, amount_paid: e.target.value })} />
+
+                <div>
+                  <p className="text-xs text-slate-500 mb-1.5">Amount Paid</p>
+                  <div className="flex gap-2">
+                    <div className="border border-slate-200 rounded-xl px-4 py-3 bg-slate-50 text-[#20364D] font-semibold text-sm w-[70px] flex items-center justify-center shrink-0">TZS</div>
+                    <input data-testid="proof-amount" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm"
+                      placeholder="0" value={proof.amount_paid}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/[^0-9]/g, "");
+                        const formatted = digits ? Number(digits).toLocaleString() : "";
+                        setProof({ ...proof, amount_paid: formatted });
+                      }} />
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <button data-testid="proof-camera-btn" onClick={() => { fileInputRef.current?.setAttribute("capture", "environment"); fileInputRef.current?.click(); }}

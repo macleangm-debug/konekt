@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class KonektAPITester:
-    def __init__(self, base_url: str = "https://checkout-integration-7.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://admin-crm-stage.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.user_id = None

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Package, Palette, Megaphone, Search } from "lucide-react";
 import api from "../../lib/api";
 import ProductCardCompact from "../../components/marketplace/ProductCardCompact";
-import ProductOrPromoDetailModal from "../../components/products/ProductOrPromoDetailModal";
+import ProductPromoDetailModalV2 from "../../components/products/ProductPromoDetailModalV2";
 import ServiceCardGrid from "../../components/services/ServiceCardGrid";
 import ServiceDetailShowcase from "../../components/services/ServiceDetailShowcase";
 import ServiceQuoteRequestFormV2 from "../../components/services/ServiceQuoteRequestFormV2";
@@ -171,7 +171,7 @@ export default function MarketplaceUnifiedPageV3() {
               <p className="text-xs text-slate-400">{filteredProducts.length} {tab === "promo" ? "promotional item" : "product"}{filteredProducts.length !== 1 ? "s" : ""}</p>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {visibleProducts.map((product) => (
-                  <ProductCardCompact key={product.id} product={product} onDetail={setDetailItem} />
+                  <ProductCardCompact key={product.id} product={product} onDetail={setDetailItem} isPromo={tab === "promo"} />
                 ))}
               </div>
               {hasMore && (
@@ -210,11 +210,11 @@ export default function MarketplaceUnifiedPageV3() {
       )}
 
       {/* Product Detail Modal */}
-      <ProductOrPromoDetailModal
+      <ProductPromoDetailModalV2
         item={detailItem}
         open={!!detailItem}
         onClose={() => setDetailItem(null)}
-        onAddToCart={(item) => addItem({ ...item, price: item.base_price || item.price, quantity: 1 })}
+        isPromo={tab === "promo"}
       />
     </div>
   );

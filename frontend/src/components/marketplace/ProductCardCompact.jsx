@@ -1,13 +1,14 @@
 import React from "react";
-import { Package } from "lucide-react";
+import { Package, FileText } from "lucide-react";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
 }
 
-export default function ProductCardCompact({ product, onDetail }) {
+export default function ProductCardCompact({ product, onDetail, isPromo = false }) {
   const { addItem } = useCartDrawer();
+  const price = product?.price ?? product?.base_price ?? product?.blank_unit_price ?? product?.unit_price ?? 0;
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group" data-testid={`product-card-${product?.id}`}>
@@ -22,14 +23,24 @@ export default function ProductCardCompact({ product, onDetail }) {
         <button onClick={() => onDetail?.(product)} className="text-sm font-semibold text-[#0f172a] leading-5 line-clamp-2 text-left hover:underline">{product?.name}</button>
         <div className="text-xs text-[#94a3b8] mt-1">{product?.category || product?.branch || ""}</div>
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <span className="text-sm font-semibold text-[#0f172a]">{money(product?.base_price || product?.price || 0)}</span>
-          <button
-            onClick={() => addItem({ ...product, price: product?.base_price || product?.price, quantity: 1 })}
-            className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors"
-            data-testid={`add-to-cart-${product?.id}`}
-          >
-            Add
-          </button>
+          <span className="text-sm font-semibold text-[#0f172a]">{money(price)}</span>
+          {isPromo ? (
+            <button
+              onClick={() => onDetail?.(product)}
+              className="rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 transition-colors flex items-center gap-1"
+              data-testid={`request-quote-${product?.id}`}
+            >
+              <FileText size={10} /> Quote
+            </button>
+          ) : (
+            <button
+              onClick={() => addItem({ ...product, price: Number(price), quantity: 1 })}
+              className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors"
+              data-testid={`add-to-cart-${product?.id}`}
+            >
+              Add
+            </button>
+          )}
         </div>
       </div>
     </div>
