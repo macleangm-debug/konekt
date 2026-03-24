@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Package, Palette, Megaphone, Search, Filter } from "lucide-react";
+import { Package, Palette, Megaphone, Search } from "lucide-react";
 import api from "../../lib/api";
 import ProductCardCompact from "../../components/marketplace/ProductCardCompact";
+import ProductOrPromoDetailModal from "../../components/products/ProductOrPromoDetailModal";
 import ServiceCardGrid from "../../components/services/ServiceCardGrid";
 import ServiceDetailShowcase from "../../components/services/ServiceDetailShowcase";
 import ServiceQuoteRequestFormV2 from "../../components/services/ServiceQuoteRequestFormV2";
+import { useCartDrawer } from "../../contexts/CartDrawerContext";
 
 const TABS = [
   { key: "products", label: "Products", icon: Package },
@@ -39,6 +41,8 @@ export default function MarketplaceUnifiedPageV3() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [detailItem, setDetailItem] = useState(null);
+  const { addItem } = useCartDrawer();
 
   useEffect(() => {
     api.get("/api/service-request-templates").then((res) => {
@@ -167,7 +171,7 @@ export default function MarketplaceUnifiedPageV3() {
               <p className="text-xs text-slate-400">{filteredProducts.length} {tab === "promo" ? "promotional item" : "product"}{filteredProducts.length !== 1 ? "s" : ""}</p>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {visibleProducts.map((product) => (
-                  <ProductCardCompact key={product.id} product={product} />
+                  <ProductCardCompact key={product.id} product={product} onDetail={setDetailItem} />
                 ))}
               </div>
               {hasMore && (
@@ -204,6 +208,14 @@ export default function MarketplaceUnifiedPageV3() {
           <ServiceCardGrid services={services} onOpen={setSelectedService} />
         )
       )}
+
+      {/* Product Detail Modal */}
+      <ProductOrPromoDetailModal
+        item={detailItem}
+        open={!!detailItem}
+        onClose={() => setDetailItem(null)}
+        onAddToCart={(item) => addItem({ ...item, price: item.base_price || item.price, quantity: 1 })}
+      />
     </div>
   );
 }

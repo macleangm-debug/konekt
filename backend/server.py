@@ -2583,6 +2583,10 @@ from final_commercial_flow_routes import profile_router as commercial_profile_ro
 app.include_router(commercial_profile_router)
 app.include_router(commercial_flow_router)
 
+# Payments + Fulfillment Governance Routes
+from payments_governance_routes import router as payments_governance_router
+app.include_router(payments_governance_router)
+
 
 
 

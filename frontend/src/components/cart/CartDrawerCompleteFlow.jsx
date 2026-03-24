@@ -1,17 +1,17 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../lib/api";
-import { X, Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy } from "lucide-react";
+import { Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy, Camera, Image } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
 const BANK_DETAILS = {
-  bank: "CRDB Bank PLC",
-  account_name: "Konekt Ltd",
-  account_number: "0150 2930 0000",
-  branch: "Dar es Salaam Main",
-  swift: "CORUTZTZ",
+  "Bank": "CRDB Bank PLC",
+  "Account Name": "Konekt Ltd",
+  "Account Number": "0150 2930 0000",
+  "Branch": "Dar es Salaam Main",
+  "SWIFT": "CORUTZTZ",
 };
 
 export default function CartDrawerCompleteFlow() {
@@ -21,10 +21,12 @@ export default function CartDrawerCompleteFlow() {
   const [step, setStep] = useState("cart");
   const [prefixes, setPrefixes] = useState(["+255"]);
   const [sameAsContact, setSameAsContact] = useState(false);
-  const [orderResult, setOrderResult] = useState(null);
+  const [invoiceResult, setInvoiceResult] = useState(null);
+  const [paymentIntent, setPaymentIntent] = useState(null);
   const [proofSubmitted, setProofSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState("");
+  const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
     client_name: "", client_phone_prefix: "+255", client_phone: "", client_email: "",
@@ -33,7 +35,7 @@ export default function CartDrawerCompleteFlow() {
     invoice_client_name: "", invoice_client_phone_prefix: "+255",
     invoice_client_phone: "", invoice_client_email: "", invoice_client_tin: "",
   });
-  const [proof, setProof] = useState({ payer_name: "", reference_number: "", amount_paid: "" });
+  const [proof, setProof] = useState({ payer_name: "", amount_paid: "", file_url: "", file_name: "" });
 
   const loadPrefill = useCallback(async () => {
     if (!open) return;
@@ -61,21 +63,15 @@ export default function CartDrawerCompleteFlow() {
   useEffect(() => { loadPrefill(); }, [loadPrefill]);
 
   useEffect(() => {
-    if (!open) { setStep("cart"); setOrderResult(null); setProofSubmitted(false); }
+    if (!open) { setStep("cart"); setInvoiceResult(null); setPaymentIntent(null); setProofSubmitted(false); }
   }, [open]);
 
   useEffect(() => {
     if (sameAsContact) {
-      setForm((prev) => ({
-        ...prev,
-        recipient_name: prev.client_name,
-        recipient_phone_prefix: prev.client_phone_prefix,
-        recipient_phone: prev.client_phone,
-      }));
+      setForm((prev) => ({ ...prev, recipient_name: prev.client_name, recipient_phone_prefix: prev.client_phone_prefix, recipient_phone: prev.client_phone }));
     }
   }, [sameAsContact]);
 
-  // Dispatch event to hide AI assistant when cart is open
   useEffect(() => {
     window.dispatchEvent(new CustomEvent("konekt-cart-state", { detail: { open } }));
   }, [open]);
@@ -99,11 +95,7 @@ export default function CartDrawerCompleteFlow() {
       if (!existing.contact_name && form.client_name) updates.contact_name = form.client_name;
       if (!existing.phone && form.client_phone) updates.phone = form.client_phone;
       if (!existing.email && form.client_email) updates.email = form.client_email;
-      if (!existing.phone_prefix && form.client_phone_prefix) updates.phone_prefix = form.client_phone_prefix;
       if (!existing.quote_client_name && form.invoice_client_name) updates.quote_client_name = form.invoice_client_name;
-      if (!existing.quote_client_phone && form.invoice_client_phone) updates.quote_client_phone = form.invoice_client_phone;
-      if (!existing.quote_client_email && form.invoice_client_email) updates.quote_client_email = form.invoice_client_email;
-      if (!existing.quote_client_tin && form.invoice_client_tin) updates.quote_client_tin = form.invoice_client_tin;
       const addrs = existing.delivery_addresses || [];
       if (addrs.length === 0 && form.address_line) {
         updates.delivery_addresses = [{
@@ -118,23 +110,23 @@ export default function CartDrawerCompleteFlow() {
     } catch {}
   };
 
+  // Step 1 → Step 2: Checkout creates invoice (NO order)
   const checkout = async () => {
     setSubmitting(true);
     try {
-      const res = await api.post("/api/commercial-flow/create-product-checkout", {
+      const res = await api.post("/api/payments-governance/product-checkout", {
         customer_id: customerId, items,
         vat_percent: 18,
-        delivery: {
-          recipient_name: form.recipient_name, phone_prefix: form.recipient_phone_prefix,
-          phone: form.recipient_phone, address_line: form.address_line,
-          city: form.city, region: form.region,
-        },
-        quote_details: {
-          client_name: form.invoice_client_name, client_phone: form.invoice_client_phone,
-          client_email: form.invoice_client_email, client_tin: form.invoice_client_tin,
-        },
+        delivery: { recipient_name: form.recipient_name, phone_prefix: form.recipient_phone_prefix, phone: form.recipient_phone, address_line: form.address_line, city: form.city, region: form.region },
+        quote_details: { client_name: form.invoice_client_name, client_phone: form.invoice_client_phone, client_email: form.invoice_client_email, client_tin: form.invoice_client_tin },
       });
-      setOrderResult(res.data);
+      setInvoiceResult(res.data);
+      // Auto-create payment intent
+      const payRes = await api.post("/api/payments-governance/invoice/payment-intent", {
+        invoice_id: res.data.invoice.id,
+        payment_mode: "full",
+      });
+      setPaymentIntent(payRes.data.payment);
       setProof((p) => ({ ...p, amount_paid: total.toString() }));
       setStep("payment");
       await saveProfileIfMissing();
@@ -144,17 +136,24 @@ export default function CartDrawerCompleteFlow() {
     setSubmitting(false);
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setProof((p) => ({ ...p, file_url: url, file_name: file.name }));
+  };
+
   const submitProof = async () => {
-    if (!orderResult?.invoice?.id) return;
+    if (!paymentIntent?.id) return;
     setSubmitting(true);
     try {
-      await api.post("/api/commercial-flow/payment-proof", {
-        invoice_id: orderResult.invoice.id,
+      await api.post("/api/payments-governance/payment-proof", {
+        payment_id: paymentIntent.id,
         customer_id: customerId,
         customer_email: user?.email || form.client_email || "",
         payer_name: proof.payer_name,
-        reference_number: proof.reference_number,
         amount_paid: Number(proof.amount_paid || total),
+        file_url: proof.file_url,
       });
       setProofSubmitted(true);
       setStep("done");
@@ -170,10 +169,7 @@ export default function CartDrawerCompleteFlow() {
     setTimeout(() => setCopied(""), 2000);
   };
 
-  const finishAndClose = () => {
-    setItems([]);
-    closeCart();
-  };
+  const finishAndClose = () => { setItems([]); closeCart(); };
 
   const PrefixSelect = ({ value, onChange }) => (
     <select value={value} onChange={(e) => onChange(e.target.value)}
@@ -190,12 +186,12 @@ export default function CartDrawerCompleteFlow() {
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
           <div>
             <h2 className="text-xl font-bold text-[#20364D]">
-              {step === "cart" ? "Your Cart" : step === "checkout" ? "Complete Order" : step === "payment" ? "Payment" : "Order Confirmed"}
+              {step === "cart" ? "Your Cart" : step === "checkout" ? "Checkout" : step === "payment" ? "Payment" : "Submitted"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {step === "cart" ? `${(items || []).length} item${(items || []).length !== 1 ? "s" : ""}` :
                step === "checkout" ? "Review details and confirm" :
-               step === "payment" ? "Transfer & upload proof" : "Thank you for your order"}
+               step === "payment" ? "Transfer & upload proof" : "Your proof is under review"}
             </p>
           </div>
           <button data-testid="cart-continue-browsing-btn" onClick={() => setOpen(false)}
@@ -295,18 +291,18 @@ export default function CartDrawerCompleteFlow() {
           )}
 
           {/* STEP: PAYMENT */}
-          {step === "payment" && orderResult && (
+          {step === "payment" && invoiceResult && (
             <div className="space-y-5">
-              <div className="rounded-2xl bg-green-50 border border-green-200 p-4">
-                <p className="font-semibold text-green-800">Order {orderResult.order?.order_number} created</p>
-                <p className="text-sm text-green-700 mt-1">Invoice {orderResult.invoice?.invoice_number} is ready. Please complete bank transfer below.</p>
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4">
+                <p className="font-semibold text-amber-800">Invoice {invoiceResult.invoice?.invoice_number} created</p>
+                <p className="text-sm text-amber-700 mt-1">Complete payment below. Your order will be created once payment is confirmed by our finance team.</p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 p-4 space-y-3" data-testid="bank-details-section">
                 <h3 className="text-base font-bold text-[#20364D]">Bank Transfer Details</h3>
                 {Object.entries(BANK_DETAILS).map(([key, val]) => (
                   <div key={key} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                    <span className="text-sm text-slate-600 capitalize">{key.replace(/_/g, " ")}</span>
+                    <span className="text-sm text-slate-600">{key}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-[#20364D]">{val}</span>
                       <button onClick={() => copyToClipboard(val, key)} className="text-slate-400 hover:text-[#20364D] transition-colors">
@@ -317,16 +313,33 @@ export default function CartDrawerCompleteFlow() {
                 ))}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                   <span className="text-sm font-bold text-[#20364D]">Amount Due</span>
-                  <span className="text-lg font-bold text-[#20364D]">{money(total)}</span>
+                  <span className="text-lg font-bold text-[#20364D]">{money(paymentIntent?.amount_due || total)}</span>
                 </div>
+                <p className="text-xs text-slate-500">Use invoice number <strong>{invoiceResult.invoice?.invoice_number}</strong> as payment reference.</p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 p-4 space-y-3" data-testid="proof-upload-section">
                 <h3 className="text-base font-bold text-[#20364D]">Upload Payment Proof</h3>
-                <p className="text-xs text-slate-500">Once you've transferred, provide proof below for finance review.</p>
+                <p className="text-xs text-slate-500">Capture or upload your bank transfer confirmation.</p>
                 <input data-testid="proof-payer-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Payer Name" value={proof.payer_name} onChange={(e) => setProof({ ...proof, payer_name: e.target.value })} />
-                <input data-testid="proof-reference" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Transaction Reference Number" value={proof.reference_number} onChange={(e) => setProof({ ...proof, reference_number: e.target.value })} />
                 <input data-testid="proof-amount" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Amount Paid" type="number" value={proof.amount_paid} onChange={(e) => setProof({ ...proof, amount_paid: e.target.value })} />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button data-testid="proof-camera-btn" onClick={() => { fileInputRef.current?.setAttribute("capture", "environment"); fileInputRef.current?.click(); }}
+                    className="rounded-xl border border-slate-200 px-4 py-3 font-semibold text-[#20364D] hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    <Camera size={16} /> Use Camera
+                  </button>
+                  <button data-testid="proof-upload-btn" onClick={() => { fileInputRef.current?.removeAttribute("capture"); fileInputRef.current?.click(); }}
+                    className="rounded-xl border border-slate-200 px-4 py-3 font-semibold text-[#20364D] hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
+                    <Image size={16} /> Upload File
+                  </button>
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileUpload} />
+                {proof.file_name && (
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-2 text-sm text-green-800 flex items-center gap-2">
+                    <Check size={14} /> {proof.file_name}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -338,13 +351,13 @@ export default function CartDrawerCompleteFlow() {
                 <Check size={32} className="text-green-600" />
               </div>
               <h3 className="text-2xl font-bold text-[#20364D]">Payment Proof Submitted</h3>
-              <p className="text-slate-600">Your payment is under review. You will be notified once approved by our finance team.</p>
-              {orderResult && (
+              <p className="text-slate-600">Your payment is being reviewed by our finance team. Once approved, your order will be created and processing will begin.</p>
+              {invoiceResult && (
                 <div className="rounded-2xl bg-slate-50 p-4 text-left space-y-1">
-                  <p className="text-sm"><span className="text-slate-500">Order:</span> <span className="font-semibold text-[#20364D]">{orderResult.order?.order_number}</span></p>
-                  <p className="text-sm"><span className="text-slate-500">Invoice:</span> <span className="font-semibold text-[#20364D]">{orderResult.invoice?.invoice_number}</span></p>
+                  <p className="text-sm"><span className="text-slate-500">Invoice:</span> <span className="font-semibold text-[#20364D]">{invoiceResult.invoice?.invoice_number}</span></p>
                   <p className="text-sm"><span className="text-slate-500">Total:</span> <span className="font-semibold text-[#20364D]">{money(total)}</span></p>
                   <p className="text-sm"><span className="text-slate-500">Status:</span> <span className="font-semibold text-amber-600">Payment Under Review</span></p>
+                  <p className="text-xs text-slate-400 mt-2">Order will be created after finance approval.</p>
                 </div>
               )}
             </div>
@@ -376,13 +389,13 @@ export default function CartDrawerCompleteFlow() {
               </button>
               <button data-testid="cart-complete-payment-btn" onClick={checkout} disabled={submitting}
                 className="rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60">
-                {submitting ? "Processing..." : "Place Order"}
+                {submitting ? "Processing..." : "Confirm & Pay"}
               </button>
             </div>
           )}
 
           {step === "payment" && (
-            <button data-testid="submit-proof-btn" onClick={submitProof} disabled={submitting || !proof.reference_number}
+            <button data-testid="submit-proof-btn" onClick={submitProof} disabled={submitting || !proof.payer_name}
               className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
               <Upload size={16} /> {submitting ? "Submitting..." : "Submit Payment Proof"}
             </button>

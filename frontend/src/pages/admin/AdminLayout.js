@@ -54,6 +54,7 @@ const navItems = [
   { path: '/admin/country-launch-config', label: 'Country Launch', icon: Globe, moduleKey: 'marketing' },
   { path: '/admin/country-partner-applications', label: 'Partner Applications', icon: Building2, moduleKey: 'marketing' },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
+  { path: '/admin/finance-queue', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
   { path: '/admin/central-payments', label: 'Central Payments', icon: CreditCard, moduleKey: 'finance' },
   { path: '/admin/payments/record', label: 'Record Payment', icon: Coins, moduleKey: 'finance' },

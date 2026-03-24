@@ -55,6 +55,8 @@ import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminDashboardV2 from "@/pages/admin/AdminDashboardV2";
 import AdminOrders from "@/pages/admin/AdminOrders";
+import AdminOrdersSplitViewV2 from "@/components/orders/AdminOrdersSplitViewV2";
+import FinancePaymentsQueuePage from "@/components/finance/FinancePaymentsQueuePage";
 import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminStock from "@/pages/admin/AdminStock";
 import AdminMaintenance from "@/pages/admin/AdminMaintenance";
@@ -508,7 +510,8 @@ function App() {
           </AdminAuthProvider>
         }>
           <Route index element={<AdminDashboardV2 />} />
-          <Route path="orders" element={<AdminOrders />} />
+          <Route path="orders" element={<AdminOrdersSplitViewV2 />} />
+          <Route path="orders-legacy" element={<AdminOrders />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="stock" element={<AdminStock />} />
           <Route path="maintenance" element={<AdminMaintenance />} />
@@ -597,6 +600,7 @@ function App() {
           <Route path="group-markups" element={<GroupMarkupsPage />} />
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
           <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
+          <Route path="finance-queue" element={<FinancePaymentsQueuePage />} />
           {/* Staff Performance & Commission */}
           <Route path="supervisor-dashboard" element={<SupervisorDashboardPage />} />
           <Route path="commission-rules" element={<CommissionRulesPage />} />
