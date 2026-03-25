@@ -1,33 +1,38 @@
-<analysis>**original_problem_statement**: The user is finalizing the Launch + Growth Phase of a B2B e-commerce platform (Konekt). The user requested a complete architectural and UX overhaul of the Admin and Sales CRM sections (Passes 1-5). After successfully completing these and applying a patch for operational bugs (cart merging, notification triggers, invoice statuses, vendor visibility), the user provided a final specification to build the Core Engine consisting of: 1) A full Quote System, 2) A dedicated Sales CRM UI, and 3) Installment Payment Logic (Deposit + Balance splits).
+<analysis>**original_problem_statement**: The user is finalizing the Launch + Growth Phase of a B2B e-commerce platform (Konekt). The user requested standardizing the UI across all roles (Admin, Customer, Vendor) to use a strict Table + Right Drawer pattern and fixing Source of Truth data-wiring bugs where records (orders, invoices) were being created but not visible to the correct users. The user has provided a final code patch () to enforce these UI patterns and data queries.
 
-**User's preferred language**: English
+**User's preferred language**: INSTRUCT NEXT AGENT: Respond in English.
 
-**what currently exists?**: A fully functional B2B platform with a React frontend and FastAPI backend. The entire Admin UI has been refactored to follow a unified table-first + detail drawer design pattern. Operational bugs regarding cart duplicates, invoice status visibility, notifications, and vendor order matching have been patched and verified.
+**what currently exists?**: A fully functional B2B platform with a React frontend and FastAPI backend. The Core Engine (Quotes, Service CRM, Installment Logic) is complete. The backend data-wiring for notifications and order visibility has been heavily stabilized. The user has just uploaded a final codebase patch containing their exact frontend/backend code implementations for the Table+Drawer UI, Branded Previews, and exact API query logic.
 
 **Last working item**:
-    - Last item agent was working: Implementing the Core Engine (Quote System, Sales CRM UI, Installment Logic). The agent successfully created , registered it in , added endpoints to , and overwrote  to include the new Tabs and Quote Builder Modal.
+    - Last item agent was working: Analyzing and applying the user's latest code patch (). The agent successfully downloaded the zip, extracted it to , and ran a  to see what changed, but the session ended before the files could be applied to the  directory and tested.
     - Status: IN PROGRESS
-    - Agent Testing Done: N (Mid-implementation; backend routes and frontend admin UI updated but not fully completed or tested).
-    - Which testing method agent to use? both (testing_agent_v3_fork must be used to test the full end-to-end Service/Promo quote flow).
+    - Agent Testing Done: N (Patch not yet applied)
+    - Which testing method agent to use? both (The user specifically requested manual/smoke testing of 5 exact scenarios after patch application, followed by the testing agent).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:
-  Issue 1: Complete Core Engine Implementation (P0 🔴)
-     - Attempted fixes: The backend quote routes and the Admin Sales CRM UI are created. Still need to finalize the customer-facing quote acceptance, installment invoice generation, and customer invoice payment UI to handle partial/deposit payments.
+  Issue 1: Apply  and verify 5 specific UI/Data Gates (P0 🔴)
+     - Attempted fixes: The zip was extracted to . A diff was run showing changes in cart contexts, customer invoice/order pages, and admin layouts.
      - Next debug checklist: 
-        1. Verify  accurately handles  generation for installments.
-        2. Update customer-facing Quotes Page to handle accept/reject actions calling the new endpoints.
-        3. Update Customer Invoice UI to properly display and handle Deposit vs Balance payments when  is .
-        4. Run end-to-end tests on the Service/Promo flow (Request -> Quote -> Accept -> Invoice (Installment) -> Pay -> Order).
-     - Why fix this issue and what will be achieved with the fix? This unlocks the core service and promotional material business flows, allowing complex quote negotiations and flexible payment terms.
+        1. Copy the changed files from  to the active  workspace.
+        2. Restart frontend/backend to ensure compilation.
+        3. Test the 5 exact items the user requested in their last message:
+           - Is invoice visible to customer?
+           - Does invoice drawer work and show the branded header?
+           - Is customer order visible after admin approval?
+           - Does vendor see their assigned order in My Orders?
+           - Is admin payment proof preview visible (inline image vs document link)?
+           - *Note: Ensure the AI widget is successfully hidden on admin/vendor pages.*
+     - Why fix this issue and what will be achieved with the fix? This applies the user's handwritten code fixes, ensuring the platform matches their exact production expectations for the UI and data queries.
      - Status: IN PROGRESS
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
   Issue 2: Configure Twilio Credentials for WhatsApp (P2 🟡)
-     - Attempted fixes: N/A. Deferred.
-     - Next debug checklist: Use  to request , , and  credentials when appropriate.
+     - Attempted fixes: N/A. Deferred to backlog.
+     - Next debug checklist: Use  to request , , and  credentials when ready to launch.
      - Why fix this issue and what will be achieved with the fix? Live transactional WhatsApp notifications.
      - Status: NOT STARTED
      - Is recurring issue? Y
@@ -35,17 +40,17 @@
      - Blocked on other issue: Awaiting credentials.
 
 **In progress Task List**:
-  Task 1: Build Core Engine (Quotes, Sales UI, Installments)
-     - Where to resume: You just overwrote . Resume by finalizing the frontend components for the Customer (Quotes acceptance, Installment Invoice UI) and ensuring the backend  and  logic perfectly aligns with the user's latest spec. 
-     - What will be achieved with this? The final required operational engine for Konekt's go-live.
-     - Status: IN PROGRESS
+  Task 1: End-to-end Product / Service / Promo test matrix
+     - Where to resume: Once the  patch is applied and the 5 specific gates are manually verified, run a full E2E flow using the testing agent to simulate a Product purchase, a Service Quote negotiation, and a Promo fulfillment.
+     - What will be achieved with this? Final confirmation that the entire system functions harmoniously without data-loss across roles.
+     - Status: NOT STARTED
      - Should Test frontend/backend/both after fix? both
-     - Blocked on something: None
+     - Blocked on something: Blocked until  (applying the patch) is complete.
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - (P1 🟡) Final Launch Verification Checklist execution
     - (P1 🟡) Connect live payment gateway (KwikPay/Stripe)
+    - (P1 🟡) Final Launch Verification Checklist execution
 
     Future Tasks:
     - (P2 ⚪️) One-click reorder / Saved Carts functionality
@@ -54,64 +59,61 @@
     - (P2 ⚪️) Mobile-first optimization across all dashboards
 
 **Completed work in this session**
-- Admin/CRM Refactor - Pass 1 & 2 (Payments Queue, Invoices, Orders, Quotes) (DONE)
-- Admin/CRM Refactor - Pass 3, 4, 5 (Sales CRM, Customers, Vendors, Affiliates, Catalog, Settings, Audit, Users) (DONE)
-- Patch Round 1 & 2 Fixes (Cart duplicate fix, Invoice under-review logic, Customer/Vendor Orders table+drawer refactor, Notifications) (DONE)
+- Customer Quote Actions & Installment API endpoints (DONE)
+- Customer Quotes & Invoices UI implementation (DONE)
+- Priority 1: Backend Source-of-Truth stabilization (Customer orders query, Vendor orders query) (DONE)
+- Priority 1: Notification wiring fix ( vs  mismatch) (DONE)
+- Priority 1: Vendor sidebar cleanup (Removed affiliate links) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Twilio configuration is continually deferred.
-  - Recurrence count: 5
+  - Recurrence count: 6
   - Status: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Strangler Fig Pattern**: Actively using new clean facade APIs (, ) while leaving old backend routes intact.
-- **Table + Drawer Pattern**: The strict frontend UX rule universally applied across Admin, Customer, and Vendor dashboards.
-- **Installment Splits**: A new paradigm just introduced where single quotes can spawn an invoice divided into a Deposit and a Balance.
+- **Table + Drawer Pattern**: The strict frontend UX rule universally applied. No full-page details for invoices/orders.
+- **Source of Truth Routing**: Customer endpoints read strictly from / via . Vendor endpoints read strictly from  via .
+- **Branded Previews**: Drawers now feature standardized branded headers (logo, invoice-style summary, rejection reasons).
 
 **key DB schema**
-  - , , , , , ,  / , , .
-  - New models conceptually added:  (with , ),  (type, amount, status).
+  - , , ,  / , , .
 
 **changes in tech stack**
   - None.
 
 **All files of reference**
--  (New: Contains Quote creation, sending, accepting, rejecting, and InvoiceSplit logic)
--  (Overwritten: Now has Tabs for Leads/Quotes/Orders and the Quote Builder Modal)
--  (Updated to register )
--  (Updated with quote endpoints)
--  (Fixed duplicate cart bug)
+-  (CRITICAL: Contains the unzipped files from the user's . You must copy these over the  files).
+-  (Updated heavily in the last session).
 
 **Areas that need refactoring**:
-- Customer-facing invoice payment UI needs a refactor to cleanly support the new  (deposit vs balance) data structure.
+- The UI refactoring is handled by the unzipped patch. Just apply it.
 
 **key api endpoints**
-- **New Quote Engine**: , , , .
+- 
+- 
+- 
 
 **Critical Info for New Agent**
-You are mid-way through implementing the highly specific Core Engine spec provided by the user in the last message. The backend routes () and the Admin Sales CRM page have been generated, but you must complete the loop:
-1. Ensure the Customer can see, accept, and reject these new quotes.
-2. Ensure the Invoice UI accurately reflects Deposit and Balance states for installment quotes.
-3. Test the ENTIRE Service/Promo quote flow from end-to-end. The user explicitly requested to reply with Quote flow results once testing is complete.
+**STOP AND READ:** The user provided a zipped patch () containing the exact code they want applied to the system. The previous agent downloaded and extracted it to  but did not copy the files over to  or test them.
+Your VERY FIRST step should be copying the modified files from  into the  directory, restarting the frontend/backend, and executing the manual test of the 5 items listed by the user in the final prompt. DO NOT attempt to write your own fixes for these UI issues; rely on the user's patched files.
 
 **documents and test reports created in this job**
   - 
-  -  through  (Record of successful Pass 1-5 and Patch 1 & 2 tests)
+  -  to  (Record of 100% pass rates for the underlying backend logic).
 
 **Last 10 User Messages and any pending HUMAN messages**
-- The user requested credentials and flow documentation for Customer, Admin, and Partner, which the agent provided.
-- The user uploaded a patch () to fix various UI/UX logic flaws. Agent integrated it.
-- The user then supplied a precise list of 7 bugs from that patch (e.g., cart duplication, missing notifications, lack of uniform table+drawer design). Agent fixed all 7 and verified with tests.
-- **LATEST MESSAGE**: The user provided a structured specification for the Core Engine consisting of 1) Quote System, 2) Sales CRM UI, and 3) Installment Payment Logic. The user expects you to implement this and report back with Quote flow results after testing.
+- User requested alignment on repeating bugs. Supplied a massive Everything Pack ZIP with specs and truth tables.
+- Agent implemented the logic fixes from the spec (Notifications, API queries, Sidebar cleanup) and tested perfectly.
+- **LATEST MESSAGE (PENDING ACTION):** User clarified the previous pack was just specs, and uploaded  containing the *actual merged codebase*. User instructed the agent to apply the patch, and re-test 5 highly specific UI/visibility scenarios, sending back *only the failures*.
 
 **Project Health Check:**
-- The project is healthy. 100% of previously requested endpoints and flows pass end-to-end tests. Frontend compiles with warnings but no errors.
+- App logic is healthy. Pending frontend overlay from the user's patch.
 
 **3rd Party Integrations**
 - Resend (Emails) — requires User API Key
@@ -119,10 +121,10 @@ You are mid-way through implementing the highly specific Core Engine spec provid
 - Twilio (WhatsApp) — requires User API Key (Credentials pending)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Heavily used for Passes 1-5 and Patch 1-2).
+  - Testing agent used after significant changes: YES (Iterations 108-110 pass 100%).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created:  to .
-  - Known regressions: None known.
+  - Test files created: 
+  - Known regressions: None known. The patch needs to be tested for regressions.
 
 **Credentials to test flow:**
 - Customer:  / 
@@ -130,4 +132,4 @@ You are mid-way through implementing the highly specific Core Engine spec provid
 - Vendor/Partner:  / 
 
 **What agent forgot to execute**
-The agent just started the Core Engine implementation. Make sure to implement the *customer side* (Quote acceptance & Installment invoice payment UI) and thoroughly test the end-to-end flow before reporting success back to the user.</analysis>
+The agent extracted the  file into  and ran a  to read the files, but the session ended before the agent could run the  commands to actually apply the patch to the  directory and run the user's requested 5-step test checklist.</analysis>
