@@ -39,7 +39,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
 async def get_customer_statement(customer_email: str, user: dict = Depends(get_admin_user)):
     """Get statement of account for a customer"""
     # Get all invoices for customer
-    invoices = await db.invoices_v2.find({"customer_email": customer_email}).sort("created_at", 1).to_list(length=1000)
+    invoices = await db.invoices.find({"customer_email": customer_email}).sort("created_at", 1).to_list(length=1000)
     
     # Get all payments for customer
     payments = await db.central_payments.find({"customer_email": customer_email}).sort("payment_date", 1).to_list(length=1000)
@@ -111,7 +111,7 @@ async def get_customer_aging(customer_email: str, user: dict = Depends(get_admin
     now = datetime.utcnow()
 
     # Get unpaid/partially paid invoices
-    invoices = await db.invoices_v2.find({
+    invoices = await db.invoices.find({
         "customer_email": customer_email,
         "status": {"$in": ["sent", "partially_paid", "overdue"]}
     }).to_list(length=500)

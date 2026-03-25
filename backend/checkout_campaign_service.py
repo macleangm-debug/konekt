@@ -123,7 +123,7 @@ async def get_affiliate_perk_for_checkout(
             "customer_email": customer_email,
             "payment_status": "paid"
         })
-        prior_invoice = await db.invoices_v2.find_one({
+        prior_invoice = await db.invoices.find_one({
             "customer_email": customer_email,
             "status": "paid"
         })

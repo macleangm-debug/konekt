@@ -71,7 +71,7 @@ async def create_bank_transfer_intent(payload: BankTransferIntentCreate):
         amount = float(target.get("total", 0))
         currency = normalize_currency(target.get("currency", BANK_CURRENCY))
     else:
-        target = await db.invoices_v2.find_one({"_id": ObjectId(payload.target_id)})
+        target = await db.invoices.find_one({"_id": ObjectId(payload.target_id)})
         if not target:
             raise HTTPException(status_code=404, detail="Invoice not found")
         if not payment_allowed_for_invoice(target):

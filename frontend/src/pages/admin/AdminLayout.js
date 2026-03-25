@@ -103,33 +103,33 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="admin-layout">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      {/* Sidebar — matches customer/vendor shell */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-5 py-6 border-b border-white/10">
-            <BrandLogo size="lg" variant="light" />
-            <p className="text-white/40 text-xs mt-2 tracking-wide">Admin Portal</p>
+          <div className="px-5 py-6 border-b border-gray-100">
+            <BrandLogo size="md" />
+            <p className="text-slate-400 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
           
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {filteredNavItems.map((item, index) => (
               item.type === 'divider' ? (
                 <div key={index} className="pt-4 pb-2">
-                  <p className="px-4 text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</p>
+                  <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.label}</p>
                 </div>
               ) : (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                     isActive(item.path, item.exact) 
-                      ? 'bg-white/20 text-white' 
+                      ? 'bg-[#1f3a5f] text-white shadow-sm' 
                       : item.highlight
-                      ? 'bg-[#D4A843]/20 text-[#D4A843] hover:bg-[#D4A843]/30'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      ? 'text-[#D4A843] hover:bg-amber-50'
+                      : 'text-slate-600 hover:bg-gray-100 hover:text-slate-900'
                   }`}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -144,13 +144,13 @@ export default function AdminLayout() {
           </nav>
           
           {/* User Info */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-gray-100">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">{admin?.full_name?.charAt(0) || 'A'}</span>
+              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                <span className="text-[#20364D] font-bold">{admin?.full_name?.charAt(0) || 'A'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{admin?.full_name}</p>
+                <p className="text-[#20364D] font-medium truncate">{admin?.full_name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(admin?.role)}`}>
                   {admin?.role}
                 </span>
@@ -159,7 +159,7 @@ export default function AdminLayout() {
             <Button 
               variant="ghost" 
               onClick={handleLogout}
-              className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start text-slate-500 hover:text-slate-900 hover:bg-gray-100"
               data-testid="admin-logout-btn"
             >
               <LogOut className="w-4 h-4 mr-2" />

@@ -25,7 +25,7 @@ db = client[db_name]
 async def export_invoice_pdf(invoice_id: str):
     """Export invoice as premium PDF"""
     try:
-        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         invoice = None
 

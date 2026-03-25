@@ -47,7 +47,7 @@ async def accept_quote_create_invoice(payload: dict, request: Request):
         "quote_details": quote.get("quote_details", {}),
         "created_at": now,
     }
-    await db.invoices_v2.insert_one(invoice)
+    await db.invoices.insert_one(invoice)
     invoice.pop("_id", None)
     await db.quotes.update_one({"id": quote_id}, {"$set": {
         "status": "approved",
@@ -111,7 +111,7 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     }
     await db.product_checkouts.insert_one(checkout_doc)
     checkout_doc.pop("_id", None)
-    await db.invoices_v2.insert_one(invoice_doc)
+    await db.invoices.insert_one(invoice_doc)
     invoice_doc.pop("_id", None)
     return {"ok": True, "checkout": checkout_doc, "invoice": invoice_doc}
 
@@ -122,7 +122,7 @@ async def create_payment_intent(payload: dict, request: Request):
     invoice_id = payload.get("invoice_id")
     payment_mode = payload.get("payment_mode", "full")
     deposit_percent = float(payload.get("deposit_percent", 0) or 0)
-    invoice = await db.invoices_v2.find_one({"id": invoice_id})
+    invoice = await db.invoices.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     total = _money(invoice.get("total_amount", 0))
@@ -145,7 +145,7 @@ async def create_payment_intent(payload: dict, request: Request):
     }
     await db.payments.insert_one(payment)
     payment.pop("_id", None)
-    await db.invoices_v2.update_one({"id": invoice_id}, {"$set": {
+    await db.invoices.update_one({"id": invoice_id}, {"$set": {
         "payment_status": "awaiting_payment_proof",
         "current_payment_id": payment_id,
     }})
@@ -185,7 +185,7 @@ async def upload_payment_proof(payload: dict, request: Request):
         "payment_date": now,
         "invoice_number": "",
     }
-    inv = await db.invoices_v2.find_one({"id": payment.get("invoice_id")})
+    inv = await db.invoices.find_one({"id": payment.get("invoice_id")})
     if inv:
         admin_proof["invoice_number"] = inv.get("invoice_number", "")
     await db.payment_proof_submissions.insert_one(admin_proof)
@@ -193,7 +193,7 @@ async def upload_payment_proof(payload: dict, request: Request):
         "status": "proof_uploaded", "review_status": "under_review",
         "payment_proof_id": proof_id,
     }})
-    await db.invoices_v2.update_one({"id": payment.get("invoice_id")}, {"$set": {
+    await db.invoices.update_one({"id": payment.get("invoice_id")}, {"$set": {
         "payment_status": "payment_under_review",
         "status": "payment_under_review",
     }})
@@ -208,7 +208,7 @@ async def finance_queue(request: Request):
     for proof in proofs:
         proof.pop("_id", None)
         payment = await db.payments.find_one({"id": proof.get("payment_id")})
-        invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
+        invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
         profile = await db.customer_profiles.find_one({"customer_id": proof.get("customer_id")})
         out.append({
             "payment_proof_id": proof.get("id"),
@@ -241,7 +241,7 @@ async def finance_approve(payload: dict, request: Request):
     if not proof:
         raise HTTPException(status_code=404, detail="Payment proof not found")
     payment = await db.payments.find_one({"id": proof.get("payment_id")})
-    invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
+    invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
     if not payment or not invoice:
         raise HTTPException(status_code=404, detail="Related payment or invoice not found")
     now = _now()
@@ -257,7 +257,7 @@ async def finance_approve(payload: dict, request: Request):
     invoice_total = _money(invoice.get("total_amount", 0))
     approved_paid = _money(proof.get("amount_paid", 0))
     fully_paid = approved_paid >= invoice_total
-    await db.invoices_v2.update_one({"id": invoice.get("id")}, {"$set": {
+    await db.invoices.update_one({"id": invoice.get("id")}, {"$set": {
         "status": "paid" if fully_paid else "partially_paid",
         "payment_status": "paid" if fully_paid else "partially_paid",
     }})
@@ -339,7 +339,7 @@ async def finance_reject(payload: dict, request: Request):
     await db.payments.update_one({"id": proof.get("payment_id")}, {"$set": {
         "status": "proof_rejected", "review_status": "rejected",
     }})
-    await db.invoices_v2.update_one({"id": proof.get("invoice_id")}, {"$set": {
+    await db.invoices.update_one({"id": proof.get("invoice_id")}, {"$set": {
         "payment_status": "proof_rejected", "status": "pending_payment",
     }})
     return {"ok": True}
@@ -348,7 +348,7 @@ async def finance_reject(payload: dict, request: Request):
 @router.get("/customer/invoices")
 async def customer_invoices(request: Request, customer_id: str):
     db = request.app.mongodb
-    invoices = await db.invoices_v2.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
+    invoices = await db.invoices.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
     out = []
     for inv in invoices:
         inv.pop("_id", None)

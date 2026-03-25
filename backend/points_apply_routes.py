@@ -43,7 +43,7 @@ async def apply_points_to_invoice(invoice_id: str, payload: dict, user: dict = D
 
     requested_points = int(payload.get("requested_points", 0) or 0)
 
-    invoice = await db.invoices_v2.find_one(
+    invoice = await db.invoices.find_one(
         {"_id": ObjectId(invoice_id), "customer_email": user_email}
     )
     if not invoice:
@@ -69,7 +69,7 @@ async def apply_points_to_invoice(invoice_id: str, payload: dict, user: dict = D
     )
 
     now = datetime.utcnow()
-    await db.invoices_v2.update_one(
+    await db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$set": {
@@ -89,7 +89,7 @@ async def apply_points_to_invoice(invoice_id: str, payload: dict, user: dict = D
         },
     )
 
-    updated = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     return {
         "invoice": serialize_doc(updated),
         "applied_points": result["applied_points"],

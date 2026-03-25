@@ -154,7 +154,7 @@ async def accept_quote(quote_id: str, payload: dict, request: Request):
         "created_at": now,
         "updated_at": now,
     }
-    await db.invoices_v2.insert_one(invoice_doc)
+    await db.invoices.insert_one(invoice_doc)
     invoice_doc.pop("_id", None)
 
     # Create installment splits if needed
@@ -178,7 +178,7 @@ async def accept_quote(quote_id: str, payload: dict, request: Request):
         splits = [deposit_split, balance_split]
 
         # Update invoice with split info
-        await db.invoices_v2.update_one({"id": invoice_id}, {"$set": {
+        await db.invoices.update_one({"id": invoice_id}, {"$set": {
             "has_installments": True, "amount_due": deposit_amount,
             "deposit_amount": deposit_amount, "balance_amount": balance_amount,
         }})

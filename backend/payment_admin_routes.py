@@ -93,7 +93,7 @@ async def verify_payment(payment_id: str):
         )
         
         # Create affiliate commission if applicable
-        invoice = await db.invoices_v2.find_one({"_id": ObjectId(payment["target_id"])})
+        invoice = await db.invoices.find_one({"_id": ObjectId(payment["target_id"])})
         if invoice:
             await create_affiliate_commission_on_closed_business(
                 db,

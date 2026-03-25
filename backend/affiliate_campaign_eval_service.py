@@ -66,7 +66,7 @@ async def evaluate_campaigns_for_checkout(
 
         # Check first order only
         if eligibility.get("first_order_only") and customer_email:
-            prior_paid = await db.invoices_v2.find_one({
+            prior_paid = await db.invoices.find_one({
                 "customer_email": customer_email,
                 "status": "paid",
             })

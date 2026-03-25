@@ -19,9 +19,9 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
         
         if invoice_id:
             try:
-                invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+                invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
             except:
-                invoice = await db.invoices_v2.find_one({"invoice_number": invoice_id})
+                invoice = await db.invoices.find_one({"invoice_number": invoice_id})
         
         order_id = proof.get("order_id") or (invoice.get("order_id") if invoice else None)
         if order_id:

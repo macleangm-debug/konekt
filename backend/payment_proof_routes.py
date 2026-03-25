@@ -166,13 +166,13 @@ async def approve_payment_proof(proof_id: str, payload: dict):
         invoice = None
         try:
             if len(invoice_id) == 24:  # Valid ObjectId length
-                invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+                invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
         except Exception:
             pass
         
         # If not found by ObjectId, try by invoice_number
         if not invoice:
-            invoice = await db.invoices_v2.find_one({"invoice_number": invoice_id})
+            invoice = await db.invoices.find_one({"invoice_number": invoice_id})
         
         if invoice:
             amount_paid = float(proof.get("amount_paid", 0) or 0)
@@ -186,7 +186,7 @@ async def approve_payment_proof(proof_id: str, payload: dict):
             elif new_paid > 0:
                 new_status = "part_paid"
 
-            await db.invoices_v2.update_one(
+            await db.invoices.update_one(
                 {"_id": ObjectId(invoice_id)},
                 {"$set": {
                     "amount_paid": new_paid,
@@ -209,7 +209,7 @@ async def approve_payment_proof(proof_id: str, payload: dict):
     
     # Trigger Payment Timeline event for payment confirmed
     try:
-        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)}) if invoice_id and len(invoice_id) == 24 else None
+        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)}) if invoice_id and len(invoice_id) == 24 else None
         invoice_number = invoice.get("invoice_number", "") if invoice else proof.get("invoice_number", "")
         await trigger_payment_confirmed(
             db,

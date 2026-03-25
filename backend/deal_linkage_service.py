@@ -21,7 +21,7 @@ async def get_lead_related_documents(db, lead: dict):
         }
     ).sort("created_at", -1).to_list(length=100)
 
-    invoices = await db.invoices_v2.find(
+    invoices = await db.invoices.find(
         {
             "$or": [
                 {"customer_email": lead_email},

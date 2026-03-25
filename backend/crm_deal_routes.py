@@ -100,7 +100,7 @@ async def staff_leaderboard():
     async for row in assigned_cursor:
         email = row["_id"] or "unassigned"
 
-        won_revenue_cursor = db.invoices_v2.aggregate([
+        won_revenue_cursor = db.invoices.aggregate([
             {"$match": {"assigned_to": email, "status": "paid"}},
             {"$group": {"_id": None, "revenue": {"$sum": "$total"}}}
         ])
@@ -145,7 +145,7 @@ async def marketing_roi():
     for row in lead_sources:
         source = row["_id"] or "unknown"
 
-        paid_invoice_cursor = db.invoices_v2.aggregate([
+        paid_invoice_cursor = db.invoices.aggregate([
             {"$match": {"lead_source": source, "status": "paid"}},
             {"$group": {"_id": None, "closed_revenue": {"$sum": "$total"}}}
         ])

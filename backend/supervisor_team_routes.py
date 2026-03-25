@@ -35,11 +35,11 @@ async def supervisor_team_overview(role: str = "admin", team: str = None):
     
     # Get quote and invoice stats
     quote_count = await db.quotes_v2.count_documents({})
-    invoice_count = await db.invoices_v2.count_documents({})
-    unpaid_invoices = await db.invoices_v2.count_documents({"status": {"$nin": ["paid", "cancelled"]}})
+    invoice_count = await db.invoices.count_documents({})
+    unpaid_invoices = await db.invoices.count_documents({"status": {"$nin": ["paid", "cancelled"]}})
     
     # Get revenue stats
-    paid_invoices = await db.invoices_v2.find({"status": "paid"}).to_list(length=1000)
+    paid_invoices = await db.invoices.find({"status": "paid"}).to_list(length=1000)
     total_revenue = sum(float(inv.get("total", 0) or 0) for inv in paid_invoices)
     
     # Get staff count

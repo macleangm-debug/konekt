@@ -41,7 +41,7 @@ async def get_my_statement(user: dict = Depends(get_user)):
     user_email = user.get("email")
     
     # Get all invoices for customer
-    invoices = await db.invoices_v2.find({"customer_email": user_email}).sort("created_at", 1).to_list(length=1000)
+    invoices = await db.invoices.find({"customer_email": user_email}).sort("created_at", 1).to_list(length=1000)
     payments = await db.central_payments.find({"customer_email": user_email}).sort("payment_date", 1).to_list(length=1000)
     
     entries = []

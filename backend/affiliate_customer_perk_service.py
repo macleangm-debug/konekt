@@ -73,7 +73,7 @@ async def preview_affiliate_perk(
 
     # Check first order only restriction
     if perk.get("first_order_only") and customer_email:
-        prior_paid = await db.invoices_v2.find_one({
+        prior_paid = await db.invoices.find_one({
             "customer_email": customer_email,
             "status": "paid",
         })

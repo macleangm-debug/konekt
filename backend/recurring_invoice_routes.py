@@ -126,7 +126,7 @@ async def generate_invoice_now(plan_id: str):
     )
 
     # Generate invoice number
-    last_invoice = await db.invoices_v2.find_one(sort=[("created_at", -1)])
+    last_invoice = await db.invoices.find_one(sort=[("created_at", -1)])
     last_num = 1000
     if last_invoice and last_invoice.get("invoice_number"):
         try:
@@ -157,7 +157,7 @@ async def generate_invoice_now(plan_id: str):
         "updated_at": datetime.now(timezone.utc),
     }
 
-    result = await db.invoices_v2.insert_one(invoice_doc)
+    result = await db.invoices.insert_one(invoice_doc)
 
     # Update plan stats
     await db.recurring_invoice_plans.update_one(
@@ -168,7 +168,7 @@ async def generate_invoice_now(plan_id: str):
         }
     )
 
-    created = await db.invoices_v2.find_one({"_id": result.inserted_id})
+    created = await db.invoices.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
 
 

@@ -33,15 +33,15 @@ export const adminApi = {
   getStockMovements: (params) => api.get("/api/admin/inventory/movements", { params }),
   getLowStockItems: () => api.get("/api/admin/inventory/low-stock"),
 
-  // Invoices (v2 routes)
-  getInvoices: (params) => api.get("/api/admin/invoices-v2", { params }),
-  getInvoice: (id) => api.get(`/api/admin/invoices-v2/${id}`),
-  createInvoice: (payload) => api.post("/api/admin/invoices-v2", payload),
+  // Invoices
+  getInvoices: (params) => api.get("/api/admin/invoices", { params }),
+  getInvoice: (id) => api.get(`/api/admin/invoices/${id}`),
+  createInvoice: (payload) => api.post("/api/admin/invoices", payload),
   updateInvoiceStatus: (invoiceId, status) =>
-    api.patch(`/api/admin/invoices-v2/${invoiceId}/status`, null, { params: { status } }),
-  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices-v2/${invoiceId}/payments`, payload),
+    api.patch(`/api/admin/invoices/${invoiceId}/status`, null, { params: { status } }),
+  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices/${invoiceId}/payments`, payload),
   convertOrderToInvoice: (orderId, dueDate) =>
-    api.post("/api/admin/invoices-v2/convert-from-order", {
+    api.post("/api/admin/invoices/convert-from-order", {
       order_id: orderId,
       due_date: dueDate || null,
     }),

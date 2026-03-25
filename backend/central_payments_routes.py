@@ -46,7 +46,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
 
 async def recalculate_invoice_status(invoice_id: str):
     """Recalculate invoice payment status based on allocations"""
-    invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         return None
 
@@ -61,7 +61,7 @@ async def recalculate_invoice_status(invoice_id: str):
     else:
         status = "paid"
 
-    await db.invoices_v2.update_one(
+    await db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$set": {
@@ -73,7 +73,7 @@ async def recalculate_invoice_status(invoice_id: str):
         },
     )
 
-    return await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    return await db.invoices.find_one({"_id": ObjectId(invoice_id)})
 
 
 @router.get("")
@@ -134,7 +134,7 @@ async def create_payment(payload: ManualPaymentCreate, user: dict = Depends(get_
         if allocation.allocated_amount <= 0:
             continue
 
-        invoice = await db.invoices_v2.find_one({"_id": ObjectId(allocation.invoice_id)})
+        invoice = await db.invoices.find_one({"_id": ObjectId(allocation.invoice_id)})
         if not invoice:
             continue
 
@@ -180,7 +180,7 @@ async def allocate_payment(payment_id: str, payload: PaymentAllocationUpdate, us
         if allocation.allocated_amount <= 0:
             continue
 
-        invoice = await db.invoices_v2.find_one({"_id": ObjectId(allocation.invoice_id)})
+        invoice = await db.invoices.find_one({"_id": ObjectId(allocation.invoice_id)})
         if not invoice:
             continue
 

@@ -56,7 +56,7 @@ async def create_delivery_note(payload: dict):
     
     source_doc = None
     if source_type in ["order", "invoice"] and source_id:
-        collection = db.orders if source_type == "order" else db.invoices_v2
+        collection = db.orders if source_type == "order" else db.invoices
         try:
             source_doc = await collection.find_one({"_id": ObjectId(source_id)})
         except:

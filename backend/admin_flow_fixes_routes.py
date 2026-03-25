@@ -57,7 +57,7 @@ async def finance_queue(request: Request, q: str = ""):
     q_lower = (q or "").strip().lower()
     for proof in proofs:
         proof.pop("_id", None)
-        invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")}) or {}
+        invoice = await db.invoices.find_one({"id": proof.get("invoice_id")}) or {}
         customer_id = proof.get("customer_id") or invoice.get("customer_id")
         customer = await db.customer_profiles.find_one({"customer_id": customer_id}) or {}
         customer_name = customer.get("contact_name") or customer.get("business_name") or customer_id or "Customer"
@@ -95,7 +95,7 @@ async def finance_approve_proof(payload: dict, request: Request):
     proof = await db.payment_proofs.find_one({"id": payment_proof_id})
     if not proof:
         raise HTTPException(status_code=404, detail="Payment proof not found")
-    invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
+    invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     now = _now()
@@ -105,7 +105,7 @@ async def finance_approve_proof(payload: dict, request: Request):
     await db.payment_proof_submissions.update_one({"id": payment_proof_id}, {"$set": {
         "status": "approved", "approved_by": approver_role, "approved_at": now,
     }})
-    await db.invoices_v2.update_one({"id": invoice["id"]}, {"$set": {"status": "paid", "payment_status": "paid"}})
+    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {"status": "paid", "payment_status": "paid"}})
     existing_order = await db.orders.find_one({"invoice_id": invoice["id"]})
     order_doc = None
     if not existing_order:
@@ -184,7 +184,7 @@ async def finance_reject_proof(payload: dict, request: Request):
     await db.payment_proofs.update_one({"id": payment_proof_id}, {"$set": {
         "status": "rejected", "rejected_by_role": approver_role, "rejection_reason": reason, "rejected_at": now,
     }})
-    await db.invoices_v2.update_one({"id": proof.get("invoice_id")}, {"$set": {
+    await db.invoices.update_one({"id": proof.get("invoice_id")}, {"$set": {
         "payment_status": "proof_rejected", "status": "pending_payment",
     }})
     return {"ok": True}
@@ -199,7 +199,7 @@ async def admin_orders_split(request: Request, q: str = ""):
         order.pop("_id", None)
         customer = await db.customer_profiles.find_one({"customer_id": order.get("customer_id")}) or {}
         customer_name = customer.get("contact_name") or customer.get("business_name") or order.get("customer_id") or "Customer"
-        invoice = await db.invoices_v2.find_one({"id": order.get("invoice_id")}) or {}
+        invoice = await db.invoices.find_one({"id": order.get("invoice_id")}) or {}
         row = {
             "id": order.get("id"),
             "order_number": order.get("order_number", ""),

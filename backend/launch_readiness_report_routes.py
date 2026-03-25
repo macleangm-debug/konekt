@@ -63,7 +63,7 @@ async def build_report_data():
         "inventory_variants": await db.inventory_variants.count_documents({}),
         "orders": await db.orders.count_documents({}),
         "quotes": await db.quotes_v2.count_documents({}),
-        "invoices": await db.invoices_v2.count_documents({}),
+        "invoices": await db.invoices.count_documents({}),
         "payments": await db.central_payments.count_documents({}),
         "creative_services": await db.creative_services.count_documents({}),
         "creative_projects": await db.creative_service_orders.count_documents({}),

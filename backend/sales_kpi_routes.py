@@ -23,7 +23,7 @@ async def sales_summary():
     lost_count = await db.crm_leads.count_documents({"stage": "lost"})
     quote_count = await db.quotes_v2.count_documents({})
 
-    invoice_cursor = db.invoices_v2.aggregate([
+    invoice_cursor = db.invoices.aggregate([
         {"$match": {"status": "paid"}},
         {"$group": {"_id": None, "total": {"$sum": "$total"}}}
     ])

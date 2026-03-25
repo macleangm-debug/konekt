@@ -30,7 +30,7 @@ async def ecosystem_overview():
     """Get top-level ecosystem metrics."""
     # Revenue from invoices
     total_revenue = 0
-    async for row in db.invoices_v2.aggregate([
+    async for row in db.invoices.aggregate([
         {"$match": {"status": {"$in": ["sent", "paid", "part_paid"]}}},
         {"$group": {"_id": None, "total": {"$sum": "$total"}}},
     ]):
@@ -219,7 +219,7 @@ async def ecosystem_at_risk_items():
 
     # Overdue invoices (30+ days)
     overdue_cutoff = datetime.utcnow() - timedelta(days=30)
-    overdue_invoices = await db.invoices_v2.find({
+    overdue_invoices = await db.invoices.find({
         "status": {"$in": ["sent", "part_paid"]},
         "created_at": {"$lt": overdue_cutoff},
     }).to_list(length=20)

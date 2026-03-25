@@ -17,7 +17,7 @@ from collection_mode_service import get_invoice_collection
 from notification_trigger_service import notify_customer_invoice_issued
 from payment_timeline_service import trigger_invoice_issued
 
-router = APIRouter(prefix="/api/admin/invoices-v2", tags=["Invoices V2"])
+router = APIRouter(prefix="/api/admin/invoices", tags=["Invoices"])
 
 # Database connection
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
@@ -82,8 +82,8 @@ async def create_invoice(payload: InvoiceCreateNew):
         doc["terms"] = resolved_terms["payment_term_notes"] or (settings.get("invoice_terms") if settings else None)
 
     # Use canonical invoice collection
-    result = await db.invoices_v2.insert_one(doc)
-    created = await db.invoices_v2.find_one({"_id": result.inserted_id})
+    result = await db.invoices.insert_one(doc)
+    created = await db.invoices.find_one({"_id": result.inserted_id})
     
     # Trigger Payment Timeline event for invoice issued
     try:
@@ -112,7 +112,7 @@ async def list_invoices(
     if customer_email:
         query["customer_email"] = customer_email
 
-    docs = await db.invoices_v2.find(query).sort("created_at", -1).to_list(length=limit)
+    docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
     return [serialize_doc(doc) for doc in docs]
 
 
@@ -120,7 +120,7 @@ async def list_invoices(
 async def get_invoice(invoice_id: str):
     """Get a specific invoice"""
     try:
-        doc = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return serialize_doc(doc)
@@ -132,7 +132,7 @@ async def get_invoice(invoice_id: str):
 async def get_invoice_payments(invoice_id: str):
     """Get payment history for an invoice"""
     try:
-        doc = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
         if not doc:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return doc.get("payments", [])
@@ -149,18 +149,18 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...), trigg
     
     now = datetime.now(timezone.utc)
 
-    invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     previous_status = invoice.get("status")
 
-    await db.invoices_v2.update_one(
+    await db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
 
-    updated = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     
     # Send notification only when status changes to "sent" (invoice issued)
     if status == "sent" and previous_status != "sent":
@@ -190,7 +190,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     """Add a payment to an invoice"""
     now = datetime.now(timezone.utc)
 
-    invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
@@ -209,7 +209,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     elif total_paid > 0:
         new_status = "partially_paid"
     
-    await db.invoices_v2.update_one(
+    await db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$push": {"payments": payment},
@@ -221,7 +221,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
         }
     )
     
-    updated = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
+    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
     return serialize_doc(updated)
 
 
@@ -287,7 +287,7 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
     }
 
     # Use canonical invoice collection
-    result = await db.invoices_v2.insert_one(invoice_doc)
+    result = await db.invoices.insert_one(invoice_doc)
     
     # Update order with invoice reference
     await db.orders.update_one(
@@ -299,5 +299,5 @@ async def convert_order_to_invoice(payload: ConvertOrderToInvoiceRequest):
         }}
     )
     
-    created = await db.invoices_v2.find_one({"_id": result.inserted_id})
+    created = await db.invoices.find_one({"_id": result.inserted_id})
     return serialize_doc(created)

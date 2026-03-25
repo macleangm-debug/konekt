@@ -79,7 +79,7 @@ async def get_staff_dashboard(user_email: str = None, user_role: str = None):
 
     if role == "finance":
         pending_payments = await db.payments.count_documents({"status": {"$in": ["pending", "payment_submitted"]}})
-        unpaid_invoices = await db.invoices_v2.count_documents({"status": {"$nin": ["paid", "cancelled"]}})
+        unpaid_invoices = await db.invoices.count_documents({"status": {"$nin": ["paid", "cancelled"]}})
 
         result["cards"] = [
             {"label": "Pending Payments", "value": pending_payments, "href": "/admin/central-payments"},

@@ -28,7 +28,7 @@ async def get_customer_account(customer_email: str):
     user = await db.users.find_one({"email": customer_email}, {"_id": 0, "password_hash": 0})
 
     quotes = await db.quotes_v2.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)
-    invoices = await db.invoices_v2.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)
+    invoices = await db.invoices.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)
     orders = await db.orders.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)
     payments = await db.payments.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)
     service_requests = await db.service_requests.find({"customer_email": customer_email}).sort("created_at", -1).to_list(length=100)

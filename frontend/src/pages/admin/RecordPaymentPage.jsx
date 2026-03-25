@@ -23,7 +23,7 @@ export default function RecordPaymentPage() {
     if (!customerEmail) return;
     setLoading(true);
     try {
-      const res = await api.get("/api/admin/invoices-v2", {
+      const res = await api.get("/api/admin/invoices", {
         params: { customer_email: customerEmail, status: "sent,partially_paid,overdue" },
       });
       setCustomerInvoices(res.data || []);

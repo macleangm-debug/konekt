@@ -54,7 +54,7 @@ async def list_my_invoices(user: dict = Depends(get_user)):
         {"customer.email": user_email},
     ]
 
-    rows = await db.invoices_v2.find({"$or": queries}).sort("created_at", -1).to_list(length=500)
+    rows = await db.invoices.find({"$or": queries}).sort("created_at", -1).to_list(length=500)
     return [serialize_doc(doc) for doc in rows]
 
 
@@ -74,11 +74,11 @@ async def get_my_invoice(invoice_id: str, user: dict = Depends(get_user)):
 
     doc = None
     try:
-        doc = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id), **base_query})
+        doc = await db.invoices.find_one({"_id": ObjectId(invoice_id), **base_query})
     except Exception:
-        doc = await db.invoices_v2.find_one({"id": invoice_id, **base_query})
+        doc = await db.invoices.find_one({"id": invoice_id, **base_query})
     if not doc:
-        doc = await db.invoices_v2.find_one({"invoice_number": invoice_id, **base_query})
+        doc = await db.invoices.find_one({"invoice_number": invoice_id, **base_query})
     if doc:
         return serialize_doc(doc)
 

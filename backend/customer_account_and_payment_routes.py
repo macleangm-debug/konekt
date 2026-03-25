@@ -131,7 +131,7 @@ async def checkout_fixed_price(payload: dict, request: Request):
     }
 
     await db.orders.insert_one(order_doc)
-    await db.invoices_v2.insert_one(invoice_doc)
+    await db.invoices.insert_one(invoice_doc)
     await db.payments.insert_one(payment_doc)
     order_doc.pop("_id", None)
     invoice_doc.pop("_id", None)
@@ -163,7 +163,7 @@ async def approve_quote_create_invoice(payload: dict, request: Request):
       "billing": quote.get("billing", {}),
       "created_at": datetime.now(timezone.utc),
     }
-    await db.invoices_v2.insert_one(invoice_doc)
+    await db.invoices.insert_one(invoice_doc)
     await db.quotes.update_one({"id": quote_id}, {"$set": {"status": "approved", "invoice_created": True, "invoice_id": invoice_id}})
     invoice_doc.pop("_id", None)
     return {"ok": True, "invoice": invoice_doc}
