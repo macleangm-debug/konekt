@@ -58,6 +58,24 @@ async def accept_quote_create_invoice(payload: dict, request: Request):
     return {"ok": True, "invoice": invoice}
 
 # ─── Fixed-Price Product Checkout → Invoice (no order yet) ─────
+
+
+async def _create_notification(db, *, recipient_user_id=None, recipient_role=None, title='', message='', target_url='/', priority='normal'):
+    doc = {
+        'id': str(uuid4()),
+        'recipient_user_id': recipient_user_id,
+        'recipient_role': recipient_role,
+        'title': title,
+        'message': message,
+        'target_url': target_url,
+        'priority': priority,
+        'is_read': False,
+        'created_at': _now(),
+        'updated_at': _now(),
+    }
+    await db.notifications.insert_one(doc)
+    return doc
+
 @router.post("/product-checkout")
 async def product_checkout_to_invoice(payload: dict, request: Request):
     db = request.app.mongodb
@@ -197,6 +215,9 @@ async def upload_payment_proof(payload: dict, request: Request):
         "payment_status": "payment_under_review",
         "status": "payment_under_review",
     }})
+    await _create_notification(db, recipient_role='finance', title='New payment proof submitted', message=f'Invoice {payment.get("invoice_id")} is ready for review.', target_url='/admin/payments', priority='high')
+    if payment.get('customer_id'):
+        await _create_notification(db, recipient_user_id=payment.get('customer_id'), title='Payment submitted', message='Your payment proof has been submitted and is under review.', target_url='/dashboard/invoices', priority='normal')
     return {"ok": True, "payment_proof": proof}
 
 # ─── Finance Queue ──────────────────────────────────────────────
@@ -314,6 +335,10 @@ async def finance_approve(payload: dict, request: Request):
             "customer_id": invoice.get("customer_id"),
             "event": "payment_approved_order_created", "created_at": now,
         })
+        if invoice.get('customer_id'):
+            await _create_notification(db, recipient_user_id=invoice.get('customer_id'), title='Payment approved', message='Your payment has been approved and your order is now in progress.', target_url='/dashboard/orders', priority='high')
+        await _create_notification(db, recipient_role='sales', title='New active order assigned', message=f'Order {order_doc.get("order_number")} is ready for follow-up.', target_url='/staff/queue', priority='high')
+        await _create_notification(db, recipient_role='vendor', title='New vendor job released', message=f'Order {order_doc.get("order_number")} is ready to fulfill.', target_url='/partner/fulfillment', priority='high')
     return {"ok": True, "fully_paid": fully_paid, "order": order_doc}
 
 # ─── Finance Reject ─────────────────────────────────────────────
@@ -342,6 +367,8 @@ async def finance_reject(payload: dict, request: Request):
     await db.invoices.update_one({"id": proof.get("invoice_id")}, {"$set": {
         "payment_status": "proof_rejected", "status": "pending_payment",
     }})
+    if proof.get('customer_id'):
+        await _create_notification(db, recipient_user_id=proof.get('customer_id'), title='Payment rejected', message=reason or 'Your payment proof was rejected. Please review and resubmit.', target_url='/dashboard/invoices', priority='high')
     return {"ok": True}
 
 # ─── Customer: My Invoices ──────────────────────────────────────

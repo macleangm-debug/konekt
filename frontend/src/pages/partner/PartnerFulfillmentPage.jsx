@@ -34,6 +34,7 @@ export default function PartnerFulfillmentPage() {
 
   const getStatusBadge = (status) => {
     const styles = {
+      ready_to_fulfill: "bg-purple-100 text-purple-700",
       allocated: "bg-blue-100 text-blue-700",
       accepted: "bg-indigo-100 text-indigo-700",
       in_progress: "bg-amber-100 text-amber-700",
@@ -45,6 +46,7 @@ export default function PartnerFulfillmentPage() {
 
   const filterOptions = [
     { value: "all", label: "All Jobs" },
+    { value: "ready_to_fulfill", label: "Ready to Fulfill" },
     { value: "allocated", label: "Pending" },
     { value: "accepted", label: "Accepted" },
     { value: "in_progress", label: "In Progress" },
@@ -52,7 +54,7 @@ export default function PartnerFulfillmentPage() {
     { value: "issue_reported", label: "Issues" },
   ];
 
-  const pendingJobs = jobs.filter(j => ["allocated", "accepted", "in_progress"].includes(j.status));
+  const pendingJobs = jobs.filter(j => ["ready_to_fulfill", "allocated", "accepted", "in_progress"].includes(j.status));
   const completedJobs = jobs.filter(j => j.status === "fulfilled");
 
   return (
@@ -159,7 +161,7 @@ export default function PartnerFulfillmentPage() {
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-4 border-t">
-                {job.status === "allocated" && (
+                {["allocated", "ready_to_fulfill"].includes(job.status) && (
                   <button
                     onClick={() => updateStatus(job.id, "accepted")}
                     className="flex items-center gap-1.5 rounded-xl bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-700"

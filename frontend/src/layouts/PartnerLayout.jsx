@@ -64,15 +64,14 @@ export default function PartnerLayout() {
     { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
   ];
 
-  // Combine items based on partner type, defaulting to showing all options
-  let navItems = [...productPartnerItems];
-  
-  // Add affiliate section
-  navItems = [...navItems, { divider: true, label: "Affiliate" }, ...affiliateItems];
-  
-  // Add vendor section if applicable
-  if (isVendor || !isAffiliate) {
-    navItems = [...navItems, { divider: true, label: "Vendor" }, ...vendorItems];
+  // Combine items based on partner type
+  let navItems = [];
+  if (isAffiliate && !isVendor) {
+    navItems = [...affiliateItems];
+  } else if (isVendor && !isAffiliate) {
+    navItems = [...productPartnerItems, { divider: true, label: "Vendor" }, ...vendorItems];
+  } else {
+    navItems = [...productPartnerItems, { divider: true, label: "Affiliate" }, ...affiliateItems, { divider: true, label: "Vendor" }, ...vendorItems];
   }
 
   return (

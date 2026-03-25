@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { ShieldCheck, Truck, CreditCard, Tag, Gift, Sparkles } from "lucide-react";
 import api from "../lib/api";
-import liveCommerceApi from "../lib/liveCommerceApi";
 import AffiliatePerkPreviewBox from "../components/checkout/AffiliatePerkPreviewBox";
 import { bootstrapAffiliateAttribution, getStoredAffiliateCode } from "../lib/attribution";
 
@@ -134,64 +133,52 @@ export default function CheckoutPage() {
       setSubmitting(true);
 
       const payload = {
-        customer_id: form.email,
         customer_name: form.full_name,
         customer_email: form.email,
         customer_phone: form.phone,
-        customer: {
-          full_name: form.full_name,
-          email: form.email,
-          phone: form.phone,
-          company_name: form.company_name,
-        },
-        delivery: {
-          address: form.delivery_address,
-          city: form.city,
-          country: form.country,
-          notes: form.notes,
-        },
-        items: items.map((item) => ({
-          id: item.id,
-          product_id: item.product_id || item.id,
-          sku: item.sku,
-          name: item.title || item.name,
+        customer_company: form.company_name,
+        delivery_address: form.delivery_address,
+        city: form.city,
+        country: form.country,
+        notes: form.notes,
+        line_items: items.map((item) => ({
+          description: item.title || item.name,
           quantity: item.quantity,
-          price: item.unit_price,
-          vendor_id: item.vendor_id,
-          customization_summary:
-            item.customization_summary ||
-            (item.customization ? `${item.color || ''} ${item.size || ''} ${item.print_method || ''}`.trim() : ""),
+          unit_price: item.unit_price,
+          total: item.subtotal || item.quantity * item.unit_price,
+          customization_summary: item.customization_summary || 
+            (item.customization ? `${item.color || ''} ${item.size || ''} ${item.print_method || ''}`.trim() : ''),
         })),
-        vat_percent: 18,
-        quote_details: {
-          discount: totalDiscount,
-          affiliate_code: affiliatePerk?.affiliateCode || detectedAffiliate?.affiliate_code || null,
-          affiliate_email: null,
-          campaign_id: appliedCampaign?.campaign_id || null,
-          campaign_name: appliedCampaign?.campaign_name || null,
-          campaign_discount: campaignDiscount,
-          campaign_reward_type: appliedCampaign?.reward_type || null,
-        },
+        subtotal: total,
+        tax: 0,
+        discount: totalDiscount,
+        total: grandTotal,
+        status: "pending",
+        // Attribution fields
+        affiliate_code: affiliatePerk?.affiliateCode || detectedAffiliate?.affiliate_code || null,
+        affiliate_email: null, // Will be looked up by backend
+        campaign_id: appliedCampaign?.campaign_id || null,
+        campaign_name: appliedCampaign?.campaign_name || null,
+        campaign_discount: campaignDiscount,
+        campaign_reward_type: appliedCampaign?.reward_type || null,
       };
 
-      const checkoutRes = await liveCommerceApi.createProductCheckout(payload);
-      const invoice = checkoutRes.data?.invoice;
-
-      const paymentRes = await liveCommerceApi.createInvoicePaymentIntent(invoice.id, {
-        payment_mode: "full",
-      });
-
+      const res = await api.post("/api/guest/orders", payload);
+      const orderId = res.data.id || res.data.order_id;
+      const orderNumber = res.data.order_number;
+      
       clearCart();
-
-      navigate(`/payment/bank-transfer`, {
-        state: {
-          liveFlow: true,
-          customerName: form.full_name,
-          invoice,
-          payment: paymentRes.data?.payment,
-          bank_details: paymentRes.data?.bank_details || checkoutRes.data?.bank_details,
-        },
-      });
+      
+      // Redirect to payment selection
+      navigate(
+        `/payment/select?target_type=order&target_id=${orderId}&email=${encodeURIComponent(form.email)}&amount=${grandTotal}`,
+        {
+          state: {
+            customerName: form.full_name,
+            orderNumber: orderNumber,
+          },
+        }
+      );
     } catch (error) {
       console.error("Checkout failed", error);
       setError("Failed to submit order. Please try again.");

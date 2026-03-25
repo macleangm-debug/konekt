@@ -1,10 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Smartphone, Building2, CreditCard, Shield } from "lucide-react";
 import { paymentApi } from "../lib/paymentApi";
-import liveCommerceApi from "../lib/liveCommerceApi";
-
-const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
 
 export default function PaymentSelectionPage() {
   const [params] = useSearchParams();
@@ -16,20 +13,16 @@ export default function PaymentSelectionPage() {
   const email = params.get("email") || "";
   const amount = params.get("amount") || "";
   const customerName = location.state?.customerName || "";
-
+  
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const useLiveInvoiceFlow = useMemo(() => {
-    return targetType === "invoice" && targetId && !OBJECT_ID_RE.test(targetId);
-  }, [targetType, targetId]);
 
   const handleKwikPay = async () => {
     if (!phoneNumber) {
       alert("Please enter your phone number");
       return;
     }
-
+    
     try {
       setLoading(true);
       const res = await paymentApi.createKwikPayIntent({
@@ -58,22 +51,6 @@ export default function PaymentSelectionPage() {
   const handleBankTransfer = async () => {
     try {
       setLoading(true);
-
-      if (useLiveInvoiceFlow) {
-        const res = await liveCommerceApi.createInvoicePaymentIntent(targetId, {
-          payment_mode: "full",
-        });
-        navigate("/payment/bank-transfer", {
-          state: {
-            liveFlow: true,
-            invoice: res.data?.invoice,
-            payment: res.data?.payment,
-            bank_details: res.data?.bank_details,
-          },
-        });
-        return;
-      }
-
       const res = await paymentApi.createBankTransferIntent({
         target_type: targetType,
         target_id: targetId,
@@ -108,6 +85,7 @@ export default function PaymentSelectionPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
+          {/* Bank Transfer - Primary Active Method */}
           <div className="rounded-3xl border-2 border-[#20364D] bg-white p-8 relative">
             <div className="absolute -top-3 left-6 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
               Active
@@ -118,9 +96,9 @@ export default function PaymentSelectionPage() {
               </div>
               <h2 className="text-2xl font-bold">Bank Transfer</h2>
             </div>
-
+            
             <p className="text-slate-600">
-              Best for company and bulk orders. We&apos;ll provide bank details and move your payment into finance review after you upload proof.
+              Best for company and bulk orders. We'll provide bank details and a unique reference.
             </p>
 
             <div className="mt-5 rounded-xl bg-[#F4E7BF] border border-[#D4A843]/30 p-4">
@@ -144,6 +122,7 @@ export default function PaymentSelectionPage() {
             </button>
           </div>
 
+          {/* Mobile Money - Coming Soon */}
           <div className="rounded-3xl border bg-white p-8 opacity-60 relative">
             <div className="absolute -top-3 left-6 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
               Coming Soon
@@ -154,7 +133,7 @@ export default function PaymentSelectionPage() {
               </div>
               <h2 className="text-2xl font-bold text-slate-500">Mobile Money</h2>
             </div>
-
+            
             <p className="text-slate-500">
               Pay using M-Pesa, Tigo Pesa, Airtel Money, or Halotel through KwikPay.
             </p>
@@ -184,6 +163,7 @@ export default function PaymentSelectionPage() {
           </div>
         </div>
 
+        {/* Card Payment - Coming Soon */}
         <div className="mt-6 rounded-3xl border bg-white p-8 opacity-60 relative">
           <div className="absolute -top-3 left-6 bg-amber-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
             Coming Soon
@@ -199,13 +179,14 @@ export default function PaymentSelectionPage() {
           </div>
         </div>
 
+        {/* KwikPay Notice */}
         <div className="mt-6 rounded-3xl border bg-slate-100 p-6">
           <div className="flex items-center gap-3">
             <Shield className="w-5 h-5 text-slate-500" />
             <div>
-              <div className="font-semibold text-slate-700">Go-live payment policy</div>
+              <div className="font-semibold text-slate-700">KwikPay Integration</div>
               <p className="text-sm text-slate-500">
-                Konekt only creates the order after finance approves the uploaded proof of payment.
+                Mobile money payments via KwikPay are not yet available. We're working on enabling this payment method for your convenience.
               </p>
             </div>
           </div>

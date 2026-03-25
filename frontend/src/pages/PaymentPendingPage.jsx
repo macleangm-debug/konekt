@@ -85,11 +85,11 @@ export default function PaymentPendingPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>This stays under review until finance confirms the payment</span>
+                  <span>This usually takes 1-2 business hours</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>Once approved, your invoice becomes paid and your order is created automatically</span>
+                  <span>You'll receive email confirmation once verified</span>
                 </li>
               </>
             )}

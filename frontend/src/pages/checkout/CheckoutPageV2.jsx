@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
-import liveCommerceApi from "../../lib/liveCommerceApi";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import PaymentMethodOption from "../../components/payments/PaymentMethodOption";
@@ -138,52 +137,29 @@ export default function CheckoutPageV2() {
 
     setSubmitting(true);
     try {
-      const checkoutRes = await liveCommerceApi.createProductCheckout({
-        customer_id: form.email,
-        customer_name: form.full_name,
-        customer_email: form.email,
-        customer_phone: form.phone,
-        customer: {
-          full_name: form.full_name,
-          email: form.email,
-          phone: form.phone,
-          company_name: form.company_name,
-        },
-        delivery: {
-          address: form.delivery_address,
-          city: form.city,
-          country: form.country,
-          notes: form.notes,
-        },
+      // Create order
+      const orderRes = await api.post("/api/orders", {
+        ...form,
         items: cartItems.map(item => ({
-          id: item.id,
           product_id: item.product_id || item.id,
           sku: item.sku,
           name: item.name || item.title,
           quantity: item.qty || item.quantity,
-          price: item.price || item.unit_price,
-          vendor_id: item.vendor_id,
+          unit_price: item.price || item.unit_price,
+          partner_cost: item.partner_cost || 0,
         })),
-        vat_percent: 18,
-        quote_details: {
-          points_used: validation?.checkout?.approved_points_amount || 0,
-          protected_margin: validation?.rule_book || null,
-        },
+        subtotal,
+        total: validation?.checkout?.final_total || subtotal,
+        points_used: validation?.checkout?.approved_points_amount || 0,
+        payment_method: "bank_transfer",
       });
 
-      const invoice = checkoutRes.data?.invoice;
-      const paymentRes = await liveCommerceApi.createInvoicePaymentIntent(invoice.id, {
-        payment_mode: "full",
-      });
-
-      toast.success("Invoice created. Submit your bank transfer proof to continue.");
+      toast.success("Order submitted! Proceed to bank transfer.");
       clearCart();
       navigate(`/payment/bank-transfer`, {
         state: {
-          liveFlow: true,
-          invoice,
-          payment: paymentRes.data?.payment,
-          bank_details: paymentRes.data?.bank_details || tzSettings,
+          payment: orderRes.data,
+          bank_details: tzSettings,
         }
       });
     } catch (err) {
