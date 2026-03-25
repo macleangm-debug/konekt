@@ -197,25 +197,52 @@ async def partner_fulfillment_jobs(
     status: Optional[str] = None,
     authorization: Optional[str] = Header(None)
 ):
-    """Get partner's fulfillment jobs - NO customer PII exposed"""
+    """Get partner's fulfillment jobs from BOTH fulfillment_jobs AND vendor_orders"""
     user = await get_partner_user_from_header(authorization)
+    partner_id = user["partner_id"]
 
-    query = {"partner_id": user["partner_id"]}
+    # Query fulfillment_jobs
+    fj_query = {"partner_id": partner_id}
     if status:
-        query["status"] = status
+        fj_query["status"] = status
+    fj_docs = await db.fulfillment_jobs.find(fj_query).sort("created_at", -1).to_list(length=300)
 
-    docs = await db.fulfillment_jobs.find(query).sort("created_at", -1).to_list(length=300)
-    
-    # Sanitize - remove any customer details
+    # Also query vendor_orders (created on payment approval)
+    vo_query = {"vendor_id": partner_id}
+    if status:
+        vo_query["status"] = status
+    vo_docs = await db.vendor_orders.find(vo_query).sort("created_at", -1).to_list(length=300)
+
+    # Merge and deduplicate (prefer fulfillment_jobs if same order_id)
+    seen_order_ids = set()
     sanitized = []
-    for doc in docs:
+    pii_fields = ["customer_email", "customer_name", "customer_company",
+                  "customer_phone", "delivery_address", "customer_id"]
+
+    for doc in fj_docs:
         clean = serialize_doc(doc)
-        # Remove ALL customer-related fields
-        for field in ["customer_email", "customer_name", "customer_company", 
-                      "customer_phone", "delivery_address", "customer_id"]:
+        for field in pii_fields:
             clean.pop(field, None)
+        clean["source"] = "fulfillment_job"
+        if clean.get("order_id"):
+            seen_order_ids.add(clean["order_id"])
         sanitized.append(clean)
 
+    for doc in vo_docs:
+        clean = serialize_doc(doc)
+        if clean.get("order_id") in seen_order_ids:
+            continue
+        for field in pii_fields:
+            clean.pop(field, None)
+        # Normalize vendor_order fields to match fulfillment_job shape
+        if not clean.get("item_name") and clean.get("items"):
+            clean["item_name"] = ", ".join(i.get("name", i.get("product_name", "Item")) for i in clean["items"][:3])
+        if not clean.get("quantity") and clean.get("items"):
+            clean["quantity"] = sum(i.get("quantity", 1) for i in clean["items"])
+        clean["source"] = "vendor_order"
+        sanitized.append(clean)
+
+    sanitized.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
     return sanitized
 
 

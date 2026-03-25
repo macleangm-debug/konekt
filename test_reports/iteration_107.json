@@ -1,0 +1,116 @@
+{
+  "summary": "Round 2 Patch Fixes Testing - All 7 fixes verified working. 15/15 backend tests pass. All UI flows working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_round2_patch_fixes.py",
+    "/app/test_reports/pytest/pytest_results_round2_patch.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_round2_patch_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all 7 fixes verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing demo accounts",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Round 2 patch fixes all verified. Cart merges quantity correctly. Invoice actions show correct buttons/badges based on payment_status. Customer orders and partner fulfillment use table+drawer pattern. NotificationBell works in both customer and partner portals.",
+  "fixes_verified": {
+    "FIX_1_CART_DUPLICATE_ROWS": {
+      "status": "PASS",
+      "details": "Cart correctly merges quantity when same product added twice. Shows 1 row with qty 2 instead of 2 separate rows.",
+      "file": "/app/frontend/src/contexts/CartDrawerContext.jsx",
+      "ui_verified": true
+    },
+    "FIX_2_INVOICE_ACTIONS": {
+      "status": "PASS",
+      "details": "Invoice table shows correct actions: 'Pay Invoice' for pending, 'Under Review' badge for payment_under_review, 'Paid' badge for paid, 'Resubmit Proof' for rejected",
+      "file": "/app/frontend/src/pages/customer/InvoicesPageV2.jsx",
+      "ui_verified": true
+    },
+    "FIX_3_UNDER_REVIEW_DETAIL": {
+      "status": "PASS",
+      "details": "Invoice detail panel shows 'Payment Under Review' status and hides Pay Invoice button when payment_status='payment_under_review'",
+      "file": "/app/frontend/src/pages/customer/InvoicesPageV2.jsx",
+      "ui_verified": true
+    },
+    "FIX_4_NOTIFICATIONS_ON_APPROVAL_REJECTION": {
+      "status": "PASS",
+      "details": "Code review verified: _create_notification called on approve (lines 338-341) for customer, sales, vendor roles. Called on reject (line 371) for customer.",
+      "file": "/app/backend/payments_governance_routes.py",
+      "code_review_verified": true
+    },
+    "FIX_5_CUSTOMER_ORDERS_TABLE_DRAWER": {
+      "status": "PASS",
+      "details": "Customer orders page shows table with columns (Date, Order, Type, Amount, Payment, Fulfillment) and right-side detail panel with items, delivery info, activity timeline",
+      "file": "/app/frontend/src/pages/customer/OrdersPageV2.jsx",
+      "ui_verified": true
+    },
+    "FIX_6_VENDOR_FULFILLMENT_BOTH_COLLECTIONS": {
+      "status": "PASS",
+      "details": "GET /api/partner-portal/fulfillment-jobs queries both fulfillment_jobs AND vendor_orders collections. Returns jobs with 'source' field indicating origin.",
+      "file": "/app/backend/partner_portal_dashboard_routes.py",
+      "api_verified": true
+    },
+    "FIX_7_VENDOR_PAGE_TITLE": {
+      "status": "PASS",
+      "details": "Partner fulfillment page title is 'My Orders' (not 'Fulfillment'). Table+drawer pattern with filter tabs.",
+      "file": "/app/frontend/src/pages/partner/PartnerFulfillmentPage.jsx",
+      "ui_verified": true
+    }
+  },
+  "additional_verifications": {
+    "NOTIFICATION_BELL_CUSTOMER": {
+      "status": "PASS",
+      "details": "NotificationBell component renders in customer dashboard topbar with unread count badge. Dropdown shows notifications."
+    },
+    "NOTIFICATION_BELL_PARTNER": {
+      "status": "PASS",
+      "details": "NotificationBell component renders in partner portal sidebar header. Dropdown works correctly."
+    },
+    "PARTNER_SIDEBAR_VENDOR_ONLY": {
+      "status": "PASS",
+      "details": "Partner sidebar logic correctly handles vendor-only accounts. Demo partner shows all sections (has multiple roles). Code in PartnerLayout.jsx correctly filters based on isAffiliate/isVendor flags."
+    }
+  },
+  "backend_api_tests": {
+    "api_health": "PASS",
+    "customer_login": "PASS",
+    "partner_login": "PASS (endpoint: /api/partner-auth/login)",
+    "customer_invoices_endpoint": "PASS",
+    "invoice_status_mapping": "PASS",
+    "customer_orders_endpoint": "PASS",
+    "partner_fulfillment_jobs_endpoint": "PASS",
+    "partner_fulfillment_jobs_status_filter": "PASS",
+    "partner_dashboard": "PASS",
+    "customer_notifications": "PASS",
+    "partner_notifications": "PASS",
+    "finance_queue_endpoint": "PASS"
+  },
+  "screenshots": [
+    ".screenshots/customer_invoices_page.png",
+    ".screenshots/customer_orders_page.png",
+    ".screenshots/partner_fulfillment_page.png",
+    ".screenshots/cart_first_add.png",
+    ".screenshots/cart_after_double_add.png",
+    ".screenshots/customer_notification_bell.png",
+    ".screenshots/partner_notification_bell.png",
+    ".screenshots/invoice_under_review_detail.png"
+  ]
+}
