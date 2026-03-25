@@ -88,15 +88,18 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 - [x] **Admin CRM Refactor - Pass 3** (Sales CRM, Customers, Vendors pages)
 - [x] **Admin CRM Refactor - Pass 4** (Affiliates, Products/Services, Business Settings pages)
 - [x] **Admin CRM Refactor - Pass 5** (Users & Roles, Audit Log pages)
+- [x] **Patch Round 1 & 2** (Cart dedup, notification triggers, invoice statuses, vendor visibility)
+- [x] **Core Engine** — Quote System, Sales CRM UI, Installment Payment Logic (Deposit + Balance)
 
 ### Remaining
-- [ ] Configure Twilio WhatsApp credentials (P1)
+- [ ] Configure Twilio WhatsApp credentials (P2)
 - [ ] Final Launch Verification Checklist (P1)
 - [ ] Live payment gateway — KwikPay/Stripe (P1)
 - [ ] DNS/SSL setup (P1)
 - [ ] One-click reorder / Saved Carts (P2)
 - [ ] Mobile-first optimization (P2)
 - [ ] Advanced analytics (P2)
+- [ ] AI-assisted Auto Quote Suggestions (P2)
 
 ---
 
@@ -109,6 +112,33 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 | 102 | Go-Live Commerce Engine | 100% (15/15) |
 | 103 | Customer UX Go-Live Fix Pack | 100% (15/15 backend, 100% frontend) |
 | 104 | Admin CRM Refactor Pass 2 | 100% (20/20 backend, 4/4 pages) |
-| 105 | **Admin CRM Refactor Pass 3/4/5** | **97% (29/30 backend, 8/8 pages) — vendor detail fixed post-test** |
+| 105 | **Admin CRM Refactor Pass 3/4/5** | **97% (29/30 backend, 8/8 pages)** |
+| 106-107 | Patch Round 1 & 2 | 100% |
+| 108 | **Core Engine (Quotes + Installments)** | **100% (18/18 backend, 100% frontend)** |
+
+---
+
+## Core Engine Architecture
+
+### Quote Flow
+```
+Admin Creates Quote (draft) → Sends to Customer (sent) → Customer Accepts (converted) → Invoice + Splits Created
+                                                        → Customer Rejects (rejected) → Notifies Sales
+```
+
+### Key Endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/quotes-engine/create` | Admin creates quote (supports full/installment payment) |
+| `POST /api/quotes-engine/{id}/send` | Admin sends quote to customer |
+| `POST /api/customer/quotes/{id}/approve` | Customer accepts quote → auto-creates invoice + splits |
+| `POST /api/customer/quotes/{id}/reject` | Customer rejects quote with reason |
+| `GET /api/customer/invoices/{id}/splits` | Get installment splits for invoice |
+
+### Installment Logic
+- Quotes with `payment_type: "installment"` and `deposit_percent > 0`
+- On acceptance: Creates invoice + two `invoice_splits` (deposit + balance)
+- Invoice `amount_due` set to deposit amount initially
+- Customer can select which split to pay on the payment page
 
 *Last updated: March 25, 2026*

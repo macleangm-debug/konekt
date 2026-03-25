@@ -86,8 +86,8 @@ async def get_activity_feed(
             "link": f"/account/orders"
         })
     
-    # Sort by created_at
-    activities.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    # Sort by created_at (handle mixed datetime/str types)
+    activities.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
     
     return activities[:limit]
 
