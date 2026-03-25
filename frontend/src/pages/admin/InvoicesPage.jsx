@@ -4,7 +4,7 @@ import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
-import { Receipt, FileText, ExternalLink } from "lucide-react";
+import { Receipt, FileText, Download, ExternalLink, Layers, AlertTriangle } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
@@ -121,6 +121,7 @@ export default function InvoicesPage() {
           <div className="space-y-4 animate-pulse"><div className="h-20 bg-slate-100 rounded-xl" /><div className="h-40 bg-slate-100 rounded-xl" /></div>
         ) : detail ? (
           <div className="space-y-6">
+            {/* Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs text-slate-500">Customer</p>
@@ -134,6 +135,29 @@ export default function InvoicesPage() {
               </div>
             </div>
 
+            {/* Installment Splits */}
+            {detail.splits && detail.splits.length > 0 && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4" data-testid="admin-invoice-splits">
+                <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold mb-2">
+                  <Layers size={16} /> Installment Payment
+                </div>
+                <div className="space-y-1.5">
+                  {detail.splits.map((split, idx) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="capitalize text-amber-700">{split.type}</span>
+                      <div className="text-right">
+                        <span className="font-semibold text-amber-800">{money(split.amount)}</span>
+                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${split.status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                          {split.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Line Items */}
             {detail.invoice?.items && detail.invoice.items.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Line Items ({detail.invoice.items.length})</p>
@@ -148,23 +172,54 @@ export default function InvoicesPage() {
               </div>
             )}
 
+            {/* Payment Proofs */}
             {detail.proofs && detail.proofs.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Payment Proofs ({detail.proofs.length})</p>
                 <div className="space-y-2">
                   {detail.proofs.map((proof, idx) => (
-                    <div key={idx} className="rounded-xl border border-slate-200 p-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-[#20364D]">{money(proof.amount_paid)}</p>
-                        <p className="text-xs text-slate-500">{proof.payer_name || "—"} &middot; {fmtDate(proof.created_at)}</p>
+                    <div key={idx} className="rounded-xl border border-slate-200 p-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-[#20364D]">{money(proof.amount_paid)}</p>
+                          <p className="text-xs text-slate-500">{proof.payer_name || proof.customer_name || "—"} &middot; {fmtDate(proof.created_at)}</p>
+                          {proof.transaction_reference && (
+                            <p className="text-xs text-slate-400 mt-0.5">Ref: {proof.transaction_reference}</p>
+                          )}
+                        </div>
+                        <StatusBadge status={proof.status} />
                       </div>
-                      <StatusBadge status={proof.status} />
+                      {proof.proof_url && (
+                        <a href={proof.proof_url} target="_blank" rel="noopener noreferrer"
+                          className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#20364D] hover:underline font-medium" data-testid="download-proof-btn">
+                          <Download size={12} /> Download Proof
+                        </a>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Proof Submissions (with rejection reasons) */}
+            {detail.proof_submissions && detail.proof_submissions.filter(p => p.rejection_reason).length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-2">Rejection Details</p>
+                <div className="space-y-2">
+                  {detail.proof_submissions.filter(p => p.rejection_reason).map((sub, idx) => (
+                    <div key={idx} className="rounded-xl border border-red-200 bg-red-50 p-3">
+                      <div className="flex items-center gap-2 text-red-700 text-sm font-medium mb-1">
+                        <AlertTriangle size={14} /> Rejection Reason
+                      </div>
+                      <p className="text-sm text-red-600">{sub.rejection_reason}</p>
+                      <p className="text-xs text-red-400 mt-1">{fmtDate(sub.updated_at || sub.created_at)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Linked Order */}
             {detail.order && (
               <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
                 <div className="flex items-center gap-2">

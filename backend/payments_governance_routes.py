@@ -293,6 +293,8 @@ async def finance_approve(payload: dict, request: Request):
             "quote_id": invoice.get("quote_id"),
             "customer_id": invoice.get("customer_id"),
             "user_id": invoice.get("customer_id"),
+            "customer_name": invoice.get("customer_name", ""),
+            "customer_email": invoice.get("customer_email", ""),
             "type": invoice.get("type", "product"),
             "status": "processing",
             "current_status": "processing",
@@ -319,14 +321,20 @@ async def finance_approve(payload: dict, request: Request):
             "status": "active_followup", "created_at": now,
         }
         await db.sales_assignments.insert_one(sa)
+        # Update order with sales reference
+        await db.orders.update_one({"id": order_id}, {"$set": {"sales_id": assigned_sales_id, "sales_name": assigned_sales_name}})
         vendor_ids = set()
         for item in invoice.get("items", []):
             if item.get("vendor_id"):
                 vendor_ids.add(item["vendor_id"])
         for vid in vendor_ids:
             vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
+            # Look up partner_id from partners collection for proper linkage
+            partner_doc = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "partner_id": 1})
+            resolved_partner_id = partner_doc["partner_id"] if partner_doc else vid
             await db.vendor_orders.insert_one({
-                "id": str(uuid4()), "vendor_id": vid, "order_id": order_id,
+                "id": str(uuid4()), "vendor_id": vid, "partner_id": resolved_partner_id,
+                "order_id": order_id, "order_number": order_doc.get("order_number"),
                 "customer_id": invoice.get("customer_id"),
                 "status": "ready_to_fulfill", "items": vitems, "created_at": now,
             })

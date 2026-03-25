@@ -207,8 +207,8 @@ async def partner_fulfillment_jobs(
         fj_query["status"] = status
     fj_docs = await db.fulfillment_jobs.find(fj_query).sort("created_at", -1).to_list(length=300)
 
-    # Also query vendor_orders (created on payment approval)
-    vo_query = {"vendor_id": partner_id}
+    # Also query vendor_orders by partner_id OR vendor_id matching partner_id
+    vo_query = {"$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]}
     if status:
         vo_query["status"] = status
     vo_docs = await db.vendor_orders.find(vo_query).sort("created_at", -1).to_list(length=300)
@@ -252,18 +252,12 @@ async def update_fulfillment_status(
     payload: dict,
     authorization: Optional[str] = Header(None)
 ):
-    """Partner updates fulfillment job status"""
+    """Partner updates fulfillment job or vendor order status"""
     user = await get_partner_user_from_header(authorization)
-
-    job = await db.fulfillment_jobs.find_one({
-        "_id": ObjectId(job_id),
-        "partner_id": user["partner_id"]
-    })
-    if not job:
-        raise HTTPException(status_code=404, detail="Fulfillment job not found")
+    partner_id = user["partner_id"]
 
     status = payload.get("status")
-    allowed_statuses = {"allocated", "accepted", "in_progress", "fulfilled", "issue_reported"}
+    allowed_statuses = {"allocated", "accepted", "in_progress", "fulfilled", "issue_reported", "ready_to_fulfill"}
     if status not in allowed_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {allowed_statuses}")
 
@@ -271,19 +265,42 @@ async def update_fulfillment_status(
         "status": status,
         "updated_at": datetime.now(timezone.utc),
     }
-    
     if payload.get("partner_note"):
-        update_data["partner_note"] = payload.get("partner_note")
+        update_data["partner_note"] = payload["partner_note"]
 
-    await db.fulfillment_jobs.update_one({"_id": ObjectId(job_id)}, {"$set": update_data})
-    
-    updated = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id)})
-    clean = serialize_doc(updated)
-    # Remove customer details
-    for field in ["customer_email", "customer_name", "customer_company", 
-                  "customer_phone", "delivery_address", "customer_id"]:
-        clean.pop(field, None)
-    return clean
+    # Try fulfillment_jobs first
+    try:
+        job = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id), "partner_id": partner_id})
+    except Exception:
+        job = None
+    if job:
+        await db.fulfillment_jobs.update_one({"_id": ObjectId(job_id)}, {"$set": update_data})
+        updated = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id)})
+        clean = serialize_doc(updated)
+        for field in ["customer_email", "customer_name", "customer_company",
+                      "customer_phone", "delivery_address", "customer_id"]:
+            clean.pop(field, None)
+        return clean
+
+    # Try vendor_orders by id field
+    vo = await db.vendor_orders.find_one({"id": job_id, "$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]})
+    if not vo:
+        # Try by _id
+        try:
+            vo = await db.vendor_orders.find_one({"_id": ObjectId(job_id), "$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]})
+        except Exception:
+            pass
+    if vo:
+        update_key = {"_id": vo["_id"]}
+        await db.vendor_orders.update_one(update_key, {"$set": update_data})
+        updated = await db.vendor_orders.find_one(update_key)
+        clean = serialize_doc(updated)
+        for field in ["customer_email", "customer_name", "customer_company",
+                      "customer_phone", "delivery_address", "customer_id"]:
+            clean.pop(field, None)
+        return clean
+
+    raise HTTPException(status_code=404, detail="Order not found")
 
 
 @router.get("/settlements")

@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Package, X, Truck, FileText, Clock } from "lucide-react";
-import PageHeader from "../../components/ui/PageHeader";
-import SurfaceCard from "../../components/ui/SurfaceCard";
-import FilterBar from "../../components/ui/FilterBar";
-import BrandButton from "../../components/ui/BrandButton";
-import axios from "axios";
-
-const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+import { Package, X, Truck, Clock, User } from "lucide-react";
+import api from "../../lib/api";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(v) { try { return new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "-"; } }
@@ -34,9 +28,7 @@ export default function OrdersPageV2() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    axios.get(`${API_URL}/api/customer/orders`, { headers: { Authorization: `Bearer ${token}` } })
+    api.get("/api/customer/orders")
       .then((r) => setOrders(r.data || []))
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
@@ -50,17 +42,27 @@ export default function OrdersPageV2() {
 
   return (
     <div className="space-y-6" data-testid="orders-page">
-      <PageHeader title="My Orders" subtitle="Track fulfillment after payment approval."
-        actions={<BrandButton href="/marketplace" variant="primary">New Order</BrandButton>} />
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-[#20364D]">My Orders</h1>
+        <p className="text-slate-500 mt-1 text-sm">Track fulfillment after payment approval.</p>
+      </div>
 
-      <FilterBar searchValue={searchValue} onSearchChange={setSearchValue} searchPlaceholder="Search orders..."
-        filters={[{ name: "status", value: statusFilter, onChange: setStatusFilter, placeholder: "All Statuses",
-          options: [{ value: "pending_payment_confirmation", label: "Awaiting Payment" }, { value: "processing", label: "Processing" }, { value: "ready_to_fulfill", label: "Ready to Fulfill" }, { value: "shipped", label: "Shipped" }, { value: "completed", label: "Completed" }],
-        }]}
-      />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+          placeholder="Search orders..." value={searchValue} onChange={(e) => setSearchValue(e.target.value)} data-testid="orders-search" />
+        <select className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm min-w-[160px]"
+          value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} data-testid="orders-status-filter">
+          <option value="">All Statuses</option>
+          <option value="processing">Processing</option>
+          <option value="ready_to_fulfill">Ready to Fulfill</option>
+          <option value="shipped">Shipped</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
 
       <div className="grid xl:grid-cols-[1fr_400px] gap-6">
-        <SurfaceCard className="overflow-hidden p-0">
+        {/* Table */}
+        <div className="rounded-[2rem] border border-slate-200 bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm" data-testid="orders-table">
               <thead className="bg-slate-50 text-slate-500">
@@ -68,7 +70,7 @@ export default function OrdersPageV2() {
                   <th className="px-4 py-3 text-left font-semibold">Date</th>
                   <th className="px-4 py-3 text-left font-semibold">Order</th>
                   <th className="px-4 py-3 text-left font-semibold">Type</th>
-                  <th className="px-4 py-3 text-left font-semibold">Amount</th>
+                  <th className="px-4 py-3 text-right font-semibold">Amount</th>
                   <th className="px-4 py-3 text-left font-semibold">Payment</th>
                   <th className="px-4 py-3 text-left font-semibold">Fulfillment</th>
                 </tr>
@@ -79,8 +81,8 @@ export default function OrdersPageV2() {
                 ) : filtered.length ? filtered.map((order) => {
                   const state = order.current_status || order.status || "processing";
                   return (
-                    <tr key={order.id || order._id} onClick={() => setSelected(order)}
-                      className={`border-t hover:bg-slate-50 cursor-pointer ${selected?.id === (order.id || order._id) ? "bg-[#20364D]/5" : ""}`}
+                    <tr key={order.id} onClick={() => setSelected(order)}
+                      className={`border-t hover:bg-slate-50/60 cursor-pointer ${selected?.id === order.id ? "bg-[#20364D]/5" : ""}`}
                       data-testid={`order-row-${order.id}`}>
                       <td className="px-4 py-4 text-slate-600 whitespace-nowrap">{fmtDate(order.created_at)}</td>
                       <td className="px-4 py-4">
@@ -88,7 +90,7 @@ export default function OrdersPageV2() {
                         <div className="text-xs text-slate-500">{(order.items || []).length} item(s)</div>
                       </td>
                       <td className="px-4 py-4 text-slate-600 capitalize">{(order.type || "order").replace(/_/g, " ")}</td>
-                      <td className="px-4 py-4 font-semibold text-[#20364D]">{money(order.total || order.total_amount)}</td>
+                      <td className="px-4 py-4 text-right font-semibold text-[#20364D]">{money(order.total || order.total_amount)}</td>
                       <td className="px-4 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${order.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                           {order.payment_status || "paid"}
@@ -113,10 +115,10 @@ export default function OrdersPageV2() {
               </tbody>
             </table>
           </div>
-        </SurfaceCard>
+        </div>
 
         {/* Detail Panel (Drawer) */}
-        <SurfaceCard data-testid="order-detail-panel">
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6" data-testid="order-detail-panel">
           {selected ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -125,7 +127,7 @@ export default function OrdersPageV2() {
                   <div className="text-sm text-slate-500">{fmtDate(selected.created_at)}</div>
                 </div>
                 <button onClick={() => setSelected(null)} className="p-2 rounded-lg hover:bg-slate-100" data-testid="close-order-detail">
-                  <X className="w-4 h-4" />
+                  <X className="w-4 h-4 text-slate-400" />
                 </button>
               </div>
 
@@ -150,15 +152,32 @@ export default function OrdersPageV2() {
                 </div>
               </div>
 
+              {/* Assigned Sales Contact */}
+              {selected.sales && (
+                <div className="rounded-xl bg-blue-50 border border-blue-200 p-3" data-testid="sales-contact-info">
+                  <div className="flex items-center gap-2 text-blue-800 text-sm font-semibold mb-1">
+                    <User className="w-4 h-4" /> Assigned Sales
+                  </div>
+                  <div className="text-sm text-blue-700 space-y-0.5">
+                    <p>{selected.sales.name || "Sales Representative"}</p>
+                    {selected.sales.phone && <p>{selected.sales.phone}</p>}
+                    {selected.sales.email && <p>{selected.sales.email}</p>}
+                  </div>
+                </div>
+              )}
+
               {/* Delivery info */}
-              {(selected.delivery_address || selected.delivery_city) && (
+              {(selected.delivery_address || selected.delivery_city || selected.delivery) && (
                 <div className="rounded-xl bg-slate-50 p-3">
                   <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 mb-1">
                     <Truck className="w-4 h-4" /> Delivery
                   </div>
                   <div className="text-sm text-slate-700">
-                    {[selected.delivery_address, selected.delivery_city, selected.delivery_region].filter(Boolean).join(", ")}
+                    {[selected.delivery_address || (selected.delivery || {}).address, selected.delivery_city || (selected.delivery || {}).city, selected.delivery_region].filter(Boolean).join(", ") || "TBD"}
                   </div>
+                  {(selected.delivery_phone || (selected.delivery || {}).phone) && (
+                    <div className="text-xs text-slate-500 mt-1">Phone: {selected.delivery_phone || (selected.delivery || {}).phone}</div>
+                  )}
                 </div>
               )}
 
@@ -175,7 +194,7 @@ export default function OrdersPageV2() {
                 </div>
               </div>
 
-              {/* Order timeline */}
+              {/* Events timeline */}
               {selected.events && selected.events.length > 0 && (
                 <div>
                   <div className="text-sm font-semibold text-slate-500 mb-2">Activity</div>
@@ -199,7 +218,7 @@ export default function OrdersPageV2() {
               <div>Select an order to see details</div>
             </div>
           )}
-        </SurfaceCard>
+        </div>
       </div>
     </div>
   );
