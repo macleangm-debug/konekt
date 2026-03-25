@@ -8,7 +8,7 @@ import {
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
-import BrandLogoFinal from './branding/BrandLogoFinal';
+import BrandLogo from './branding/BrandLogo';
 
 // Main product branches with their sub-categories
 const productBranches = [
@@ -78,7 +78,7 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-20">
             {/* Logo - DARK on white navbar background */}
             <Link to="/" className="flex items-center gap-3" data-testid="logo">
-              <BrandLogoFinal size="md" />
+              <BrandLogo size="md" />
             </Link>
 
             {/* Desktop Links */}

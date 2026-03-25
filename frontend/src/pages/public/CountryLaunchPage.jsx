@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MapPin, Building2, Users } from "lucide-react";
 import api from "../../lib/api";
 import { getStoredCountryCode } from "../../lib/countryPreference";
+import BrandLogo from "../../components/branding/BrandLogo";
 
 export default function CountryLaunchPage() {
   const [config, setConfig] = useState(null);
@@ -102,8 +103,8 @@ export default function CountryLaunchPage() {
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Header */}
         <div className="rounded-3xl border bg-white p-8 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#20364D] flex items-center justify-center text-white text-2xl font-bold mb-4">
-            K
+          <div className="mb-4 flex justify-center">
+            <BrandLogo size="xl" />
           </div>
           <h1 className="text-4xl font-bold text-[#20364D]">
             {config?.headline || "Konekt is Coming to Your Country"}

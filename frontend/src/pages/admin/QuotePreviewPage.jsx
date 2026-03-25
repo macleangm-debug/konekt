@@ -6,6 +6,7 @@ import { formatMoney } from "@/utils/finance";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import BrandLogo from "@/components/branding/BrandLogo";
 
 const statusColors = {
   draft: "bg-slate-100 text-slate-700",
@@ -168,13 +169,7 @@ export default function QuotePreviewPage() {
           <div className="bg-[#2D3E50] text-white p-8">
             <div className="flex items-start justify-between">
               <div>
-                {settings.logo_url ? (
-                  <img src={settings.logo_url} alt="Logo" className="h-12 mb-4" />
-                ) : (
-                  <div className="w-24 h-12 bg-white/20 rounded flex items-center justify-center text-sm font-medium mb-4">
-                    LOGO
-                  </div>
-                )}
+                <BrandLogo size="md" variant="light" className="mb-4" />
                 <h1 className="text-3xl font-bold">QUOTE</h1>
               </div>
               <div className="text-right">

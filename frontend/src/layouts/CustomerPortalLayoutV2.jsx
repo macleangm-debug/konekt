@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
-import BrandLogoFinal from "../components/branding/BrandLogoFinal";
+import BrandLogo from "../components/branding/BrandLogo";
 import CartTopbarButton from "../components/topbar/CartTopbarButton";
 
 const nav = [
@@ -49,7 +49,7 @@ export default function CustomerPortalLayoutV2() {
         {/* Logo */}
         <div className="px-5 py-6 border-b border-gray-100">
           <Link to="/" className="flex items-center" data-testid="sidebar-logo-link">
-            <BrandLogoFinal size="md" />
+            <BrandLogo size="md" />
           </Link>
         </div>
         
@@ -118,7 +118,7 @@ export default function CustomerPortalLayoutV2() {
 
           {/* Mobile Logo */}
           <Link to="/" className="lg:hidden">
-            <BrandLogoFinal size="sm" />
+            <BrandLogo size="sm" />
           </Link>
 
           <div className="flex items-center gap-3">

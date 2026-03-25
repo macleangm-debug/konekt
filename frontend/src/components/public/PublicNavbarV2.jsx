@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BrandButton from "../ui/BrandButton";
 import { Menu, X, FileText, ChevronDown } from "lucide-react";
-import BrandLogoFinal from "../branding/BrandLogoFinal";
+import BrandLogo from "../branding/BrandLogo";
 import { serviceNavigationGroups } from "../services/ServiceNavigationDropdownData";
 
 export default function PublicNavbarV2() {
@@ -34,7 +34,7 @@ export default function PublicNavbarV2() {
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm" data-testid="public-navbar">
       <div className="max-w-7xl mx-auto px-6 h-18 min-h-[72px] flex items-center justify-between">
         <Link to="/" className="flex items-center" data-testid="navbar-logo">
-          <BrandLogoFinal size="md" />
+          <BrandLogo size="md" />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">

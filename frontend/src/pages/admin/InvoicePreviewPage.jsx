@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import BrandLogo from "@/components/branding/BrandLogo";
 import { toast } from "sonner";
 
 const statusColors = {
@@ -264,13 +265,7 @@ export default function InvoicePreviewPage() {
           <div className="bg-[#2D3E50] text-white p-8">
             <div className="flex items-start justify-between">
               <div>
-                {settings.logo_url ? (
-                  <img src={settings.logo_url} alt="Logo" className="h-12 mb-4" />
-                ) : (
-                  <div className="w-24 h-12 bg-white/20 rounded flex items-center justify-center text-sm font-medium mb-4">
-                    LOGO
-                  </div>
-                )}
+                <BrandLogo size="md" variant="light" className="mb-4" />
                 <h1 className="text-3xl font-bold">INVOICE</h1>
               </div>
               <div className="text-right">

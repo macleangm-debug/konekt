@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "../ui/button";
-import BrandLogoFinal from "../branding/BrandLogoFinal";
+import BrandLogo from "../branding/BrandLogo";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
@@ -62,7 +62,7 @@ export default function CustomerPortalLayout() {
           {/* Logo */}
           <div className="px-5 py-6 border-b border-gray-100">
             <Link to="/">
-              <BrandLogoFinal size="md" />
+              <BrandLogo size="md" />
             </Link>
           </div>
 
@@ -145,7 +145,7 @@ export default function CustomerPortalLayout() {
               >
                 {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <div className="text-2xl font-bold text-[#2D3E50] hidden md:block">Konekt Portal</div>
+              <BrandLogo size="sm" className="hidden md:flex" />
             </div>
 
             <div className="flex items-center gap-3">

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import AuthBrandHeader from "@/components/auth/AuthBrandHeader";
 
 export default function CustomerLoginPage() {
   const navigate = useNavigate();
@@ -35,9 +36,8 @@ export default function CustomerLoginPage() {
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6 py-12" data-testid="customer-login-page">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="text-3xl font-bold text-[#20364D]">Konekt</Link>
+          <AuthBrandHeader subtitle="Sign in to manage your orders, quotes, and services." />
           <h1 className="text-2xl font-bold text-[#20364D] mt-6">Customer Login</h1>
-          <p className="text-slate-600 mt-2">Sign in to manage your orders, quotes, and services.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-3xl border p-8 space-y-5">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../lib/api";
 import { Check, X, Clock, DollarSign, Search, ChevronRight, Image, FileText } from "lucide-react";
-import BrandLogoFinal from "../branding/BrandLogoFinal";
+import BrandLogo from "../branding/BrandLogo";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 

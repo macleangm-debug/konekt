@@ -11,7 +11,7 @@ import { Input } from '../../components/ui/input';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 import NotificationBell from '../../components/admin/NotificationBell';
-import BrandLogoFinal from '../../components/branding/BrandLogoFinal';
+import BrandLogo from '../../components/branding/BrandLogo';
 
 // Navigation items with moduleKey for filtering
 const navItems = [
@@ -108,7 +108,7 @@ export default function AdminLayout() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="px-5 py-6 border-b border-white/10">
-            <BrandLogoFinal size="lg" light />
+            <BrandLogo size="lg" variant="light" />
             <p className="text-white/40 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
           

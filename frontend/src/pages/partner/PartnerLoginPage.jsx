@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
+import AuthBrandHeader from "../../components/auth/AuthBrandHeader";
 
 export default function PartnerLoginPage() {
   const navigate = useNavigate();
@@ -28,11 +29,8 @@ export default function PartnerLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6" data-testid="partner-login-page">
       <form onSubmit={handleLogin} className="w-full max-w-md rounded-3xl border bg-white p-8 space-y-5">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-[#20364D] flex items-center justify-center text-white text-2xl font-bold mb-4">
-            K
-          </div>
+          <AuthBrandHeader subtitle="Sign in to manage your Konekt allocation" />
           <h1 className="text-3xl font-bold text-[#20364D]">Partner Portal</h1>
-          <p className="text-slate-500 mt-2">Sign in to manage your Konekt allocation</p>
         </div>
 
         {error && (

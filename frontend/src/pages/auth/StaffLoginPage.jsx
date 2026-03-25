@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Shield, Users, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import BrandLogo from "@/components/branding/BrandLogo";
 
 export default function StaffLoginPage() {
   const navigate = useNavigate();
@@ -41,7 +42,9 @@ export default function StaffLoginPage() {
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-[#20364D] to-[#0f1a24] p-12">
         <div>
-          <Link to="/" className="text-3xl font-bold text-white">Konekt</Link>
+          <Link to="/" className="inline-block">
+            <BrandLogo size="lg" variant="light" />
+          </Link>
           <p className="text-slate-400 mt-2">Staff Portal</p>
         </div>
         
@@ -84,7 +87,9 @@ export default function StaffLoginPage() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="text-center mb-8 lg:hidden">
-            <Link to="/" className="text-3xl font-bold text-white">Konekt</Link>
+            <Link to="/" className="inline-flex justify-center">
+              <BrandLogo size="lg" variant="light" />
+            </Link>
             <p className="text-slate-400 mt-2">Staff Portal</p>
           </div>
 

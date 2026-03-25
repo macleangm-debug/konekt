@@ -3,7 +3,7 @@ import { X, ShoppingCart, Trash2, Sparkles, ShieldCheck } from "lucide-react";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import SalesAssistModalV2 from "../modals/SalesAssistModalV2";
 import CheckoutPanel from "../checkout/CheckoutPanel";
-import BrandLogoFinal from "../branding/BrandLogoFinal";
+import BrandLogo from "../branding/BrandLogo";
 
 export default function CartDrawerV2() {
   const { open, items, closeCart, removeItem, clearCart } = useCartDrawer();
@@ -41,7 +41,7 @@ export default function CartDrawerV2() {
           <div className="bg-gradient-to-br from-[#20364D] via-[#294B68] to-[#D4A843] px-6 py-6 text-white">
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-4">
-                <BrandLogoFinal size="md" light className="!h-8" />
+                <BrandLogo size="sm" variant="light" />
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center border border-white/10">
                     <ShoppingCart className="w-5 h-5" />

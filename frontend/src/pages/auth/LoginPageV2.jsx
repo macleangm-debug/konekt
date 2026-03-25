@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
-import BrandLogoFinal from "../../components/branding/BrandLogoFinal";
+import BrandLogo from "../../components/branding/BrandLogo";
 import { Check } from "lucide-react";
 
 export default function LoginPageV2() {
@@ -60,7 +60,7 @@ export default function LoginPageV2() {
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
         
         <div className="max-w-md mx-auto relative z-10">
-          <BrandLogoFinal size="xl" light className="mb-12" />
+          <BrandLogo size="xl" variant="light" className="mb-12" />
           
           <h1 className="text-4xl md:text-5xl font-bold leading-tight tracking-tight">
             Welcome to Konekt

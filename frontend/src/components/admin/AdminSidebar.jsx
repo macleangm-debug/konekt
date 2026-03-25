@@ -4,10 +4,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import { adminNavigation } from "../../config/adminNavigation";
 import { hasModuleAccess } from "../../lib/moduleAccess";
 import { LogOut, ChevronDown, ChevronRight } from "lucide-react";
+import SidebarBrand from "../layout/SidebarBrand";
 
 export default function AdminSidebar() {
-  const { user, logout } = useAuth();
-  const location = useLocation();
+  const { user, logout } = useAuth();  const location = useLocation();
   const navigate = useNavigate();
   const [openKey, setOpenKey] = useState(null);
 
@@ -37,8 +37,8 @@ export default function AdminSidebar() {
 
   return (
     <aside className="w-[260px] border-r bg-white px-4 py-5 flex flex-col h-screen sticky top-0">
+      <SidebarBrand />
       <div className="px-2">
-        <div className="text-2xl font-bold text-[#2D3E50]" data-testid="admin-logo">Konekt Admin</div>
         <div className="text-sm text-slate-500 mt-1" data-testid="admin-user-email">{user?.full_name || user?.email}</div>
       </div>
 

@@ -7,7 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import { toast } from 'sonner';
-import BrandLogoFinal from '../../components/branding/BrandLogoFinal';
+import BrandLogo from '../../components/branding/BrandLogo';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -48,7 +48,7 @@ export default function AdminLogin() {
       >
         {/* Header */}
         <div className="text-center mb-8">
-          <BrandLogoFinal size="lg" light className="mx-auto mb-4" />
+          <BrandLogo size="lg" variant="light" className="mx-auto mb-4" />
           <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 px-4 py-2 rounded-full text-sm">
             <Shield className="w-4 h-4" />
             Admin Portal

@@ -3,7 +3,7 @@ import { Eye, Package, Phone, Mail, X } from "lucide-react";
 import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
-import BrandLogoFinal from "../../components/branding/BrandLogoFinal";
+import BrandLogo from "../../components/branding/BrandLogo";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -31,7 +31,7 @@ function OrderDrawer({ order, onClose }) {
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f] text-white px-6 py-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <BrandLogoFinal size="md" light className="!h-7 mb-3" />
+              <BrandLogo size="sm" variant="light" className="mb-3" />
               <div className="text-lg font-semibold">Order Details</div>
               <div className="text-xs text-white/75 mt-1">{order.order_number || order.id}</div>
             </div>

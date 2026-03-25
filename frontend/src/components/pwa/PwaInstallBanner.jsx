@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Download, X } from "lucide-react";
+import BrandLogo from "../branding/BrandLogo";
 
 /**
  * Get role-specific install messaging
@@ -78,9 +79,7 @@ export default function PwaInstallBanner({ user }) {
       data-testid="pwa-install-banner"
     >
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#20364D] flex items-center justify-center text-white font-bold shrink-0">
-          K
-        </div>
+        <BrandLogo size="xs" className="shrink-0" />
         <div>
           <div className="font-bold text-[#20364D]">Install Konekt</div>
           <p className="text-sm text-slate-600 mt-1">{copy}</p>
