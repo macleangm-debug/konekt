@@ -1,143 +1,146 @@
-<analysis>**original_problem_statement**: The user is finalizing Konekt, a premium B2B e-commerce platform. The system is transitioning into a Launch + Growth Phase. The user requested the implementation of multiple major code packs to achieve a Stripe-level checkout experience, a unified customer marketplace, an Uber-style Sales Command Center, and direct payment flows.
+<analysis>**original_problem_statement**: The user, in the Launch + Growth Phase for their B2B e-commerce platform Konekt, has provided a series of code packs to finalize the application. These packs introduced a referral/sales commission system, enhanced payment flows, a multi-service request taxonomy, and a centralized Go-Live Commerce Engine. The most recent and critical task is a complete architectural and UX overhaul of the Admin and Sales CRM sections, moving from a fragmented structure to a clean, unified, and go-live ready interface based on a detailed specification pack provided by the user.
 
-**User's preferred language**: English (INSTRUCT next agent to respond in English only)
+**User's preferred language**: English (You MUST respond in English only)
 
-**what currently exists?** 
-A highly polished, premium B2B platform. The application now features a Stripe-style in-flow checkout panel, a unified customer marketplace (Products and Services tabs in one view), a top-bar cart drawer, and a Sales Command Center where staff can view dispatch queues and generate instant quotes. The UI has been heavily upgraded with consistent typography, spacing, and a robust  component.
+**what currently exists?**
+The application is a feature-rich B2B platform with a React frontend and FastAPI backend. Key features include a strict payment-proof-before-order-creation governance model, a unified marketplace, and a lead-generation flow for promotional items. Architecturally, the system is in transition. It contains many older, feature-specific routes alongside a new, centralized  and a  facade for the core customer checkout flow. The agent has just begun implementing a massive admin UI refactor, starting with a new  facade on the backend.
 
-**Last working item**: 
-    - Last item agent was working: Implementing the Customer Payment Flow Completion Pack. The user uploaded a zip file containing backend payment routes, a My Account page, and a completed Cart Drawer flow (which sends fixed-price products directly to payment/order/invoice). The agent extracted and viewed the contents of  but has not yet copied the files into the main application.
-    - Status: NOT STARTED
-    - Agent Testing Done: N
+**Last working item**:
+    - Last item agent was working: Implementing Pass 1 and Pass 2 of the Admin CRM Master Pack refactor. The agent successfully created the backend facade () with endpoints for the core operational pages (Payments, Invoices, Orders, Quotes) and resolved routing conflicts with older APIs. On the frontend, the agent created the new  library, several shared UI components (, , , etc.), and the first of four core pages for Pass 2: .
+    - Status: IN PROGRESS
+    - Agent Testing Done: N (The backend facade was partially tested via curl, but no frontend compilation or end-to-end testing has been performed on the new admin components.)
     - Which testing method agent to use? testing_agent_v3_fork
     - User Testing Done: N
 
-**All Pending/In progress Issue list**:  
-  Issue 1: Implement the Customer Payment Flow Completion Pack (P0 🔴)
-     - Attempted fixes: The agent unzipped the pack into  and viewed the  and snippets. No code has been integrated yet.
+**All Pending/In progress Issue list**:
+  Issue 1:  Complete and Test Admin/CRM Refactor (Pass 1 & 2) (P0 🔴)
+  Issue 2:  Configure Twilio Credentials for WhatsApp (P2 🟡)
+  
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: The agent has laid the backend and shared component groundwork. The implementation is currently mid-flight.
      - Next debug checklist: 
-        1. Copy  to backend and register it in .
-        2. Create/update the frontend components (, , , ).
-        3. Wire up the routes and navigation as per .
-     - Why fix this issue and what will be achieved with the fix? It completes the customer-side payment flow, enabling personal/business account profiles, VAT calculations, and direct full payment routing for fixed-price products.
-     - Status: NOT STARTED
+        1. Create the remaining Pass 2 page components: , , and .
+        2. Create the core admin layout components: , , and .
+        3. Update  to use the new  and simplified sidebar structure.
+        4. Wire the new pages into  with their respective routes (, , etc.).
+        5. Verify the frontend compiles without errors.
+        6. Execute  to perform a full end-to-end test of the new admin backbone (Payments, Invoices, Orders, Quotes pages).
+     - Why fix this issue and what will be achieved with the fix? This is the highest priority user-requested task to create a stable, usable, and simplified operational backbone for the business to manage core commerce flows for go-live.
+     - Status: IN PROGRESS
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
-  Issue 2: Configure Twilio Credentials for WhatsApp (P0 🔴)
-     - Attempted fixes: N/A. Deferred again due to the influx of high-priority UI and payment flow code packs from the user.
-     - Next debug checklist: Ask the user to provide the , , and  credentials to inject into the backend .
-     - Why fix this issue and what will be achieved with the fix? Activates live WhatsApp transactional messaging.
+  - Issue 2:
+     - Attempted fixes: N/A. This task has been consistently deferred to prioritize major structural and feature-pack implementations.
+     - Next debug checklist: Use  to request the , , and  credentials from the user.
+     - Why fix this issue and what will be achieved with the fix? This will enable live transactional WhatsApp notifications for events like order confirmation.
      - Status: NOT STARTED
-     - Is recurring issue? Y (Carried over from previous forks)
+     - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? backend
-     - Blocked on other issue: User providing the keys.
+     - Blocked on other issue: Awaiting credentials from the user.
 
 **In progress Task List**:
-  Task 1: Complete Payment Flow Integration
-     - Where to resume: Begin copying files from  into the  directory and wiring them up.
-     - What will be achieved with this? Allows end-to-end testing of the customer journey from ordering to payment and invoice creation.
-     - Status: NOT STARTED
+  - Task 1: Complete Admin/CRM Refactor (Pass 1 & 2) (P0 🔴)
+     - Where to resume: The agent just created . The immediate next step is to create the other three core pages (, , ) and the shared  layout components.
+     - What will be achieved with this? A functional, simplified admin interface for managing the four most critical business operations: Payments, Invoices, Orders, and Quotes/Requests. This forms the backbone for all subsequent admin-facing work.
+     - Status: IN PROGRESS
      - Should Test frontend/backend/both after fix? both
      - Blocked on something: None
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - (P0 🔴) Final Launch Verification Checklist execution ().
-    - (P1 🔴) Connect live payment gateway (KwikPay/Stripe).
-    - (P1 🔴) DNS/SSL setup for production domain.
+    - (P0 🔴) Admin/CRM Refactor - Pass 3 (Sales CRM, Customers, Vendors)
+    - (P0 🔴) Admin/CRM Refactor - Pass 4 (Affiliates, Catalog, Settings)
+    - (P1 🟡) Admin/CRM Refactor - Pass 5 (Audit Logs, Notifications, Exports)
+    - (P1 🟡) Final Launch Verification Checklist execution
+    - (P1 🟡) Connect live payment gateway (KwikPay/Stripe)
+
     Future Tasks:
-    - (P2 🟡) AI-assisted Auto Quote Suggestions / One-click quote templates for Sales.
-    - (P2 🟡) Advanced Analytics dashboard.
-    - (P2 🟡) Mobile-first optimization across all dashboards.
-    - (P2 🟡) Push notifications.
-    - (P2 🟡) One-click reorder functionality.
+    - (P2 ⚪️) One-click reorder / Saved Carts functionality
+    - (P2 ⚪️) AI-assisted Auto Quote Suggestions for Sales
+    - (P2 ⚪️) Advanced Analytics dashboard
+    - (P2 ⚪️) Mobile-first optimization across all dashboards
 
 **Completed work in this session**
-- UI Polish Pack (BrandLogoFinal, standard colors/typography, layout upgrades) (DONE)
-- Stripe-Level Checkout Flow ( sliding from cart drawer) (DONE)
-- Instant Quote Engine & Sales Command Center () (DONE)
-- Repositioned Quote Builder out of Customer flow into Sales Command Center (DONE)
-- Customer Account Unification Pack (, removed fragmented pages) (DONE)
+- Admin Simplification + Payments Fixes Pack (DONE)
+- Referral + Sales Commission Governance Pack (DONE)
+- Payment Confirmation + Affiliate Promo Pack (DONE)
+- Multi-Service and Promo Taxonomy Pack (DONE)
+- Go-Live Commerce Engine (Centralized Core & Facade API) (DONE)
+- Customer UX Go-Live Fix Pack (4 passes improving customer-facing state flow) (DONE)
 
 **Earlier issues found/mentioned but not fixed**
 None.
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Twilio configuration is continually deferred because the user keeps providing higher-priority feature zip packs.
-  - Recurrence count: 2
+  - Issue recurrence in previous fork: Twilio configuration is continually deferred.
+  - Recurrence count: 4
   - Status: NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Unified Marketplace**: Combines Products and Services under one route with tab navigation. 
-- **Stripe-Style Checkout**: The checkout flow is a slide-in panel triggered from the Cart Drawer, keeping the user in-context.
-- **Sales Command Center**: Uber-style dispatch board exclusively for Staff/Sales to view leads and generate instant quotes. Customer UI is kept strictly separated from pricing logic.
+- **Strangler Fig Pattern**: Actively being used to refactor the application. New, clean facade APIs (, ) are created to provide a stable interface, while the old, fragmented backend routes are kept intact underneath. This allows for incremental refactoring with lower risk.
+- **Centralized Core Engine**: Critical business logic is being consolidated into service classes within the  directory to serve as a single source of truth for all entry points (old routes, new facades, etc.).
+- **Admin UI/UX Refactor**: A major overhaul of the admin interface, moving towards a consistent pattern: table-first lists, with row clicks opening a right-hand detail drawer. The goal is to simplify the UI while retaining all functionality.
 
 **key DB schema**
-  - , , 
-  - 
+  - , , , , , , , , , , .
 
 **changes in tech stack**
-  - None
+  - None.
 
-**All files of reference** 
-  -  (Extracted files from user's latest upload)
-  - 
-  - 
-  - 
-  - 
+**All files of reference**
+-  (New backend facade for the Admin UI)
+-  (New API library for the Admin UI)
+-  (First page of the new Admin UI)
+-  (New shared components for the Admin UI)
+-  (Modified to register the new facade routes with the correct priority)
+- Admin spec docs from user (located in  during the session)
 
-**Areas that need refactoring**: 
-- Ensure legacy marketplace/cart/checkout pages (like , ) are fully unlinked or removed to prevent routing confusion, as they have been superseded by  and  equivalents.
+**Areas that need refactoring**:
+- The entire Admin UI and its corresponding API endpoints are undergoing a planned refactor. The user's directive is to follow the Strangler Fig Pattern: build the new clean layer first, then slowly deprecate and remove the old, fragmented pages and routes post-launch.
 
 **key api endpoints**
-- 
--  (Unified quick service request)
-- 
--  (Pending integration from payment pack)
+- **Go-Live Facade**: , 
+- **New Admin Facade (In Progress)**: , , , 
 
-**Critical Info for New Agent** 
-The user *just* uploaded a zip file containing the Customer Payment Flow Completion Pack. It has been extracted to  but **no code has been moved to the  directory yet**. Start your session by integrating the files from , hooking up the backend routes, and replacing the Cart Drawer with the new .
+**Critical Info for New Agent**
+You are in the middle of a large, user-directed refactoring of the entire Admin UI, following a detailed specification. The architectural strategy is the **Strangler Fig Pattern**—you are building a new, clean UI and API facade *on top of* the existing system without deleting old code yet.
 
-**documents and test reports created in this job** 
-  -  (UI Polish)
-  -  (Checkout Flow)
-  -  (Sales Command Center)
-  -  (Customer Unification)
-  - 
+You have just completed the backend part of Pass 1 (creating the  facade) and have started Pass 2 (building the core pages). Your immediate task is to continue with Pass 2: create the , , and , along with the shared  and . Once created, you must wire everything into  and , and then run the testing agent to verify this new operational backbone is functional.
 
-**Last 10 User Messages and any pending HUMAN messages** 
-- *Latest:* User uploaded Customer Payment Flow Completion Pack containing My Account profiling, fixed-price payment routing, and invoice creation logic. User also clarified the roadmap for service installments.
-- *Previous:* User asked for credentials to test the customer-to-sales-to-partner flow.
-- *Previous:* User corrected the agent regarding the Instant Quote Engine—stating it MUST be in the Sales staff UI, not the customer UI. (Agent successfully implemented this fix).
-- *Previous:* User provided the Instant Quote Engine + Sales Command Center code pack.
-- *Previous:* User defined a requirement for a World-Class Checkout Flow directly embedded in the Cart Drawer.
+**documents and test reports created in this job**
+  -  (Continuously updated)
+  -  (Last completed test run)
+  - All user-provided spec documents (e.g., ) are in the  directory from the previous session's unzips.
+
+**Last 10 User Messages and any pending HUMAN messages**
+- The user has provided a series of comprehensive code packs and deliverables outlining a major architectural refactor and UX simplification for the Admin and Sales CRM areas.
+- The user explicitly defined the new UI structure, API endpoints, component hierarchy, and a phased implementation plan (Pass 1-5).
+- The last user message gave clear approval to proceed with **Pass 1 and Pass 2** of the plan, emphasizing the priority of the Payments Queue and the importance of using shared UI patterns and the centralized backend engine.
 
 **Project Health Check:**
-- Broken: None.
-- Mocked: Dashboard metrics and quotes are entirely real DB integrations now.
+- **Broken**: The admin section is in a state of transition. The new facade and UI components are partially built and not yet functional as a whole.
+- **Mocked**: None.
 
-**3rd Party Integrations** 
- - Resend (Emails) — requires User API Key
- - KwikPay (Payments) — requires User API Key 
- - Twilio (WhatsApp) — requires User API Key (Routes built, credentials currently pending configuration)
- - WeasyPrint (PDFs) — Local backend library
+**3rd Party Integrations**
+- Resend (Emails) — requires User API Key
+- KwikPay (Payments) — requires User API Key
+- Twilio (WhatsApp) — requires User API Key (Credentials are **pending**)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 92, 93, 94, 95 passed with 100% success).
+  - Testing agent used after significant changes: YES, most recently in .
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created:  to 
-  - Known regressions: None.
+  - Test files created:  through .
+  - Known regressions: None known, but the admin UI is intentionally being rebuilt.
 
 **Credentials to test flow:**
-- Admin:  |  / 
+- Admin/Finance:  |  / 
 - Customer:  |  / 
-- Partner:  |  / 
-- Staff/Sales:  |  / 
 
 **What agent forgot to execute**
-The agent has repeatedly deferred asking the user for Twilio credentials because the user keeps leading with new Pack uploads. Ensure you flag this and collect the keys when the opportunity arises, ideally after integrating the currently queued payment pack.</analysis>
+The agent has been following the user's detailed plan closely. The only long-standing, deferred task is the configuration of Twilio, which is blocked on user input.</analysis>

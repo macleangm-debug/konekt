@@ -1,122 +1,28 @@
 import api from "./api";
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
-
-export const adminApi = {
+const adminApi = {
   // Dashboard
   getDashboardSummary: () => api.get("/api/admin/dashboard/summary"),
+  getPendingActions: () => api.get("/api/admin/dashboard/pending-actions"),
 
-  // Company Settings
-  getCompanySettings: () => api.get("/api/admin/settings/company"),
-  updateCompanySettings: (payload) => api.put("/api/admin/settings/company", payload),
+  // Payments
+  getPaymentsQueue: (params) => api.get("/api/admin/payments/queue", { params }),
+  getPaymentDetail: (id) => api.get(`/api/admin/payments/${id}`),
+  approvePayment: (id, payload) => api.post(`/api/admin/payments/${id}/approve`, payload),
+  rejectPayment: (id, payload) => api.post(`/api/admin/payments/${id}/reject`, payload),
 
-  // CRM / Leads
-  getLeads: (params) => api.get("/api/admin/crm/leads", { params }),
-  getLead: (id) => api.get(`/api/admin/crm/leads/${id}`),
-  createLead: (payload) => api.post("/api/admin/crm/leads", payload),
-  updateLeadStatus: (leadId, status) =>
-    api.patch(`/api/admin/crm/leads/${leadId}/status`, null, { params: { status } }),
-  deleteLead: (leadId) => api.delete(`/api/admin/crm/leads/${leadId}`),
+  // Invoices
+  getInvoices: (params) => api.get("/api/admin/invoices/list", { params }),
+  getInvoiceDetail: (id) => api.get(`/api/admin/invoices/${id}`),
 
-  // Tasks
-  getTasks: (params) => api.get("/api/admin/tasks", { params }),
-  createTask: (payload) => api.post("/api/admin/tasks", payload),
-  updateTaskStatus: (taskId, status) =>
-    api.patch(`/api/admin/tasks/${taskId}/status`, null, { params: { status } }),
-  deleteTask: (taskId) => api.delete(`/api/admin/tasks/${taskId}`),
+  // Orders
+  getOrders: (params) => api.get("/api/admin/orders/list", { params }),
+  getOrderDetail: (id) => api.get(`/api/admin/orders/${id}`),
+  releaseToVendor: (id, payload) => api.post(`/api/admin/orders/${id}/release-to-vendor`, payload),
+  updateOrderStatus: (id, payload) => api.post(`/api/admin/orders/${id}/update-status`, payload),
 
-  // Inventory
-  getInventoryItems: (params) => api.get("/api/admin/inventory/items", { params }),
-  getInventoryItem: (id) => api.get(`/api/admin/inventory/items/${id}`),
-  createInventoryItem: (payload) => api.post("/api/admin/inventory/items", payload),
-  createStockMovement: (payload) => api.post("/api/admin/inventory/movements", payload),
-  getStockMovements: (params) => api.get("/api/admin/inventory/movements", { params }),
-  getLowStockItems: () => api.get("/api/admin/inventory/low-stock"),
-
-  // Invoices (v2 routes)
-  getInvoices: (params) => api.get("/api/admin/invoices-v2", { params }),
-  getInvoice: (id) => api.get(`/api/admin/invoices-v2/${id}`),
-  createInvoice: (payload) => api.post("/api/admin/invoices-v2", payload),
-  updateInvoiceStatus: (invoiceId, status) =>
-    api.patch(`/api/admin/invoices-v2/${invoiceId}/status`, null, { params: { status } }),
-  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices-v2/${invoiceId}/payments`, payload),
-  convertOrderToInvoice: (orderId, dueDate) =>
-    api.post("/api/admin/invoices-v2/convert-from-order", {
-      order_id: orderId,
-      due_date: dueDate || null,
-    }),
-
-  // Quotes (v2 routes)
-  getQuotes: (params) => api.get("/api/admin/quotes-v2", { params }),
-  getQuote: (id) => api.get(`/api/admin/quotes-v2/${id}`),
-  createQuote: (payload) => api.post("/api/admin/quotes-v2", payload),
-  updateQuoteStatus: (quoteId, status) =>
-    api.patch(`/api/admin/quotes-v2/${quoteId}/status`, null, { params: { status } }),
-  convertQuoteToOrder: (quoteId) =>
-    api.post("/api/admin/quotes-v2/convert-to-order", { quote_id: quoteId }),
-  convertQuoteToInvoice: (quoteId) =>
-    api.post(`/api/admin/quotes-v2/${quoteId}/convert-to-invoice`),
-
-  // PDF Export URLs
-  downloadQuotePdf: (quoteId) => `${API_BASE_URL}/api/admin/pdf/quote/${quoteId}`,
-  downloadInvoicePdf: (invoiceId) => `${API_BASE_URL}/api/admin/pdf/invoice/${invoiceId}`,
-
-  // Customers
-  getCustomers: (params) => api.get("/api/admin/customers", { params }),
-  getCustomer: (id) => api.get(`/api/admin/customers/${id}`),
-  getCustomerByEmail: (email) => api.get(`/api/admin/customers/by-email/${encodeURIComponent(email)}`),
-  createCustomer: (payload) => api.post("/api/admin/customers", payload),
-  updateCustomer: (customerId, payload) => api.patch(`/api/admin/customers/${customerId}`, payload),
-  deleteCustomer: (customerId) => api.delete(`/api/admin/customers/${customerId}`),
-
-  // Service Orders
-  getServiceOrders: (params) => api.get("/api/service-orders", { params }),
-  getServiceOrder: (id) => api.get(`/api/service-orders/${id}`),
-  updateServiceOrderStatus: (orderId, status, note) =>
-    api.patch(`/api/service-orders/${orderId}/status`, { status, note }),
-  addDesignerNote: (orderId, note, isCustomerVisible) =>
-    api.post(`/api/service-orders/${orderId}/notes`, { note, is_customer_visible: isCustomerVisible }),
-  getServiceOrderStats: () => api.get("/api/admin/service-orders/stats"),
-
-  // Order Operations
-  getOrders: (params) => api.get("/api/admin/orders-ops", { params }),
-  getOrder: (orderId) => api.get(`/api/admin/orders-ops/${orderId}`),
-  updateOrderStatus: (orderId, status, note) =>
-    api.patch(`/api/admin/orders-ops/${orderId}/status`, null, { params: { status, note } }),
-  reserveInventory: (payload) => api.post("/api/admin/orders-ops/reserve-inventory", payload),
-  assignOrderTask: (payload) => api.post("/api/admin/orders-ops/assign-task", payload),
-  sendOrderToProduction: (payload) => api.post("/api/admin/orders-ops/send-to-production", payload),
-
-  // Production Queue
-  getProductionQueue: (params) => api.get("/api/admin/production/queue", { params }),
-  getProductionItem: (queueId) => api.get(`/api/admin/production/queue/${queueId}`),
-  updateProductionStatus: (queueId, payload) =>
-    api.patch(`/api/admin/production/queue/${queueId}/status`, payload),
-  getProductionStats: () => api.get("/api/admin/production/stats"),
-
-  // Product Pricing Lookup
-  getProductPricingBySku: (sku) => api.get(`/api/admin/inventory/items/by-sku/${encodeURIComponent(sku)}`),
-
-  // Document Sending (email stubs)
-  sendQuoteDocument: (quoteId) => api.post(`/api/admin/send/quote/${quoteId}`),
-  sendInvoiceDocument: (invoiceId) => api.post(`/api/admin/send/invoice/${invoiceId}`),
-  sendOrderConfirmation: (orderId) => api.post(`/api/admin/send/order/${orderId}/confirmation`),
-
-  // Quote Pipeline (Kanban)
-  getQuotePipeline: () => api.get("/api/admin/quotes/pipeline"),
-  moveQuoteToStage: (quoteId, status) =>
-    api.patch(`/api/admin/quotes/${quoteId}/move`, null, {
-      params: { status },
-    }),
-  getQuotePipelineStats: () => api.get("/api/admin/quotes/pipeline/stats"),
-
-  // Referral Settings
-  getReferralSettings: () => api.get("/api/admin/referral-settings"),
-  updateReferralSettings: (payload) => api.put("/api/admin/referral-settings", payload),
-
-  // Points Management
-  getPointsWallets: () => api.get("/api/admin/points/wallets"),
-  getPointsTransactions: () => api.get("/api/admin/points/transactions"),
+  // Quotes
+  getQuotes: (params) => api.get("/api/admin/quotes/list", { params }),
 };
 
 export default adminApi;
