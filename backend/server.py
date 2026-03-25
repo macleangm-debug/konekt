@@ -2088,6 +2088,11 @@ async def health():
 
 # Include routers
 app.include_router(api_router)
+
+# Include admin facade router BEFORE admin_router to ensure /api/admin/orders/list is matched before /api/admin/orders/{order_id}
+from admin_facade_routes import router as admin_facade_router
+app.include_router(admin_facade_router)
+
 app.include_router(admin_router)
 
 # Initialize and include sales router
@@ -2104,9 +2109,6 @@ app.include_router(service_orders_router)
 app.include_router(quote_pipeline_router)
 
 # Include admin operations router (CRM, Inventory, Invoices, Tasks, Quotes)
-from admin_facade_routes import router as admin_facade_router
-app.include_router(admin_facade_router)
-
 app.include_router(admin_ops_router)
 
 # Include settings router

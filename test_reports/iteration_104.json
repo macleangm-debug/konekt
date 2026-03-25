@@ -1,0 +1,105 @@
+{
+  "summary": "Admin/CRM Refactor Pass 2 - Tested 4 core admin operational pages (Payments Queue, Invoices, Orders, Quotes & Requests). Fixed critical backend route ordering issue that was blocking Orders page. All 20 backend API tests pass. All 4 frontend pages working correctly with table-first pattern and right-hand detail drawer.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [],
+    "fixed": [
+      {
+        "endpoint": "/api/admin/orders/list",
+        "issue": "Route was being intercepted by admin_router's /api/admin/orders/{order_id} route (where order_id='list') which required authentication. Fixed by moving admin_facade_router inclusion BEFORE admin_router in server.py",
+        "priority": "CRITICAL",
+        "status": "FIXED"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_facade_routes.py",
+    "/app/test_reports/pytest/pytest_results_admin_facade.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Route ordering in server.py is critical - facade routes with specific paths like /orders/list must be registered BEFORE routes with path parameters like /orders/{order_id} to avoid interception"
+  ],
+  "updated_files": [
+    "/app/backend/server.py",
+    "/app/backend/tests/test_admin_facade_routes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 tests passed)",
+    "frontend": "100% (all 4 pages working)"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin/CRM Refactor Pass 2 complete. All 4 new admin pages (Payments Queue at /admin/finance-queue, Invoices at /admin/invoices, Orders at /admin/orders, Quotes at /admin/quotes) are working. Backend facade routes at /api/admin/* are all functional. Route ordering fix applied in server.py - admin_facade_router now included before admin_router.",
+  "features_tested": {
+    "payments_queue_page": {
+      "url": "/admin/finance-queue",
+      "status": "PASS",
+      "features": [
+        "Table loads with 19 payment proofs",
+        "Filter bar with search and status filter",
+        "Clicking row opens detail drawer",
+        "Approve/Reject buttons in drawer"
+      ]
+    },
+    "invoices_page": {
+      "url": "/admin/invoices",
+      "status": "PASS",
+      "features": [
+        "Table loads with 86 invoices",
+        "Unpaid alert banner shows (TZS 11,466,580 across 64 invoices)",
+        "Status filter dropdown works",
+        "Clicking row opens detail drawer with invoice info, proofs, linked order",
+        "source_type and rejection_reason enrichment working"
+      ]
+    },
+    "orders_page": {
+      "url": "/admin/orders",
+      "status": "PASS",
+      "features": [
+        "Table loads with 68 orders",
+        "Tab switching works (All Orders, Awaiting Release, Released, Completed)",
+        "Clicking row opens detail drawer with order items, vendor orders, events, commissions",
+        "Release to Vendor button in drawer",
+        "release_state, vendor_count, sales_owner enrichment working"
+      ]
+    },
+    "quotes_requests_page": {
+      "url": "/admin/quotes",
+      "status": "PASS",
+      "features": [
+        "Unified table with 48 quotes + leads + service requests",
+        "Type badges shown (Quote, service_bundle_request, promotional_bundle_request, promotional_material_customization)",
+        "Status filter works",
+        "Clicking row opens detail drawer"
+      ]
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "links_found": [
+        "Payments Queue -> /admin/finance-queue",
+        "Invoices -> /admin/invoices",
+        "Orders -> /admin/orders",
+        "Quotes -> /admin/quotes"
+      ]
+    }
+  },
+  "backend_api_tests": {
+    "dashboard_summary": "PASS - GET /api/admin/dashboard/summary returns counts",
+    "payments_queue": "PASS - GET /api/admin/payments/queue returns array with search/status filters",
+    "invoices_list": "PASS - GET /api/admin/invoices/list returns array with source_type, rejection_reason enrichment",
+    "invoice_detail": "PASS - GET /api/admin/invoices/{id} returns invoice with payments, proofs, linked order",
+    "orders_list": "PASS - GET /api/admin/orders/list returns array with release_state, vendor_count, sales_owner enrichment",
+    "orders_tabs": "PASS - tab=awaiting_release, tab=released, tab=completed filters work",
+    "order_detail": "PASS - GET /api/admin/orders/{id} returns order with items, vendor_orders, events, commissions",
+    "quotes_list": "PASS - GET /api/admin/quotes/list returns unified quotes + leads + service requests",
+    "pending_actions": "PASS - GET /api/admin/dashboard/pending-actions returns pending proofs and quotes"
+  }
+}

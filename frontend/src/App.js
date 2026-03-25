@@ -57,6 +57,9 @@ import AdminDashboardV2 from "@/pages/admin/AdminDashboardV2";
 import AdminOrders from "@/pages/admin/AdminOrders";
 import AdminOrdersSplitViewV2 from "@/components/orders/AdminOrdersSplitViewV2";
 import FinancePaymentsQueuePage from "@/components/finance/FinancePaymentsQueuePage";
+import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
+import OrdersPage from "@/pages/admin/OrdersPage";
+import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminStock from "@/pages/admin/AdminStock";
 import AdminMaintenance from "@/pages/admin/AdminMaintenance";
@@ -519,7 +522,8 @@ function App() {
           </AdminAuthProvider>
         }>
           <Route index element={<AdminDashboardV2 />} />
-          <Route path="orders" element={<AdminOrdersSplitViewV2 />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders-v1" element={<AdminOrdersSplitViewV2 />} />
           <Route path="orders-legacy" element={<AdminOrders />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="stock" element={<AdminStock />} />
@@ -536,7 +540,8 @@ function App() {
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:id" element={<InvoicePreviewPage />} />
-          <Route path="quotes" element={<QuotesPage />} />
+          <Route path="quotes" element={<QuotesRequestsPage />} />
+          <Route path="quotes-v1" element={<QuotesPage />} />
           <Route path="quotes/:id" element={<QuotePreviewPage />} />
           <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
           <Route path="quotes-old" element={<AdminQuotes />} />
@@ -609,7 +614,8 @@ function App() {
           <Route path="group-markups" element={<GroupMarkupsPage />} />
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
           <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
-          <Route path="finance-queue" element={<FinancePaymentsQueuePage />} />
+          <Route path="finance-queue" element={<PaymentsQueuePage />} />
+          <Route path="finance-queue-v1" element={<FinancePaymentsQueuePage />} />
           {/* Service Leads CRM */}
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
           {/* Affiliate Manager */}

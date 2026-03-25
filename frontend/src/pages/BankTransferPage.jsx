@@ -16,6 +16,9 @@ export default function BankTransferPage() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState("");
+  const [payerName, setPayerName] = useState("");
+  const [errors, setErrors] = useState({});
+  const payerNameRef = React.useRef(null);
 
   const isLiveFlow = Boolean(data?.liveFlow);
   const payment = data?.payment;
@@ -90,10 +93,6 @@ export default function BankTransferPage() {
     setProofUrl("");
     setProofFilename("");
   };
-
-  const [payerName, setPayerName] = useState("");
-  const [errors, setErrors] = useState({});
-  const payerNameRef = React.useRef(null);
 
   const markSubmitted = async () => {
     const newErrors = {};
