@@ -35,18 +35,18 @@ export default function PartnerLayout() {
   const isAffiliate = partner?.type === "affiliate" || partner?.role === "affiliate";
   const isVendor = partner?.type === "vendor" || partner?.role === "vendor";
 
-  // Base nav items for product partners
+  // Base nav items for product partners (vendor operations)
   const productPartnerItems = [
     { path: "/partner", label: "Dashboard", icon: LayoutDashboard },
     { path: "/partner/catalog", label: "My Catalog", icon: Package },
     { path: "/partner/catalog/new", label: "Create Listing", icon: PlusCircle },
     { path: "/partner/stock", label: "Stock Table", icon: ListPlus },
     { path: "/partner/bulk-upload", label: "Bulk Upload", icon: Upload },
-    { path: "/partner/fulfillment", label: "Fulfillment Queue", icon: Truck },
+    { path: "/partner/fulfillment", label: "My Orders", icon: Truck },
     { path: "/partner/settlements", label: "Settlements", icon: Receipt },
   ];
 
-  // Affiliate-specific nav items
+  // Affiliate-specific nav items (only shown for affiliate partners)
   const affiliateItems = [
     { path: "/partner/affiliate-dashboard", label: "Affiliate Dashboard", icon: LayoutDashboard },
     { path: "/partner/affiliate-promotions", label: "Promotions", icon: TrendingUp },
@@ -58,20 +58,13 @@ export default function PartnerLayout() {
     { path: "/partner/affiliate-help", label: "Help", icon: HelpCircle },
   ];
 
-  // Vendor-specific nav items
-  const vendorItems = [
-    { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
-    { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
-  ];
-
-  // Combine items based on partner type
+  // Combine items based on partner type — vendors should NOT see affiliate items
   let navItems = [];
   if (isAffiliate && !isVendor) {
     navItems = [...affiliateItems];
-  } else if (isVendor && !isAffiliate) {
-    navItems = [...productPartnerItems, { divider: true, label: "Vendor" }, ...vendorItems];
-  } else {
-    navItems = [...productPartnerItems, { divider: true, label: "Affiliate" }, ...affiliateItems, { divider: true, label: "Vendor" }, ...vendorItems];
+  } else if (isVendor || (!isAffiliate && !isVendor)) {
+    // Default: show vendor/product partner items only
+    navItems = [...productPartnerItems];
   }
 
   return (

@@ -98,12 +98,12 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="admin-layout">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-5 py-6 border-b border-white/10">
-            <BrandLogoFinal size="lg" light />
-            <p className="text-white/40 text-xs mt-2 tracking-wide">Admin Portal</p>
+          <div className="px-5 py-6 border-b border-slate-100">
+            <BrandLogoFinal size="lg" />
+            <p className="text-slate-400 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
           
           {/* Navigation */}
@@ -111,7 +111,7 @@ export default function AdminLayout() {
             {filteredNavItems.map((item, index) => (
               item.type === 'divider' ? (
                 <div key={index} className="pt-4 pb-2">
-                  <p className="px-4 text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</p>
+                  <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.label}</p>
                 </div>
               ) : (
                 <Link
@@ -120,10 +120,10 @@ export default function AdminLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                     isActive(item.path, item.exact) 
-                      ? 'bg-white/20 text-white' 
+                      ? 'bg-[#20364D] text-white' 
                       : item.highlight
-                      ? 'bg-[#D4A843]/20 text-[#D4A843] hover:bg-[#D4A843]/30'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-[#20364D]'
                   }`}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -138,13 +138,13 @@ export default function AdminLayout() {
           </nav>
           
           {/* User Info */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-slate-200">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-[#20364D] rounded-full flex items-center justify-center">
                 <span className="text-white font-bold">{admin?.full_name?.charAt(0) || 'A'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-white font-medium truncate">{admin?.full_name}</p>
+                <p className="text-[#20364D] font-medium truncate">{admin?.full_name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(admin?.role)}`}>
                   {admin?.role}
                 </span>
@@ -153,7 +153,7 @@ export default function AdminLayout() {
             <Button 
               variant="ghost" 
               onClick={handleLogout}
-              className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start text-slate-500 hover:text-[#20364D] hover:bg-slate-100"
               data-testid="admin-logout-btn"
             >
               <LogOut className="w-4 h-4 mr-2" />

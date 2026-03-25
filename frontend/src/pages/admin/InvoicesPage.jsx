@@ -4,6 +4,7 @@ import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
+import { BrandedDocPreview } from "../../components/shared/BrandedDocPreview";
 import { Receipt, FileText, Download, ExternalLink, Layers, AlertTriangle } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -121,56 +122,8 @@ export default function InvoicesPage() {
           <div className="space-y-4 animate-pulse"><div className="h-20 bg-slate-100 rounded-xl" /><div className="h-40 bg-slate-100 rounded-xl" /></div>
         ) : detail ? (
           <div className="space-y-6">
-            {/* Summary */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-semibold text-[#20364D] mt-1">{detail.invoice?.customer_name || "-"}</p>
-                <p className="text-xs text-slate-500 mt-1">{detail.invoice?.customer_email || ""}</p>
-              </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-500">Total</p>
-                <p className="font-semibold text-[#20364D] text-lg mt-1">{money(detail.invoice?.total_amount || detail.invoice?.total)}</p>
-                <StatusBadge status={detail.invoice?.payment_status || detail.invoice?.status} />
-              </div>
-            </div>
-
-            {/* Installment Splits */}
-            {detail.splits && detail.splits.length > 0 && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4" data-testid="admin-invoice-splits">
-                <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold mb-2">
-                  <Layers size={16} /> Installment Payment
-                </div>
-                <div className="space-y-1.5">
-                  {detail.splits.map((split, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span className="capitalize text-amber-700">{split.type}</span>
-                      <div className="text-right">
-                        <span className="font-semibold text-amber-800">{money(split.amount)}</span>
-                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${split.status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                          {split.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Line Items */}
-            {detail.invoice?.items && detail.invoice.items.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Line Items ({detail.invoice.items.length})</p>
-                <div className="space-y-1.5">
-                  {detail.invoice.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
-                      <span className="text-slate-700">{item.name || item.description || "Item"} x{item.quantity || 1}</span>
-                      <span className="font-medium text-[#20364D]">{money(item.line_total || item.total || item.unit_price)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Branded Document Preview */}
+            <BrandedDocPreview type="invoice" doc={detail.invoice} splits={detail.splits || []} />
 
             {/* Payment Proofs */}
             {detail.proofs && detail.proofs.length > 0 && (
@@ -182,7 +135,7 @@ export default function InvoicesPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-sm font-medium text-[#20364D]">{money(proof.amount_paid)}</p>
-                          <p className="text-xs text-slate-500">{proof.payer_name || proof.customer_name || "—"} &middot; {fmtDate(proof.created_at)}</p>
+                          <p className="text-xs text-slate-500">{proof.payer_name || proof.customer_name || "-"} &middot; {fmtDate(proof.created_at)}</p>
                           {proof.transaction_reference && (
                             <p className="text-xs text-slate-400 mt-0.5">Ref: {proof.transaction_reference}</p>
                           )}
@@ -201,7 +154,7 @@ export default function InvoicesPage() {
               </div>
             )}
 
-            {/* Proof Submissions (with rejection reasons) */}
+            {/* Rejection Details */}
             {detail.proof_submissions && detail.proof_submissions.filter(p => p.rejection_reason).length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-red-500 uppercase tracking-wider mb-2">Rejection Details</p>

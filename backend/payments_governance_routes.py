@@ -88,25 +88,42 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     normalized, vendor_ids, subtotal = [], set(), 0
     for item in items:
         qty = max(1, int(item.get("quantity", 1) or 1))
-        price = _money(item.get("price", 0))
+        price = _money(item.get("price", item.get("unit_price", 0)))
         line_total = _money(qty * price)
         subtotal += line_total
+        # Resolve partner_id: from item first, then from listing lookup
+        pid = item.get("partner_id") or item.get("vendor_id")
+        item_id = item.get("id") or item.get("product_id") or item.get("listing_id")
+        if not pid and item_id:
+            listing = await db.marketplace_listings.find_one(
+                {"id": item_id}, {"_id": 0, "partner_id": 1}
+            )
+            if listing and listing.get("partner_id"):
+                pid = str(listing["partner_id"])
+        if pid:
+            pid = str(pid)
         normalized.append({
-            "product_id": item.get("id"),
-            "name": item.get("name", "Product"),
+            "product_id": item_id,
+            "listing_id": item_id,
+            "name": item.get("name", item.get("product_name", "Product")),
             "quantity": qty,
             "unit_price": price,
             "line_total": line_total,
-            "vendor_id": item.get("vendor_id"),
+            "vendor_id": pid,
+            "partner_id": pid,
         })
-        if item.get("vendor_id"):
-            vendor_ids.add(item["vendor_id"])
+        if pid:
+            vendor_ids.add(pid)
     vat_pct = float(payload.get("vat_percent", 18) or 18)
     vat = _money(subtotal * vat_pct / 100.0)
     total = _money(subtotal + vat)
     now = _now()
     invoice_id = str(uuid4())
     checkout_id = str(uuid4())
+    # Resolve customer info
+    customer_doc = await db.users.find_one({"id": customer_id}, {"_id": 0, "name": 1, "email": 1}) or {}
+    cust_name = customer_doc.get("name", quote_details.get("client_name", ""))
+    cust_email = customer_doc.get("email", quote_details.get("client_email", ""))
     checkout_doc = {
         "id": checkout_id, "customer_id": customer_id, "type": "product",
         "status": "awaiting_payment", "items": normalized,
@@ -117,6 +134,7 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     invoice_doc = {
         "id": invoice_id, "invoice_number": f"KON-INV-{_stamp()}",
         "customer_id": customer_id, "user_id": customer_id,
+        "customer_name": cust_name, "customer_email": cust_email,
         "checkout_id": checkout_id,
         "status": "pending_payment", "payment_status": "pending",
         "type": "product",
@@ -323,21 +341,40 @@ async def finance_approve(payload: dict, request: Request):
         await db.sales_assignments.insert_one(sa)
         # Update order with sales reference
         await db.orders.update_one({"id": order_id}, {"$set": {"sales_id": assigned_sales_id, "sales_name": assigned_sales_name}})
-        vendor_ids = set()
+
+        # ── Create Vendor Orders ──
+        # Resolve partner_id for each item from: item.partner_id > item.vendor_id > listing lookup
+        partner_items_map = {}  # partner_id -> list of items
         for item in invoice.get("items", []):
-            if item.get("vendor_id"):
-                vendor_ids.add(item["vendor_id"])
-        for vid in vendor_ids:
-            vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
-            # Look up partner_id from partners collection for proper linkage
-            partner_doc = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "partner_id": 1})
-            resolved_partner_id = partner_doc["partner_id"] if partner_doc else vid
+            pid = item.get("partner_id") or item.get("vendor_id")
+            if not pid and item.get("listing_id"):
+                listing = await db.marketplace_listings.find_one({"id": item["listing_id"]}, {"_id": 0, "partner_id": 1})
+                if listing:
+                    pid = listing.get("partner_id")
+            if not pid and item.get("product_id"):
+                listing = await db.marketplace_listings.find_one({"id": item["product_id"]}, {"_id": 0, "partner_id": 1})
+                if listing:
+                    pid = listing.get("partner_id")
+            if pid:
+                pid = str(pid)
+                partner_items_map.setdefault(pid, []).append(item)
+
+        for pid, vitems in partner_items_map.items():
+            vo_id = str(uuid4())
             await db.vendor_orders.insert_one({
-                "id": str(uuid4()), "vendor_id": vid, "partner_id": resolved_partner_id,
+                "id": vo_id, "vendor_id": pid, "partner_id": pid,
                 "order_id": order_id, "order_number": order_doc.get("order_number"),
                 "customer_id": invoice.get("customer_id"),
                 "status": "ready_to_fulfill", "items": vitems, "created_at": now,
             })
+            # Send targeted notification to the specific partner
+            partner_users = await db.partner_users.find({"partner_id": pid}, {"_id": 0, "id": 1}).to_list(10)
+            for pu in partner_users:
+                await _create_notification(db, recipient_user_id=pu["id"],
+                    title="New order assigned to you",
+                    message=f"Order {order_doc.get('order_number')} has been assigned. Please review and accept.",
+                    target_url="/partner/fulfillment", priority="high")
+
         await db.order_events.insert_one({
             "id": str(uuid4()), "order_id": order_id,
             "customer_id": invoice.get("customer_id"),
@@ -346,7 +383,6 @@ async def finance_approve(payload: dict, request: Request):
         if invoice.get('customer_id'):
             await _create_notification(db, recipient_user_id=invoice.get('customer_id'), title='Payment approved', message='Your payment has been approved and your order is now in progress.', target_url='/dashboard/orders', priority='high')
         await _create_notification(db, recipient_role='sales', title='New active order assigned', message=f'Order {order_doc.get("order_number")} is ready for follow-up.', target_url='/staff/queue', priority='high')
-        await _create_notification(db, recipient_role='vendor', title='New vendor job released', message=f'Order {order_doc.get("order_number")} is ready to fulfill.', target_url='/partner/fulfillment', priority='high')
     return {"ok": True, "fully_paid": fully_paid, "order": order_doc}
 
 # ─── Finance Reject ─────────────────────────────────────────────
