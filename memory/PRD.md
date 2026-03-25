@@ -137,7 +137,9 @@ Single source of truth for service groups and subgroups:
 ## Remaining Tasks
 
 ### P0
-- [ ] Configure Twilio WhatsApp credentials
+- [x] Apply konekt_real_patch_round3 (Table+Drawer UI, Branded Previews, Data Wiring)
+- [x] Lock canonical invoice source (invoices_v2) - eliminated dual reads
+- [ ] Configure Twilio WhatsApp credentials (awaiting user API keys)
 
 ### P1 - Launch Critical
 - [x] UI Polish Pack
@@ -151,6 +153,8 @@ Single source of truth for service groups and subgroups:
 - [x] Referral + Sales Commission Governance Pack
 - [x] Payment Confirmation + Affiliate Promo Pack
 - [x] Multi-Service + Promo Taxonomy Pack
+- [x] Vendor sidebar cleanup (affiliate section removed for non-affiliate partners)
+- [x] AI widget visibility (hidden on admin/vendor pages)
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
@@ -164,11 +168,22 @@ Single source of truth for service groups and subgroups:
 
 ---
 
+## Invoice Consolidation (March 25, 2026)
+- Canonical collection: `invoices_v2`
+- All backend code uses `db.invoices_v2` exclusively
+- `collection_mode_service.py` always returns `invoices_v2`
+- Removed dual-read/fallback logic from 20+ files
+- Verified flows: product checkout, quote approval, payment proof, customer/admin invoice lists
+
+---
+
 ## Testing History
 | Iter | Feature | Result |
 |------|---------|--------|
 | 99 | Admin Simplification + Payments Fixes | 100% |
 | 100 | Referral + Commission + Payment Packs | 100% (27/27 backend) |
 | 101 | Multi-Service + Promo Taxonomy + Cart Integrations | 100% (16/16 backend) |
+| 108-110 | Backend Source-of-Truth Stabilization | 100% |
+| 111 | Patch Round 3 + Invoice Consolidation + 6 Gates | 100% frontend, 94% backend |
 
-*Last updated: March 24, 2026*
+*Last updated: March 25, 2026*
