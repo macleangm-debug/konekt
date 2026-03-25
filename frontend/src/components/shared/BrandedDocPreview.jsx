@@ -1,5 +1,6 @@
 import React from "react";
 import { Download, FileText, Layers } from "lucide-react";
+import BrandLogo from "../branding/BrandLogo";
 
 function money(v, c = "TZS") { return `${c} ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(v) { try { return new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" }); } catch { return "-"; } }
@@ -33,11 +34,8 @@ export function BrandedDocPreview({ type = "invoice", doc, splits = [], onDownlo
       <div className="bg-[#20364D] px-6 py-5 flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">K</span>
-            </div>
+            <BrandLogo size="sm" variant="light" />
             <div>
-              <div className="text-white font-bold text-xl">KONEKT</div>
               <div className="text-white/60 text-xs">Commercial Document</div>
             </div>
           </div>

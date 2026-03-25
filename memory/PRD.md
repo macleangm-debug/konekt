@@ -155,6 +155,7 @@ Single source of truth for service groups and subgroups:
 - [x] Multi-Service + Promo Taxonomy Pack
 - [x] Vendor sidebar cleanup (affiliate section removed for non-affiliate partners)
 - [x] AI widget visibility (hidden on admin/vendor pages)
+- [x] Unified BrandLogo system (one component, one sizing system, one placement rule)
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
