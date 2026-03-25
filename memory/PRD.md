@@ -91,6 +91,7 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 - [x] **Patch Round 1 & 2** (Cart dedup, notification triggers, invoice statuses, vendor visibility)
 - [x] **Core Engine** — Quote System, Sales CRM UI, Installment Payment Logic (Deposit + Balance)
 - [x] **UI/UX + Data Link Fix Round** — Table+drawer standardization, customer orders visibility, vendor orders linkage, sales contact enrichment
+- [x] **Stabilization Pass** — Source-of-truth locked (1 source per page), notification wiring fixed (recipient_user_id), vendor sidebar cleaned (My Orders, no affiliates), branded doc preview, admin sidebar light theme
 
 ### Remaining
 - [ ] Configure Twilio WhatsApp credentials (P2)
@@ -117,6 +118,7 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 | 106-107 | Patch Round 1 & 2 | 100% |
 | 108 | **Core Engine (Quotes + Installments)** | **100% (18/18 backend, 100% frontend)** |
 | 109 | **UI/UX + Data Link Fix Round** | **94% (15/16 backend, 100% frontend)** |
+| 110 | **Stabilization Pass (Source-of-Truth + Notifications + Vendor)** | **100% (17/17 backend, 100% frontend)** |
 
 ---
 
