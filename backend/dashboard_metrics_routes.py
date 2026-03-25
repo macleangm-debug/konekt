@@ -33,13 +33,13 @@ async def customer_dashboard_metrics(request: Request, user_id: str | None = Non
     quote_count = await db.quotes.count_documents(quote_filter)
     quote_count_v2 = await db.quotes_v2.count_documents(quote_filter)
     order_count = await db.orders.count_documents(order_filter)
-    invoice_count = await db.invoices.count_documents(invoice_filter)
+    invoice_count = await db.invoices_v2.count_documents(invoice_filter)
     
     # Get recent orders for activity feed
     recent_orders = await db.orders.find(order_filter).sort("created_at", -1).limit(5).to_list(length=5)
     
     # Calculate pending amounts
-    pending_invoices = await db.invoices.find({**invoice_filter, "status": {"$in": ["pending", "unpaid"]}}).to_list(length=1000)
+    pending_invoices = await db.invoices_v2.find({**invoice_filter, "status": {"$in": ["pending", "unpaid"]}}).to_list(length=1000)
     pending_amount = sum(float(x.get("total") or x.get("total_amount", 0) or 0) for x in pending_invoices)
 
     return {
@@ -119,11 +119,11 @@ async def admin_dashboard_metrics(request: Request):
     total_affiliates = await db.affiliates.count_documents({})
     
     # Revenue from paid invoices
-    paid_invoices = await db.invoices.find({"status": "paid"}).to_list(length=10000)
+    paid_invoices = await db.invoices_v2.find({"status": "paid"}).to_list(length=10000)
     revenue = sum(float(x.get("total") or x.get("total_amount", 0) or 0) for x in paid_invoices)
     
     # Pending revenue
-    pending_invoices = await db.invoices.find({"status": {"$in": ["pending", "unpaid"]}}).to_list(length=10000)
+    pending_invoices = await db.invoices_v2.find({"status": {"$in": ["pending", "unpaid"]}}).to_list(length=10000)
     pending_revenue = sum(float(x.get("total") or x.get("total_amount", 0) or 0) for x in pending_invoices)
     
     # Quote metrics

@@ -16,28 +16,34 @@ import BrandLogoFinal from '../../components/branding/BrandLogoFinal';
 // Navigation items with moduleKey for filtering
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
+  { path: '/admin/settings-hub', label: 'Settings Hub', icon: Settings, moduleKey: 'settings', highlight: true },
+  { path: '/admin/control-center', label: 'Control Center', icon: PanelTop, moduleKey: 'settings' },
+  { path: '/admin/catalog-setup', label: 'Catalog Setup', icon: Boxes, moduleKey: 'settings', highlight: true },
+  { path: '/staff', label: 'Staff Workspace', icon: Briefcase, moduleKey: 'overview' },
+  { path: '/admin/staff-performance', label: 'Staff Performance', icon: BarChart3, moduleKey: 'reports' },
+  { path: '/admin/launch-readiness', label: 'Launch Readiness', icon: Zap, moduleKey: 'settings' },
   { type: 'divider', label: 'Sales', moduleKey: 'crm' },
-  { path: '/admin/crm', label: 'Sales CRM', icon: Target, moduleKey: 'crm' },
-  { path: '/admin/quotes', label: 'Quotes & Requests', icon: FileText, moduleKey: 'quotes' },
+  { path: '/admin/crm', label: 'CRM Pipeline', icon: Target, moduleKey: 'crm' },
+  { path: '/admin/crm-intelligence', label: 'CRM Intelligence', icon: TrendingUp, moduleKey: 'crm' },
+  { path: '/admin/quotes', label: 'Quotes', icon: FileText, moduleKey: 'quotes' },
   { path: '/admin/customers', label: 'Customers', icon: Contact, moduleKey: 'crm' },
-  { path: '/admin/vendors', label: 'Vendors', icon: Network, moduleKey: 'orders' },
-  { type: 'divider', label: 'Operations', moduleKey: 'orders' },
+  { path: '/admin/customer-accounts', label: 'Customer Accounts', icon: UsersRound, moduleKey: 'crm' },
+  { type: 'divider', label: 'Operations', moduleKey: 'tasks' },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders' },
   { path: '/admin/service-leads', label: 'Service Leads', icon: Briefcase, moduleKey: 'support' },
-  { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders' },
+  { path: '/admin/affiliate-manager', label: 'Affiliates', icon: Megaphone, moduleKey: 'crm' },
+  { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', highlight: true },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
   { path: '/admin/finance-queue', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
-  { type: 'divider', label: 'Marketing', moduleKey: 'crm' },
-  { path: '/admin/affiliates', label: 'Affiliates & Referrals', icon: Megaphone, moduleKey: 'crm' },
-  { type: 'divider', label: 'Catalog', moduleKey: 'inventory' },
-  { path: '/admin/products-services', label: 'Products & Services', icon: Package, moduleKey: 'inventory' },
+  { type: 'divider', label: 'Inventory', moduleKey: 'inventory' },
+  { path: '/admin/products', label: 'Products', icon: Package, moduleKey: 'inventory' },
   { path: '/admin/inventory', label: 'Stock Items', icon: Boxes, moduleKey: 'inventory' },
   { type: 'divider', label: 'Settings', moduleKey: 'settings' },
-  { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
-  { path: '/admin/users-roles', label: 'Users & Roles', icon: Shield, moduleKey: 'settings' },
-  { path: '/admin/audit', label: 'Audit Log', icon: ClipboardList, moduleKey: 'settings' },
   { path: '/admin/service-taxonomy', label: 'Service Taxonomy', icon: Layers, moduleKey: 'settings' },
+  { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
+  { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
+  { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
 ];
 
 // Filter nav items based on user role
@@ -98,12 +104,12 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="admin-layout">
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-primary transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-5 py-6 border-b border-slate-100">
-            <BrandLogoFinal size="lg" />
-            <p className="text-slate-400 text-xs mt-2 tracking-wide">Admin Portal</p>
+          <div className="px-5 py-6 border-b border-white/10">
+            <BrandLogoFinal size="lg" light />
+            <p className="text-white/40 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
           
           {/* Navigation */}
@@ -111,7 +117,7 @@ export default function AdminLayout() {
             {filteredNavItems.map((item, index) => (
               item.type === 'divider' ? (
                 <div key={index} className="pt-4 pb-2">
-                  <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.label}</p>
+                  <p className="px-4 text-xs font-semibold text-white/40 uppercase tracking-wider">{item.label}</p>
                 </div>
               ) : (
                 <Link
@@ -120,10 +126,10 @@ export default function AdminLayout() {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                     isActive(item.path, item.exact) 
-                      ? 'bg-[#20364D] text-white' 
+                      ? 'bg-white/20 text-white' 
                       : item.highlight
-                      ? 'bg-[#D4A843]/10 text-[#D4A843] hover:bg-[#D4A843]/20'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-[#20364D]'
+                      ? 'bg-[#D4A843]/20 text-[#D4A843] hover:bg-[#D4A843]/30'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -138,13 +144,13 @@ export default function AdminLayout() {
           </nav>
           
           {/* User Info */}
-          <div className="p-4 border-t border-slate-200">
+          <div className="p-4 border-t border-white/10">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-[#20364D] rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold">{admin?.full_name?.charAt(0) || 'A'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[#20364D] font-medium truncate">{admin?.full_name}</p>
+                <p className="text-white font-medium truncate">{admin?.full_name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(admin?.role)}`}>
                   {admin?.role}
                 </span>
@@ -153,7 +159,7 @@ export default function AdminLayout() {
             <Button 
               variant="ghost" 
               onClick={handleLogout}
-              className="w-full justify-start text-slate-500 hover:text-[#20364D] hover:bg-slate-100"
+              className="w-full justify-start text-white/70 hover:text-white hover:bg-white/10"
               data-testid="admin-logout-btn"
             >
               <LogOut className="w-4 h-4 mr-2" />

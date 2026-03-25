@@ -197,52 +197,37 @@ async def partner_fulfillment_jobs(
     status: Optional[str] = None,
     authorization: Optional[str] = Header(None)
 ):
-    """Get partner's fulfillment jobs from BOTH fulfillment_jobs AND vendor_orders"""
+    """Get partner orders and fulfillment jobs - NO customer PII exposed"""
     user = await get_partner_user_from_header(authorization)
     partner_id = user["partner_id"]
 
-    # Query fulfillment_jobs
-    fj_query = {"partner_id": partner_id}
+    query = {"partner_id": partner_id}
     if status:
-        fj_query["status"] = status
-    fj_docs = await db.fulfillment_jobs.find(fj_query).sort("created_at", -1).to_list(length=300)
+        query["status"] = status
 
-    # Also query vendor_orders by partner_id OR vendor_id matching partner_id
-    vo_query = {"$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]}
-    if status:
-        vo_query["status"] = status
-    vo_docs = await db.vendor_orders.find(vo_query).sort("created_at", -1).to_list(length=300)
+    docs = await db.fulfillment_jobs.find(query).sort("created_at", -1).to_list(length=300)
+    vendor_docs = await db.vendor_orders.find({"vendor_id": partner_id, **({"status": status} if status else {})}).sort("created_at", -1).to_list(length=300)
 
-    # Merge and deduplicate (prefer fulfillment_jobs if same order_id)
-    seen_order_ids = set()
     sanitized = []
-    pii_fields = ["customer_email", "customer_name", "customer_company",
-                  "customer_phone", "delivery_address", "customer_id"]
-
-    for doc in fj_docs:
+    for doc in docs:
         clean = serialize_doc(doc)
-        for field in pii_fields:
+        for field in ["customer_email", "customer_name", "customer_company", "customer_phone", "delivery_address", "customer_id"]:
             clean.pop(field, None)
-        clean["source"] = "fulfillment_job"
-        if clean.get("order_id"):
-            seen_order_ids.add(clean["order_id"])
         sanitized.append(clean)
 
-    for doc in vo_docs:
+    existing_order_ids = {row.get("order_id") for row in sanitized if row.get("order_id")}
+    for doc in vendor_docs:
         clean = serialize_doc(doc)
-        if clean.get("order_id") in seen_order_ids:
+        if clean.get("order_id") in existing_order_ids:
             continue
-        for field in pii_fields:
-            clean.pop(field, None)
-        # Normalize vendor_order fields to match fulfillment_job shape
-        if not clean.get("item_name") and clean.get("items"):
-            clean["item_name"] = ", ".join(i.get("name", i.get("product_name", "Item")) for i in clean["items"][:3])
-        if not clean.get("quantity") and clean.get("items"):
-            clean["quantity"] = sum(i.get("quantity", 1) for i in clean["items"])
-        clean["source"] = "vendor_order"
+        clean["partner_id"] = partner_id
+        clean["partner_note"] = clean.get("partner_note") or clean.get("brief")
+        clean["quantity"] = sum(int((item or {}).get("quantity", 1) or 1) for item in (clean.get("items") or []))
+        clean["item_name"] = ", ".join([str((item or {}).get("name") or (item or {}).get("title") or "Item") for item in (clean.get("items") or [])[:3]]) or "Assigned Order"
+        clean["sku"] = clean.get("order_id") or clean.get("id")
         sanitized.append(clean)
 
-    sanitized.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
+    sanitized.sort(key=lambda d: str(d.get("created_at", "")), reverse=True)
     return sanitized
 
 
@@ -252,12 +237,18 @@ async def update_fulfillment_status(
     payload: dict,
     authorization: Optional[str] = Header(None)
 ):
-    """Partner updates fulfillment job or vendor order status"""
+    """Partner updates fulfillment job status"""
     user = await get_partner_user_from_header(authorization)
-    partner_id = user["partner_id"]
+
+    job = await db.fulfillment_jobs.find_one({
+        "_id": ObjectId(job_id),
+        "partner_id": user["partner_id"]
+    })
+    if not job:
+        raise HTTPException(status_code=404, detail="Fulfillment job not found")
 
     status = payload.get("status")
-    allowed_statuses = {"allocated", "accepted", "in_progress", "fulfilled", "issue_reported", "ready_to_fulfill"}
+    allowed_statuses = {"allocated", "accepted", "in_progress", "fulfilled", "issue_reported"}
     if status not in allowed_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {allowed_statuses}")
 
@@ -265,42 +256,19 @@ async def update_fulfillment_status(
         "status": status,
         "updated_at": datetime.now(timezone.utc),
     }
+    
     if payload.get("partner_note"):
-        update_data["partner_note"] = payload["partner_note"]
+        update_data["partner_note"] = payload.get("partner_note")
 
-    # Try fulfillment_jobs first
-    try:
-        job = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id), "partner_id": partner_id})
-    except Exception:
-        job = None
-    if job:
-        await db.fulfillment_jobs.update_one({"_id": ObjectId(job_id)}, {"$set": update_data})
-        updated = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id)})
-        clean = serialize_doc(updated)
-        for field in ["customer_email", "customer_name", "customer_company",
-                      "customer_phone", "delivery_address", "customer_id"]:
-            clean.pop(field, None)
-        return clean
-
-    # Try vendor_orders by id field
-    vo = await db.vendor_orders.find_one({"id": job_id, "$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]})
-    if not vo:
-        # Try by _id
-        try:
-            vo = await db.vendor_orders.find_one({"_id": ObjectId(job_id), "$or": [{"partner_id": partner_id}, {"vendor_id": partner_id}]})
-        except Exception:
-            pass
-    if vo:
-        update_key = {"_id": vo["_id"]}
-        await db.vendor_orders.update_one(update_key, {"$set": update_data})
-        updated = await db.vendor_orders.find_one(update_key)
-        clean = serialize_doc(updated)
-        for field in ["customer_email", "customer_name", "customer_company",
-                      "customer_phone", "delivery_address", "customer_id"]:
-            clean.pop(field, None)
-        return clean
-
-    raise HTTPException(status_code=404, detail="Order not found")
+    await db.fulfillment_jobs.update_one({"_id": ObjectId(job_id)}, {"$set": update_data})
+    
+    updated = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id)})
+    clean = serialize_doc(updated)
+    # Remove customer details
+    for field in ["customer_email", "customer_name", "customer_company", 
+                  "customer_phone", "delivery_address", "customer_id"]:
+        clean.pop(field, None)
+    return clean
 
 
 @router.get("/settlements")

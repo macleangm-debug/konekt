@@ -44,7 +44,7 @@ async def export_quote_pdf(quote_id: str):
 async def export_invoice_pdf(invoice_id: str):
     """Export an invoice as PDF"""
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Invoice not found")
     

@@ -24,19 +24,10 @@ db = client[db_name]
 @router.get("/invoice/{invoice_id}")
 async def export_invoice_pdf(invoice_id: str):
     """Export invoice as premium PDF"""
-    invoices_collection = await get_invoice_collection(db)
     try:
-        invoice = await invoices_collection.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         invoice = None
-    
-    if not invoice:
-        # Try fallback collection
-        fallback = db.invoices if invoices_collection.name == "invoices_v2" else db.invoices_v2
-        try:
-            invoice = await fallback.find_one({"_id": ObjectId(invoice_id)})
-        except Exception:
-            pass
 
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")

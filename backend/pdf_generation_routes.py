@@ -242,9 +242,9 @@ async def download_quote_pdf(quote_id: str, request: Request):
 async def download_invoice_pdf(invoice_id: str, request: Request):
     """Download invoice as PDF"""
     db = request.app.mongodb
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    invoice = await db.invoices_v2.find_one({"id": invoice_id})
     if not invoice:
-        invoice = await db.invoices.find_one({"invoice_number": invoice_id})
+        invoice = await db.invoices_v2.find_one({"invoice_number": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
@@ -275,9 +275,9 @@ async def quote_html_preview(quote_id: str, request: Request):
 async def invoice_html_preview(invoice_id: str, request: Request):
     """Preview invoice as HTML"""
     db = request.app.mongodb
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    invoice = await db.invoices_v2.find_one({"id": invoice_id})
     if not invoice:
-        invoice = await db.invoices.find_one({"invoice_number": invoice_id})
+        invoice = await db.invoices_v2.find_one({"invoice_number": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return HTMLResponse(render_invoice_html(invoice))

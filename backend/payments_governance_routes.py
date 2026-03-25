@@ -47,7 +47,7 @@ async def accept_quote_create_invoice(payload: dict, request: Request):
         "quote_details": quote.get("quote_details", {}),
         "created_at": now,
     }
-    await db.invoices.insert_one(invoice)
+    await db.invoices_v2.insert_one(invoice)
     invoice.pop("_id", None)
     await db.quotes.update_one({"id": quote_id}, {"$set": {
         "status": "approved",
@@ -58,24 +58,6 @@ async def accept_quote_create_invoice(payload: dict, request: Request):
     return {"ok": True, "invoice": invoice}
 
 # ─── Fixed-Price Product Checkout → Invoice (no order yet) ─────
-
-
-async def _create_notification(db, *, recipient_user_id=None, recipient_role=None, title='', message='', target_url='/', priority='normal'):
-    doc = {
-        'id': str(uuid4()),
-        'recipient_user_id': recipient_user_id,
-        'recipient_role': recipient_role,
-        'title': title,
-        'message': message,
-        'target_url': target_url,
-        'priority': priority,
-        'is_read': False,
-        'created_at': _now(),
-        'updated_at': _now(),
-    }
-    await db.notifications.insert_one(doc)
-    return doc
-
 @router.post("/product-checkout")
 async def product_checkout_to_invoice(payload: dict, request: Request):
     db = request.app.mongodb
@@ -88,42 +70,25 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     normalized, vendor_ids, subtotal = [], set(), 0
     for item in items:
         qty = max(1, int(item.get("quantity", 1) or 1))
-        price = _money(item.get("price", item.get("unit_price", 0)))
+        price = _money(item.get("price", 0))
         line_total = _money(qty * price)
         subtotal += line_total
-        # Resolve partner_id: from item first, then from listing lookup
-        pid = item.get("partner_id") or item.get("vendor_id")
-        item_id = item.get("id") or item.get("product_id") or item.get("listing_id")
-        if not pid and item_id:
-            listing = await db.marketplace_listings.find_one(
-                {"id": item_id}, {"_id": 0, "partner_id": 1}
-            )
-            if listing and listing.get("partner_id"):
-                pid = str(listing["partner_id"])
-        if pid:
-            pid = str(pid)
         normalized.append({
-            "product_id": item_id,
-            "listing_id": item_id,
-            "name": item.get("name", item.get("product_name", "Product")),
+            "product_id": item.get("id"),
+            "name": item.get("name", "Product"),
             "quantity": qty,
             "unit_price": price,
             "line_total": line_total,
-            "vendor_id": pid,
-            "partner_id": pid,
+            "vendor_id": item.get("vendor_id"),
         })
-        if pid:
-            vendor_ids.add(pid)
+        if item.get("vendor_id"):
+            vendor_ids.add(item["vendor_id"])
     vat_pct = float(payload.get("vat_percent", 18) or 18)
     vat = _money(subtotal * vat_pct / 100.0)
     total = _money(subtotal + vat)
     now = _now()
     invoice_id = str(uuid4())
     checkout_id = str(uuid4())
-    # Resolve customer info
-    customer_doc = await db.users.find_one({"id": customer_id}, {"_id": 0, "name": 1, "email": 1}) or {}
-    cust_name = customer_doc.get("name", quote_details.get("client_name", ""))
-    cust_email = customer_doc.get("email", quote_details.get("client_email", ""))
     checkout_doc = {
         "id": checkout_id, "customer_id": customer_id, "type": "product",
         "status": "awaiting_payment", "items": normalized,
@@ -134,7 +99,6 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     invoice_doc = {
         "id": invoice_id, "invoice_number": f"KON-INV-{_stamp()}",
         "customer_id": customer_id, "user_id": customer_id,
-        "customer_name": cust_name, "customer_email": cust_email,
         "checkout_id": checkout_id,
         "status": "pending_payment", "payment_status": "pending",
         "type": "product",
@@ -147,7 +111,7 @@ async def product_checkout_to_invoice(payload: dict, request: Request):
     }
     await db.product_checkouts.insert_one(checkout_doc)
     checkout_doc.pop("_id", None)
-    await db.invoices.insert_one(invoice_doc)
+    await db.invoices_v2.insert_one(invoice_doc)
     invoice_doc.pop("_id", None)
     return {"ok": True, "checkout": checkout_doc, "invoice": invoice_doc}
 
@@ -158,7 +122,7 @@ async def create_payment_intent(payload: dict, request: Request):
     invoice_id = payload.get("invoice_id")
     payment_mode = payload.get("payment_mode", "full")
     deposit_percent = float(payload.get("deposit_percent", 0) or 0)
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    invoice = await db.invoices_v2.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     total = _money(invoice.get("total_amount", 0))
@@ -181,7 +145,7 @@ async def create_payment_intent(payload: dict, request: Request):
     }
     await db.payments.insert_one(payment)
     payment.pop("_id", None)
-    await db.invoices.update_one({"id": invoice_id}, {"$set": {
+    await db.invoices_v2.update_one({"id": invoice_id}, {"$set": {
         "payment_status": "awaiting_payment_proof",
         "current_payment_id": payment_id,
     }})
@@ -221,7 +185,7 @@ async def upload_payment_proof(payload: dict, request: Request):
         "payment_date": now,
         "invoice_number": "",
     }
-    inv = await db.invoices.find_one({"id": payment.get("invoice_id")})
+    inv = await db.invoices_v2.find_one({"id": payment.get("invoice_id")})
     if inv:
         admin_proof["invoice_number"] = inv.get("invoice_number", "")
     await db.payment_proof_submissions.insert_one(admin_proof)
@@ -229,13 +193,10 @@ async def upload_payment_proof(payload: dict, request: Request):
         "status": "proof_uploaded", "review_status": "under_review",
         "payment_proof_id": proof_id,
     }})
-    await db.invoices.update_one({"id": payment.get("invoice_id")}, {"$set": {
+    await db.invoices_v2.update_one({"id": payment.get("invoice_id")}, {"$set": {
         "payment_status": "payment_under_review",
         "status": "payment_under_review",
     }})
-    await _create_notification(db, recipient_role='finance', title='New payment proof submitted', message=f'Invoice {payment.get("invoice_id")} is ready for review.', target_url='/admin/payments', priority='high')
-    if payment.get('customer_id'):
-        await _create_notification(db, recipient_user_id=payment.get('customer_id'), title='Payment submitted', message='Your payment proof has been submitted and is under review.', target_url='/dashboard/invoices', priority='normal')
     return {"ok": True, "payment_proof": proof}
 
 # ─── Finance Queue ──────────────────────────────────────────────
@@ -247,7 +208,7 @@ async def finance_queue(request: Request):
     for proof in proofs:
         proof.pop("_id", None)
         payment = await db.payments.find_one({"id": proof.get("payment_id")})
-        invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
+        invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
         profile = await db.customer_profiles.find_one({"customer_id": proof.get("customer_id")})
         out.append({
             "payment_proof_id": proof.get("id"),
@@ -280,7 +241,7 @@ async def finance_approve(payload: dict, request: Request):
     if not proof:
         raise HTTPException(status_code=404, detail="Payment proof not found")
     payment = await db.payments.find_one({"id": proof.get("payment_id")})
-    invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
+    invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
     if not payment or not invoice:
         raise HTTPException(status_code=404, detail="Related payment or invoice not found")
     now = _now()
@@ -296,7 +257,7 @@ async def finance_approve(payload: dict, request: Request):
     invoice_total = _money(invoice.get("total_amount", 0))
     approved_paid = _money(proof.get("amount_paid", 0))
     fully_paid = approved_paid >= invoice_total
-    await db.invoices.update_one({"id": invoice.get("id")}, {"$set": {
+    await db.invoices_v2.update_one({"id": invoice.get("id")}, {"$set": {
         "status": "paid" if fully_paid else "partially_paid",
         "payment_status": "paid" if fully_paid else "partially_paid",
     }})
@@ -311,8 +272,6 @@ async def finance_approve(payload: dict, request: Request):
             "quote_id": invoice.get("quote_id"),
             "customer_id": invoice.get("customer_id"),
             "user_id": invoice.get("customer_id"),
-            "customer_name": invoice.get("customer_name", ""),
-            "customer_email": invoice.get("customer_email", ""),
             "type": invoice.get("type", "product"),
             "status": "processing",
             "current_status": "processing",
@@ -339,50 +298,22 @@ async def finance_approve(payload: dict, request: Request):
             "status": "active_followup", "created_at": now,
         }
         await db.sales_assignments.insert_one(sa)
-        # Update order with sales reference
-        await db.orders.update_one({"id": order_id}, {"$set": {"sales_id": assigned_sales_id, "sales_name": assigned_sales_name}})
-
-        # ── Create Vendor Orders ──
-        # Resolve partner_id for each item from: item.partner_id > item.vendor_id > listing lookup
-        partner_items_map = {}  # partner_id -> list of items
+        vendor_ids = set()
         for item in invoice.get("items", []):
-            pid = item.get("partner_id") or item.get("vendor_id")
-            if not pid and item.get("listing_id"):
-                listing = await db.marketplace_listings.find_one({"id": item["listing_id"]}, {"_id": 0, "partner_id": 1})
-                if listing:
-                    pid = listing.get("partner_id")
-            if not pid and item.get("product_id"):
-                listing = await db.marketplace_listings.find_one({"id": item["product_id"]}, {"_id": 0, "partner_id": 1})
-                if listing:
-                    pid = listing.get("partner_id")
-            if pid:
-                pid = str(pid)
-                partner_items_map.setdefault(pid, []).append(item)
-
-        for pid, vitems in partner_items_map.items():
-            vo_id = str(uuid4())
+            if item.get("vendor_id"):
+                vendor_ids.add(item["vendor_id"])
+        for vid in vendor_ids:
+            vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
             await db.vendor_orders.insert_one({
-                "id": vo_id, "vendor_id": pid, "partner_id": pid,
-                "order_id": order_id, "order_number": order_doc.get("order_number"),
+                "id": str(uuid4()), "vendor_id": vid, "order_id": order_id,
                 "customer_id": invoice.get("customer_id"),
                 "status": "ready_to_fulfill", "items": vitems, "created_at": now,
             })
-            # Send targeted notification to the specific partner
-            partner_users = await db.partner_users.find({"partner_id": pid}, {"_id": 0, "id": 1}).to_list(10)
-            for pu in partner_users:
-                await _create_notification(db, recipient_user_id=pu["id"],
-                    title="New order assigned to you",
-                    message=f"Order {order_doc.get('order_number')} has been assigned. Please review and accept.",
-                    target_url="/partner/fulfillment", priority="high")
-
         await db.order_events.insert_one({
             "id": str(uuid4()), "order_id": order_id,
             "customer_id": invoice.get("customer_id"),
             "event": "payment_approved_order_created", "created_at": now,
         })
-        if invoice.get('customer_id'):
-            await _create_notification(db, recipient_user_id=invoice.get('customer_id'), title='Payment approved', message='Your payment has been approved and your order is now in progress.', target_url='/dashboard/orders', priority='high')
-        await _create_notification(db, recipient_role='sales', title='New active order assigned', message=f'Order {order_doc.get("order_number")} is ready for follow-up.', target_url='/staff/queue', priority='high')
     return {"ok": True, "fully_paid": fully_paid, "order": order_doc}
 
 # ─── Finance Reject ─────────────────────────────────────────────
@@ -408,18 +339,16 @@ async def finance_reject(payload: dict, request: Request):
     await db.payments.update_one({"id": proof.get("payment_id")}, {"$set": {
         "status": "proof_rejected", "review_status": "rejected",
     }})
-    await db.invoices.update_one({"id": proof.get("invoice_id")}, {"$set": {
+    await db.invoices_v2.update_one({"id": proof.get("invoice_id")}, {"$set": {
         "payment_status": "proof_rejected", "status": "pending_payment",
     }})
-    if proof.get('customer_id'):
-        await _create_notification(db, recipient_user_id=proof.get('customer_id'), title='Payment rejected', message=reason or 'Your payment proof was rejected. Please review and resubmit.', target_url='/dashboard/invoices', priority='high')
     return {"ok": True}
 
 # ─── Customer: My Invoices ──────────────────────────────────────
 @router.get("/customer/invoices")
 async def customer_invoices(request: Request, customer_id: str):
     db = request.app.mongodb
-    invoices = await db.invoices.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
+    invoices = await db.invoices_v2.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
     out = []
     for inv in invoices:
         inv.pop("_id", None)

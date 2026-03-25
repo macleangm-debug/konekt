@@ -1,141 +1,122 @@
 import api from "./api";
 
-const adminApi = {
-  // ═══ NEW FACADE (admin_facade_routes.py /api/admin/*) ═══
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
+
+export const adminApi = {
+  // Dashboard
   getDashboardSummary: () => api.get("/api/admin/dashboard/summary"),
-  getPendingActions: () => api.get("/api/admin/dashboard/pending-actions"),
 
-  // Payments (facade)
-  getPaymentsQueue: (params) => api.get("/api/admin/payments/queue", { params }),
-  getPaymentDetail: (id) => api.get(`/api/admin/payments/${id}`),
-  approvePayment: (id, payload) => api.post(`/api/admin/payments/${id}/approve`, payload),
-  rejectPayment: (id, payload) => api.post(`/api/admin/payments/${id}/reject`, payload),
+  // Company Settings
+  getCompanySettings: () => api.get("/api/admin/settings/company"),
+  updateCompanySettings: (payload) => api.put("/api/admin/settings/company", payload),
 
-  // Invoices (facade)
-  getInvoices: (params) => api.get("/api/admin/invoices/list", { params }),
-  getInvoiceDetail: (id) => api.get(`/api/admin/invoices/${id}`),
-
-  // Orders (facade)
-  getOrders: (params) => api.get("/api/admin/orders/list", { params }),
-  getOrderDetail: (id) => api.get(`/api/admin/orders/${id}`),
-  releaseToVendor: (id, payload) => api.post(`/api/admin/orders/${id}/release-to-vendor`, payload),
-  updateOrderStatus: (id, payload) => api.post(`/api/admin/orders/${id}/update-status`, payload),
-
-  // Quotes (facade)
-  getQuotes: (params) => api.get("/api/admin/quotes/list", { params }),
-
-  // Sales CRM (facade)
-  getSalesCrmLeads: (params) => api.get("/api/admin/sales-crm/leads", { params }),
-  getSalesCrmAccounts: (params) => api.get("/api/admin/sales-crm/accounts", { params }),
-  getSalesCrmPerformance: () => api.get("/api/admin/sales-crm/performance"),
-  assignLead: (payload) => api.post("/api/admin/sales-crm/assign-lead", payload),
-  updateLeadStatusFacade: (payload) => api.post("/api/admin/sales-crm/update-lead-status", payload),
-
-  // Customers (facade)
-  getCustomersList: (params) => api.get("/api/admin/customers/list", { params }),
-  getCustomerDetail: (id) => api.get(`/api/admin/customers/detail/${id}`),
-  assignSalesToCustomer: (id, payload) => api.post(`/api/admin/customers/${id}/assign-sales`, payload),
-
-  // Vendors (facade)
-  getVendorsList: (params) => api.get("/api/admin/vendors/list", { params }),
-  getVendorDetail: (id) => api.get(`/api/admin/vendors/${id}`),
-  toggleVendorStatus: (id) => api.post(`/api/admin/vendors/${id}/toggle-status`),
-
-  // Affiliates (facade)
-  getAffiliatesList: (params) => api.get("/api/admin/affiliates/list", { params }),
-  getReferralsList: () => api.get("/api/admin/referrals/list"),
-  getCommissionsList: (params) => api.get("/api/admin/commissions/list", { params }),
-  getPayoutsList: () => api.get("/api/admin/payouts/list"),
-  toggleAffiliateStatus: (id) => api.post(`/api/admin/affiliates/${id}/toggle-status`),
-  approvePayout: (id) => api.post(`/api/admin/payouts/${id}/approve`),
-
-  // Catalog (facade)
-  getCatalogProducts: (params) => api.get("/api/admin/catalog/products", { params }),
-  getCatalogServices: () => api.get("/api/admin/catalog/services"),
-  getCatalogGroups: () => api.get("/api/admin/catalog/groups"),
-  getCatalogPromoItems: () => api.get("/api/admin/catalog/promo-items"),
-
-  // Settings (facade)
-  getBusinessProfile: () => api.get("/api/admin/settings/business-profile"),
-  updateBusinessProfile: (data) => api.post("/api/admin/settings/business-profile", data),
-  getCommercialRules: () => api.get("/api/admin/settings/commercial-rules"),
-  updateCommercialRules: (data) => api.post("/api/admin/settings/commercial-rules", data),
-  getAffiliateDefaults: () => api.get("/api/admin/settings/affiliate-defaults"),
-  updateAffiliateDefaults: (data) => api.post("/api/admin/settings/affiliate-defaults", data),
-  getNotificationSettings: () => api.get("/api/admin/settings/notifications"),
-  updateNotificationSettings: (data) => api.post("/api/admin/settings/notifications", data),
-
-  // Users (facade)
-  getUsersList: (params) => api.get("/api/admin/users/list", { params }),
-  assignUserRole: (id, payload) => api.post(`/api/admin/users/${id}/assign-role`, payload),
-  toggleUserStatus: (id) => api.post(`/api/admin/users/${id}/toggle-status`),
-
-  // Audit (facade)
-  getAuditLogs: (params) => api.get("/api/admin/audit/list", { params }),
-  getAuditActions: () => api.get("/api/admin/audit/actions"),
-
-  // Quote Engine
-  createQuoteFromLead: (payload) => api.post("/api/quotes-engine/create", payload),
-  sendQuote: (quoteId) => api.post(`/api/quotes-engine/${quoteId}/send`),
-  acceptQuote: (quoteId, payload) => api.post(`/api/quotes-engine/${quoteId}/accept`, payload || {}),
-  rejectQuote: (quoteId, payload) => api.post(`/api/quotes-engine/${quoteId}/reject`, payload || {}),
-  getQuoteDetail: (quoteId) => api.get(`/api/quotes-engine/${quoteId}`),
-  getInvoiceSplits: (invoiceId) => api.get(`/api/quotes-engine/invoice/${invoiceId}/splits`),
-
-  // ═══ LEGACY (old admin_routes.py endpoints — keep for backward compat) ═══
-  // Customers
-  getCustomers: () => api.get("/api/admin/customers"),
-  createCustomer: (data) => api.post("/api/admin/customers", data),
-  updateCustomer: (id, data) => api.patch(`/api/admin/customers/${id}`, data),
-  deleteCustomer: (id) => api.delete(`/api/admin/customers/${id}`),
-
-  // Invoices (legacy CRUD)
-  createInvoice: (data) => api.post("/api/admin/invoices", data),
-  updateInvoiceStatus: (id, status) => api.patch(`/api/admin/invoices/${id}/status?status=${status}`),
-  getInvoicePayments: (id) => api.get(`/api/admin/invoices/${id}/payments`),
-  sendInvoiceDocument: (id) => api.post(`/api/admin/document-send/invoice/${id}`),
-  downloadInvoicePdf: (id) => `${api.defaults.baseURL || ""}/api/admin/invoices/${id}/pdf`,
-
-  // Quotes (legacy CRUD)
-  createQuote: (data) => api.post("/api/admin/quotes", data),
-  updateQuoteStatus: (id, status) => api.patch(`/api/admin/quotes/${id}/status?status=${status}`),
-  convertQuoteToOrder: (id) => api.post(`/api/admin/quotes/${id}/convert`),
-  sendQuoteDocument: (id) => api.post(`/api/admin/document-send/quote/${id}`),
-  downloadQuotePdf: (id) => `${api.defaults.baseURL || ""}/api/admin/quotes/${id}/pdf`,
-
-  // Orders (legacy ops)
-  convertOrderToInvoice: (orderId, dueDate) => api.post(`/api/admin/quotes/${orderId}/convert-to-invoice`, { due_date: dueDate }),
-  assignOrderTask: (data) => api.post("/api/admin/orders-ops/assign-task", data),
-  sendOrderToProduction: (data) => api.post("/api/admin/orders-ops/send-to-production", data),
-  reserveInventory: (data) => api.post("/api/admin/orders-ops/reserve-inventory", data),
-
-  // Leads
-  getLeads: () => api.get("/api/admin/leads"),
-  createLead: (data) => api.post("/api/admin/leads", data),
-  updateLeadStatus: (id, status) => api.patch(`/api/admin/leads/${id}/status?status=${status}`),
+  // CRM / Leads
+  getLeads: (params) => api.get("/api/admin/crm/leads", { params }),
+  getLead: (id) => api.get(`/api/admin/crm/leads/${id}`),
+  createLead: (payload) => api.post("/api/admin/crm/leads", payload),
+  updateLeadStatus: (leadId, status) =>
+    api.patch(`/api/admin/crm/leads/${leadId}/status`, null, { params: { status } }),
+  deleteLead: (leadId) => api.delete(`/api/admin/crm/leads/${leadId}`),
 
   // Tasks
-  getTasks: () => api.get("/api/admin/tasks"),
-  createTask: (data) => api.post("/api/admin/tasks", data),
-  updateTaskStatus: (id, status) => api.patch(`/api/admin/tasks/${id}/status?status=${status}`),
-  deleteTask: (id) => api.delete(`/api/admin/tasks/${id}`),
+  getTasks: (params) => api.get("/api/admin/tasks", { params }),
+  createTask: (payload) => api.post("/api/admin/tasks", payload),
+  updateTaskStatus: (taskId, status) =>
+    api.patch(`/api/admin/tasks/${taskId}/status`, null, { params: { status } }),
+  deleteTask: (taskId) => api.delete(`/api/admin/tasks/${taskId}`),
 
   // Inventory
-  getInventoryItems: () => api.get("/api/admin/inventory"),
-  createInventoryItem: (data) => api.post("/api/admin/inventory", data),
-  getProductPricingBySku: (sku) => api.get(`/api/admin/inventory/by-sku/${sku}`),
-  getStockMovements: () => api.get("/api/admin/stock-movements"),
-  createStockMovement: (data) => api.post("/api/admin/stock-movements", data),
+  getInventoryItems: (params) => api.get("/api/admin/inventory/items", { params }),
+  getInventoryItem: (id) => api.get(`/api/admin/inventory/items/${id}`),
+  createInventoryItem: (payload) => api.post("/api/admin/inventory/items", payload),
+  createStockMovement: (payload) => api.post("/api/admin/inventory/movements", payload),
+  getStockMovements: (params) => api.get("/api/admin/inventory/movements", { params }),
+  getLowStockItems: () => api.get("/api/admin/inventory/low-stock"),
 
-  // Production
-  getProductionQueue: () => api.get("/api/admin/orders-ops"),
-  getProductionStats: () => api.get("/api/admin/orders-ops"),
-  updateProductionStatus: (id, status) => api.patch(`/api/admin/orders-ops/${id}/status?status=${status}`),
+  // Invoices (v2 routes)
+  getInvoices: (params) => api.get("/api/admin/invoices-v2", { params }),
+  getInvoice: (id) => api.get(`/api/admin/invoices-v2/${id}`),
+  createInvoice: (payload) => api.post("/api/admin/invoices-v2", payload),
+  updateInvoiceStatus: (invoiceId, status) =>
+    api.patch(`/api/admin/invoices-v2/${invoiceId}/status`, null, { params: { status } }),
+  addPayment: (invoiceId, payload) => api.post(`/api/admin/invoices-v2/${invoiceId}/payments`, payload),
+  convertOrderToInvoice: (orderId, dueDate) =>
+    api.post("/api/admin/invoices-v2/convert-from-order", {
+      order_id: orderId,
+      due_date: dueDate || null,
+    }),
 
-  // Settings
-  getCompanySettings: () => api.get("/api/admin/company-settings"),
-  updateCompanySettings: (data) => api.patch("/api/admin/company-settings", data),
+  // Quotes (v2 routes)
+  getQuotes: (params) => api.get("/api/admin/quotes-v2", { params }),
+  getQuote: (id) => api.get(`/api/admin/quotes-v2/${id}`),
+  createQuote: (payload) => api.post("/api/admin/quotes-v2", payload),
+  updateQuoteStatus: (quoteId, status) =>
+    api.patch(`/api/admin/quotes-v2/${quoteId}/status`, null, { params: { status } }),
+  convertQuoteToOrder: (quoteId) =>
+    api.post("/api/admin/quotes-v2/convert-to-order", { quote_id: quoteId }),
+  convertQuoteToInvoice: (quoteId) =>
+    api.post(`/api/admin/quotes-v2/${quoteId}/convert-to-invoice`),
+
+  // PDF Export URLs
+  downloadQuotePdf: (quoteId) => `${API_BASE_URL}/api/admin/pdf/quote/${quoteId}`,
+  downloadInvoicePdf: (invoiceId) => `${API_BASE_URL}/api/admin/pdf/invoice/${invoiceId}`,
+
+  // Customers
+  getCustomers: (params) => api.get("/api/admin/customers", { params }),
+  getCustomer: (id) => api.get(`/api/admin/customers/${id}`),
+  getCustomerByEmail: (email) => api.get(`/api/admin/customers/by-email/${encodeURIComponent(email)}`),
+  createCustomer: (payload) => api.post("/api/admin/customers", payload),
+  updateCustomer: (customerId, payload) => api.patch(`/api/admin/customers/${customerId}`, payload),
+  deleteCustomer: (customerId) => api.delete(`/api/admin/customers/${customerId}`),
+
+  // Service Orders
+  getServiceOrders: (params) => api.get("/api/service-orders", { params }),
+  getServiceOrder: (id) => api.get(`/api/service-orders/${id}`),
+  updateServiceOrderStatus: (orderId, status, note) =>
+    api.patch(`/api/service-orders/${orderId}/status`, { status, note }),
+  addDesignerNote: (orderId, note, isCustomerVisible) =>
+    api.post(`/api/service-orders/${orderId}/notes`, { note, is_customer_visible: isCustomerVisible }),
+  getServiceOrderStats: () => api.get("/api/admin/service-orders/stats"),
+
+  // Order Operations
+  getOrders: (params) => api.get("/api/admin/orders-ops", { params }),
+  getOrder: (orderId) => api.get(`/api/admin/orders-ops/${orderId}`),
+  updateOrderStatus: (orderId, status, note) =>
+    api.patch(`/api/admin/orders-ops/${orderId}/status`, null, { params: { status, note } }),
+  reserveInventory: (payload) => api.post("/api/admin/orders-ops/reserve-inventory", payload),
+  assignOrderTask: (payload) => api.post("/api/admin/orders-ops/assign-task", payload),
+  sendOrderToProduction: (payload) => api.post("/api/admin/orders-ops/send-to-production", payload),
+
+  // Production Queue
+  getProductionQueue: (params) => api.get("/api/admin/production/queue", { params }),
+  getProductionItem: (queueId) => api.get(`/api/admin/production/queue/${queueId}`),
+  updateProductionStatus: (queueId, payload) =>
+    api.patch(`/api/admin/production/queue/${queueId}/status`, payload),
+  getProductionStats: () => api.get("/api/admin/production/stats"),
+
+  // Product Pricing Lookup
+  getProductPricingBySku: (sku) => api.get(`/api/admin/inventory/items/by-sku/${encodeURIComponent(sku)}`),
+
+  // Document Sending (email stubs)
+  sendQuoteDocument: (quoteId) => api.post(`/api/admin/send/quote/${quoteId}`),
+  sendInvoiceDocument: (invoiceId) => api.post(`/api/admin/send/invoice/${invoiceId}`),
+  sendOrderConfirmation: (orderId) => api.post(`/api/admin/send/order/${orderId}/confirmation`),
+
+  // Quote Pipeline (Kanban)
+  getQuotePipeline: () => api.get("/api/admin/quotes/pipeline"),
+  moveQuoteToStage: (quoteId, status) =>
+    api.patch(`/api/admin/quotes/${quoteId}/move`, null, {
+      params: { status },
+    }),
+  getQuotePipelineStats: () => api.get("/api/admin/quotes/pipeline/stats"),
+
+  // Referral Settings
+  getReferralSettings: () => api.get("/api/admin/referral-settings"),
+  updateReferralSettings: (payload) => api.put("/api/admin/referral-settings", payload),
+
+  // Points Management
+  getPointsWallets: () => api.get("/api/admin/points/wallets"),
+  getPointsTransactions: () => api.get("/api/admin/points/transactions"),
 };
 
-export { adminApi };
 export default adminApi;

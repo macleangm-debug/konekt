@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { MessageCircle, X, Send, Bot, User, Loader2, UserCheck } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -11,6 +12,7 @@ const QUICK_ACTIONS = [
 ];
 
 export default function AIChatWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -108,7 +110,7 @@ export default function AIChatWidget() {
     }
   };
 
-  if (cartOpen) return null;
+  if (cartOpen || location.pathname.startsWith("/admin") || location.pathname.startsWith("/partner")) return null;
 
   if (!isOpen) {
     return (

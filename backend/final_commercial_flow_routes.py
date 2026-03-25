@@ -160,7 +160,7 @@ async def create_product_checkout(payload: dict, request: Request):
     }
     await db.product_checkouts.insert_one(checkout_doc)
     checkout_doc.pop("_id", None)
-    await db.invoices.insert_one(invoice_doc)
+    await db.invoices_v2.insert_one(invoice_doc)
     invoice_doc.pop("_id", None)
     await db.orders.insert_one(order_doc)
     order_doc.pop("_id", None)
@@ -216,13 +216,13 @@ async def upload_payment_proof(payload: dict, request: Request):
         "payment_date": now,
         "invoice_number": "",
     }
-    inv = await db.invoices.find_one({"id": invoice_id})
+    inv = await db.invoices_v2.find_one({"id": invoice_id})
     if inv:
         admin_proof["invoice_number"] = inv.get("invoice_number", "")
         admin_proof["invoice_id"] = invoice_id
     await db.payment_proof_submissions.insert_one(admin_proof)
     admin_proof.pop("_id", None)
-    await db.invoices.update_one(
+    await db.invoices_v2.update_one(
         {"id": invoice_id},
         {"$set": {"payment_status": "proof_uploaded", "status": "payment_proof_uploaded"}}
     )
@@ -250,7 +250,7 @@ async def approve_payment_proof(payload: dict, request: Request):
         {"id": proof_id},
         {"$set": {"status": "approved", "approved_at": now, "approved_by": approver_role, "updated_at": now}}
     )
-    await db.invoices.update_one(
+    await db.invoices_v2.update_one(
         {"id": proof["invoice_id"]},
         {"$set": {"status": "paid", "payment_status": "paid"}}
     )
@@ -308,7 +308,7 @@ async def accept_quote_and_create_invoice(payload: dict, request: Request):
             "quote_details": quote.get("quote_details", {}),
             "created_at": now,
         }
-        await db.invoices.insert_one(invoice_doc)
+        await db.invoices_v2.insert_one(invoice_doc)
         invoice_doc.pop("_id", None)
         await db.quotes.update_one(
             {"id": quote_id},
@@ -339,7 +339,7 @@ async def accept_quote_and_create_invoice(payload: dict, request: Request):
             "quote_details": quote.get("quote_details", {}),
             "created_at": now,
         }
-        await db.invoices.insert_one(invoice_doc)
+        await db.invoices_v2.insert_one(invoice_doc)
         invoice_doc.pop("_id", None)
         await db.quotes.update_one(
             {"id": quote_id},
@@ -376,7 +376,7 @@ async def orders_split_view(request: Request, customer_id: str):
 @flow_router.get("/invoices")
 async def get_customer_invoices(request: Request, customer_id: str):
     db = request.app.mongodb
-    invoices = await db.invoices.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
+    invoices = await db.invoices_v2.find({"customer_id": customer_id}).sort("created_at", -1).to_list(length=200)
     out = []
     for inv in invoices:
         inv.pop("_id", None)

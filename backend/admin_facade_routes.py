@@ -67,7 +67,7 @@ async def payment_detail(payment_proof_id: str, request: Request):
     if not proof:
         raise HTTPException(status_code=404, detail="Payment proof not found")
     payment = await db.payments.find_one({"id": proof.get("payment_id")})
-    invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
+    invoice = await db.invoices_v2.find_one({"id": proof.get("invoice_id")})
     return {
         "proof": _clean(proof),
         "payment": _clean(payment),
@@ -123,7 +123,7 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
     query = {}
     if status:
         query["$or"] = [{"status": status}, {"payment_status": status}]
-    rows = await db.invoices.find(query).sort("created_at", -1).to_list(length=500)
+    rows = await db.invoices_v2.find(query).sort("created_at", -1).to_list(length=500)
     out = []
     for inv in rows:
         inv = _clean(inv)
@@ -140,7 +140,7 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
 @router.get("/invoices/{invoice_id}")
 async def invoice_detail(invoice_id: str, request: Request):
     db = request.app.mongodb
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    invoice = await db.invoices_v2.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     payments = [_clean(p) for p in await db.payments.find({"invoice_id": invoice_id}).to_list(100)]
@@ -199,7 +199,7 @@ async def order_detail(order_id: str, request: Request):
     order = await db.orders.find_one({"id": order_id})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
-    invoice = await db.invoices.find_one({"id": order.get("invoice_id")})
+    invoice = await db.invoices_v2.find_one({"id": order.get("invoice_id")})
     vendor_orders = [_clean(v) for v in await db.vendor_orders.find({"order_id": order_id}).to_list(50)]
     assignment = await db.sales_assignments.find_one({"order_id": order_id})
     events = [_clean(e) for e in await db.order_events.find({"order_id": order_id}).sort("created_at", 1).to_list(100)]
@@ -418,7 +418,7 @@ async def customer_detail_facade(customer_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Customer not found")
     user = _clean(user)
     orders = [_clean(o) for o in await db.orders.find({"customer_email": user.get("email")}).sort("created_at", -1).to_list(20)]
-    invoices = [_clean(i) for i in await db.invoices.find({"customer_email": user.get("email")}).sort("created_at", -1).to_list(20)]
+    invoices = [_clean(i) for i in await db.invoices_v2.find({"customer_email": user.get("email")}).sort("created_at", -1).to_list(20)]
     return {"customer": user, "orders": orders, "invoices": invoices}
 
 @router.post("/customers/{customer_id}/assign-sales")

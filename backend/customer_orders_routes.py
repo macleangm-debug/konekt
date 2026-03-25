@@ -1,10 +1,10 @@
 """
 Customer Orders Routes
-Get orders for the authenticated customer, enriched with sales assignment info
+Get orders for the authenticated customer
 """
-from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import jwt
@@ -16,7 +16,6 @@ mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 db_name = os.environ.get('DB_NAME', 'konekt_db')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
-
 JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
 
 
@@ -25,8 +24,7 @@ def serialize_doc(doc):
         return None
     doc = dict(doc)
     if "_id" in doc:
-        if "id" not in doc:
-            doc["id"] = str(doc["_id"])
+        doc["id"] = str(doc["_id"])
         del doc["_id"]
     return doc
 
@@ -42,34 +40,39 @@ async def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)
         return None
 
 
-async def _enrich_with_sales(order_doc):
-    """Attach sales contact info to an order"""
-    order_id = order_doc.get("id")
-    sa = await db.sales_assignments.find_one(
-        {"order_id": order_id},
-        {"_id": 0, "sales_owner_id": 1, "sales_owner_name": 1}
-    )
-    if sa and sa.get("sales_owner_id"):
-        sales_user = await db.users.find_one(
-            {"id": sa["sales_owner_id"]},
-            {"_id": 0, "id": 1, "name": 1, "email": 1, "phone": 1}
-        )
-        order_doc["sales"] = sales_user or {
-            "name": sa.get("sales_owner_name", "Assigned Sales"),
-            "email": "", "phone": "",
-        }
-    return order_doc
+async def enrich_order(order):
+    order = serialize_doc(order)
+    sales_assignment = await db.sales_assignments.find_one({"order_id": order.get("id")}, {"_id": 0})
+    if sales_assignment:
+        order["sales_owner_name"] = sales_assignment.get("sales_owner_name")
+        if sales_assignment.get("sales_owner_id"):
+            sales_user = await db.users.find_one({"id": sales_assignment.get("sales_owner_id")}, {"_id": 0})
+            if sales_user:
+                order["sales"] = {
+                    "name": sales_user.get("full_name") or sales_assignment.get("sales_owner_name"),
+                    "email": sales_user.get("email"),
+                    "phone": sales_user.get("phone") or sales_user.get("mobile"),
+                }
+
+    vendor_id = (order.get("vendor_ids") or [None])[0]
+    if vendor_id:
+        partner = await db.partners.find_one({"_id": ObjectId(vendor_id)}) if ObjectId.is_valid(str(vendor_id)) else await db.partners.find_one({"id": vendor_id})
+        if partner:
+            order["vendor"] = {
+                "name": partner.get("name"),
+                "phone": partner.get("phone"),
+                "email": partner.get("email"),
+            }
+    return order
 
 
 @router.get("")
 async def get_my_orders(user: dict = Depends(get_user)):
-    """Get orders for the current user"""
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     user_email = user.get("email")
     user_id = user.get("id")
-
     orders = await db.orders.find({
         "$or": [
             {"user_id": user_id},
@@ -77,26 +80,18 @@ async def get_my_orders(user: dict = Depends(get_user)):
             {"customer_email": user_email},
             {"customer.email": user_email}
         ]
-    }).sort("created_at", -1).to_list(length=200)
-
-    result = []
-    for o in orders:
-        doc = serialize_doc(o)
-        doc = await _enrich_with_sales(doc)
-        result.append(doc)
-    return result
+    }).sort("created_at", -1).to_list(length=100)
+    return [await enrich_order(o) for o in orders]
 
 
 @router.get("/{order_id}")
 async def get_order_detail(order_id: str, user: dict = Depends(get_user)):
-    """Get a specific order with full detail for the current user"""
     if not user:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     user_email = user.get("email")
     user_id = user.get("id")
-
-    match_filter = {
+    base_query = {
         "$or": [
             {"user_id": user_id},
             {"customer_id": user_id},
@@ -105,21 +100,14 @@ async def get_order_detail(order_id: str, user: dict = Depends(get_user)):
         ]
     }
 
-    # Try by id field, then order_number
-    order = await db.orders.find_one({"id": order_id, **match_filter})
+    order = None
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id), **base_query})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id, **base_query})
     if not order:
-        order = await db.orders.find_one({"order_number": order_id, **match_filter})
-
+        order = await db.orders.find_one({"id": order_id, **base_query})
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    doc = serialize_doc(order)
-    doc = await _enrich_with_sales(doc)
-
-    # Attach events
-    events = await db.order_events.find(
-        {"order_id": doc["id"]}, {"_id": 0}
-    ).sort("created_at", -1).to_list(20)
-    doc["events"] = events
-
-    return doc
+    return await enrich_order(order)

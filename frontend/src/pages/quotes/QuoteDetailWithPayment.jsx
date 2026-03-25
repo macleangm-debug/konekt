@@ -2,34 +2,29 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
-import { FileText, Download, ArrowLeft, CheckCircle, XCircle, Layers, Loader2 } from "lucide-react";
-
-function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
-
-const STATUS_MAP = {
-  sent: { label: "Awaiting Your Review", color: "bg-amber-100 text-amber-800" },
-  draft: { label: "Draft", color: "bg-slate-100 text-slate-600" },
-  pending: { label: "Pending", color: "bg-amber-100 text-amber-800" },
-  approved: { label: "Accepted", color: "bg-green-100 text-green-800" },
-  converted: { label: "Converted", color: "bg-blue-100 text-blue-800" },
-  rejected: { label: "Rejected", color: "bg-red-100 text-red-700" },
-  expired: { label: "Expired", color: "bg-slate-100 text-slate-700" },
-};
+import { FileText, CreditCard, Download, ArrowLeft, CheckCircle } from "lucide-react";
 
 export default function QuoteDetailWithPayment() {
   const { quoteId } = useParams();
   const navigate = useNavigate();
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [rejectReason, setRejectReason] = useState("");
+  const [paying, setPaying] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  useEffect(() => { loadQuote(); }, [quoteId]);
+  useEffect(() => {
+    loadQuote();
+  }, [quoteId]);
 
   const loadQuote = async () => {
     try {
-      const res = await api.get(`/api/customer/quotes/${quoteId}`);
+      // Try quotes_v2 first, then fall back to quotes
+      let res;
+      try {
+        res = await api.get(`/api/customer/quotes/${quoteId}`);
+      } catch (e) {
+        res = await api.get(`/api/quotes/${quoteId}`);
+      }
       setQuote(res.data);
     } catch (err) {
       toast.error("Failed to load quote");
@@ -39,242 +34,242 @@ export default function QuoteDetailWithPayment() {
     }
   };
 
-  const handleAccept = async () => {
-    setActionLoading(true);
+  const handlePayNow = async () => {
+    setPaying(true);
     try {
-      const res = await api.post(`/api/customer/quotes/${quoteId}/approve`, { convert_to_invoice: true });
-      toast.success("Quote accepted! Invoice created.");
-      const invoiceId = res.data?.invoice?.id;
-      if (invoiceId) {
-        navigate(`/dashboard/invoices/${invoiceId}/pay`);
-      } else {
-        navigate("/dashboard/invoices");
-      }
+      // Convert quote to invoice and mark as paid
+      await api.post(`/api/customer/quotes/${quoteId}/convert-to-invoice`);
+      toast.success("Quote converted to invoice! Proceeding to payment...");
+      setShowPaymentModal(true);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Failed to accept quote");
+      // If conversion endpoint doesn't exist, show bank payment modal directly
+      setShowPaymentModal(true);
+    } finally {
+      setPaying(false);
     }
-    setActionLoading(false);
   };
 
-  const handleReject = async () => {
-    setActionLoading(true);
+  const handleBankPaymentConfirm = async () => {
     try {
-      await api.post(`/api/customer/quotes/${quoteId}/reject`, { reason: rejectReason });
-      toast.success("Quote rejected.");
-      setShowRejectModal(false);
-      navigate("/dashboard/quotes");
+      await api.patch(`/api/customer/quotes/${quoteId}/status`, { status: "paid" });
+      toast.success("Payment recorded! Our team will verify and process your order.");
+      navigate("/account/orders");
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "Failed to reject quote");
+      toast.error("Failed to record payment");
     }
-    setActionLoading(false);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20" data-testid="quote-detail-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#20364D]"></div>
       </div>
     );
   }
 
   if (!quote) {
     return (
-      <div className="text-center py-12" data-testid="quote-not-found">
+      <div className="text-center py-12">
         <p className="text-slate-500">Quote not found</p>
-        <Link to="/dashboard/quotes" className="text-[#20364D] font-medium mt-2 inline-block">Back to Quotes</Link>
+        <Link to="/dashboard/quotes" className="text-[#20364D] font-medium mt-2 inline-block">
+          ← Back to Quotes
+        </Link>
       </div>
     );
   }
 
-  const si = STATUS_MAP[quote.status] || { label: quote.status, color: "bg-slate-100 text-slate-600" };
-  const total = Number(quote.total_amount || quote.total || 0);
-  const items = quote.items || quote.line_items || [];
-  const canAct = ["sent", "pending", "draft"].includes(quote.status);
+  const getStatusBadge = (status) => {
+    const styles = {
+      pending: "bg-yellow-100 text-yellow-800",
+      approved: "bg-blue-100 text-blue-800",
+      paid: "bg-green-100 text-green-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    return styles[status] || "bg-slate-100 text-slate-800";
+  };
 
   return (
     <div className="space-y-6" data-testid="quote-detail-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard/quotes" className="p-2 hover:bg-slate-100 rounded-lg transition" data-testid="back-to-quotes">
+          <Link to="/dashboard/quotes" className="p-2 hover:bg-slate-100 rounded-lg transition">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#20364D]">
-              {quote.quote_number || `Quote ${(quote.id || "").slice(-8)}`}
+            <h1 className="text-3xl font-bold text-[#20364D]">
+              Quote #{quote.quote_number || quote.id.slice(0, 8).toUpperCase()}
             </h1>
             <div className="flex items-center gap-3 mt-1">
-              <span className={`px-3 py-1 text-xs font-semibold rounded-full ${si.color}`}>{si.label}</span>
-              <span className="text-slate-500 text-sm">Created {new Date(quote.created_at).toLocaleDateString()}</span>
+              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusBadge(quote.status)}`}>
+                {quote.status}
+              </span>
+              <span className="text-slate-500 text-sm">
+                Created {new Date(quote.created_at).toLocaleDateString()}
+              </span>
             </div>
           </div>
         </div>
+        
+        {/* Actions */}
         <div className="flex items-center gap-3">
-          {canAct && (
-            <>
-              <button onClick={handleAccept} disabled={actionLoading}
-                className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 transition"
-                data-testid="accept-quote-btn">
-                <CheckCircle className="w-4 h-4" /> {actionLoading ? "Processing..." : "Accept Quote"}
-              </button>
-              <button onClick={() => setShowRejectModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 border border-red-200 text-red-600 rounded-xl font-semibold hover:bg-red-50 transition"
-                data-testid="reject-quote-btn">
-                <XCircle className="w-4 h-4" /> Reject
-              </button>
-            </>
-          )}
-          {quote.status === "converted" && (quote.invoice_id || quote.splits?.length > 0) && (
-            <Link to={`/dashboard/invoices/${quote.invoice_id}/pay`}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#D4A843] text-[#17283C] rounded-xl font-semibold hover:bg-[#c49a3d] transition"
-              data-testid="go-to-invoice-btn">
-              Pay Invoice
-            </Link>
+          <button className="flex items-center gap-2 px-4 py-2 border rounded-xl hover:bg-slate-50 transition">
+            <Download className="w-4 h-4" />
+            Download PDF
+          </button>
+          {quote.status === "pending" && (
+            <button
+              onClick={handlePayNow}
+              disabled={paying}
+              className="flex items-center gap-2 px-5 py-2 bg-[#20364D] text-white rounded-xl font-semibold hover:bg-[#2a4563] transition disabled:opacity-50"
+              data-testid="pay-now-btn"
+            >
+              <CreditCard className="w-4 h-4" />
+              {paying ? "Processing..." : "Pay Now"}
+            </button>
           )}
         </div>
       </div>
 
+      {/* Main Content */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Items */}
-          <div className="rounded-[2rem] border bg-white p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <FileText className="w-5 h-5 text-[#20364D]" />
-              <h2 className="font-bold text-lg text-[#20364D]">Quote Details</h2>
-            </div>
-            {items.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full" data-testid="quote-items-table">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2 text-sm font-medium text-slate-500">Item</th>
-                      <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Qty</th>
-                      <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Unit Price</th>
-                      <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Subtotal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, idx) => (
-                      <tr key={idx} className="border-b">
-                        <td className="py-3 px-2">
-                          <div className="font-medium text-slate-800">{item.name || item.description || "Item"}</div>
-                        </td>
-                        <td className="py-3 px-2 text-right text-slate-600">{item.quantity || 1}</td>
-                        <td className="py-3 px-2 text-right text-slate-600">{money(item.unit_price)}</td>
-                        <td className="py-3 px-2 text-right font-medium text-slate-800">{money(item.line_total || (item.unit_price || 0) * (item.quantity || 1))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-slate-500 text-sm">No itemized breakdown available.</p>
-            )}
-
-            {/* Totals */}
-            <div className="mt-6 pt-4 border-t space-y-2">
-              {quote.subtotal_amount > 0 && (
-                <div className="flex justify-between text-slate-600 text-sm">
-                  <span>Subtotal</span>
-                  <span>{money(quote.subtotal_amount || quote.subtotal)}</span>
-                </div>
-              )}
-              {(quote.vat_amount > 0 || quote.vat_percent > 0) && (
-                <div className="flex justify-between text-slate-600 text-sm">
-                  <span>VAT</span>
-                  <span>{money(quote.vat_amount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-xl font-bold text-[#20364D] pt-2">
-                <span>Total</span>
-                <span>{money(total)}</span>
-              </div>
-            </div>
+        {/* Quote Details */}
+        <div className="lg:col-span-2 border rounded-2xl bg-white p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <FileText className="w-5 h-5 text-[#20364D]" />
+            <h2 className="font-bold text-lg text-[#20364D]">Quote Details</h2>
           </div>
 
-          {/* Notes */}
-          {quote.notes && (
-            <div className="rounded-[2rem] border bg-white p-6">
-              <h3 className="font-bold text-[#20364D] mb-3">Notes & Terms</h3>
-              <p className="text-slate-600 text-sm whitespace-pre-wrap">{quote.notes}</p>
+          {/* Line Items */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-2 text-sm font-medium text-slate-500">Item</th>
+                  <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Qty</th>
+                  <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Unit Price</th>
+                  <th className="text-right py-3 px-2 text-sm font-medium text-slate-500">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(quote.items || []).map((item, idx) => (
+                  <tr key={idx} className="border-b">
+                    <td className="py-3 px-2">
+                      <div className="font-medium text-slate-800">{item.name}</div>
+                      {item.sku && <div className="text-xs text-slate-500">SKU: {item.sku}</div>}
+                    </td>
+                    <td className="py-3 px-2 text-right text-slate-600">{item.quantity}</td>
+                    <td className="py-3 px-2 text-right text-slate-600">TZS {(item.unit_price || 0).toLocaleString()}</td>
+                    <td className="py-3 px-2 text-right font-medium text-slate-800">TZS {(item.subtotal || 0).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Totals */}
+          <div className="mt-6 pt-6 border-t space-y-2">
+            <div className="flex justify-between text-slate-600">
+              <span>Subtotal</span>
+              <span>TZS {(quote.subtotal || 0).toLocaleString()}</span>
             </div>
-          )}
+            {quote.vat_percent && (
+              <div className="flex justify-between text-slate-600">
+                <span>VAT ({quote.vat_percent}%)</span>
+                <span>TZS {(quote.vat_amount || 0).toLocaleString()}</span>
+              </div>
+            )}
+            {quote.discount > 0 && (
+              <div className="flex justify-between text-green-600">
+                <span>Discount</span>
+                <span>-TZS {quote.discount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-xl font-bold text-[#20364D] pt-2">
+              <span>Total</span>
+              <span>TZS {(quote.total || 0).toLocaleString()}</span>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Payment Type */}
-          <div className="rounded-[2rem] border bg-white p-6" data-testid="payment-type-panel">
-            <h3 className="font-bold text-[#20364D] mb-3">Payment Terms</h3>
-            {quote.payment_type === "installment" && quote.deposit_percent > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold">
-                  <Layers className="w-4 h-4" /> Installment Payment
-                </div>
-                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-amber-700">Deposit ({quote.deposit_percent}%)</span>
-                    <span className="font-semibold text-amber-800">{money(total * quote.deposit_percent / 100)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-amber-700">Balance ({100 - quote.deposit_percent}%)</span>
-                    <span className="font-semibold text-amber-800">{money(total * (100 - quote.deposit_percent) / 100)}</span>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500">Pay the deposit first. Balance due before delivery/completion.</p>
+          {/* Delivery Address */}
+          {quote.delivery_address && (
+            <div className="border rounded-2xl bg-white p-6">
+              <h3 className="font-bold text-[#20364D] mb-4">Delivery Address</h3>
+              <div className="text-slate-600 space-y-1">
+                <p>{quote.delivery_address.street}</p>
+                <p>{quote.delivery_address.city}, {quote.delivery_address.region}</p>
+                <p>{quote.delivery_address.country}</p>
+                {quote.delivery_address.contact_phone && (
+                  <p className="font-medium mt-2">Phone: {quote.delivery_address.contact_phone}</p>
+                )}
               </div>
-            ) : (
-              <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-700">
-                <span className="font-semibold">Full Payment</span> required upon acceptance.
-              </div>
-            )}
-          </div>
-
-          {/* Validity */}
-          {quote.valid_until && (
-            <div className="rounded-[2rem] border bg-white p-6">
-              <h3 className="font-bold text-[#20364D] mb-2">Valid Until</h3>
-              <p className="text-slate-600">{new Date(quote.valid_until).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}</p>
             </div>
           )}
 
-          {/* Bank Details */}
-          <div className="rounded-[2rem] border bg-white p-6">
-            <h3 className="font-bold text-[#20364D] mb-3">Bank Transfer Details</h3>
-            <div className="text-sm text-slate-600 space-y-1">
-              <p><strong>Bank:</strong> CRDB Bank</p>
-              <p><strong>Account:</strong> KONEKT LIMITED</p>
-              <p><strong>Account No:</strong> 015C8841347002</p>
-              <p><strong>SWIFT:</strong> CORUTZTZ</p>
+          {/* Payment Info */}
+          <div className="border rounded-2xl bg-white p-6">
+            <h3 className="font-bold text-[#20364D] mb-4">Payment Information</h3>
+            <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
+              <p className="font-medium mb-2">Bank Transfer Details:</p>
+              <p>Bank: CRDB Bank</p>
+              <p>Account: Konekt Co. Ltd</p>
+              <p>Account No: 0150XXXXXXXX</p>
+              <p className="mt-2 text-xs">Use Quote # as payment reference</p>
             </div>
           </div>
+
+          {/* Valid Until */}
+          {quote.valid_until && (
+            <div className="border rounded-2xl bg-white p-6">
+              <h3 className="font-bold text-[#20364D] mb-2">Quote Valid Until</h3>
+              <p className="text-slate-600">{new Date(quote.valid_until).toLocaleDateString()}</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowRejectModal(false)}>
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()} data-testid="reject-modal">
-            <h2 className="text-xl font-bold text-[#20364D] mb-4">Reject Quote</h2>
-            <p className="text-sm text-slate-600 mb-4">Please provide a reason for rejecting this quote (optional).</p>
-            <textarea
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm mb-4"
-              rows={3}
-              placeholder="Reason for rejection..."
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              data-testid="reject-reason-input"
-            />
-            <div className="flex gap-3">
-              <button onClick={handleReject} disabled={actionLoading}
-                className="flex-1 rounded-xl bg-red-600 text-white px-4 py-3 font-semibold hover:bg-red-700 disabled:opacity-50"
-                data-testid="confirm-reject-btn">
-                {actionLoading ? "Rejecting..." : "Reject Quote"}
-              </button>
-              <button onClick={() => { setShowRejectModal(false); setRejectReason(""); }}
-                className="flex-1 rounded-xl border px-4 py-3 font-semibold text-slate-600 hover:bg-slate-50">
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold text-[#20364D]">Complete Payment</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="rounded-xl bg-green-50 border border-green-200 p-4">
+                <div className="flex items-center gap-2 text-green-800 mb-2">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Bank Transfer Details</span>
+                </div>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p><strong>Bank:</strong> CRDB Bank</p>
+                  <p><strong>Account Name:</strong> Konekt Co. Ltd</p>
+                  <p><strong>Account Number:</strong> 0150XXXXXXXX</p>
+                  <p><strong>Reference:</strong> {quote.quote_number || quote.id.slice(0, 8).toUpperCase()}</p>
+                  <p><strong>Amount:</strong> TZS {(quote.total || 0).toLocaleString()}</p>
+                </div>
+              </div>
+              
+              <p className="text-sm text-slate-600">
+                After making the transfer, click the button below to notify our team. We'll verify and process your order within 24 hours.
+              </p>
+            </div>
+            <div className="p-6 border-t flex gap-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="flex-1 px-4 py-3 border rounded-xl hover:bg-slate-50 transition"
+              >
                 Cancel
+              </button>
+              <button
+                onClick={handleBankPaymentConfirm}
+                className="flex-1 px-4 py-3 bg-[#20364D] text-white rounded-xl font-semibold hover:bg-[#2a4563] transition"
+                data-testid="confirm-payment-btn"
+              >
+                I've Made Payment
               </button>
             </div>
           </div>

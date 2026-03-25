@@ -55,7 +55,7 @@ async def create_kwikpay_intent(payload: KwikPayIntentCreate):
         currency = normalize_currency(target.get("currency", "TZS"))
         description = f"Payment for order {document_number}"
     else:
-        target = await db.invoices.find_one({"_id": ObjectId(payload.target_id)})
+        target = await db.invoices_v2.find_one({"_id": ObjectId(payload.target_id)})
         if not target:
             raise HTTPException(status_code=404, detail="Invoice not found")
         if not payment_allowed_for_invoice(target):

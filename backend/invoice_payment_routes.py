@@ -24,7 +24,7 @@ async def get_invoice_payment_context(invoice_id: str, request: Request):
     db = request.app.mongodb
     
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         invoice = None
     
@@ -78,7 +78,7 @@ async def submit_invoice_payment_proof(invoice_id: str, payload: dict, request: 
     now = datetime.now(timezone.utc)
 
     # Try both collections
-    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     
@@ -106,7 +106,7 @@ async def submit_invoice_payment_proof(invoice_id: str, payload: dict, request: 
     result = await db.payment_proofs.insert_one(doc)
 
     # Update invoice payment status
-    await db.invoices.update_one(
+    await db.invoices_v2.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": {"payment_status": "pending_verification", "updated_at": now}},
     )
@@ -123,7 +123,7 @@ async def get_invoice_by_public_token(token: str, request: Request):
     """Get invoice payment context using public payment token"""
     db = request.app.mongodb
     
-    invoice = await db.invoices.find_one({"public_payment_token": token})
+    invoice = await db.invoices_v2.find_one({"public_payment_token": token})
     if not invoice:
         invoice = await db.invoices_v2.find_one({"public_payment_token": token})
     

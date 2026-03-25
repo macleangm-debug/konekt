@@ -83,11 +83,11 @@ async def get_activity_feed(
             "message": status_messages.get(o.get('status'), "Order update"),
             "reference": f"Order #{o.get('order_number', o_id[:8])}",
             "created_at": o.get("created_at", datetime.now(timezone.utc).isoformat()),
-            "link": "/account/orders"
+            "link": f"/account/orders"
         })
     
-    # Sort by created_at (handle mixed datetime/str types)
-    activities.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
+    # Sort by created_at
+    activities.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     
     return activities[:limit]
 
@@ -101,18 +101,12 @@ async def get_notifications(
     """Get user's notifications"""
     user = await get_current_user(request)
     db = request.app.mongodb
-    user_id = user["id"]
-    user_role = user.get("role", "customer")
-
+    
     notifications = await db.notifications.find(
-        {"$or": [
-            {"user_id": user_id},
-            {"recipient_user_id": user_id},
-            {"recipient_role": user_role},
-        ]},
+        {"user_id": user["id"]},
         {"_id": 0}
     ).sort("created_at", -1).to_list(limit)
-
+    
     return notifications
 
 @router.get("/notifications/count")
@@ -120,19 +114,12 @@ async def get_unread_count(request: Request):
     """Get count of unread notifications"""
     user = await get_current_user(request)
     db = request.app.mongodb
-    user_id = user["id"]
-    user_role = user.get("role", "customer")
-
+    
     count = await db.notifications.count_documents({
-        "$or": [
-            {"user_id": user_id},
-            {"recipient_user_id": user_id},
-            {"recipient_role": user_role},
-        ],
-        "is_read": {"$ne": True},
-        "read": {"$ne": True},
+        "user_id": user["id"],
+        "read": {"$ne": True}
     })
-
+    
     return {"unread": count}
 
 @router.patch("/notifications/{notification_id}/read")
@@ -142,8 +129,8 @@ async def mark_notification_read(notification_id: str, request: Request):
     db = request.app.mongodb
     
     result = await db.notifications.update_one(
-        {"id": notification_id, "$or": [{"user_id": user["id"]}, {"recipient_user_id": user["id"]}]},
-        {"$set": {"read": True, "is_read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
+        {"id": notification_id, "user_id": user["id"]},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
     )
     
     if result.matched_count == 0:
@@ -158,8 +145,8 @@ async def mark_all_notifications_read(request: Request):
     db = request.app.mongodb
     
     await db.notifications.update_many(
-        {"$or": [{"user_id": user["id"]}, {"recipient_user_id": user["id"]}], "read": {"$ne": True}},
-        {"$set": {"read": True, "is_read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
+        {"user_id": user["id"], "read": {"$ne": True}},
+        {"$set": {"read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
     )
     
     return {"message": "All notifications marked as read"}

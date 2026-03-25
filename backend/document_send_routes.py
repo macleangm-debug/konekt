@@ -42,7 +42,7 @@ async def send_quote_document(quote_id: str):
 async def send_invoice_document(invoice_id: str):
     """Send invoice document via email (stub)"""
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Invoice not found")
     

@@ -144,9 +144,9 @@ async def _find_quote(db, key):
     return doc
 
 async def _find_invoice(db, key):
-    doc = await db.invoices.find_one({"id": key})
+    doc = await db.invoices_v2.find_one({"id": key})
     if not doc:
-        doc = await db.invoices.find_one({"invoice_number": key})
+        doc = await db.invoices_v2.find_one({"invoice_number": key})
     if not doc:
         raise HTTPException(status_code=404, detail="Invoice not found")
     doc["doc_number"] = doc.get("invoice_number", str(doc.get("_id", ""))[:8])

@@ -54,7 +54,7 @@ async def admin_dashboard_summary():
         total_service_orders = await db.service_orders.count_documents({})
         total_leads = await db.crm_leads.count_documents({})
         open_tasks = await db.admin_tasks.count_documents({"status": {"$ne": "done"}})
-        total_invoices = await db.invoices.count_documents({})
+        total_invoices = await db.invoices_v2.count_documents({})
         total_quotes = await db.quotes.count_documents({})
         
         # Low stock items (where quantity <= reorder_level)
@@ -66,7 +66,7 @@ async def admin_dashboard_summary():
         pending_orders = await db.orders.count_documents({"current_status": "pending"})
         
         # Revenue from paid invoices
-        paid_invoices = await db.invoices.find({"status": "paid"}).to_list(length=1000)
+        paid_invoices = await db.invoices_v2.find({"status": "paid"}).to_list(length=1000)
         total_revenue = sum(inv.get("total", 0) for inv in paid_invoices)
         
         # New leads today
@@ -417,8 +417,8 @@ async def create_invoice(payload: InvoiceCreate):
     doc["updated_at"] = now.isoformat()
     doc["payments"] = []
 
-    result = await db.invoices.insert_one(doc)
-    created = await db.invoices.find_one({"_id": result.inserted_id})
+    result = await db.invoices_v2.insert_one(doc)
+    created = await db.invoices_v2.find_one({"_id": result.inserted_id})
     return serialize_doc(created)
 
 
@@ -435,14 +435,14 @@ async def list_invoices(
     if customer_email:
         query["customer_email"] = customer_email
     
-    docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
+    docs = await db.invoices_v2.find(query).sort("created_at", -1).to_list(length=limit)
     return [serialize_doc(doc) for doc in docs]
 
 
 @router.get("/invoices/{invoice_id}")
 async def get_invoice(invoice_id: str):
     """Get a specific invoice"""
-    doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    doc = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return serialize_doc(doc)
@@ -457,7 +457,7 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
     
     now = datetime.now(timezone.utc)
     
-    result = await db.invoices.update_one(
+    result = await db.invoices_v2.update_one(
         {"_id": ObjectId(invoice_id)},
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
@@ -465,7 +465,7 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
-    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    updated = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     return serialize_doc(updated)
 
 
@@ -473,7 +473,7 @@ async def update_invoice_status(invoice_id: str, status: str = Query(...)):
 async def get_invoice_payments(invoice_id: str):
     """Get payment history for an invoice"""
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
         if not invoice:
             raise HTTPException(status_code=404, detail="Invoice not found")
         return invoice.get("payments", [])
@@ -496,7 +496,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     now = datetime.now(timezone.utc)
     
     try:
-        invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+        invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     except Exception:
         raise HTTPException(status_code=404, detail="Invoice not found")
     
@@ -522,7 +522,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
     elif total_paid > 0:
         new_status = "partially_paid"
     
-    await db.invoices.update_one(
+    await db.invoices_v2.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$push": {"payments": payment},
@@ -535,7 +535,7 @@ async def add_payment(invoice_id: str, payload: PaymentRecord):
         }
     )
     
-    updated = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    updated = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     return serialize_doc(updated)
 
 
@@ -698,7 +698,7 @@ async def convert_quote_to_invoice(quote_id: str):
         "updated_at": now.isoformat(),
     }
     
-    await db.invoices.insert_one(invoice_doc)
+    await db.invoices_v2.insert_one(invoice_doc)
     
     # Update quote status
     await db.quotes.update_one(

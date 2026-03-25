@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../lib/api";
-import { Check, X, Clock, DollarSign, Search, ChevronRight, Image } from "lucide-react";
+import { Check, X, Clock, DollarSign, Search, ChevronRight, Image, FileText } from "lucide-react";
+import BrandLogoFinal from "../branding/BrandLogoFinal";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
@@ -150,10 +151,21 @@ export default function FinancePaymentsQueuePage() {
               <div className="rounded-xl border border-slate-200 p-4">
                 <p className="text-xs text-slate-500 font-medium mb-2">Payment Proof</p>
                 {selected.file_url && !selected.file_url.startsWith("blob:") ? (
-                  <a href={selected.file_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-[#20364D] font-medium hover:underline">
-                    <Image size={14} /> View Uploaded Proof
-                  </a>
+                  /\.(png|jpg|jpeg|webp)$/i.test(selected.file_url) ? (
+                    <div className="space-y-3">
+                      <img src={selected.file_url} alt="Payment proof" className="w-full max-h-72 object-contain rounded-xl border border-slate-200 bg-slate-50" />
+                      <a href={selected.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-[#20364D] font-medium hover:underline">
+                        <Image size={14} /> Open Full Proof
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="rounded-xl border border-slate-200 p-4 bg-slate-50 flex items-center gap-2 text-sm text-[#20364D]"><FileText size={14} /> Proof document attached</div>
+                      <a href={selected.file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm text-[#20364D] font-medium hover:underline">
+                        <FileText size={14} /> Open Proof Document
+                      </a>
+                    </div>
+                  )
                 ) : (
                   <p className="text-sm text-slate-500">Proof submitted. File preview will be available when object storage is connected.</p>
                 )}

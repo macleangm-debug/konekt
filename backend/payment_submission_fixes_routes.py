@@ -64,7 +64,7 @@ async def submit_payment(payload: dict, request: Request):
         "status": "proof_uploaded",
         "review_status": "under_review",
     }})
-    await db.invoices.update_one({"id": payment.get("invoice_id")}, {"$set": {
+    await db.invoices_v2.update_one({"id": payment.get("invoice_id")}, {"$set": {
         "status": "payment_under_review",
         "payment_status": "payment_under_review",
     }})
@@ -86,7 +86,7 @@ async def approve_payment_and_distribute(payload: dict, request: Request):
     payment = await db.payments.find_one({"id": payment_id})
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
-    invoice = await db.invoices.find_one({"id": payment.get("invoice_id")})
+    invoice = await db.invoices_v2.find_one({"id": payment.get("invoice_id")})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
@@ -96,7 +96,7 @@ async def approve_payment_and_distribute(payload: dict, request: Request):
         "approved_at": _now(),
         "approved_by_role": approver_role,
     }})
-    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {
+    await db.invoices_v2.update_one({"id": invoice["id"]}, {"$set": {
         "status": "paid",
         "payment_status": "paid",
     }})

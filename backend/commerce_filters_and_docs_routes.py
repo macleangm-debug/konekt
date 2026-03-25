@@ -186,7 +186,7 @@ async def quote_pdf(quote_id: str):
 async def invoice_pdf(invoice_id: str):
     """Get PDF download URL for an invoice"""
     # Check if invoice exists
-    invoice = await db.invoices.find_one({"$or": [{"id": invoice_id}, {"_id": invoice_id}]})
+    invoice = await db.invoices_v2.find_one({"$or": [{"id": invoice_id}, {"_id": invoice_id}]})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     

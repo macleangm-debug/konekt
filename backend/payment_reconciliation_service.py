@@ -3,7 +3,7 @@ from bson import ObjectId
 
 
 async def reconcile_invoice_payment(db, invoice_id: str, amount: float, payment_method: str, reference: str | None = None):
-    invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    invoice = await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})
     if not invoice:
         return None
 
@@ -29,7 +29,7 @@ async def reconcile_invoice_payment(db, invoice_id: str, amount: float, payment_
         "created_at": datetime.utcnow(),
     }
 
-    await db.invoices.update_one(
+    await db.invoices_v2.update_one(
         {"_id": ObjectId(invoice_id)},
         {
             "$set": {
@@ -42,4 +42,4 @@ async def reconcile_invoice_payment(db, invoice_id: str, amount: float, payment_
         },
     )
 
-    return await db.invoices.find_one({"_id": ObjectId(invoice_id)})
+    return await db.invoices_v2.find_one({"_id": ObjectId(invoice_id)})

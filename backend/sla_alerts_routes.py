@@ -122,7 +122,7 @@ async def get_sla_alerts():
     
     # 4. Unpaid invoices overdue
     thirty_days_ago = now - timedelta(days=30)
-    overdue_invoices = await db.invoices.find({
+    overdue_invoices = await db.invoices_v2.find({
         "status": {"$in": ["sent", "unpaid", "overdue"]},
         "due_date": {"$lt": now.isoformat()},
         "created_at": {"$lt": thirty_days_ago}

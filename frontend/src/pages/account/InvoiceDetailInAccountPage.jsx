@@ -29,12 +29,6 @@ export default function InvoiceDetailInAccountPage() {
         return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100", label: "Paid" };
       case "overdue":
         return { icon: AlertCircle, color: "text-red-600", bg: "bg-red-100", label: "Overdue" };
-      case "payment_under_review":
-      case "payment_proof_uploaded":
-        return { icon: Clock, color: "text-blue-600", bg: "bg-blue-100", label: "Under Review" };
-      case "payment_rejected":
-      case "proof_rejected":
-        return { icon: AlertCircle, color: "text-red-600", bg: "bg-red-100", label: "Rejected" };
       default:
         return { icon: Clock, color: "text-amber-600", bg: "bg-amber-100", label: "Pending Payment" };
     }
@@ -112,13 +106,6 @@ export default function InvoiceDetailInAccountPage() {
               <div className="text-lg font-semibold text-[#20364D]">
                 {new Date(invoice.due_date).toLocaleDateString()}
               </div>
-            </div>
-          )}
-
-          {invoice.rejection_reason && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-              <div className="text-sm font-semibold text-red-700 mb-1">Payment rejection reason</div>
-              <div className="text-sm text-red-700">{invoice.rejection_reason}</div>
             </div>
           )}
 

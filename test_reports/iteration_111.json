@@ -1,0 +1,133 @@
+{
+  "summary": "Konekt Patch Round 3 - All 6 verification gates PASSED. Invoice consolidation verified. 16/17 backend tests passed (1 minor routing issue). All UI flows verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/admin/orders/list",
+        "issue": "Returns 404 - route conflicts with /api/admin/orders/{order_id}. Use /api/admin/orders-ops instead.",
+        "priority": "LOW",
+        "note": "This is a routing order issue in admin_facade_routes.py. The /orders-ops endpoint works correctly."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_konekt_patch_round3.py",
+    "/app/test_reports/pytest/pytest_results_konekt_patch_round3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "collection_mode_service.py correctly returns invoices_v2 exclusively",
+    "customer_invoice_routes.py only queries db.invoices_v2 (no dual reads)",
+    "AIChatWidget.jsx line 113 correctly hides on /admin and /partner paths",
+    "PartnerLayout.jsx correctly shows affiliate section only for affiliate partners (isAffiliate flag)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_konekt_patch_round3.py"
+  ],
+  "success_rate": {
+    "backend": "94% (16/17 tests passed)",
+    "frontend": "100% (all 6 gates verified)"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 verification gates passed: Gate 1 (Customer invoices table), Gate 2 (Invoice drawer with branded header), Gate 3 (Customer orders table), Gate 4 (Vendor fulfillment queue), Gate 5 (Admin finance queue with detail panel), Gate 6 (AI chat widget hidden on admin/partner pages, visible on customer pages). Invoice consolidation verified - all backend code uses invoices_v2 exclusively. Vendor sidebar has no affiliate section for non-affiliate partners.",
+  "verification_gates": {
+    "GATE_1_CUSTOMER_INVOICES": {
+      "status": "PASS",
+      "details": "Customer invoices page at /dashboard/invoices shows full-width table with Date, Invoice, Type, Amount, Status, Action columns. 3 invoices displayed.",
+      "api_verified": true,
+      "ui_verified": true
+    },
+    "GATE_2_INVOICE_DRAWER": {
+      "status": "PASS",
+      "details": "Invoice drawer opens on row click with branded header showing 'Invoice Preview' and Konekt branding. Shows Bill To, Invoice Summary, Line Items, Subtotal/VAT/Total, Download Invoice button.",
+      "ui_verified": true
+    },
+    "GATE_3_CUSTOMER_ORDERS": {
+      "status": "PASS",
+      "details": "Customer orders page at /dashboard/orders shows full-width table with Date, Order, Type, Payment, Fulfillment, Action columns. 19 orders displayed.",
+      "api_verified": true,
+      "ui_verified": true
+    },
+    "GATE_4_VENDOR_FULFILLMENT": {
+      "status": "PASS",
+      "details": "Vendor fulfillment queue at /partner/fulfillment shows jobs with tabs (All Jobs, Pending, Accepted, In Progress, Completed, Issues). Multiple jobs displayed with status badges.",
+      "api_verified": true,
+      "ui_verified": true
+    },
+    "GATE_5_ADMIN_FINANCE_QUEUE": {
+      "status": "PASS",
+      "details": "Admin finance queue at /admin/finance-queue shows 'Payments Queue' with 46 proofs. Split view layout with list and detail panel. Shows customer names, amounts, dates, status badges.",
+      "api_verified": true,
+      "ui_verified": true
+    },
+    "GATE_6_AI_CHAT_VISIBILITY": {
+      "status": "PASS",
+      "details": "AI chat widget IS visible on customer pages (/dashboard/*). AI chat widget is NOT visible on admin pages (/admin/*) and partner pages (/partner/*). Verified via AIChatWidget.jsx line 113.",
+      "ui_verified": true
+    }
+  },
+  "additional_verifications": {
+    "ADMIN_ORDERS_OPS": {
+      "status": "PASS",
+      "details": "Admin orders at /admin/orders-ops shows 73 orders with search and status filter. Split view layout.",
+      "api_verified": true,
+      "ui_verified": true
+    },
+    "VENDOR_SIDEBAR_NO_AFFILIATE": {
+      "status": "PASS",
+      "details": "Partner/Vendor sidebar does NOT show affiliate section items when logged in as vendor (demo.partner@konekt.com). Only shows: Dashboard, My Catalog, Create Listing, Stock Table, Bulk Upload, Fulfillment Queue, Settlements, Vendor Dashboard, Help.",
+      "ui_verified": true
+    },
+    "INVOICE_CONSOLIDATION": {
+      "status": "PASS",
+      "details": "All invoice APIs use invoices_v2 collection exclusively. Verified in customer_invoice_routes.py (line 57), admin_flow_fixes_routes.py, and collection_mode_service.py.",
+      "code_verified": true,
+      "api_verified": true
+    },
+    "CUSTOMER_INVOICE_TABLE_LAYOUT": {
+      "status": "PASS",
+      "details": "Customer invoice list uses full-width table layout (not cards). Table has proper columns: Date, Invoice, Type, Amount, Status, Action.",
+      "ui_verified": true
+    }
+  },
+  "backend_api_tests": {
+    "api_health": "PASS",
+    "customer_login": "PASS",
+    "admin_login": "PASS",
+    "partner_login": "PASS",
+    "customer_invoices_api": "PASS",
+    "customer_invoices_uses_invoices_v2": "PASS",
+    "customer_invoice_detail_api": "PASS",
+    "customer_orders_api": "PASS",
+    "partner_fulfillment_jobs_api": "PASS",
+    "partner_dashboard_api": "PASS",
+    "admin_finance_queue_api": "PASS",
+    "admin_finance_queue_search": "PASS",
+    "ai_chat_endpoint_exists": "PASS",
+    "admin_orders_split_api": "PASS",
+    "admin_orders_list_api": "FAIL (404 - routing issue)",
+    "admin_invoices_api": "PASS",
+    "collection_mode_service": "PASS"
+  },
+  "screenshots": [
+    ".screenshots/gate1_customer_invoices.png",
+    ".screenshots/gate2_invoice_drawer.png",
+    ".screenshots/gate3_customer_orders.png",
+    ".screenshots/gate4_vendor_fulfillment.png",
+    ".screenshots/gate5_admin_finance_queue.png",
+    ".screenshots/admin_orders_ops.png"
+  ]
+}

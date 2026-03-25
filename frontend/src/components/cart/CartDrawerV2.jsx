@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { X, ShoppingCart, Trash2 } from "lucide-react";
+import { X, ShoppingCart, Trash2, Sparkles, ShieldCheck } from "lucide-react";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import SalesAssistModalV2 from "../modals/SalesAssistModalV2";
 import CheckoutPanel from "../checkout/CheckoutPanel";
+import BrandLogoFinal from "../branding/BrandLogoFinal";
 
 export default function CartDrawerV2() {
   const { open, items, closeCart, removeItem, clearCart } = useCartDrawer();
@@ -13,13 +14,12 @@ export default function CartDrawerV2() {
 
   const total = items.reduce((sum, item) => sum + Number(item.price || item.numericPrice || item.base_price || 0), 0);
 
-  const handleCheckoutComplete = (data) => {
+  const handleCheckoutComplete = () => {
     setCheckoutOpen(false);
     clearCart();
     closeCart();
   };
 
-  // If checkout panel is open, show it instead of cart
   if (checkoutOpen) {
     return (
       <CheckoutPanel
@@ -36,86 +36,84 @@ export default function CartDrawerV2() {
   return (
     <>
       <div className="fixed inset-0 z-50 flex justify-end" data-testid="cart-drawer">
-        <button 
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
-          onClick={closeCart} 
-          aria-label="Close cart overlay" 
-        />
-        <div className="relative w-full max-w-[430px] h-full bg-white shadow-2xl flex flex-col">
-          {/* Header */}
-          <div className="px-6 py-5 border-b border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-[#1f3a5f]/10 flex items-center justify-center">
-                  <ShoppingCart className="w-4 h-4 text-[#1f3a5f]" />
+        <button className="absolute inset-0 bg-[#0f172a]/45 backdrop-blur-sm" onClick={closeCart} aria-label="Close cart overlay" />
+        <div className="relative w-full max-w-[440px] h-full bg-white shadow-2xl flex flex-col border-l border-slate-200 overflow-hidden">
+          <div className="bg-gradient-to-br from-[#20364D] via-[#294B68] to-[#D4A843] px-6 py-6 text-white">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-4">
+                <BrandLogoFinal size="md" light className="!h-8" />
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-2xl bg-white/15 flex items-center justify-center border border-white/10">
+                    <ShoppingCart className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-semibold">Your Cart</div>
+                    <div className="text-sm text-white/80">{items.length} item{items.length !== 1 ? "s" : ""} ready for checkout</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-lg font-semibold text-[#0f172a]">Your Cart</div>
-                  <div className="text-xs text-[#94a3b8]">{items.length} item{items.length !== 1 ? "s" : ""}</div>
+                <div className="flex items-center gap-3 text-xs text-white/80">
+                  <span className="inline-flex items-center gap-1"><Sparkles className="w-3.5 h-3.5" /> Fast checkout</span>
+                  <span className="inline-flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5" /> Secure payment review</span>
                 </div>
               </div>
-              <button 
-                onClick={closeCart} 
-                className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center hover:bg-[#f8fafc] transition-colors"
+              <button
+                onClick={closeCart}
+                className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center hover:bg-white/20 transition-colors"
                 data-testid="close-cart-btn"
               >
-                <X className="w-4 h-4 text-[#64748b]" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
           </div>
 
-          {/* Items */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <div className="flex-1 overflow-y-auto p-6 space-y-3 bg-slate-50/70">
             {items.map((item, idx) => (
-              <div key={`row-${idx}`} className="rounded-xl bg-[#f8fafc] border border-gray-100 p-4 flex items-start justify-between gap-3">
+              <div key={`row-${idx}`} className="rounded-2xl bg-white border border-slate-200 p-4 flex items-start justify-between gap-3 shadow-sm">
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-[#0f172a] truncate">{item.name}</div>
-                  <div className="text-xs text-[#94a3b8] mt-0.5">
-                    {item.group_name || item.category || item.branch || ""}
-                  </div>
-                  <div className="text-sm font-semibold text-[#0f172a] mt-1.5">
-                    TZS {Number(item.price || item.numericPrice || item.base_price || 0).toLocaleString()}
-                  </div>
+                  <div className="text-sm font-semibold text-[#0f172a] truncate">{item.name}</div>
+                  <div className="text-xs text-slate-500 mt-1">{item.group_name || item.category || item.branch || "Marketplace item"}</div>
+                  <div className="inline-flex items-center mt-2 rounded-full bg-[#D4A843]/10 text-[#8B6A14] text-xs px-2.5 py-1">Qty {item.quantity || 1}</div>
+                  <div className="text-base font-bold text-[#20364D] mt-2">TZS {Number(item.price || item.numericPrice || item.base_price || 0).toLocaleString()}</div>
                 </div>
-                <button 
-                  onClick={() => removeItem(`row-${idx}`)} 
-                  className="p-1.5 rounded-md hover:bg-red-50 text-red-500 transition-colors"
+                <button
+                  onClick={() => removeItem(`row-${idx}`)}
+                  className="p-2 rounded-xl hover:bg-red-50 text-red-500 transition-colors"
                   data-testid={`remove-item-${idx}`}
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
             {!items.length && (
               <div className="text-center py-16">
-                <ShoppingCart className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-                <div className="text-sm text-[#64748b]">Your cart is empty</div>
-                <div className="text-xs text-[#94a3b8] mt-1">Browse products to add items</div>
+                <ShoppingCart className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                <div className="text-sm text-slate-600">Your cart is empty</div>
+                <div className="text-xs text-slate-400 mt-1">Browse products to add items</div>
               </div>
             )}
           </div>
 
-          {/* Footer */}
           {items.length > 0 && (
-            <div className="border-t border-gray-100 p-6 bg-white space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-[#64748b]">Estimated Total</div>
-                <div className="text-xl font-semibold text-[#0f172a]">TZS {total.toLocaleString()}</div>
+            <div className="border-t border-slate-200 p-6 bg-white space-y-4 shadow-[0_-10px_30px_rgba(15,23,42,0.04)]">
+              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-slate-500">Estimated Total</div>
+                  <div className="text-xs text-slate-400 mt-1">VAT included where applicable</div>
+                </div>
+                <div className="text-2xl font-bold text-[#20364D]">TZS {total.toLocaleString()}</div>
               </div>
 
-              {/* Primary CTA - Checkout */}
-              <button 
+              <button
                 onClick={() => setCheckoutOpen(true)}
-                className="w-full bg-[#0f172a] text-white py-3.5 rounded-lg text-sm font-semibold hover:bg-[#1e293b] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="w-full bg-[#20364D] text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-[#2a4a66] transition-all hover:-translate-y-0.5 hover:shadow-md"
                 data-testid="checkout-btn"
               >
                 Checkout
               </button>
 
-              {/* Secondary - Sales Assist */}
-              <button 
-                onClick={() => setAssistOpen(true)} 
-                className="w-full border border-gray-200 text-[#0f172a] py-3 rounded-lg text-sm font-medium hover:bg-[#f8fafc] transition-colors"
+              <button
+                onClick={() => setAssistOpen(true)}
+                className="w-full border border-[#D4A843]/40 text-[#8B6A14] bg-[#FFF8E8] py-3 rounded-xl text-sm font-medium hover:bg-[#FFF1CC] transition-colors"
                 data-testid="sales-assist-btn"
               >
                 Let Sales Assist
