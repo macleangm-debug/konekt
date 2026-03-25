@@ -24,6 +24,56 @@ const adminApi = {
   // Quotes (facade)
   getQuotes: (params) => api.get("/api/admin/quotes/list", { params }),
 
+  // Sales CRM (facade)
+  getSalesCrmLeads: (params) => api.get("/api/admin/sales-crm/leads", { params }),
+  getSalesCrmAccounts: (params) => api.get("/api/admin/sales-crm/accounts", { params }),
+  getSalesCrmPerformance: () => api.get("/api/admin/sales-crm/performance"),
+  assignLead: (payload) => api.post("/api/admin/sales-crm/assign-lead", payload),
+  updateLeadStatusFacade: (payload) => api.post("/api/admin/sales-crm/update-lead-status", payload),
+
+  // Customers (facade)
+  getCustomersList: (params) => api.get("/api/admin/customers/list", { params }),
+  getCustomerDetail: (id) => api.get(`/api/admin/customers/detail/${id}`),
+  assignSalesToCustomer: (id, payload) => api.post(`/api/admin/customers/${id}/assign-sales`, payload),
+
+  // Vendors (facade)
+  getVendorsList: (params) => api.get("/api/admin/vendors/list", { params }),
+  getVendorDetail: (id) => api.get(`/api/admin/vendors/${id}`),
+  toggleVendorStatus: (id) => api.post(`/api/admin/vendors/${id}/toggle-status`),
+
+  // Affiliates (facade)
+  getAffiliatesList: (params) => api.get("/api/admin/affiliates/list", { params }),
+  getReferralsList: () => api.get("/api/admin/referrals/list"),
+  getCommissionsList: (params) => api.get("/api/admin/commissions/list", { params }),
+  getPayoutsList: () => api.get("/api/admin/payouts/list"),
+  toggleAffiliateStatus: (id) => api.post(`/api/admin/affiliates/${id}/toggle-status`),
+  approvePayout: (id) => api.post(`/api/admin/payouts/${id}/approve`),
+
+  // Catalog (facade)
+  getCatalogProducts: (params) => api.get("/api/admin/catalog/products", { params }),
+  getCatalogServices: () => api.get("/api/admin/catalog/services"),
+  getCatalogGroups: () => api.get("/api/admin/catalog/groups"),
+  getCatalogPromoItems: () => api.get("/api/admin/catalog/promo-items"),
+
+  // Settings (facade)
+  getBusinessProfile: () => api.get("/api/admin/settings/business-profile"),
+  updateBusinessProfile: (data) => api.post("/api/admin/settings/business-profile", data),
+  getCommercialRules: () => api.get("/api/admin/settings/commercial-rules"),
+  updateCommercialRules: (data) => api.post("/api/admin/settings/commercial-rules", data),
+  getAffiliateDefaults: () => api.get("/api/admin/settings/affiliate-defaults"),
+  updateAffiliateDefaults: (data) => api.post("/api/admin/settings/affiliate-defaults", data),
+  getNotificationSettings: () => api.get("/api/admin/settings/notifications"),
+  updateNotificationSettings: (data) => api.post("/api/admin/settings/notifications", data),
+
+  // Users (facade)
+  getUsersList: (params) => api.get("/api/admin/users/list", { params }),
+  assignUserRole: (id, payload) => api.post(`/api/admin/users/${id}/assign-role`, payload),
+  toggleUserStatus: (id) => api.post(`/api/admin/users/${id}/toggle-status`),
+
+  // Audit (facade)
+  getAuditLogs: (params) => api.get("/api/admin/audit/list", { params }),
+  getAuditActions: () => api.get("/api/admin/audit/actions"),
+
   // ═══ LEGACY (old admin_routes.py endpoints — keep for backward compat) ═══
   // Customers
   getCustomers: () => api.get("/api/admin/customers"),

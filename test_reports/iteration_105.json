@@ -1,0 +1,182 @@
+{
+  "summary": "Admin/CRM Refactor Pass 3, 4, 5 - Tested 8 new admin pages. All pages load correctly with table-first pattern. 29/30 backend API tests pass. Minor issue: Vendor detail drawer shows 'Could not load vendor details' because partners collection lacks UUID 'id' field.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "GET /api/admin/vendors/{vendor_id}",
+        "issue": "Returns 404 because partners collection documents don't have 'id' field - only MongoDB _id which is cleaned. Vendor list works but detail endpoint fails.",
+        "priority": "LOW",
+        "impact": "Vendor drawer shows 'Could not load vendor details' but table still loads with 22 vendors"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Vendor detail drawer",
+        "issue": "Shows 'Could not load vendor details' when clicking vendor row",
+        "affected_selectors": ["[data-testid='toggle-vendor-status-btn']"],
+        "root_cause": "Backend /api/admin/vendors/{id} returns 404 because partners lack 'id' field"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_pass_3_4_5.py",
+    "/app/test_reports/pytest/pytest_results_admin_pass_3_4_5.xml"
+  ],
+  "action_items": [
+    "Add UUID 'id' field to partners collection documents OR modify vendor_detail endpoint to lookup by email/name instead of id"
+  ],
+  "critical_code_review_comments": [
+    "Partners collection lacks 'id' field unlike other collections (users, orders, invoices) - this breaks the vendor detail endpoint pattern"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_pass_3_4_5.py"
+  ],
+  "success_rate": {
+    "backend": "97% (29/30 tests passed)",
+    "frontend": "100% (all 8 pages load correctly)"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Admin/CRM Refactor Pass 3, 4, 5 complete. All 8 new pages working: Sales CRM (/admin/crm), Customers (/admin/customers), Vendors (/admin/vendors), Affiliates & Referrals (/admin/affiliates), Products & Services (/admin/products-services), Business Settings (/admin/business-settings), Users & Roles (/admin/users-roles), Audit Log (/admin/audit). Sidebar reorganized into 6 sections. Only issue is vendor detail drawer fails due to missing 'id' field in partners collection.",
+  "features_tested": {
+    "pass_3_sales_crm": {
+      "url": "/admin/crm",
+      "status": "PASS",
+      "features": [
+        "3 tabs: Leads, Accounts, Performance",
+        "Leads table shows 17 leads with record_type badges",
+        "Accounts tab shows customer accounts with order counts",
+        "Performance tab shows sales rep cards",
+        "Status filter dropdown works"
+      ]
+    },
+    "pass_3_customers": {
+      "url": "/admin/customers",
+      "status": "PASS",
+      "features": [
+        "Table loads with 12 customers",
+        "Shows name, email, company, orders count, referral code, assigned sales",
+        "Clicking row opens detail drawer with customer info",
+        "Search filter works"
+      ]
+    },
+    "pass_3_vendors": {
+      "url": "/admin/vendors",
+      "status": "PARTIAL",
+      "features": [
+        "Table loads with 22 vendors",
+        "Shows vendor name, capability, active orders, released jobs, status",
+        "Search filter works",
+        "ISSUE: Detail drawer shows 'Could not load vendor details'"
+      ]
+    },
+    "pass_4_affiliates_referrals": {
+      "url": "/admin/affiliates",
+      "status": "PASS",
+      "features": [
+        "4 tabs: Affiliates, Referrals, Commissions, Payouts",
+        "Affiliates tab shows 19 affiliates with status badges",
+        "Referrals tab shows events and codes",
+        "Commissions tab shows commission records",
+        "Payouts tab shows payout records"
+      ]
+    },
+    "pass_4_products_services": {
+      "url": "/admin/products-services",
+      "status": "PASS",
+      "features": [
+        "4 tabs: Products, Promo Items, Services, Groups",
+        "Products tab shows 41 products with SKU, price, category",
+        "Services tab shows service catalog",
+        "Groups tab shows 15 service groups",
+        "Search filter works on Products tab"
+      ]
+    },
+    "pass_4_business_settings": {
+      "url": "/admin/business-settings",
+      "status": "PASS",
+      "features": [
+        "4 sections: Business Profile, Commercial Rules, Affiliate Defaults, Notifications",
+        "Business Profile shows company name (Konekt Limited), country (TZ), currency (TZS)",
+        "Toggle switches for boolean settings",
+        "Save Settings button works"
+      ]
+    },
+    "pass_5_users_roles": {
+      "url": "/admin/users-roles",
+      "status": "PASS",
+      "features": [
+        "Table loads with 21 users",
+        "Shows name, email, role badge, status, date",
+        "Role filter dropdown works",
+        "Clicking row opens drawer with role assignment buttons (Admin, Sales, Finance, Marketing, Production)",
+        "Deactivate User button in drawer"
+      ]
+    },
+    "pass_5_audit_log": {
+      "url": "/admin/audit",
+      "status": "PASS",
+      "features": [
+        "Table shows audit entries (empty initially - entries created on admin actions)",
+        "Action filter dropdown populated from /api/admin/audit/actions",
+        "Search filter works",
+        "Empty state shows 'No audit entries' message"
+      ]
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "sections": ["Sales", "Operations", "Finance", "Marketing", "Catalog", "Settings"],
+      "links_verified": [
+        "Sales CRM -> /admin/crm",
+        "Customers -> /admin/customers",
+        "Vendors -> /admin/vendors",
+        "Affiliates & Referrals -> /admin/affiliates",
+        "Products & Services -> /admin/products-services",
+        "Business Settings -> /admin/business-settings",
+        "Users & Roles -> /admin/users-roles",
+        "Audit Log -> /admin/audit"
+      ]
+    }
+  },
+  "backend_api_tests": {
+    "sales_crm_leads": "PASS - 17 leads returned with record_type enrichment",
+    "sales_crm_accounts": "PASS - 12 accounts with total_orders, assigned_sales enrichment",
+    "sales_crm_performance": "PASS - Sales rep performance cards",
+    "customers_list": "PASS - 12 customers with total_orders, referral_code, assigned_sales",
+    "customer_detail": "PASS - Returns customer with orders and invoices",
+    "vendors_list": "PASS - 22 vendors with active_orders, released_jobs counts",
+    "vendor_detail": "FAIL - 404 because partners lack 'id' field",
+    "affiliates_list": "PASS - 19 affiliates",
+    "referrals_list": "PASS - Returns events and codes",
+    "commissions_list": "PASS - Returns commissions",
+    "payouts_list": "PASS - Returns payouts",
+    "catalog_products": "PASS - 41 products",
+    "catalog_promo_items": "PASS - Returns promo items",
+    "catalog_services": "PASS - Returns services",
+    "catalog_groups": "PASS - 15 service groups",
+    "business_profile": "PASS - Returns company profile with TZ defaults",
+    "commercial_rules": "PASS - Returns commercial rules",
+    "affiliate_defaults": "PASS - Returns affiliate defaults",
+    "notification_settings": "PASS - Returns notification settings",
+    "save_business_profile": "PASS - Saves settings",
+    "users_list": "PASS - 21 users",
+    "audit_list": "PASS - Returns audit entries",
+    "audit_actions": "PASS - Returns distinct action types"
+  },
+  "data_counts": {
+    "leads": 17,
+    "customers": 12,
+    "vendors": 22,
+    "affiliates": 19,
+    "products": 41,
+    "service_groups": 15,
+    "users": 21
+  }
+}

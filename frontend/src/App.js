@@ -118,6 +118,16 @@ import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 import PaymentSettingsPage from "@/pages/admin/PaymentSettingsPage";
 
+// Pass 3-5 New Pages
+import SalesCrmPage from "@/pages/admin/SalesCrmPage";
+import CustomersPageV3 from "@/pages/admin/CustomersPageV3";
+import VendorsPage from "@/pages/admin/VendorsPage";
+import AffiliatesReferralsPage from "@/pages/admin/AffiliatesReferralsPage";
+import ProductsServicesPage from "@/pages/admin/ProductsServicesPage";
+import BusinessSettingsPageV2 from "@/pages/admin/BusinessSettingsPageV2";
+import UsersRolesPage from "@/pages/admin/UsersRolesPage";
+import AuditLogPageV2 from "@/pages/admin/AuditLogPageV2";
+
 // Partner Ecosystem Pages
 import PartnersPage from "@/pages/admin/PartnersPage";
 import PartnerCatalogPage from "@/pages/admin/PartnerCatalogPage";
@@ -531,7 +541,8 @@ function App() {
           <Route path="offers" element={<AdminOffers />} />
           <Route path="referrals" element={<AdminReferrals />} />
           <Route path="users" element={<AdminUsers />} />
-          <Route path="crm" element={<CRMPageV2 />} />
+          <Route path="crm" element={<SalesCrmPage />} />
+          <Route path="crm-v1" element={<CRMPageV2 />} />
           <Route path="crm-old" element={<CRMPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="inventory/variants" element={<InventoryVariantsPage />} />
@@ -550,14 +561,16 @@ function App() {
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="orders-ops" element={<OrdersPageOps />} />
           <Route path="production" element={<ProductionQueuePage />} />
-          <Route path="customers" element={<CustomersPageV2 />} />
+          <Route path="customers" element={<CustomersPageV3 />} />
+          <Route path="customers-v1" element={<CustomersPageV2 />} />
           <Route path="customers-old" element={<CustomersPage />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="central-payments" element={<CentralPaymentsPage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
-          <Route path="affiliates" element={<AffiliatesPage />} />
+          <Route path="affiliates" element={<AffiliatesReferralsPage />} />
+          <Route path="affiliates-v1" element={<AffiliatesPage />} />
           <Route path="affiliate-applications" element={<AffiliateApplicationsPage />} />
           <Route path="affiliate-commissions" element={<AffiliateCommissionsPage />} />
           <Route path="affiliate-payouts" element={<AffiliatePayoutsPage />} />
@@ -566,13 +579,18 @@ function App() {
           <Route path="payments/record" element={<RecordPaymentPage />} />
           <Route path="setup" element={<SetupPage />} />
           <Route path="launch-readiness" element={<LaunchReadinessPage />} />
-          <Route path="audit" element={<AuditLogPage />} />
+          <Route path="audit" element={<AuditLogPageV2 />} />
+          <Route path="audit-v1" element={<AuditLogPage />} />
           <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
           <Route path="inventory/movements" element={<StockMovementsPage />} />
           <Route path="service-forms" element={<ServiceFormsPage />} />
           <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
-          <Route path="business-settings" element={<BusinessSettingsPage />} />
+          <Route path="business-settings" element={<BusinessSettingsPageV2 />} />
+          <Route path="business-settings-v1" element={<BusinessSettingsPage />} />
+          <Route path="vendors" element={<VendorsPage />} />
+          <Route path="products-services" element={<ProductsServicesPage />} />
+          <Route path="users-roles" element={<UsersRolesPage />} />
           <Route path="payment-settings" element={<PaymentSettingsPage />} />
           <Route path="configuration" element={<AdminConfigurationHubPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
