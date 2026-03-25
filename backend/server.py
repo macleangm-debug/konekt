@@ -2093,6 +2093,9 @@ app.include_router(api_router)
 from admin_facade_routes import router as admin_facade_router
 app.include_router(admin_facade_router)
 
+from quote_engine_routes import router as quote_engine_router
+app.include_router(quote_engine_router)
+
 app.include_router(admin_router)
 
 # Initialize and include sales router

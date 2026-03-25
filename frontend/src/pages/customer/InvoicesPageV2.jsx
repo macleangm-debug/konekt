@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Receipt, Eye, AlertCircle, X, FileText, ExternalLink } from "lucide-react";
-import PageHeader from "../../components/ui/PageHeader";
-import SurfaceCard from "../../components/ui/SurfaceCard";
-import FilterBar from "../../components/ui/FilterBar";
-import BrandButton from "../../components/ui/BrandButton";
-import axios from "axios";
-
-const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+import { Receipt, AlertCircle, X, FileText, ExternalLink, Layers } from "lucide-react";
+import api from "../../lib/api";
 
 const STATUS_LABELS = {
   pending_payment: "Awaiting Payment", pending: "Awaiting Payment", awaiting_payment_proof: "Awaiting Payment",
@@ -42,9 +36,7 @@ export default function InvoicesPageV2() {
   const [selected, setSelected] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    axios.get(`${API_URL}/api/customer/invoices`, { headers: { Authorization: `Bearer ${token}` } })
+    api.get("/api/customer/invoices")
       .then((r) => setInvoices(r.data || []))
       .catch((e) => console.error(e))
       .finally(() => setLoading(false));
@@ -60,27 +52,36 @@ export default function InvoicesPageV2() {
 
   return (
     <div className="space-y-6" data-testid="invoices-page">
-      <PageHeader title="Invoices" subtitle="Track payments, review finance feedback, and open invoice details." />
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold text-[#20364D]">Invoices</h1>
+        <p className="text-slate-500 mt-1 text-sm">Track payments, review finance feedback, and open invoice details.</p>
+      </div>
 
       {unpaidTotal > 0 && (
-        <SurfaceCard className="bg-amber-50 border-amber-200">
+        <div className="rounded-[2rem] border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600" />
             <span className="font-medium text-amber-800">You have {money(unpaidTotal)} awaiting payment or review.</span>
           </div>
-        </SurfaceCard>
+        </div>
       )}
 
-      <FilterBar
-        searchValue={searchValue} onSearchChange={setSearchValue}
-        searchPlaceholder="Search by invoice number..."
-        filters={[{ name: "status", value: statusFilter, onChange: setStatusFilter, placeholder: "All Statuses",
-          options: [{ value: "pending_payment", label: "Awaiting Payment" }, { value: "payment_under_review", label: "Under Review" }, { value: "payment_rejected", label: "Rejected" }, { value: "paid", label: "Paid" }],
-        }]}
-      />
+      <div className="flex flex-col sm:flex-row gap-3">
+        <input className="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+          placeholder="Search by invoice number..." value={searchValue} onChange={(e) => setSearchValue(e.target.value)} data-testid="invoice-search" />
+        <select className="border border-slate-200 rounded-xl px-4 py-2.5 text-sm min-w-[160px]"
+          value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} data-testid="invoice-status-filter">
+          <option value="">All Statuses</option>
+          <option value="pending_payment">Awaiting Payment</option>
+          <option value="payment_under_review">Under Review</option>
+          <option value="payment_rejected">Rejected</option>
+          <option value="partially_paid">Partially Paid</option>
+          <option value="paid">Paid</option>
+        </select>
+      </div>
 
       <div className="grid xl:grid-cols-[1fr_400px] gap-6">
-        <SurfaceCard className="overflow-hidden p-0">
+        <div className="rounded-[2rem] border border-slate-200 bg-white overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm" data-testid="invoices-table">
               <thead className="bg-slate-50 text-slate-500">
@@ -118,19 +119,22 @@ export default function InvoicesPageV2() {
                       <td className="px-4 py-4">
                         <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                           {action === "pay" && (
-                            <BrandButton href={`/dashboard/invoices/${invoice.id || invoice._id}/pay`} variant="gold" className="text-xs py-2" data-testid="pay-invoice-btn">
+                            <Link to={`/dashboard/invoices/${invoice.id || invoice._id}/pay`}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-[#D4A843] text-[#17283C] font-semibold hover:bg-[#c49a3d]" data-testid="pay-invoice-btn">
                               Pay Invoice
-                            </BrandButton>
+                            </Link>
                           )}
                           {action === "resubmit" && (
-                            <BrandButton href={`/dashboard/invoices/${invoice.id || invoice._id}/pay`} variant="gold" className="text-xs py-2" data-testid="resubmit-proof-btn">
+                            <Link to={`/dashboard/invoices/${invoice.id || invoice._id}/pay`}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-[#D4A843] text-[#17283C] font-semibold hover:bg-[#c49a3d]" data-testid="resubmit-proof-btn">
                               Resubmit Proof
-                            </BrandButton>
+                            </Link>
                           )}
                           {action === "pay_balance" && (
-                            <BrandButton href={`/dashboard/invoices/${invoice.id || invoice._id}/pay`} variant="gold" className="text-xs py-2" data-testid="pay-balance-btn">
+                            <Link to={`/dashboard/invoices/${invoice.id || invoice._id}/pay`}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-[#D4A843] text-[#17283C] font-semibold hover:bg-[#c49a3d]" data-testid="pay-balance-btn">
                               Pay Balance
-                            </BrandButton>
+                            </Link>
                           )}
                           {action === "under_review" && (
                             <span className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold">
@@ -158,10 +162,10 @@ export default function InvoicesPageV2() {
               </tbody>
             </table>
           </div>
-        </SurfaceCard>
+        </div>
 
-        {/* Detail Drawer/Panel */}
-        <SurfaceCard data-testid="invoice-detail-panel">
+        {/* Detail Panel */}
+        <div className="rounded-[2rem] border border-slate-200 bg-white p-6" data-testid="invoice-detail-panel">
           {selected ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -195,6 +199,29 @@ export default function InvoicesPageV2() {
                 </div>
               </div>
 
+              {/* Installment Splits */}
+              {(selected.has_installments || selected.deposit_amount > 0) && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3" data-testid="invoice-installment-info">
+                  <div className="flex items-center gap-2 text-amber-800 text-sm font-semibold mb-2">
+                    <Layers className="w-4 h-4" /> Installment Payment
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between text-amber-700">
+                      <span>Deposit</span>
+                      <span className="font-semibold">{money(selected.deposit_amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-amber-700">
+                      <span>Balance</span>
+                      <span className="font-semibold">{money(selected.balance_amount)}</span>
+                    </div>
+                    <div className="flex justify-between text-amber-800 font-bold pt-1 border-t border-amber-200">
+                      <span>Amount Due Now</span>
+                      <span>{money(selected.amount_due || selected.deposit_amount)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Rejection reason */}
               {selected.rejection_reason && (
                 <div className="rounded-xl bg-red-50 border border-red-200 p-3">
@@ -224,9 +251,10 @@ export default function InvoicesPageV2() {
                   const action = getInvoiceAction(selected);
                   if (action === "pay" || action === "resubmit" || action === "pay_balance") {
                     return (
-                      <BrandButton href={`/dashboard/invoices/${selected.id || selected._id}/pay`} variant="gold" className="w-full text-center" data-testid="drawer-pay-btn">
+                      <Link to={`/dashboard/invoices/${selected.id || selected._id}/pay`}
+                        className="flex items-center justify-center w-full rounded-xl bg-[#D4A843] text-[#17283C] px-4 py-3 font-semibold hover:bg-[#c49a3d]" data-testid="drawer-pay-btn">
                         {action === "resubmit" ? "Resubmit Payment Proof" : action === "pay_balance" ? "Pay Balance" : "Pay Invoice"}
-                      </BrandButton>
+                      </Link>
                     );
                   }
                   if (action === "under_review") {
@@ -249,7 +277,7 @@ export default function InvoicesPageV2() {
               <div>Select an invoice to see details</div>
             </div>
           )}
-        </SurfaceCard>
+        </div>
       </div>
     </div>
   );

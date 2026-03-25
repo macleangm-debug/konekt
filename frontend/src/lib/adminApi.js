@@ -74,6 +74,14 @@ const adminApi = {
   getAuditLogs: (params) => api.get("/api/admin/audit/list", { params }),
   getAuditActions: () => api.get("/api/admin/audit/actions"),
 
+  // Quote Engine
+  createQuoteFromLead: (payload) => api.post("/api/quotes-engine/create", payload),
+  sendQuote: (quoteId) => api.post(`/api/quotes-engine/${quoteId}/send`),
+  acceptQuote: (quoteId, payload) => api.post(`/api/quotes-engine/${quoteId}/accept`, payload || {}),
+  rejectQuote: (quoteId, payload) => api.post(`/api/quotes-engine/${quoteId}/reject`, payload || {}),
+  getQuoteDetail: (quoteId) => api.get(`/api/quotes-engine/${quoteId}`),
+  getInvoiceSplits: (invoiceId) => api.get(`/api/quotes-engine/invoice/${invoiceId}/splits`),
+
   // ═══ LEGACY (old admin_routes.py endpoints — keep for backward compat) ═══
   // Customers
   getCustomers: () => api.get("/api/admin/customers"),

@@ -114,4 +114,26 @@ async def get_my_invoice(invoice_id: str, user: dict = Depends(get_user)):
             break
     if not doc:
         raise HTTPException(status_code=404, detail='Invoice not found')
-    return await attach_rejection_reason(normalize_invoice(doc))
+    result = await attach_rejection_reason(normalize_invoice(doc))
+    # Attach installment splits if present
+    splits = []
+    inv_id = result.get('id')
+    if inv_id:
+        async for s in db.invoice_splits.find({'invoice_id': inv_id}):
+            s = dict(s)
+            s.pop('_id', None)
+            splits.append(s)
+    result['splits'] = splits
+    return result
+
+
+@router.get('/{invoice_id}/splits')
+async def get_invoice_splits(invoice_id: str, user: dict = Depends(get_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail='Unauthorized')
+    splits = []
+    async for s in db.invoice_splits.find({'invoice_id': invoice_id}):
+        s = dict(s)
+        s.pop('_id', None)
+        splits.append(s)
+    return splits
