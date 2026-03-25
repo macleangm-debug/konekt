@@ -156,6 +156,10 @@ Single source of truth for service groups and subgroups:
 - [x] Vendor sidebar cleanup (affiliate section removed for non-affiliate partners)
 - [x] AI widget visibility (hidden on admin/vendor pages)
 - [x] Unified BrandLogo system (one component, one sizing system, one placement rule)
+- [x] Customer invoice drawer: branded preview, working PDF download, conditional pay button
+- [x] Admin sidebar white shell (matching customer/vendor)
+- [x] Admin tables: Payment Queue pattern (full-width table + right drawer, dates on left)
+- [x] invoices_v2 archived — single `invoices` collection as canonical source
 - [ ] Final Launch Verification Checklist
 - [ ] Live payment gateway (KwikPay/Stripe)
 - [ ] DNS/SSL setup
@@ -170,11 +174,12 @@ Single source of truth for service groups and subgroups:
 ---
 
 ## Invoice Consolidation (March 25, 2026)
-- Canonical collection: `invoices_v2`
-- All backend code uses `db.invoices_v2` exclusively
-- `collection_mode_service.py` always returns `invoices_v2`
-- Removed dual-read/fallback logic from 20+ files
-- Verified flows: product checkout, quote approval, payment proof, customer/admin invoice lists
+- Canonical collection: `invoices` (NOT invoices_v2)
+- All backend code uses `db.invoices` exclusively
+- `collection_mode_service.py` always returns `db.invoices`
+- Admin invoice route prefix changed from `/api/admin/invoices-v2` to `/api/admin/invoices`
+- `invoices_v2` collection archived to `_archive_invoices_v2` (13 records, 2 migrated)
+- Verified flows: product checkout, quote conversion, payment proof, payment approval, customer/admin invoice list
 
 ---
 
@@ -186,5 +191,7 @@ Single source of truth for service groups and subgroups:
 | 101 | Multi-Service + Promo Taxonomy + Cart Integrations | 100% (16/16 backend) |
 | 108-110 | Backend Source-of-Truth Stabilization | 100% |
 | 111 | Patch Round 3 + Invoice Consolidation + 6 Gates | 100% frontend, 94% backend |
+| 112 | Unified BrandLogo System | 100% frontend |
+| 113 | Final Stabilization: Invoice reversal + Admin UI alignment | 100% backend (19/19), 100% frontend (all 7 gates) |
 
 *Last updated: March 25, 2026*

@@ -28,7 +28,7 @@ async def get_invoice_payment_context(invoice_id: str, request: Request):
     except Exception:
         invoice = None
     
-    # Try invoices_v2 collection as fallback
+    # Fallback: try again with ObjectId
     if not invoice:
         try:
             invoice = await db.invoices.find_one({"_id": ObjectId(invoice_id)})

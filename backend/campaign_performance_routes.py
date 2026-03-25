@@ -68,7 +68,7 @@ async def campaign_performance_summary():
         async for row in order_revenue_cursor:
             revenue = row.get("total", 0)
         
-        # Also check invoices_v2
+        # Also check invoices for campaign revenue
         invoice_revenue_cursor = db.invoices.aggregate([
             {"$match": {"campaign_id": cid}},
             {"$group": {"_id": None, "total": {"$sum": "$total"}}}
