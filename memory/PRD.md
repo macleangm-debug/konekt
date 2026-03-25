@@ -90,6 +90,7 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 - [x] **Admin CRM Refactor - Pass 5** (Users & Roles, Audit Log pages)
 - [x] **Patch Round 1 & 2** (Cart dedup, notification triggers, invoice statuses, vendor visibility)
 - [x] **Core Engine** — Quote System, Sales CRM UI, Installment Payment Logic (Deposit + Balance)
+- [x] **UI/UX + Data Link Fix Round** — Table+drawer standardization, customer orders visibility, vendor orders linkage, sales contact enrichment
 
 ### Remaining
 - [ ] Configure Twilio WhatsApp credentials (P2)
@@ -115,6 +116,7 @@ Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Servic
 | 105 | **Admin CRM Refactor Pass 3/4/5** | **97% (29/30 backend, 8/8 pages)** |
 | 106-107 | Patch Round 1 & 2 | 100% |
 | 108 | **Core Engine (Quotes + Installments)** | **100% (18/18 backend, 100% frontend)** |
+| 109 | **UI/UX + Data Link Fix Round** | **94% (15/16 backend, 100% frontend)** |
 
 ---
 
