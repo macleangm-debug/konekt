@@ -16,6 +16,13 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 /api/live-commerce/*  →  LiveCommerceService  →  MongoDB
 ```
 
+### Admin Facade (Strangler Fig Pattern)
+`backend/admin_facade_routes.py` — unified admin operations facade.
+
+```
+/api/admin/*  →  MongoDB (direct queries + LiveCommerceService)
+```
+
 ### Master Flow
 ```
 Product Checkout → Invoice → Payment Intent → Proof Upload (with payer name)
@@ -51,6 +58,34 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 
 ---
 
+## Admin CRM Refactor (In Progress)
+
+### Pass 1: Backend Facade — COMPLETE
+- `/api/admin/dashboard/summary` — Dashboard metrics
+- `/api/admin/dashboard/pending-actions` — Pending proofs + quotes
+- `/api/admin/payments/queue` — Finance payment review queue
+- `/api/admin/payments/{id}` — Payment detail + approve/reject
+- `/api/admin/invoices/list` — All invoices with source_type + rejection_reason
+- `/api/admin/invoices/{id}` — Invoice detail with payments, proofs, linked order
+- `/api/admin/orders/list` — Orders with tabs (all/awaiting_release/released/completed)
+- `/api/admin/orders/{id}` — Order detail with vendor orders, events, commissions
+- `/api/admin/orders/{id}/release-to-vendor` — Manual vendor release
+- `/api/admin/orders/{id}/update-status` — Status updates
+- `/api/admin/quotes/list` — Unified quotes + leads + service requests
+
+### Pass 2: Core Admin Pages — COMPLETE
+- **PaymentsQueuePage** `/admin/finance-queue` — Table-first, click→drawer, approve/reject
+- **InvoicesPage** `/admin/invoices` — Table-first, unpaid banner, source badges, status filter
+- **OrdersPage** `/admin/orders` — Tabbed table (All/Awaiting/Released/Completed), release actions
+- **QuotesRequestsPage** `/admin/quotes` — Unified table with type badges, detail drawer
+- Shared components: FilterBar, StatusBadge, DetailDrawer, EmptyState, MetricCard
+
+### Pass 3: Sales CRM, Customers, Vendors — TODO
+### Pass 4: Affiliates, Catalog, Settings — TODO
+### Pass 5: Audit Logs, Notifications, Exports — TODO
+
+---
+
 ## Backend API Endpoints
 
 ### Live Commerce (`/api/live-commerce/*`) — PRIMARY
@@ -64,6 +99,15 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 | `POST /finance/proofs/{id}/approve` | Approve → order if fully paid |
 | `POST /finance/proofs/{id}/reject` | Reject → revert to pending |
 | `GET /customers/{id}/workspace` | Customer dashboard data |
+
+### Admin Facade (`/api/admin/*`) — NEW
+| Endpoint | Description |
+|----------|-------------|
+| `GET /dashboard/summary` | Dashboard metrics |
+| `GET /payments/queue` | Payment proofs for review |
+| `GET /invoices/list` | All invoices (enriched) |
+| `GET /orders/list` | All orders (enriched, tabbed) |
+| `GET /quotes/list` | Unified quotes + requests |
 
 ### Other Active Routes
 - `/api/multi-request/*` — Service taxonomy, promo/service bundles
@@ -95,10 +139,14 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 - [x] Multi-Service + Promo Taxonomy
 - [x] **Go-Live Commerce Engine** (centralized facade)
 - [x] **Customer UX Go-Live Fix Pack** (4 passes)
+- [x] **Admin CRM Refactor - Pass 1** (Backend facade `/api/admin/*`)
+- [x] **Admin CRM Refactor - Pass 2** (Core pages: Payments, Invoices, Orders, Quotes)
 
 ### Remaining
-- [ ] Configure Twilio WhatsApp credentials (P0)
-- [ ] Finance/Admin bug-fix pass (P1)
+- [ ] Admin CRM Refactor - Pass 3 (Sales CRM, Customers, Vendors) (P0)
+- [ ] Admin CRM Refactor - Pass 4 (Affiliates, Catalog, Settings) (P0)
+- [ ] Admin CRM Refactor - Pass 5 (Audit Logs, Notifications, Exports) (P1)
+- [ ] Configure Twilio WhatsApp credentials (P1)
 - [ ] Final Launch Verification Checklist (P1)
 - [ ] Live payment gateway — KwikPay/Stripe (P1)
 - [ ] DNS/SSL setup (P1)
@@ -115,6 +163,7 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 | 100 | Referral + Commission | 100% (27/27) |
 | 101 | Multi-Service + Taxonomy | 100% (16/16) |
 | 102 | Go-Live Commerce Engine | 100% (15/15) |
-| 103 | **Customer UX Go-Live Fix Pack** | **100% (15/15 backend, 100% frontend)** |
+| 103 | Customer UX Go-Live Fix Pack | 100% (15/15 backend, 100% frontend) |
+| 104 | **Admin CRM Refactor Pass 2** | **100% (20/20 backend, 4/4 pages frontend)** |
 
-*Last updated: March 24, 2026*
+*Last updated: March 25, 2026*
