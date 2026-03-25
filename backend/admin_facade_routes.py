@@ -440,34 +440,43 @@ async def vendors_list(request: Request, search: Optional[str] = Query(default=N
     out = []
     for p in partners:
         p = _clean(p)
+        if not p.get("id"):
+            p["id"] = p.get("email", "")
         if search:
             haystack = f"{p.get('company_name','')} {p.get('name','')} {p.get('email','')}".lower()
             if search.lower() not in haystack:
                 continue
-        active_orders = await db.vendor_orders.count_documents({"vendor_id": p.get("id"), "status": {"$nin": ["completed", "cancelled"]}})
-        released = await db.vendor_orders.count_documents({"vendor_id": p.get("id"), "status": "ready_to_fulfill"})
+        vendor_key = p.get("email") or p.get("id")
+        active_orders = await db.vendor_orders.count_documents({"vendor_id": vendor_key, "status": {"$nin": ["completed", "cancelled"]}})
+        released = await db.vendor_orders.count_documents({"vendor_id": vendor_key, "status": "ready_to_fulfill"})
         p["active_orders"] = active_orders
         p["released_jobs"] = released
         out.append(p)
     return out
 
-@router.get("/vendors/{vendor_id}")
+@router.get("/vendors/{vendor_id:path}")
 async def vendor_detail(vendor_id: str, request: Request):
     db = request.app.mongodb
     partner = await db.partners.find_one({"id": vendor_id})
     if not partner:
+        partner = await db.partners.find_one({"email": vendor_id})
+    if not partner:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    orders = [_clean(o) for o in await db.vendor_orders.find({"vendor_id": vendor_id}).sort("created_at", -1).to_list(50)]
+    vendor_key = partner.get("email") or partner.get("id") or vendor_id
+    orders = [_clean(o) for o in await db.vendor_orders.find({"vendor_id": vendor_key}).sort("created_at", -1).to_list(50)]
     return {"vendor": _clean(partner), "orders": orders}
 
-@router.post("/vendors/{vendor_id}/toggle-status")
+@router.post("/vendors/{vendor_id:path}/toggle-status")
 async def toggle_vendor_status(vendor_id: str, request: Request):
     db = request.app.mongodb
     partner = await db.partners.find_one({"id": vendor_id})
     if not partner:
+        partner = await db.partners.find_one({"email": vendor_id})
+    if not partner:
         raise HTTPException(status_code=404, detail="Vendor not found")
     new_status = "inactive" if partner.get("status") == "active" else "active"
-    await db.partners.update_one({"id": vendor_id}, {"$set": {"status": new_status, "updated_at": _now()}})
+    query = {"email": partner.get("email")} if partner.get("email") else {"id": vendor_id}
+    await db.partners.update_one(query, {"$set": {"status": new_status, "updated_at": _now()}})
     return {"ok": True, "new_status": new_status}
 
 # ─── AFFILIATES & REFERRALS ──────────────────────────────────────────────────

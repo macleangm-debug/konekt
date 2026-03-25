@@ -12,16 +12,8 @@ Konekt is a premium B2B e-commerce platform for promotional materials, office eq
 ### Single Source of Truth
 `backend/core/live_commerce_service.py` — centralized facade for production commerce.
 
-```
-/api/live-commerce/*  →  LiveCommerceService  →  MongoDB
-```
-
 ### Admin Facade (Strangler Fig Pattern)
-`backend/admin_facade_routes.py` — unified admin operations facade.
-
-```
-/api/admin/*  →  MongoDB (direct queries + LiveCommerceService)
-```
+`backend/admin_facade_routes.py` — unified admin operations facade with 40+ endpoints.
 
 ### Master Flow
 ```
@@ -31,89 +23,50 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 
 ---
 
-## Customer UX (Go-Live Fix Pack)
-
-### Pass 1: Payment Proof Validation (BankTransferPage)
-- "Name on Bank Transfer" field ABOVE proof upload
-- Helper text explaining why it's needed
-- Inline error states (red border + message)
-- Submit disabled until payer name + proof filled
-
-### Pass 2: Quotes (Table-First)
-- Columns: Quote #, Date, Valid Until, Type, Amount, Status, Payment, Actions
-- Explicit action labels: View, Accept, Pay Invoice
-- Expired quotes retained as history with disabled actions
-- Search + status filter
-
-### Pass 3: Invoices (Enhanced)
-- Columns: Invoice #, Source, Type, Amount, Payment Status, Rejection Reason, Actions
-- Unpaid total alert banner
-- Resubmit Proof link for rejected invoices
-- Navigate to Order from paid invoices
-
-### Pass 4: Orders (Responsive Drawer)
-- Table: Order #, Date, Items, Total, Status, Payment
-- Click row → detail drawer with items, totals, delivery, status banner
-- Desktop: slide-in drawer | Mobile-ready
-
----
-
-## Admin CRM Refactor (In Progress)
+## Admin CRM Refactor — COMPLETE (Pass 1-5)
 
 ### Pass 1: Backend Facade — COMPLETE
-- `/api/admin/dashboard/summary` — Dashboard metrics
-- `/api/admin/dashboard/pending-actions` — Pending proofs + quotes
-- `/api/admin/payments/queue` — Finance payment review queue
-- `/api/admin/payments/{id}` — Payment detail + approve/reject
-- `/api/admin/invoices/list` — All invoices with source_type + rejection_reason
-- `/api/admin/invoices/{id}` — Invoice detail with payments, proofs, linked order
-- `/api/admin/orders/list` — Orders with tabs (all/awaiting_release/released/completed)
-- `/api/admin/orders/{id}` — Order detail with vendor orders, events, commissions
-- `/api/admin/orders/{id}/release-to-vendor` — Manual vendor release
-- `/api/admin/orders/{id}/update-status` — Status updates
-- `/api/admin/quotes/list` — Unified quotes + leads + service requests
+11 core endpoints: Dashboard, Payments, Invoices, Orders, Quotes
 
 ### Pass 2: Core Admin Pages — COMPLETE
-- **PaymentsQueuePage** `/admin/finance-queue` — Table-first, click→drawer, approve/reject
-- **InvoicesPage** `/admin/invoices` — Table-first, unpaid banner, source badges, status filter
-- **OrdersPage** `/admin/orders` — Tabbed table (All/Awaiting/Released/Completed), release actions
-- **QuotesRequestsPage** `/admin/quotes` — Unified table with type badges, detail drawer
-- Shared components: FilterBar, StatusBadge, DetailDrawer, EmptyState, MetricCard
+PaymentsQueuePage, InvoicesPage, OrdersPage, QuotesRequestsPage
 
-### Pass 3: Sales CRM, Customers, Vendors — TODO
-### Pass 4: Affiliates, Catalog, Settings — TODO
-### Pass 5: Audit Logs, Notifications, Exports — TODO
+### Pass 3: Sales CRM, Customers, Vendors — COMPLETE
+- **SalesCrmPage** `/admin/crm` — 3 tabs: Leads, Accounts, Performance
+- **CustomersPageV3** `/admin/customers` — Table with orders, referrals, sales assignments + detail drawer
+- **VendorsPage** `/admin/vendors` — Table with active orders, released jobs, status toggle
+
+### Pass 4: Affiliates, Catalog, Settings — COMPLETE
+- **AffiliatesReferralsPage** `/admin/affiliates` — 4 tabs: Affiliates, Referrals, Commissions, Payouts
+- **ProductsServicesPage** `/admin/products-services` — 4 tabs: Products, Promo Items, Services, Groups
+- **BusinessSettingsPageV2** `/admin/business-settings` — 4 sections: Profile (TZ defaults), Commercial Rules, Affiliate Defaults, Notifications
+
+### Pass 5: Audit, Users, Roles — COMPLETE
+- **UsersRolesPage** `/admin/users-roles` — User list with role assignment, status toggle
+- **AuditLogPageV2** `/admin/audit` — Audit log with action filter
+
+### Sidebar Structure
+Dashboard | Sales (CRM, Quotes, Customers, Vendors) | Operations (Orders, Service Leads, Deliveries) | Finance (Payments Queue, Invoices) | Marketing (Affiliates & Referrals) | Catalog (Products & Services, Stock Items) | Settings (Business Settings, Users & Roles, Audit Log, Service Taxonomy)
 
 ---
 
-## Backend API Endpoints
+## Admin Facade API Endpoints (`/api/admin/*`)
 
-### Live Commerce (`/api/live-commerce/*`) — PRIMARY
-| Endpoint | Description |
-|----------|-------------|
-| `POST /product-checkout` | Create invoice from cart |
-| `POST /quotes/{id}/accept` | Accept quote → invoice |
-| `POST /invoices/{id}/payment-intent` | Create payment intent |
-| `POST /payments/{id}/proof` | Submit proof (payer name required) |
-| `GET /finance/queue` | Finance review queue |
-| `POST /finance/proofs/{id}/approve` | Approve → order if fully paid |
-| `POST /finance/proofs/{id}/reject` | Reject → revert to pending |
-| `GET /customers/{id}/workspace` | Customer dashboard data |
-
-### Admin Facade (`/api/admin/*`) — NEW
-| Endpoint | Description |
-|----------|-------------|
-| `GET /dashboard/summary` | Dashboard metrics |
-| `GET /payments/queue` | Payment proofs for review |
-| `GET /invoices/list` | All invoices (enriched) |
-| `GET /orders/list` | All orders (enriched, tabbed) |
-| `GET /quotes/list` | Unified quotes + requests |
-
-### Other Active Routes
-- `/api/multi-request/*` — Service taxonomy, promo/service bundles
-- `/api/referral-commission/*` — Affiliate + commission management
-- `/api/admin-flow-fixes/*` — Admin operations
-- `/api/uploads/*` — File uploads
+| Group | Endpoints |
+|-------|-----------|
+| Dashboard | `/dashboard/summary`, `/dashboard/pending-actions` |
+| Payments | `/payments/queue`, `/payments/{id}`, `/payments/{id}/approve`, `/payments/{id}/reject` |
+| Invoices | `/invoices/list`, `/invoices/{id}` |
+| Orders | `/orders/list`, `/orders/{id}`, `/orders/{id}/release-to-vendor`, `/orders/{id}/update-status` |
+| Quotes | `/quotes/list` |
+| Sales CRM | `/sales-crm/leads`, `/sales-crm/accounts`, `/sales-crm/performance`, `/sales-crm/assign-lead`, `/sales-crm/update-lead-status` |
+| Customers | `/customers/list`, `/customers/detail/{id}`, `/customers/{id}/assign-sales` |
+| Vendors | `/vendors/list`, `/vendors/{id}`, `/vendors/{id}/toggle-status` |
+| Affiliates | `/affiliates/list`, `/affiliates/{id}/toggle-status`, `/referrals/list`, `/commissions/list`, `/payouts/list`, `/payouts/{id}/approve` |
+| Catalog | `/catalog/products`, `/catalog/services`, `/catalog/groups`, `/catalog/promo-items` |
+| Settings | `/settings/business-profile` (GET/POST), `/settings/commercial-rules` (GET/POST), `/settings/affiliate-defaults` (GET/POST), `/settings/notifications` (GET/POST) |
+| Users | `/users/list`, `/users/{id}/assign-role`, `/users/{id}/toggle-status` |
+| Audit | `/audit/list`, `/audit/actions` |
 
 ---
 
@@ -129,23 +82,14 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 ## Task Status
 
 ### Completed
-- [x] UI Polish Pack
-- [x] Checkout Flow + Sales Command Center + Quote Engine
-- [x] Customer Account Unification + Payment Flow
-- [x] Final Commercial Flow + Payments Governance
-- [x] Admin Simplification + Payments Fixes
-- [x] Referral + Sales Commission Governance
-- [x] Payment Confirmation + Affiliate Promo
-- [x] Multi-Service + Promo Taxonomy
-- [x] **Go-Live Commerce Engine** (centralized facade)
-- [x] **Customer UX Go-Live Fix Pack** (4 passes)
-- [x] **Admin CRM Refactor - Pass 1** (Backend facade `/api/admin/*`)
-- [x] **Admin CRM Refactor - Pass 2** (Core pages: Payments, Invoices, Orders, Quotes)
+- [x] All prior packs (UI Polish, Checkout, Payments, Referrals, Multi-Service, Commerce Engine, Customer UX)
+- [x] **Admin CRM Refactor - Pass 1** (Backend facade)
+- [x] **Admin CRM Refactor - Pass 2** (Payments, Invoices, Orders, Quotes pages)
+- [x] **Admin CRM Refactor - Pass 3** (Sales CRM, Customers, Vendors pages)
+- [x] **Admin CRM Refactor - Pass 4** (Affiliates, Products/Services, Business Settings pages)
+- [x] **Admin CRM Refactor - Pass 5** (Users & Roles, Audit Log pages)
 
 ### Remaining
-- [ ] Admin CRM Refactor - Pass 3 (Sales CRM, Customers, Vendors) (P0)
-- [ ] Admin CRM Refactor - Pass 4 (Affiliates, Catalog, Settings) (P0)
-- [ ] Admin CRM Refactor - Pass 5 (Audit Logs, Notifications, Exports) (P1)
 - [ ] Configure Twilio WhatsApp credentials (P1)
 - [ ] Final Launch Verification Checklist (P1)
 - [ ] Live payment gateway — KwikPay/Stripe (P1)
@@ -164,6 +108,7 @@ Product Checkout → Invoice → Payment Intent → Proof Upload (with payer nam
 | 101 | Multi-Service + Taxonomy | 100% (16/16) |
 | 102 | Go-Live Commerce Engine | 100% (15/15) |
 | 103 | Customer UX Go-Live Fix Pack | 100% (15/15 backend, 100% frontend) |
-| 104 | **Admin CRM Refactor Pass 2** | **100% (20/20 backend, 4/4 pages frontend)** |
+| 104 | Admin CRM Refactor Pass 2 | 100% (20/20 backend, 4/4 pages) |
+| 105 | **Admin CRM Refactor Pass 3/4/5** | **97% (29/30 backend, 8/8 pages) — vendor detail fixed post-test** |
 
 *Last updated: March 25, 2026*
