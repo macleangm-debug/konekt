@@ -20,7 +20,7 @@ import os
 from datetime import datetime
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://quotes-orders-sync.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pdf-stamp-test.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "admin@konekt.co.tz"

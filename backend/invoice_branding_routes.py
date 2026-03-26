@@ -53,6 +53,10 @@ async def get_invoice_branding(request: Request):
     if not doc:
         return {**DEFAULT_BRANDING}
     result = _clean(doc)
+    # Merge defaults for any missing keys (e.g. newly added fields)
+    for k, v in DEFAULT_BRANDING.items():
+        if k not in result or result[k] is None:
+            result[k] = v
     return result
 
 
