@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class KonektAPITester:
-    def __init__(self, base_url: str = "https://konekt-launch.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://quotes-orders-sync.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.user_id = None
