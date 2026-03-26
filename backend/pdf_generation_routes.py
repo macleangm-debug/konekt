@@ -43,7 +43,7 @@ def _css():
     return f'''
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: {NAVY}; background: #fff; }}
-    .page {{ width: 860px; margin: 0 auto; }}
+    .page {{ width: 794px; max-width: 100%; margin: 0 auto; overflow: hidden; }}
 
     /* Multi-page support */
     @page {{
@@ -68,10 +68,10 @@ def _css():
       background: {NAVY_LIGHT};
       opacity: 0.35;
     }}
-    .header-inner {{ display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }}
+    .header-inner {{ display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; position: relative; z-index: 1; }}
     .logo {{ font-size: 36px; font-weight: 800; color: #fff; letter-spacing: 2px; }}
     .logo-sub {{ font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 2px; letter-spacing: 0.5px; }}
-    .doc-title {{ text-align: right; }}
+    .doc-title {{ text-align: right; max-width: 280px; flex-shrink: 0; }}
     .doc-title h1 {{ font-size: 34px; font-weight: 700; color: #fff; margin-bottom: 6px; }}
     .doc-title .meta {{ font-size: 13px; color: rgba(255,255,255,0.7); line-height: 1.7; }}
 
@@ -89,7 +89,7 @@ def _css():
     .body {{ padding: 36px 48px 28px 48px; }}
 
     .two-col {{ display: flex; gap: 36px; margin-bottom: 28px; }}
-    .col {{ flex: 1; }}
+    .col {{ flex: 1; min-width: 0; }}
     .section-label {{ font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: {SLATE}; font-weight: 700; margin-bottom: 10px; }}
     .client-name {{ font-size: 18px; font-weight: 700; margin-bottom: 4px; }}
     .client-detail {{ font-size: 13px; color: {SLATE}; line-height: 1.7; }}
@@ -108,7 +108,7 @@ def _css():
     .status-review {{ background: #dbeafe; color: #1e40af; }}
     .status-rejected {{ background: #fee2e2; color: #991b1b; }}
 
-    .items-table {{ width: 100%; border-collapse: collapse; margin-top: 8px; }}
+    .items-table {{ width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 8px; }}
     .items-table thead {{ display: table-header-group; }}
     .items-table thead th {{
       background: {NAVY};
@@ -127,6 +127,8 @@ def _css():
       padding: 14px 16px;
       font-size: 14px;
       border-bottom: 1px solid #e5edf5;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }}
     .items-table tbody td:nth-child(2),
     .items-table tbody td:nth-child(3),
@@ -135,7 +137,8 @@ def _css():
     /* Allow table rows to break across pages */
     .items-table tbody tr {{ page-break-inside: avoid; }}
 
-    .totals-box {{ width: 320px; margin-left: auto; margin-top: 20px; }}
+    .totals-wrap {{ display: flex; justify-content: flex-end; margin-top: 20px; }}
+    .totals-box {{ width: 320px; max-width: 100%; margin-left: auto; margin-top: 20px; }}
     .totals-row {{ display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; color: {SLATE}; }}
     .totals-row span:last-child {{ color: {NAVY}; font-weight: 600; }}
     .totals-grand {{
@@ -161,19 +164,21 @@ def _css():
     .bank-row {{ display: flex; gap: 6px; font-size: 14px; line-height: 1.8; }}
     .bank-row strong {{ display: inline-block; min-width: 140px; color: {SLATE}; }}
 
-    .auth-area {{ display: flex; gap: 28px; margin-top: 32px; page-break-inside: avoid; }}
+    .auth-area {{ display: flex; justify-content: flex-end; gap: 24px; margin-top: 32px; page-break-inside: avoid; align-items: flex-end; }}
     .auth-block {{
-      flex: 1;
       border: 1px solid #d7e3ee;
       border-radius: 12px;
       padding: 18px;
       min-height: 130px;
       background: #fff;
+      text-align: center;
     }}
     .auth-block .section-label {{ margin-bottom: 12px; }}
     .sig-line {{ height: 48px; border-bottom: 2px solid #d7e3ee; margin-bottom: 10px; }}
     .sig-name {{ font-size: 14px; font-weight: 700; color: {NAVY}; }}
     .sig-title {{ font-size: 11px; color: {SLATE}; }}
+    .signature-img {{ max-width: 140px; max-height: 60px; object-fit: contain; margin-bottom: 8px; }}
+    .stamp-img {{ width: 96px; height: 96px; object-fit: contain; margin: 8px auto 0 auto; display: block; }}
 
     .footer {{
       border-top: 3px solid {NAVY};
@@ -262,9 +267,8 @@ def _bank_html(bank, reference):
     </div>'''
 
 
-def _auth_html(branding, is_finalized):
-    if not is_finalized:
-        return ""
+def _auth_html(branding):
+    """Settings-driven auth block — shows signature/stamp when enabled regardless of doc status."""
     show_sig = branding.get("show_signature", False)
     show_stamp = branding.get("show_stamp", False)
     if not show_sig and not show_stamp:
@@ -273,7 +277,12 @@ def _auth_html(branding, is_finalized):
     sig_block = ""
     if show_sig:
         sig_url = branding.get("cfo_signature_url", "")
-        sig_img = f'<img src="file:///app/backend{sig_url}" style="height:48px; object-fit:contain; margin-bottom:8px;" />' if sig_url else '<div class="sig-line"></div>'
+        if sig_url and sig_url.startswith("data:"):
+            sig_img = f'<img src="{sig_url}" class="signature-img" />'
+        elif sig_url:
+            sig_img = f'<img src="file:///app/backend{sig_url}" class="signature-img" />'
+        else:
+            sig_img = '<div class="sig-line"></div>'
         cfo_name = branding.get("cfo_name", "")
         cfo_title = branding.get("cfo_title", "Chief Finance Officer")
         sig_block = f'''<div class="auth-block">
@@ -288,18 +297,18 @@ def _auth_html(branding, is_finalized):
         stamp_mode = branding.get("stamp_mode", "generated")
         stamp_content = ""
         if stamp_mode == "uploaded" and branding.get("stamp_uploaded_url"):
-            stamp_content = f'<img src="file:///app/backend{branding["stamp_uploaded_url"]}" style="width:100px; height:100px; object-fit:contain; margin:8px auto 0 auto; display:block;" />'
+            stamp_content = f'<img src="file:///app/backend{branding["stamp_uploaded_url"]}" class="stamp-img" />'
         elif stamp_mode == "generated" and branding.get("stamp_preview_url"):
             svg_path = f"/app/backend{branding['stamp_preview_url']}"
             try:
                 with open(svg_path, "r") as f:
-                    stamp_content = f'<div style="width:100px; height:100px; margin:8px auto 0 auto;">{f.read()}</div>'
+                    stamp_content = f'<div style="width:96px; height:96px; margin:8px auto 0 auto;">{f.read()}</div>'
             except Exception:
-                stamp_content = '<div style="width:100px; height:100px; border:2px dashed #d7e3ee; border-radius:50%; margin:8px auto 0 auto;"></div>'
+                stamp_content = '<div style="width:96px; height:96px; border:2px dashed #d7e3ee; border-radius:50%; margin:8px auto 0 auto;"></div>'
         else:
-            stamp_content = '<div style="width:100px; height:100px; border:2px dashed #d7e3ee; border-radius:50%; margin:8px auto 0 auto;"></div>'
+            stamp_content = '<div style="width:96px; height:96px; border:2px dashed #d7e3ee; border-radius:50%; margin:8px auto 0 auto;"></div>'
 
-        stamp_block = f'''<div class="auth-block" style="text-align:center;">
+        stamp_block = f'''<div class="auth-block">
           <div class="section-label">Company Stamp</div>
           {stamp_content}
         </div>'''
@@ -382,7 +391,7 @@ def render_invoice_html(invoice: dict, branding: dict = None):
         {_items_table_html(items)}
         {_totals_html(subtotal, vat, total, amount_paid)}
         {_bank_html(bank, inv_number)}
-        {_auth_html(branding, is_finalized)}
+        {_auth_html(branding)}
       </div>
       {_footer_html()}
     </div>'''
@@ -441,7 +450,7 @@ def render_quote_html(quote: dict, branding: dict = None):
         </div>
         {_items_table_html(items)}
         {_totals_html(subtotal, vat, total)}
-        {_auth_html(branding, qs in ("approved", "accepted"))}
+        {_auth_html(branding)}
       </div>
       <div class="footer">
         This quote is valid until {_date(valid)}. For questions, contact us at accounts@konekt.co.tz<br/>
@@ -513,6 +522,7 @@ def render_order_html(order: dict, branding: dict = None):
         {_items_table_html(items)}
         {_totals_html(subtotal, vat, total)}
         {sales_block}
+        {_auth_html(branding)}
       </div>
       {_footer_html()}
     </div>'''

@@ -1,0 +1,102 @@
+{
+  "summary": "PDF Layout Fixes testing completed successfully. All 22 backend tests pass (2 skipped for enterprise routes due to missing data). All PDF preview endpoints verified working with correct layout constraints. Key fixes verified: 1) Page width 794px with overflow:hidden, 2) Auth-area (signature+stamp) now appears on ALL document types (Quote, Invoice, Order) when enabled in settings, 3) table-layout:fixed on items-table, 4) doc-title max-width:280px, 5) totals-box inside page container.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pdf_layout_fixes.py",
+    "/app/test_reports/pytest/pytest_results_pdf_layout_fixes.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_pdf_layout_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 passed, 2 skipped)",
+    "frontend": "100% (all PDF previews verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "PDF layout fixes complete. All document types (Quote, Invoice, Order) now have: 794px page width, overflow:hidden, table-layout:fixed, doc-title max-width:280px, auth-area (signature+stamp) when enabled in settings. Enterprise PDF routes also have page constraints. Sample IDs: Quote=69c3deedabcf7cf39caa7e56, Invoice=69c264d851b9095b5b27a02c, Order=f91e84c4-95f9-466c-bbc4-6b3a77e43962",
+  "features_verified": {
+    "quote_preview_page_width_794px": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/quotes/{id}/preview",
+      "details": "Page width is 794px with overflow:hidden"
+    },
+    "quote_preview_auth_area": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/quotes/{id}/preview",
+      "details": "Auth-area with signature and stamp blocks appears when enabled in settings"
+    },
+    "quote_preview_table_layout_fixed": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/quotes/{id}/preview",
+      "details": "items-table has table-layout:fixed CSS"
+    },
+    "quote_preview_doc_title_max_width": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/quotes/{id}/preview",
+      "details": "doc-title has max-width:280px"
+    },
+    "quote_preview_totals_inside_page": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/quotes/{id}/preview",
+      "details": "totals-box is inside .page container"
+    },
+    "invoice_preview_page_width_794px": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/invoices/{id}/preview",
+      "details": "Page width is 794px with overflow:hidden"
+    },
+    "invoice_preview_auth_area": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/invoices/{id}/preview",
+      "details": "Auth-area with signature and stamp blocks appears when enabled"
+    },
+    "invoice_preview_table_layout_fixed": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/invoices/{id}/preview",
+      "details": "items-table has table-layout:fixed CSS"
+    },
+    "order_preview_auth_area": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/orders/{id}/preview",
+      "details": "Auth-area NOW EXISTS on orders (was missing before) - KEY FIX VERIFIED"
+    },
+    "order_preview_page_width_794px": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/orders/{id}/preview",
+      "details": "Page width is 794px with overflow:hidden"
+    },
+    "order_preview_table_layout_fixed": {
+      "status": "PASS",
+      "endpoint": "/api/pdf/orders/{id}/preview",
+      "details": "items-table has table-layout:fixed CSS"
+    },
+    "invoice_branding_settings": {
+      "status": "PASS",
+      "endpoint": "/api/admin/settings/invoice-branding",
+      "details": "show_signature and show_stamp fields exist and can be toggled"
+    },
+    "auth_area_settings_driven": {
+      "status": "PASS",
+      "details": "Auth-area appears when show_signature=true OR show_stamp=true, hidden when both false"
+    },
+    "enterprise_pdf_page_constraint": {
+      "status": "PASS",
+      "details": "Enterprise PDF routes have .page { width: 794px; max-width: 100%; overflow: hidden; }"
+    }
+  }
+}

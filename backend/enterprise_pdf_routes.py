@@ -38,13 +38,13 @@ def _table(items):
             f"<td style='padding:12px 8px;border-bottom:1px solid #e2e8f0;text-align:right;'>TZS {line_total:,.0f}</td></tr>"
         )
     return '''
-    <table style="width:100%;border-collapse:collapse;margin-top:24px;">
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed;margin-top:24px;">
       <thead>
         <tr style="background:#f8fafc;">
           <th style="padding:12px 8px;text-align:left;border-bottom:1px solid #e2e8f0;">Item</th>
-          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;">Qty</th>
-          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;">Unit Price</th>
-          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;">Total</th>
+          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;width:60px;">Qty</th>
+          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;width:120px;">Unit Price</th>
+          <th style="padding:12px 8px;text-align:right;border-bottom:1px solid #e2e8f0;width:120px;">Total</th>
         </tr>
       </thead>
       <tbody>''' + "".join(rows) + '''</tbody>
@@ -53,18 +53,20 @@ def _table(items):
 
 def _totals(subtotal, vat, total):
     return f'''
-    <div style="width:340px;margin-left:auto;margin-top:20px;">
-      <div style="display:flex;justify-content:space-between;padding:8px 0;">
-        <span style="color:#64748b;">Subtotal</span>
-        <span style="font-weight:600;">TZS {float(subtotal or 0):,.0f}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;">
-        <span style="color:#64748b;">VAT</span>
-        <span style="font-weight:600;">TZS {float(vat or 0):,.0f}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;margin-top:8px;border-top:2px solid #20364D;font-size:16px;font-weight:700;">
-        <span>Grand Total</span>
-        <span>TZS {float(total or 0):,.0f}</span>
+    <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+      <div style="width:320px;max-width:100%;">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#64748b;">Subtotal</span>
+          <span style="font-weight:600;">TZS {float(subtotal or 0):,.0f}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#64748b;">VAT</span>
+          <span style="font-weight:600;">TZS {float(vat or 0):,.0f}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;margin-top:8px;border-top:2px solid #20364D;font-size:16px;font-weight:700;">
+          <span>Grand Total</span>
+          <span>TZS {float(total or 0):,.0f}</span>
+        </div>
       </div>
     </div>
     '''
@@ -78,16 +80,20 @@ def _html(title, branding, doc, footer_key):
         <meta charset="UTF-8">
         <style>
           body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color:#20364D; padding:40px; font-size:13px; line-height:1.5; }}
+          .page {{ width: 794px; max-width: 100%; margin: 0 auto; overflow: hidden; }}
           .muted {{ color:#64748b; }}
+          table {{ width: 100%; border-collapse: collapse; table-layout: fixed; }}
+          table td, table th {{ word-wrap: break-word; overflow-wrap: break-word; }}
         </style>
       </head>
       <body>
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #20364D;padding-bottom:18px;">
+        <div class="page">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #20364D;padding-bottom:18px;gap:24px;">
           <div>
             <div style="font-size:28px;font-weight:700;color:#20364D;">{branding.get("company_name","Konekt")}</div>
             <div class="muted" style="margin-top:4px;">{branding.get("company_address","")}</div>
           </div>
-          <div style="text-align:right;">
+          <div style="text-align:right;max-width:280px;flex-shrink:0;">
             <div class="muted">{branding.get("company_phone","")}</div>
             <div class="muted">{branding.get("company_email","")}</div>
             <div class="muted">TIN: {branding.get("company_tin","—")}</div>
@@ -115,6 +121,7 @@ def _html(title, branding, doc, footer_key):
         
         <div style="margin-top:36px;border-top:1px solid #e2e8f0;padding-top:16px;color:#64748b;font-size:12px;">
           {footer}
+        </div>
         </div>
       </body>
     </html>
