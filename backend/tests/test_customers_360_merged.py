@@ -228,6 +228,98 @@ class TestCustomers360DetailEndpoint:
         print("PASS: Non-existent customer returns 404")
 
 
+class TestCustomers360StatsEndpoint:
+    """Tests for GET /api/admin/customers-360/stats - New stats endpoint with computed status"""
+
+    def test_stats_returns_200(self, admin_headers):
+        """Test that stats endpoint returns 200"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/stats",
+            headers=admin_headers
+        )
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        data = response.json()
+        print(f"PASS: GET /api/admin/customers-360/stats returns 200")
+        print(f"  Stats: {data}")
+
+    def test_stats_contains_required_fields(self, admin_headers):
+        """Test that stats response contains all required fields"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/stats",
+            headers=admin_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        required_fields = ["total", "active", "at_risk", "inactive", "with_unpaid_invoices", "with_active_orders"]
+        for field in required_fields:
+            assert field in data, f"Missing required stats field: {field}"
+        print(f"PASS: Stats contains all required fields: {required_fields}")
+
+    def test_stats_values_are_integers(self, admin_headers):
+        """Test that all stats values are integers"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/stats",
+            headers=admin_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        for key, value in data.items():
+            assert isinstance(value, int), f"Stats field {key} should be int, got {type(value)}"
+        print("PASS: All stats values are integers")
+
+    def test_stats_total_equals_sum_of_statuses(self, admin_headers):
+        """Test that total = active + at_risk + inactive"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/stats",
+            headers=admin_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        total = data.get("total", 0)
+        active = data.get("active", 0)
+        at_risk = data.get("at_risk", 0)
+        inactive = data.get("inactive", 0)
+        
+        assert total == active + at_risk + inactive, f"Total ({total}) should equal active ({active}) + at_risk ({at_risk}) + inactive ({inactive})"
+        print(f"PASS: Total ({total}) = active ({active}) + at_risk ({at_risk}) + inactive ({inactive})")
+
+
+class TestCustomers360AtRiskFilter:
+    """Tests for at_risk status filter - New computed status"""
+
+    def test_list_filter_status_at_risk(self, admin_headers):
+        """Test status=at_risk filter"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/list",
+            headers=admin_headers,
+            params={"status": "at_risk"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        # All returned customers should be at_risk
+        for customer in data:
+            assert customer.get("status") == "at_risk", f"Expected at_risk status, got {customer.get('status')}"
+        print(f"PASS: status=at_risk filter returned {len(data)} at_risk customers")
+
+    def test_detail_contains_active_quotes_and_orders(self, admin_headers):
+        """Test that detail summary contains active_quotes and active_orders"""
+        response = requests.get(
+            f"{BASE_URL}/api/admin/customers-360/{DEMO_CUSTOMER_ID}",
+            headers=admin_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        
+        assert "summary" in data, "Missing summary section"
+        summary = data["summary"]
+        assert "active_quotes" in summary, "Missing active_quotes in summary"
+        assert "active_orders" in summary, "Missing active_orders in summary"
+        print(f"PASS: Detail summary contains active_quotes ({summary['active_quotes']}) and active_orders ({summary['active_orders']})")
+
+
 class TestRegressionOtherAdminRoutes:
     """Regression tests for other admin routes that should still work"""
 

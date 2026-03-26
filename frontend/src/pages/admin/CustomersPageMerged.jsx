@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Search, Users } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Search, Users, UserCheck, AlertTriangle, UserX, Receipt, ShoppingCart, X } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
-import DetailDrawer from "@/components/admin/shared/DetailDrawer";
-import FilterBar from "@/components/admin/shared/FilterBar";
 import StatusBadge from "@/components/admin/shared/StatusBadge";
+import FilterBar from "@/components/admin/shared/FilterBar";
 import EmptyState from "@/components/admin/shared/EmptyState";
 import CustomerDrawer360 from "@/components/admin/customers/CustomerDrawer360";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
   { value: "active", label: "Active" },
+  { value: "at_risk", label: "At Risk" },
   { value: "inactive", label: "Inactive" },
 ];
 
@@ -19,8 +19,36 @@ const fmtDate = (d) => {
   catch { return d; }
 };
 
+function StatCard({ label, value, icon: Icon, accent, onClick, active }) {
+  const colors = {
+    slate: { bg: "bg-white", border: "border-slate-200", text: "text-slate-600", iconBg: "bg-slate-100" },
+    emerald: { bg: "bg-white", border: "border-emerald-200", text: "text-emerald-700", iconBg: "bg-emerald-100" },
+    amber: { bg: "bg-white", border: "border-amber-200", text: "text-amber-700", iconBg: "bg-amber-100" },
+    red: { bg: "bg-white", border: "border-red-200", text: "text-red-700", iconBg: "bg-red-100" },
+    violet: { bg: "bg-white", border: "border-violet-200", text: "text-violet-700", iconBg: "bg-violet-100" },
+    blue: { bg: "bg-white", border: "border-blue-200", text: "text-blue-700", iconBg: "bg-blue-100" },
+  };
+  const c = colors[accent] || colors.slate;
+  return (
+    <button
+      onClick={onClick}
+      data-testid={`stat-card-${label.toLowerCase().replace(/\s/g, "-")}`}
+      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all hover:shadow-sm ${c.border} ${c.bg} ${active ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.iconBg}`}>
+        <Icon className={`h-5 w-5 ${c.text}`} />
+      </div>
+      <div>
+        <div className="text-2xl font-extrabold text-[#20364D]">{value ?? 0}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
+      </div>
+    </button>
+  );
+}
+
 export default function CustomersPageMerged() {
   const [rows, setRows] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -28,15 +56,19 @@ export default function CustomersPageMerged() {
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     adminApi.getCustomers360List({ search: search || undefined, status: statusFilter || undefined })
       .then((r) => setRows(r.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  };
+  }, [search, statusFilter]);
 
-  useEffect(() => { load(); }, [search, statusFilter]);
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    adminApi.getCustomers360Stats().then((r) => setStats(r.data)).catch(() => {});
+  }, []);
 
   const openDrawer = async (row) => {
     setSelected(row);
@@ -50,10 +82,26 @@ export default function CustomersPageMerged() {
 
   const closeDrawer = () => { setSelected(null); setDetail(null); };
 
+  const setStatusAndLoad = (s) => {
+    setStatusFilter((prev) => (prev === s ? "" : s));
+  };
+
   return (
     <div className="space-y-4" data-testid="customers-page-merged">
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="customer-stats-cards">
+          <StatCard label="Total" value={stats.total} icon={Users} accent="slate" onClick={() => setStatusFilter("")} active={!statusFilter} />
+          <StatCard label="Active" value={stats.active} icon={UserCheck} accent="emerald" onClick={() => setStatusAndLoad("active")} active={statusFilter === "active"} />
+          <StatCard label="At Risk" value={stats.at_risk} icon={AlertTriangle} accent="amber" onClick={() => setStatusAndLoad("at_risk")} active={statusFilter === "at_risk"} />
+          <StatCard label="Inactive" value={stats.inactive} icon={UserX} accent="red" onClick={() => setStatusAndLoad("inactive")} active={statusFilter === "inactive"} />
+          <StatCard label="Unpaid Invoices" value={stats.with_unpaid_invoices} icon={Receipt} accent="violet" />
+          <StatCard label="Active Orders" value={stats.with_active_orders} icon={ShoppingCart} accent="blue" />
+        </div>
+      )}
+
+      {/* Table Card */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        {/* Header */}
         <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-[#20364D]">Customers</h1>
@@ -61,7 +109,6 @@ export default function CustomersPageMerged() {
           </div>
         </div>
 
-        {/* Filters */}
         <FilterBar>
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -86,7 +133,6 @@ export default function CustomersPageMerged() {
           </select>
         </FilterBar>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full" data-testid="customers-table">
             <thead>
@@ -106,13 +152,13 @@ export default function CustomersPageMerged() {
               {loading ? (
                 <tr><td colSpan={9} className="px-5 py-10 text-center text-sm text-slate-400">Loading customers...</td></tr>
               ) : rows.length === 0 ? (
-                <tr><td colSpan={9} className="py-0"><EmptyState icon={<Users className="w-10 h-10 text-slate-300" />} title="No customers found" subtitle="Customers will appear here when they register or are created." /></td></tr>
+                <tr><td colSpan={9} className="py-0"><EmptyState icon={Users} title="No customers found" subtitle="Customers will appear here when they register." /></td></tr>
               ) : (
                 rows.map((row) => (
                   <tr
                     key={row.id}
                     onClick={() => openDrawer(row)}
-                    className="cursor-pointer transition-colors hover:bg-slate-50"
+                    className={`cursor-pointer transition-colors hover:bg-slate-50 ${selected?.id === row.id ? "bg-blue-50/50" : ""}`}
                     data-testid={`customer-row-${row.id}`}
                   >
                     <td className="px-5 py-3.5 text-xs text-slate-500">{fmtDate(row.last_activity_at)}</td>
@@ -136,16 +182,28 @@ export default function CustomersPageMerged() {
         </div>
       </div>
 
-      {/* Detail Drawer */}
-      <DetailDrawer open={!!selected} onClose={closeDrawer}>
-        {loadingDetail ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="text-sm text-slate-400">Loading customer summary...</div>
+      {/* Wide Profile Drawer */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex justify-end" data-testid="customer-profile-drawer-overlay">
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={closeDrawer} />
+          <div className="relative flex w-full max-w-2xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+            <button
+              onClick={closeDrawer}
+              data-testid="close-customer-drawer"
+              className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {loadingDetail ? (
+              <div className="flex flex-1 items-center justify-center">
+                <div className="text-sm text-slate-400">Loading customer profile...</div>
+              </div>
+            ) : (
+              <CustomerDrawer360 customer={detail} />
+            )}
           </div>
-        ) : (
-          <CustomerDrawer360 customer={detail} />
-        )}
-      </DetailDrawer>
+        </div>
+      )}
     </div>
   );
 }

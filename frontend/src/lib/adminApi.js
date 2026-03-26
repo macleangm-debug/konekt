@@ -147,6 +147,7 @@ export const adminApi = {
 
   // Customers 360 (merged)
   getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),
+  getCustomers360Stats: () => api.get("/api/admin/customers-360/stats"),
   getCustomer360Detail: (customerId) => api.get(`/api/admin/customers-360/${customerId}`),
 };
 

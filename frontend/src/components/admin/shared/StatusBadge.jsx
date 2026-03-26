@@ -35,8 +35,9 @@ const STATUS_THEMES = {
   released_by_payment: { label: "Released by Payment",  color: "bg-green-100 text-green-800" },
   manual:              { label: "Manually Released",    color: "bg-amber-100 text-amber-800" },
   awaiting:            { label: "Awaiting Release",     color: "bg-slate-100 text-slate-600" },
-  // Misc
+  // Customer Status
   active:              { label: "Active",               color: "bg-green-100 text-green-800" },
+  at_risk:             { label: "At Risk",              color: "bg-amber-100 text-amber-800" },
   inactive:            { label: "Inactive",             color: "bg-slate-100 text-slate-500" },
 };
 
