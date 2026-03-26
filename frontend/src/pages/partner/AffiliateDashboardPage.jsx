@@ -79,7 +79,7 @@ export default function AffiliateDashboardPage() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 mb-4">{error}</div>
-          <a href="/partner-login" className="text-[#D4A843] hover:underline">
+          <a href="/login" className="text-[#D4A843] hover:underline">
             Go to Login
           </a>
         </div>

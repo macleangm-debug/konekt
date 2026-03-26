@@ -47,7 +47,7 @@ export default function CustomerPortalLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    navigate("/login");
   };
 
   return (

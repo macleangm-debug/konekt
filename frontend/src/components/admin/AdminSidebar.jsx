@@ -32,7 +32,7 @@ export default function AdminSidebar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/admin/login");
+    navigate("/login");
   };
 
   return (

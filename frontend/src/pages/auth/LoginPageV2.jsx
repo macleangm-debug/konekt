@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import { toast } from "sonner";
 import BrandLogo from "../../components/branding/BrandLogo";
 import { Check } from "lucide-react";
+import { clearAllAuth, getDashboardPath } from "../../lib/authHelpers";
 
 export default function LoginPageV2() {
   const navigate = useNavigate();
@@ -12,9 +13,11 @@ export default function LoginPageV2() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
-    if (token) {
-      navigate("/dashboard");
+    // Check if already logged in — redirect based on stored role
+    const role = localStorage.getItem("userRole");
+    const hasToken = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");
+    if (hasToken && role) {
+      navigate(getDashboardPath(role));
     }
   }, [navigate]);
 
@@ -29,16 +32,29 @@ export default function LoginPageV2() {
     try {
       const res = await api.post("/api/auth/login", { email, password });
       const { token, user } = res.data;
-      
-      localStorage.setItem("konekt_token", token);
+      const role = user.role || "customer";
+
+      // Clear any stale tokens first
+      clearAllAuth();
+
+      // Store token in the right key based on role
+      if (["admin", "sales", "marketing", "production"].includes(role)) {
+        localStorage.setItem("konekt_admin_token", token);
+      } else if (["partner", "vendor", "affiliate"].includes(role)) {
+        localStorage.setItem("partner_token", token);
+      } else {
+        localStorage.setItem("konekt_token", token);
+      }
+
+      // Also store in common keys for compatibility
       localStorage.setItem("token", token);
-      localStorage.setItem("userRole", user.role || "customer");
+      localStorage.setItem("userRole", role);
       localStorage.setItem("userId", user.id);
       localStorage.setItem("userEmail", user.email);
       localStorage.setItem("userName", user.full_name || user.email);
       
       toast.success("Welcome back!");
-      window.location.href = "/dashboard";
+      window.location.href = getDashboardPath(role);
     } catch (err) {
       toast.error(err?.response?.data?.detail || "Invalid credentials");
     } finally {

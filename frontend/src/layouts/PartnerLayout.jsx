@@ -5,6 +5,7 @@ import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerAccountTopbar from "../components/layout/PartnerAccountTopbar";
 import BrandLogo from "../components/branding/BrandLogo";
+import { clearAllAuth } from "../lib/authHelpers";
 
 export default function PartnerLayout() {
   const [partner, setPartner] = useState(null);
@@ -15,21 +16,21 @@ export default function PartnerLayout() {
   useEffect(() => {
     const token = localStorage.getItem("partner_token");
     if (!token) {
-      navigate("/partner-login");
+      navigate("/login");
       return;
     }
     
     partnerApi.get("/api/partner-portal/dashboard")
       .then(res => setPartner(res.data?.partner))
       .catch(() => {
-        localStorage.removeItem("partner_token");
-        navigate("/partner-login");
+        clearAllAuth();
+        navigate("/login");
       });
   }, [navigate]);
 
   const logout = () => {
-    localStorage.removeItem("partner_token");
-    navigate("/partner-login");
+    clearAllAuth();
+    navigate("/login");
   };
 
   // Determine partner type from partner data

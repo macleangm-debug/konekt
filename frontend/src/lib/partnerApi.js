@@ -17,7 +17,7 @@ partnerApi.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("partner_token");
-      window.location.href = "/partner-login";
+      window.location.href = "/login";
     }
     return Promise.reject(error);
   }

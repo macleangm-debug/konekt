@@ -41,7 +41,7 @@ export default function PremiumFooterV2() {
               <Gift className="w-4 h-4 text-[#D4A843]" /> Referrals & Rewards
             </Link>
             <Link to="/launch-country" className="block hover:text-white transition">Country expansion</Link>
-            <Link to="/partner-login" className="block hover:text-white transition">Partner portal</Link>
+            <Link to="/login" className="block hover:text-white transition">Partner portal</Link>
             <Link to="/dashboard" className="block hover:text-white transition">Customer account</Link>
           </div>
         </div>

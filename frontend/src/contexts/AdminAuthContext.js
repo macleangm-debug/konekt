@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { clearAllAuth } from '../lib/authHelpers';
 
 const AdminAuthContext = createContext(null);
 
@@ -47,7 +48,7 @@ export const AdminAuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('konekt_admin_token');
+    clearAllAuth();
     delete axios.defaults.headers.common['Authorization'];
     setToken(null);
     setAdmin(null);

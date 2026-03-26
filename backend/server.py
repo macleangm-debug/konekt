@@ -877,29 +877,55 @@ async def register(data: UserCreate):
 
 @api_router.post("/auth/login")
 async def login(data: UserLogin):
+    # 1. Check main users collection (customers + admin staff)
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    if not user or not verify_password(data.password, user.get("password_hash", "")):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    if not user.get("is_active", True):
-        raise HTTPException(status_code=403, detail="Account is deactivated")
-    
-    role = user.get("role", "customer")
-    token = create_token(user["id"], user["email"], role)
-    return {
-        "token": token,
-        "user": {
-            "id": user["id"],
-            "email": user["email"],
-            "full_name": user["full_name"],
-            "phone": user.get("phone"),
-            "company": user.get("company"),
-            "points": user.get("points", 0),
-            "referral_code": user.get("referral_code"),
-            "role": role,
-            "created_at": user["created_at"]
+    if user and verify_password(data.password, user.get("password_hash", "")):
+        if not user.get("is_active", True):
+            raise HTTPException(status_code=403, detail="Account is deactivated")
+        
+        role = user.get("role", "customer")
+        token = create_token(user["id"], user["email"], role)
+        return {
+            "token": token,
+            "user": {
+                "id": user["id"],
+                "email": user["email"],
+                "full_name": user["full_name"],
+                "phone": user.get("phone"),
+                "company": user.get("company"),
+                "points": user.get("points", 0),
+                "referral_code": user.get("referral_code"),
+                "role": role,
+                "created_at": user["created_at"]
+            }
         }
-    }
+    
+    # 2. Check partner_users collection
+    partner_user = await db.partner_users.find_one({"email": data.email, "status": "active"})
+    if partner_user:
+        import bcrypt as _bcrypt
+        pw_hash = partner_user.get("password_hash", "")
+        if pw_hash and _bcrypt.checkpw(data.password.encode("utf-8"), pw_hash.encode("utf-8")):
+            from partner_auth_routes import create_partner_token
+            from bson import ObjectId as _OID
+            token = create_partner_token(partner_user)
+            partner = await db.partners.find_one({"_id": _OID(partner_user["partner_id"])})
+            return {
+                "token": token,
+                "user": {
+                    "id": str(partner_user["_id"]),
+                    "email": partner_user["email"],
+                    "full_name": partner_user.get("full_name", partner_user.get("name", partner_user["email"])),
+                    "phone": partner_user.get("phone", ""),
+                    "company": partner.get("company_name", "") if partner else "",
+                    "points": 0,
+                    "referral_code": "",
+                    "role": "partner",
+                    "created_at": str(partner_user.get("created_at", ""))
+                }
+            }
+    
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):

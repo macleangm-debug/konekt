@@ -22,15 +22,16 @@ const nav = [
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
 
+import { clearAllAuth } from "../lib/authHelpers";
+
 export default function CustomerPortalLayoutV2() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("customer");
-    navigate("/");
+    clearAllAuth();
+    navigate("/login");
   };
 
   const customerName = (() => {

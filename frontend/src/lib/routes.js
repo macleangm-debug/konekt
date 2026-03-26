@@ -10,7 +10,7 @@ export const ROUTES = {
   customerLogin: "/login/customer",
   register: "/register",
   staffLogin: "/staff-login",
-  partnerLogin: "/partner-login",
+  partnerLogin: "/login",
 
   dashboard: "/dashboard",
   referrals: "/dashboard/referrals",

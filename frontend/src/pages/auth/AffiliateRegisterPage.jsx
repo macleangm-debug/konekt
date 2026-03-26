@@ -140,7 +140,7 @@ export default function AffiliateRegisterPage() {
               <strong>Your Code:</strong> <span data-testid="affiliate-code">{result.affiliate_code}</span>
             </div>
             <Link
-              to="/partner-login"
+              to="/login"
               className="inline-block mt-6 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
               data-testid="proceed-login-btn"
             >

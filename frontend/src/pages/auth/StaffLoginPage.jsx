@@ -157,7 +157,7 @@ export default function StaffLoginPage() {
           <div className="mt-6 text-center text-slate-500 text-sm">
             <Link to="/auth" className="hover:text-slate-300">Customer Login</Link>
             <span className="mx-3">|</span>
-            <Link to="/partner-login" className="hover:text-slate-300">Partner Login</Link>
+            <Link to="/login" className="hover:text-slate-300">Partner Login</Link>
           </div>
         </div>
       </div>

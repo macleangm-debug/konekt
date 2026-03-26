@@ -40,7 +40,7 @@ export default function AffiliateLandingPage() {
                 Join as Affiliate
               </Link>
               <Link
-                to="/partner-login"
+                to="/login"
                 className="rounded-xl border border-white/20 px-5 py-3 font-semibold text-white text-center"
                 data-testid="affiliate-login-btn"
               >

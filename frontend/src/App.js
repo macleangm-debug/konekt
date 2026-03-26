@@ -412,7 +412,7 @@ function AdminRoute({ children }) {
   }
   
   if (!admin) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
@@ -484,12 +484,8 @@ function App() {
           </AdminAuthProvider>
         } />
         
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={
-          <AdminAuthProvider>
-            <AdminLogin />
-          </AdminAuthProvider>
-        } />
+        {/* Admin Routes — redirect /admin/login to unified /login */}
+        <Route path="/admin/login" element={<Navigate to="/login" replace />} />
         <Route path="/admin/*" element={
           <AdminAuthProvider>
             <AdminRoute>
@@ -628,8 +624,8 @@ function App() {
           <Route path="sales-quality" element={<SalesDashboardQualityV3 />} />
         </Route>
         
-        {/* Partner Portal Routes */}
-        <Route path="/partner-login" element={<PartnerLoginPage />} />
+        {/* Partner Portal Routes — /partner-login redirects to unified /login */}
+        <Route path="/partner-login" element={<Navigate to="/login" replace />} />
         <Route path="/partner" element={<PartnerLayout />}>
           <Route index element={<PartnerDashboardV2 />} />
           <Route path="catalog" element={<PartnerCatalogPage2 />} />
