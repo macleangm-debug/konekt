@@ -9,63 +9,51 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Database**: MongoDB (`konekt_db`)
 - **PDF**: WeasyPrint HTML-to-PDF engine
 
-## User Personas
-- **Customer**: Browse products/services, place orders, view invoices/quotes, pay invoices
-- **Admin**: Manage catalog, orders, invoices, quotes, vendors, CRM, analytics
-- **Vendor/Partner**: Fulfill orders, manage catalog submissions
-
 ## What's Been Implemented
 
 ### Core Platform (Complete)
 - Multi-role authentication (JWT)
-- Product catalog with categories, pricing, variants
-- Service catalog with quote request flow
-- Promotional campaigns & affiliate system
+- Product/Service/Promo catalogs
 - Shopping cart + checkout
-- Order creation & management
-- Invoice generation (auto from orders)
-- Quote creation & management
-- Loyalty points system
-- Customer dashboard with activity feed
-- Admin dashboard with KPIs
-- Vendor/Partner portal
+- Order/Invoice/Quote creation & management
+- Loyalty points, Affiliate system
+- Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes)
 
-### Final UI Polish Pass (March 26, 2026) - COMPLETED
-1. **Invoice Drawer**: BrandLogo `md`, status-aware PaymentStatusBlock (Paid in Full / Awaiting Payment with real CRDB bank details)
-2. **Invoice PDF**: Zoho-level template with bank details, CFO signature/stamp on paid invoices
-3. **AI Widget Hidden**: On all transaction pages (/dashboard/invoices, /dashboard/quotes, /dashboard/orders)
-4. **Payment Info API**: `/api/public/payment-info` endpoint
+### Final UI Polish Pass (March 26, 2026) - DONE
+- Invoice Drawer: BrandLogo md, status-aware PaymentStatusBlock (Paid/Awaiting with real bank details)
+- Invoice PDF: Zoho-level template with bank details, dynamic CFO signature/stamp
+- AI Widget hidden on transaction pages
+- Payment Info API: `/api/public/payment-info`
 
-### Quotes & Orders Full Rewrite (March 26, 2026) - COMPLETED
+### Quotes & Orders Full Rewrite (March 26, 2026) - DONE
 **Quotes Page (Decision Stage):**
 - Table: Date, Quote No, Type, Amount, Valid Until, Status, Payment Status
-- Drawer: Customer Info, Quote Details (Prepared By, Valid Until), Line Items table, Totals
-- Actions: Accept/Reject/Download for pending quotes
-- Expiry countdown, Converted to Invoice indicator for accepted quotes
+- Drawer: Customer Info, Quote Details + Prepared By, Line Items, Totals, Accept/Reject/Download, Expiry countdown
 
 **Orders Page (Fulfillment Tracking):**
 - Table: Date, Order No, Source, Amount, Payment, Fulfillment
-- Drawer sections:
-  1. Order Summary (linked Invoice/Quote)
-  2. Customer Details
-  3. **Assigned Sales Person** (PROMINENT - Call/Email/WhatsApp buttons)
-  4. Fulfillment/Vendor (small, not prominent)
-  5. Order Items / Work Details
-  6. Totals
-  7. Timeline (Order Created → Payment Approved → Vendor Assigned → Work Started → Completed)
-  8. "Need help?" → Call Sales / WhatsApp
-- NO payment buttons in Orders drawer
+- Drawer: Order Summary, Customer, PROMINENT Sales Person (Call/Email/WhatsApp), Fulfillment/Vendor, Items, Timeline, "Need help?"
 
-### System Consistency Rules (Enforced)
-- All 3 pages: full table, no action column, click row → drawer, same logo header, same spacing
-- Page purposes locked: Quotes=Decision, Invoices=Payment, Orders=Fulfillment
+### Invoice Branding & Authorization (March 26, 2026) - DONE
+**Admin Settings Hub → Invoice Branding section:**
+- CFO Name, Title, Show Signature toggle, Signature upload
+- Company Stamp: Generated (Circle/Square, Blue/Red/Black, company details) or Uploaded
+- Generated stamp as SVG with curved text, double borders, registration/TIN
+- Live Invoice Footer Preview panel
+- Settings saved to MongoDB `business_settings` collection
+- PDF generator reads branding settings dynamically
+- Light preview shown in customer invoice drawer for finalized invoices
 
 ## Key API Endpoints
-- `POST /api/auth/login` — JWT login
+- `POST /api/auth/login`, `POST /api/admin/auth/login`
 - `GET /api/customer/invoices`, `GET /api/customer/orders`, `GET /api/customer/quotes`
-- `GET /api/public/payment-info` — Bank details from .env
-- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/quotes/{id}` — PDF download
+- `GET /api/public/payment-info`
+- `GET/POST /api/admin/settings/invoice-branding`
+- `POST /api/admin/settings/invoice-branding/signature-upload`
+- `POST /api/admin/settings/invoice-branding/stamp-upload`
+- `POST /api/admin/settings/invoice-branding/generate-stamp`
+- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/quotes/{id}`
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
