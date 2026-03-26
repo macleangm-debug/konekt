@@ -52,34 +52,23 @@ import AffiliatePortalPage from "@/pages/AffiliatePortalPage";
 // Admin Pages
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminLayout from "@/pages/admin/AdminLayout";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminDashboardV2 from "@/pages/admin/AdminDashboardV2";
-import AdminOrders from "@/pages/admin/AdminOrders";
-import AdminOrdersSplitViewV2 from "@/components/orders/AdminOrdersSplitViewV2";
-import FinancePaymentsQueuePage from "@/components/finance/FinancePaymentsQueuePage";
 import AdminProducts from "@/pages/admin/AdminProducts";
 import AdminStock from "@/pages/admin/AdminStock";
 import AdminMaintenance from "@/pages/admin/AdminMaintenance";
 import AdminOffers from "@/pages/admin/AdminOffers";
 import AdminReferrals from "@/pages/admin/AdminReferrals";
 import AdminUsers from "@/pages/admin/AdminUsers";
-import CRMPage from "@/pages/admin/CRMPage";
 import CRMPageV2 from "@/pages/admin/CRMPageV2";
 import InventoryPage from "@/pages/admin/InventoryPage";
 import TasksPage from "@/pages/admin/TasksPage";
 import InvoicesPage from "@/pages/admin/InvoicesPage";
-import AdminQuotes from "@/pages/admin/AdminQuotes";
-import QuotesPage from "@/pages/admin/QuotesPage";
-import QuoteKanbanPage from "@/pages/admin/QuoteKanbanPage";
 import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
-import OrdersPageOps from "@/pages/admin/OrdersPageOps";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
 import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
-import CustomersPage from "@/pages/admin/CustomersPage";
 import CustomersPageV2 from "@/pages/admin/CustomersPageV2";
-import PaymentsPage from "@/pages/admin/PaymentsPage";
 import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
@@ -88,7 +77,6 @@ import AffiliatePayoutsPage from "@/pages/admin/AffiliatePayoutsPage";
 import AffiliateApplicationsPage from "@/pages/admin/AffiliateApplicationsPage";
 import AffiliateSettingsPage from "@/pages/admin/AffiliateSettingsPage";
 import AffiliateCampaignsPage from "@/pages/admin/AffiliateCampaignsPage";
-import CentralPaymentsPage from "@/pages/admin/CentralPaymentsPage";
 import StatementPage from "@/pages/admin/StatementPage";
 import QuotePreviewPage from "@/pages/admin/QuotePreviewPage";
 import InvoicePreviewPage from "@/pages/admin/InvoicePreviewPage";
@@ -97,7 +85,6 @@ import WarehousesPage from "@/pages/admin/WarehousesPage";
 import RawMaterialsPage from "@/pages/admin/RawMaterialsPage";
 import DocumentWorkflowPage from "@/pages/admin/DocumentWorkflowPage";
 import RecordPaymentPage from "@/pages/admin/RecordPaymentPage";
-import SetupPage from "@/pages/admin/SetupPage";
 import LaunchReadinessPage from "@/pages/admin/LaunchReadinessPage";
 import AuditLogPage from "@/pages/admin/AuditLogPage";
 import WarehouseTransfersPage from "@/pages/admin/WarehouseTransfersPage";
@@ -140,8 +127,7 @@ import AdminAffiliateManagerSimple from "@/components/admin/AdminAffiliateManage
 // Service Taxonomy Admin
 import ServiceTaxonomyAdminSetup from "@/components/admin/ServiceTaxonomyAdminSetup";
 
-// Admin Catalog & Deliveries
-import AdminCatalogSetupPage from "@/pages/admin/AdminCatalogSetupPage";
+// Admin Deliveries
 import AdminDeliveriesPage from "@/pages/admin/AdminDeliveriesPage";
 
 // Contract Clients + Billing Discipline Pack
@@ -161,7 +147,6 @@ import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashb
 // Super Admin Commercial Controls
 import GroupMarkupsPage from "@/pages/admin/GroupMarkupsPage";
 import PartnerSettlementsAdminPage from "@/pages/admin/PartnerSettlementsAdminPage";
-import PaymentProofsAdminPage from "@/pages/admin/PaymentProofsAdminPage";
 
 // Staff Performance & Supervisor
 import SupervisorDashboardPage from "@/pages/admin/SupervisorDashboardPage";
@@ -181,9 +166,6 @@ import BusinessPricingAdminPage from "@/pages/admin/BusinessPricingAdminPage";
 
 // Production Jobs Admin
 import ProductionJobsAdminPage from "@/pages/admin/ProductionJobsAdminPage";
-
-// Admin UX Overview
-import AdminUxOverviewPage from "@/pages/admin/AdminUxOverviewPage";
 
 // Service Partner Capabilities
 import ServicePartnerCapabilitiesPage from "@/pages/admin/ServicePartnerCapabilitiesPage";
@@ -242,9 +224,6 @@ import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
 // Admin Control Center
 import AdminControlCenterPage from "@/pages/admin/AdminControlCenterPage";
 
-// Partner Ecosystem V2
-import PartnerEcosystemPageV2 from "@/pages/admin/PartnerEcosystemPageV2";
-
 // Smart Partner Ecosystem
 import PartnerEcosystemSmart from "@/pages/admin/PartnerEcosystemSmart";
 
@@ -257,7 +236,6 @@ import AccountMarketplacePage from "@/pages/account/AccountMarketplacePage";
 import AccountServicesPage from "@/pages/account/AccountServicesPage";
 import AssistedQuoteRequestPage from "@/pages/account/AssistedQuoteRequestPage";
 import MyOrdersUnifiedPage from "@/pages/account/MyOrdersUnifiedPage";
-import OrdersSplitView from "@/components/orders/OrdersSplitView";
 
 // Account Marketplace + Service Request Pack
 import MarketplaceUnifiedPageV3 from "@/pages/account/MarketplaceUnifiedPageV3";
@@ -523,7 +501,6 @@ function App() {
         }>
           <Route index element={<AdminDashboardV2 />} />
           <Route path="orders" element={<OrdersPage />} />
-          <Route path="orders-legacy" element={<OrdersPage />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="stock" element={<AdminStock />} />
           <Route path="maintenance" element={<AdminMaintenance />} />
@@ -531,7 +508,6 @@ function App() {
           <Route path="referrals" element={<AdminReferrals />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="crm" element={<CRMPageV2 />} />
-          <Route path="crm-old" element={<CRMPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="inventory/variants" element={<InventoryVariantsPage />} />
           <Route path="warehouses" element={<WarehousesPage />} />
@@ -541,17 +517,12 @@ function App() {
           <Route path="invoices/:id" element={<InvoicePreviewPage />} />
           <Route path="quotes" element={<QuotesRequestsPage />} />
           <Route path="quotes/:id" element={<QuotePreviewPage />} />
-          <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
-          <Route path="quotes-old" element={<AdminQuotes />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
-          <Route path="orders-ops" element={<OrdersPage />} />
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPageV2 />} />
-          <Route path="customers-old" element={<CustomersPage />} />
           <Route path="payments" element={<PaymentsQueuePage />} />
-          <Route path="central-payments" element={<PaymentsQueuePage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
@@ -562,7 +533,6 @@ function App() {
           <Route path="affiliate-settings" element={<AffiliateSettingsPage />} />
           <Route path="affiliate-campaigns" element={<AffiliateCampaignsPage />} />
           <Route path="payments/record" element={<RecordPaymentPage />} />
-          <Route path="setup" element={<SetupPage />} />
           <Route path="launch-readiness" element={<LaunchReadinessPage />} />
           <Route path="audit" element={<AuditLogPage />} />
           <Route path="inventory/transfers" element={<WarehouseTransfersPage />} />
@@ -611,8 +581,6 @@ function App() {
           {/* Super Admin Commercial Controls */}
           <Route path="group-markups" element={<GroupMarkupsPage />} />
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
-          <Route path="payment-proofs" element={<PaymentsQueuePage />} />
-          <Route path="finance-queue" element={<PaymentsQueuePage />} />
           {/* Service Leads CRM */}
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
           {/* Affiliate Manager */}
@@ -632,8 +600,6 @@ function App() {
           <Route path="business-pricing-requests" element={<BusinessPricingAdminPage />} />
           {/* Production Jobs Admin */}
           <Route path="production-jobs" element={<ProductionJobsAdminPage />} />
-          {/* Admin UX Overview */}
-          <Route path="ux-overview" element={<AdminUxOverviewPage />} />
           {/* Supervisor Performance Dashboard */}
           <Route path="supervisor-performance" element={<SupervisorPerformanceDashboardPage />} />
           {/* Service Partner Capabilities */}
@@ -654,12 +620,8 @@ function App() {
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
           {/* Admin Control Center */}
           <Route path="control-center" element={<AdminControlCenterPage />} />
-          {/* Admin Catalog Setup */}
-          <Route path="catalog-setup" element={<AdminCatalogSetupPage />} />
           {/* Admin Deliveries */}
           <Route path="deliveries" element={<AdminDeliveriesPage />} />
-          {/* Partner Ecosystem V2 */}
-          <Route path="partner-ecosystem-v2" element={<PartnerEcosystemPageV2 />} />
           {/* Smart Partner Ecosystem (Unified) */}
           <Route path="partner-ecosystem" element={<PartnerEcosystemUnifiedPage />} />
           {/* Product Sub-Groups Manager */}
@@ -922,7 +884,6 @@ function App() {
                 <Navbar />
                 <main className="flex-1 pb-16 md:pb-0">
                   <Routes>
-                    <Route path="/old-home" element={<Landing />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/product/:productId" element={<ProductDetail />} />
                     <Route path="/customize/:productId" element={<Customize />} />

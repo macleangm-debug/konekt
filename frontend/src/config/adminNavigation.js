@@ -17,7 +17,7 @@ export const adminNavigation = [
       { label: "Orders", href: "/admin/orders", moduleKey: "sales" },
       { label: "Quotes", href: "/admin/quotes", moduleKey: "sales" },
       { label: "Invoices", href: "/admin/invoices", moduleKey: "finance" },
-      { label: "Payment Proofs", href: "/admin/payment-proofs", moduleKey: "finance" },
+      { label: "Payments", href: "/admin/payments", moduleKey: "finance" },
       { label: "Business Pricing Requests", href: "/admin/business-pricing-requests", moduleKey: "sales" },
     ],
   },

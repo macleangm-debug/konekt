@@ -18,7 +18,6 @@ const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
   { path: '/admin/settings-hub', label: 'Settings Hub', icon: Settings, moduleKey: 'settings', highlight: true },
   { path: '/admin/control-center', label: 'Control Center', icon: PanelTop, moduleKey: 'settings' },
-  { path: '/admin/catalog-setup', label: 'Catalog Setup', icon: Boxes, moduleKey: 'settings', highlight: true },
   { path: '/staff', label: 'Staff Workspace', icon: Briefcase, moduleKey: 'overview' },
   { path: '/admin/staff-performance', label: 'Staff Performance', icon: BarChart3, moduleKey: 'reports' },
   { path: '/admin/launch-readiness', label: 'Launch Readiness', icon: Zap, moduleKey: 'settings' },

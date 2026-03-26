@@ -8,6 +8,7 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Backend**: FastAPI + Motor (async MongoDB)
 - **Database**: MongoDB (`konekt_db`)
 - **PDF**: WeasyPrint HTML-to-PDF engine
+- **Navigation**: `adminNavigation.js` is the single source of truth for admin nav config
 
 ## What's Been Implemented
 
@@ -23,45 +24,46 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 ### Final UI Polish Pass (March 26, 2026) - DONE
 - Invoice Drawer: BrandLogo, status-aware PaymentStatusBlock
 - Invoice PDF: Zoho-level template with bank details, dynamic CFO signature/stamp
-- AI Widget hidden on transaction pages
 - Dynamic contact details in Admin Invoice Branding settings
 - Multi-page PDF layout support with @page CSS
 - Custom logo embedding in generated SVG stamps
 
 ### Canonical UI Reuse Consolidation (March 26, 2026) - DONE
-**Admin Pages Consolidated:**
-- `/admin/payments` (+ central-payments, payment-proofs, finance-queue) → PaymentsQueuePage (canonical Table+Drawer)
-- `/admin/orders` (+ orders-ops, orders-legacy) → OrdersPage with tabs (All, Awaiting Release, Released, Completed)
-- `/admin/quotes` → QuotesRequestsPage (unified quotes & requests)
-- `/admin/invoices` → InvoicesPage (action column removed, row click opens drawer)
+- All admin transaction pages use canonical Table+Drawer pattern
+- Date columns on the left, no action columns, newest-first sorting
+- Route consolidation: duplicate routes removed (253 → 239 routes)
+- Sidebar: "Payments Queue" → `/admin/payments`, Partner "My Orders"
 
-**Table Pattern Standardized:**
-- Date column on the left across all admin tables
-- Admin orders sorted newest first
-- Consistent column structure: Date → ID → Customer → Amount → Status
+### Route Cleanup (March 26, 2026) - DONE
+**Removed 14 duplicate/legacy routes:**
+- `/admin/orders-legacy`, `/admin/orders-ops` (→ `/admin/orders`)
+- `/admin/crm-old` (→ `/admin/crm`)
+- `/admin/quotes-old`, `/admin/quotes/kanban` (→ `/admin/quotes`)
+- `/admin/customers-old` (→ `/admin/customers`)
+- `/admin/central-payments`, `/admin/finance-queue`, `/admin/payment-proofs` (→ `/admin/payments`)
+- `/admin/setup`, `/admin/ux-overview`, `/admin/catalog-setup`, `/admin/partner-ecosystem-v2`
+- `/old-home`
 
-**Sidebar Updates:**
-- Admin: "Payments Queue" → /admin/payments (canonical route)
-- Partner: "Fulfillment Queue" → "My Orders"
+**Removed 16 dead imports** from App.js
 
-**Route Consolidation:**
-- `/account/orders` → OrdersPageV2
-- All duplicate payment routes → PaymentsQueuePage
-- All duplicate order routes → OrdersPage
+**Cleaned navigation configs:**
+- Deleted: `admin-sidebar-final-links.js`, `adminNavigationGroups.js`, `navigationAccess.js`
+- Kept: `adminNavigation.js` (single source of truth), `admin-sidebar-links.js` (audit page)
+- Updated `adminNavigation.js`: "Payment Proofs" → "Payments" at `/admin/payments`
+- Removed `/admin/catalog-setup` from AdminLayout sidebar
 
-**API Methods Added:**
-- `getPaymentsQueue`, `getPaymentDetail`, `approvePayment`, `rejectPayment`
-- `getOrderDetail`, `releaseToVendor`
-
-## Key API Endpoints
-- `POST /api/auth/login`, `POST /api/admin/auth/login`
-- `GET /api/admin/payments/queue`, `GET /api/admin/payments/{id}`, `POST /api/admin/payments/{id}/approve`, `POST /api/admin/payments/{id}/reject`
-- `GET /api/admin/orders/list`, `GET /api/admin/orders/{id}`, `POST /api/admin/orders/{id}/release-to-vendor`
-- `GET /api/admin/quotes/list`
-- `GET /api/admin/invoices/list`
-- `GET/POST /api/admin/settings/invoice-branding`
-- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/invoices/{id}/preview`
-- `GET /api/pdf/quotes/{id}`, `GET /api/pdf/orders/{id}`
+## Canonical Admin Routes
+| Business Area | Route | Component |
+|---|---|---|
+| Dashboard | `/admin` | AdminDashboardV2 |
+| CRM | `/admin/crm` | CRMPageV2 |
+| Quotes | `/admin/quotes` | QuotesRequestsPage |
+| Orders | `/admin/orders` | OrdersPage |
+| Invoices | `/admin/invoices` | InvoicesPage |
+| Payments | `/admin/payments` | PaymentsQueuePage |
+| Customers | `/admin/customers` | CustomersPageV2 |
+| Users | `/admin/users` | AdminUsers |
+| Settings | `/admin/settings-hub` | AdminSettingsHubPage |
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
