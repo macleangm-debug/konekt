@@ -46,15 +46,24 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 
 **Wide Profile Drawer (max-w-2xl) with 5 Tabs:**
 - Overview: 6 KPI cards + Profile + Sales Ownership + Referrals
-- Quotes: Recent quotes table
-- Invoices: Recent invoices table
-- Orders: Recent orders table
-- Notes: Internal notes
+- Quotes, Invoices, Orders, Notes tabs
 
 **APIs:**
 - `/api/admin/customers-360/stats` — Aggregate stats
 - `/api/admin/customers-360/list` — Customer list with computed status, search, status filter
 - `/api/admin/customers-360/{customer_id}` — Full 360 detail
+
+### Tabbed Business Settings Hub (March 26, 2026) - DONE
+**9-Tab Layout:**
+- Business Profile, Payment Details, Invoice Branding, Commercial Rules, Sales & Commissions, Affiliate & Referrals, Workflows & Vendors, Notifications, Launch Controls
+
+**New Components Integrated:**
+- **CustomerActivityRulesCard** in Commercial Rules tab — configurable Active Window (days), At Risk Window End (days), Default New Customer Status, 6 activity signal checkboxes (orders, invoices, quotes, requests, sales_notes, account_logins)
+- **GeneratedStampBuilder** in Invoice Branding tab — stamp shape/color/phrase/company name/city/registration/TIN with CSS quick preview + backend SVG generation
+- **SignaturePad** in Invoice Branding tab — canvas drawing tool with Upload Image / Draw Signature method toggle
+- Backend deep-merges defaults so new settings sections are always available
+- `customer_activity_rules` persisted via settings-hub state
+- `signature_method` (upload/pad) persisted in invoice branding settings
 
 ## Canonical Admin Routes
 | Route | Component |
