@@ -8,31 +8,33 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Backend**: FastAPI + Motor (async MongoDB)
 - **Database**: MongoDB (`konekt_db`)
 - **PDF**: WeasyPrint HTML-to-PDF engine + ReportLab
-- **Navigation**: `adminNavigation.js` is the single source of truth for admin nav config
 
 ## What's Been Implemented
 
 ### Core Platform (Complete)
-- Multi-role authentication (JWT), Product/Service/Promo catalogs
+- Multi-role auth (JWT), Product/Service/Promo catalogs
 - Shopping cart + checkout, Order/Invoice/Quote CRUD
 - Loyalty points, Affiliate system, Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes, Orders)
 
 ### Unified Auth System (March 26, 2026) - DONE
-- Single `/login` page for ALL roles (Customer, Admin, Partner)
+- Single `/login` for ALL roles (Customer, Admin, Partner)
 - Role-based routing: admin→`/admin`, partner→`/partner`, customer→`/dashboard`
 - `clearAllAuth()` clears ALL token keys on logout
-- `/admin/login` and `/partner-login` redirect to `/login`
 
 ### PDF Layout V2 — Cut-Off Fix (March 26, 2026) - DONE
-- **Combined payment-auth-section** grid: left content (bank/terms/sales) + right auth-column (signature stacked on stamp)
-- Stamp reduced to 88px, signature to 110x42px (prevents overflow)
-- `page-break-inside: avoid` on payment-auth-section, signature, stamp, footer, totals
-- Footer margin reduced (18px), thinner border (1px)
-- Applied to all 3 document types: Quote, Invoice, Order
-- Quote: Terms & Conditions (left) + Auth (right)
-- Invoice: Bank Transfer Details (left) + Auth (right)
-- Order: Sales Contact (left) + Auth (right)
+- Combined `payment-auth-section` grid: left content + right auth-column
+- Stamp 88px, signature 110x42px, page-break-inside:avoid
+- Applied to Quote, Invoice, Order
+
+### Sales Accounts & Order Enrichment (March 26, 2026) - DONE
+- **Backend**: `sales_orders_routes.py` — `/api/sales/orders` (list, filtered by sales user), `/api/sales/orders/{id}` (enriched detail)
+- **Backend**: `order_sales_enrichment_service.py` — enriches orders with real sales profile from `users` collection
+- **Admin orders also enriched** — existing `/api/admin/orders` and `/api/admin/orders/{id}` return `sales` object
+- **Frontend**: `SalesOrdersPageV2.jsx` at `/staff/orders` — Table+Drawer with status filters, search
+- **Frontend**: `SalesOrderDrawerV2.jsx` — Customer, Assigned Sales, Vendor, Line Items, Financials, Timeline
+- **PDF**: Order template uses real `sales` data instead of "Konekt Sales Team" placeholder
+- **Nav**: Staff sidebar includes "My Orders" link
 
 ### Tabbed Business Settings Hub - DONE
 - 9-Tab Layout with CustomerActivityRulesCard, GeneratedStampBuilder, SignaturePad
@@ -51,17 +53,10 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 
 ## Prioritized Backlog
 
-### P0 — Next Layer Ops (from ops pack)
-1. Customer Invoice Table enrichment (Date, Invoice No, Type, Amount, Payer, Status)
-2. Admin Order Auto-Assignment (sales + vendor on payment approval)
-3. Stored Notifications (real collection, bell icon, dashboard visibility)
-4. Shared Drawer Design System (MasterDrawerFrame)
-5. Sales Orders List + Drawer
-
 ### P1 — Upcoming
 - Connect live payment gateway (KwikPay/Stripe)
 - Final Launch Verification Checklist
-- Wire actual sales person data when assigned in admin
+- Next Layer Ops (Customer Invoice Table enrichment, Admin Order Auto-Assignment, Stored Notifications, Shared Drawer Design System)
 
 ### P2 — Future
 - Twilio WhatsApp credentials (blocked on user API keys)
