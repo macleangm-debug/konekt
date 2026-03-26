@@ -31,43 +31,41 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Vendor/Partner portal
 - PDF generation (Invoices, Quotes)
 
-### Final UI Polish Pass (March 26, 2026) ✅
-1. **Invoice Drawer Polish**: BrandLogo `md` size, status-aware PaymentStatusBlock (Paid in Full / Awaiting Payment with real bank details from .env)
-2. **AI Widget Hidden**: AIChatWidget suppressed on all transaction drawer pages (/dashboard/invoices, /dashboard/quotes, /dashboard/orders)
-3. **Invoice PDF Template**: Zoho-level design with status-aware payment block, real bank details from .env, CFO signature/stamp block on paid invoices
-4. **Quotes Page**: Refactored from card layout to master Table + Right Drawer pattern matching Invoices
-5. **Orders Page**: Polished to fully match master Table + Right Drawer pattern (removed Action column, added Amount column)
-6. **Payment Info API**: New `/api/public/payment-info` endpoint serving bank details from .env
+### Final UI Polish Pass (March 26, 2026) - COMPLETED
+1. **Invoice Drawer**: BrandLogo `md`, status-aware PaymentStatusBlock (Paid in Full / Awaiting Payment with real CRDB bank details)
+2. **Invoice PDF**: Zoho-level template with bank details, CFO signature/stamp on paid invoices
+3. **AI Widget Hidden**: On all transaction pages (/dashboard/invoices, /dashboard/quotes, /dashboard/orders)
+4. **Payment Info API**: `/api/public/payment-info` endpoint
 
-### Infrastructure
-- Unified `invoices` collection (v2 archived)
-- Unified BrandLogo system
-- Admin Orders/Invoices → Payment Queue Table+Drawer pattern
+### Quotes & Orders Full Rewrite (March 26, 2026) - COMPLETED
+**Quotes Page (Decision Stage):**
+- Table: Date, Quote No, Type, Amount, Valid Until, Status, Payment Status
+- Drawer: Customer Info, Quote Details (Prepared By, Valid Until), Line Items table, Totals
+- Actions: Accept/Reject/Download for pending quotes
+- Expiry countdown, Converted to Invoice indicator for accepted quotes
 
-## Acceptance Criteria Verified (13/13 Gates PASS)
-- Invoices table: Date, Invoice, Payer, Amount, Status columns
-- Sorted DESC by created_at
-- Drawer: bigger logo, status badge, Bill To, PaymentStatusBlock
-- Paid drawer: "Paid in Full" green
-- Pending drawer: "Awaiting Payment" + CRDB BANK details
-- Quotes table: Date, Quote, Items, Amount, Status
-- Quote drawer: logo, items, totals, download
-- Orders table: Date, Order, Amount, Payment, Fulfillment
-- Order drawer: logo, vendor, sales person, items
-- AI widget hidden on transaction pages
-- /api/public/payment-info returns .env bank details
-- PDF with status-aware payment + bank details
-- CFO signature block on paid PDFs
+**Orders Page (Fulfillment Tracking):**
+- Table: Date, Order No, Source, Amount, Payment, Fulfillment
+- Drawer sections:
+  1. Order Summary (linked Invoice/Quote)
+  2. Customer Details
+  3. **Assigned Sales Person** (PROMINENT - Call/Email/WhatsApp buttons)
+  4. Fulfillment/Vendor (small, not prominent)
+  5. Order Items / Work Details
+  6. Totals
+  7. Timeline (Order Created → Payment Approved → Vendor Assigned → Work Started → Completed)
+  8. "Need help?" → Call Sales / WhatsApp
+- NO payment buttons in Orders drawer
+
+### System Consistency Rules (Enforced)
+- All 3 pages: full table, no action column, click row → drawer, same logo header, same spacing
+- Page purposes locked: Quotes=Decision, Invoices=Payment, Orders=Fulfillment
 
 ## Key API Endpoints
 - `POST /api/auth/login` — JWT login
-- `GET /api/customer/invoices` — Customer invoices
-- `GET /api/customer/orders` — Customer orders
-- `GET /api/customer/quotes` — Customer quotes
+- `GET /api/customer/invoices`, `GET /api/customer/orders`, `GET /api/customer/quotes`
 - `GET /api/public/payment-info` — Bank details from .env
-- `GET /api/pdf/invoices/{id}` — Invoice PDF download
-- `GET /api/pdf/quotes/{id}` — Quote PDF download
-- `GET /api/admin/payment-settings` — Admin payment config
+- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/quotes/{id}` — PDF download
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
