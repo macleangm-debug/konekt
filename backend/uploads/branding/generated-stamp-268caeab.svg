@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    <path id="topArc" d="M 30,120 a 90,90 0 1,1 180,0" fill="none"/>
+    <path id="bottomArc" d="M 210,120 a 90,90 0 1,1 -180,0" fill="none"/>
+  </defs>
+  <circle cx="120" cy="120" r="112" fill="none" stroke="#b91c1c" stroke-width="3"/>
+  <circle cx="120" cy="120" r="100" fill="none" stroke="#b91c1c" stroke-width="1.5"/>
+  <text fill="#b91c1c" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">TEST RED COMPANY</textPath>
+  </text>
+  <text fill="#b91c1c" font-family="Arial,sans-serif" font-size="11" letter-spacing="1.5">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle"></textPath>
+  </text>
+  <text x="120" y="112" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="9" font-weight="600">Official Company Stamp</text>
+  <text x="120" y="128" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="8"></text>
+  <text x="120" y="142" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="8"></text>
+</svg>

@@ -5,6 +5,7 @@ import SettingsNumberField from "../../components/admin/settings/SettingsNumberF
 import SettingsToggleField from "../../components/admin/settings/SettingsToggleField";
 import SettingsSelectField from "../../components/admin/settings/SettingsSelectField";
 import SettingsTextField from "../../components/admin/settings/SettingsTextField";
+import InvoiceBrandingSettings from "../../components/admin/settings/InvoiceBrandingSettings";
 
 const defaultState = {
   commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18 },
@@ -130,6 +131,10 @@ export default function AdminSettingsHubPage() {
           <SettingsToggleField label="Show on invoice" checked={state.payment_accounts.show_on_invoice} onChange={(v) => setState({ ...state, payment_accounts: { ...state.payment_accounts, show_on_invoice: v } })} />
           <SettingsToggleField label="Show on checkout" checked={state.payment_accounts.show_on_checkout} onChange={(v) => setState({ ...state, payment_accounts: { ...state.payment_accounts, show_on_checkout: v } })} />
         </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Invoice Branding & Authorization" description="Configure CFO signature, company stamp, and invoice authorization appearance.">
+        <InvoiceBrandingSettings />
       </SettingsSectionCard>
 
       <SettingsSectionCard title="Progress Workflows" description="Make sure customer-facing status remains safe and clear.">

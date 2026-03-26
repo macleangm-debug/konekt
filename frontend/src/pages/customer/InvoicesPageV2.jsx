@@ -72,7 +72,7 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
   );
 }
 
-function InvoiceDrawer({ invoice, onClose, bankInfo }) {
+function InvoiceDrawer({ invoice, onClose, bankInfo, branding }) {
   if (!invoice) return null;
   const status = statusMeta(invoice);
   const action = getActionConfig(invoice);
@@ -176,6 +176,36 @@ function InvoiceDrawer({ invoice, onClose, bankInfo }) {
             </div>
           )}
 
+          {/* Light branding preview for finalized invoices */}
+          {isPaid(invoice) && branding && (branding.show_signature || branding.show_stamp) && (
+            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/30 flex gap-6" data-testid="branding-preview">
+              {branding.show_signature && (
+                <div className="flex-1">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Authorized by</div>
+                  {branding.cfo_signature_url ? (
+                    <img src={`${API_URL}${branding.cfo_signature_url}`} alt="Signature" className="h-8 object-contain mb-1 opacity-60" />
+                  ) : (
+                    <div className="h-8 border-b border-slate-300 mb-1" />
+                  )}
+                  <div className="text-xs font-semibold text-[#20364D]">{branding.cfo_name || "CFO"}</div>
+                  <div className="text-[10px] text-slate-400">{branding.cfo_title || "Chief Finance Officer"}</div>
+                </div>
+              )}
+              {branding.show_stamp && (
+                <div className="flex-1 flex flex-col items-center">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Company Stamp</div>
+                  {branding.stamp_uploaded_url ? (
+                    <img src={`${API_URL}${branding.stamp_uploaded_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
+                  ) : branding.stamp_preview_url ? (
+                    <img src={`${API_URL}${branding.stamp_preview_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
+                  ) : (
+                    <div className="w-14 h-14 border border-dashed border-slate-200 rounded-full" />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-3 pt-2">
             <button
               type="button"
@@ -219,6 +249,7 @@ export default function InvoicesPageV2() {
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [bankInfo, setBankInfo] = useState(null);
+  const [branding, setBranding] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
@@ -232,6 +263,7 @@ export default function InvoicesPageV2() {
       .finally(() => setLoading(false));
 
     axios.get(`${API_URL}/api/public/payment-info`).then(r => setBankInfo(r.data)).catch(() => {});
+    axios.get(`${API_URL}/api/admin/settings/invoice-branding`).then(r => setBranding(r.data)).catch(() => {});
   }, []);
 
   const filteredInvoices = useMemo(() => invoices.filter((invoice) => {
@@ -295,7 +327,7 @@ export default function InvoicesPageV2() {
         </div>
       </div>
 
-      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} bankInfo={bankInfo} />
+      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} bankInfo={bankInfo} branding={branding} />
     </div>
   );
 }

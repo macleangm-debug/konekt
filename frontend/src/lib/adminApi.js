@@ -117,6 +117,23 @@ export const adminApi = {
   // Points Management
   getPointsWallets: () => api.get("/api/admin/points/wallets"),
   getPointsTransactions: () => api.get("/api/admin/points/transactions"),
+
+  // Business Settings sections
+  getBusinessProfile: () => api.get("/api/admin/settings/business-profile"),
+  updateBusinessProfile: (payload) => api.post("/api/admin/settings/business-profile", payload),
+  getCommercialRules: () => api.get("/api/admin/settings/commercial-rules"),
+  updateCommercialRules: (payload) => api.post("/api/admin/settings/commercial-rules", payload),
+  getAffiliateDefaults: () => api.get("/api/admin/settings/affiliate-defaults"),
+  updateAffiliateDefaults: (payload) => api.post("/api/admin/settings/affiliate-defaults", payload),
+  getNotificationSettings: () => api.get("/api/admin/settings/notifications"),
+  updateNotificationSettings: (payload) => api.post("/api/admin/settings/notifications", payload),
+
+  // Invoice Branding & Authorization
+  getInvoiceBranding: () => api.get("/api/admin/settings/invoice-branding"),
+  saveInvoiceBranding: (payload) => api.post("/api/admin/settings/invoice-branding", payload),
+  uploadSignature: (formData) => api.post("/api/admin/settings/invoice-branding/signature-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  uploadStamp: (formData) => api.post("/api/admin/settings/invoice-branding/stamp-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  generateStamp: (payload) => api.post("/api/admin/settings/invoice-branding/generate-stamp", payload),
 };
 
 export default adminApi;

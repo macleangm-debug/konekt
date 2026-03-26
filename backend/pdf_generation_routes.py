@@ -115,9 +115,10 @@ def render_quote_html(quote: dict):
     '''
 
 
-def render_invoice_html(invoice: dict):
+def render_invoice_html(invoice: dict, branding: dict = None):
     """Generate branded Zoho-level HTML invoice with status-aware payment block and CFO signature."""
     bank = _env_bank()
+    branding = branding or {}
 
     items_html = ""
     if invoice.get("items"):
@@ -213,21 +214,63 @@ def render_invoice_html(invoice: dict):
       </div>
     </div>'''
 
-    # CFO signature block — only on paid/finalized invoices
+    # CFO signature block — driven by branding settings
     signature_html = ""
-    if payment_status_raw in ("paid", "under_review"):
-        signature_html = f'''
-    <div style="display:flex; gap:24px; margin-top:36px;">
+    show_sig = branding.get("show_signature", False)
+    show_stamp = branding.get("show_stamp", False)
+    is_finalized = payment_status_raw in ("paid", "under_review", "issued")
+
+    if is_finalized and (show_sig or show_stamp):
+        cfo_name = branding.get("cfo_name", "")
+        cfo_title = branding.get("cfo_title", "Chief Finance Officer")
+        sig_url = branding.get("cfo_signature_url", "")
+
+        # Resolve stamp image/svg
+        stamp_mode = branding.get("stamp_mode", "generated")
+        stamp_preview_url = branding.get("stamp_preview_url", "")
+        stamp_uploaded_url = branding.get("stamp_uploaded_url", "")
+
+        sig_block = ""
+        if show_sig:
+            sig_img = ""
+            if sig_url:
+                sig_img = f'<img src="file:///app/backend{sig_url}" style="height:50px; object-fit:contain; margin-bottom:12px;" />'
+            else:
+                sig_img = '<div style="height:50px; border-bottom:2px solid #d7e3ee; margin:24px 0 12px 0;"></div>'
+            sig_block = f'''
       <div style="flex:1; border:1px solid #d7e3ee; border-radius:12px; padding:18px; min-height:140px; background:#fff;">
         <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6e7f99; font-weight:700; margin-bottom:14px;">Authorized by</div>
-        <div style="height:50px; border-bottom:2px solid #d7e3ee; margin:24px 0 12px 0;"></div>
-        <div style="font-size:14px; color:#183153; font-weight:700;">Chief Finance Officer</div>
-        <div style="font-size:12px; color:#6e7f99;">Konekt Limited</div>
-      </div>
+        {sig_img}
+        <div style="font-size:14px; color:#183153; font-weight:700;">{cfo_name or "Chief Finance Officer"}</div>
+        <div style="font-size:12px; color:#6e7f99;">{cfo_title}</div>
+      </div>'''
+
+        stamp_block = ""
+        if show_stamp:
+            stamp_content = ""
+            if stamp_mode == "uploaded" and stamp_uploaded_url:
+                stamp_content = f'<img src="file:///app/backend{stamp_uploaded_url}" style="width:90px; height:90px; object-fit:contain; margin:12px auto 0 auto;" />'
+            elif stamp_mode == "generated" and stamp_preview_url:
+                # Read SVG from file
+                svg_path = f"/app/backend{stamp_preview_url}"
+                try:
+                    with open(svg_path, "r") as f:
+                        stamp_content = f.read()
+                except Exception:
+                    stamp_content = '<div style="width:90px; height:90px; border:2px dashed #d7e3ee; border-radius:50%; margin:12px auto 0 auto;"></div>'
+            else:
+                stamp_content = '<div style="width:90px; height:90px; border:2px dashed #d7e3ee; border-radius:50%; margin:12px auto 0 auto;"></div>'
+
+            stamp_block = f'''
       <div style="flex:1; border:1px solid #d7e3ee; border-radius:12px; padding:18px; min-height:140px; background:#fff; text-align:center;">
         <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6e7f99; font-weight:700; margin-bottom:14px;">Company Stamp</div>
-        <div style="width:90px; height:90px; border:2px dashed #d7e3ee; border-radius:50%; margin:12px auto 0 auto;"></div>
-      </div>
+        {stamp_content}
+      </div>'''
+
+        signature_html = f'''
+    <div style="display:flex; gap:24px; margin-top:36px;">
+      {sig_block}
+      {stamp_block}
     </div>'''
 
     return f'''<!DOCTYPE html>
@@ -364,7 +407,8 @@ async def download_invoice_pdf(invoice_id: str, request: Request):
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    pdf_io = html_to_pdf_bytes(render_invoice_html(invoice))
+    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    pdf_io = html_to_pdf_bytes(render_invoice_html(invoice, branding=branding))
     filename = f'Invoice-{invoice.get("invoice_number", str(invoice.get("_id", ""))[:8])}.pdf'
     return StreamingResponse(
         pdf_io,
@@ -398,4 +442,5 @@ async def invoice_html_preview(invoice_id: str, request: Request):
         invoice = await db.invoices.find_one({"invoice_number": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    return HTMLResponse(render_invoice_html(invoice))
+    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    return HTMLResponse(render_invoice_html(invoice, branding=branding))

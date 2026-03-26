@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect x="10" y="10" width="220" height="220" rx="8" fill="none" stroke="#b91c1c" stroke-width="3"/>
+  <rect x="18" y="18" width="204" height="204" rx="4" fill="none" stroke="#b91c1c" stroke-width="1"/>
+  <text x="120" y="60" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="1">TEST SQUARE COMPANY</text>
+  <line x1="40" y1="72" x2="200" y2="72" stroke="#b91c1c" stroke-width="0.8"/>
+  <text x="120" y="100" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="10">REG-SQ-001</text>
+  <text x="120" y="118" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="10">TIN-SQ-002</text>
+  <text x="120" y="148" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="11" font-weight="600">Square Stamp</text>
+  <line x1="40" y1="162" x2="200" y2="162" stroke="#b91c1c" stroke-width="0.8"/>
+  <text x="120" y="185" text-anchor="middle" fill="#b91c1c" font-family="Arial,sans-serif" font-size="10">Arusha</text>
+</svg>

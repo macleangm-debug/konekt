@@ -2603,6 +2603,9 @@ app.include_router(multi_request_router)
 from public_payment_info_routes import router as public_payment_info_router
 app.include_router(public_payment_info_router)
 
+from invoice_branding_routes import router as invoice_branding_router
+app.include_router(invoice_branding_router)
+
 
 
 
