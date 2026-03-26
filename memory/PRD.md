@@ -13,63 +13,50 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 ## What's Been Implemented
 
 ### Core Platform (Complete)
-- Multi-role authentication (JWT)
-- Product/Service/Promo catalogs, Shopping cart + checkout
-- Order/Invoice/Quote creation & management
-- Loyalty points, Affiliate system
-- Admin/Vendor/Customer dashboards
+- Multi-role authentication (JWT), Product/Service/Promo catalogs
+- Shopping cart + checkout, Order/Invoice/Quote CRUD
+- Loyalty points, Affiliate system, Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes, Orders)
 
 ### Unified Auth System (March 26, 2026) - DONE
 - Single `/login` page for ALL roles (Customer, Admin, Partner)
-- Backend `/api/auth/login` checks both `users` AND `partner_users` collections
 - Role-based routing: admin→`/admin`, partner→`/partner`, customer→`/dashboard`
-- `clearAllAuth()` helper clears ALL token keys on logout
+- `clearAllAuth()` clears ALL token keys on logout
 - `/admin/login` and `/partner-login` redirect to `/login`
-- Fixed: Logout bug where `konekt_token` was not cleared, causing auto-redirect back
 
-### PDF Layout & Auth Block Overhaul (March 26, 2026) - DONE
-- Page width constrained to 794px (print-safe A4) with overflow:hidden
-- table-layout:fixed, doc-title max-width:280px
-- Signature+stamp settings-driven (not status-dependent) for Quotes, Invoices, Orders
-- Applied across all PDF systems
+### PDF Layout V2 — Cut-Off Fix (March 26, 2026) - DONE
+- **Combined payment-auth-section** grid: left content (bank/terms/sales) + right auth-column (signature stacked on stamp)
+- Stamp reduced to 88px, signature to 110x42px (prevents overflow)
+- `page-break-inside: avoid` on payment-auth-section, signature, stamp, footer, totals
+- Footer margin reduced (18px), thinner border (1px)
+- Applied to all 3 document types: Quote, Invoice, Order
+- Quote: Terms & Conditions (left) + Auth (right)
+- Invoice: Bank Transfer Details (left) + Auth (right)
+- Order: Sales Contact (left) + Auth (right)
 
-### Tabbed Business Settings Hub (March 26, 2026) - DONE
+### Tabbed Business Settings Hub - DONE
 - 9-Tab Layout with CustomerActivityRulesCard, GeneratedStampBuilder, SignaturePad
 
 ### Customers CRM Page - DONE
 - Stats Cards, Computed Status, Wide Profile Drawer with 5 Tabs
 
 ### Route Cleanup & Canonical Consolidation - DONE
-- 14+ duplicate/legacy routes removed
-- All admin transaction pages use canonical Table+Drawer pattern
-
-## Canonical Admin Routes
-| Route | Component |
-|---|---|
-| `/admin` | AdminDashboardV2 |
-| `/admin/crm` | CRMPageV2 |
-| `/admin/quotes` | QuotesRequestsPage |
-| `/admin/orders` | OrdersPage |
-| `/admin/invoices` | InvoicesPage |
-| `/admin/payments` | PaymentsQueuePage |
-| `/admin/customers` | CustomersPageMerged |
-| `/admin/users` | AdminUsers |
-| `/admin/settings-hub` | AdminSettingsHubPage |
-
-## Auth Flow
-- **Single login URL**: `/login` for all users
-- **Customer** → `konekt_token` → `/dashboard`
-- **Admin** → `konekt_admin_token` → `/admin`
-- **Partner** → `partner_token` → `/partner`
-- **Logout**: `clearAllAuth()` removes all token keys
+- 14+ legacy routes removed, canonical Table+Drawer pattern
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Vendor: `demo.partner@konekt.com` / `Partner123!`
+- **Single login URL**: `/login` for all roles
 
 ## Prioritized Backlog
+
+### P0 — Next Layer Ops (from ops pack)
+1. Customer Invoice Table enrichment (Date, Invoice No, Type, Amount, Payer, Status)
+2. Admin Order Auto-Assignment (sales + vendor on payment approval)
+3. Stored Notifications (real collection, bell icon, dashboard visibility)
+4. Shared Drawer Design System (MasterDrawerFrame)
+5. Sales Orders List + Drawer
 
 ### P1 — Upcoming
 - Connect live payment gateway (KwikPay/Stripe)
