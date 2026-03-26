@@ -1226,6 +1226,10 @@ async def get_all_orders(
         customer = await db.users.find_one({"id": order.get("user_id")}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
         order["customer"] = customer
     
+    # Enrich with real sales data
+    from order_sales_enrichment_service import enrich_orders_batch
+    await enrich_orders_batch(orders, db)
+    
     return {
         "orders": orders,
         "total": total,
@@ -1256,6 +1260,10 @@ async def get_order_details(order_id: str, user: dict = Depends(get_admin_user))
     customer = await db.users.find_one({"id": order.get("user_id")}, {"_id": 0, "password_hash": 0})
     order["customer"] = customer
     order["available_statuses"] = ORDER_STATUSES
+    
+    # Enrich with real sales data
+    from order_sales_enrichment_service import enrich_order_with_sales
+    await enrich_order_with_sales(order, db)
     
     return order
 
@@ -2414,6 +2422,10 @@ app.include_router(invoice_payment_router)
 # Sales Queue
 from sales_queue_routes import router as sales_queue_router
 app.include_router(sales_queue_router)
+
+# Sales Orders (role-filtered order list for sales team)
+from sales_orders_routes import router as sales_orders_router
+app.include_router(sales_orders_router)
 
 # Payment Timeline
 from payment_timeline_routes import router as payment_timeline_router

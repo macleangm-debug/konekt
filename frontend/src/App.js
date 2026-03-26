@@ -198,6 +198,9 @@ import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
 
+// Sales Orders
+import SalesOrdersPageV2 from "@/pages/staff/SalesOrdersPageV2";
+
 // Final Operations + Growth Pack
 import AffiliatePerformancePage from "@/pages/partner/AffiliatePerformancePage";
 import AffiliatePerformanceGovernancePage from "@/pages/admin/AffiliatePerformanceGovernancePage";
@@ -804,6 +807,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <SalesCommissionDashboardPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/orders" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesOrdersPageV2 />
             </AdminRoute>
           </AdminAuthProvider>
         } />

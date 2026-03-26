@@ -423,8 +423,11 @@ def render_order_html(order: dict, branding: dict = None):
     address = delivery.get("address_line", "")
 
     sales_name = order.get("assigned_sales_name") or "Konekt Sales Team"
-    sales_phone = order.get("sales_phone") or "+255 XXX XXX XXX"
-    sales_email = order.get("sales_email") or "sales@konekt.co.tz"
+    sales_data = order.get("sales", {})
+    if sales_data.get("name"):
+        sales_name = sales_data["name"]
+    sales_phone = sales_data.get("phone") or order.get("sales_phone") or "+255 XXX XXX XXX"
+    sales_email = sales_data.get("email") or order.get("sales_email") or "sales@konekt.co.tz"
 
     order_info = f'''<div class="section-label">Order Summary</div>
       <div class="client-detail">
