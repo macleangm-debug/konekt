@@ -14,54 +14,60 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 
 ### Core Platform (Complete)
 - Multi-role authentication (JWT)
-- Product/Service/Promo catalogs
-- Shopping cart + checkout
+- Product/Service/Promo catalogs, Shopping cart + checkout
 - Order/Invoice/Quote creation & management
 - Loyalty points, Affiliate system
 - Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes, Orders)
 
 ### Final UI Polish Pass (March 26, 2026) - DONE
-- Invoice Drawer: BrandLogo, status-aware PaymentStatusBlock
-- Invoice PDF: Zoho-level template with bank details, dynamic CFO signature/stamp
-- Dynamic contact details in Admin Invoice Branding settings
-- Multi-page PDF layout support with @page CSS
+- Invoice PDF: Zoho-level template with dynamic CFO signature/stamp
+- Dynamic contact details + multi-page PDF support
 - Custom logo embedding in generated SVG stamps
 
-### Canonical UI Reuse Consolidation (March 26, 2026) - DONE
+### Route Cleanup & Canonical Consolidation (March 26, 2026) - DONE
+- Removed 14+ duplicate/legacy routes
 - All admin transaction pages use canonical Table+Drawer pattern
-- Date columns on the left, no action columns, newest-first sorting
+- Single navigation source of truth
 
-### Route Cleanup (March 26, 2026) - DONE
-- Removed 14+ duplicate/legacy routes (253 → ~225 routes)
-- Cleaned dead imports and orphaned config files
-- Canonical routes: /admin/payments, /admin/orders, /admin/quotes, /admin/invoices, /admin/customers
+### Customers CRM Page (March 26, 2026) - DONE
+**Stats Cards (top):**
+- Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders
+- Clickable cards filter the table
 
-### Merged Customers Page (March 26, 2026) - DONE
-**Replaced separate Customers + Customer Accounts with one canonical page:**
-- `/admin/customers` → `CustomersPageMerged` (table + drawer)
-- Table: Recent Activity, Customer, Email, Company, Type (business/individual), Orders, Invoices, Sales, Status
-- Drawer: Customer 360 view with:
-  - KPI cards (Quotes, Invoices, Orders, Unpaid)
-  - Profile (type, phone, address, referral code, points, credit balance)
-  - Sales Ownership (assigned sales person with contact details)
-  - Recent Quotes, Invoices, Orders with amounts and status badges
-  - Internal Notes
-- Backend: `/api/admin/customers-360/list` and `/api/admin/customers-360/{customer_id}`
-- Removed `/admin/customer-accounts` route and sidebar link
+**Computed Customer Status:**
+- Active = commercial activity in last 30 days
+- At Risk = activity 31-90 days ago
+- Inactive = no activity in 90+ days
+- Computed from latest order/invoice/quote dates
+
+**Customer Table:**
+- Recent Activity, Customer, Email, Company, Type, Orders, Invoices, Sales, Status
+
+**Wide Profile Drawer (max-w-2xl) with 5 Tabs:**
+- Overview: 6 KPI cards + Profile + Sales Ownership + Referrals
+- Quotes: Recent quotes table
+- Invoices: Recent invoices table
+- Orders: Recent orders table
+- Notes: Internal notes
+
+**APIs:**
+- `/api/admin/customers-360/stats` — Aggregate stats
+- `/api/admin/customers-360/list` — Customer list with computed status, search, status filter
+- `/api/admin/customers-360/{customer_id}` — Full 360 detail
 
 ## Canonical Admin Routes
-| Business Area | Route | Component |
-|---|---|---|
-| Dashboard | `/admin` | AdminDashboardV2 |
-| CRM | `/admin/crm` | CRMPageV2 |
-| Quotes | `/admin/quotes` | QuotesRequestsPage |
-| Orders | `/admin/orders` | OrdersPage |
-| Invoices | `/admin/invoices` | InvoicesPage |
-| Payments | `/admin/payments` | PaymentsQueuePage |
-| Customers | `/admin/customers` | CustomersPageMerged |
-| Users | `/admin/users` | AdminUsers |
-| Settings | `/admin/settings-hub` | AdminSettingsHubPage |
+| Route | Component |
+|---|---|
+| `/admin` | AdminDashboardV2 |
+| `/admin/crm` | CRMPageV2 |
+| `/admin/quotes` | QuotesRequestsPage |
+| `/admin/orders` | OrdersPage |
+| `/admin/invoices` | InvoicesPage |
+| `/admin/payments` | PaymentsQueuePage |
+| `/admin/customers` | CustomersPageMerged |
+| `/admin/users` | AdminUsers |
+| `/admin/settings-hub` | AdminSettingsHubPage |
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
