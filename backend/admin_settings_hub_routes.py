@@ -112,6 +112,19 @@ DEFAULT_SETTINGS = {
         "bank_only_payments": True,
         "audit_notifications_enabled": True,
     },
+    "customer_activity_rules": {
+        "active_days": 30,
+        "at_risk_days": 90,
+        "default_new_customer_status": "active",
+        "signals": {
+            "orders": True,
+            "invoices": True,
+            "quotes": True,
+            "requests": True,
+            "sales_notes": True,
+            "account_logins": False,
+        },
+    },
     "updated_at": None,
 }
 
@@ -121,7 +134,17 @@ async def get_settings_hub(request: Request):
     row = await db.admin_settings.find_one({"key": "settings_hub"})
     if not row:
         return DEFAULT_SETTINGS
-    return row.get("value", DEFAULT_SETTINGS)
+    stored = row.get("value", {})
+    # Deep merge with defaults so new fields are always present
+    merged = {}
+    for k, v in DEFAULT_SETTINGS.items():
+        if isinstance(v, dict) and isinstance(stored.get(k), dict):
+            merged[k] = {**v, **stored[k]}
+        elif k in stored:
+            merged[k] = stored[k]
+        else:
+            merged[k] = v
+    return merged
 
 @router.put("")
 async def update_settings_hub(payload: dict, request: Request):

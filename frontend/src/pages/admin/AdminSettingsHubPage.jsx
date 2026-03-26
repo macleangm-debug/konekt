@@ -7,6 +7,7 @@ import SettingsToggleField from "../../components/admin/settings/SettingsToggleF
 import SettingsSelectField from "../../components/admin/settings/SettingsSelectField";
 import SettingsTextField from "../../components/admin/settings/SettingsTextField";
 import InvoiceBrandingSettings from "../../components/admin/settings/InvoiceBrandingSettings";
+import CustomerActivityRulesCard from "../../components/admin/settings/CustomerActivityRulesCard";
 
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
@@ -35,6 +36,7 @@ const defaultState = {
   numbering_rules: { sku_auto_numbering_enabled: true, quote_format: "KON-QT-[YY]-[SEQ]", invoice_format: "KON-IN-[YY]-[SEQ]", order_format: "KON-OR-[YY]-[SEQ]" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
   business_profile: { legal_name: "KONEKT LIMITED", brand_name: "Konekt", support_email: "support@konekt.co.tz", support_phone: "+255 XXX XXX XXX", business_address: "Dar es Salaam, Tanzania", tax_id: "", vat_number: "" },
+  customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
 };
 
 function U(state, section, field, value) {
@@ -209,6 +211,12 @@ function CommercialTab({ state, setState }) {
           <SettingsToggleField label="Service margin override" checked={m.allow_service_margin_override} onChange={(v) => setState(U(state, "margin_rules", "allow_service_margin_override", v))} />
           <SettingsToggleField label="Below-minimum requires admin override" checked={m.pricing_below_minimum_margin_requires_admin_override} onChange={(v) => setState(U(state, "margin_rules", "pricing_below_minimum_margin_requires_admin_override", v))} />
         </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Customer Activity Rules" description="Control how the CRM computes Active, At Risk, and Inactive customer status.">
+        <CustomerActivityRulesCard
+          value={state.customer_activity_rules}
+          onChange={(v) => setState((prev) => ({ ...prev, customer_activity_rules: v }))}
+        />
       </SettingsSectionCard>
       <SettingsSectionCard title="Promotions" description="Safe public and affiliate campaign controls.">
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">

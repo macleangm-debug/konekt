@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import adminApi from "../../../lib/adminApi";
 import { Save, CheckCircle, RefreshCw, Upload, Trash2 } from "lucide-react";
+import SignaturePad from "./SignaturePad";
+import GeneratedStampBuilder from "./GeneratedStampBuilder";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -10,6 +12,7 @@ const DEFAULTS = {
   cfo_name: "",
   cfo_title: "Chief Finance Officer",
   cfo_signature_url: "",
+  signature_method: "upload",
   stamp_mode: "generated",
   stamp_shape: "circle",
   stamp_color: "blue",
@@ -167,9 +170,44 @@ export default function InvoiceBrandingSettings() {
         </div>
       </div>
 
-      {/* Signature Upload */}
+      {/* Signature Upload / Pad */}
       {form.show_signature && (
-        <ImageUpload label="CFO Signature (PNG preferred)" url={form.cfo_signature_url} onUpload={handleSigUpload} onClear={() => up("cfo_signature_url", "")} />
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => up("signature_method", "upload")}
+              data-testid="sig-method-upload"
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                (form.signature_method || "upload") === "upload"
+                  ? "border-[#20364D] bg-[#20364D]/5 text-[#20364D]"
+                  : "border-slate-200 text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Upload Image
+            </button>
+            <button
+              type="button"
+              onClick={() => up("signature_method", "pad")}
+              data-testid="sig-method-pad"
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                form.signature_method === "pad"
+                  ? "border-[#20364D] bg-[#20364D]/5 text-[#20364D]"
+                  : "border-slate-200 text-slate-500 hover:bg-slate-50"
+              }`}
+            >
+              Draw Signature
+            </button>
+          </div>
+          {form.signature_method === "pad" ? (
+            <SignaturePad
+              existingUrl={form.cfo_signature_url ? `${API_URL}${form.cfo_signature_url}` : null}
+              onSave={(dataUrl) => up("cfo_signature_url", dataUrl)}
+            />
+          ) : (
+            <ImageUpload label="CFO Signature (PNG preferred)" url={form.cfo_signature_url} onUpload={handleSigUpload} onClear={() => up("cfo_signature_url", "")} />
+          )}
+        </div>
       )}
 
       {/* Company Stamp */}
@@ -184,29 +222,28 @@ export default function InvoiceBrandingSettings() {
 
           {form.stamp_mode === "generated" ? (
             <>
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <Field label="Shape" value={form.stamp_shape} onChange={v => up("stamp_shape", v)} type="select"
-                  options={[{ value: "circle", label: "Circle" }, { value: "square", label: "Square" }]} />
-                <Field label="Color" value={form.stamp_color} onChange={v => up("stamp_color", v)} type="select"
-                  options={[{ value: "blue", label: "Blue" }, { value: "red", label: "Red" }, { value: "black", label: "Black" }]} />
-                <Field label="Stamp Phrase" value={form.stamp_phrase} onChange={v => up("stamp_phrase", v)} placeholder="Official Company Stamp" />
-              </div>
-              <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <Field label="Company Legal Name" value={form.stamp_text_primary} onChange={v => up("stamp_text_primary", v)} required />
-                <Field label="City / Country" value={form.stamp_text_secondary} onChange={v => up("stamp_text_secondary", v)} />
-                <Field label="Registration Number" value={form.stamp_registration_number} onChange={v => up("stamp_registration_number", v)} />
-                <Field label="TIN / Tax Number" value={form.stamp_tax_number} onChange={v => up("stamp_tax_number", v)} />
-              </div>
-              <div className="flex items-center gap-6">
+              <GeneratedStampBuilder
+                value={{
+                  stamp_shape: form.stamp_shape,
+                  stamp_color: form.stamp_color,
+                  stamp_text_primary: form.stamp_text_primary,
+                  stamp_text_secondary: form.stamp_text_secondary,
+                  stamp_registration_number: form.stamp_registration_number,
+                  stamp_tax_number: form.stamp_tax_number,
+                  stamp_phrase: form.stamp_phrase,
+                }}
+                onChange={(stampValues) => setForm((p) => ({ ...p, ...stampValues }))}
+              />
+              <div className="flex items-center gap-6 mt-2">
                 <button onClick={generateStamp} disabled={generating} data-testid="generate-stamp-btn"
                   className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition-colors">
-                  <RefreshCw className={`w-4 h-4 ${generating ? "animate-spin" : ""}`} /> {generating ? "Generating..." : "Preview Stamp"}
+                  <RefreshCw className={`w-4 h-4 ${generating ? "animate-spin" : ""}`} /> {generating ? "Generating..." : "Generate SVG Preview"}
                 </button>
                 <div className="w-28 h-28">
                   {stampSvg ? (
                     <div dangerouslySetInnerHTML={{ __html: stampSvg }} />
                   ) : (
-                    <div className={`w-full h-full border-2 border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-300 ${form.stamp_shape === "circle" ? "rounded-full" : "rounded-xl"}`}>Click Preview</div>
+                    <div className={`w-full h-full border-2 border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-300 ${form.stamp_shape === "circle" ? "rounded-full" : "rounded-xl"}`}>Click Generate</div>
                   )}
                 </div>
               </div>
@@ -224,7 +261,7 @@ export default function InvoiceBrandingSettings() {
           <div className="flex-1">
             <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1 font-semibold">Authorized by</div>
             {form.show_signature && form.cfo_signature_url ? (
-              <img src={`${API_URL}${form.cfo_signature_url}`} alt="sig" className="h-10 object-contain mb-1 opacity-60" />
+              <img src={form.cfo_signature_url.startsWith("data:") ? form.cfo_signature_url : `${API_URL}${form.cfo_signature_url}`} alt="sig" className="h-10 object-contain mb-1 opacity-60" />
             ) : (
               <div className="h-10 border-b-2 border-slate-300 mb-1" />
             )}

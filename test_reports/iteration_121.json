@@ -1,0 +1,98 @@
+{
+  "summary": "Settings Hub new features testing completed. All 9 backend tests pass. All frontend UI features verified working correctly. New features: CustomerActivityRulesCard in Commercial Rules tab (active_days=30, at_risk_days=90, 6 signal checkboxes), GeneratedStampBuilder in Invoice Branding tab (shape, color, phrase, company name, city, reg number, TIN), SignaturePad with Upload/Draw method toggle, Generate SVG Preview button producing professional stamps.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_settings_hub_new_features.py",
+    "/app/test_reports/pytest/pytest_results_settings_hub_new_features.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_settings_hub_new_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Settings Hub new features complete. CustomerActivityRulesCard in Commercial Rules tab with active_days, at_risk_days, default_new_customer_status, and 6 signal checkboxes. GeneratedStampBuilder in Invoice Branding tab with stamp_shape, stamp_color, stamp_phrase, stamp_text_primary, stamp_text_secondary, stamp_registration_number, stamp_tax_number. SignaturePad with upload/pad method toggle. Generate SVG Preview button creates professional stamps with company logo.",
+  "features_verified": {
+    "GET /api/admin/settings-hub": {
+      "status": "PASS",
+      "details": "Returns all settings including customer_activity_rules section with active_days=30, at_risk_days=90, signals object"
+    },
+    "PUT /api/admin/settings-hub": {
+      "status": "PASS",
+      "details": "Persists customer_activity_rules changes correctly"
+    },
+    "GET /api/admin/settings/invoice-branding": {
+      "status": "PASS",
+      "details": "Returns signature_method field (upload/pad) and all stamp fields"
+    },
+    "POST /api/admin/settings/invoice-branding": {
+      "status": "PASS",
+      "details": "Persists signature_method and stamp settings"
+    },
+    "POST /api/admin/settings/invoice-branding/generate-stamp": {
+      "status": "PASS",
+      "details": "Returns SVG for circle and square stamps with correct colors (blue, red, black)"
+    },
+    "9_tabs_render_correctly": {
+      "status": "PASS",
+      "details": "All 9 tabs (Business Profile, Payment Details, Invoice Branding, Commercial Rules, Sales & Commissions, Affiliate & Referrals, Workflows & Vendors, Notifications, Launch Controls) render and are clickable"
+    },
+    "business_profile_tab": {
+      "status": "PASS",
+      "details": "Shows Company Information and Document Numbering fields"
+    },
+    "commercial_rules_tab": {
+      "status": "PASS",
+      "details": "Shows Core Commercials, Margin Rules, Customer Activity Rules card, and Promotions sections"
+    },
+    "customer_activity_rules_card": {
+      "status": "PASS",
+      "details": "Shows Active Window (30 days), At Risk Window End (90 days), Default New Customer Status dropdown, and 6 signal checkboxes (orders, invoices, quotes, requests, sales_notes, account_logins)"
+    },
+    "invoice_branding_tab": {
+      "status": "PASS",
+      "details": "Shows contact details, CFO fields, signature toggle with Upload/Draw method buttons, stamp toggle with GeneratedStampBuilder, CSS preview, and Generate SVG Preview button"
+    },
+    "signature_pad": {
+      "status": "PASS",
+      "details": "SignaturePad with canvas, Clear button, Save Signature button. Upload/Draw method toggle works"
+    },
+    "generated_stamp_builder": {
+      "status": "PASS",
+      "details": "Shows Stamp Shape (circle/square), Stamp Color (blue/red/black), Stamp Phrase, Company Legal Name, City/Country, Registration Number, TIN/Tax Number inputs"
+    },
+    "generate_svg_preview": {
+      "status": "PASS",
+      "details": "Generates professional SVG stamp with company name in arc, city in arc, registration/TIN numbers, and Konekt logo in center"
+    },
+    "invoice_footer_preview": {
+      "status": "PASS",
+      "details": "Shows Authorized By section with CFO name/title and Company Stamp section with generated SVG"
+    },
+    "save_all_settings": {
+      "status": "PASS",
+      "details": "Save All Settings button persists data to backend"
+    },
+    "save_branding_settings": {
+      "status": "PASS",
+      "details": "Save Branding Settings button persists invoice branding independently"
+    }
+  }
+}

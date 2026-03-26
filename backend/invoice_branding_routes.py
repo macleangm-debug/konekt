@@ -21,6 +21,7 @@ DEFAULT_BRANDING = {
     "cfo_name": "",
     "cfo_title": "Chief Finance Officer",
     "cfo_signature_url": "",
+    "signature_method": "upload",
     "stamp_mode": "generated",
     "stamp_shape": "circle",
     "stamp_color": "blue",
