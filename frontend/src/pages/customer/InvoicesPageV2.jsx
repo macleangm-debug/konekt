@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Download, Eye, X, AlertCircle, CreditCard, RefreshCw } from "lucide-react";
+import { Download, Eye, X, AlertCircle, CreditCard, RefreshCw, Building2 } from "lucide-react";
 import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
@@ -31,7 +31,48 @@ function getActionConfig(invoice) {
   return null;
 }
 
-function InvoiceDrawer({ invoice, onClose }) {
+function isPaid(invoice) {
+  const s = invoice.payment_status || invoice.status || "";
+  return s === "paid";
+}
+
+function PaymentStatusBlock({ invoice, bankInfo }) {
+  const paid = isPaid(invoice);
+  const amountPaid = Number(invoice.amount_paid || 0);
+
+  if (paid) {
+    return (
+      <div className="rounded-xl border border-green-200 p-4 bg-green-50/50" data-testid="payment-status-block">
+        <div className="text-xs uppercase tracking-wide text-green-600 mb-2 font-semibold">Payment Status</div>
+        <div className="font-bold text-green-700 text-sm">Paid in Full</div>
+        {invoice.paid_at && <div className="text-xs text-green-600 mt-1">Date: {fmtDate(invoice.paid_at || invoice.updated_at)}</div>}
+        <div className="text-xs text-green-600">Method: {invoice.payment_method || "Bank Transfer"}</div>
+        {amountPaid > 0 && <div className="text-xs text-green-600">Amount: {money(amountPaid)}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-200 p-4 bg-amber-50/50" data-testid="payment-status-block">
+      <div className="text-xs uppercase tracking-wide text-amber-600 mb-2 font-semibold">Payment Status</div>
+      <div className="font-bold text-amber-700 text-sm">Awaiting Payment</div>
+      {amountPaid > 0 && (
+        <div className="text-xs text-amber-600 mt-1">Paid so far: {money(amountPaid)}</div>
+      )}
+      {bankInfo && bankInfo.bank_name && (
+        <div className="mt-3 space-y-1 text-xs text-slate-600 border-t border-amber-200 pt-2">
+          <div className="flex gap-2"><Building2 className="w-3 h-3 mt-0.5 text-slate-400 shrink-0" /><span><strong>Bank:</strong> {bankInfo.bank_name}</span></div>
+          <div><strong>Account:</strong> {bankInfo.account_name}</div>
+          <div><strong>Number:</strong> {bankInfo.account_number}</div>
+          {bankInfo.branch && <div><strong>Branch:</strong> {bankInfo.branch}</div>}
+          {bankInfo.swift_code && <div><strong>SWIFT:</strong> {bankInfo.swift_code}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InvoiceDrawer({ invoice, onClose, bankInfo }) {
   if (!invoice) return null;
   const status = statusMeta(invoice);
   const action = getActionConfig(invoice);
@@ -57,12 +98,11 @@ function InvoiceDrawer({ invoice, onClose }) {
     <div className="fixed inset-0 z-50 flex justify-end" data-testid="invoice-drawer">
       <button className="absolute inset-0 bg-black/35" onClick={onClose} aria-label="Close drawer" />
       <div className="relative w-full max-w-[520px] h-full bg-white shadow-2xl border-l border-slate-200 overflow-y-auto">
-        {/* Branded header */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f]">
           <div className="px-6 py-5 text-white">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <BrandLogo size="sm" variant="light" className="mb-3" />
+                <BrandLogo size="md" variant="light" className="mb-3" />
                 <div className="text-lg font-semibold">Invoice Preview</div>
                 <div className="text-xs text-white/70 mt-1">{invoice.invoice_number || invoice.id}</div>
               </div>
@@ -77,7 +117,6 @@ function InvoiceDrawer({ invoice, onClose }) {
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Date + Type */}
           <div className="flex items-center justify-between text-sm">
             <div>
               <div className="text-xs text-slate-400 uppercase tracking-wide">Date</div>
@@ -89,7 +128,6 @@ function InvoiceDrawer({ invoice, onClose }) {
             </div>
           </div>
 
-          {/* Bill To + Invoice Details */}
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
               <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Bill To</div>
@@ -98,20 +136,9 @@ function InvoiceDrawer({ invoice, onClose }) {
               {billingPhone && <div className="text-xs text-slate-500">{billingPhone}</div>}
               {billingTin && <div className="text-xs text-slate-500">TIN: {billingTin}</div>}
             </div>
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Payment</div>
-              <div className="text-xs text-slate-500">Terms</div>
-              <div className="font-semibold text-[#20364D] text-sm">{invoice.payment_terms || "Due on receipt"}</div>
-              {amountPaid > 0 && (
-                <>
-                  <div className="text-xs text-slate-500 mt-2">Paid</div>
-                  <div className="font-semibold text-green-700 text-sm">{money(amountPaid)}</div>
-                </>
-              )}
-            </div>
+            <PaymentStatusBlock invoice={invoice} bankInfo={bankInfo} />
           </div>
 
-          {/* Line Items */}
           <div className="rounded-xl border border-slate-200 overflow-hidden">
             <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
               <span className="font-semibold text-[#20364D] text-sm">Line Items</span>
@@ -129,7 +156,6 @@ function InvoiceDrawer({ invoice, onClose }) {
             </div>
           </div>
 
-          {/* Totals */}
           <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-2">
             <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-medium text-[#20364D]">{money(subtotal)}</span></div>
             <div className="flex items-center justify-between text-sm"><span className="text-slate-500">VAT</span><span className="font-medium text-[#20364D]">{money(vat)}</span></div>
@@ -140,7 +166,6 @@ function InvoiceDrawer({ invoice, onClose }) {
             </div>
           </div>
 
-          {/* Rejection reason */}
           {(invoice.rejection_reason || ["proof_rejected", "rejected", "payment_rejected"].includes(invoice.payment_status)) && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
@@ -151,7 +176,6 @@ function InvoiceDrawer({ invoice, onClose }) {
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex items-center gap-3 pt-2">
             <button
               type="button"
@@ -194,14 +218,20 @@ export default function InvoicesPageV2() {
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [bankInfo, setBankInfo] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
     if (!token) return;
     axios.get(`${API_URL}/api/customer/invoices`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => setInvoices(res.data || []))
+      .then((res) => {
+        const sorted = (res.data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setInvoices(sorted);
+      })
       .catch((err) => console.error("Failed to load invoices:", err))
       .finally(() => setLoading(false));
+
+    axios.get(`${API_URL}/api/public/payment-info`).then(r => setBankInfo(r.data)).catch(() => {});
   }, []);
 
   const filteredInvoices = useMemo(() => invoices.filter((invoice) => {
@@ -236,27 +266,27 @@ export default function InvoicesPageV2() {
               <tr>
                 <th className="px-6 py-4 text-left">Date</th>
                 <th className="px-6 py-4 text-left">Invoice</th>
-                <th className="px-6 py-4 text-left">Type</th>
+                <th className="px-6 py-4 text-left">Payer</th>
                 <th className="px-6 py-4 text-left">Amount</th>
                 <th className="px-6 py-4 text-left">Status</th>
-                <th className="px-6 py-4 text-left">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">Loading invoices...</td></tr>
+                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">Loading invoices...</td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No invoices found.</td></tr>
+                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No invoices found.</td></tr>
               ) : filteredInvoices.map((invoice) => {
                 const st = statusMeta(invoice);
+                const billing = invoice.billing || {};
+                const payerName = billing.invoice_client_name || invoice.customer_name || invoice.customer_email || "-";
                 return (
                   <tr key={invoice.id || invoice._id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
                     <td className="px-6 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{invoice.invoice_number || invoice.id}</td>
-                    <td className="px-6 py-4 capitalize text-slate-600">{invoice.type || invoice.source_type || "product"}</td>
+                    <td className="px-6 py-4 text-slate-600">{payerName}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
                     <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${st.cls}`}>{st.label}</span></td>
-                    <td className="px-6 py-4"><button type="button" className="inline-flex items-center gap-2 text-[#20364D] font-semibold text-sm hover:underline"><Eye className="w-4 h-4" /> View</button></td>
                   </tr>
                 );
               })}
@@ -265,7 +295,7 @@ export default function InvoicesPageV2() {
         </div>
       </div>
 
-      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />
+      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} bankInfo={bankInfo} />
     </div>
   );
 }

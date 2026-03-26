@@ -110,7 +110,9 @@ export default function AIChatWidget() {
     }
   };
 
-  if (cartOpen || location.pathname.startsWith("/admin") || location.pathname.startsWith("/partner")) return null;
+  const txPages = ["/account/invoices", "/account/orders", "/account/quotes", "/customer/invoices", "/customer/orders", "/customer/quotes", "/dashboard/invoices", "/dashboard/quotes", "/dashboard/orders"];
+  const onTxPage = txPages.some(p => location.pathname.startsWith(p));
+  if (cartOpen || onTxPage || location.pathname.startsWith("/admin") || location.pathname.startsWith("/partner")) return null;
 
   if (!isOpen) {
     return (

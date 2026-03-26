@@ -1,9 +1,23 @@
+import os
 from io import BytesIO
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 
 router = APIRouter(prefix="/api/pdf", tags=["PDF Generation"])
+
+
+def _env_bank():
+    """Read bank details from environment variables."""
+    return {
+        "bank_name": os.environ.get("BANK_NAME", ""),
+        "account_name": os.environ.get("BANK_ACCOUNT_NAME", ""),
+        "account_number": os.environ.get("BANK_ACCOUNT_NUMBER", ""),
+        "branch": os.environ.get("BANK_BRANCH", ""),
+        "swift_code": os.environ.get("BANK_SWIFT_CODE", ""),
+        "currency": os.environ.get("BANK_CURRENCY", "TZS"),
+    }
+
 
 def render_quote_html(quote: dict):
     """Generate HTML template for quote PDF"""
@@ -22,7 +36,7 @@ def render_quote_html(quote: dict):
     subtotal = quote.get("subtotal", 0)
     vat_amount = quote.get("vat_amount", 0)
     total = quote.get("total") or quote.get("total_amount", 0)
-    
+
     return f'''
     <!DOCTYPE html>
     <html>
@@ -100,26 +114,53 @@ def render_quote_html(quote: dict):
     </html>
     '''
 
+
 def render_invoice_html(invoice: dict):
-    """Generate branded Zoho-style HTML invoice"""
+    """Generate branded Zoho-level HTML invoice with status-aware payment block and CFO signature."""
+    bank = _env_bank()
+
     items_html = ""
     if invoice.get("items"):
-        items_html = "<table style='width:100%; border-collapse:collapse; margin-top:16px;'>"
-        items_html += "<tr style='background:#f1f5f9;'><th style='padding:10px 12px; text-align:left; border-bottom:2px solid #e2e8f0; font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;'>Item</th><th style='padding:10px 12px; text-align:center; border-bottom:2px solid #e2e8f0; font-size:12px; color:#64748b; text-transform:uppercase;'>Qty</th><th style='padding:10px 12px; text-align:right; border-bottom:2px solid #e2e8f0; font-size:12px; color:#64748b; text-transform:uppercase;'>Unit Price</th><th style='padding:10px 12px; text-align:right; border-bottom:2px solid #e2e8f0; font-size:12px; color:#64748b; text-transform:uppercase;'>Amount</th></tr>"
         for item in invoice.get("items", []):
             name = item.get("name") or item.get("product_name") or "Item"
             qty = item.get("quantity", 1)
             price = item.get("price") or item.get("unit_price", 0)
-            subtotal = item.get("line_total") or item.get("subtotal") or (qty * price)
-            items_html += f"<tr><td style='padding:10px 12px; border-bottom:1px solid #f1f5f9;'>{name}</td><td style='padding:10px 12px; text-align:center; border-bottom:1px solid #f1f5f9;'>{qty}</td><td style='padding:10px 12px; text-align:right; border-bottom:1px solid #f1f5f9;'>TZS {price:,.0f}</td><td style='padding:10px 12px; text-align:right; border-bottom:1px solid #f1f5f9;'>TZS {subtotal:,.0f}</td></tr>"
-        items_html += "</table>"
+            line_total = item.get("line_total") or item.get("subtotal") or (qty * price)
+            items_html += f'''<tr>
+              <td style="padding:14px 16px; border-bottom:1px solid #e5edf5; font-size:15px;">{name}</td>
+              <td style="padding:14px 16px; text-align:center; border-bottom:1px solid #e5edf5; font-size:15px;">{qty}</td>
+              <td style="padding:14px 16px; text-align:right; border-bottom:1px solid #e5edf5; font-size:15px;">TZS {price:,.0f}</td>
+              <td style="padding:14px 16px; text-align:right; border-bottom:1px solid #e5edf5; font-size:15px;">TZS {line_total:,.0f}</td>
+            </tr>'''
 
     subtotal = invoice.get("subtotal_amount") or invoice.get("subtotal", 0)
     vat_amount = invoice.get("vat_amount", 0)
     total = invoice.get("total_amount") or invoice.get("total", 0)
     amount_paid = invoice.get("amount_paid", 0)
     balance_due = total - amount_paid
-    status = (invoice.get("payment_status") or invoice.get("status", "pending")).replace("_", " ").title()
+
+    payment_status_raw = invoice.get("payment_status") or invoice.get("status", "pending_payment")
+
+    if payment_status_raw == "paid":
+        payment_label = "Paid in Full"
+        status_bg = "#dff6e8"
+        status_color = "#16794d"
+    elif payment_status_raw in ("under_review", "awaiting_review", "payment_under_review"):
+        payment_label = "Under Review"
+        status_bg = "#dbeafe"
+        status_color = "#1e40af"
+    elif payment_status_raw == "partially_paid":
+        payment_label = "Partially Paid"
+        status_bg = "#fef3c7"
+        status_color = "#92400e"
+    elif payment_status_raw in ("proof_rejected", "rejected", "payment_rejected"):
+        payment_label = "Rejected"
+        status_bg = "#fee2e2"
+        status_color = "#991b1b"
+    else:
+        payment_label = "Awaiting Payment"
+        status_bg = "#f1f5f9"
+        status_color = "#475569"
 
     billing = invoice.get("billing", {})
     billing_name = billing.get("invoice_client_name") or invoice.get("customer_name", "Customer")
@@ -130,81 +171,146 @@ def render_invoice_html(invoice: dict):
 
     inv_number = invoice.get("invoice_number") or str(invoice.get("_id", ""))[:8]
     created = str(invoice.get("created_at", ""))[:10]
-    due = str(invoice.get("due_date", ""))[:10] if invoice.get("due_date") else ""
-    payment_terms = invoice.get("payment_terms", "Due on receipt")
+    paid_on = str(invoice.get("paid_at") or invoice.get("updated_at") or "")[:10]
+    payment_method = invoice.get("payment_method", "Bank Transfer")
+    payer_name = billing_name
 
-    status_color = "#92400e" if "pending" in status.lower() else "#065f46" if "paid" in status.lower() else "#991b1b" if "reject" in status.lower() else "#1e40af"
-    status_bg = "#fef3c7" if "pending" in status.lower() else "#d1fae5" if "paid" in status.lower() else "#fee2e2" if "reject" in status.lower() else "#dbeafe"
+    # Payment info section — status aware
+    if payment_status_raw == "paid":
+        payment_info_html = f'''
+        <div style="text-align:left;">
+          <div style="font-size:11px; color:#6e7f99; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:10px;">Payment Information</div>
+          <div style="color:#16794d; font-weight:700; font-size:15px; margin-bottom:6px;">Paid in Full</div>
+          <div style="font-size:14px; color:#475569; line-height:1.7;">
+            <strong>Date:</strong> {paid_on}<br/>
+            <strong>Method:</strong> {payment_method}<br/>
+            <strong>Payer:</strong> {payer_name}<br/>
+            <strong>Reference:</strong> {inv_number}
+          </div>
+        </div>'''
+    else:
+        payment_info_html = f'''
+        <div style="text-align:left;">
+          <div style="font-size:11px; color:#6e7f99; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:10px;">Payment Information</div>
+          <div style="color:#92400e; font-weight:700; font-size:15px; margin-bottom:6px;">{payment_label}</div>
+          <div style="font-size:14px; color:#475569; line-height:1.7;">
+            <strong>Status:</strong> {payment_label}<br/>
+            <strong>Reference:</strong> {inv_number}
+          </div>
+        </div>'''
+
+    # Bank details box
+    bank_html = f'''
+    <div style="background:#f8fbff; border:1px solid #d7e3ee; border-radius:12px; padding:18px 20px; margin-top:32px;">
+      <div style="font-size:11px; color:#6e7f99; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:12px;">Bank Transfer Details</div>
+      <div style="font-size:15px; color:#183153; line-height:1.8;">
+        <strong style="display:inline-block; min-width:135px;">Bank:</strong> {bank["bank_name"]}<br/>
+        <strong style="display:inline-block; min-width:135px;">Account Name:</strong> {bank["account_name"]}<br/>
+        <strong style="display:inline-block; min-width:135px;">Account Number:</strong> {bank["account_number"]}<br/>
+        <strong style="display:inline-block; min-width:135px;">Branch:</strong> {bank["branch"]}<br/>
+        <strong style="display:inline-block; min-width:135px;">SWIFT:</strong> {bank["swift_code"]}<br/>
+        <strong style="display:inline-block; min-width:135px;">Reference:</strong> {inv_number}
+      </div>
+    </div>'''
+
+    # CFO signature block — only on paid/finalized invoices
+    signature_html = ""
+    if payment_status_raw in ("paid", "under_review"):
+        signature_html = f'''
+    <div style="display:flex; gap:24px; margin-top:36px;">
+      <div style="flex:1; border:1px solid #d7e3ee; border-radius:12px; padding:18px; min-height:140px; background:#fff;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6e7f99; font-weight:700; margin-bottom:14px;">Authorized by</div>
+        <div style="height:50px; border-bottom:2px solid #d7e3ee; margin:24px 0 12px 0;"></div>
+        <div style="font-size:14px; color:#183153; font-weight:700;">Chief Finance Officer</div>
+        <div style="font-size:12px; color:#6e7f99;">Konekt Limited</div>
+      </div>
+      <div style="flex:1; border:1px solid #d7e3ee; border-radius:12px; padding:18px; min-height:140px; background:#fff; text-align:center;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:#6e7f99; font-weight:700; margin-bottom:14px;">Company Stamp</div>
+        <div style="width:90px; height:90px; border:2px dashed #d7e3ee; border-radius:50%; margin:12px auto 0 auto;"></div>
+      </div>
+    </div>'''
 
     return f'''<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><style>
-body {{ font-family:'Helvetica Neue',Arial,sans-serif; padding:40px 50px; color:#20364D; line-height:1.6; max-width:800px; margin:0 auto; }}
-.header {{ display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:24px; border-bottom:3px solid #20364D; margin-bottom:32px; }}
-.logo {{ font-size:32px; font-weight:800; color:#20364D; letter-spacing:1px; }}
-.logo-sub {{ font-size:11px; color:#64748b; margin-top:2px; }}
-.inv-title {{ font-size:28px; font-weight:700; color:#20364D; text-align:right; }}
-.meta {{ color:#64748b; font-size:13px; text-align:right; margin-top:4px; }}
-.two-col {{ display:flex; gap:40px; margin:28px 0; }}
-.col {{ flex:1; }}
-.col-label {{ font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; font-weight:600; margin-bottom:8px; }}
-.col-value {{ font-size:14px; line-height:1.7; }}
-.col-value strong {{ display:block; font-size:15px; color:#20364D; }}
-.section {{ margin-top:28px; }}
-.totals {{ margin-top:24px; margin-left:auto; width:280px; }}
-.totals-row {{ display:flex; justify-content:space-between; padding:6px 0; font-size:14px; }}
-.totals-row.grand {{ font-size:18px; font-weight:700; color:#20364D; border-top:2px solid #20364D; padding-top:12px; margin-top:8px; }}
-.status-badge {{ display:inline-block; padding:5px 16px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; background:{status_bg}; color:{status_color}; }}
-.payment-box {{ background:#f8fafc; padding:20px; border-radius:8px; margin-top:28px; border:1px solid #e2e8f0; }}
-.payment-box h3 {{ font-size:13px; font-weight:700; color:#20364D; margin:0 0 12px; text-transform:uppercase; letter-spacing:0.5px; }}
-.payment-box p {{ margin:4px 0; font-size:13px; color:#475569; }}
-.footer {{ margin-top:48px; padding-top:16px; border-top:1px solid #e2e8f0; color:#94a3b8; font-size:11px; text-align:center; }}
+* {{ box-sizing: border-box; }}
+body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: #183153; margin: 0; background: #fff; }}
+.page {{ width: 860px; margin: 0 auto; padding: 56px; }}
 </style></head><body>
-<div class="header">
-  <div><div class="logo">KONEKT</div><div class="logo-sub">B2B Commerce Platform</div></div>
-  <div><div class="inv-title">INVOICE</div>
-    <div class="meta">#{inv_number}</div>
-    <div class="meta">Date: {created}</div>
-    {'<div class="meta">Due: ' + due + '</div>' if due else ''}
-    <div style="margin-top:8px;"><span class="status-badge">{status}</span></div>
+<div class="page">
+  <!-- Header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:28px;">
+    <div>
+      <div style="font-size:36px; font-weight:800; color:#20364D; letter-spacing:1px;">KONEKT</div>
+      <div style="font-size:12px; color:#6e7f99; margin-top:2px;">B2B Commerce Platform</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:34px; font-weight:700; color:#20364D; margin-bottom:10px;">Invoice</div>
+      <div style="font-size:14px; color:#6e7f99; margin-top:4px;">#{inv_number}</div>
+      <div style="font-size:14px; color:#6e7f99; margin-top:4px;">Date: {created}</div>
+      <div style="display:inline-block; margin-top:14px; padding:8px 16px; border-radius:999px; background:{status_bg}; color:{status_color}; font-size:13px; font-weight:700;">{payment_label}</div>
+    </div>
+  </div>
+
+  <!-- Divider -->
+  <div style="height:3px; background:#203d5c; margin:26px 0 24px 0;"></div>
+
+  <!-- Two columns: Bill To + Payment Info -->
+  <div style="display:flex; gap:40px; margin-bottom:28px;">
+    <div style="flex:1;">
+      <div style="font-size:11px; color:#6e7f99; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; margin-bottom:10px;">Bill To</div>
+      <div style="font-size:18px; font-weight:700; margin-bottom:6px;">{billing_name}</div>
+      <div style="color:#6e7f99; font-size:14px; line-height:1.7;">
+        {billing_email}{'<br/>' + billing_phone if billing_phone else ''}{'<br/>' + billing_address if billing_address else ''}{'<br/>TIN: ' + billing_tin if billing_tin else ''}
+      </div>
+    </div>
+    <div style="flex:1;">
+      {payment_info_html}
+    </div>
+  </div>
+
+  <!-- Line Items Table -->
+  <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+    <thead>
+      <tr>
+        <th style="text-align:left; background:#f1f5f9; color:#6e7f99; font-size:12px; padding:12px 16px; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Item</th>
+        <th style="text-align:center; background:#f1f5f9; color:#6e7f99; font-size:12px; padding:12px 16px; text-transform:uppercase; font-weight:700;">Qty</th>
+        <th style="text-align:right; background:#f1f5f9; color:#6e7f99; font-size:12px; padding:12px 16px; text-transform:uppercase; font-weight:700;">Unit Price</th>
+        <th style="text-align:right; background:#f1f5f9; color:#6e7f99; font-size:12px; padding:12px 16px; text-transform:uppercase; font-weight:700;">Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {items_html if items_html else '<tr><td colspan="4" style="padding:20px; text-align:center; color:#94a3b8;">No line items.</td></tr>'}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div style="width:330px; margin-left:auto; margin-top:20px;">
+    <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:16px; color:#6e7f99;">
+      <span>Subtotal</span><span style="color:#183153;">TZS {subtotal:,.0f}</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:16px; color:#6e7f99;">
+      <span>VAT</span><span style="color:#183153;">TZS {vat_amount:,.0f}</span>
+    </div>
+    {'<div style="display:flex; justify-content:space-between; padding:8px 0; font-size:16px; color:#6e7f99;"><span>Amount Paid</span><span style="color:#16794d;">TZS ' + f'{amount_paid:,.0f}' + '</span></div>' if amount_paid > 0 else ''}
+    <div style="border-top:3px solid #203d5c; margin-top:6px; padding-top:12px; display:flex; justify-content:space-between; font-size:28px; color:#183153; font-weight:700;">
+      <span>{"Balance Due" if amount_paid > 0 else "Total Due"}</span><span>TZS {balance_due if amount_paid > 0 else total:,.0f}</span>
+    </div>
+  </div>
+
+  <!-- Bank Details -->
+  {bank_html}
+
+  <!-- CFO Signature & Stamp -->
+  {signature_html}
+
+  <!-- Footer -->
+  <div style="border-top:1px solid #e5edf5; margin-top:36px; padding-top:18px; text-align:center; color:#8aa0ba; font-size:12px; line-height:1.8;">
+    Thank you for your business. Please include the invoice number as payment reference.<br/>
+    Konekt Limited &bull; accounts@konekt.co.tz
   </div>
 </div>
-
-<div class="two-col">
-  <div class="col"><div class="col-label">Bill To</div><div class="col-value">
-    <strong>{billing_name}</strong>{billing_email}<br/>{billing_phone}
-    {'<br/>' + billing_address if billing_address else ''}
-    {'<br/>TIN: ' + billing_tin if billing_tin else ''}
-  </div></div>
-  <div class="col"><div class="col-label">Invoice Details</div><div class="col-value">
-    <strong>Invoice #{inv_number}</strong>
-    Payment Terms: {payment_terms}<br/>
-    {'Balance Due: TZS ' + f'{balance_due:,.0f}' if amount_paid > 0 else ''}
-  </div></div>
-</div>
-
-<div class="section">{items_html if items_html else "<p style='color:#94a3b8;'>No line items.</p>"}</div>
-
-<div class="totals">
-  <div class="totals-row"><span style="color:#64748b;">Subtotal</span><span>TZS {subtotal:,.0f}</span></div>
-  <div class="totals-row"><span style="color:#64748b;">VAT ({invoice.get("vat_percentage", 18)}%)</span><span>TZS {vat_amount:,.0f}</span></div>
-  {'<div class="totals-row"><span style="color:#64748b;">Amount Paid</span><span>TZS ' + f'{amount_paid:,.0f}' + '</span></div>' if amount_paid > 0 else ''}
-  <div class="totals-row grand"><span>{"Balance Due" if amount_paid > 0 else "Total Due"}</span><span>TZS {balance_due if amount_paid > 0 else total:,.0f}</span></div>
-</div>
-
-<div class="payment-box">
-  <h3>Payment Information</h3>
-  <p><strong>Bank:</strong> CRDB Bank</p>
-  <p><strong>Account Name:</strong> Konekt Limited</p>
-  <p><strong>Account Number:</strong> 0150XXXXXXXX</p>
-  <p><strong>SWIFT:</strong> CORUTZTZ</p>
-  <p><strong>Reference:</strong> {inv_number}</p>
-</div>
-
-<div class="footer">
-  <p>Thank you for your business. Please include the invoice number as payment reference.</p>
-  <p>Konekt Limited &bull; accounts@konekt.co.tz</p>
-</div>
 </body></html>'''
+
 
 def html_to_pdf_bytes(html: str):
     """Convert HTML to PDF using WeasyPrint"""
@@ -216,6 +322,7 @@ def html_to_pdf_bytes(html: str):
     HTML(string=html).write_pdf(pdf_io)
     pdf_io.seek(0)
     return pdf_io
+
 
 @router.get("/quotes/{quote_id}")
 async def download_quote_pdf(quote_id: str, request: Request):
@@ -230,14 +337,15 @@ async def download_quote_pdf(quote_id: str, request: Request):
         quote = await db.quotes_v2.find_one({"quote_number": quote_id})
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
-    
+
     pdf_io = html_to_pdf_bytes(render_quote_html(quote))
     filename = f'Quote-{quote.get("quote_number", quote.get("id", "")[:8])}.pdf'
     return StreamingResponse(
-        pdf_io, 
-        media_type="application/pdf", 
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        pdf_io,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
 
 @router.get("/invoices/{invoice_id}")
 async def download_invoice_pdf(invoice_id: str, request: Request):
@@ -255,14 +363,15 @@ async def download_invoice_pdf(invoice_id: str, request: Request):
         invoice = await db.invoices.find_one({"invoice_number": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    
+
     pdf_io = html_to_pdf_bytes(render_invoice_html(invoice))
     filename = f'Invoice-{invoice.get("invoice_number", str(invoice.get("_id", ""))[:8])}.pdf'
     return StreamingResponse(
-        pdf_io, 
-        media_type="application/pdf", 
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        pdf_io,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
 
 @router.get("/quotes/{quote_id}/preview", response_class=HTMLResponse)
 async def quote_html_preview(quote_id: str, request: Request):
@@ -278,6 +387,7 @@ async def quote_html_preview(quote_id: str, request: Request):
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     return HTMLResponse(render_quote_html(quote))
+
 
 @router.get("/invoices/{invoice_id}/preview", response_class=HTMLResponse)
 async def invoice_html_preview(invoice_id: str, request: Request):

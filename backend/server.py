@@ -2600,6 +2600,9 @@ app.include_router(payment_submission_fixes_router)
 from multi_request_routes import router as multi_request_router
 app.include_router(multi_request_router)
 
+from public_payment_info_routes import router as public_payment_info_router
+app.include_router(public_payment_info_router)
+
 
 
 
