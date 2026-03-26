@@ -437,7 +437,14 @@ async def quote_html_preview(quote_id: str, request: Request):
 async def invoice_html_preview(invoice_id: str, request: Request):
     """Preview invoice as HTML"""
     db = request.app.mongodb
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    invoice = None
+    try:
+        from bson import ObjectId as OID
+        invoice = await db.invoices.find_one({"_id": OID(invoice_id)})
+    except Exception:
+        pass
+    if not invoice:
+        invoice = await db.invoices.find_one({"id": invoice_id})
     if not invoice:
         invoice = await db.invoices.find_one({"invoice_number": invoice_id})
     if not invoice:
