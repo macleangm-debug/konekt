@@ -51,6 +51,15 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Vendor: `demo.partner@konekt.com` / `Partner123!`
 - **Single login URL**: `/login` for all roles
 
+### Vendor Orders Cleanup (March 26, 2026) - DONE
+- **Backend**: `vendor_orders_routes.py` — `/api/vendor/orders` (list, filtered by vendor), `/api/vendor/orders/{id}/status`, `/api/vendor/orders/{id}/note`
+- **Source of truth**: `vendor_orders` collection ONLY (no fulfillment_jobs, no mixed fallbacks)
+- **Frontend**: `MyOrdersPage.jsx` at `/partner/orders` — Full-width table, newest first, row click opens drawer
+- **Frontend**: `VendorOrderDrawer.jsx` — Vendor order no, customer info, Konekt sales contact, work details, timeline, status update actions
+- **Legacy cleanup**: `/partner/fulfillment` route removed, redirects to `/partner/orders`; sidebar updated to "My Orders"
+- **Vendor notification**: Added notification creation on payment approval vendor_order push
+- **Test**: 100% pass (21/21 backend, all frontend UI tests) — iteration_126.json
+
 ## Prioritized Backlog
 
 ### P1 — Upcoming

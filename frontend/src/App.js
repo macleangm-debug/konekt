@@ -637,6 +637,7 @@ function App() {
           <Route path="stock" element={<PartnerStockTablePage />} />
           <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
           <Route path="orders" element={<MyOrdersPage />} />
+          <Route path="fulfillment" element={<Navigate to="/partner/orders" replace />} />
           <Route path="settlements" element={<PartnerSettlementsPage />} />
           {/* Affiliate Dashboard Routes */}
           <Route path="affiliate-dashboard" element={<AffiliateDashboardHomePage />} />
