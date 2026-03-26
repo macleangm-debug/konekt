@@ -21,44 +21,47 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - PDF generation (Invoices, Quotes, Orders)
 
 ### Final UI Polish Pass (March 26, 2026) - DONE
-- Invoice Drawer: BrandLogo md, status-aware PaymentStatusBlock (Paid/Awaiting with real bank details)
+- Invoice Drawer: BrandLogo, status-aware PaymentStatusBlock
 - Invoice PDF: Zoho-level template with bank details, dynamic CFO signature/stamp
 - AI Widget hidden on transaction pages
-- Payment Info API: `/api/public/payment-info`
+- Dynamic contact details in Admin Invoice Branding settings
+- Multi-page PDF layout support with @page CSS
+- Custom logo embedding in generated SVG stamps
 
-### Quotes & Orders Full Rewrite (March 26, 2026) - DONE
-**Quotes Page (Decision Stage):**
-- Table: Date, Quote No, Type, Amount, Valid Until, Status, Payment Status
-- Drawer: Customer Info, Quote Details + Prepared By, Line Items, Totals, Accept/Reject/Download, Expiry countdown
+### Canonical UI Reuse Consolidation (March 26, 2026) - DONE
+**Admin Pages Consolidated:**
+- `/admin/payments` (+ central-payments, payment-proofs, finance-queue) → PaymentsQueuePage (canonical Table+Drawer)
+- `/admin/orders` (+ orders-ops, orders-legacy) → OrdersPage with tabs (All, Awaiting Release, Released, Completed)
+- `/admin/quotes` → QuotesRequestsPage (unified quotes & requests)
+- `/admin/invoices` → InvoicesPage (action column removed, row click opens drawer)
 
-**Orders Page (Fulfillment Tracking):**
-- Table: Date, Order No, Source, Amount, Payment, Fulfillment
-- Drawer: Order Summary, Customer, PROMINENT Sales Person (Call/Email/WhatsApp), Fulfillment/Vendor, Items, Timeline, "Need help?"
+**Table Pattern Standardized:**
+- Date column on the left across all admin tables
+- Admin orders sorted newest first
+- Consistent column structure: Date → ID → Customer → Amount → Status
 
-### Invoice Branding & Authorization (March 26, 2026) - DONE
-**Admin Settings Hub -> Invoice Branding section:**
-- CFO Name, Title, Show Signature toggle, Signature upload
-- Company Stamp: Generated (Circle/Square, Blue/Red/Black, company details) or Uploaded
-- Generated stamp as SVG with curved text, double borders, registration/TIN
-- Dynamic contact details (email, phone, address) editable in settings
-- Custom logo image embedded in center of generated stamps (base64)
-- Multi-page PDF layout support with @page CSS and page-break-inside
-- Live Invoice Footer Preview panel
-- Settings saved to MongoDB `business_settings` collection
-- PDF generator reads branding settings dynamically
-- Light preview shown in customer invoice drawer for finalized invoices
+**Sidebar Updates:**
+- Admin: "Payments Queue" → /admin/payments (canonical route)
+- Partner: "Fulfillment Queue" → "My Orders"
+
+**Route Consolidation:**
+- `/account/orders` → OrdersPageV2
+- All duplicate payment routes → PaymentsQueuePage
+- All duplicate order routes → OrdersPage
+
+**API Methods Added:**
+- `getPaymentsQueue`, `getPaymentDetail`, `approvePayment`, `rejectPayment`
+- `getOrderDetail`, `releaseToVendor`
 
 ## Key API Endpoints
 - `POST /api/auth/login`, `POST /api/admin/auth/login`
-- `GET /api/customer/invoices`, `GET /api/customer/orders`, `GET /api/customer/quotes`
-- `GET /api/public/payment-info`
+- `GET /api/admin/payments/queue`, `GET /api/admin/payments/{id}`, `POST /api/admin/payments/{id}/approve`, `POST /api/admin/payments/{id}/reject`
+- `GET /api/admin/orders/list`, `GET /api/admin/orders/{id}`, `POST /api/admin/orders/{id}/release-to-vendor`
+- `GET /api/admin/quotes/list`
+- `GET /api/admin/invoices/list`
 - `GET/POST /api/admin/settings/invoice-branding`
-- `POST /api/admin/settings/invoice-branding/signature-upload`
-- `POST /api/admin/settings/invoice-branding/stamp-upload`
-- `POST /api/admin/settings/invoice-branding/generate-stamp`
 - `GET /api/pdf/invoices/{id}`, `GET /api/pdf/invoices/{id}/preview`
-- `GET /api/pdf/quotes/{id}`, `GET /api/pdf/quotes/{id}/preview`
-- `GET /api/pdf/orders/{id}`, `GET /api/pdf/orders/{id}/preview`
+- `GET /api/pdf/quotes/{id}`, `GET /api/pdf/orders/{id}`
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
