@@ -20,6 +20,9 @@ const DEFAULTS = {
   stamp_phrase: "Official Company Stamp",
   stamp_uploaded_url: "",
   stamp_preview_url: "",
+  contact_email: "accounts@konekt.co.tz",
+  contact_phone: "+255 XXX XXX XXX",
+  contact_address: "Dar es Salaam, Tanzania",
 };
 
 function Toggle({ label, checked, onChange }) {
@@ -148,6 +151,13 @@ export default function InvoiceBrandingSettings() {
 
   return (
     <div className="space-y-6" data-testid="invoice-branding-section">
+      {/* Document Contact Details */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <Field label="Contact Email" value={form.contact_email} onChange={v => up("contact_email", v)} placeholder="accounts@konekt.co.tz" />
+        <Field label="Contact Phone" value={form.contact_phone} onChange={v => up("contact_phone", v)} placeholder="+255 XXX XXX XXX" />
+        <Field label="Contact Address" value={form.contact_address} onChange={v => up("contact_address", v)} placeholder="Dar es Salaam, Tanzania" />
+      </div>
+
       {/* CFO Details */}
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         <Field label="CFO Name" value={form.cfo_name} onChange={v => up("cfo_name", v)} placeholder="Jane M. Doe" required={form.show_signature} />

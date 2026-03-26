@@ -45,6 +45,12 @@ def _css():
     body {{ font-family: 'Helvetica Neue', Arial, sans-serif; color: {NAVY}; background: #fff; }}
     .page {{ width: 860px; margin: 0 auto; }}
 
+    /* Multi-page support */
+    @page {{
+      size: A4;
+      margin: 28px 0;
+    }}
+
     .header {{
       position: relative;
       background: {NAVY};
@@ -103,6 +109,7 @@ def _css():
     .status-rejected {{ background: #fee2e2; color: #991b1b; }}
 
     .items-table {{ width: 100%; border-collapse: collapse; margin-top: 8px; }}
+    .items-table thead {{ display: table-header-group; }}
     .items-table thead th {{
       background: {NAVY};
       color: #fff;
@@ -125,6 +132,8 @@ def _css():
     .items-table tbody td:nth-child(3),
     .items-table tbody td:last-child {{ text-align: right; }}
     .items-table tbody tr:nth-child(even) td {{ background: {LIGHT_BG}; }}
+    /* Allow table rows to break across pages */
+    .items-table tbody tr {{ page-break-inside: avoid; }}
 
     .totals-box {{ width: 320px; margin-left: auto; margin-top: 20px; }}
     .totals-row {{ display: flex; justify-content: space-between; padding: 7px 0; font-size: 14px; color: {SLATE}; }}
@@ -152,7 +161,7 @@ def _css():
     .bank-row {{ display: flex; gap: 6px; font-size: 14px; line-height: 1.8; }}
     .bank-row strong {{ display: inline-block; min-width: 140px; color: {SLATE}; }}
 
-    .auth-area {{ display: flex; gap: 28px; margin-top: 32px; }}
+    .auth-area {{ display: flex; gap: 28px; margin-top: 32px; page-break-inside: avoid; }}
     .auth-block {{
       flex: 1;
       border: 1px solid #d7e3ee;
@@ -178,7 +187,11 @@ def _css():
     '''
 
 
-def _header_block(doc_type, doc_number, doc_date, status_label, status_class):
+def _header_block(doc_type, doc_number, doc_date, status_label, status_class, branding=None):
+    branding = branding or {}
+    email = branding.get("contact_email") or "accounts@konekt.co.tz"
+    phone = branding.get("contact_phone") or "+255 XXX XXX XXX"
+    address = branding.get("contact_address") or "Dar es Salaam, Tanzania"
     return f'''
     <div class="header">
       <div class="header-inner">
@@ -199,9 +212,9 @@ def _header_block(doc_type, doc_number, doc_date, status_label, status_class):
       </div>
     </div>
     <div class="contact-bar">
-      <span>accounts@konekt.co.tz</span>
-      <span>+255 XXX XXX XXX</span>
-      <span>Dar es Salaam, Tanzania</span>
+      <span>{email}</span>
+      <span>{phone}</span>
+      <span>{address}</span>
     </div>'''
 
 
@@ -356,7 +369,7 @@ def render_invoice_html(invoice: dict, branding: dict = None):
 
     body = f'''
     <div class="page">
-      {_header_block("INVOICE", inv_number, created, sl, sc)}
+      {_header_block("INVOICE", inv_number, created, sl, sc, branding)}
       <div class="body">
         <div class="two-col">
           <div class="col">
@@ -415,7 +428,7 @@ def render_quote_html(quote: dict, branding: dict = None):
 
     body = f'''
     <div class="page">
-      {_header_block("QUOTE", q_number, created, sl, sc)}
+      {_header_block("QUOTE", q_number, created, sl, sc, branding)}
       <div class="body">
         <div class="two-col">
           <div class="col">
@@ -487,7 +500,7 @@ def render_order_html(order: dict, branding: dict = None):
 
     body = f'''
     <div class="page">
-      {_header_block("ORDER", o_number, created, sl, sc)}
+      {_header_block("ORDER", o_number, created, sl, sc, branding)}
       <div class="body">
         <div class="two-col">
           <div class="col">

@@ -31,6 +31,9 @@ DEFAULT_BRANDING = {
     "stamp_phrase": "Official Company Stamp",
     "stamp_uploaded_url": "",
     "stamp_preview_url": "",
+    "contact_email": "accounts@konekt.co.tz",
+    "contact_phone": "+255 XXX XXX XXX",
+    "contact_address": "Dar es Salaam, Tanzania",
 }
 
 
@@ -93,6 +96,15 @@ async def upload_stamp(file: UploadFile = File(...)):
     return {"url": url}
 
 
+def _load_icon_b64():
+    """Load the Konekt icon as base64 for embedding in SVG"""
+    icon_path = Path("/app/backend/uploads/branding/ybvjms74_IMG_8680.jpeg")
+    if icon_path.exists():
+        import base64
+        return "data:image/jpeg;base64," + base64.b64encode(icon_path.read_bytes()).decode()
+    return None
+
+
 def _generate_circle_stamp_svg(settings: dict) -> str:
     color_map = {"blue": "#1a4b8c", "red": "#b91c1c", "black": "#1e293b"}
     c = color_map.get(settings.get("stamp_color", "blue"), "#1a4b8c")
@@ -104,24 +116,34 @@ def _generate_circle_stamp_svg(settings: dict) -> str:
     primary_upper = primary.upper()
     secondary_upper = secondary.upper() if secondary else ""
 
-    # Single-color Konekt "K" logo in the center of the circle
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+    icon_b64 = _load_icon_b64()
+    if icon_b64:
+        center = f'''<clipPath id="iconClip"><circle cx="120" cy="118" r="32"/></clipPath>
+  <image href="{icon_b64}" x="88" y="86" width="64" height="64" clip-path="url(#iconClip)" preserveAspectRatio="xMidYMid slice"/>'''
+    else:
+        center = f'<text x="120" y="130" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="46" font-weight="700" font-style="italic">K</text>'
+
+    reg_tin = reg
+    if tin:
+        reg_tin = f"{reg} | {tin}" if reg else tin
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240">
   <defs>
     <path id="topArc" d="M 30,120 a 90,90 0 1,1 180,0" fill="none"/>
     <path id="bottomArc" d="M 210,120 a 90,90 0 1,1 -180,0" fill="none"/>
+    {center.split("</clipPath>")[0] + "</clipPath>" if icon_b64 else ""}
   </defs>
   <circle cx="120" cy="120" r="112" fill="none" stroke="{c}" stroke-width="3"/>
   <circle cx="120" cy="120" r="100" fill="none" stroke="{c}" stroke-width="1.5"/>
-  <circle cx="120" cy="120" r="52" fill="none" stroke="{c}" stroke-width="0.8" stroke-dasharray="3,3"/>
+  <circle cx="120" cy="118" r="36" fill="none" stroke="{c}" stroke-width="0.8" stroke-dasharray="3,3"/>
   <text fill="{c}" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2">
     <textPath href="#topArc" startOffset="50%" text-anchor="middle">{primary_upper}</textPath>
   </text>
   <text fill="{c}" font-family="Arial,sans-serif" font-size="11" letter-spacing="1.5">
     <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">{secondary_upper}</textPath>
   </text>
-  <!-- Single-color K logo at center -->
-  <text x="120" y="130" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="46" font-weight="700" font-style="italic">K</text>
-  <text x="120" y="160" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.5">{reg}{" | " + tin if tin else ""}</text>
+  {"<image href='" + icon_b64 + "' x='88' y='86' width='64' height='64' clip-path='url(#iconClip)' preserveAspectRatio='xMidYMid slice'/>" if icon_b64 else center}
+  <text x="120" y="164" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.5">{reg_tin}</text>
 </svg>'''
     return svg
 
@@ -134,17 +156,26 @@ def _generate_square_stamp_svg(settings: dict) -> str:
     reg = settings.get("stamp_registration_number", "")
     tin = settings.get("stamp_tax_number", "")
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+    icon_b64 = _load_icon_b64()
+    if icon_b64:
+        center = f'''<clipPath id="sqClip"><rect x="85" y="70" width="70" height="70" rx="8"/></clipPath>
+  <image href="{icon_b64}" x="85" y="70" width="70" height="70" clip-path="url(#sqClip)" preserveAspectRatio="xMidYMid slice"/>'''
+    else:
+        center = f'<text x="120" y="120" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="52" font-weight="700" font-style="italic">K</text>'
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240">
+  <defs>
+    {center.split("</clipPath>")[0] + "</clipPath>" if icon_b64 else ""}
+  </defs>
   <rect x="10" y="10" width="220" height="220" rx="8" fill="none" stroke="{c}" stroke-width="3"/>
   <rect x="18" y="18" width="204" height="204" rx="4" fill="none" stroke="{c}" stroke-width="1"/>
   <text x="120" y="50" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1">{primary.upper()}</text>
   <line x1="40" y1="60" x2="200" y2="60" stroke="{c}" stroke-width="0.8"/>
-  <!-- Single-color K logo at center -->
-  <text x="120" y="140" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="52" font-weight="700" font-style="italic">K</text>
-  <line x1="40" y1="165" x2="200" y2="165" stroke="{c}" stroke-width="0.8"/>
-  <text x="120" y="183" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{reg}</text>
-  <text x="120" y="198" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{tin}</text>
-  <text x="120" y="215" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{secondary}</text>
+  {"<image href='" + icon_b64 + "' x='85' y='70' width='70' height='70' clip-path='url(#sqClip)' preserveAspectRatio='xMidYMid slice'/>" if icon_b64 else center}
+  <line x1="40" y1="155" x2="200" y2="155" stroke="{c}" stroke-width="0.8"/>
+  <text x="120" y="175" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{reg}</text>
+  <text x="120" y="192" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{tin}</text>
+  <text x="120" y="210" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{secondary}</text>
 </svg>'''
     return svg
 
