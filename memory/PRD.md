@@ -7,7 +7,7 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Frontend**: React (CRA) + Tailwind CSS + Shadcn/UI
 - **Backend**: FastAPI + Motor (async MongoDB)
 - **Database**: MongoDB (`konekt_db`)
-- **PDF**: WeasyPrint HTML-to-PDF engine
+- **PDF**: WeasyPrint HTML-to-PDF engine + ReportLab
 - **Navigation**: `adminNavigation.js` is the single source of truth for admin nav config
 
 ## What's Been Implemented
@@ -20,50 +20,47 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes, Orders)
 
-### Final UI Polish Pass (March 26, 2026) - DONE
+### Final UI Polish Pass - DONE
 - Invoice PDF: Zoho-level template with dynamic CFO signature/stamp
 - Dynamic contact details + multi-page PDF support
 - Custom logo embedding in generated SVG stamps
 
-### Route Cleanup & Canonical Consolidation (March 26, 2026) - DONE
+### Route Cleanup & Canonical Consolidation - DONE
 - Removed 14+ duplicate/legacy routes
 - All admin transaction pages use canonical Table+Drawer pattern
 - Single navigation source of truth
 
-### Customers CRM Page (March 26, 2026) - DONE
-**Stats Cards (top):**
-- Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders
-- Clickable cards filter the table
+### Customers CRM Page - DONE
+- Stats Cards: Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders
+- Computed Customer Status: Active (30d) / At Risk (31-90d) / Inactive (90d+)
+- Wide Profile Drawer with 5 Tabs (Overview, Quotes, Invoices, Orders, Notes)
 
-**Computed Customer Status:**
-- Active = commercial activity in last 30 days
-- At Risk = activity 31-90 days ago
-- Inactive = no activity in 90+ days
-- Computed from latest order/invoice/quote dates
+### Tabbed Business Settings Hub - DONE
+- 9-Tab Layout: Business Profile, Payment Details, Invoice Branding, Commercial Rules, Sales & Commissions, Affiliate & Referrals, Workflows & Vendors, Notifications, Launch Controls
+- CustomerActivityRulesCard in Commercial Rules tab
+- GeneratedStampBuilder in Invoice Branding tab
+- SignaturePad with Upload/Draw method toggle
 
-**Customer Table:**
-- Recent Activity, Customer, Email, Company, Type, Orders, Invoices, Sales, Status
+### PDF Layout & Auth Block Overhaul (March 26, 2026) - DONE
+**Layout Fixes:**
+- Page width constrained to 794px (print-safe A4) with `overflow: hidden`
+- `table-layout: fixed` on all item tables
+- `doc-title` max-width: 280px to prevent header overflow
+- Totals box wrapped in flex-end container, stays inside page
+- All child blocks use `width: 100%` — nothing exceeds wrapper
+- `.col` has `min-width: 0` to prevent flex overflow
 
-**Wide Profile Drawer (max-w-2xl) with 5 Tabs:**
-- Overview: 6 KPI cards + Profile + Sales Ownership + Referrals
-- Quotes, Invoices, Orders, Notes tabs
+**Signature/Stamp Visibility:**
+- Auth block is now **settings-driven**, not document-status-dependent
+- Signature+stamp appear on **Quotes, Invoices, AND Orders** when enabled
+- Removed `is_finalized` restriction — shows whenever `show_signature`/`show_stamp` is true
+- Supports both file-based signature URLs and `data:` base64 URLs from SignaturePad
+- SVG stamps rendered inline from file
 
-**APIs:**
-- `/api/admin/customers-360/stats` — Aggregate stats
-- `/api/admin/customers-360/list` — Customer list with computed status, search, status filter
-- `/api/admin/customers-360/{customer_id}` — Full 360 detail
-
-### Tabbed Business Settings Hub (March 26, 2026) - DONE
-**9-Tab Layout:**
-- Business Profile, Payment Details, Invoice Branding, Commercial Rules, Sales & Commissions, Affiliate & Referrals, Workflows & Vendors, Notifications, Launch Controls
-
-**New Components Integrated:**
-- **CustomerActivityRulesCard** in Commercial Rules tab — configurable Active Window (days), At Risk Window End (days), Default New Customer Status, 6 activity signal checkboxes (orders, invoices, quotes, requests, sales_notes, account_logins)
-- **GeneratedStampBuilder** in Invoice Branding tab — stamp shape/color/phrase/company name/city/registration/TIN with CSS quick preview + backend SVG generation
-- **SignaturePad** in Invoice Branding tab — canvas drawing tool with Upload Image / Draw Signature method toggle
-- Backend deep-merges defaults so new settings sections are always available
-- `customer_activity_rules` persisted via settings-hub state
-- `signature_method` (upload/pad) persisted in invoice branding settings
+**Applied to all 3 PDF systems:**
+- `pdf_generation_routes.py` (primary WeasyPrint — Quotes/Invoices/Orders)
+- `enterprise_pdf_routes.py` (enterprise WeasyPrint)
+- ReportLab services unchanged (programmatic PDF, not HTML)
 
 ## Canonical Admin Routes
 | Route | Component |
