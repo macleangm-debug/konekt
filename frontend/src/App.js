@@ -68,7 +68,7 @@ import OrdersPage from "@/pages/admin/OrdersPage";
 import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
 import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
-import CustomersPageV2 from "@/pages/admin/CustomersPageV2";
+import CustomersPageMerged from "@/pages/admin/CustomersPageMerged";
 import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
@@ -99,8 +99,6 @@ import AdminConfigurationHubPage from "@/pages/admin/AdminConfigurationHubPage";
 import CrmIntelligencePage from "@/pages/admin/CrmIntelligencePage";
 import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";
 import LeadDetailPage from "@/pages/admin/LeadDetailPage";
-import CustomerAccountSummaryPage from "@/pages/admin/CustomerAccountSummaryPage";
-import CustomerAccountsPage from "@/pages/admin/CustomerAccountsPage";
 import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 import PaymentSettingsPage from "@/pages/admin/PaymentSettingsPage";
@@ -521,7 +519,7 @@ function App() {
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="production" element={<ProductionQueuePage />} />
-          <Route path="customers" element={<CustomersPageV2 />} />
+          <Route path="customers" element={<CustomersPageMerged />} />
           <Route path="payments" element={<PaymentsQueuePage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
@@ -546,8 +544,6 @@ function App() {
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
           <Route path="crm-settings" element={<CrmSettingsPage />} />
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
-          <Route path="customer-accounts" element={<CustomerAccountsPage />} />
-          <Route path="customer-accounts/:customerEmail" element={<CustomerAccountSummaryPage />} />
           <Route path="control-panel" element={<SuperAdminControlPanelPage />} />
           <Route path="staff-performance" element={<StaffPerformancePage />} />
           <Route path="inventory-operations" element={<InventoryOperationsPage />} />

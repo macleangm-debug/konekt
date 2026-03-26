@@ -40,6 +40,7 @@ from kwikpay_webhook_routes import router as kwikpay_webhook_router
 from bank_transfer_routes import router as bank_transfer_router
 from payment_admin_routes import router as payment_admin_router
 from customer_admin_routes import router as customer_admin_router
+from admin_customers_merged_routes import router as customers_merged_router
 from payment_upload_routes import router as payment_upload_router
 from hero_banner_routes import router as hero_banner_router
 from referral_public_routes import router as referral_public_router
@@ -2155,6 +2156,7 @@ app.include_router(payment_admin_router)
 
 # Include customer admin routes
 app.include_router(customer_admin_router)
+app.include_router(customers_merged_router)
 
 # Include payment upload routes
 app.include_router(payment_upload_router)

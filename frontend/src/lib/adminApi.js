@@ -144,6 +144,10 @@ export const adminApi = {
   // Order detail & release (facade)
   getOrderDetail: (orderId) => api.get(`/api/admin/orders/${orderId}`),
   releaseToVendor: (orderId, payload) => api.post(`/api/admin/orders/${orderId}/release-to-vendor`, payload),
+
+  // Customers 360 (merged)
+  getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),
+  getCustomer360Detail: (customerId) => api.get(`/api/admin/customers-360/${customerId}`),
 };
 
 export default adminApi;
