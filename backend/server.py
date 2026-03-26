@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from bson import ObjectId
 import os
 import logging
 import asyncio
@@ -24,6 +25,7 @@ from sales_automation import init_automation_engine
 from ai_services import router as ai_services_router
 from service_orders import router as service_orders_router
 from admin_routes import router as admin_ops_router
+from admin_facade_routes import router as admin_facade_router
 from settings_routes import router as settings_router
 from quote_routes import router as quote_router
 from invoice_routes import router as invoice_router
@@ -1208,9 +1210,21 @@ async def get_all_orders(
 @admin_router.get("/orders/{order_id}")
 async def get_order_details(order_id: str, user: dict = Depends(get_admin_user)):
     """Get detailed order information"""
-    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    # Try finding by 'id' field first, then by ObjectId
+    order = await db.orders.find_one({"id": order_id})
+    if not order:
+        try:
+            order = await db.orders.find_one({"_id": ObjectId(order_id)})
+        except:
+            pass
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Serialize the order
+    order = dict(order)
+    if "_id" in order:
+        order["id"] = str(order["_id"])
+        del order["_id"]
     
     customer = await db.users.find_one({"id": order.get("user_id")}, {"_id": 0, "password_hash": 0})
     order["customer"] = customer
@@ -2131,6 +2145,9 @@ app.include_router(document_send_router)
 app.include_router(customer_order_router)
 
 # Include payment routes
+# IMPORTANT: admin_facade_router must be included BEFORE payment_admin_router
+# because payment_admin_router has /{payment_id} which would catch "queue"
+app.include_router(admin_facade_router)
 app.include_router(kwikpay_payment_router)
 app.include_router(kwikpay_webhook_router)
 app.include_router(bank_transfer_router)

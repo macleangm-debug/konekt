@@ -73,6 +73,9 @@ import QuotesPage from "@/pages/admin/QuotesPage";
 import QuoteKanbanPage from "@/pages/admin/QuoteKanbanPage";
 import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPageOps from "@/pages/admin/OrdersPageOps";
+import OrdersPage from "@/pages/admin/OrdersPage";
+import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
+import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPage from "@/pages/admin/CustomersPage";
 import CustomersPageV2 from "@/pages/admin/CustomersPageV2";
@@ -519,8 +522,8 @@ function App() {
           </AdminAuthProvider>
         }>
           <Route index element={<AdminDashboardV2 />} />
-          <Route path="orders" element={<AdminOrdersSplitViewV2 />} />
-          <Route path="orders-legacy" element={<AdminOrders />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders-legacy" element={<OrdersPage />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="stock" element={<AdminStock />} />
           <Route path="maintenance" element={<AdminMaintenance />} />
@@ -536,19 +539,19 @@ function App() {
           <Route path="tasks" element={<TasksPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:id" element={<InvoicePreviewPage />} />
-          <Route path="quotes" element={<QuotesPage />} />
+          <Route path="quotes" element={<QuotesRequestsPage />} />
           <Route path="quotes/:id" element={<QuotePreviewPage />} />
           <Route path="quotes/kanban" element={<QuoteKanbanPage />} />
           <Route path="quotes-old" element={<AdminQuotes />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
-          <Route path="orders-ops" element={<OrdersPageOps />} />
+          <Route path="orders-ops" element={<OrdersPage />} />
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPageV2 />} />
           <Route path="customers-old" element={<CustomersPage />} />
-          <Route path="payments" element={<PaymentsPage />} />
-          <Route path="central-payments" element={<CentralPaymentsPage />} />
+          <Route path="payments" element={<PaymentsQueuePage />} />
+          <Route path="central-payments" element={<PaymentsQueuePage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
@@ -608,8 +611,8 @@ function App() {
           {/* Super Admin Commercial Controls */}
           <Route path="group-markups" element={<GroupMarkupsPage />} />
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
-          <Route path="payment-proofs" element={<PaymentProofsAdminPage />} />
-          <Route path="finance-queue" element={<FinancePaymentsQueuePage />} />
+          <Route path="payment-proofs" element={<PaymentsQueuePage />} />
+          <Route path="finance-queue" element={<PaymentsQueuePage />} />
           {/* Service Leads CRM */}
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
           {/* Affiliate Manager */}
@@ -798,7 +801,7 @@ function App() {
           <Route path="services" element={<AccountServicesPageV2 />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
-          <Route path="orders" element={<OrdersSplitView />} />
+          <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
           <Route path="my-account" element={<MyAccountPageV2 />} />

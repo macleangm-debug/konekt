@@ -43,7 +43,7 @@ export default function PartnerLayout() {
     { path: "/partner/catalog/new", label: "Create Listing", icon: PlusCircle },
     { path: "/partner/stock", label: "Stock Table", icon: ListPlus },
     { path: "/partner/bulk-upload", label: "Bulk Upload", icon: Upload },
-    { path: "/partner/fulfillment", label: "Fulfillment Queue", icon: Truck },
+    { path: "/partner/fulfillment", label: "My Orders", icon: Truck },
     { path: "/partner/settlements", label: "Settlements", icon: Receipt },
   ];
 

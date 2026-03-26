@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Receipt, Download, Send, Search, RefreshCcw, X, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { Receipt, Download, Send, Search, RefreshCcw, X, ChevronDown, ChevronUp } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import { calculateTotals, formatMoney } from "@/utils/finance";
 import CustomerSummaryCard from "@/components/admin/CustomerSummaryCard";
@@ -218,24 +218,22 @@ export default function InvoicesPage() {
                 <th className="px-6 py-4 text-left">Date</th>
                 <th className="px-6 py-4 text-left">Invoice</th>
                 <th className="px-6 py-4 text-left">Customer</th>
-                <th className="px-6 py-4 text-left">Amount</th>
+                <th className="px-6 py-4 text-right">Amount</th>
                 <th className="px-6 py-4 text-left">Status</th>
-                <th className="px-6 py-4 text-left">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No invoices found</td></tr>
+                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No invoices found</td></tr>
               ) : filteredInvoices.map((invoice) => (
                 <tr key={invoice.id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
                   <td className="px-6 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
                   <td className="px-6 py-4 font-semibold text-[#20364D]">{invoice.invoice_number}</td>
                   <td className="px-6 py-4 text-slate-600">{invoice.customer_name || invoice.customer_company || "—"}</td>
-                  <td className="px-6 py-4 font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
                   <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.status || "draft").replace(/_/g, " ")}</span></td>
-                  <td className="px-6 py-4"><button type="button" className="inline-flex items-center gap-2 text-[#20364D] font-semibold text-sm hover:underline"><Eye className="w-4 h-4" /> View</button></td>
                 </tr>
               ))}
             </tbody>

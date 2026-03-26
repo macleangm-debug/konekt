@@ -34,7 +34,7 @@ const navItems = [
   { path: '/admin/affiliate-manager', label: 'Affiliates', icon: Megaphone, moduleKey: 'crm' },
   { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', highlight: true },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
-  { path: '/admin/finance-queue', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },
+  { path: '/admin/payments', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
   { type: 'divider', label: 'Inventory', moduleKey: 'inventory' },
   { path: '/admin/products', label: 'Products', icon: Package, moduleKey: 'inventory' },

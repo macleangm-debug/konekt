@@ -134,6 +134,16 @@ export const adminApi = {
   uploadSignature: (formData) => api.post("/api/admin/settings/invoice-branding/signature-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
   uploadStamp: (formData) => api.post("/api/admin/settings/invoice-branding/stamp-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
   generateStamp: (payload) => api.post("/api/admin/settings/invoice-branding/generate-stamp", payload),
+
+  // Payment Queue (canonical)
+  getPaymentsQueue: (params) => api.get("/api/admin/payments/queue", { params }),
+  getPaymentDetail: (proofId) => api.get(`/api/admin/payments/${proofId}`),
+  approvePayment: (proofId, payload) => api.post(`/api/admin/payments/${proofId}/approve`, payload),
+  rejectPayment: (proofId, payload) => api.post(`/api/admin/payments/${proofId}/reject`, payload),
+
+  // Order detail & release (facade)
+  getOrderDetail: (orderId) => api.get(`/api/admin/orders/${orderId}`),
+  releaseToVendor: (orderId, payload) => api.post(`/api/admin/orders/${orderId}/release-to-vendor`, payload),
 };
 
 export default adminApi;

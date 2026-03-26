@@ -103,27 +103,29 @@ export default function OrdersPage() {
             <table className="w-full text-sm" data-testid="orders-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Order #</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Release</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Sales</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Vendors</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payment</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fulfillment</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Assigned Sales</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Assigned Vendor</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {rows.map((row) => (
+                {[...rows].sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0)).map((row) => (
                   <tr key={row.id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`order-row-${row.id}`}>
+                    <td className="px-4 py-3 text-xs text-slate-500">{fmtDate(row.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
                     <td className="px-4 py-3 text-slate-700">{row.customer_name || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">{row.source_type || row.type || "-"}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
-                    <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
-                    <td className="px-4 py-3 hidden md:table-cell"><StatusBadge status={row.release_state} /></td>
+                    <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
+                    <td className="px-4 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
                     <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{row.sales_owner || "Unassigned"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.vendor_count || 0}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 hidden md:table-cell">{fmtDate(row.created_at)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.vendor_name || row.vendor_count || "-"}</td>
                   </tr>
                 ))}
               </tbody>

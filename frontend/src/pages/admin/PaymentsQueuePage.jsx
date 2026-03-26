@@ -82,6 +82,7 @@ export default function PaymentsQueuePage() {
             <table className="w-full text-sm" data-testid="payments-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Invoice</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payer</th>
@@ -89,12 +90,12 @@ export default function PaymentsQueuePage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right hidden md:table-cell">Invoice Total</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Mode</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map((row) => (
                   <tr key={row.payment_proof_id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`payment-row-${row.payment_proof_id}`}>
+                    <td className="px-4 py-3 text-xs text-slate-500">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.invoice_number || "-"}</td>
                     <td className="px-4 py-3 text-slate-700">{row.customer_name || row.customer_email || "-"}</td>
                     <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{row.payer_name || "-"}</td>
@@ -102,7 +103,6 @@ export default function PaymentsQueuePage() {
                     <td className="px-4 py-3 text-right text-slate-600 hidden md:table-cell">{money(row.total_invoice_amount)}</td>
                     <td className="px-4 py-3 capitalize text-slate-600">{row.payment_mode || "full"}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
-                    <td className="px-4 py-3 text-xs text-slate-500 hidden md:table-cell">{row.created_at ? new Date(row.created_at).toLocaleDateString() : "-"}</td>
                   </tr>
                 ))}
               </tbody>

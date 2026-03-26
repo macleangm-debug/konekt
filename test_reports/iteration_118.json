@@ -1,0 +1,88 @@
+{
+  "summary": "Canonical UI Reuse Consolidation testing completed. All 16 backend tests pass. All frontend UI features verified working correctly. Fixed critical bug: admin_facade_routes.py was not included in server.py, causing /api/admin/payments/queue and /api/admin/orders/{id} endpoints to fail. Also fixed ObjectId import issue in server.py for order detail lookup.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [],
+    "fixed_during_testing": [
+      {"endpoint": "/api/admin/payments/queue", "issue": "Route not registered - admin_facade_routes.py was not included in server.py", "fix": "Added import and include_router for admin_facade_router in server.py"},
+      {"endpoint": "/api/admin/orders/{id}", "issue": "Order not found - was looking for 'id' field but orders use ObjectId '_id'", "fix": "Added ObjectId import and fallback lookup by ObjectId in server.py"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ui_consolidation_canonical.py",
+    "/app/test_reports/pytest/pytest_results_ui_consolidation.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/server.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all UI features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "UI consolidation complete. All admin pages (Payments, Orders, Quotes, Invoices) use Table+Drawer pattern. Route redirects working. Partner sidebar shows 'My Orders'. Customer /account/orders uses OrdersPageV2.",
+  "features_verified": {
+    "/admin/payments": {
+      "status": "PASS",
+      "details": "PaymentsQueuePage loads with columns: Date, Invoice, Customer, Payer, Paid, Invoice Total, Mode, Status"
+    },
+    "/admin/orders": {
+      "status": "PASS",
+      "details": "OrdersPage loads with tabs (All Orders, Awaiting Release, Released, Completed) and columns: Date, Order#, Customer, Source, Total, Payment, Fulfillment, Assigned Sales, Assigned Vendor. Sorted newest first."
+    },
+    "order_detail_drawer": {
+      "status": "PASS",
+      "details": "Clicking order row opens DetailDrawer with customer info, items, Release to Vendor button"
+    },
+    "/admin/quotes": {
+      "status": "PASS",
+      "details": "QuotesRequestsPage loads with columns: Date, Number, Customer, Type, Amount, Status, Sales. Status filter present."
+    },
+    "quote_detail_drawer": {
+      "status": "PASS",
+      "details": "Clicking quote row opens DetailDrawer with quote details"
+    },
+    "/admin/invoices": {
+      "status": "PASS",
+      "details": "InvoicesPage loads with columns: Date, Invoice, Customer, Amount, Status. NO Action column."
+    },
+    "invoice_drawer": {
+      "status": "PASS",
+      "details": "Clicking invoice row opens drawer with line items, totals, PDF download, status change"
+    },
+    "/account/orders": {
+      "status": "PASS",
+      "details": "OrdersPageV2 loads with columns: Date, Order No, Source, Amount, Payment, Fulfillment"
+    },
+    "customer_order_drawer": {
+      "status": "PASS",
+      "details": "Clicking customer order row opens order drawer with details"
+    },
+    "/partner/fulfillment": {
+      "status": "PASS",
+      "details": "Partner fulfillment page loads. Sidebar shows 'My Orders' (not 'Fulfillment Queue')"
+    },
+    "route_redirects": {
+      "status": "PASS",
+      "details": "/admin/central-payments, /admin/payment-proofs, /admin/finance-queue all redirect to PaymentsQueuePage. /admin/orders-ops, /admin/orders-legacy redirect to OrdersPage."
+    },
+    "admin_sidebar": {
+      "status": "PASS",
+      "details": "Finance section shows 'Payments Queue' linking to /admin/payments"
+    }
+  }
+}

@@ -195,8 +195,15 @@ async def orders_list(request: Request, search: Optional[str] = Query(default=No
 
 @router.get("/orders/{order_id}")
 async def order_detail(order_id: str, request: Request):
+    from bson import ObjectId
     db = request.app.mongodb
+    # Try finding by 'id' field first, then by ObjectId
     order = await db.orders.find_one({"id": order_id})
+    if not order:
+        try:
+            order = await db.orders.find_one({"_id": ObjectId(order_id)})
+        except:
+            pass
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     invoice = await db.invoices.find_one({"id": order.get("invoice_id")})
