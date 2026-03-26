@@ -179,7 +179,7 @@ import PartnerDashboardV2 from "@/pages/partner/PartnerDashboardV2";
 import PartnerCatalogPage2 from "@/pages/partner/PartnerCatalogPage";
 import PartnerStockTablePage from "@/pages/partner/PartnerStockTablePage";
 import PartnerBulkUploadPage from "@/pages/partner/PartnerBulkUploadPage";
-import PartnerFulfillmentPage from "@/pages/partner/PartnerFulfillmentPage";
+import MyOrdersPage from "@/pages/partner/MyOrdersPage";
 import PartnerSettlementsPage from "@/pages/partner/PartnerSettlementsPage";
 
 // Affiliate Dashboard Pages
@@ -636,7 +636,7 @@ function App() {
           <Route path="catalog/:listingId/edit" element={<PartnerListingEditorPage />} />
           <Route path="stock" element={<PartnerStockTablePage />} />
           <Route path="bulk-upload" element={<PartnerBulkUploadPage />} />
-          <Route path="fulfillment" element={<PartnerFulfillmentPage />} />
+          <Route path="orders" element={<MyOrdersPage />} />
           <Route path="settlements" element={<PartnerSettlementsPage />} />
           {/* Affiliate Dashboard Routes */}
           <Route path="affiliate-dashboard" element={<AffiliateDashboardHomePage />} />

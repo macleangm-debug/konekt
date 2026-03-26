@@ -143,10 +143,17 @@ async def finance_approve_proof(payload: dict, request: Request):
         })
         for vid in (invoice.get("vendor_ids") or []):
             vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
+            vo_id = str(uuid4())
             await db.vendor_orders.insert_one({
-                "id": str(uuid4()), "vendor_id": vid, "order_id": order_id,
+                "id": vo_id, "vendor_id": vid, "order_id": order_id,
                 "customer_id": invoice.get("customer_id"),
                 "status": "ready_to_fulfill", "items": vitems, "created_at": now,
+            })
+            await db.notifications.insert_one({
+                "id": str(uuid4()), "target_type": "vendor", "target_id": vid,
+                "title": "New Order Assigned",
+                "message": f"You have a new vendor order for order {order_id[:12]}",
+                "read": False, "created_at": now,
             })
         await db.order_events.insert_one({
             "id": str(uuid4()), "order_id": order_id,

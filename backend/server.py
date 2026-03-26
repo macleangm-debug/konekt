@@ -140,6 +140,7 @@ from partner_listing_submission_routes import router as partner_listing_submissi
 from public_marketplace_routes import router as public_marketplace_router
 from media_upload_routes import router as media_upload_router
 from partner_excel_import_routes import router as partner_excel_import_router
+from vendor_orders_routes import router as vendor_orders_router
 
 # Service Orchestration Routes
 from service_catalog_routes import router as service_catalog_router
@@ -2316,6 +2317,7 @@ app.include_router(partner_listing_submission_router)
 app.include_router(public_marketplace_router)
 app.include_router(media_upload_router)
 app.include_router(partner_excel_import_router)
+app.include_router(vendor_orders_router)
 
 # Service Orchestration Routes
 app.include_router(service_catalog_router)

@@ -31,7 +31,7 @@ function getActions(role) {
     case "partner":
     case "delivery_partner":
       return [
-        { label: "Jobs", href: "/partner/fulfillment", icon: Briefcase },
+        { label: "My Orders", href: "/partner/orders", icon: Briefcase },
         { label: "Settlements", href: "/partner/settlements", icon: DollarSign },
         { label: "Profile", href: "/partner/profile", icon: User },
       ];

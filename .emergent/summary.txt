@@ -1,114 +1,120 @@
-<analysis>**original_problem_statement**: The user requested a series of major UI and architectural polish passes for the Konekt platform. This included: 1) Canonical UI Reuse Consolidation (ensuring all admin transaction pages use the master Table + Drawer pattern). 2) Route Cleanup (removing legacy/duplicate routes). 3) Customers CRM Upgrade (merging Customers and Customer Accounts into one page with a tabbed 360 profile drawer and top stats cards). 4) Business Settings Overhaul (converting the settings page into a 9-tab layout, adding a Signature Pad, Logo upload, and a Generated Stamp Builder). PRODUCT REQUIREMENTS: Single source of truth for routing, computed active/inactive customer statuses (30/90 days), tabbed settings UI, and dynamic SVG stamp/signature generation.
+<analysis>**original_problem_statement**: The user wants to continue refining the Konekt B2B platform. The current phase focuses on unifying the authentication flow, polishing PDF document generation (fixing cutoffs and layout overflows), enriching the Sales Staff portal with real data, and cleaning up the Vendor/Partner portal (specifically merging Fulfillment into a unified My Orders page with a drawer). PRODUCT REQUIREMENTS: Single unified  for all roles, print-safe WeasyPrint PDFs, dedicated  with enriched sales drawer, and dedicated  replacing legacy fulfillment pages.
 
 **User's preferred language**: INSTRUCT NEXT AGENT: Respond in English.
 
-**what currently exists?**: A highly consolidated B2B admin platform. Transaction pages (Quotes, Orders, Invoices, Payments) strictly use the Table + Right Drawer pattern. Routing is clean (14 legacy routes removed). The Customers page is a robust CRM with computed status stats cards and a wide, tabbed 360-degree drawer. The backend handles dynamic SVG stamp generation, PDF creation, and complex MongoDB aggregations for customer stats. 
+**what currently exists?**: A mature React + FastAPI + MongoDB platform. The Admin Settings Hub is fully tabbed. Quotes/Invoices/Orders generate clean, print-safe PDFs with combined Auth/Bank grids. Authentication is unified at a single  route that automatically redirects based on role (Customer, Admin, Staff, Partner). The Staff/Sales side has an enriched Orders queue. 
 
 **Last working item**:
-    - Last item agent was working: Refactoring the  into a 9-tab layout and integrating new UI components. The agent created  and rewrote the Settings Hub. Right before the session ended, the user uploaded a new codepack () containing , , and a . The agent extracted the zip to  but the session ended before these components could be integrated into the new Tabbed Business Settings and tested.
+    - Last item agent was working: Implementing the Vendor Orders Cleanup. The user uploaded . The goal is to build a unified Vendor My Orders page with a drawer, deprecate the separate  route, and ensure role-based visibility. The agent extracted the pack to  and reviewed the existing partner routes, but the session ended before implementation.
     - Status: IN PROGRESS
     - Agent Testing Done: N
-    - Which testing method agent to use? both (Frontend screenshot to verify the new Tabbed Settings UI and Signature/Stamp builder rendering, backend testing agent/curl to verify saving these new complex settings objects to MongoDB).
+    - Which testing method agent to use? both (Frontend screenshot to verify new My Orders layout and Drawer; Backend testing agent for the new  endpoints).
     - User Testing Done: N
 
-**All Pending/In progress Issue list**:
-  Issue 1: Integrate and Verify Tabbed Business Settings & New Zip Components (P0 🔴)
-     - Attempted fixes: The agent scaffolded the tabbed  and . The user provided  and  in . They have not been stitched together.
+**All Pending/In progress Issue list**: 
+  Issue 1: Implement Vendor Orders Cleanup Pack (P0 🔴)
+     - Attempted fixes: Agent extracted the zip to  and identified that  and the  route in  need to be replaced.
      - Next debug checklist: 
-        1. Review the extracted files in .
-        2. Integrate  and  into the appropriate tabs inside  (e.g., Commercial Rules tab, Invoice Branding tab).
-        3. Ensure the Signature Pad and Logo Upload work inside the Invoice Branding tab.
-        4. Test saving the settings to the backend to ensure the JSON schema matches the user's requested structure.
-     - Why fix this issue and what will be achieved with the fix? This completes the Business Settings overhaul, giving admins centralized control over branding, signatures, and CRM activity rules.
+        1. Review files in .
+        2. Copy  to the backend and register it in .
+        3. Copy  to backend services.
+        4. Copy  and  to the frontend partner pages/components.
+        5. Update  and Partner Sidebar navigation to remove  and point to the new Orders page.
+     - Why fix this issue and what will be achieved with the fix? It consolidates the vendor experience. Vendors will have a single source of truth for their orders without needing a separate, confusing fulfillment page.
      - Status: IN PROGRESS
      - Is recurring issue? N
      - Should Test frontend/backend/both after fix? both
      - Blocked on other issue: None
 
 **In progress Task List**:
-  Task 1: Complete Tabbed Business Settings Integration
-     - Where to resume: Open  and the files in . Wire the new components into the tabs.
-     - What will be achieved with this? A clean, organized settings hub preventing endless scrolling, with advanced branding tools.
+  Task 1: Deprecate legacy Partner Fulfillment routes
+     - Where to resume:  and .
+     - What will be achieved with this? Cleans up dead code and prevents vendor confusion.
      - Status: IN PROGRESS
-     - Should Test frontend/backend/both after fix? both
-     - Blocked on something: None
+     - Should Test frontend/backend/both after fix? frontend
+     - Blocked on something: Tied to Issue 1 (Implementing new Vendor Orders pack).
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
     - (P1 🟡) Connect live payment gateway (KwikPay/Stripe)
     - (P1 🟡) Final Launch Verification Checklist execution
-    - (P1 🟡) Wire actual sales person data when assigned in admin (currently stubbed in Order Drawer)
-
+    
     Future Tasks:
-    - (P2 ⚪️) Configure Twilio WhatsApp credentials (blocked on API keys)
-    - (P2 ⚪️) One-click reorder / Saved Carts
-    - (P2 ⚪️) AI-assisted Auto Quote Suggestions
-    - (P2 ⚪️) Advanced Analytics dashboard
-    - (P2 ⚪️) Mobile-first optimization
+    - (P2 ⚪) Configure Twilio WhatsApp credentials (blocked on API keys)
+    - (P2 ⚪) One-click reorder / Saved Carts
+    - (P2 ⚪) AI-assisted Auto Quote Suggestions
+    - (P2 ⚪) Advanced Analytics dashboard
+    - (P2 ⚪) Mobile-first optimization
 
 **Completed work in this session**
-- Verified 3 unverified changes from previous session: dynamic contact details, multi-page PDF CSS, and custom logo embedding in SVG stamps. (DONE)
-- Canonical UI Reuse Consolidation: standardized Orders, Payments, Quotes, and Invoices admin pages. (DONE)
-- Route Cleanup: Removed 14 legacy/duplicate routes from App.js and cleaned up navigation config files. (DONE)
-- Merged Customers CRM: Combined Customers and Customer Accounts into  with top stats cards, computed statuses (Active/At Risk/Inactive), and a wide tabbed 360-drawer. (DONE)
-- Fixed naive vs. aware datetime comparison bug in customer activity computation. (DONE)
+- Admin Settings Hub tab integration (CRM Rules & Stamp Builder) (DONE)
+- PDF Layout Fixes (v2) - Fixed 794px widths, overflow issues, fixed tables (DONE)
+- Unified Authentication - Merged all login pages to , fixed logout state bug (DONE)
+- PDF Cutoff Fix - Created  grid to prevent signature/stamp page breaks (DONE)
+- Sales Accounts Reuse Pack - Implemented  and  with enriched order data (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-None.
+None. (Note: The user uploaded an ops pack but immediately pivoted to the Sales pack and Vendor Pack. The user also accidentally pasted a prompt about a StikIt affiliate program and explicitly told the agent to ignore it. Do not build StikIt features).
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: Twilio WhatsApp configuration continually deferred due to missing API keys.
-  - Recurrence count: 9
+  - Issue recurrence in previous fork: Twilio WhatsApp integration deferred due to lack of API keys.
+  - Recurrence count: 10
   - Status: BLOCKED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Computed CRM Status**: Customer status (Active/At Risk/Inactive) is dynamically computed on the backend based on the most recent order, invoice, quote, or note date (30/90 day thresholds).
-- **Tabbed Settings Architecture**: Settings are migrating from a single long scroll to categorized tabs (Business Profile, Invoice Branding, Commercial Rules, etc.)
-- **Canvas Signature Pad**: React component for capturing base64 signatures.
+- **Unified Login**:  handles Customers, Admins, and Partners. The backend checks both the  collection and the  collection and issues tokens accordingly.
+- **WeasyPrint PDFs**: PDFs rely strictly on HTML/CSS with print-safe constraints (, ).
+- **Drawer Pattern**: Most admin panels use . Complex entities (like CRM or customized Vendor/Staff views) use custom drawer implementations that follow a similar visual spec.
 
 **key DB schema**
-  -  (type: ): Updated to support , ,  (upload vs pad), and .
+  - : Core users (Admin, Staff, Customer).
+  - : Separate collection for vendor/affiliate auth.
+  - : Contains nested dictionaries for ,  (enrichment), and .
 
 **changes in tech stack**
-  - No new stack changes; heavy utilization of React state for Canvas API (Signature Pad).
+  - None.
 
 **All files of reference**
--  (Main WIP file)
-- 
-- 
-- 
-- 
+-  (Source of truth for next task)
+-  (Routing cleanup required)
+-  (Sidebar cleanup required)
+-  (Must attach new vendor routes)
 
 **Areas that need refactoring**:
--  is currently in a transitional state and needs the extracted components wired into its new Tab layout.
+- Legacy  route and  need to be deleted once  is wired.
 
 **key api endpoints**
+-  (POST) - Unified login
 -  (GET)
--  (GET)
--  (GET)
--  (GET/POST)
+-  (GET) - *Pending implementation*
 
 **Critical Info for New Agent**
-Your immediate priority is to finish what the previous agent started: The **Tabbed Business Settings UI**. The previous agent created the tab layout and . The user then uploaded  (extracted to ) containing  and . **You need to take these unintegrated components and wire them into the tabs inside **. Verify that the Invoice Branding tab correctly supports the logo upload, signature pad, and stamp builder, and that settings save successfully to the backend.
+1. **IGNORE the StikIt prompt** found in the message history. The user confirmed it was an accidental paste from another project.
+2. Your immediate P0 task is to implement the files currently sitting in .
+3. The goal of the vendor pack is to give vendors a  (with a ) and completely remove the old Fulfillment page concept, combining it all into one orders view.
 
 **documents and test reports created in this job**
-  -  (Canonical UI tests - Pass)
-  -  (Merged Customers tests - Pass)
-  -  (Customers CRM Upgrade tests - Pass)
   - 
+  -  (100% pass on Sales feature)
+  -  (100% pass on PDF cutoff fixes)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-- User requested checking for hanging/duplicate routes. (Agent fixed)
-- User requested merging Customers and Customer Accounts into one page with Table+Drawer. (Agent fixed)
-- User requested upgrading Customers to a CRM feel with stats cards, computed Active/Inactive status, and a tabbed profile drawer. (Agent fixed)
-- User requested transforming Business Settings into a Tabbed Layout, adding Logo Upload, Signature Pad, and Stamp Generation options, providing a zip file.
-- *PENDING ACTION*: Agent started building the tabs and Signature Pad, but the user uploaded a final zip () with  and  right before the session ended. You must integrate these and finish the Settings Hub.
+- User uploaded  and confirmed Fulfillment should be merged into Orders. (PENDING ACTION)
+- User asked where the uniform drawer design was.
+- User asked for test credentials.
+- User explicitly told agent to ignore the StikIt affiliate message.
+- User uploaded . (Agent implemented)
+- User uploaded  and . (Agent fixed PDF)
+- User asked to unify login pages and fix a logout redirect bug. (Agent fixed)
+- User requested test credentials.
+- User verified the PDF layout patch.
+- User uploaded . (Agent implemented)
 
 **Project Health Check:**
-Healthy. All prior iterations passed via testing agent with 100% success. Codebase is much cleaner after removing 14 legacy routes.
+Healthy. Heavy testing agent usage resulting in passing test suites. Codebase is much cleaner after removing disparate login pages.
 
 **3rd Party Integrations** 
 - Resend (Emails) — requires User API Key
@@ -116,15 +122,16 @@ Healthy. All prior iterations passed via testing agent with 100% success. Codeba
 - Twilio (WhatsApp) — requires User API Key (Credentials pending)
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 118, 119, 120).
+  - Testing agent used after significant changes: YES (Iterations 122, 123, 124, 125).
   - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: 
-  - Known regressions: None known, but  is currently mid-refactor.
+  - Known regressions: None.
 
 **Credentials to test flow:**
 - Customer:  / 
 - Admin:  / 
 - Vendor/Partner:  / 
+*(All roles log in at )*
 
 **What agent forgot to execute**
-The agent extracted the user's final zip () to  but ran out of time before integrating  and  into the newly refactored .</analysis>
+The agent extracted the user's  to  but ran out of time before copying the files into the main  directory, updating , and removing the legacy fulfillment routes.</analysis>

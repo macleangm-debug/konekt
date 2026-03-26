@@ -28,7 +28,7 @@
   "seed_data_creation": "None",
   "retest_needed": false,
   "main_agent_can_self_test": true,
-  "context_for_next_testing_agent": "PDF layout fixes complete. All document types (Quote, Invoice, Order) now have: 794px page width, overflow:hidden, table-layout:fixed, doc-title max-width:280px, auth-area (signature+stamp) when enabled in settings. Enterprise PDF routes also have page constraints. Sample IDs: Quote=69c3deedabcf7cf39caa7e56, Invoice=69c264d851b9095b5b27a02c, Order=f91e84c4-95f9-466c-bbc4-6b3a77e43962",
+  "context_for_next_testing_agent": "PDF layout fixes complete. All document types (Quote, Invoice, Order) now have: 794px page width, overflow:hidden, table-layout:fixed, doc-title max-width:280px, auth-area (signature+stamp) when enabled in settings. Enterprise PDF routes also have page constraints. Sample IDs: Quote=69c3deedabcf7cf39caa7e56, Invoice=69c264d851b9095b5b27a02c, Order=partner-my-orders",
   "features_verified": {
     "quote_preview_page_width_794px": {
       "status": "PASS",

@@ -106,7 +106,7 @@ export default function PartnerDashboardPage() {
             description="Upload multiple items via JSON or CSV"
           />
           <ActionCard
-            href="/partner/fulfillment"
+            href="/partner/orders"
             title="View Fulfillment Queue"
             description="Check and process pending fulfillment jobs"
           />
