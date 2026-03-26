@@ -18,7 +18,7 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Order/Invoice/Quote creation & management
 - Loyalty points, Affiliate system
 - Admin/Vendor/Customer dashboards
-- PDF generation (Invoices, Quotes)
+- PDF generation (Invoices, Quotes, Orders)
 
 ### Final UI Polish Pass (March 26, 2026) - DONE
 - Invoice Drawer: BrandLogo md, status-aware PaymentStatusBlock (Paid/Awaiting with real bank details)
@@ -36,10 +36,13 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Drawer: Order Summary, Customer, PROMINENT Sales Person (Call/Email/WhatsApp), Fulfillment/Vendor, Items, Timeline, "Need help?"
 
 ### Invoice Branding & Authorization (March 26, 2026) - DONE
-**Admin Settings Hub → Invoice Branding section:**
+**Admin Settings Hub -> Invoice Branding section:**
 - CFO Name, Title, Show Signature toggle, Signature upload
 - Company Stamp: Generated (Circle/Square, Blue/Red/Black, company details) or Uploaded
 - Generated stamp as SVG with curved text, double borders, registration/TIN
+- Dynamic contact details (email, phone, address) editable in settings
+- Custom logo image embedded in center of generated stamps (base64)
+- Multi-page PDF layout support with @page CSS and page-break-inside
 - Live Invoice Footer Preview panel
 - Settings saved to MongoDB `business_settings` collection
 - PDF generator reads branding settings dynamically
@@ -53,7 +56,9 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - `POST /api/admin/settings/invoice-branding/signature-upload`
 - `POST /api/admin/settings/invoice-branding/stamp-upload`
 - `POST /api/admin/settings/invoice-branding/generate-stamp`
-- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/quotes/{id}`
+- `GET /api/pdf/invoices/{id}`, `GET /api/pdf/invoices/{id}/preview`
+- `GET /api/pdf/quotes/{id}`, `GET /api/pdf/quotes/{id}/preview`
+- `GET /api/pdf/orders/{id}`, `GET /api/pdf/orders/{id}/preview`
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
@@ -65,6 +70,7 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 ### P1 — Upcoming
 - Connect live payment gateway (KwikPay/Stripe)
 - Final Launch Verification Checklist
+- Wire actual sales person data when assigned in admin
 
 ### P2 — Future
 - Twilio WhatsApp credentials (blocked on user API keys)
