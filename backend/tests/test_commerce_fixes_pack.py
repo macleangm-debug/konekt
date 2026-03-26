@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pdf-stamp-test.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://admin-settings-v4.preview.emergentagent.com')
 
 class TestMarketplaceFilters:
     """Tests for GET /api/marketplace/filters endpoint"""
