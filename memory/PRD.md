@@ -31,26 +31,24 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 ### Canonical UI Reuse Consolidation (March 26, 2026) - DONE
 - All admin transaction pages use canonical Table+Drawer pattern
 - Date columns on the left, no action columns, newest-first sorting
-- Route consolidation: duplicate routes removed (253 → 239 routes)
-- Sidebar: "Payments Queue" → `/admin/payments`, Partner "My Orders"
 
 ### Route Cleanup (March 26, 2026) - DONE
-**Removed 14 duplicate/legacy routes:**
-- `/admin/orders-legacy`, `/admin/orders-ops` (→ `/admin/orders`)
-- `/admin/crm-old` (→ `/admin/crm`)
-- `/admin/quotes-old`, `/admin/quotes/kanban` (→ `/admin/quotes`)
-- `/admin/customers-old` (→ `/admin/customers`)
-- `/admin/central-payments`, `/admin/finance-queue`, `/admin/payment-proofs` (→ `/admin/payments`)
-- `/admin/setup`, `/admin/ux-overview`, `/admin/catalog-setup`, `/admin/partner-ecosystem-v2`
-- `/old-home`
+- Removed 14+ duplicate/legacy routes (253 → ~225 routes)
+- Cleaned dead imports and orphaned config files
+- Canonical routes: /admin/payments, /admin/orders, /admin/quotes, /admin/invoices, /admin/customers
 
-**Removed 16 dead imports** from App.js
-
-**Cleaned navigation configs:**
-- Deleted: `admin-sidebar-final-links.js`, `adminNavigationGroups.js`, `navigationAccess.js`
-- Kept: `adminNavigation.js` (single source of truth), `admin-sidebar-links.js` (audit page)
-- Updated `adminNavigation.js`: "Payment Proofs" → "Payments" at `/admin/payments`
-- Removed `/admin/catalog-setup` from AdminLayout sidebar
+### Merged Customers Page (March 26, 2026) - DONE
+**Replaced separate Customers + Customer Accounts with one canonical page:**
+- `/admin/customers` → `CustomersPageMerged` (table + drawer)
+- Table: Recent Activity, Customer, Email, Company, Type (business/individual), Orders, Invoices, Sales, Status
+- Drawer: Customer 360 view with:
+  - KPI cards (Quotes, Invoices, Orders, Unpaid)
+  - Profile (type, phone, address, referral code, points, credit balance)
+  - Sales Ownership (assigned sales person with contact details)
+  - Recent Quotes, Invoices, Orders with amounts and status badges
+  - Internal Notes
+- Backend: `/api/admin/customers-360/list` and `/api/admin/customers-360/{customer_id}`
+- Removed `/admin/customer-accounts` route and sidebar link
 
 ## Canonical Admin Routes
 | Business Area | Route | Component |
@@ -61,7 +59,7 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 | Orders | `/admin/orders` | OrdersPage |
 | Invoices | `/admin/invoices` | InvoicesPage |
 | Payments | `/admin/payments` | PaymentsQueuePage |
-| Customers | `/admin/customers` | CustomersPageV2 |
+| Customers | `/admin/customers` | CustomersPageMerged |
 | Users | `/admin/users` | AdminUsers |
 | Settings | `/admin/settings-hub` | AdminSettingsHubPage |
 
