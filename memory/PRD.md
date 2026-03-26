@@ -20,47 +20,29 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - Admin/Vendor/Customer dashboards
 - PDF generation (Invoices, Quotes, Orders)
 
-### Final UI Polish Pass - DONE
-- Invoice PDF: Zoho-level template with dynamic CFO signature/stamp
-- Dynamic contact details + multi-page PDF support
-- Custom logo embedding in generated SVG stamps
-
-### Route Cleanup & Canonical Consolidation - DONE
-- Removed 14+ duplicate/legacy routes
-- All admin transaction pages use canonical Table+Drawer pattern
-- Single navigation source of truth
-
-### Customers CRM Page - DONE
-- Stats Cards: Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders
-- Computed Customer Status: Active (30d) / At Risk (31-90d) / Inactive (90d+)
-- Wide Profile Drawer with 5 Tabs (Overview, Quotes, Invoices, Orders, Notes)
-
-### Tabbed Business Settings Hub - DONE
-- 9-Tab Layout: Business Profile, Payment Details, Invoice Branding, Commercial Rules, Sales & Commissions, Affiliate & Referrals, Workflows & Vendors, Notifications, Launch Controls
-- CustomerActivityRulesCard in Commercial Rules tab
-- GeneratedStampBuilder in Invoice Branding tab
-- SignaturePad with Upload/Draw method toggle
+### Unified Auth System (March 26, 2026) - DONE
+- Single `/login` page for ALL roles (Customer, Admin, Partner)
+- Backend `/api/auth/login` checks both `users` AND `partner_users` collections
+- Role-based routing: admin→`/admin`, partner→`/partner`, customer→`/dashboard`
+- `clearAllAuth()` helper clears ALL token keys on logout
+- `/admin/login` and `/partner-login` redirect to `/login`
+- Fixed: Logout bug where `konekt_token` was not cleared, causing auto-redirect back
 
 ### PDF Layout & Auth Block Overhaul (March 26, 2026) - DONE
-**Layout Fixes:**
-- Page width constrained to 794px (print-safe A4) with `overflow: hidden`
-- `table-layout: fixed` on all item tables
-- `doc-title` max-width: 280px to prevent header overflow
-- Totals box wrapped in flex-end container, stays inside page
-- All child blocks use `width: 100%` — nothing exceeds wrapper
-- `.col` has `min-width: 0` to prevent flex overflow
+- Page width constrained to 794px (print-safe A4) with overflow:hidden
+- table-layout:fixed, doc-title max-width:280px
+- Signature+stamp settings-driven (not status-dependent) for Quotes, Invoices, Orders
+- Applied across all PDF systems
 
-**Signature/Stamp Visibility:**
-- Auth block is now **settings-driven**, not document-status-dependent
-- Signature+stamp appear on **Quotes, Invoices, AND Orders** when enabled
-- Removed `is_finalized` restriction — shows whenever `show_signature`/`show_stamp` is true
-- Supports both file-based signature URLs and `data:` base64 URLs from SignaturePad
-- SVG stamps rendered inline from file
+### Tabbed Business Settings Hub (March 26, 2026) - DONE
+- 9-Tab Layout with CustomerActivityRulesCard, GeneratedStampBuilder, SignaturePad
 
-**Applied to all 3 PDF systems:**
-- `pdf_generation_routes.py` (primary WeasyPrint — Quotes/Invoices/Orders)
-- `enterprise_pdf_routes.py` (enterprise WeasyPrint)
-- ReportLab services unchanged (programmatic PDF, not HTML)
+### Customers CRM Page - DONE
+- Stats Cards, Computed Status, Wide Profile Drawer with 5 Tabs
+
+### Route Cleanup & Canonical Consolidation - DONE
+- 14+ duplicate/legacy routes removed
+- All admin transaction pages use canonical Table+Drawer pattern
 
 ## Canonical Admin Routes
 | Route | Component |
@@ -74,6 +56,13 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 | `/admin/customers` | CustomersPageMerged |
 | `/admin/users` | AdminUsers |
 | `/admin/settings-hub` | AdminSettingsHubPage |
+
+## Auth Flow
+- **Single login URL**: `/login` for all users
+- **Customer** → `konekt_token` → `/dashboard`
+- **Admin** → `konekt_admin_token` → `/admin`
+- **Partner** → `partner_token` → `/partner`
+- **Logout**: `clearAllAuth()` removes all token keys
 
 ## Test Credentials
 - Customer: `demo.customer@konekt.com` / `Demo123!`
