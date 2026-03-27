@@ -1,0 +1,89 @@
+{
+  "summary": "6-Item Route/API Cleanup Audit - All features verified and working. Backend: 12/12 tests passed. Frontend: All UI components verified via Playwright. Fixed additional /dashboard/ and /partner/fulfillment references found in production_progress_routes.py, customer_notifications_routes.py, quote_engine_routes.py, email_templates_v2.py, and CustomerPortalLayoutV2.jsx.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_route_api_cleanup.py",
+    "/app/test_reports/pytest/pytest_results_route_api_cleanup.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/production_progress_routes.py - Fixed /dashboard/ to /account/ and /partner/fulfillment to /partner/orders",
+    "/app/backend/customer_notifications_routes.py - Fixed activity feed link from /dashboard/quotes to /account/quotes",
+    "/app/backend/quote_engine_routes.py - Fixed notification target_url from /dashboard/ to /account/",
+    "/app/backend/email_templates_v2.py - Fixed all email links from /dashboard/ to /account/",
+    "/app/frontend/src/layouts/CustomerPortalLayoutV2.jsx - Fixed all sidebar nav links from /dashboard/ to /account/",
+    "/app/frontend/src/config/customer-sidebar-links.js - Fixed all links from /dashboard/ to /account/"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "6-Item Route/API Cleanup Audit fully tested and verified. All features working: 1) Customer invoice payer_name returned by API with priority chain (invoice.payer_name → proof payer_name → billing.invoice_client_name → customer_name). 2) Vendor notification links replaced from /partner/fulfillment to /partner/orders. 3) PartnerFulfillmentPage.jsx physically deleted. 4) /account/* is the only customer shell - /dashboard/* redirects to /account/*. 5) Only one admin payments page (PaymentsQueuePage) is active at /admin/payments. 6) Password show/hide toggle on LoginPageV2.jsx works correctly with data-testid='toggle-password-btn'. Additional fixes applied: Updated remaining /dashboard/ references in backend notification services and email templates to use /account/. Updated CustomerPortalLayoutV2.jsx sidebar links to use /account/*.",
+  "features_tested": {
+    "customer_invoice_payer_name": {
+      "status": "PASS",
+      "details": "GET /api/customer/invoices returns payer_name field with priority chain. Customer invoice table shows PAYER column."
+    },
+    "vendor_notification_links": {
+      "status": "PASS",
+      "details": "All notification links updated from /partner/fulfillment to /partner/orders. Verified via API tests."
+    },
+    "partner_fulfillment_page_deleted": {
+      "status": "PASS",
+      "details": "PartnerFulfillmentPage.jsx no longer exists. /partner/fulfillment redirects to /partner/orders."
+    },
+    "account_customer_shell": {
+      "status": "PASS",
+      "details": "/account/* is the only customer shell. /dashboard/* redirects to /account/*. All sidebar links point to /account/*."
+    },
+    "admin_payments_page": {
+      "status": "PASS",
+      "details": "Only PaymentsQueuePage is active at /admin/payments. Shows Date, Invoice, Customer, Payer, Paid, Invoice Total, Mode, Status columns."
+    },
+    "password_toggle": {
+      "status": "PASS",
+      "details": "LoginPageV2.jsx has password show/hide toggle with data-testid='toggle-password-btn'. Clicking toggles input type between 'password' and 'text'."
+    },
+    "customer_login_redirect": {
+      "status": "PASS",
+      "details": "Customer login redirects to /account (not /dashboard). getDashboardPath('customer') returns '/account'."
+    },
+    "sign_out_in_profile_dropdown": {
+      "status": "PASS",
+      "details": "Sign Out is in profile dropdown (top-right), NOT in sidebar for all roles (Customer, Admin, Partner)."
+    },
+    "customer_timeline_labels": {
+      "status": "PASS",
+      "details": "Customer orders show customer-safe timeline labels: Ordered, Confirmed, In Progress, Quality Check, Ready, Completed."
+    },
+    "vendor_orders_privacy": {
+      "status": "PASS",
+      "details": "Vendor orders table does NOT show customer name. Shows: Date, Vendor Order No, Source Type, Base Price, Status, Priority."
+    }
+  },
+  "additional_fixes_applied": {
+    "production_progress_routes.py": "Fixed /dashboard/orders to /account/orders and /partner/fulfillment to /partner/orders",
+    "customer_notifications_routes.py": "Fixed activity feed link from /dashboard/quotes to /account/quotes",
+    "quote_engine_routes.py": "Fixed notification target_url from /dashboard/quotes and /dashboard/invoices to /account/quotes and /account/invoices",
+    "email_templates_v2.py": "Fixed all email CTA links from /dashboard/* to /account/*",
+    "CustomerPortalLayoutV2.jsx": "Fixed sidebar nav links and profile dropdown menu links from /dashboard/* to /account/*",
+    "customer-sidebar-links.js": "Fixed all links from /dashboard/* to /account/*"
+  }
+}

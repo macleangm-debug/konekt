@@ -3,13 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
 import BrandLogo from "../../components/branding/BrandLogo";
-import { Check } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 import { clearAllAuth, getDashboardPath } from "../../lib/authHelpers";
 
 export default function LoginPageV2() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -120,14 +121,25 @@ export default function LoginPageV2() {
               
               <div>
                 <label className="block text-sm font-medium text-[#0f172a] mb-1.5">Password</label>
-                <input 
-                  type="password"
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition" 
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  data-testid="password-input"
-                />
+                <div className="relative">
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    className="w-full border border-gray-200 rounded-lg px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition" 
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    data-testid="password-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                    data-testid="toggle-password-btn"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
               <button 

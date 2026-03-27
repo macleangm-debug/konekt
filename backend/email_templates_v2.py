@@ -35,7 +35,7 @@ def quote_ready_email(customer_name, quote_number, total, currency, quote_id):
         <p><strong>Total:</strong> {currency} {total:,.0f}</p>
         <p>You can preview and approve it directly in your client portal.</p>
         <p style="margin-top:24px;">
-          <a href="{FRONTEND_URL}/dashboard/quotes/{quote_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
+          <a href="{FRONTEND_URL}/account/quotes/{quote_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
             Review Quote
           </a>
         </p>
@@ -56,7 +56,7 @@ def invoice_ready_email(customer_name, invoice_number, total, currency, invoice_
         <p><strong>Total:</strong> {currency} {total:,.0f}</p>
         <p>You can preview the invoice and complete payment in your portal.</p>
         <p style="margin-top:24px;">
-          <a href="{FRONTEND_URL}/dashboard/invoices/{invoice_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
+          <a href="{FRONTEND_URL}/account/invoices/{invoice_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
             View Invoice
           </a>
         </p>
@@ -78,7 +78,7 @@ def service_update_email(customer_name, service_title, status, request_id, note=
         <p><strong>Status:</strong> <span style="background:#e0f2fe; color:#0369a1; padding:4px 10px; border-radius:6px; font-weight:600;">{status}</span></p>
         {note_html}
         <p style="margin-top:24px;">
-          <a href="{FRONTEND_URL}/dashboard/service-requests/{request_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
+          <a href="{FRONTEND_URL}/account/service-requests/{request_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
             Track Request
           </a>
         </p>
@@ -97,7 +97,7 @@ def payment_received_email(customer_name, document_number, amount, currency):
         <p><strong>Amount:</strong> {currency} {amount:,.0f}</p>
         <p style="margin-top:24px;">Thank you for choosing Konekt. We appreciate your business!</p>
         <p style="margin-top:24px;">
-          <a href="{FRONTEND_URL}/dashboard" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
+          <a href="{FRONTEND_URL}/account" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
             Go to Dashboard
           </a>
         </p>
@@ -116,7 +116,7 @@ def order_confirmation_email(customer_name, order_number, total, currency, order
         <p><strong>Total:</strong> {currency} {total:,.0f}</p>
         <p style="margin-top:16px;">We'll notify you when your order status changes.</p>
         <p style="margin-top:24px;">
-          <a href="{FRONTEND_URL}/dashboard/orders/{order_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
+          <a href="{FRONTEND_URL}/account/orders/{order_id}" style="background:#20364D;color:white;text-decoration:none;padding:12px 18px;border-radius:10px;font-weight:600;display:inline-block;">
             Track Order
           </a>
         </p>

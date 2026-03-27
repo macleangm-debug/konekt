@@ -12,7 +12,7 @@ export const ROUTES = {
   staffLogin: "/staff-login",
   partnerLogin: "/login",
 
-  dashboard: "/dashboard",
+  dashboard: "/account",
   referrals: "/dashboard/referrals",
 
   staffHome: "/staff",

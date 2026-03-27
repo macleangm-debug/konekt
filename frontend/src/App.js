@@ -700,42 +700,9 @@ function App() {
           <Route path="contact" element={<ContactPageContent />} />
         </Route>
         
-        {/* NEW: Premium Customer Portal with unified layout */}
-        <Route path="/dashboard" element={
-          <AuthProvider>
-            <CartProvider>
-              <CartDrawerProvider>
-                <CustomerRoute>
-                  <CustomerPortalLayoutV2 />
-                  <CartDrawerV2 />
-                </CustomerRoute>
-              </CartDrawerProvider>
-            </CartProvider>
-          </AuthProvider>
-        }>
-          <Route index element={<CustomerDashboardV3 />} />
-          <Route path="explore" element={<ExplorePageV2 />} />
-          <Route path="orders" element={<OrdersPageV2 />} />
-          <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
-          <Route path="quotes" element={<QuotesPageV2 />} />
-          <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
-          <Route path="invoices" element={<InvoicesPageV2 />} />
-          <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
-          <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
-          <Route path="checkout" element={<CheckoutPageV2 />} />
-          <Route path="services" element={<AccountServicesDiscoveryPage />} />
-          <Route path="services/:slug" element={<AccountServiceDetailPage />} />
-          <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
-          <Route path="points" element={<PointsPageV2 />} />
-          <Route path="referrals" element={<PointsPageV2 />} />
-          <Route path="statement" element={<MyStatementPageV2 />} />
-          <Route path="recurring-plans" element={<RecurringPlansPage />} />
-          <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
-          <Route path="profile/business" element={<ClientProfilePage />} />
-          <Route path="help" element={<HelpPageV3 />} />
-          {/* Sales Rating Tasks */}
-          <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
-        </Route>
+        {/* /dashboard/* — Redirect to canonical /account/* */}
+        <Route path="/dashboard" element={<Navigate to="/account" replace />} />
+        <Route path="/dashboard/*" element={<Navigate to="/account" replace />} />
         
         {/* Account shell routes - simplified customer experience */}
         <Route path="/account" element={
@@ -757,14 +724,25 @@ function App() {
           <Route path="cart" element={<AccountCartPage />} />
           <Route path="checkout" element={<AccountCheckoutPage />} />
           <Route path="services" element={<AccountServicesPageV2 />} />
+          <Route path="services/:slug" element={<AccountServiceDetailPage />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
+          <Route path="quotes" element={<QuotesPageV2 />} />
+          <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
+          <Route path="invoices" element={<InvoicesPageV2 />} />
           <Route path="invoices/:invoiceId" element={<InvoiceDetailInAccountPage />} />
+          <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
+          <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
+          <Route path="points" element={<PointsPageV2 />} />
+          <Route path="referrals" element={<PointsPageV2 />} />
+          <Route path="statement" element={<MyStatementPageV2 />} />
+          <Route path="recurring-plans" element={<RecurringPlansPage />} />
+          <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
+          <Route path="profile/business" element={<ClientProfilePage />} />
           <Route path="my-account" element={<MyAccountPageV2 />} />
           <Route path="help" element={<HelpPageV3 />} />
-          {/* Sales Rating Tasks */}
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
         </Route>
         
@@ -857,7 +835,7 @@ function App() {
         } />
         
         {/* Legacy Customer Portal Routes - Redirects to canonical routes */}
-        <Route path="/dashboard-legacy/*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard-legacy/*" element={<Navigate to="/account" replace />} />
         
         {/* Public Customer Routes - Legacy routes for backward compatibility */}
         <Route path="/*" element={

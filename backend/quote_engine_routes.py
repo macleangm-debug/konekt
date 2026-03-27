@@ -106,7 +106,7 @@ async def send_quote(quote_id: str, request: Request):
     if quote.get("customer_id"):
         await _notify(db, recipient_user_id=quote["customer_id"], title="New Quote Ready",
             message=f"Quote {quote.get('quote_number', quote_id[:8])} is ready for your review.",
-            target_url="/dashboard/quotes", priority="high")
+            target_url="/account/quotes", priority="high")
 
     return {"ok": True, "status": "sent"}
 
@@ -202,7 +202,7 @@ async def accept_quote(quote_id: str, payload: dict, request: Request):
     if quote.get("customer_id"):
         await _notify(db, recipient_user_id=quote["customer_id"], title="Invoice Created",
             message=f"Invoice for Quote {quote.get('quote_number', '')} is ready for payment.",
-            target_url="/dashboard/invoices", priority="high")
+            target_url="/account/invoices", priority="high")
     if quote.get("assigned_sales_id"):
         await _notify(db, recipient_user_id=quote["assigned_sales_id"], title="Quote Accepted",
             message=f"Quote {quote.get('quote_number', '')} was accepted. Invoice created.",

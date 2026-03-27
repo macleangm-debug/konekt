@@ -10,14 +10,14 @@ import BrandLogo from "../components/branding/BrandLogo";
 import CartTopbarButton from "../components/topbar/CartTopbarButton";
 
 const nav = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/account", icon: LayoutDashboard },
   { label: "Marketplace", href: "/account/marketplace", icon: Store },
   { label: "My Orders", href: "/account/orders", icon: ShoppingBag },
-  { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
-  { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
-  { label: "Recurring Plans", href: "/dashboard/recurring-plans", icon: RefreshCcw },
-  { label: "Referrals & Rewards", href: "/dashboard/referrals", icon: Users },
-  { label: "My Statement", href: "/dashboard/statement", icon: LayoutDashboard },
+  { label: "Quotes", href: "/account/quotes", icon: FileText },
+  { label: "Invoices", href: "/account/invoices", icon: Receipt },
+  { label: "Recurring Plans", href: "/account/recurring-plans", icon: RefreshCcw },
+  { label: "Referrals & Rewards", href: "/account/referrals", icon: Users },
+  { label: "My Statement", href: "/account/statement", icon: LayoutDashboard },
   { label: "My Account", href: "/account/my-account", icon: UserCircle },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
@@ -60,7 +60,7 @@ export default function CustomerPortalLayoutV2() {
             const Icon = item.icon;
             const active =
               location.pathname === item.href ||
-              (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
+              (item.href !== "/account" && location.pathname.startsWith(item.href));
             return (
               <Link
                 key={item.href}
@@ -87,7 +87,7 @@ export default function CustomerPortalLayoutV2() {
         {/* Business Pricing CTA */}
         <div className="px-3 py-4 border-t border-gray-100">
           <Link
-            to="/dashboard/business-pricing"
+            to="/account/business-pricing"
             className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 bg-[#1f3a5f] text-white text-sm font-medium hover:bg-[#162c47] transition-colors"
             data-testid="business-pricing-cta"
           >
@@ -124,13 +124,13 @@ export default function CustomerPortalLayoutV2() {
 
           <div className="flex items-center gap-3">
             <CartTopbarButton />
-            <NotificationBell tokenKey="token" defaultRedirect="/dashboard" />
+            <NotificationBell tokenKey="token" defaultRedirect="/account" />
             <PartnerProfileDropdown
               name={customerName}
               onLogout={handleLogout}
               menu={[
-                { label: "Orders", href: "/dashboard/orders" },
-                { label: "Invoices", href: "/dashboard/invoices" },
+                { label: "Orders", href: "/account/orders" },
+                { label: "Invoices", href: "/account/invoices" },
                 { label: "Help", href: "/help/customer" },
               ]}
             />
@@ -144,7 +144,7 @@ export default function CustomerPortalLayoutV2() {
               const Icon = item.icon;
               const active =
                 location.pathname === item.href ||
-                (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
+                (item.href !== "/account" && location.pathname.startsWith(item.href));
               return (
                 <Link
                   key={item.href}

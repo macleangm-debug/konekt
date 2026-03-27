@@ -37,8 +37,14 @@ def _enrich_invoice(doc):
     ps = doc.get("payment_status") or doc.get("status") or "pending_payment"
     has_proof = bool(doc.get("proof_url") or doc.get("payment_proof_url") or doc.get("proof_submitted_at"))
     doc["payment_status_label"] = get_customer_payment_status_label(ps, has_proof)
-    billing = doc.get("billing") or {}
-    doc["payer_name"] = billing.get("invoice_client_name") or doc.get("customer_name") or doc.get("customer_email") or "-"
+    # payer_name priority: invoice.payer_name → billing.invoice_client_name → customer_name → customer_email
+    payer = doc.get("payer_name") or ""
+    if not payer:
+        billing = doc.get("billing") or {}
+        payer = billing.get("invoice_client_name") or ""
+    if not payer:
+        payer = doc.get("customer_name") or doc.get("customer_email") or "-"
+    doc["payer_name"] = payer
     return doc
 
 
@@ -68,7 +74,20 @@ async def list_my_invoices(user: dict = Depends(get_user)):
     ]
 
     rows = await db.invoices.find({"$or": queries}).sort("created_at", -1).to_list(length=500)
-    return [_enrich_invoice(serialize_doc(doc)) for doc in rows]
+    result = []
+    for doc in rows:
+        enriched = _enrich_invoice(serialize_doc(doc))
+        # If payer_name is still empty/dash, check the payment_proofs collection
+        if enriched.get("payer_name") in ("", "-", None):
+            proof = await db.payment_proofs.find_one(
+                {"invoice_id": enriched.get("id")},
+                {"_id": 0, "payer_name": 1, "customer_name": 1},
+                sort=[("created_at", -1)]
+            )
+            if proof:
+                enriched["payer_name"] = proof.get("payer_name") or proof.get("customer_name") or "-"
+        result.append(enriched)
+    return result
 
 
 @router.get("/{invoice_id}")

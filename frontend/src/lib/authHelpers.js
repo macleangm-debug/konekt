@@ -23,5 +23,5 @@ export function clearAllAuth() {
 export function getDashboardPath(role) {
   if (["admin", "sales", "marketing", "production"].includes(role)) return "/admin";
   if (["partner", "vendor", "affiliate"].includes(role)) return "/partner";
-  return "/dashboard";
+  return "/account";
 }

@@ -60,7 +60,7 @@ async def get_activity_feed(
             "message": status_messages.get(q.get('status'), "New quote created"),
             "reference": f"Quote #{q.get('quote_number', q_id[:8])} - TZS {q.get('total', 0):,}",
             "created_at": q.get("created_at", datetime.now(timezone.utc).isoformat()),
-            "link": f"/dashboard/quotes/{q_id}"
+            "link": f"/account/quotes/{q_id}"
         })
     
     # Get recent orders
