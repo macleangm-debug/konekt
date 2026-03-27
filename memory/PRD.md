@@ -87,6 +87,12 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Password visibility**: Show/hide toggle added to `LoginPageV2.jsx` (unified login for all roles).
 - **Test**: 100% pass (12/12 backend, all frontend UI) — iteration_129.json
 
+### P0 Route Deletion & Assignment Fix (March 27, 2026) - DONE
+- **Unified admin orders-ops**: Both list and detail use ONLY `/api/admin/orders-ops`. List enriched with customer_name, vendor_name, sales_owner, payment_state, fulfillment_state. Detail returns full 7-section structure (customer, vendor_orders, sales_user, payment_proof, events, commissions, quote).
+- **Admin invoice enrichment**: payer_name priority chain (invoice → proof → billing → customer_name). customer_name resolved from users collection.
+- **Notification click behavior**: target_url added to all approval notifications (customer → /account/orders/{id}, vendor → /partner/orders, sales → /staff/orders). NotificationBell navigates on click.
+- **Test**: 100% pass (19/20 backend, all frontend UI) — iteration_130.json
+
 ## Prioritized Backlog
 
 ### P1 — Upcoming
