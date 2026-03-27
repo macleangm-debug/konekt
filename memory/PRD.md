@@ -78,6 +78,15 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Route Cleanup**: /dashboard-legacy/* → /dashboard redirect. /partner/fulfillment → /partner/orders. fulfillment-jobs → vendor/orders (307 redirect). Partner dashboard stats now read from vendor_orders (not fulfillment_jobs).
 - **Test**: 100% pass (12/12 backend, all frontend UI) — iteration_128.json
 
+### Route/API Cleanup Audit (March 27, 2026) - DONE
+- **Invoice payer_name**: Priority chain: `invoice.payer_name` → proof `payer_name` → `billing.invoice_client_name` → `customer_name`. Proof lookup added as fallback.
+- **Vendor notifications**: All links changed from `/partner/fulfillment` → `/partner/orders`. Backend files fixed: `notification_trigger_service.py`, `production_progress_routes.py`, `customer_notifications_routes.py`, `quote_engine_routes.py`.
+- **PartnerFulfillmentPage.jsx**: Physically deleted. `/partner/fulfillment` redirects to `/partner/orders`.
+- **Canonical customer shell**: `/account/*` is the ONLY active customer portal. `/dashboard/*` and `/dashboard-legacy/*` redirect to `/account/*`. All sidebar links, login redirect, notification links, and email templates updated.
+- **Admin payments**: Only `PaymentsQueuePage` at `/admin/payments` is active. No duplicates.
+- **Password visibility**: Show/hide toggle added to `LoginPageV2.jsx` (unified login for all roles).
+- **Test**: 100% pass (12/12 backend, all frontend UI) — iteration_129.json
+
 ## Prioritized Backlog
 
 ### P1 — Upcoming
