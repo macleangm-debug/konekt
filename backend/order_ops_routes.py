@@ -57,27 +57,141 @@ def serialize_doc(doc):
 @router.get("")
 async def list_orders(
     status: Optional[str] = None,
+    tab: Optional[str] = None,
+    search: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all orders with optional status filter"""
+    """List all orders with enrichment for admin table"""
     query = {}
     if status:
         query = {"$or": [{"current_status": status}, {"status": status}]}
-    
-    docs = await db.orders.find(query if status else {}).sort("created_at", -1).to_list(length=limit)
-    return [serialize_doc(doc) for doc in docs]
+    if tab == "assigned":
+        query["status"] = {"$in": ["assigned", "ready_to_fulfill", "processing"]}
+    elif tab == "in_progress":
+        query["status"] = {"$in": ["in_progress", "work_scheduled"]}
+    elif tab == "completed":
+        query["status"] = {"$in": ["completed", "delivered", "fulfilled"]}
+    elif tab == "new":
+        query["status"] = {"$in": ["new", "pending"]}
+
+    docs = await db.orders.find(query if (status or tab) else {}).sort("created_at", -1).to_list(length=limit)
+    out = []
+    for doc in docs:
+        order = serialize_doc(doc)
+        if search:
+            haystack = f"{order.get('order_number','')} {order.get('customer_name','')} {order.get('customer_email','')}".lower()
+            if search.lower() not in haystack:
+                continue
+        # Enrich customer_name
+        if not order.get("customer_name"):
+            cid = order.get("customer_id") or order.get("user_id")
+            if cid:
+                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1})
+                if cust:
+                    order["customer_name"] = cust.get("full_name", "")
+        # Vendor info
+        vendor_orders = await db.vendor_orders.find({"order_id": order.get("id")}).to_list(5)
+        order["vendor_count"] = len(vendor_orders)
+        vendor_name = "-"
+        if vendor_orders:
+            vid = vendor_orders[0].get("vendor_id")
+            if vid:
+                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1})
+                vendor_name = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+        order["vendor_name"] = vendor_name
+        # Sales assignment
+        assignment = await db.sales_assignments.find_one({"order_id": order.get("id")})
+        order["sales_owner"] = (assignment or {}).get("sales_owner_name", "Unassigned")
+        # States
+        order["payment_state"] = order.get("payment_status") or "paid"
+        order["fulfillment_state"] = order.get("status") or "new"
+        out.append(order)
+    return out
 
 
 @router.get("/{order_id}")
 async def get_order(order_id: str):
-    """Get a specific order by ID"""
+    """Get a specific order by ID — enriched with customer, vendor, sales, timeline, payment info"""
     try:
         doc = await db.orders.find_one({"_id": ObjectId(order_id)})
-        if not doc:
-            raise HTTPException(status_code=404, detail="Order not found")
-        return serialize_doc(doc)
     except Exception:
+        doc = None
+    if not doc:
+        doc = await db.orders.find_one({"id": order_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    order = serialize_doc(doc)
+    oid = order.get("id") or order_id
+
+    # Invoice
+    invoice = None
+    if order.get("invoice_id"):
+        inv = await db.invoices.find_one({"id": order["invoice_id"]})
+        if inv:
+            invoice = serialize_doc(inv)
+
+    # Customer info
+    customer = None
+    cust_id = order.get("customer_id") or order.get("user_id")
+    if cust_id:
+        customer = await db.users.find_one({"id": cust_id}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
+
+    # Vendor orders with vendor details
+    raw_vos = await db.vendor_orders.find({"order_id": oid}).to_list(50)
+    vendor_orders = []
+    for vo in raw_vos:
+        vo = serialize_doc(vo)
+        vid = vo.get("vendor_id", "")
+        vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "phone": 1, "email": 1})
+        vo["vendor_name"] = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+        vo["vendor_phone"] = (vp or {}).get("phone", "")
+        vo["vendor_email"] = (vp or {}).get("email", "")
+        vendor_orders.append(vo)
+
+    # Sales assignment
+    assignment = await db.sales_assignments.find_one({"order_id": oid})
+    assignment = serialize_doc(assignment) if assignment else None
+    sales_user = None
+    sales_id = (assignment or {}).get("sales_owner_id") or order.get("assigned_sales_id")
+    if sales_id:
+        sales_user = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "phone": 1, "email": 1})
+
+    # Events timeline
+    events = [serialize_doc(e) for e in await db.order_events.find({"order_id": oid}).sort("created_at", 1).to_list(100)]
+
+    # Payment info from invoice
+    payment_proof = None
+    if invoice:
+        payment_proof = {
+            "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+            "approved_by": invoice.get("approved_by") or "-",
+            "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "-",
+            "payment_status": invoice.get("payment_status") or invoice.get("status") or "-",
+        }
+
+    # Quote link
+    quote = None
+    if order.get("quote_id"):
+        q = await db.quotes.find_one({"id": order["quote_id"]}, {"_id": 0, "id": 1, "quote_number": 1})
+        if q:
+            quote = dict(q)
+
+    # Commissions
+    commissions = [serialize_doc(c) for c in await db.commissions.find({"order_id": oid}).to_list(50)]
+
+    return {
+        "order": order,
+        "invoice": invoice,
+        "vendor_orders": vendor_orders,
+        "sales_assignment": assignment,
+        "sales_user": sales_user,
+        "customer": customer,
+        "events": events,
+        "commissions": commissions,
+        "quote": quote,
+        "payment_proof": payment_proof,
+    }
 
 
 @router.patch("/{order_id}/status")

@@ -134,9 +134,23 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
         proof = await db.payment_proofs.find_one({"invoice_id": inv.get("id")}, sort=[("created_at", -1)])
         inv["rejection_reason"] = (proof or {}).get("rejection_reason", "") if (proof or {}).get("status") == "rejected" else ""
         inv["source_type"] = "Quote" if inv.get("quote_id") else "Cart"
-        # Payer name
-        billing = inv.get("billing") or {}
-        inv["payer_name"] = billing.get("invoice_client_name") or inv.get("customer_name") or inv.get("customer_email") or "-"
+        # Payer name priority: invoice.payer_name → proof.payer_name → billing.invoice_client_name → customer_name
+        payer = inv.get("payer_name") or ""
+        if not payer and proof:
+            payer = (proof or {}).get("payer_name") or ""
+        if not payer:
+            billing = inv.get("billing") or {}
+            payer = billing.get("invoice_client_name") or ""
+        if not payer:
+            payer = inv.get("customer_name") or inv.get("customer_email") or "-"
+        inv["payer_name"] = payer
+        # Enrich customer_name from users collection if missing
+        if not inv.get("customer_name") or inv.get("customer_name") == "-":
+            cid = inv.get("customer_id") or inv.get("user_id") or inv.get("customer_user_id")
+            if cid:
+                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1})
+                if cust and cust.get("full_name"):
+                    inv["customer_name"] = cust["full_name"]
         # Payment status (use payment_status first, fallback to status)
         inv["payment_state"] = inv.get("payment_status") or inv.get("status") or "draft"
         # Invoice status
@@ -217,6 +231,13 @@ async def orders_list(request: Request, search: Optional[str] = Query(default=No
         # Payment status
         order["payment_state"] = order.get("payment_status") or "paid"
         order["fulfillment_state"] = order.get("status") or "new"
+        # Enrich customer_name from users collection if missing
+        if not order.get("customer_name") or order.get("customer_name") == "-":
+            cid = order.get("customer_id") or order.get("user_id")
+            if cid:
+                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1})
+                if cust and cust.get("full_name"):
+                    order["customer_name"] = cust["full_name"]
         out.append(order)
     return out
 

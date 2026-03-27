@@ -115,7 +115,13 @@ export default function NotificationBell() {
                   className={`px-4 py-3 border-b hover:bg-slate-50 cursor-pointer transition ${
                     !notif.is_read ? "bg-blue-50/50" : ""
                   }`}
-                  onClick={() => markAsRead(notif._id || notif.id)}
+                  onClick={() => {
+                    markAsRead(notif._id || notif.id);
+                    if (notif.target_url) {
+                      window.location.href = notif.target_url;
+                      setOpen(false);
+                    }
+                  }}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5">

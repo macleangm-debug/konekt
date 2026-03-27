@@ -187,6 +187,7 @@ async def finance_approve_proof(payload: dict, request: Request):
                 "title": "New Order Assigned to You",
                 "message": f"Order {order_doc['order_number']} has been assigned to you.",
                 "type": "info", "is_read": False, "created_at": now,
+                "target_url": f"/staff/orders",
             })
 
         # Create vendor orders + notifications for each vendor
@@ -205,6 +206,7 @@ async def finance_approve_proof(payload: dict, request: Request):
                 "title": "New Order Assigned",
                 "message": f"You have a new vendor order for order {order_doc['order_number']}",
                 "type": "info", "is_read": False, "created_at": now,
+                "target_url": "/partner/orders",
             })
 
         # Customer notification
@@ -216,6 +218,7 @@ async def finance_approve_proof(payload: dict, request: Request):
                 "title": "Order Confirmed",
                 "message": f"Your order {order_doc['order_number']} has been confirmed and is being processed.",
                 "type": "success", "is_read": False, "created_at": now,
+                "target_url": f"/account/orders/{order_id}",
             })
 
         await db.order_events.insert_one({

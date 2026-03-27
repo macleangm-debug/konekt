@@ -42,7 +42,7 @@ export default function OrdersPage() {
     setSelected(row);
     setLoadingDetail(true);
     try {
-      const res = await adminApi.getOrderDetail(row.id);
+      const res = await adminApi.getOrder(row.id);
       setDetail(res.data);
     } catch { setDetail(null); }
     setLoadingDetail(false);
