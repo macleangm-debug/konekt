@@ -13,6 +13,50 @@ import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 import NotificationBell from '../../components/admin/NotificationBell';
 import BrandLogo from '../../components/branding/BrandLogo';
 
+function ProfileDropdown({ name, role, onLogout }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+
+  React.useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref} data-testid="admin-profile-dropdown">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-10 w-10 rounded-full border bg-white flex items-center justify-center text-[#20364D] font-bold text-sm hover:bg-slate-50 transition"
+        data-testid="admin-profile-trigger"
+      >
+        {String(name || "A").charAt(0).toUpperCase()}
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-lg p-2 z-50" data-testid="admin-profile-menu">
+          <div className="px-3 py-2 border-b mb-1">
+            <div className="font-semibold text-[#20364D] text-sm truncate">{name}</div>
+            <div className="text-xs text-slate-400 capitalize">{role || "admin"}</div>
+          </div>
+          <a href="/admin/settings-hub" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition" onClick={() => setOpen(false)} data-testid="admin-profile-settings">
+            <Settings className="w-4 h-4" /> Settings
+          </a>
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onLogout(); }}
+            className="w-full flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
+            data-testid="admin-logout-btn"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Navigation items with moduleKey for filtering
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
@@ -143,7 +187,7 @@ export default function AdminLayout() {
           
           {/* User Info */}
           <div className="p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
                 <span className="text-[#20364D] font-bold">{admin?.full_name?.charAt(0) || 'A'}</span>
               </div>
@@ -154,15 +198,6 @@ export default function AdminLayout() {
                 </span>
               </div>
             </div>
-            <Button 
-              variant="ghost" 
-              onClick={handleLogout}
-              className="w-full justify-start text-slate-500 hover:text-slate-900 hover:bg-gray-100"
-              data-testid="admin-logout-btn"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
           </div>
         </div>
       </aside>
@@ -212,6 +247,13 @@ export default function AdminLayout() {
               
               {/* Notifications */}
               <NotificationBell />
+
+              {/* Profile Dropdown */}
+              <ProfileDropdown 
+                name={admin?.full_name || "Admin"}
+                role={admin?.role}
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </header>

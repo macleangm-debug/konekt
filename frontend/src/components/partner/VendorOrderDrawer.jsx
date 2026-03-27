@@ -3,12 +3,14 @@ import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, Mes
 import partnerApi from "../../lib/partnerApi";
 
 const STATUS_FLOW = {
-  ready_to_fulfill: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
-  pending_payment_confirmation: { next: "accepted", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
-  assigned: { next: "accepted", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
+  ready_to_fulfill: { next: "assigned", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
+  pending_payment_confirmation: { next: "assigned", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
+  assigned: { next: "work_scheduled", label: "Schedule Work", icon: Play, color: "bg-cyan-600 hover:bg-cyan-700" },
+  work_scheduled: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
   accepted: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
-  in_progress: { next: "fulfilled", label: "Mark Fulfilled", icon: CheckCircle, color: "bg-green-600 hover:bg-green-700" },
+  in_progress: { next: "ready", label: "Mark Ready", icon: CheckCircle, color: "bg-teal-600 hover:bg-teal-700" },
   processing: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
+  ready: { next: "completed", label: "Mark Completed", icon: CheckCircle, color: "bg-green-600 hover:bg-green-700" },
 };
 
 function StatusBadgeDrawer({ status }) {
@@ -17,8 +19,11 @@ function StatusBadgeDrawer({ status }) {
     pending_payment_confirmation: "bg-amber-100 text-amber-700",
     assigned: "bg-indigo-100 text-indigo-700",
     accepted: "bg-cyan-100 text-cyan-700",
+    work_scheduled: "bg-sky-100 text-sky-700",
     in_progress: "bg-yellow-100 text-yellow-700",
     processing: "bg-yellow-100 text-yellow-700",
+    quality_check: "bg-purple-100 text-purple-700",
+    ready: "bg-teal-100 text-teal-700",
     fulfilled: "bg-green-100 text-green-700",
     completed: "bg-emerald-100 text-emerald-700",
     issue_reported: "bg-red-100 text-red-700",
@@ -39,7 +44,7 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
 
   const currentStatus = order?.fulfillment_state || order?.status || "processing";
   const nextAction = STATUS_FLOW[currentStatus];
-  const isTerminal = ["fulfilled", "completed", "issue_reported"].includes(currentStatus);
+  const isTerminal = ["completed", "issue_reported"].includes(currentStatus);
 
   const handleStatusUpdate = async (newStatus) => {
     setUpdating(true);
@@ -108,19 +113,12 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
               <span className="font-medium text-slate-700">{order?.date || "-"}</span>
             </div>
           </div>
-          <div className="flex items-start gap-2">
-            <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-            <div>
-              <span className="text-slate-500">Customer:</span>{" "}
-              <span className="font-medium text-slate-700">{order?.customer_name || "-"}</span>
-            </div>
-          </div>
-          {order?.customer_phone && (
+          {order?.base_price && (
             <div className="flex items-start gap-2">
-              <Phone className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+              <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
               <div>
-                <span className="text-slate-500">Phone:</span>{" "}
-                <span className="font-medium text-slate-700">{order.customer_phone}</span>
+                <span className="text-slate-500">Base Price:</span>{" "}
+                <span className="font-semibold text-[#20364D]">TZS {Number(order.base_price).toLocaleString()}</span>
               </div>
             </div>
           )}

@@ -8,6 +8,7 @@ from bson import ObjectId
 import os
 import jwt
 from motor.motor_asyncio import AsyncIOMotorClient
+from payment_status_wording_service import get_customer_payment_status_label
 
 router = APIRouter(prefix="/api/customer/invoices", tags=["Customer Invoices"])
 security = HTTPBearer(auto_error=False)
@@ -26,6 +27,18 @@ def serialize_doc(doc):
     if "_id" in doc:
         doc["id"] = str(doc["_id"])
         del doc["_id"]
+    return doc
+
+
+def _enrich_invoice(doc):
+    """Add customer-facing payment_status_label and payer_name."""
+    if not doc:
+        return doc
+    ps = doc.get("payment_status") or doc.get("status") or "pending_payment"
+    has_proof = bool(doc.get("proof_url") or doc.get("payment_proof_url") or doc.get("proof_submitted_at"))
+    doc["payment_status_label"] = get_customer_payment_status_label(ps, has_proof)
+    billing = doc.get("billing") or {}
+    doc["payer_name"] = billing.get("invoice_client_name") or doc.get("customer_name") or doc.get("customer_email") or "-"
     return doc
 
 
@@ -55,7 +68,7 @@ async def list_my_invoices(user: dict = Depends(get_user)):
     ]
 
     rows = await db.invoices.find({"$or": queries}).sort("created_at", -1).to_list(length=500)
-    return [serialize_doc(doc) for doc in rows]
+    return [_enrich_invoice(serialize_doc(doc)) for doc in rows]
 
 
 @router.get("/{invoice_id}")
@@ -80,6 +93,6 @@ async def get_my_invoice(invoice_id: str, user: dict = Depends(get_user)):
     if not doc:
         doc = await db.invoices.find_one({"invoice_number": invoice_id, **base_query})
     if doc:
-        return serialize_doc(doc)
+        return _enrich_invoice(serialize_doc(doc))
 
     raise HTTPException(status_code=404, detail="Invoice not found")

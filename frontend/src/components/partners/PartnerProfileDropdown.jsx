@@ -1,11 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Settings, User, LogOut } from "lucide-react";
 
 export default function PartnerProfileDropdown({ name = "Account", onLogout, menu = [] }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
-    <div className="relative" data-testid="profile-dropdown">
+    <div className="relative" ref={ref} data-testid="profile-dropdown">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -27,7 +35,7 @@ export default function PartnerProfileDropdown({ name = "Account", onLogout, men
               <Link
                 key={item.href}
                 to={item.href}
-                className="block rounded-xl px-3 py-3 text-sm font-medium text-[#20364D] hover:bg-slate-50"
+                className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm font-medium text-[#20364D] hover:bg-slate-50"
                 onClick={() => setOpen(false)}
                 data-testid={`profile-menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
@@ -36,14 +44,16 @@ export default function PartnerProfileDropdown({ name = "Account", onLogout, men
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            className="w-full rounded-xl border px-3 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
-            data-testid="profile-logout-btn"
-          >
-            Log Out
-          </button>
+          <div className="border-t pt-2 space-y-1">
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="w-full flex items-center gap-2 rounded-xl px-3 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+              data-testid="profile-logout-btn"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

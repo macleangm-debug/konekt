@@ -4,15 +4,16 @@ import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
-import { ShoppingCart, Truck, CheckCircle, Clock, Package, Users } from "lucide-react";
+import { ShoppingCart, Truck, CheckCircle, Clock, Package } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
 
 const TABS = [
   { key: "", label: "All Orders", icon: ShoppingCart },
-  { key: "awaiting_release", label: "Awaiting Release", icon: Clock },
-  { key: "released", label: "Released", icon: Truck },
+  { key: "new", label: "New", icon: Clock },
+  { key: "assigned", label: "Assigned", icon: Package },
+  { key: "in_progress", label: "In Progress", icon: Truck },
   { key: "completed", label: "Completed", icon: CheckCircle },
 ];
 
@@ -45,17 +46,6 @@ export default function OrdersPage() {
       setDetail(res.data);
     } catch { setDetail(null); }
     setLoadingDetail(false);
-  };
-
-  const handleRelease = async () => {
-    if (!selected) return;
-    setActionLoading(true);
-    try {
-      await adminApi.releaseToVendor(selected.id, { released_by: "admin" });
-      setSelected(null);
-      load();
-    } catch (err) { alert("Failed: " + (err.response?.data?.detail || err.message)); }
-    setActionLoading(false);
   };
 
   const handleStatusUpdate = async (newStatus) => {
@@ -141,87 +131,121 @@ export default function OrdersPage() {
           <div className="space-y-4 animate-pulse"><div className="h-20 bg-slate-100 rounded-xl" /><div className="h-40 bg-slate-100 rounded-xl" /></div>
         ) : detail ? (
           <div className="space-y-6">
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-semibold text-[#20364D] mt-1">{detail.order?.customer_name || "-"}</p>
-                <p className="text-xs text-slate-500 mt-1">{detail.order?.customer_email || ""}</p>
+            {/* A. Order Summary */}
+            <section className="rounded-2xl border p-4" data-testid="drawer-order-summary">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Order Summary</p>
+              <div className="grid gap-2 text-sm text-slate-700">
+                <div><strong>Order No:</strong> {detail.order?.order_number || "-"}</div>
+                <div><strong>Date:</strong> {fmtDate(detail.order?.created_at)}</div>
+                <div><strong>Source Type:</strong> <span className="capitalize">{detail.order?.source_type || detail.order?.type || "-"}</span></div>
+                <div><strong>Linked Invoice:</strong> {detail.invoice?.invoice_number || "-"}</div>
+                {detail.quote && <div><strong>Linked Quote:</strong> {detail.quote.quote_number || "-"}</div>}
+                <div><strong>Amount:</strong> <span className="font-semibold text-[#20364D]">{money(detail.order?.total_amount || detail.order?.total)}</span></div>
               </div>
-              <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-500">Total</p>
-                <p className="font-semibold text-[#20364D] text-lg mt-1">{money(detail.order?.total_amount || detail.order?.total)}</p>
-                <div className="mt-1 flex gap-2">
-                  <StatusBadge status={detail.order?.status} />
-                  <StatusBadge status={detail.order?.release_state || "awaiting"} />
-                </div>
-              </div>
-            </div>
+            </section>
 
-            {/* Sales assignment */}
-            {detail.sales_assignment && (
-              <div className="rounded-2xl border border-slate-200 p-4 flex items-center gap-3">
-                <Users size={18} className="text-slate-400" />
+            {/* B. Customer */}
+            <section className="rounded-2xl border p-4" data-testid="drawer-customer">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Customer</p>
+              <div className="grid gap-2 text-sm text-slate-700">
+                <div><strong>Name:</strong> {detail.customer?.full_name || detail.order?.customer_name || "-"}</div>
+                <div><strong>Email:</strong> {detail.customer?.email || detail.order?.customer_email || "-"}</div>
+                <div><strong>Phone:</strong> {detail.customer?.phone || detail.order?.customer_phone || "-"}</div>
+              </div>
+            </section>
+
+            {/* C. Assignment */}
+            <section className="rounded-2xl border p-4" data-testid="drawer-assignment">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Assignment</p>
+              <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-700">
                 <div>
-                  <p className="text-xs text-slate-500">Sales Owner</p>
-                  <p className="text-sm font-semibold text-[#20364D]">{detail.sales_assignment.sales_owner_name || "Unassigned"}</p>
+                  <div className="text-xs text-slate-400 font-semibold mb-1">Sales Person</div>
+                  <div><strong>Name:</strong> {detail.sales_user?.full_name || detail.sales_assignment?.sales_owner_name || "Unassigned"}</div>
+                  {detail.sales_user?.email && <div><strong>Email:</strong> {detail.sales_user.email}</div>}
+                  {detail.sales_user?.phone && <div><strong>Phone:</strong> {detail.sales_user.phone}</div>}
+                </div>
+                <div>
+                  <div className="text-xs text-slate-400 font-semibold mb-1">Vendor</div>
+                  {detail.vendor_orders && detail.vendor_orders.length > 0 ? detail.vendor_orders.map((vo, idx) => (
+                    <div key={idx} className="mb-2">
+                      <div><strong>Name:</strong> {vo.vendor_name || "-"}</div>
+                      {vo.vendor_email && <div><strong>Email:</strong> {vo.vendor_email}</div>}
+                      {vo.vendor_phone && <div><strong>Phone:</strong> {vo.vendor_phone}</div>}
+                      <div className="mt-1"><StatusBadge status={vo.status} /></div>
+                    </div>
+                  )) : <div className="text-slate-400">No vendor assigned</div>}
                 </div>
               </div>
+            </section>
+
+            {/* D. Payment */}
+            {detail.payment_proof && (
+              <section className="rounded-2xl border p-4" data-testid="drawer-payment">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Payment</p>
+                <div className="grid gap-2 text-sm text-slate-700">
+                  <div><strong>Payment Status:</strong> <StatusBadge status={detail.payment_proof.payment_status} /></div>
+                  <div><strong>Payer Name:</strong> {detail.payment_proof.payer_name || "-"}</div>
+                  <div><strong>Approved By:</strong> {detail.payment_proof.approved_by || "-"}</div>
+                  <div><strong>Approval Date:</strong> {detail.payment_proof.approved_at ? fmtDate(detail.payment_proof.approved_at) : "-"}</div>
+                </div>
+              </section>
             )}
 
-            {/* Items */}
+            {/* E. Fulfillment / Items */}
             {detail.order?.items && detail.order.items.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Items ({detail.order.items.length})</p>
-                <div className="space-y-1.5">
+              <section className="rounded-2xl border p-4" data-testid="drawer-fulfillment">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Fulfillment ({detail.order.items.length} items)</p>
+                <div className="space-y-2">
                   {detail.order.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
-                      <span className="text-slate-700">{item.name || item.product_name || "Item"} x{item.quantity || 1}</span>
+                      <div>
+                        <span className="text-slate-700">{item.name || item.product_name || "Item"}</span>
+                        <span className="text-slate-400 ml-2">x{item.quantity || 1}</span>
+                        {item.variant && <div className="text-xs text-slate-400">{item.variant}</div>}
+                        {item.brief && <div className="text-xs text-slate-400">{item.brief}</div>}
+                      </div>
                       <span className="font-medium text-[#20364D]">{money(item.line_total || item.total || item.unit_price)}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+                <div className="mt-3"><strong>Fulfillment Status:</strong> <StatusBadge status={detail.order?.status} /></div>
+              </section>
             )}
 
-            {/* Vendor orders */}
-            {detail.vendor_orders && detail.vendor_orders.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Vendor Orders ({detail.vendor_orders.length})</p>
-                <div className="space-y-2">
-                  {detail.vendor_orders.map((vo, idx) => (
-                    <div key={idx} className="rounded-xl border border-slate-200 p-3">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-sm font-medium text-[#20364D]">{vo.vendor_name || vo.vendor_id || "Vendor"}</p>
-                          <p className="text-xs text-slate-500">{vo.items?.length || 0} items &middot; {money(vo.total_amount || vo.total)}</p>
-                        </div>
-                        <StatusBadge status={vo.status} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Events timeline */}
+            {/* F. Timeline / Progress */}
             {detail.events && detail.events.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Events</p>
-                <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              <section className="rounded-2xl border p-4" data-testid="drawer-timeline">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Timeline</p>
+                <div className="space-y-2 max-h-[250px] overflow-y-auto">
                   {detail.events.map((ev, idx) => (
-                    <div key={idx} className="flex gap-3 text-xs">
-                      <span className="text-slate-400 whitespace-nowrap">{fmtDate(ev.created_at)}</span>
-                      <span className="text-slate-700">{(ev.event || "").replace(/_/g, " ")}</span>
+                    <div key={idx} className="flex gap-3 items-center text-xs py-1.5 border-b border-slate-100 last:border-0">
+                      <div className="w-2 h-2 rounded-full bg-[#20364D] shrink-0" />
+                      <span className="text-slate-700 capitalize">{(ev.event || "").replace(/_/g, " ")}</span>
+                      <span className="text-slate-400 ml-auto whitespace-nowrap">{fmtDate(ev.created_at)}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
+
+            {/* G. Admin Actions */}
+            <section className="pt-4 border-t border-slate-200 space-y-3" data-testid="drawer-admin-actions">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Actions</p>
+              <div className="grid grid-cols-2 gap-2">
+                {["assigned", "in_progress", "quality_check", "ready", "completed", "cancelled"].map((s) => (
+                  <button key={s} onClick={() => handleStatusUpdate(s)} disabled={actionLoading || detail.order?.status === s}
+                    className={`rounded-xl border px-3 py-2.5 text-xs font-semibold capitalize transition-colors disabled:opacity-40 ${
+                      detail.order?.status === s ? "bg-[#20364D] text-white border-[#20364D]" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                    data-testid={`status-btn-${s}`}
+                  >{s.replace(/_/g, " ")}</button>
+                ))}
+              </div>
+            </section>
 
             {/* Commissions */}
             {detail.commissions && detail.commissions.length > 0 && (
-              <div>
+              <section className="rounded-2xl border p-4">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Commissions ({detail.commissions.length})</p>
                 <div className="space-y-2">
                   {detail.commissions.map((c, idx) => (
@@ -234,26 +258,8 @@ export default function OrdersPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
-
-            {/* Actions */}
-            <div className="pt-4 border-t border-slate-200 space-y-3">
-              {(detail.order?.release_state === "awaiting" || !detail.order?.release_state) && detail.order?.status !== "cancelled" && (
-                <button onClick={handleRelease} disabled={actionLoading} data-testid="release-to-vendor-btn"
-                  className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2d4a66] transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
-                  <Truck size={16} /> {actionLoading ? "Processing..." : "Release to Vendor"}
-                </button>
-              )}
-              <div className="grid grid-cols-3 gap-2">
-                {["processing", "shipped", "completed"].map((s) => (
-                  <button key={s} onClick={() => handleStatusUpdate(s)} disabled={actionLoading || detail.order?.status === s}
-                    className="rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-semibold capitalize text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-40"
-                    data-testid={`status-btn-${s}`}
-                  >{s}</button>
-                ))}
-              </div>
-            </div>
           </div>
         ) : (
           <p className="text-slate-500">Could not load details.</p>

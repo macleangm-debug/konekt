@@ -134,6 +134,22 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
         proof = await db.payment_proofs.find_one({"invoice_id": inv.get("id")}, sort=[("created_at", -1)])
         inv["rejection_reason"] = (proof or {}).get("rejection_reason", "") if (proof or {}).get("status") == "rejected" else ""
         inv["source_type"] = "Quote" if inv.get("quote_id") else "Cart"
+        # Payer name
+        billing = inv.get("billing") or {}
+        inv["payer_name"] = billing.get("invoice_client_name") or inv.get("customer_name") or inv.get("customer_email") or "-"
+        # Payment status (use payment_status first, fallback to status)
+        inv["payment_state"] = inv.get("payment_status") or inv.get("status") or "draft"
+        # Invoice status
+        inv["invoice_status"] = inv.get("status") or "draft"
+        # Linked ref (quote or order short ref)
+        linked_ref = "-"
+        if inv.get("quote_id"):
+            q = await db.quotes.find_one({"id": inv["quote_id"]}, {"_id": 0, "quote_number": 1})
+            linked_ref = (q or {}).get("quote_number", inv["quote_id"][:12])
+        elif inv.get("order_id"):
+            o = await db.orders.find_one({"id": inv["order_id"]}, {"_id": 0, "order_number": 1})
+            linked_ref = (o or {}).get("order_number", inv["order_id"][:12])
+        inv["linked_ref"] = linked_ref
         out.append(inv)
     return out
 
@@ -165,15 +181,14 @@ async def orders_list(request: Request, search: Optional[str] = Query(default=No
     query = {}
     if status:
         query["status"] = status
-    if tab == "awaiting_release":
-        query["$or"] = [{"release_state": {"$exists": False}}, {"release_state": "awaiting"}]
-        query["status"] = {"$nin": ["cancelled"]}
-    elif tab == "released":
-        query["release_state"] = {"$in": ["released_by_payment", "manual"]}
+    if tab == "assigned":
+        query["status"] = {"$in": ["assigned", "ready_to_fulfill", "processing"]}
+    elif tab == "in_progress":
+        query["status"] = {"$in": ["in_progress", "work_scheduled"]}
     elif tab == "completed":
-        query["status"] = {"$in": ["completed", "delivered"]}
-    elif tab == "manual_released":
-        query["release_type"] = "manual"
+        query["status"] = {"$in": ["completed", "delivered", "fulfilled"]}
+    elif tab == "new":
+        query["status"] = {"$in": ["new", "pending"]}
 
     rows = await db.orders.find(query).sort("created_at", -1).to_list(length=500)
     out = []
@@ -183,13 +198,25 @@ async def orders_list(request: Request, search: Optional[str] = Query(default=No
             haystack = f"{order.get('order_number','')} {order.get('customer_name','')}".lower()
             if search.lower() not in haystack:
                 continue
-        # Determine release state
-        if not order.get("release_state"):
-            order["release_state"] = "released_by_payment" if order.get("payment_status") == "paid" else "awaiting"
+        # Vendor info
         vendor_orders = await db.vendor_orders.find({"order_id": order.get("id")}).to_list(20)
         order["vendor_count"] = len(vendor_orders)
+        vendor_name = "-"
+        if vendor_orders:
+            vid = vendor_orders[0].get("vendor_id")
+            if vid:
+                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1})
+                if vp:
+                    vendor_name = vp.get("company_name") or vp.get("name") or vid[:12]
+                else:
+                    vendor_name = vid[:12]
+        order["vendor_name"] = vendor_name
+        # Sales assignment
         assignment = await db.sales_assignments.find_one({"order_id": order.get("id")})
         order["sales_owner"] = (assignment or {}).get("sales_owner_name", "Unassigned")
+        # Payment status
+        order["payment_state"] = order.get("payment_status") or "paid"
+        order["fulfillment_state"] = order.get("status") or "new"
         out.append(order)
     return out
 
@@ -197,7 +224,6 @@ async def orders_list(request: Request, search: Optional[str] = Query(default=No
 async def order_detail(order_id: str, request: Request):
     from bson import ObjectId
     db = request.app.mongodb
-    # Try finding by 'id' field first, then by ObjectId
     order = await db.orders.find_one({"id": order_id})
     if not order:
         try:
@@ -206,18 +232,71 @@ async def order_detail(order_id: str, request: Request):
             pass
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    order = _clean(order)
+
+    # Invoice
     invoice = await db.invoices.find_one({"id": order.get("invoice_id")})
-    vendor_orders = [_clean(v) for v in await db.vendor_orders.find({"order_id": order_id}).to_list(50)]
+    invoice = _clean(invoice)
+
+    # Vendor orders with vendor names
+    raw_vendor_orders = await db.vendor_orders.find({"order_id": order_id}).to_list(50)
+    vendor_orders = []
+    for vo in raw_vendor_orders:
+        vo = _clean(vo)
+        vid = vo.get("vendor_id", "")
+        vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "phone": 1, "email": 1})
+        vo["vendor_name"] = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+        vo["vendor_phone"] = (vp or {}).get("phone", "")
+        vo["vendor_email"] = (vp or {}).get("email", "")
+        vendor_orders.append(vo)
+
+    # Sales assignment
     assignment = await db.sales_assignments.find_one({"order_id": order_id})
+    assignment = _clean(assignment)
+    sales_user = None
+    sales_id = (assignment or {}).get("sales_owner_id") or order.get("assigned_sales_id")
+    if sales_id:
+        sales_user = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "phone": 1, "email": 1})
+
+    # Customer info
+    cust_id = order.get("customer_id") or order.get("user_id")
+    customer = None
+    if cust_id:
+        customer = await db.users.find_one({"id": cust_id}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
+
+    # Events / timeline
     events = [_clean(e) for e in await db.order_events.find({"order_id": order_id}).sort("created_at", 1).to_list(100)]
+
+    # Commissions
     commissions = [_clean(c) for c in await db.commissions.find({"order_id": order_id}).to_list(50)]
+
+    # Quote link
+    quote = None
+    quote_id = order.get("quote_id")
+    if quote_id:
+        quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0, "id": 1, "quote_number": 1})
+
+    # Payment proof info
+    payment_proof = None
+    if invoice:
+        payment_proof = {
+            "payer_name": (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+            "approved_by": invoice.get("approved_by") or "-",
+            "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "-",
+            "payment_status": invoice.get("payment_status") or invoice.get("status") or "-",
+        }
+
     return {
-        "order": _clean(order),
-        "invoice": _clean(invoice),
+        "order": order,
+        "invoice": invoice,
         "vendor_orders": vendor_orders,
-        "sales_assignment": _clean(assignment),
+        "sales_assignment": assignment,
+        "sales_user": sales_user,
+        "customer": customer,
         "events": events,
         "commissions": commissions,
+        "quote": quote,
+        "payment_proof": payment_proof,
     }
 
 @router.post("/orders/{order_id}/release-to-vendor")

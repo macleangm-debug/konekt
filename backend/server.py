@@ -2138,6 +2138,9 @@ async def health():
 
 # Include routers
 app.include_router(api_router)
+# IMPORTANT: admin_facade_router must be included BEFORE admin_router
+# because admin_router has /orders/{order_id} which would catch /orders/list
+app.include_router(admin_facade_router)
 app.include_router(admin_router)
 
 # Initialize and include sales router
@@ -2181,9 +2184,7 @@ app.include_router(document_send_router)
 app.include_router(customer_order_router)
 
 # Include payment routes
-# IMPORTANT: admin_facade_router must be included BEFORE payment_admin_router
-# because payment_admin_router has /{payment_id} which would catch "queue"
-app.include_router(admin_facade_router)
+# IMPORTANT: payment_admin_router has /{payment_id} which would catch "queue"
 app.include_router(kwikpay_payment_router)
 app.include_router(kwikpay_webhook_router)
 app.include_router(bank_transfer_router)

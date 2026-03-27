@@ -161,13 +161,6 @@ export default function CustomerPortalLayoutV2() {
                 </Link>
               );
             })}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
-            >
-              <LogOut className="w-[18px] h-[18px]" />
-              Sign Out
-            </button>
           </div>
         )}
 

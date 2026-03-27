@@ -12,12 +12,14 @@ function fmtDate(v) { try { return new Date(v).toLocaleDateString("en-GB", { day
 
 function statusMeta(invoice) {
   const s = invoice.payment_status || invoice.status || "pending_payment";
-  if (["under_review", "awaiting_review", "payment_under_review"].includes(s)) return { label: "Under Review", cls: "bg-blue-100 text-blue-700" };
+  const hasProof = !!(invoice.proof_url || invoice.payment_proof_url || invoice.proof_submitted_at);
+  if (["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation"].includes(s)) return { label: "Payment Under Review", cls: "bg-blue-100 text-blue-700" };
   if (s === "partially_paid") return { label: "Partially Paid", cls: "bg-amber-100 text-amber-700" };
-  if (s === "paid" || invoice.status === "paid") return { label: "Paid", cls: "bg-green-100 text-green-700" };
-  if (["proof_rejected", "rejected", "payment_rejected"].includes(s)) return { label: "Rejected", cls: "bg-red-100 text-red-700" };
-  if (s === "awaiting_payment_proof") return { label: "Awaiting Proof", cls: "bg-amber-100 text-amber-700" };
-  return { label: "Pending Payment", cls: "bg-slate-100 text-slate-700" };
+  if (s === "paid" || invoice.status === "paid") return { label: "Paid in Full", cls: "bg-green-100 text-green-700" };
+  if (["proof_rejected", "rejected", "payment_rejected"].includes(s)) return { label: "Payment Rejected", cls: "bg-red-100 text-red-700" };
+  if (hasProof) return { label: "Payment Under Review", cls: "bg-blue-100 text-blue-700" };
+  if (s === "awaiting_payment_proof") return { label: "Awaiting Payment", cls: "bg-amber-100 text-amber-700" };
+  return { label: "Awaiting Payment", cls: "bg-slate-100 text-slate-700" };
 }
 
 function getActionConfig(invoice) {
@@ -39,6 +41,9 @@ function isPaid(invoice) {
 function PaymentStatusBlock({ invoice, bankInfo }) {
   const paid = isPaid(invoice);
   const amountPaid = Number(invoice.amount_paid || 0);
+  const hasProof = !!(invoice.proof_url || invoice.payment_proof_url || invoice.proof_submitted_at);
+  const s = invoice.payment_status || invoice.status || "pending_payment";
+  const isUnderReview = ["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation"].includes(s) || hasProof;
 
   if (paid) {
     return (
@@ -48,6 +53,18 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
         {invoice.paid_at && <div className="text-xs text-green-600 mt-1">Date: {fmtDate(invoice.paid_at || invoice.updated_at)}</div>}
         <div className="text-xs text-green-600">Method: {invoice.payment_method || "Bank Transfer"}</div>
         {amountPaid > 0 && <div className="text-xs text-green-600">Amount: {money(amountPaid)}</div>}
+      </div>
+    );
+  }
+
+  if (isUnderReview && !["proof_rejected", "rejected", "payment_rejected"].includes(s)) {
+    return (
+      <div className="rounded-xl border border-blue-200 p-4 bg-blue-50/50" data-testid="payment-status-block">
+        <div className="text-xs uppercase tracking-wide text-blue-600 mb-2 font-semibold">Payment Status</div>
+        <div className="font-bold text-blue-700 text-sm">Payment Under Review</div>
+        {amountPaid > 0 && (
+          <div className="text-xs text-blue-600 mt-1">Paid so far: {money(amountPaid)}</div>
+        )}
       </div>
     );
   }
@@ -297,28 +314,29 @@ export default function InvoicesPageV2() {
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">
               <tr>
                 <th className="px-6 py-4 text-left">Date</th>
-                <th className="px-6 py-4 text-left">Invoice</th>
-                <th className="px-6 py-4 text-left">Payer</th>
+                <th className="px-6 py-4 text-left">Invoice No</th>
+                <th className="px-6 py-4 text-left">Type</th>
                 <th className="px-6 py-4 text-left">Amount</th>
-                <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-6 py-4 text-left">Payer Name</th>
+                <th className="px-6 py-4 text-left">Payment Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">Loading invoices...</td></tr>
+                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">Loading invoices...</td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No invoices found.</td></tr>
+                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No invoices found.</td></tr>
               ) : filteredInvoices.map((invoice) => {
                 const st = statusMeta(invoice);
-                const billing = invoice.billing || {};
-                const payerName = billing.invoice_client_name || invoice.customer_name || invoice.customer_email || "-";
+                const payerName = invoice.payer_name || (invoice.billing || {}).invoice_client_name || invoice.customer_name || "-";
                 return (
                   <tr key={invoice.id || invoice._id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
                     <td className="px-6 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{invoice.invoice_number || invoice.id}</td>
-                    <td className="px-6 py-4 text-slate-600">{payerName}</td>
+                    <td className="px-6 py-4 text-slate-600 capitalize">{invoice.type || invoice.source_type || "product"}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
-                    <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${st.cls}`}>{st.label}</span></td>
+                    <td className="px-6 py-4 text-slate-600">{payerName}</td>
+                    <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${st.cls}`}>{invoice.payment_status_label || st.label}</span></td>
                   </tr>
                 );
               })}

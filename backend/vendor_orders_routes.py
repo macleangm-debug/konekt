@@ -129,18 +129,25 @@ async def list_vendor_orders(
         # Priority
         priority = row.get("priority", "normal")
 
+        # Base price (vendor sees their cost, not customer price)
+        base_price = 0
+        for item in row.get("items", []):
+            bp = item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or item.get("price") or 0
+            base_price += float(bp) * float(item.get("quantity", 1))
+        if not base_price:
+            base_price = row.get("vendor_total") or row.get("total_amount") or row.get("total") or 0
+
         rows.append({
             "id": row.get("id"),
             "vendor_order_no": vendor_order_no,
             "order_id": order_id,
             "created_at": row.get("created_at", ""),
             "date": str(row.get("created_at", ""))[:10],
-            "customer_name": customer_name,
-            "customer_phone": customer_phone,
             "source_type": source_type,
             "fulfillment_state": row.get("status", "processing"),
             "status": row.get("status", "processing"),
             "priority": priority,
+            "base_price": base_price,
             "delivery_address": delivery_address,
             "sales_name": sales_name,
             "sales_phone": sales_phone,
@@ -192,7 +199,7 @@ async def update_vendor_order_status(
         raise HTTPException(status_code=404, detail="Vendor order not found")
 
     new_status = payload.get("status")
-    allowed = {"assigned", "accepted", "in_progress", "ready_to_fulfill", "fulfilled", "completed", "issue_reported", "processing"}
+    allowed = {"assigned", "accepted", "work_scheduled", "in_progress", "quality_check", "ready", "completed", "issue_reported", "processing"}
     if new_status not in allowed:
         raise HTTPException(status_code=400, detail=f"Invalid status. Allowed: {allowed}")
 

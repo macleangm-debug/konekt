@@ -1,0 +1,81 @@
+{
+  "summary": "6-Item UI Cleanup Pack - All features verified and working. Fixed route ordering issue in server.py where admin_facade_router was being shadowed by admin_router. Backend: 34/34 tests passed. Frontend: All UI components verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_ui_cleanup_pack.py",
+    "/app/test_reports/pytest/pytest_results_ui_cleanup_pack.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/server.py - Fixed router ordering: admin_facade_router now included BEFORE admin_router to prevent /orders/list being caught by /orders/{order_id}"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "6-Item UI Cleanup Pack fully tested and verified. All features working: 1) Customer invoice wording (Payment Under Review when proof submitted), 2) Customer invoice table enrichment (Date, Invoice No, Type, Amount, Payer Name, Payment Status), 3) Admin orders table/drawer cleanup (no Awaiting Release tab, enriched 7-section drawer), 4) Admin invoice page enrichment (Date, Invoice No, Customer, Type, Amount, Payer Name, Payment Status, Invoice Status, Linked Ref - no action column), 5) Sign out moved to top-right profile dropdown for all layouts, 6) Vendor order privacy (no customer identity, base price shown, status controls in drawer). Legacy /partner/fulfillment route redirects to /partner/orders.",
+  "features_tested": {
+    "customer_invoice_wording": {
+      "status": "PASS",
+      "details": "Payment Under Review shown when proof submitted, Awaiting Payment shown when no proof, Paid in Full shown for paid invoices"
+    },
+    "customer_invoice_table_columns": {
+      "status": "PASS",
+      "details": "Table has columns: Date, Invoice No, Type, Amount, Payer Name, Payment Status"
+    },
+    "admin_orders_tabs": {
+      "status": "PASS",
+      "details": "Tabs: All Orders, New, Assigned, In Progress, Completed. NO Awaiting Release tab."
+    },
+    "admin_orders_table_columns": {
+      "status": "PASS",
+      "details": "Table has columns: Date, Order #, Customer, Source, Total, Payment, Fulfillment, Assigned Sales, Assigned Vendor"
+    },
+    "admin_order_drawer_7_sections": {
+      "status": "PASS",
+      "details": "Drawer has 7 sections: Order Summary, Customer, Assignment, Payment, Fulfillment, Timeline, Admin Actions"
+    },
+    "admin_invoice_table_columns": {
+      "status": "PASS",
+      "details": "Table has columns: Date, Invoice No, Customer, Type, Amount, Payer Name, Payment Status, Invoice Status, Linked Ref. NO Action column."
+    },
+    "sign_out_in_profile_dropdown": {
+      "status": "PASS",
+      "details": "Sign Out button is in top-right profile dropdown for Admin, Customer, and Partner layouts. NOT in sidebar bottom."
+    },
+    "vendor_orders_privacy": {
+      "status": "PASS",
+      "details": "Vendor orders table does NOT show customer name. Shows: Date, Vendor Order No, Source Type, Base Price, Status, Priority"
+    },
+    "vendor_drawer_no_customer_identity": {
+      "status": "PASS",
+      "details": "Vendor drawer shows Order Summary, Konekt Sales Contact, Work Details, Timeline, Actions. NO customer identity block."
+    },
+    "legacy_fulfillment_route_redirect": {
+      "status": "PASS",
+      "details": "/partner/fulfillment redirects to /partner/orders"
+    }
+  },
+  "bug_fix_applied": {
+    "issue": "Route ordering conflict in server.py - /api/admin/orders/list was being caught by /api/admin/orders/{order_id}",
+    "fix": "Moved admin_facade_router include BEFORE admin_router in server.py",
+    "file": "/app/backend/server.py"
+  }
+}

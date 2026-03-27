@@ -209,31 +209,39 @@ export default function InvoicesPage() {
         <input type="text" placeholder="Search invoices..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-[#D4A843] outline-none" data-testid="search-invoices-input" />
       </div>
 
-      {/* Invoice Table — Payment Queue Pattern */}
+      {/* Invoice Table — enriched */}
       <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="admin-invoices-table">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">
               <tr>
-                <th className="px-6 py-4 text-left">Date</th>
-                <th className="px-6 py-4 text-left">Invoice</th>
-                <th className="px-6 py-4 text-left">Customer</th>
-                <th className="px-6 py-4 text-right">Amount</th>
-                <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-5 py-4 text-left">Date</th>
+                <th className="px-5 py-4 text-left">Invoice No</th>
+                <th className="px-5 py-4 text-left">Customer</th>
+                <th className="px-5 py-4 text-left">Type</th>
+                <th className="px-5 py-4 text-right">Amount</th>
+                <th className="px-5 py-4 text-left">Payer Name</th>
+                <th className="px-5 py-4 text-left">Payment Status</th>
+                <th className="px-5 py-4 text-left">Invoice Status</th>
+                <th className="px-5 py-4 text-left">Linked Ref</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">Loading...</td></tr>
+                <tr><td colSpan="9" className="px-6 py-10 text-center text-slate-400">Loading...</td></tr>
               ) : filteredInvoices.length === 0 ? (
-                <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No invoices found</td></tr>
-              ) : filteredInvoices.map((invoice) => (
+                <tr><td colSpan="9" className="px-6 py-10 text-center text-slate-400">No invoices found</td></tr>
+              ) : [...filteredInvoices].sort((a,b) => new Date(b.created_at||0)-new Date(a.created_at||0)).map((invoice) => (
                 <tr key={invoice.id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
-                  <td className="px-6 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
-                  <td className="px-6 py-4 font-semibold text-[#20364D]">{invoice.invoice_number}</td>
-                  <td className="px-6 py-4 text-slate-600">{invoice.customer_name || invoice.customer_company || "—"}</td>
-                  <td className="px-6 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
-                  <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.status || "draft").replace(/_/g, " ")}</span></td>
+                  <td className="px-5 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
+                  <td className="px-5 py-4 font-semibold text-[#20364D]">{invoice.invoice_number}</td>
+                  <td className="px-5 py-4 text-slate-600">{invoice.customer_name || invoice.customer_company || "-"}</td>
+                  <td className="px-5 py-4 text-slate-600 capitalize">{invoice.source_type || invoice.type || "-"}</td>
+                  <td className="px-5 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
+                  <td className="px-5 py-4 text-slate-600">{invoice.payer_name || "-"}</td>
+                  <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.payment_state || invoice.payment_status] || statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.payment_state || invoice.payment_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
+                  <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.invoice_status || invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.invoice_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
+                  <td className="px-5 py-4 text-xs text-slate-500">{invoice.linked_ref || "-"}</td>
                 </tr>
               ))}
             </tbody>
