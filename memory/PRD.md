@@ -70,6 +70,14 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Vendor Privacy**: Customer identity removed, base price added, status flow → Assigned → Work Scheduled → In Progress → Ready → Completed
 - **Test**: 100% pass (34/34 backend, all frontend UI) — iteration_127.json
 
+### Unresolved Fixes Pack (March 27, 2026) - DONE
+- **Customer-Safe Timeline**: Flow-type-specific labels (Product: Ordered→Confirmed→In Progress→QC→Ready→Completed; Service: Requested→Scheduled→In Progress→Review→Completed; Promo: Submitted→Processing→Active→Completed). Customer never sees vendor-internal labels.
+- **Invoice payer_name**: Persisted at proof submission, returned by all invoice APIs, shown in customer + admin tables.
+- **Auto-Assignment**: At payment approval — vendor auto-assigned from product owner, sales via round-robin, vendor_orders created with status "assigned", notifications created for customer + vendor + sales.
+- **Stored Notifications**: Real notifications in bell (unread count) + dashboard card for customer/vendor/sales. Fixed is_read mismatch bug.
+- **Route Cleanup**: /dashboard-legacy/* → /dashboard redirect. /partner/fulfillment → /partner/orders. fulfillment-jobs → vendor/orders (307 redirect). Partner dashboard stats now read from vendor_orders (not fulfillment_jobs).
+- **Test**: 100% pass (12/12 backend, all frontend UI) — iteration_128.json
+
 ## Prioritized Backlog
 
 ### P1 — Upcoming
