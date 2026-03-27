@@ -60,6 +60,16 @@ Build a comprehensive B2B e-commerce platform ("Konekt") for Tanzania, featuring
 - **Vendor notification**: Added notification creation on payment approval vendor_order push
 - **Test**: 100% pass (21/21 backend, all frontend UI tests) — iteration_126.json
 
+### UI Cleanup & Role Views Pass (March 27, 2026) - DONE
+- **Customer Invoice Wording**: "Payment Under Review" when proof submitted (never "Waiting for payment")
+- **Customer Invoice Table**: Columns → Date, Invoice No, Type, Amount, Payer Name, Payment Status
+- **Admin Orders**: Tabs → All, New, Assigned, In Progress, Completed (removed "Awaiting Release")
+- **Admin Orders Drawer**: 7 enriched sections (Summary, Customer, Assignment, Payment, Fulfillment, Timeline, Admin Actions)
+- **Admin Invoices**: Columns → Date, Invoice No, Customer, Type, Amount, Payer Name, Payment Status, Invoice Status, Linked Ref (no action column)
+- **Sign Out**: Moved from sidebar bottom to top-right profile dropdown for Admin, Customer, Partner
+- **Vendor Privacy**: Customer identity removed, base price added, status flow → Assigned → Work Scheduled → In Progress → Ready → Completed
+- **Test**: 100% pass (34/34 backend, all frontend UI) — iteration_127.json
+
 ## Prioritized Backlog
 
 ### P1 — Upcoming
