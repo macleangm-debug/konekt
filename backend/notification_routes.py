@@ -85,27 +85,38 @@ async def list_notifications(
     unread_only: bool = False,
     user: dict = Depends(get_current_user)
 ):
-    """List notifications for current user based on role"""
+    """List notifications for current user based on role and user ID"""
     role = user.get("role", "customer")
     user_id = user.get("id")
-    
-    # Build query for role-based or user-specific notifications
-    query = {
-        "$or": [
-            {"recipient_role": role},
-            {"recipient_role": {"$in": ["admin", "super_admin"]}} if role in ["admin", "super_admin"] else {"recipient_role": role},
-            {"recipient_user_id": user_id},
-        ]
-    }
-    
+    partner_id = user.get("partner_id")
+
+    # Build query matching by user ID, role, or partner target
+    or_conditions = [
+        {"recipient_user_id": user_id},
+        {"recipient_role": role},
+    ]
+    # Also match vendor notifications by target_id (legacy format)
+    if partner_id:
+        or_conditions.append({"target_id": partner_id, "target_type": "vendor"})
+        or_conditions.append({"recipient_user_id": partner_id})
+    if role in ["admin", "super_admin"]:
+        or_conditions.append({"recipient_role": {"$in": ["admin", "super_admin"]}})
+
+    query = {"$or": or_conditions}
+
     if unread_only:
-        query["is_read"] = False
-    
+        query["$and"] = [{"$or": [{"is_read": False}, {"read": False}]}]
+
     notifications = await db.notifications.find(
         query,
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
-    
+
+    # Normalize is_read field
+    for n in notifications:
+        if "is_read" not in n:
+            n["is_read"] = n.get("read", False)
+
     return notifications
 
 
@@ -114,16 +125,23 @@ async def get_unread_count(user: dict = Depends(get_current_user)):
     """Get count of unread notifications for current user"""
     role = user.get("role", "customer")
     user_id = user.get("id")
-    
+    partner_id = user.get("partner_id")
+
+    or_conditions = [
+        {"recipient_user_id": user_id},
+        {"recipient_role": role},
+    ]
+    if partner_id:
+        or_conditions.append({"target_id": partner_id, "target_type": "vendor"})
+        or_conditions.append({"recipient_user_id": partner_id})
+    if role in ["admin", "super_admin"]:
+        or_conditions.append({"recipient_role": {"$in": ["admin", "super_admin"]}})
+
     query = {
-        "$or": [
-            {"recipient_role": role},
-            {"recipient_role": {"$in": ["admin", "super_admin"]}} if role in ["admin", "super_admin"] else {"recipient_role": role},
-            {"recipient_user_id": user_id},
-        ],
-        "is_read": False,
+        "$or": or_conditions,
+        "$and": [{"$or": [{"is_read": False}, {"read": False}]}],
     }
-    
+
     count = await db.notifications.count_documents(query)
     return {"count": count}
 

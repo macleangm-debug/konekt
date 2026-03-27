@@ -856,27 +856,8 @@ function App() {
           </AdminAuthProvider>
         } />
         
-        {/* Legacy Customer Portal Routes - Keep for detailed pages */}
-        <Route path="/dashboard-legacy/*" element={
-          <AuthProvider>
-            <CartProvider>
-              <CustomerRoute>
-                <CustomerPortalLayout />
-              </CustomerRoute>
-            </CartProvider>
-          </AuthProvider>
-        }>
-          <Route path="orders/:orderId" element={<CustomerOrdersPage />} />
-          <Route path="quotes/:quoteId" element={<CustomerQuoteDetailPage />} />
-          <Route path="invoices/:invoiceId" element={<CustomerInvoiceDetailPage />} />
-          <Route path="designs" element={<MyDesignProjectsPage />} />
-          <Route path="designs/:projectId" element={<CreativeProjectDetailPage />} />
-          <Route path="addresses" element={<AddressesPage />} />
-          <Route path="maintenance" element={<MaintenanceDashboardPage />} />
-          <Route path="service-requests/:requestId" element={<ServiceRequestDetailPage />} />
-          <Route path="referrals" element={<ReferralsPage />} />
-          <Route path="affiliate" element={<DashboardAffiliatePage />} />
-        </Route>
+        {/* Legacy Customer Portal Routes - Redirects to canonical routes */}
+        <Route path="/dashboard-legacy/*" element={<Navigate to="/dashboard" replace />} />
         
         {/* Public Customer Routes - Legacy routes for backward compatibility */}
         <Route path="/*" element={

@@ -10,14 +10,33 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(v) { if (!v) return "-"; try { return new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "-"; } }
 
-function fulfillMeta(s) {
+function fulfillMeta(s, order) {
+  // Use customer-safe label from API if available
+  if (order && order.customer_status) {
+    const label = order.customer_status;
+    const map = {
+      "Ordered": { cls: "bg-slate-100 text-slate-600" },
+      "Confirmed": { cls: "bg-blue-100 text-blue-700" },
+      "In Progress": { cls: "bg-amber-100 text-amber-700" },
+      "Quality Check": { cls: "bg-purple-100 text-purple-700" },
+      "Ready": { cls: "bg-teal-100 text-teal-700" },
+      "Completed": { cls: "bg-emerald-100 text-emerald-700" },
+      "Requested": { cls: "bg-slate-100 text-slate-600" },
+      "Scheduled": { cls: "bg-blue-100 text-blue-700" },
+      "Review": { cls: "bg-purple-100 text-purple-700" },
+      "Submitted": { cls: "bg-slate-100 text-slate-600" },
+      "Processing": { cls: "bg-blue-100 text-blue-700" },
+      "Active": { cls: "bg-teal-100 text-teal-700" },
+    };
+    return { label, cls: (map[label] || { cls: "bg-blue-100 text-blue-700" }).cls };
+  }
   const st = (s || "processing").toLowerCase();
   if (st === "completed" || st === "delivered") return { label: "Completed", cls: "bg-emerald-100 text-emerald-700" };
   if (st === "ready_to_fulfill" || st === "ready" || st === "shipped") return { label: "Ready", cls: "bg-blue-100 text-blue-700" };
   if (st === "in_progress") return { label: "In Progress", cls: "bg-amber-100 text-amber-700" };
   if (st === "cancelled") return { label: "Cancelled", cls: "bg-red-100 text-red-700" };
-  if (st === "paid") return { label: "Pending", cls: "bg-slate-100 text-slate-600" };
-  return { label: "Processing", cls: "bg-blue-100 text-blue-700" };
+  if (st === "paid") return { label: "Confirmed", cls: "bg-blue-100 text-blue-700" };
+  return { label: "Ordered", cls: "bg-blue-100 text-blue-700" };
 }
 
 function paymentMeta(s) {
@@ -36,40 +55,22 @@ function sourceLabel(order) {
   return "Product";
 }
 
-/* Build timeline from order data */
+/* Build timeline from customer-safe API data */
 function buildTimeline(order) {
-  const events = [];
-  if (order.created_at) events.push({ label: "Order Created", date: fmtDate(order.created_at), done: true });
+  // Use customer-safe steps from API
+  const steps = order.timeline_steps || ["Ordered", "Confirmed", "In Progress", "Quality Check", "Ready", "Completed"];
+  const currentIdx = order.timeline_index ?? 0;
 
-  const ps = (order.payment_status || "").toLowerCase();
-  if (ps === "paid") events.push({ label: "Payment Approved", date: fmtDate(order.updated_at), done: true });
-  else events.push({ label: "Payment Approved", date: "", done: false });
-
-  // Use status_history if available
-  const history = order.status_history || [];
-  const hasVendor = history.some(h => (h.status || "").includes("vendor") || (h.status || "").includes("assigned"));
-  if (hasVendor || order.vendor_ids?.length) events.push({ label: "Vendor Assigned", date: "", done: true });
-  else events.push({ label: "Vendor Assigned", date: "", done: false });
-
-  const fs = (order.status || order.fulfillment_state || "").toLowerCase();
-  if (["in_progress", "ready", "ready_to_fulfill", "shipped", "completed", "delivered"].includes(fs)) {
-    events.push({ label: "Work Started", date: "", done: true });
-  } else {
-    events.push({ label: "Work Started", date: "", done: false });
-  }
-
-  if (["completed", "delivered"].includes(fs)) {
-    events.push({ label: "Completed", date: fmtDate(order.updated_at), done: true });
-  } else {
-    events.push({ label: "Completed", date: "", done: false });
-  }
-
-  return events;
+  return steps.map((step, idx) => ({
+    label: step,
+    date: idx === 0 ? fmtDate(order.created_at) : "",
+    done: idx <= currentIdx,
+  }));
 }
 
 function OrderDrawer({ order, onClose }) {
   if (!order) return null;
-  const fStatus = fulfillMeta(order.status || order.fulfillment_state);
+  const fStatus = fulfillMeta(order.status || order.fulfillment_state, order);
   const pStatus = paymentMeta(order.payment_status || order.payment_state);
   const items = order.items || order.line_items || [];
   const delivery = order.delivery || {};
@@ -82,9 +83,9 @@ function OrderDrawer({ order, onClose }) {
   const customerPhone = delivery.client_phone || billing.invoice_client_phone || order.customer_phone || "";
   const customerAddress = delivery.address_line ? `${delivery.address_line}, ${delivery.city || ""}` : "";
 
-  const salesName = order.assigned_sales_name || order.sales_owner_name || "Konekt Sales Team";
-  const salesPhone = order.sales_phone || "+255 XXX XXX XXX";
-  const salesEmail = order.sales_email || "sales@konekt.co.tz";
+  const salesName = order.sales?.name || order.assigned_sales_name || order.sales_owner_name || "Konekt Sales Team";
+  const salesPhone = order.sales?.phone || order.sales_phone || "+255 XXX XXX XXX";
+  const salesEmail = order.sales?.email || order.sales_email || "sales@konekt.co.tz";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" data-testid="order-drawer">
@@ -157,13 +158,13 @@ function OrderDrawer({ order, onClose }) {
             </div>
           </div>
 
-          {/* 4. Fulfillment / Vendor */}
+          {/* 4. Order Status */}
           <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Fulfillment</div>
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Order Status</div>
             <div className="space-y-1.5 text-xs text-slate-600">
-              <div className="flex items-center gap-2"><strong className="text-slate-500">Vendor:</strong> {order.vendor_name || "Pending assignment"}</div>
               <div className="flex items-center gap-2"><strong className="text-slate-500">Payment:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pStatus.cls}`}>{pStatus.label}</span></div>
               <div className="flex items-center gap-2"><strong className="text-slate-500">Status:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${fStatus.cls}`}>{fStatus.label}</span></div>
+              {order.status_description && <div className="mt-2 text-slate-500 text-xs">{order.status_description}</div>}
             </div>
           </div>
 
@@ -302,7 +303,7 @@ export default function OrdersPageV2() {
               ) : filteredOrders.length === 0 ? (
                 <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No orders found.</td></tr>
               ) : filteredOrders.map((order) => {
-                const fSt = fulfillMeta(order.status || order.fulfillment_state);
+                const fSt = fulfillMeta(order.status || order.fulfillment_state, order);
                 const pSt = paymentMeta(order.payment_status || order.payment_state);
                 return (
                   <tr key={order.id || order._id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedOrder(order)} data-testid={`order-row-${order.id}`}>

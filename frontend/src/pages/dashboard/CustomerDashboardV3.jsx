@@ -34,7 +34,7 @@ export default function CustomerDashboardV3() {
         api.get("/api/customer/orders").catch(() => ({ data: [] })),
         api.get("/api/customer/invoices").catch(() => ({ data: [] })),
         api.get("/api/customer/activity-feed", { params: { limit: 5 } }).catch(() => ({ data: [] })),
-        api.get("/api/customer/notifications", { params: { limit: 5 } }).catch(() => ({ data: [] })),
+        api.get("/api/notifications").catch(() => ({ data: [] })),
       ]);
 
       const quotes = quotesRes.data || [];
@@ -56,10 +56,10 @@ export default function CustomerDashboardV3() {
       }));
       setActivities(formattedActivities);
 
-      const formattedNotifs = (notifRes.data || []).map(n => ({
-        title: n.message,
-        text: n.reference || "",
-        read: n.read
+      const formattedNotifs = (notifRes.data || []).slice(0, 5).map(n => ({
+        title: n.title || n.message,
+        text: n.message || n.reference || "",
+        read: n.is_read || n.read || false,
       }));
       setNotifications(formattedNotifs);
 
@@ -174,8 +174,8 @@ export default function CustomerDashboardV3() {
         {currentOrder ? (
           <OrderStatusTimelineCard
             title={`Order #${currentOrder.order_number || currentOrder.id?.slice(0, 8)}`}
-            currentIndex={getOrderStageIndex(currentOrder.status)}
-            steps={["Received", "Payment", "In Progress", "Shipped", "Delivered"]}
+            currentIndex={currentOrder.timeline_index ?? 0}
+            steps={currentOrder.timeline_steps || ["Ordered", "Confirmed", "In Progress", "Quality Check", "Ready", "Completed"]}
           />
         ) : (
           <div className="rounded-xl border border-gray-200 bg-white p-6 flex flex-col items-center justify-center text-center">

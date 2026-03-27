@@ -8,6 +8,7 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import jwt
+from customer_timeline_mapping_service import get_customer_timeline
 
 router = APIRouter(prefix="/api/customer/orders", tags=["Customer Orders"])
 security = HTTPBearer(auto_error=False)
@@ -42,27 +43,43 @@ async def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)
 
 async def enrich_order(order):
     order = serialize_doc(order)
-    sales_assignment = await db.sales_assignments.find_one({"order_id": order.get("id")}, {"_id": 0})
-    if sales_assignment:
-        order["sales_owner_name"] = sales_assignment.get("sales_owner_name")
-        if sales_assignment.get("sales_owner_id"):
-            sales_user = await db.users.find_one({"id": sales_assignment.get("sales_owner_id")}, {"_id": 0})
-            if sales_user:
-                order["sales"] = {
-                    "name": sales_user.get("full_name") or sales_assignment.get("sales_owner_name"),
-                    "email": sales_user.get("email"),
-                    "phone": sales_user.get("phone") or sales_user.get("mobile"),
-                }
+    order_id = order.get("id")
 
-    vendor_id = (order.get("vendor_ids") or [None])[0]
-    if vendor_id:
-        partner = await db.partners.find_one({"_id": ObjectId(vendor_id)}) if ObjectId.is_valid(str(vendor_id)) else await db.partners.find_one({"id": vendor_id})
-        if partner:
-            order["vendor"] = {
-                "name": partner.get("name"),
-                "phone": partner.get("phone"),
-                "email": partner.get("email"),
+    # Sales contact (safe for customer)
+    sales_assignment = await db.sales_assignments.find_one({"order_id": order_id}, {"_id": 0})
+    if sales_assignment and sales_assignment.get("sales_owner_id"):
+        sales_user = await db.users.find_one({"id": sales_assignment["sales_owner_id"]}, {"_id": 0})
+        if sales_user:
+            order["sales"] = {
+                "name": sales_user.get("full_name"),
+                "email": sales_user.get("email"),
+                "phone": sales_user.get("phone"),
             }
+
+    # Determine internal status from vendor orders (most advanced status)
+    internal_status = order.get("status") or "processing"
+    vendor_orders = await db.vendor_orders.find({"order_id": order_id}).to_list(10)
+    if vendor_orders:
+        vo_statuses = [vo.get("status", "processing") for vo in vendor_orders]
+        # Use the most advanced vendor status
+        status_priority = ["completed", "ready", "quality_check", "in_progress", "work_scheduled", "assigned", "accepted", "ready_to_fulfill", "processing"]
+        for sp in status_priority:
+            if sp in vo_statuses:
+                internal_status = sp
+                break
+
+    # Customer-safe timeline
+    source_type = order.get("type") or order.get("source_type") or "product"
+    timeline_data = get_customer_timeline(source_type, internal_status)
+    order["timeline_steps"] = timeline_data["steps"]
+    order["timeline_index"] = timeline_data["current_index"]
+    order["customer_status"] = timeline_data["current_label"]
+    order["status_description"] = timeline_data["description"]
+
+    # DO NOT expose vendor identity to customer
+    order.pop("vendor_ids", None)
+    order.pop("vendor", None)
+
     return order
 
 

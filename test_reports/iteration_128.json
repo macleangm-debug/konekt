@@ -1,0 +1,85 @@
+{
+  "summary": "5-Item Unresolved Fixes Pack - All features verified and working. Backend: 12/12 tests passed. Frontend: All UI components verified via Playwright. Fixed a bug in customer_notifications_routes.py where activity feed sorting failed due to datetime/string comparison.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unresolved_fixes_pack.py",
+    "/app/test_reports/pytest/pytest_results_unresolved_fixes.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/customer_notifications_routes.py - Fixed activity feed sorting to handle datetime/string comparison"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "5-Item Unresolved Fixes Pack fully tested and verified. All features working: 1) Customer-safe timeline mapping (Ordered, Confirmed, In Progress, Quality Check, Ready, Completed for Product; Requested, Scheduled, In Progress, Review, Completed for Service; Submitted, Processing, Active, Completed for Promo). Customer NEVER sees vendor-internal labels. 2) Invoice payer_name returned by all invoice APIs. 3) Auto-assignment at approval creates vendor_orders with status 'assigned', sales_assignment with actual sales user, and notifications for customer/vendor/sales. 4) Real stored notifications in bell icon + dashboard card for all roles. 5) Route cleanup: /dashboard-legacy/* redirects to /dashboard, /partner/fulfillment redirects to /partner/orders.",
+  "features_tested": {
+    "customer_timeline_mapping": {
+      "status": "PASS",
+      "details": "GET /api/customer/orders returns customer_status, timeline_steps, timeline_index fields. Customer drawer shows customer-safe labels (Ordered, Confirmed, In Progress, Quality Check, Ready, Completed). No vendor-internal labels visible."
+    },
+    "customer_orders_no_vendor_identity": {
+      "status": "PASS",
+      "details": "Customer orders API does not expose vendor_ids or vendor fields. Customer drawer does not show vendor name/identity."
+    },
+    "invoice_payer_name": {
+      "status": "PASS",
+      "details": "GET /api/customer/invoices returns payer_name and payment_status_label fields. Customer invoice table shows PAYER NAME column."
+    },
+    "notifications_api": {
+      "status": "PASS",
+      "details": "GET /api/notifications returns notifications with is_read field for all roles (customer, admin, partner). Unread count API works correctly."
+    },
+    "notification_bell_ui": {
+      "status": "PASS",
+      "details": "Notification bell shows unread count (24) and notification list. Dashboard shows notifications card with '5 new'. Mark all read functionality available."
+    },
+    "admin_orders_tabs": {
+      "status": "PASS",
+      "details": "Admin orders page has tabs: All Orders, New, Assigned, In Progress, Completed. NO 'Awaiting Release' tab."
+    },
+    "admin_order_drawer_7_sections": {
+      "status": "PASS",
+      "details": "Admin order drawer has 7 sections: Order Summary, Customer, Assignment, Payment, Fulfillment, Timeline, Admin Actions."
+    },
+    "sign_out_in_profile_dropdown": {
+      "status": "PASS",
+      "details": "Sign Out button is in top-right profile dropdown for Customer, Admin, and Partner layouts. NOT in sidebar bottom."
+    },
+    "vendor_orders_privacy": {
+      "status": "PASS",
+      "details": "Vendor orders table does NOT show customer name. Shows: Date, Vendor Order No, Source Type, Base Price, Status, Priority."
+    },
+    "legacy_route_redirects": {
+      "status": "PASS",
+      "details": "/dashboard-legacy/* redirects to /dashboard. /partner/fulfillment redirects to /partner/orders."
+    },
+    "fulfillment_jobs_redirect": {
+      "status": "PASS",
+      "details": "GET /api/partner-portal/fulfillment-jobs returns 307 redirect to /api/vendor/orders."
+    }
+  },
+  "bug_fix_applied": {
+    "issue": "Activity feed sorting failed with TypeError: '<' not supported between instances of 'datetime.datetime' and 'str'",
+    "fix": "Added get_sort_key function to normalize datetime objects to ISO strings before sorting",
+    "file": "/app/backend/customer_notifications_routes.py"
+  }
+}

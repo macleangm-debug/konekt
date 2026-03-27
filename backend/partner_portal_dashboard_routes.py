@@ -53,26 +53,33 @@ async def partner_dashboard(authorization: Optional[str] = Header(None)):
         "is_active": True,
     })
 
-    # Fulfillment job counts
-    fulfillment_count = await db.fulfillment_jobs.count_documents({
-        "partner_id": partner_id,
-        "status": {"$in": ["allocated", "accepted", "in_progress"]},
+    # Vendor order counts (source of truth: vendor_orders collection)
+    fulfillment_count = await db.vendor_orders.count_documents({
+        "vendor_id": partner_id,
+        "status": {"$in": ["assigned", "accepted", "work_scheduled", "in_progress", "ready_to_fulfill", "processing"]},
     })
 
-    completed_jobs = await db.fulfillment_jobs.count_documents({
-        "partner_id": partner_id,
-        "status": "fulfilled",
+    completed_jobs = await db.vendor_orders.count_documents({
+        "vendor_id": partner_id,
+        "status": {"$in": ["completed", "fulfilled", "ready"]},
     })
 
-    # Settlement estimate
+    # Settlement estimate from vendor_orders
     pipeline = [
-        {"$match": {"partner_id": partner_id}},
+        {"$match": {"vendor_id": partner_id}},
+        {"$unwind": {"path": "$items", "preserveNullAndEmptyArrays": True}},
         {"$group": {
             "_id": None,
-            "total_amount": {"$sum": {"$multiply": ["$base_partner_price", "$quantity"]}}
+            "total_amount": {"$sum": {"$ifNull": [
+                {"$multiply": [
+                    {"$ifNull": ["$items.vendor_price", {"$ifNull": ["$items.base_price", {"$ifNull": ["$items.unit_price", 0]}]}]},
+                    {"$ifNull": ["$items.quantity", 1]}
+                ]},
+                0
+            ]}}
         }}
     ]
-    settlement_cursor = db.fulfillment_jobs.aggregate(pipeline)
+    settlement_cursor = db.vendor_orders.aggregate(pipeline)
     settlement_total = 0
     async for row in settlement_cursor:
         settlement_total = row.get("total_amount", 0)
@@ -193,91 +200,35 @@ async def delete_catalog_item(item_id: str, authorization: Optional[str] = Heade
 
 
 @router.get("/fulfillment-jobs")
-async def partner_fulfillment_jobs(
+async def partner_fulfillment_jobs_deprecated(
     status: Optional[str] = None,
     authorization: Optional[str] = Header(None)
 ):
-    """Get partner orders and fulfillment jobs - NO customer PII exposed"""
-    user = await get_partner_user_from_header(authorization)
-    partner_id = user["partner_id"]
-
-    query = {"partner_id": partner_id}
-    if status:
-        query["status"] = status
-
-    docs = await db.fulfillment_jobs.find(query).sort("created_at", -1).to_list(length=300)
-    vendor_docs = await db.vendor_orders.find({"vendor_id": partner_id, **({"status": status} if status else {})}).sort("created_at", -1).to_list(length=300)
-
-    sanitized = []
-    for doc in docs:
-        clean = serialize_doc(doc)
-        for field in ["customer_email", "customer_name", "customer_company", "customer_phone", "delivery_address", "customer_id"]:
-            clean.pop(field, None)
-        sanitized.append(clean)
-
-    existing_order_ids = {row.get("order_id") for row in sanitized if row.get("order_id")}
-    for doc in vendor_docs:
-        clean = serialize_doc(doc)
-        if clean.get("order_id") in existing_order_ids:
-            continue
-        clean["partner_id"] = partner_id
-        clean["partner_note"] = clean.get("partner_note") or clean.get("brief")
-        clean["quantity"] = sum(int((item or {}).get("quantity", 1) or 1) for item in (clean.get("items") or []))
-        clean["item_name"] = ", ".join([str((item or {}).get("name") or (item or {}).get("title") or "Item") for item in (clean.get("items") or [])[:3]]) or "Assigned Order"
-        clean["sku"] = clean.get("order_id") or clean.get("id")
-        sanitized.append(clean)
-
-    sanitized.sort(key=lambda d: str(d.get("created_at", "")), reverse=True)
-    return sanitized
+    """DEPRECATED: Redirects to vendor_orders. Use /api/vendor/orders instead."""
+    from fastapi.responses import RedirectResponse
+    params = f"?status={status}" if status else ""
+    return RedirectResponse(url=f"/api/vendor/orders{params}", status_code=307)
 
 
 @router.post("/fulfillment-jobs/{job_id}/status")
-async def update_fulfillment_status(
+async def update_fulfillment_status_deprecated(
     job_id: str,
     payload: dict,
     authorization: Optional[str] = Header(None)
 ):
-    """Partner updates fulfillment job status"""
-    user = await get_partner_user_from_header(authorization)
-
-    job = await db.fulfillment_jobs.find_one({
-        "_id": ObjectId(job_id),
-        "partner_id": user["partner_id"]
-    })
-    if not job:
-        raise HTTPException(status_code=404, detail="Fulfillment job not found")
-
-    status = payload.get("status")
-    allowed_statuses = {"allocated", "accepted", "in_progress", "fulfilled", "issue_reported"}
-    if status not in allowed_statuses:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {allowed_statuses}")
-
-    update_data = {
-        "status": status,
-        "updated_at": datetime.now(timezone.utc),
-    }
-    
-    if payload.get("partner_note"):
-        update_data["partner_note"] = payload.get("partner_note")
-
-    await db.fulfillment_jobs.update_one({"_id": ObjectId(job_id)}, {"$set": update_data})
-    
-    updated = await db.fulfillment_jobs.find_one({"_id": ObjectId(job_id)})
-    clean = serialize_doc(updated)
-    # Remove customer details
-    for field in ["customer_email", "customer_name", "customer_company", 
-                  "customer_phone", "delivery_address", "customer_id"]:
-        clean.pop(field, None)
-    return clean
+    """DEPRECATED: Use /api/vendor/orders/{id}/status instead."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url=f"/api/vendor/orders/{job_id}/status", status_code=307)
 
 
 @router.get("/settlements")
 async def partner_settlements(authorization: Optional[str] = Header(None)):
-    """Get partner settlement summary"""
+    """Get partner settlement summary from vendor_orders"""
     user = await get_partner_user_from_header(authorization)
+    partner_id = user["partner_id"]
 
-    docs = await db.fulfillment_jobs.find({
-        "partner_id": user["partner_id"]
+    docs = await db.vendor_orders.find({
+        "vendor_id": partner_id
     }).sort("created_at", -1).to_list(length=500)
 
     rows = []
@@ -285,21 +236,27 @@ async def partner_settlements(authorization: Optional[str] = Header(None)):
     total_paid = 0
 
     for doc in docs:
-        amount = float(doc.get("base_partner_price", 0) or 0) * float(doc.get("quantity", 0) or 0)
+        doc = serialize_doc(doc)
+        # Calculate amount from items
+        amount = 0
+        for item in doc.get("items", []):
+            bp = float(item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or 0)
+            qty = float(item.get("quantity") or 1)
+            amount += bp * qty
+
         settlement_status = doc.get("settlement_status", "pending")
-        
         if settlement_status == "paid":
             total_paid += amount
         else:
             total_due += amount
 
+        item_names = ", ".join([str(i.get("name") or i.get("title") or "Item") for i in (doc.get("items") or [])[:3]]) or "Order"
+
         rows.append({
-            "id": str(doc["_id"]),
-            "konekt_order_ref": doc.get("konekt_order_ref"),
-            "sku": doc.get("sku"),
-            "item_name": doc.get("item_name"),
-            "quantity": doc.get("quantity"),
-            "unit_price": doc.get("base_partner_price"),
+            "id": doc.get("id"),
+            "konekt_order_ref": doc.get("order_id", "")[:12],
+            "item_name": item_names,
+            "quantity": sum(int(i.get("quantity") or 1) for i in doc.get("items", [])),
             "status": doc.get("status"),
             "settlement_status": settlement_status,
             "settlement_amount": amount,

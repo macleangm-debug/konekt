@@ -91,6 +91,7 @@ async def submit_invoice_payment_proof(invoice_id: str, payload: dict, request: 
         "customer_user_id": invoice.get("customer_user_id"),
         "customer_email": invoice.get("customer_email"),
         "customer_name": invoice.get("customer_name"),
+        "payer_name": payload.get("payer_name") or invoice.get("customer_name") or "",
         "amount_due": invoice.get("amount_due") or invoice.get("total") or 0,
         "amount_paid": float(payload.get("amount_paid", 0) or 0),
         "currency": payload.get("currency", invoice.get("currency", "TZS")),
@@ -105,14 +106,16 @@ async def submit_invoice_payment_proof(invoice_id: str, payload: dict, request: 
     }
     result = await db.payment_proofs.insert_one(doc)
 
-    # Update invoice payment status
+    # Update invoice payment status and store payer_name
+    payer_name = payload.get("payer_name") or invoice.get("customer_name") or ""
     await db.invoices.update_one(
         {"_id": ObjectId(invoice_id)},
-        {"$set": {"payment_status": "pending_verification", "updated_at": now}},
-    )
-    await db.invoices.update_one(
-        {"_id": ObjectId(invoice_id)},
-        {"$set": {"payment_status": "pending_verification", "updated_at": now}},
+        {"$set": {
+            "payment_status": "pending_verification",
+            "proof_submitted_at": now.isoformat(),
+            "payer_name": payer_name,
+            "updated_at": now,
+        }},
     )
 
     return {"ok": True, "payment_proof_id": str(result.inserted_id)}

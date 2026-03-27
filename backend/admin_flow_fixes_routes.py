@@ -111,6 +111,38 @@ async def finance_approve_proof(payload: dict, request: Request):
     if not existing_order:
         order_id = str(uuid4())
         ts = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+
+        # Auto-resolve vendor_ids from product owners if not explicit
+        vendor_ids = invoice.get("vendor_ids") or []
+        if not vendor_ids:
+            for item in invoice.get("items", []):
+                vid = item.get("vendor_id")
+                if vid and vid not in vendor_ids:
+                    vendor_ids.append(vid)
+
+        # Auto-resolve sales assignment
+        assigned_sales_id = payload.get("assigned_sales_id")
+        assigned_sales_name = "Unassigned"
+        if not assigned_sales_id:
+            # Try to find an available sales person via round-robin
+            sales_users = await db.users.find({"role": "sales", "is_active": True}, {"_id": 0, "id": 1, "full_name": 1}).to_list(50)
+            if sales_users:
+                # Simple round-robin: pick the one with fewest active assignments
+                best = None
+                best_count = float("inf")
+                for su in sales_users:
+                    cnt = await db.sales_assignments.count_documents({"sales_owner_id": su["id"], "status": "active_followup"})
+                    if cnt < best_count:
+                        best_count = cnt
+                        best = su
+                if best:
+                    assigned_sales_id = best["id"]
+                    assigned_sales_name = best.get("full_name", "Sales")
+        else:
+            su = await db.users.find_one({"id": assigned_sales_id}, {"_id": 0, "full_name": 1})
+            if su:
+                assigned_sales_name = su.get("full_name", "Sales")
+
         order_doc = {
             "id": order_id,
             "order_number": f"KON-ORD-{ts}",
@@ -119,9 +151,11 @@ async def finance_approve_proof(payload: dict, request: Request):
             "quote_id": invoice.get("quote_id"),
             "customer_id": invoice.get("customer_id"),
             "user_id": invoice.get("customer_id"),
+            "customer_name": invoice.get("customer_name") or "",
+            "customer_email": invoice.get("customer_email") or "",
             "type": invoice.get("type", "product"),
-            "status": "processing",
-            "current_status": "processing",
+            "status": "assigned",
+            "current_status": "assigned",
             "payment_status": "paid",
             "items": invoice.get("items", []),
             "subtotal_amount": invoice.get("subtotal_amount", 0),
@@ -130,31 +164,60 @@ async def finance_approve_proof(payload: dict, request: Request):
             "total": invoice.get("total_amount", 0),
             "delivery": invoice.get("delivery", {}),
             "delivery_phone": (invoice.get("delivery") or {}).get("phone", ""),
-            "vendor_ids": invoice.get("vendor_ids", []),
+            "vendor_ids": vendor_ids,
+            "assigned_sales_id": assigned_sales_id,
             "created_at": now, "updated_at": now,
         }
         await db.orders.insert_one(order_doc)
         order_doc.pop("_id", None)
-        assigned_sales_id = payload.get("assigned_sales_id") or "auto-sales"
+
+        # Sales assignment record
         await db.sales_assignments.insert_one({
             "id": str(uuid4()), "customer_id": invoice.get("customer_id"),
             "invoice_id": invoice.get("id"), "order_id": order_id,
-            "sales_owner_id": assigned_sales_id, "status": "active_followup", "created_at": now,
+            "sales_owner_id": assigned_sales_id, "sales_owner_name": assigned_sales_name,
+            "status": "active_followup", "created_at": now,
         })
-        for vid in (invoice.get("vendor_ids") or []):
+
+        # Sales notification
+        if assigned_sales_id:
+            await db.notifications.insert_one({
+                "id": str(uuid4()), "recipient_user_id": assigned_sales_id,
+                "recipient_role": "sales",
+                "title": "New Order Assigned to You",
+                "message": f"Order {order_doc['order_number']} has been assigned to you.",
+                "type": "info", "is_read": False, "created_at": now,
+            })
+
+        # Create vendor orders + notifications for each vendor
+        for vid in vendor_ids:
             vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
             vo_id = str(uuid4())
             await db.vendor_orders.insert_one({
                 "id": vo_id, "vendor_id": vid, "order_id": order_id,
                 "customer_id": invoice.get("customer_id"),
-                "status": "ready_to_fulfill", "items": vitems, "created_at": now,
+                "assigned_sales_id": assigned_sales_id,
+                "status": "assigned", "items": vitems, "created_at": now,
             })
             await db.notifications.insert_one({
                 "id": str(uuid4()), "target_type": "vendor", "target_id": vid,
+                "recipient_role": "partner", "recipient_user_id": vid,
                 "title": "New Order Assigned",
-                "message": f"You have a new vendor order for order {order_id[:12]}",
-                "read": False, "created_at": now,
+                "message": f"You have a new vendor order for order {order_doc['order_number']}",
+                "type": "info", "is_read": False, "created_at": now,
             })
+
+        # Customer notification
+        customer_id = invoice.get("customer_id")
+        if customer_id:
+            await db.notifications.insert_one({
+                "id": str(uuid4()), "recipient_user_id": customer_id,
+                "recipient_role": "customer",
+                "title": "Order Confirmed",
+                "message": f"Your order {order_doc['order_number']} has been confirmed and is being processed.",
+                "type": "success", "is_read": False, "created_at": now,
+            })
+
         await db.order_events.insert_one({
             "id": str(uuid4()), "order_id": order_id,
             "customer_id": invoice.get("customer_id"),

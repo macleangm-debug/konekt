@@ -34,8 +34,9 @@ export default function NotificationBell() {
       });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(Array.isArray(data) ? data : []);
-        setUnreadCount((data || []).filter(n => n.status === "unread").length);
+        const list = Array.isArray(data) ? data : [];
+        setNotifications(list);
+        setUnreadCount(list.filter(n => !n.is_read && n.is_read !== undefined ? !n.is_read : n.status === "unread").length);
       }
     } catch (err) {
       console.error("Failed to load notifications:", err);
@@ -112,7 +113,7 @@ export default function NotificationBell() {
                 <div
                   key={notif._id || notif.id}
                   className={`px-4 py-3 border-b hover:bg-slate-50 cursor-pointer transition ${
-                    notif.status === "unread" ? "bg-blue-50/50" : ""
+                    !notif.is_read ? "bg-blue-50/50" : ""
                   }`}
                   onClick={() => markAsRead(notif._id || notif.id)}
                 >
@@ -131,7 +132,7 @@ export default function NotificationBell() {
                         {formatTime(notif.created_at)}
                       </div>
                     </div>
-                    {notif.status === "unread" && (
+                    {!notif.is_read && (
                       <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
                     )}
                   </div>
@@ -141,9 +142,21 @@ export default function NotificationBell() {
           </div>
 
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t text-center">
-              <button className="text-sm text-[#20364D] font-medium hover:underline">
-                View all notifications
+            <div className="px-4 py-3 border-t flex items-center justify-between">
+              <button 
+                className="text-sm text-[#20364D] font-medium hover:underline"
+                onClick={async () => {
+                  try {
+                    await fetch(`${API_URL}/api/notifications/mark-all-read`, {
+                      method: "PUT",
+                      headers: { Authorization: `Bearer ${token}` },
+                    });
+                    loadNotifications();
+                  } catch {}
+                }}
+                data-testid="mark-all-read-btn"
+              >
+                Mark all read
               </button>
             </div>
           )}
