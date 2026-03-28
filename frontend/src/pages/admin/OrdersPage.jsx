@@ -96,6 +96,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Order #</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payer</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payment</th>
@@ -110,6 +111,7 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 text-xs text-slate-500">{fmtDate(row.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
                     <td className="px-4 py-3 text-slate-700">{row.customer_name || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{row.payer_name || "-"}</td>
                     <td className="px-4 py-3 text-slate-600">{row.source_type || row.type || "-"}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>

@@ -153,7 +153,21 @@ async def finance_approve_proof(payload: dict, request: Request):
 
         # --- Build order with SEPARATED customer_name / payer_name ---
         customer_name = resolve_customer_name(invoice)
-        payer_name = resolve_payer_name(invoice)
+        if customer_name == "-" or not customer_name:
+            cust_user = await db.users.find_one(
+                {"$or": [{"id": invoice.get("customer_id")}, {"email": invoice.get("customer_email")}]},
+                {"_id": 0, "full_name": 1, "email": 1}
+            )
+            if cust_user:
+                customer_name = cust_user.get("full_name") or cust_user.get("email") or "-"
+        payer_name = resolve_payer_name(invoice, proof=proof)
+
+        # Resolve customer_email from user record if missing
+        customer_email = invoice.get("customer_email") or ""
+        if not customer_email and invoice.get("customer_id"):
+            ce_user = await db.users.find_one({"id": invoice.get("customer_id")}, {"_id": 0, "email": 1})
+            if ce_user:
+                customer_email = ce_user.get("email") or ""
 
         order_doc = {
             "id": order_id,
@@ -164,7 +178,7 @@ async def finance_approve_proof(payload: dict, request: Request):
             "customer_id": invoice.get("customer_id"),
             "user_id": invoice.get("customer_id"),
             "customer_name": customer_name,
-            "customer_email": invoice.get("customer_email") or "",
+            "customer_email": customer_email,
             "type": invoice.get("type", "product"),
             "status": "assigned",
             "current_status": "assigned",
@@ -221,7 +235,13 @@ async def finance_approve_proof(payload: dict, request: Request):
         # Customer notification — "Payment Approved"
         customer_id = invoice.get("customer_id")
         if customer_id:
-            notif = build_customer_payment_approved_notification(invoice, customer_id, order=order_doc)
+            # Resolve actual user.id in case customer_id differs from user record id
+            actual_user = await db.users.find_one(
+                {"$or": [{"id": customer_id}, {"email": invoice.get("customer_email")}]},
+                {"_id": 0, "id": 1}
+            )
+            notif_user_id = (actual_user or {}).get("id") or customer_id
+            notif = build_customer_payment_approved_notification(invoice, notif_user_id, order=order_doc)
             await db.notifications.insert_one(notif)
 
         await db.order_events.insert_one({

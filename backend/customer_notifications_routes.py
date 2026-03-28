@@ -109,7 +109,11 @@ async def get_notifications(
     db = request.app.mongodb
     
     notifications = await db.notifications.find(
-        {"user_id": user["id"]},
+        {"$or": [
+            {"user_id": user["id"]},
+            {"target_id": user["id"]},
+            {"customer_id": user["id"]},
+        ]},
         {"_id": 0}
     ).sort("created_at", -1).to_list(limit)
     
@@ -122,7 +126,11 @@ async def get_unread_count(request: Request):
     db = request.app.mongodb
     
     count = await db.notifications.count_documents({
-        "user_id": user["id"],
+        "$or": [
+            {"user_id": user["id"]},
+            {"target_id": user["id"]},
+            {"customer_id": user["id"]},
+        ],
         "read": {"$ne": True}
     })
     
@@ -135,7 +143,11 @@ async def mark_notification_read(notification_id: str, request: Request):
     db = request.app.mongodb
     
     result = await db.notifications.update_one(
-        {"id": notification_id, "user_id": user["id"]},
+        {"id": notification_id, "$or": [
+            {"user_id": user["id"]},
+            {"target_id": user["id"]},
+            {"customer_id": user["id"]},
+        ]},
         {"$set": {"read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
     )
     
@@ -151,7 +163,11 @@ async def mark_all_notifications_read(request: Request):
     db = request.app.mongodb
     
     await db.notifications.update_many(
-        {"user_id": user["id"], "read": {"$ne": True}},
+        {"$or": [
+            {"user_id": user["id"]},
+            {"target_id": user["id"]},
+            {"customer_id": user["id"]},
+        ], "read": {"$ne": True}},
         {"$set": {"read": True, "read_at": datetime.now(timezone.utc).isoformat()}}
     )
     

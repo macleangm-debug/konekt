@@ -150,6 +150,8 @@ async def list_vendor_orders(
             "priority": priority,
             "base_price": base_price,
             "delivery_address": delivery_address,
+            "customer_name": customer_name,
+            "customer_phone": customer_phone,
             "sales_name": sales_name,
             "sales_phone": sales_phone,
             "sales_email": sales_email,

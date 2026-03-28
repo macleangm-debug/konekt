@@ -46,6 +46,49 @@ async def enrich_order(order):
     order = serialize_doc(order)
     order_id = order.get("id")
 
+    # Customer name from user record
+    if not order.get("customer_name"):
+        cid = order.get("customer_id") or order.get("user_id")
+        if cid:
+            cust_user = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1, "email": 1})
+            if cust_user:
+                order["customer_name"] = cust_user.get("full_name") or cust_user.get("email") or ""
+
+    # Payer name from payment proofs
+    if not order.get("payer_name"):
+        inv_id = order.get("invoice_id")
+        # Try direct invoice_id lookup
+        if inv_id:
+            proof = await db.payment_proofs.find_one(
+                {"invoice_id": inv_id},
+                {"_id": 0, "payer_name": 1},
+                sort=[("created_at", -1)]
+            )
+            if proof and proof.get("payer_name"):
+                order["payer_name"] = proof["payer_name"]
+        # Reverse lookup: find invoice by order reference
+        if not order.get("payer_name"):
+            inv = await db.invoices.find_one(
+                {"$or": [
+                    {"order_id": order_id},
+                    {"linked_order_id": order_id},
+                    {"checkout_id": order.get("checkout_id")},
+                ]},
+                {"_id": 0, "id": 1, "payer_name": 1, "billing": 1}
+            )
+            if inv:
+                payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or ""
+                if payer:
+                    order["payer_name"] = payer
+                elif inv.get("id"):
+                    proof = await db.payment_proofs.find_one(
+                        {"invoice_id": inv["id"]},
+                        {"_id": 0, "payer_name": 1},
+                        sort=[("created_at", -1)]
+                    )
+                    if proof and proof.get("payer_name"):
+                        order["payer_name"] = proof["payer_name"]
+
     # Sales contact (safe for customer)
     sales_assignment = await db.sales_assignments.find_one({"order_id": order_id}, {"_id": 0})
     sales_id = None

@@ -1,0 +1,56 @@
+{
+  "summary": "Konekt B2B E-commerce Platform - All 5 Acceptance Checks PASSED (v135). Backend: 17/17 tests passed. Frontend: All UI components verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_acceptance_checks_v135.py",
+    "/app/test_reports/pytest/pytest_results_acceptance_checks_v135.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_acceptance_checks_v135.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 5 acceptance checks verified and passing. CHECK 1: Customer invoices show PAYER NAME column with real names (Suwena, John, Mac Geofrey, Federica, Mac, Pendo, Moses, Don). CHECK 2: Customer notifications API returns 'Payment Approved' notification with target_url '/account/invoices'. CHECK 3: Customer order drawer shows 'YOUR KONEKT SALES CONTACT' section with real sales info (Janeth Msuya, +255710000001, janeth.sales@konekt.demo). CHECK 4: Admin orders table shows all 4 required columns (Customer, Payer, Assigned Sales, Assigned Vendor) with real data. CHECK 5: Vendor/Partner orders page shows CUSTOMER column with real customer names ('Demo Customer').",
+  "features_tested": {
+    "check_1_customer_invoice_payer_name": {
+      "status": "PASS",
+      "details": "Customer invoices page shows PAYER NAME column with real names (Suwena, John, Mac Geofrey, Federica, Mac, Pendo, Moses, Don). Invoice drawer shows Bill To with customer name."
+    },
+    "check_2_customer_payment_notification": {
+      "status": "PASS",
+      "details": "Customer notifications API returns 'Payment Approved' notification with title='Payment Approved', target_url='/account/invoices', message='Your payment has been approved. Open the invoice, then track your order progress.'"
+    },
+    "check_3_customer_order_sales_contact": {
+      "status": "PASS",
+      "details": "Customer order drawer shows 'YOUR KONEKT SALES CONTACT' section with real sales person info: Janeth Msuya, +255710000001, janeth.sales@konekt.demo. Call and Email buttons present."
+    },
+    "check_4_admin_orders_columns": {
+      "status": "PASS",
+      "details": "Admin orders table shows all 4 required columns: Customer (Demo Customer, Test Business Ltd), Payer (John, Mac Geofrey, Federica, Mac, Pendo, Moses), Assigned Sales (Janeth Msuya, Neema Mallya, Brian Kweka), Assigned Vendor (shows '-' for orders without vendor assignments)."
+    },
+    "check_5_vendor_orders_customer_name": {
+      "status": "PASS",
+      "details": "Vendor/Partner orders page shows CUSTOMER column with real customer names ('Demo Customer'). 6 vendor orders displayed with proper customer names."
+    }
+  }
+}

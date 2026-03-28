@@ -101,8 +101,8 @@ async def list_orders(
         if vendor_orders:
             vid = vendor_orders[0].get("vendor_id")
             if vid:
-                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "phone": 1, "email": 1})
-                vendor_name = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "full_name": 1, "phone": 1, "email": 1})
+                vendor_name = (vp or {}).get("company_name") or (vp or {}).get("full_name") or (vp or {}).get("name") or vid[:12]
                 vendor_email = (vp or {}).get("email", "")
                 vendor_phone = (vp or {}).get("phone", "")
         order["vendor_name"] = vendor_name
@@ -150,7 +150,21 @@ async def list_orders(
                 order["approved_at"] = inv.get("approved_at") or inv.get("paid_at") or ""
                 order["approved_by"] = inv.get("approved_by") or ""
         if "payer_name" not in order:
-            order["payer_name"] = order.get("customer_name") or "-"
+            # Try payment_proofs as last resort
+            proof = None
+            if inv_id:
+                proof = await db.payment_proofs.find_one({"invoice_id": inv_id}, {"_id": 0, "payer_name": 1}, sort=[("created_at", -1)])
+            if not proof and order.get("id"):
+                inv_for_proof = await db.invoices.find_one(
+                    {"$or": [{"order_id": order.get("id")}, {"linked_order_id": order.get("id")}]},
+                    {"_id": 0, "id": 1}
+                )
+                if inv_for_proof:
+                    proof = await db.payment_proofs.find_one({"invoice_id": inv_for_proof["id"]}, {"_id": 0, "payer_name": 1}, sort=[("created_at", -1)])
+            if proof and proof.get("payer_name"):
+                order["payer_name"] = proof["payer_name"]
+            else:
+                order["payer_name"] = order.get("customer_name") or "-"
         if "approved_at" not in order:
             order["approved_at"] = ""
         if "approved_by" not in order:
