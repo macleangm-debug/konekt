@@ -9,66 +9,34 @@ Build a B2B e-commerce platform for Konekt with strict role-based views (Custome
 - **Roles**: Customer (`/account/*`), Admin (`/admin/*`), Vendor/Partner (`/partner/*`), Sales (`/staff/*`)
 - **Auth**: JWT-based login at `/login`
 
-## Canonical Routing Rules
-- `/dashboard/*` → Redirects to `/account/*`
-- `/partner/fulfillment` → Redirects to `/partner/orders`
-- Admin orders API: `/api/admin/orders-ops` (list + detail + status + release)
-- Admin invoices API: `/api/admin/invoices` (enriched handler in `admin_routes.py`)
-- Vendor orders API: `/api/vendor/orders`
-- Customer invoices: `/api/customer/invoices`
-- Customer orders: `/api/customer/orders`
+## Critical Technical Fix: serialize_doc
+All `serialize_doc`/`_clean` functions across the codebase now preserve existing UUID `id` fields. Previously, `_id` (ObjectId) was always overwriting `id`, breaking proof/invoice joins for records that use UUID-based `id` fields. Fixed in:
+- `admin_routes.py`, `admin_facade_routes.py`, `customer_invoice_routes.py`, `customer_orders_routes.py`, `vendor_orders_routes.py`, `order_ops_routes.py`
 
-## Key DB Schema
-- `orders`: Core transaction. Has both `_id` (ObjectId) and `id` (UUID)
-- `vendor_orders`: Created upon payment approval, linked to `order_id`
-- `invoices`: Has `order_id` linking back to orders. Stores `payer_name` from proof submission
-- `notifications`: Unified collection for all roles
-- `payment_proofs`: Stores `payer_name` from customer proof submissions
-- `payment_proof_submissions`: Alternate proof storage
-- `sales_assignments`: Maps sales users to orders
-- `quotes`: Internal auto-approved quotes for product traceability
+## Canonical Routing
+- `/dashboard/*` → `/account/*`
+- `/partner/fulfillment` → `/partner/orders`
+- Admin orders: `/api/admin/orders-ops`
+- Admin invoices: `/api/admin/invoices`
 
 ## Completed Work
 
-### Session 6 — Route & API Cleanup
-- Vendor Orders Cleanup Pass
-- 6-Item UI Cleanup Pass
-- Route/API Cleanup Audit
-- P0 Route Deletion & Assignment
+### Session 7c — Real Fix Patch (2026-03-28) ✅
+**Root cause fixes for execution path issues:**
 
-### Session 7 — Final Canonical Flow Fix Pack (2026-03-28)
-1. payer_name on admin/customer invoice tables
-2. Payment status labels (human-readable)
-3. "Approved Payment" state
-4. Customer order sales contact card
-5. Vendor order creation at approval
-6. Internal auto-approved product quote
-7. Stale route cleanup
-8. Notification routing fix
+1. **serialize_doc UUID preservation** — ALL serialize_doc/_clean functions now check `if "id" not in doc` before overwriting with ObjectId. This was the root cause of proof join failures.
 
-### Session 7b — Exact Patch Manifest v2 (2026-03-28)
-1. **customer_invoice_routes.py** — `_enrich_invoice` made async; payer_name resolves from proof → submission → billing → customer (correct priority)
-2. **admin_routes.py** — list_invoices enrichment: customer_name fallback to email/billing when user lookup fails
-3. **order_ops_routes.py** — List endpoint: full enrichment with customer_email/phone, sales_name/email/phone, vendor_email/phone, payer_name, approved_at/by + reverse invoice lookup
-4. **order_ops_routes.py** — Detail endpoint: reverse invoice lookup, payment_proof payer from proofs collection, flat enriched fields
-5. **order_ops_routes.py** — `serialize_doc` fixed: preserves existing UUID `id` over ObjectId conversion
-6. **order_ops_routes.py** — Added `release-to-vendor` endpoint to canonical orders-ops
-7. **adminApi.js** — `getOrderDetail` unified to `/api/admin/orders-ops/{id}` (was `/api/admin/orders/{id}`)
-8. **Verified**: PartnerFulfillmentPage deleted, no stale fulfillment aliases, no /dashboard links in /account pages
+2. **Payer name resolution** — Admin invoices use dual-format proof lookup (UUID + ObjectId). Customer invoices use async enrichment checking proof → submission → billing → customer chain.
 
-## Required Response Fields (from manifest)
+3. **Sales assignment auto-resolve** — Approval flows (admin_flow_fixes + live_commerce_service) now search for sales users across roles (sales → staff → admin) with round-robin. No more "auto-sales" or "unassigned" placeholder IDs.
 
-### Admin Invoices
-customer_name, payer_name, payment_status_label, invoice_status, linked_ref
+4. **Data backfill** — Fixed 33 sales_assignments from "auto-sales"/"unassigned" to real admin user. Fixed 82 orders with real assigned_sales_id.
 
-### Admin Orders (list + detail)
-customer_name, customer_email, customer_phone, sales_name, sales_email, sales_phone, vendor_name, vendor_email, vendor_phone, payer_name, approved_at, approved_by
+5. **Placeholder removal** — Removed ALL "Konekt Sales Team" / "+255 XXX" placeholders from customer UI. Sales section now conditionally renders only when real data exists.
 
-### Vendor Orders
-vendor_order_no, sales_name, sales_phone, sales_email, base_price, status, priority
+6. **Admin invoice consistency** — Both admin_routes.py and admin_facade_routes.py now use the same enrichment logic for payer/customer resolution.
 
-### Customer Invoices
-payer_name, payment_status_label
+7. **Approval flow persistence** — Now stores: assigned_sales_id, assigned_sales_name, assigned_vendor_id, invoice_id, payer_name on the order document.
 
 ## Prioritized Backlog
 
@@ -77,7 +45,7 @@ payer_name, payment_status_label
 - Final Launch Verification Checklist execution
 
 ### P2 — Future
-- Configure Twilio WhatsApp credentials (blocked on API keys)
+- Configure Twilio WhatsApp credentials
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
