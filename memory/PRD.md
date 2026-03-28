@@ -1,52 +1,88 @@
 # Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
-Build a B2B e-commerce platform for Konekt with strict role-based views (Customer, Admin, Vendor, Sales), canonical routing, automated order assignment at payment approval, and proper UI/UX data presentation.
+Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Customer, Admin, Vendor/Partner, and Sales. Canonical routing, automated order assignment at payment approval, invoice/order data enrichment. Live payment gateway integration.
 
 ## Architecture
-- **Frontend**: React (Vite) + Tailwind + Shadcn/UI
-- **Backend**: FastAPI + MongoDB (Motor)
-- **Roles**: Customer (`/account/*`), Admin (`/admin/*`), Vendor/Partner (`/partner/*`), Sales (`/staff/*`)
-- **Auth**: JWT-based login at `/login`
+- **Frontend**: React (Vite/CRA) with Shadcn/UI, Tailwind CSS
+- **Backend**: FastAPI (Python 3.11) with Motor (async MongoDB)
+- **Database**: MongoDB (Konekt DB)
+- **Payments**: Stripe (sandbox), KwikPay (pending keys)
+- **Email**: Resend (pending API key)
+- **Messaging**: Twilio WhatsApp (pending API keys)
 
-## Critical Technical Fix: serialize_doc
-All `serialize_doc`/`_clean` functions across the codebase now preserve existing UUID `id` fields. Previously, `_id` (ObjectId) was always overwriting `id`, breaking proof/invoice joins for records that use UUID-based `id` fields. Fixed in:
-- `admin_routes.py`, `admin_facade_routes.py`, `customer_invoice_routes.py`, `customer_orders_routes.py`, `vendor_orders_routes.py`, `order_ops_routes.py`
+## Core Roles & Routes
+| Role     | Login Route | Portal Root      |
+|----------|-------------|------------------|
+| Customer | /login      | /account/*       |
+| Admin    | /login      | /admin/*         |
+| Vendor   | /login      | /partner/*       |
+| Sales    | /login      | (assigned data)  |
 
-## Canonical Routing
-- `/dashboard/*` → `/account/*`
-- `/partner/fulfillment` → `/partner/orders`
-- Admin orders: `/api/admin/orders-ops`
-- Admin invoices: `/api/admin/invoices`
+## Completed Features
 
-## Completed Work
+### Phase 1: Core Platform (Done)
+- Unified /login with role-based redirect
+- Canonical /account/* for customers, /admin/* for admins, /partner/* for vendors
+- Product catalog, service catalog, quotes, invoices, orders
+- Admin order management with enriched data
 
-### Session 7c — Real Fix Patch (2026-03-28) ✅
-**Root cause fixes for execution path issues:**
+### Phase 2: Data Enrichment & Assignment (Done — March 28, 2026)
+- Automated vendor assignment from product catalog at payment approval
+- Automated sales rep assignment via round-robin at payment approval
+- Payer name / customer name separation (from payment proofs)
+- Notification generation on payment approval (customer, admin, vendor, sales)
+- 3 demo sales users seeded
+- Modular backend services in /backend/services/
 
-1. **serialize_doc UUID preservation** — ALL serialize_doc/_clean functions now check `if "id" not in doc` before overwriting with ObjectId. This was the root cause of proof join failures.
+### Phase 3: Stripe Payment Gateway — Sandbox (Done — March 28, 2026)
+- Stripe checkout session creation for invoice payments
+- Payment status polling (frontend + backend)
+- payment_transactions collection for audit trail
+- Pay Invoice button on customer invoice drawer
+- Payment success/cancel URL handling with banner messages
+- Stripe webhook handler at /api/webhook/stripe
+- Go-live readiness updated to detect Stripe configuration
 
-2. **Payer name resolution** — Admin invoices use dual-format proof lookup (UUID + ObjectId). Customer invoices use async enrichment checking proof → submission → billing → customer chain.
+### Phase 4: 5-Point Acceptance Verification (Done — March 28, 2026)
+1. ✅ Customer invoice shows payer name correctly
+2. ✅ Customer payment approval notification appears and links to invoice
+3. ✅ Customer order drawer shows real assigned sales person + contact
+4. ✅ Admin sees customer name, payer name, assigned sales, assigned vendor
+5. ✅ Vendor sees orders in My Orders with customer name
 
-3. **Sales assignment auto-resolve** — Approval flows (admin_flow_fixes + live_commerce_service) now search for sales users across roles (sales → staff → admin) with round-robin. No more "auto-sales" or "unassigned" placeholder IDs.
+## Go-Live Readiness Status (11/18)
+### Passing
+- company_name, company_email, company_phone, address, currency, tax_rate, payment_terms, bank_name, sku_prefix, payment_gateway, payment_gateway_keys
 
-4. **Data backfill** — Fixed 33 sales_assignments from "auto-sales"/"unassigned" to real admin user. Fixed 82 orders with real assigned_sales_id.
+### Needs Admin Action
+- logo (upload company logo)
+- tax_number (enter TIN)
+- business_registration_number (enter BRN)
+- bank_account_name, bank_account_number
+- resend_key, sender_email (Resend API key required)
 
-5. **Placeholder removal** — Removed ALL "Konekt Sales Team" / "+255 XXX" placeholders from customer UI. Sales section now conditionally renders only when real data exists.
+## Key API Endpoints
+- `POST /api/payments/stripe/checkout/invoice` — Create Stripe checkout session
+- `GET /api/payments/stripe/checkout/status/{session_id}` — Poll payment status
+- `POST /api/webhook/stripe` — Stripe webhook
+- `GET /api/admin/orders-ops` — Admin enriched orders
+- `POST /api/admin-flow-fixes/finance/approve-proof` — Payment approval orchestrator
+- `GET /api/vendor/orders` — Vendor enriched orders
+- `GET /api/customer/invoices` — Customer invoices with payer_name
+- `GET /api/customer/orders` — Customer orders with sales contact
+- `GET /api/customer/notifications` — Customer notifications
+- `GET /api/admin/go-live-readiness` — Launch readiness checklist
 
-6. **Admin invoice consistency** — Both admin_routes.py and admin_facade_routes.py now use the same enrichment logic for payer/customer resolution.
+## Upcoming Tasks (P1)
+- Final admin configuration (logo, TIN, bank details)
+- Resend email integration (requires user API key)
+- End-to-end payment flow testing with real Stripe test cards
 
-7. **Approval flow persistence** — Now stores: assigned_sales_id, assigned_sales_name, assigned_vendor_id, invoice_id, payer_name on the order document.
-
-## Prioritized Backlog
-
-### P1 — Upcoming
-- Connect live payment gateway (KwikPay/Stripe)
-- Final Launch Verification Checklist execution
-
-### P2 — Future
-- Configure Twilio WhatsApp credentials
+## Backlog (P2)
+- Configure Twilio WhatsApp (blocked on API keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
+- KwikPay live payment gateway (blocked on API keys)
