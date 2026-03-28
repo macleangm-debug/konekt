@@ -141,9 +141,9 @@ export const adminApi = {
   approvePayment: (proofId, payload) => api.post(`/api/admin/payments/${proofId}/approve`, payload),
   rejectPayment: (proofId, payload) => api.post(`/api/admin/payments/${proofId}/reject`, payload),
 
-  // Order detail & release (facade)
-  getOrderDetail: (orderId) => api.get(`/api/admin/orders/${orderId}`),
-  releaseToVendor: (orderId, payload) => api.post(`/api/admin/orders/${orderId}/release-to-vendor`, payload),
+  // Order detail & release (canonical — uses orders-ops)
+  getOrderDetail: (orderId) => api.get(`/api/admin/orders-ops/${orderId}`),
+  releaseToVendor: (orderId, payload) => api.post(`/api/admin/orders-ops/${orderId}/release-to-vendor`, payload),
 
   // Customers 360 (merged)
   getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),

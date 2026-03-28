@@ -40,7 +40,8 @@ def serialize_doc(doc):
         return None
     doc = dict(doc)
     if "_id" in doc:
-        doc["id"] = str(doc["_id"])
+        if "id" not in doc or not doc["id"]:
+            doc["id"] = str(doc["_id"])
         del doc["_id"]
     for key, value in doc.items():
         if isinstance(value, datetime):
@@ -82,26 +83,73 @@ async def list_orders(
             haystack = f"{order.get('order_number','')} {order.get('customer_name','')} {order.get('customer_email','')}".lower()
             if search.lower() not in haystack:
                 continue
-        # Enrich customer_name
-        if not order.get("customer_name"):
+        # Enrich customer_name, email, phone
+        if not order.get("customer_name") or not order.get("customer_email"):
             cid = order.get("customer_id") or order.get("user_id")
             if cid:
-                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1})
+                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
                 if cust:
-                    order["customer_name"] = cust.get("full_name", "")
+                    order["customer_name"] = order.get("customer_name") or cust.get("full_name", "")
+                    order["customer_email"] = order.get("customer_email") or cust.get("email", "")
+                    order["customer_phone"] = cust.get("phone", "")
         # Vendor info
         vendor_orders = await db.vendor_orders.find({"order_id": order.get("id")}).to_list(5)
         order["vendor_count"] = len(vendor_orders)
         vendor_name = "-"
+        vendor_email = ""
+        vendor_phone = ""
         if vendor_orders:
             vid = vendor_orders[0].get("vendor_id")
             if vid:
-                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1})
+                vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "phone": 1, "email": 1})
                 vendor_name = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+                vendor_email = (vp or {}).get("email", "")
+                vendor_phone = (vp or {}).get("phone", "")
         order["vendor_name"] = vendor_name
-        # Sales assignment
+        order["vendor_email"] = vendor_email
+        order["vendor_phone"] = vendor_phone
+        # Sales assignment — full details
         assignment = await db.sales_assignments.find_one({"order_id": order.get("id")})
         order["sales_owner"] = (assignment or {}).get("sales_owner_name", "Unassigned")
+        sales_id = (assignment or {}).get("sales_owner_id") or order.get("assigned_sales_id")
+        if sales_id:
+            su = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
+            order["sales_name"] = (su or {}).get("full_name", order["sales_owner"])
+            order["sales_email"] = (su or {}).get("email", "")
+            order["sales_phone"] = (su or {}).get("phone", "")
+        else:
+            order["sales_name"] = order["sales_owner"]
+            order["sales_email"] = ""
+            order["sales_phone"] = ""
+        # Payer + approval info from invoice
+        inv_id = order.get("invoice_id")
+        inv = None
+        if inv_id:
+            inv = await db.invoices.find_one({"id": inv_id}, {"_id": 0, "payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1})
+            if not inv:
+                try:
+                    inv = await db.invoices.find_one({"_id": ObjectId(inv_id)}, {"payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1})
+                    if inv:
+                        inv.pop("_id", None)
+                except Exception:
+                    inv = None
+        # Reverse lookup if no invoice_id
+        if not inv:
+            inv = await db.invoices.find_one(
+                {"$or": [{"order_id": order.get("id")}, {"linked_order_id": order.get("id")}]},
+                {"_id": 0, "payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1}
+            )
+            if inv:
+                payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or inv.get("customer_name") or "-"
+                order["payer_name"] = payer
+                order["approved_at"] = inv.get("approved_at") or inv.get("paid_at") or ""
+                order["approved_by"] = inv.get("approved_by") or ""
+        if "payer_name" not in order:
+            order["payer_name"] = order.get("customer_name") or "-"
+        if "approved_at" not in order:
+            order["approved_at"] = ""
+        if "approved_by" not in order:
+            order["approved_by"] = ""
         # States
         order["payment_state"] = order.get("payment_status") or "paid"
         order["fulfillment_state"] = order.get("status") or "new"
@@ -124,10 +172,22 @@ async def get_order(order_id: str):
     order = serialize_doc(doc)
     oid = order.get("id") or order_id
 
-    # Invoice
+    # Invoice — try both id field and ObjectId, plus reverse lookup
     invoice = None
     if order.get("invoice_id"):
         inv = await db.invoices.find_one({"id": order["invoice_id"]})
+        if not inv:
+            try:
+                inv = await db.invoices.find_one({"_id": ObjectId(order["invoice_id"])})
+            except Exception:
+                pass
+        if inv:
+            invoice = serialize_doc(inv)
+    # Reverse lookup: find invoice that created this order
+    if not invoice:
+        inv = await db.invoices.find_one({"order_id": oid})
+        if not inv:
+            inv = await db.invoices.find_one({"linked_order_id": oid})
         if inv:
             invoice = serialize_doc(inv)
 
@@ -160,11 +220,23 @@ async def get_order(order_id: str):
     # Events timeline
     events = [serialize_doc(e) for e in await db.order_events.find({"order_id": oid}).sort("created_at", 1).to_list(100)]
 
-    # Payment info from invoice
+    # Payment info from invoice + proof
     payment_proof = None
     if invoice:
+        payer = invoice.get("payer_name") or ""
+        if not payer:
+            # Check payment_proofs collection
+            proof_doc = await db.payment_proofs.find_one(
+                {"invoice_id": invoice.get("id")},
+                {"_id": 0, "payer_name": 1, "customer_name": 1},
+                sort=[("created_at", -1)]
+            )
+            if proof_doc:
+                payer = proof_doc.get("payer_name") or proof_doc.get("customer_name") or ""
+        if not payer:
+            payer = (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-"
         payment_proof = {
-            "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+            "payer_name": payer,
             "approved_by": invoice.get("approved_by") or "-",
             "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "-",
             "payment_status": invoice.get("payment_status") or invoice.get("status") or "-",
@@ -191,6 +263,19 @@ async def get_order(order_id: str):
         "commissions": commissions,
         "quote": quote,
         "payment_proof": payment_proof,
+        # Flat enriched fields for drawer/detail consumption
+        "customer_name": (customer or {}).get("full_name") or order.get("customer_name") or "-",
+        "customer_email": (customer or {}).get("email") or order.get("customer_email") or "-",
+        "customer_phone": (customer or {}).get("phone") or order.get("delivery_phone") or "-",
+        "sales_name": (sales_user or {}).get("full_name") or (assignment or {}).get("sales_owner_name") or "Unassigned",
+        "sales_email": (sales_user or {}).get("email") or "",
+        "sales_phone": (sales_user or {}).get("phone") or "",
+        "vendor_name": vendor_orders[0].get("vendor_name") if vendor_orders else "-",
+        "vendor_email": vendor_orders[0].get("vendor_email") if vendor_orders else "",
+        "vendor_phone": vendor_orders[0].get("vendor_phone") if vendor_orders else "",
+        "payer_name": (payment_proof or {}).get("payer_name") or order.get("customer_name") or "-",
+        "approved_at": (payment_proof or {}).get("approved_at") or "",
+        "approved_by": (payment_proof or {}).get("approved_by") or "",
     }
 
 
@@ -592,3 +677,28 @@ async def deduct_order_stock(order_id: str):
     
     updated = await db.orders.find_one({"_id": ObjectId(order_id)})
     return serialize_doc(updated)
+
+
+@router.post("/{order_id}/release-to-vendor")
+async def release_to_vendor(order_id: str, payload: dict = {}):
+    """Manual release of an order to vendor(s)."""
+    order = await db.orders.find_one({"id": order_id})
+    if not order:
+        try:
+            order = await db.orders.find_one({"_id": ObjectId(order_id)})
+        except Exception:
+            pass
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    now = datetime.now(timezone.utc).isoformat()
+    oid = order.get("id") or str(order["_id"])
+    await db.orders.update_one(
+        {"id": oid},
+        {"$set": {"release_state": "manual", "release_type": "manual", "released_at": now, "released_by": payload.get("released_by", "admin")}}
+    )
+    await db.vendor_orders.update_many(
+        {"order_id": oid},
+        {"$set": {"status": "ready_to_fulfill", "released_at": now}}
+    )
+    return {"ok": True}

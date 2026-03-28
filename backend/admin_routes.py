@@ -446,6 +446,14 @@ async def list_invoices(
                 cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1, "email": 1})
                 if cust:
                     inv["customer_name"] = cust.get("full_name") or cust.get("email") or ""
+            # Also try by email
+            if not inv.get("customer_name") and inv.get("customer_email"):
+                cust = await db.users.find_one({"email": inv["customer_email"]}, {"_id": 0, "full_name": 1})
+                if cust and cust.get("full_name"):
+                    inv["customer_name"] = cust["full_name"]
+            # Final fallback: use email or billing name
+            if not inv.get("customer_name"):
+                inv["customer_name"] = inv.get("customer_email") or (inv.get("billing") or {}).get("invoice_client_name") or "-"
         # Resolve payer_name: invoice → proof → billing → customer_name
         payer = inv.get("payer_name") or ""
         if not payer:
