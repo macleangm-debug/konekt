@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, Package, Wrench, Calendar, CreditCard, Loader2 } from "lucide-react";
 import OrderDetailTimelineSection from "../../components/orders/OrderDetailTimelineSection";
+import CustomerAssignedSalesCard from "../../components/orders/CustomerAssignedSalesCard";
 import axios from "axios";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -56,7 +57,7 @@ export default function OrderDetailPageV2() {
       <div className="text-center py-20">
         <Package className="w-16 h-16 mx-auto text-slate-300 mb-4" />
         <div className="text-xl font-bold text-slate-600">Order not found</div>
-        <Link to="/dashboard/orders" className="text-[#20364D] underline mt-2 inline-block">
+        <Link to="/account/orders" className="text-[#20364D] underline mt-2 inline-block">
           Back to Orders
         </Link>
       </div>
@@ -69,7 +70,7 @@ export default function OrderDetailPageV2() {
   return (
     <div className="space-y-8" data-testid="order-detail-page">
       <Link 
-        to="/dashboard/orders" 
+        to="/account/orders" 
         className="inline-flex items-center gap-2 text-slate-500 hover:text-[#20364D] transition"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -119,6 +120,9 @@ export default function OrderDetailPageV2() {
       {/* Order Timeline */}
       <OrderDetailTimelineSection order={order} />
 
+      {/* Assigned Sales Contact */}
+      {order.sales && <CustomerAssignedSalesCard sales={order.sales} />}
+
       {/* Order Items */}
       {order.items && order.items.length > 0 && (
         <div className="rounded-[2rem] border bg-white p-8">
@@ -146,7 +150,7 @@ export default function OrderDetailPageV2() {
           If you have questions about this order, our support team is here to help.
         </p>
         <Link
-          to="/dashboard/help"
+          to="/account/help"
           className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#2a4a66] transition"
         >
           Contact Support

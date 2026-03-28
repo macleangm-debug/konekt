@@ -105,7 +105,7 @@ async def finance_approve_proof(payload: dict, request: Request):
     await db.payment_proof_submissions.update_one({"id": payment_proof_id}, {"$set": {
         "status": "approved", "approved_by": approver_role, "approved_at": now,
     }})
-    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {"status": "paid", "payment_status": "paid"}})
+    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {"status": "paid", "payment_status": "approved"}})
     existing_order = await db.orders.find_one({"invoice_id": invoice["id"]})
     order_doc = None
     if not existing_order:
@@ -226,6 +226,26 @@ async def finance_approve_proof(payload: dict, request: Request):
             "customer_id": invoice.get("customer_id"),
             "event": "payment_approved_order_created", "created_at": now,
         })
+
+        # Create internal auto-approved product quote for traceability
+        if invoice.get("type", "product") == "product":
+            auto_quote = {
+                "id": str(uuid4()),
+                "quote_number": f"AUTO-QT-{order_doc['order_number']}",
+                "status": "approved",
+                "source_type": "product",
+                "is_internal_auto_quote": True,
+                "linked_invoice_id": invoice.get("id"),
+                "linked_order_id": order_id,
+                "customer_id": invoice.get("customer_id"),
+                "customer_name": invoice.get("customer_name"),
+                "items": invoice.get("items", []),
+                "total_amount": invoice.get("total_amount", 0),
+                "created_at": now,
+            }
+            await db.quotes.insert_one(auto_quote)
+            auto_quote.pop("_id", None)
+
         # Trigger non-margin-touching commissions after payment approval
         try:
             sales_assignment = await db.sales_assignments.find_one({"order_id": order_id})

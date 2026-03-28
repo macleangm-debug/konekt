@@ -14,7 +14,7 @@ import requests
 import os
 from uuid import uuid4
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://partner-my-orders.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://konekt-invoice-fix.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 CUSTOMER_EMAIL = "demo.customer@konekt.com"

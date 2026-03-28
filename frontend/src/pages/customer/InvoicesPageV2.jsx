@@ -13,7 +13,8 @@ function fmtDate(v) { try { return new Date(v).toLocaleDateString("en-GB", { day
 function statusMeta(invoice) {
   const s = invoice.payment_status || invoice.status || "pending_payment";
   const hasProof = !!(invoice.proof_url || invoice.payment_proof_url || invoice.proof_submitted_at);
-  if (["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation"].includes(s)) return { label: "Payment Under Review", cls: "bg-blue-100 text-blue-700" };
+  if (s === "approved") return { label: "Approved Payment", cls: "bg-teal-100 text-teal-700" };
+  if (["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation", "pending_verification", "proof_uploaded", "payment_proof_uploaded"].includes(s)) return { label: "Payment Under Review", cls: "bg-blue-100 text-blue-700" };
   if (s === "partially_paid") return { label: "Partially Paid", cls: "bg-amber-100 text-amber-700" };
   if (s === "paid" || invoice.status === "paid") return { label: "Paid in Full", cls: "bg-green-100 text-green-700" };
   if (["proof_rejected", "rejected", "payment_rejected"].includes(s)) return { label: "Payment Rejected", cls: "bg-red-100 text-red-700" };
@@ -38,12 +39,18 @@ function isPaid(invoice) {
   return s === "paid";
 }
 
+function isApprovedPayment(invoice) {
+  const s = invoice.payment_status || invoice.status || "";
+  return s === "approved";
+}
+
 function PaymentStatusBlock({ invoice, bankInfo }) {
   const paid = isPaid(invoice);
   const amountPaid = Number(invoice.amount_paid || 0);
   const hasProof = !!(invoice.proof_url || invoice.payment_proof_url || invoice.proof_submitted_at);
   const s = invoice.payment_status || invoice.status || "pending_payment";
-  const isUnderReview = ["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation"].includes(s) || hasProof;
+  const isApproved = s === "approved";
+  const isUnderReview = ["under_review", "awaiting_review", "payment_under_review", "pending_payment_confirmation", "pending_verification", "proof_uploaded", "payment_proof_uploaded"].includes(s) || (hasProof && !isApproved && !paid);
 
   if (paid) {
     return (
@@ -53,6 +60,18 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
         {invoice.paid_at && <div className="text-xs text-green-600 mt-1">Date: {fmtDate(invoice.paid_at || invoice.updated_at)}</div>}
         <div className="text-xs text-green-600">Method: {invoice.payment_method || "Bank Transfer"}</div>
         {amountPaid > 0 && <div className="text-xs text-green-600">Amount: {money(amountPaid)}</div>}
+      </div>
+    );
+  }
+
+  if (isApproved) {
+    return (
+      <div className="rounded-xl border border-teal-200 p-4 bg-teal-50/50" data-testid="payment-status-block">
+        <div className="text-xs uppercase tracking-wide text-teal-600 mb-2 font-semibold">Payment Status</div>
+        <div className="font-bold text-teal-700 text-sm">Approved Payment</div>
+        {amountPaid > 0 && (
+          <div className="text-xs text-teal-600 mt-1">Amount: {money(amountPaid)}</div>
+        )}
       </div>
     );
   }

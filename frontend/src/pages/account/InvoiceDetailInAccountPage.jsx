@@ -47,7 +47,7 @@ export default function InvoiceDetailInAccountPage() {
       <div className="text-center py-20">
         <Receipt className="w-16 h-16 mx-auto text-slate-300 mb-4" />
         <div className="text-xl font-bold text-slate-600">Invoice not found</div>
-        <Link to="/dashboard/invoices" className="text-[#20364D] underline mt-2 inline-block">
+        <Link to="/account/invoices" className="text-[#20364D] underline mt-2 inline-block">
           Back to Invoices
         </Link>
       </div>
@@ -60,7 +60,7 @@ export default function InvoiceDetailInAccountPage() {
   return (
     <div className="space-y-8" data-testid="invoice-detail-page">
       <Link 
-        to="/dashboard/invoices" 
+        to="/account/invoices" 
         className="inline-flex items-center gap-2 text-slate-500 hover:text-[#20364D] transition"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -137,7 +137,7 @@ export default function InvoiceDetailInAccountPage() {
         <div className="space-y-4">
           {invoice.status !== "paid" && (
             <Link
-              to={`/dashboard/invoices/${invoiceId}/pay`}
+              to={`/account/invoices/${invoiceId}/pay`}
               className="w-full rounded-xl bg-[#20364D] text-white px-6 py-4 font-semibold hover:bg-[#2a4a66] transition flex items-center justify-center gap-2"
               data-testid="pay-invoice-btn"
             >
@@ -152,7 +152,7 @@ export default function InvoiceDetailInAccountPage() {
               If you have questions about this invoice, our support team is here to help.
             </p>
             <Link
-              to="/dashboard/help"
+              to="/account/help"
               className="text-sm text-[#20364D] font-semibold hover:underline"
             >
               Contact Support

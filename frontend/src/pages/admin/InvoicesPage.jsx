@@ -18,6 +18,11 @@ const statusColors = {
   cancelled: "bg-gray-100 text-gray-500",
   pending_payment: "bg-amber-100 text-amber-700",
   under_review: "bg-blue-100 text-blue-700",
+  pending_verification: "bg-blue-100 text-blue-700",
+  payment_under_review: "bg-blue-100 text-blue-700",
+  proof_uploaded: "bg-blue-100 text-blue-700",
+  payment_proof_uploaded: "bg-blue-100 text-blue-700",
+  approved: "bg-teal-100 text-teal-700",
   proof_rejected: "bg-red-100 text-red-700",
   rejected: "bg-red-100 text-red-700",
   awaiting_payment_proof: "bg-amber-100 text-amber-700",
@@ -239,7 +244,7 @@ export default function InvoicesPage() {
                   <td className="px-5 py-4 text-slate-600 capitalize">{invoice.source_type || invoice.type || "-"}</td>
                   <td className="px-5 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
                   <td className="px-5 py-4 text-slate-600">{invoice.payer_name || "-"}</td>
-                  <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.payment_state || invoice.payment_status] || statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.payment_state || invoice.payment_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
+                  <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.payment_state || invoice.payment_status] || statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{invoice.payment_status_label || (invoice.payment_state || invoice.payment_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
                   <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.invoice_status || invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.invoice_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
                   <td className="px-5 py-4 text-xs text-slate-500">{invoice.linked_ref || "-"}</td>
                 </tr>

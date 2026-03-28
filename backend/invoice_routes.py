@@ -105,7 +105,7 @@ async def list_invoices(
     customer_email: Optional[str] = None,
     limit: int = Query(default=100, le=500)
 ):
-    """List all invoices"""
+    """List all invoices — enriched with payer_name and payment_status_label"""
     query = {}
     if status:
         query["status"] = status
@@ -113,7 +113,49 @@ async def list_invoices(
         query["customer_email"] = customer_email
 
     docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
-    return [serialize_doc(doc) for doc in docs]
+    result = []
+    for doc in docs:
+        inv = serialize_doc(doc)
+        # Resolve customer_name from users collection if missing
+        if not inv.get("customer_name"):
+            cid = inv.get("customer_id") or inv.get("customer_user_id") or inv.get("user_id")
+            if cid:
+                cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1, "email": 1})
+                if cust:
+                    inv["customer_name"] = cust.get("full_name") or cust.get("email") or ""
+        # Resolve payer_name: invoice → proof → billing → customer_name
+        payer = inv.get("payer_name") or ""
+        if not payer:
+            proof = await db.payment_proofs.find_one(
+                {"invoice_id": inv.get("id")},
+                {"_id": 0, "payer_name": 1, "customer_name": 1},
+                sort=[("created_at", -1)]
+            )
+            if proof:
+                payer = proof.get("payer_name") or proof.get("customer_name") or ""
+        if not payer:
+            billing = inv.get("billing") or {}
+            payer = billing.get("invoice_client_name") or ""
+        if not payer:
+            payer = inv.get("customer_name") or inv.get("customer_email") or "-"
+        inv["payer_name"] = payer
+        # Payment status label
+        ps = inv.get("payment_status") or inv.get("status") or "pending_payment"
+        label_map = {
+            "pending_payment": "Awaiting Payment",
+            "awaiting_payment_proof": "Awaiting Payment",
+            "pending": "Awaiting Payment",
+            "under_review": "Payment Under Review",
+            "pending_verification": "Payment Under Review",
+            "approved": "Approved Payment",
+            "paid": "Paid in Full",
+            "partially_paid": "Partially Paid",
+            "proof_rejected": "Payment Rejected",
+            "rejected": "Payment Rejected",
+        }
+        inv["payment_status_label"] = label_map.get(ps, ps or "-")
+        result.append(inv)
+    return result
 
 
 @router.get("/{invoice_id}")

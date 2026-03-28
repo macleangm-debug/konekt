@@ -227,7 +227,7 @@ export default function NotificationBell({
                 <button
                   onClick={() => {
                     setOpen(false);
-                    navigate(defaultRedirect.includes("admin") ? "/admin" : "/dashboard");
+                    navigate(defaultRedirect.includes("admin") ? "/admin" : "/account");
                   }}
                   className="w-full text-center text-sm font-medium text-[#20364D] hover:underline"
                   data-testid="view-all-notifications-btn"
