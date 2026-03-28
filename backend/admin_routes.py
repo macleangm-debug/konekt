@@ -35,7 +35,8 @@ def serialize_doc(doc):
         return None
     doc = dict(doc)
     if "_id" in doc:
-        doc["id"] = str(doc["_id"])
+        if "id" not in doc or not doc["id"]:
+            doc["id"] = str(doc["_id"])
         del doc["_id"]
     # Convert datetime objects to ISO strings
     for key, value in doc.items():
@@ -437,8 +438,9 @@ async def list_invoices(
     
     docs = await db.invoices.find(query).sort("created_at", -1).to_list(length=limit)
     result = []
-    for doc in docs:
-        inv = serialize_doc(doc)
+    for raw_doc in docs:
+        oid_str = str(raw_doc["_id"]) if "_id" in raw_doc else None
+        inv = serialize_doc(raw_doc)
         # Resolve customer_name from users collection if missing
         if not inv.get("customer_name"):
             cid = inv.get("customer_id") or inv.get("customer_user_id") or inv.get("user_id")
@@ -454,7 +456,7 @@ async def list_invoices(
             # Final fallback: use email or billing name
             if not inv.get("customer_name"):
                 inv["customer_name"] = inv.get("customer_email") or (inv.get("billing") or {}).get("invoice_client_name") or "-"
-        # Resolve payer_name: invoice → proof → billing → customer_name
+        # Resolve payer_name: invoice → proof (by UUID then ObjectId) → billing → customer_name
         payer = inv.get("payer_name") or ""
         if not payer:
             proof = await db.payment_proofs.find_one(
@@ -462,6 +464,12 @@ async def list_invoices(
                 {"_id": 0, "payer_name": 1, "customer_name": 1},
                 sort=[("created_at", -1)]
             )
+            if not proof and oid_str:
+                proof = await db.payment_proofs.find_one(
+                    {"invoice_id": oid_str},
+                    {"_id": 0, "payer_name": 1, "customer_name": 1},
+                    sort=[("created_at", -1)]
+                )
             if proof:
                 payer = proof.get("payer_name") or proof.get("customer_name") or ""
         if not payer:

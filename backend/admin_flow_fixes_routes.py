@@ -122,22 +122,29 @@ async def finance_approve_proof(payload: dict, request: Request):
 
         # Auto-resolve sales assignment
         assigned_sales_id = payload.get("assigned_sales_id")
-        assigned_sales_name = "Unassigned"
+        assigned_sales_name = ""
         if not assigned_sales_id:
-            # Try to find an available sales person via round-robin
-            sales_users = await db.users.find({"role": "sales", "is_active": True}, {"_id": 0, "id": 1, "full_name": 1}).to_list(50)
-            if sales_users:
-                # Simple round-robin: pick the one with fewest active assignments
-                best = None
-                best_count = float("inf")
-                for su in sales_users:
-                    cnt = await db.sales_assignments.count_documents({"sales_owner_id": su["id"], "status": "active_followup"})
-                    if cnt < best_count:
-                        best_count = cnt
-                        best = su
-                if best:
-                    assigned_sales_id = best["id"]
-                    assigned_sales_name = best.get("full_name", "Sales")
+            # Try sales users first, then admin/staff as fallback
+            sales_users = await db.users.find(
+                {"role": {"$in": ["sales", "staff", "admin"]}, "is_active": {"$ne": False}},
+                {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1, "role": 1}
+            ).to_list(50)
+            # Prefer sales role, then staff, then admin
+            for preferred_role in ["sales", "staff", "admin"]:
+                candidates = [u for u in sales_users if u.get("role") == preferred_role]
+                if candidates:
+                    # Round-robin: pick one with fewest active assignments
+                    best = None
+                    best_count = float("inf")
+                    for su in candidates:
+                        cnt = await db.sales_assignments.count_documents({"sales_owner_id": su["id"], "status": "active_followup"})
+                        if cnt < best_count:
+                            best_count = cnt
+                            best = su
+                    if best:
+                        assigned_sales_id = best["id"]
+                        assigned_sales_name = best.get("full_name", "Sales")
+                        break
         else:
             su = await db.users.find_one({"id": assigned_sales_id}, {"_id": 0, "full_name": 1})
             if su:
@@ -164,8 +171,12 @@ async def finance_approve_proof(payload: dict, request: Request):
             "total": invoice.get("total_amount", 0),
             "delivery": invoice.get("delivery", {}),
             "delivery_phone": (invoice.get("delivery") or {}).get("phone", ""),
+            "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
             "vendor_ids": vendor_ids,
+            "assigned_vendor_id": vendor_ids[0] if vendor_ids else None,
             "assigned_sales_id": assigned_sales_id,
+            "assigned_sales_name": assigned_sales_name,
+            "invoice_id": invoice.get("id"),
             "created_at": now, "updated_at": now,
         }
         await db.orders.insert_one(order_doc)
@@ -198,6 +209,8 @@ async def finance_approve_proof(payload: dict, request: Request):
                 "id": vo_id, "vendor_id": vid, "order_id": order_id,
                 "customer_id": invoice.get("customer_id"),
                 "assigned_sales_id": assigned_sales_id,
+                "sales_owner_name": assigned_sales_name,
+                "order_number": order_doc["order_number"],
                 "status": "assigned", "items": vitems, "created_at": now,
             })
             await db.notifications.insert_one({

@@ -110,7 +110,7 @@ function QuoteDrawer({ quote, onClose }) {
               <div className="space-y-1.5 text-xs text-slate-600">
                 <div><strong className="text-slate-500">Issued:</strong> {fmtDate(quote.created_at)}</div>
                 <div><strong className="text-slate-500">Valid Until:</strong> {fmtDate(quote.valid_until)}</div>
-                <div><strong className="text-slate-500">Prepared by:</strong> {quote.prepared_by || quote.sales_person || "Konekt Sales Team"}</div>
+                <div><strong className="text-slate-500">Prepared by:</strong> {quote.prepared_by || quote.sales_person || ""}</div>
                 <div><strong className="text-slate-500">Type:</strong> <span className="capitalize">{quoteType(quote)}</span></div>
               </div>
             </div>

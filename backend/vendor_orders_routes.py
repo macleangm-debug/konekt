@@ -26,7 +26,8 @@ def _clean(doc):
         return None
     doc = dict(doc)
     if "_id" in doc:
-        doc["id"] = str(doc["_id"])
+        if "id" not in doc or not doc["id"]:
+            doc["id"] = str(doc["_id"])
         del doc["_id"]
     for key, value in list(doc.items()):
         if isinstance(value, ObjectId):

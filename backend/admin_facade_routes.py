@@ -15,7 +15,10 @@ def _clean(doc):
     if not doc:
         return doc
     doc = dict(doc)
-    doc.pop("_id", None)
+    if "_id" in doc:
+        if "id" not in doc or not doc["id"]:
+            doc["id"] = str(doc["_id"])
+        doc.pop("_id", None)
     return doc
 
 # ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -125,13 +128,22 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
         query["$or"] = [{"status": status}, {"payment_status": status}]
     rows = await db.invoices.find(query).sort("created_at", -1).to_list(length=500)
     out = []
-    for inv in rows:
-        inv = _clean(inv)
+    for raw_inv in rows:
+        oid_str = str(raw_inv["_id"]) if "_id" in raw_inv else None
+        inv = _clean(raw_inv)
         if search:
             haystack = f"{inv.get('invoice_number','')} {inv.get('customer_name','')} {inv.get('customer_email','')}".lower()
             if search.lower() not in haystack:
                 continue
-        proof = await db.payment_proofs.find_one({"invoice_id": inv.get("id")}, sort=[("created_at", -1)])
+        # Try proof lookup by UUID id first, then by ObjectId string
+        inv_id = inv.get("id")
+        proof = None
+        if inv_id:
+            proof = await db.payment_proofs.find_one({"invoice_id": inv_id}, sort=[("created_at", -1)])
+        if not proof and oid_str:
+            proof = await db.payment_proofs.find_one({"invoice_id": oid_str}, sort=[("created_at", -1)])
+        if proof:
+            proof = _clean(proof)
         inv["rejection_reason"] = (proof or {}).get("rejection_reason", "") if (proof or {}).get("status") == "rejected" else ""
         inv["source_type"] = "Quote" if inv.get("quote_id") else "Cart"
         # Payer name priority: invoice.payer_name → proof.payer_name → billing.invoice_client_name → customer_name
@@ -297,11 +309,23 @@ async def order_detail(order_id: str, request: Request):
     if quote_id:
         quote = await db.quotes.find_one({"id": quote_id}, {"_id": 0, "id": 1, "quote_number": 1})
 
-    # Payment proof info
+    # Payment proof info — resolve payer_name from proof collection first
     payment_proof = None
     if invoice:
+        inv_id = invoice.get("id")
+        payer = invoice.get("payer_name") or ""
+        if not payer and inv_id:
+            pp = await db.payment_proofs.find_one(
+                {"invoice_id": inv_id},
+                {"_id": 0, "payer_name": 1, "customer_name": 1},
+                sort=[("created_at", -1)]
+            )
+            if pp:
+                payer = pp.get("payer_name") or pp.get("customer_name") or ""
+        if not payer:
+            payer = (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-"
         payment_proof = {
-            "payer_name": (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+            "payer_name": payer,
             "approved_by": invoice.get("approved_by") or "-",
             "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "-",
             "payment_status": invoice.get("payment_status") or invoice.get("status") or "-",

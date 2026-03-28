@@ -343,6 +343,21 @@ class LiveCommerceService:
             raise HTTPException(status_code=404, detail="Related payment or invoice not found")
 
         now = self._now()
+
+        # Auto-resolve sales if not provided
+        if not assigned_sales_id:
+            sales_users = await self.db.users.find(
+                {"role": {"$in": ["sales", "staff", "admin"]}, "is_active": {"$ne": False}},
+                {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1, "role": 1}
+            ).to_list(50)
+            for preferred_role in ["sales", "staff", "admin"]:
+                candidates = [u for u in sales_users if u.get("role") == preferred_role]
+                if candidates:
+                    best = candidates[0]
+                    assigned_sales_id = best["id"]
+                    assigned_sales_name = best.get("full_name", "Sales")
+                    break
+
         await self.db.payment_proofs.update_one(
             {"id": payment_proof_id},
             {"$set": {"status": "approved", "approved_by_role": approver_role, "approved_at": now, "updated_at": now}},
@@ -362,7 +377,7 @@ class LiveCommerceService:
         invoice_status = "paid" if fully_paid else "partially_paid"
         await self.db.invoices.update_one(
             {"id": invoice.get("id")},
-            {"$set": {"status": invoice_status, "payment_status": invoice_status, "updated_at": now}},
+            {"$set": {"status": invoice_status, "payment_status": "approved", "updated_at": now}},
         )
 
         order_doc = None
@@ -393,6 +408,11 @@ class LiveCommerceService:
                     "total": invoice_total,
                     "delivery": invoice.get("delivery", {}),
                     "vendor_ids": invoice.get("vendor_ids", []),
+                    "assigned_sales_id": assigned_sales_id,
+                    "assigned_sales_name": assigned_sales_name,
+                    "assigned_vendor_id": (invoice.get("vendor_ids") or [None])[0],
+                    "invoice_id": invoice.get("id"),
+                    "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
                     "created_at": now,
                     "updated_at": now,
                 }
@@ -403,8 +423,8 @@ class LiveCommerceService:
                         "customer_id": invoice.get("customer_id"),
                         "invoice_id": invoice.get("id"),
                         "order_id": order_id,
-                        "sales_owner_id": assigned_sales_id or "unassigned",
-                        "sales_owner_name": assigned_sales_name or "Unassigned",
+                        "sales_owner_id": assigned_sales_id or "",
+                        "sales_owner_name": assigned_sales_name or "",
                         "status": "active_followup",
                         "created_at": now,
                         "updated_at": now,
@@ -419,6 +439,9 @@ class LiveCommerceService:
                             "vendor_id": vendor_id,
                             "order_id": order_id,
                             "customer_id": invoice.get("customer_id"),
+                            "assigned_sales_id": assigned_sales_id,
+                            "sales_owner_name": assigned_sales_name or "",
+                            "order_number": order_doc.get("order_number", ""),
                             "status": "ready_to_fulfill",
                             "items": vendor_items,
                             "created_at": now,

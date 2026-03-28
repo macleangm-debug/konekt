@@ -25,7 +25,8 @@ def serialize_doc(doc):
         return None
     doc = dict(doc)
     if "_id" in doc:
-        doc["id"] = str(doc["_id"])
+        if "id" not in doc or not doc["id"]:
+            doc["id"] = str(doc["_id"])
         del doc["_id"]
     return doc
 
@@ -47,14 +48,29 @@ async def enrich_order(order):
 
     # Sales contact (safe for customer)
     sales_assignment = await db.sales_assignments.find_one({"order_id": order_id}, {"_id": 0})
-    if sales_assignment and sales_assignment.get("sales_owner_id"):
-        sales_user = await db.users.find_one({"id": sales_assignment["sales_owner_id"]}, {"_id": 0})
+    sales_id = None
+    invalid_ids = {"unassigned", "auto-sales", ""}
+    if sales_assignment and sales_assignment.get("sales_owner_id") and sales_assignment["sales_owner_id"] not in invalid_ids:
+        sales_id = sales_assignment["sales_owner_id"]
+    if not sales_id and order.get("assigned_sales_id") and order["assigned_sales_id"] not in invalid_ids:
+        sales_id = order["assigned_sales_id"]
+    if sales_id:
+        sales_user = await db.users.find_one({"id": sales_id}, {"_id": 0})
         if sales_user:
             order["sales"] = {
                 "name": sales_user.get("full_name"),
                 "email": sales_user.get("email"),
                 "phone": sales_user.get("phone"),
             }
+            order["assigned_sales_name"] = sales_user.get("full_name", "")
+            order["sales_owner_name"] = sales_user.get("full_name", "")
+    # Fallback: if no sales user found but assignment has name, use it
+    if not order.get("sales") and (sales_assignment or order.get("assigned_sales_name")):
+        name = (sales_assignment or {}).get("sales_owner_name") or order.get("assigned_sales_name") or ""
+        if name and name not in ("Unassigned", "unassigned", "auto-sales"):
+            order["sales"] = {"name": name, "email": "", "phone": ""}
+            order["assigned_sales_name"] = name
+            order["sales_owner_name"] = name
 
     # Determine internal status from vendor orders (most advanced status)
     internal_status = order.get("status") or "processing"

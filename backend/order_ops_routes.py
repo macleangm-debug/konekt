@@ -110,8 +110,13 @@ async def list_orders(
         order["vendor_phone"] = vendor_phone
         # Sales assignment — full details
         assignment = await db.sales_assignments.find_one({"order_id": order.get("id")})
-        order["sales_owner"] = (assignment or {}).get("sales_owner_name", "Unassigned")
+        order["sales_owner"] = (assignment or {}).get("sales_owner_name") or ""
+        _invalid = {"unassigned", "auto-sales", ""}
         sales_id = (assignment or {}).get("sales_owner_id") or order.get("assigned_sales_id")
+        if sales_id and sales_id in _invalid:
+            sales_id = order.get("assigned_sales_id")
+        if sales_id and sales_id in _invalid:
+            sales_id = None
         if sales_id:
             su = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "email": 1, "phone": 1})
             order["sales_name"] = (su or {}).get("full_name", order["sales_owner"])
@@ -213,7 +218,12 @@ async def get_order(order_id: str):
     assignment = await db.sales_assignments.find_one({"order_id": oid})
     assignment = serialize_doc(assignment) if assignment else None
     sales_user = None
+    _invalid_detail = {"unassigned", "auto-sales", ""}
     sales_id = (assignment or {}).get("sales_owner_id") or order.get("assigned_sales_id")
+    if sales_id and sales_id in _invalid_detail:
+        sales_id = order.get("assigned_sales_id")
+    if sales_id and sales_id in _invalid_detail:
+        sales_id = None
     if sales_id:
         sales_user = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "phone": 1, "email": 1})
 
@@ -267,7 +277,7 @@ async def get_order(order_id: str):
         "customer_name": (customer or {}).get("full_name") or order.get("customer_name") or "-",
         "customer_email": (customer or {}).get("email") or order.get("customer_email") or "-",
         "customer_phone": (customer or {}).get("phone") or order.get("delivery_phone") or "-",
-        "sales_name": (sales_user or {}).get("full_name") or (assignment or {}).get("sales_owner_name") or "Unassigned",
+        "sales_name": (sales_user or {}).get("full_name") or (assignment or {}).get("sales_owner_name") or "",
         "sales_email": (sales_user or {}).get("email") or "",
         "sales_phone": (sales_user or {}).get("phone") or "",
         "vendor_name": vendor_orders[0].get("vendor_name") if vendor_orders else "-",

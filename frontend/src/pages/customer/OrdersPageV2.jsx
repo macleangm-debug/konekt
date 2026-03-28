@@ -83,9 +83,9 @@ function OrderDrawer({ order, onClose }) {
   const customerPhone = delivery.client_phone || billing.invoice_client_phone || order.customer_phone || "";
   const customerAddress = delivery.address_line ? `${delivery.address_line}, ${delivery.city || ""}` : "";
 
-  const salesName = order.sales?.name || order.assigned_sales_name || order.sales_owner_name || "Konekt Sales Team";
-  const salesPhone = order.sales?.phone || order.sales_phone || "+255 XXX XXX XXX";
-  const salesEmail = order.sales?.email || order.sales_email || "sales@konekt.co.tz";
+  const salesName = order.sales?.name || order.assigned_sales_name || order.sales_owner_name || "";
+  const salesPhone = order.sales?.phone || order.sales_phone || "";
+  const salesEmail = order.sales?.email || order.sales_email || "";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" data-testid="order-drawer">
@@ -133,30 +133,42 @@ function OrderDrawer({ order, onClose }) {
             </div>
           </div>
 
-          {/* 3. Assigned Sales Person — KEY SECTION */}
+          {/* 3. Assigned Sales Person — only show when real data exists */}
+          {salesName ? (
           <div className="rounded-xl border-2 border-[#20364D]/20 p-4 bg-[#20364D]/[0.02]" data-testid="sales-person-section">
-            <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Assigned Sales Person</div>
+            <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Your Konekt Sales Contact</div>
             <div className="font-semibold text-[#20364D] text-base">{salesName}</div>
             <div className="mt-3 space-y-2">
+              {salesPhone && (
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Phone className="w-3.5 h-3.5 text-slate-400" /> {salesPhone}
               </div>
+              )}
+              {salesEmail && (
               <div className="flex items-center gap-2 text-sm text-slate-600">
                 <Mail className="w-3.5 h-3.5 text-slate-400" /> {salesEmail}
               </div>
+              )}
             </div>
             <div className="mt-4 flex items-center gap-2">
+              {salesPhone && (
               <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors" data-testid="call-sales-btn">
                 <Phone className="w-3 h-3" /> Call
               </a>
+              )}
+              {salesEmail && (
               <a href={`mailto:${salesEmail}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 text-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors" data-testid="email-sales-btn">
                 <Mail className="w-3 h-3" /> Email
               </a>
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 text-green-700 px-3 py-2 text-xs font-semibold hover:bg-green-50 transition-colors" data-testid="whatsapp-sales-btn">
-                <MessageCircle className="w-3 h-3" /> WhatsApp
-              </button>
+              )}
             </div>
           </div>
+          ) : (
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50" data-testid="sales-person-section">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Sales Contact</div>
+            <div className="text-sm text-slate-500">A sales representative will be assigned to your order shortly.</div>
+          </div>
+          )}
 
           {/* 4. Order Status */}
           <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
@@ -226,15 +238,14 @@ function OrderDrawer({ order, onClose }) {
           {/* Need help? */}
           <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center bg-slate-50/30" data-testid="need-help-section">
             <div className="text-sm font-semibold text-[#20364D] mb-1">Need help with this order?</div>
-            <div className="text-xs text-slate-500 mb-3">Contact your assigned sales person for updates</div>
+            <div className="text-xs text-slate-500 mb-3">{salesName ? "Contact your assigned sales person for updates" : "A sales representative will be assigned shortly"}</div>
+            {salesPhone && (
             <div className="flex items-center justify-center gap-2">
               <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-4 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors">
                 <Phone className="w-3 h-3" /> Call Sales
               </a>
-              <button className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 text-green-700 px-4 py-2 text-xs font-semibold hover:bg-green-50 transition-colors">
-                <MessageCircle className="w-3 h-3" /> WhatsApp
-              </button>
             </div>
+            )}
           </div>
         </div>
       </div>
