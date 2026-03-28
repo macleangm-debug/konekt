@@ -141,6 +141,8 @@ from public_marketplace_routes import router as public_marketplace_router
 from media_upload_routes import router as media_upload_router
 from partner_excel_import_routes import router as partner_excel_import_router
 from vendor_orders_routes import router as vendor_orders_router
+from stripe_payment_routes import router as stripe_payment_router
+from stripe_webhook_routes import router as stripe_webhook_router
 
 # Service Orchestration Routes
 from service_catalog_routes import router as service_catalog_router
@@ -2321,6 +2323,8 @@ app.include_router(public_marketplace_router)
 app.include_router(media_upload_router)
 app.include_router(partner_excel_import_router)
 app.include_router(vendor_orders_router)
+app.include_router(stripe_payment_router)
+app.include_router(stripe_webhook_router)
 
 # Service Orchestration Routes
 app.include_router(service_catalog_router)

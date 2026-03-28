@@ -36,9 +36,8 @@ async def get_go_live_readiness():
         "sku_prefix": bool(settings.get("sku_prefix")),
         "resend_key": bool(os.getenv("RESEND_API_KEY")),
         "sender_email": bool(os.getenv("SENDER_EMAIL") or os.getenv("RESEND_FROM_EMAIL")),
-        "kwikpay_base_url": bool(os.getenv("KWIKPAY_BASE_URL")),
-        "kwikpay_api_key": bool(os.getenv("KWIKPAY_API_KEY") or os.getenv("KWIKPAY_PUBLIC_KEY")),
-        "kwikpay_secret": bool(os.getenv("KWIKPAY_API_SECRET") or os.getenv("KWIKPAY_SECRET_KEY")),
+        "payment_gateway": bool(os.getenv("KWIKPAY_BASE_URL")) or bool(os.getenv("STRIPE_API_KEY")),
+        "payment_gateway_keys": bool(os.getenv("KWIKPAY_API_KEY") or os.getenv("KWIKPAY_PUBLIC_KEY") or os.getenv("STRIPE_API_KEY")),
     }
 
     score = sum(1 for v in checks.values() if v)
@@ -78,6 +77,7 @@ async def launch_readiness_audit():
             "payment_settings_count": payment_settings_count,
             "bank_transfer_configured": payment_settings_count > 0 or bool(settings.get("bank_account_number")),
             "kwikpay_configured": bool(os.getenv("KWIKPAY_PUBLIC_KEY")) and bool(os.getenv("KWIKPAY_SECRET_KEY")),
+            "stripe_configured": bool(os.getenv("STRIPE_API_KEY")),
             "resend_configured": bool(os.getenv("RESEND_API_KEY")) and bool(os.getenv("RESEND_FROM_EMAIL")),
         },
         "operations": {

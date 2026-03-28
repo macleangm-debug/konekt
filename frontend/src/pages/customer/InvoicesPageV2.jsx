@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Download, Eye, X, AlertCircle, CreditCard, RefreshCw, Building2 } from "lucide-react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { Download, Eye, X, AlertCircle, CreditCard, RefreshCw, Building2, Loader2 } from "lucide-react";
 import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
@@ -118,7 +118,9 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
   );
 }
 
-function InvoiceDrawer({ invoice, onClose, bankInfo, branding }) {
+function InvoiceDrawer({ invoice, onClose, bankInfo, branding, onPaymentSuccess }) {
+  const [paymentLoading, setPaymentLoading] = useState(false);
+
   if (!invoice) return null;
   const status = statusMeta(invoice);
   const action = getActionConfig(invoice);
@@ -132,6 +134,27 @@ function InvoiceDrawer({ invoice, onClose, bankInfo, branding }) {
   const handleDownload = () => {
     const id = invoice.id || invoice._id;
     window.open(`${API_URL}/api/pdf/invoices/${id}`, "_blank");
+  };
+
+  const handleStripePayment = async () => {
+    setPaymentLoading(true);
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
+      const originUrl = window.location.origin;
+      const res = await axios.post(
+        `${API_URL}/api/payments/stripe/checkout/invoice`,
+        { invoice_id: invoice.id || invoice._id, origin_url: originUrl },
+        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+      );
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      const msg = err.response?.data?.detail || "Payment initiation failed";
+      alert(msg);
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const billing = invoice.billing || {};
@@ -265,10 +288,13 @@ function InvoiceDrawer({ invoice, onClose, bankInfo, branding }) {
             {action && action.type === "pay" && (
               <button
                 type="button"
-                className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls}`}
+                onClick={handleStripePayment}
+                disabled={paymentLoading}
+                className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls} disabled:opacity-50`}
                 data-testid="pay-invoice-btn"
               >
-                <CreditCard className="w-4 h-4" /> {action.label}
+                {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                {paymentLoading ? "Redirecting..." : action.label}
               </button>
             )}
 
@@ -296,8 +322,9 @@ export default function InvoicesPageV2() {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [bankInfo, setBankInfo] = useState(null);
   const [branding, setBranding] = useState(null);
+  const [paymentMessage, setPaymentMessage] = useState(null);
 
-  useEffect(() => {
+  const loadInvoices = useCallback(() => {
     const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
     if (!token) return;
     axios.get(`${API_URL}/api/customer/invoices`, { headers: { Authorization: `Bearer ${token}` } })
@@ -307,10 +334,56 @@ export default function InvoicesPageV2() {
       })
       .catch((err) => console.error("Failed to load invoices:", err))
       .finally(() => setLoading(false));
+  }, []);
 
+  useEffect(() => {
+    loadInvoices();
     axios.get(`${API_URL}/api/public/payment-info`).then(r => setBankInfo(r.data)).catch(() => {});
     axios.get(`${API_URL}/api/admin/settings/invoice-branding`).then(r => setBranding(r.data)).catch(() => {});
-  }, []);
+  }, [loadInvoices]);
+
+  // Handle Stripe payment return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    const paymentStatus = params.get("payment");
+
+    if (paymentStatus === "cancelled") {
+      setPaymentMessage({ type: "warning", text: "Payment was cancelled. You can try again from your invoice." });
+      window.history.replaceState({}, "", window.location.pathname);
+      return;
+    }
+
+    if (sessionId) {
+      setPaymentMessage({ type: "info", text: "Verifying your payment..." });
+      let attempts = 0;
+      const maxAttempts = 8;
+      const poll = async () => {
+        try {
+          const res = await axios.get(`${API_URL}/api/payments/stripe/checkout/status/${sessionId}`);
+          if (res.data.payment_status === "paid") {
+            setPaymentMessage({ type: "success", text: "Payment successful! Your invoice has been updated." });
+            loadInvoices();
+            window.history.replaceState({}, "", window.location.pathname);
+            return;
+          }
+          if (res.data.status === "expired") {
+            setPaymentMessage({ type: "error", text: "Payment session expired. Please try again." });
+            window.history.replaceState({}, "", window.location.pathname);
+            return;
+          }
+        } catch (e) { /* continue polling */ }
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 2500);
+        } else {
+          setPaymentMessage({ type: "info", text: "Payment is being processed. Please check back shortly." });
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      };
+      poll();
+    }
+  }, [loadInvoices]);
 
   const filteredInvoices = useMemo(() => invoices.filter((invoice) => {
     const q = searchValue.toLowerCase();
@@ -323,6 +396,25 @@ export default function InvoicesPageV2() {
   return (
     <div data-testid="customer-invoices-page" className="space-y-6">
       <PageHeader title="My Invoices" subtitle="Track payments, review invoice status, and download your documents." />
+
+      {paymentMessage && (
+        <div
+          data-testid="payment-message-banner"
+          className={`rounded-xl px-5 py-3 text-sm font-medium flex items-center gap-3 ${
+            paymentMessage.type === "success" ? "bg-green-50 text-green-700 border border-green-200" :
+            paymentMessage.type === "error" ? "bg-red-50 text-red-700 border border-red-200" :
+            paymentMessage.type === "warning" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+            "bg-blue-50 text-blue-700 border border-blue-200"
+          }`}
+        >
+          {paymentMessage.type === "info" && <Loader2 className="w-4 h-4 animate-spin" />}
+          {paymentMessage.text}
+          <button onClick={() => setPaymentMessage(null)} className="ml-auto text-current opacity-60 hover:opacity-100">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <FilterBar
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -374,7 +466,7 @@ export default function InvoicesPageV2() {
         </div>
       </div>
 
-      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} bankInfo={bankInfo} branding={branding} />
+      <InvoiceDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} bankInfo={bankInfo} branding={branding} onPaymentSuccess={loadInvoices} />
     </div>
   );
 }
