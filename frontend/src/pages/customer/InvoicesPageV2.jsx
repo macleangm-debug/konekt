@@ -60,6 +60,11 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
         {invoice.paid_at && <div className="text-xs text-green-600 mt-1">Date: {fmtDate(invoice.paid_at || invoice.updated_at)}</div>}
         <div className="text-xs text-green-600">Method: {invoice.payment_method || "Bank Transfer"}</div>
         {amountPaid > 0 && <div className="text-xs text-green-600">Amount: {money(amountPaid)}</div>}
+        {(invoice.order_id || invoice.linked_order_id) && (
+          <a href={`/account/orders/${invoice.order_id || invoice.linked_order_id}`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-green-600 text-white px-4 py-2 text-xs font-semibold hover:bg-green-700 transition-colors" data-testid="track-order-cta">
+            Track Order
+          </a>
+        )}
       </div>
     );
   }
@@ -71,6 +76,11 @@ function PaymentStatusBlock({ invoice, bankInfo }) {
         <div className="font-bold text-teal-700 text-sm">Approved Payment</div>
         {amountPaid > 0 && (
           <div className="text-xs text-teal-600 mt-1">Amount: {money(amountPaid)}</div>
+        )}
+        {(invoice.order_id || invoice.linked_order_id) && (
+          <a href={`/account/orders/${invoice.order_id || invoice.linked_order_id}`} className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-teal-600 text-white px-4 py-2 text-xs font-semibold hover:bg-teal-700 transition-colors" data-testid="track-order-cta">
+            Track Order
+          </a>
         )}
       </div>
     );

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "sales-demo-001",
+    "full_name": "Janeth Msuya",
+    "email": "janeth.sales@konekt.demo",
+    "phone": "+255710000001",
+    "role": "sales",
+    "team": "Products",
+    "is_active": true
+  },
+  {
+    "id": "sales-demo-002",
+    "full_name": "Brian Kweka",
+    "email": "brian.sales@konekt.demo",
+    "phone": "+255710000002",
+    "role": "sales",
+    "team": "Services",
+    "is_active": true
+  },
+  {
+    "id": "sales-demo-003",
+    "full_name": "Neema Mallya",
+    "email": "neema.sales@konekt.demo",
+    "phone": "+255710000003",
+    "role": "sales",
+    "team": "Promotions",
+    "is_active": true
+  }
+]

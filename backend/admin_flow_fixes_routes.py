@@ -2,6 +2,14 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import APIRouter, Request, HTTPException
 from referral_commission_governance_routes import create_commissions_for_order
+from services.payer_customer_separation_service import resolve_customer_name, resolve_payer_name
+from services.vendor_auto_assignment_from_product_service import resolve_vendor_from_product
+from services.sales_auto_assignment_service_v2 import resolve_sales_assignment
+from services.payment_approved_notification_flow_service import (
+    build_customer_payment_approved_notification,
+    build_vendor_order_assigned_notification,
+    build_sales_order_assigned_notification,
+)
 
 router = APIRouter(prefix="/api/admin-flow-fixes", tags=["Admin Flow Fixes"])
 
@@ -112,43 +120,40 @@ async def finance_approve_proof(payload: dict, request: Request):
         order_id = str(uuid4())
         ts = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
 
-        # Auto-resolve vendor_ids from product owners if not explicit
+        # --- Vendor auto-assignment from product owners ---
         vendor_ids = invoice.get("vendor_ids") or []
         if not vendor_ids:
             for item in invoice.get("items", []):
-                vid = item.get("vendor_id")
+                # Check product ownership for vendor assignment
+                product = await db.products.find_one({"id": item.get("product_id")}, {"_id": 0})
+                vid = resolve_vendor_from_product(product or item) if product else item.get("vendor_id")
                 if vid and vid not in vendor_ids:
                     vendor_ids.append(vid)
 
-        # Auto-resolve sales assignment
+        # --- Sales auto-assignment ---
         assigned_sales_id = payload.get("assigned_sales_id")
         assigned_sales_name = ""
         if not assigned_sales_id:
-            # Try sales users first, then admin/staff as fallback
-            sales_users = await db.users.find(
-                {"role": {"$in": ["sales", "staff", "admin"]}, "is_active": {"$ne": False}},
-                {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1, "role": 1}
+            # Check if customer already has a sales rep
+            customer = await db.users.find_one({"id": invoice.get("customer_id")}, {"_id": 0}) or {}
+            sales_pool = await db.users.find(
+                {"role": "sales", "is_active": {"$ne": False}},
+                {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1, "role": 1, "is_active": 1}
             ).to_list(50)
-            # Prefer sales role, then staff, then admin
-            for preferred_role in ["sales", "staff", "admin"]:
-                candidates = [u for u in sales_users if u.get("role") == preferred_role]
-                if candidates:
-                    # Round-robin: pick one with fewest active assignments
-                    best = None
-                    best_count = float("inf")
-                    for su in candidates:
-                        cnt = await db.sales_assignments.count_documents({"sales_owner_id": su["id"], "status": "active_followup"})
-                        if cnt < best_count:
-                            best_count = cnt
-                            best = su
-                    if best:
-                        assigned_sales_id = best["id"]
-                        assigned_sales_name = best.get("full_name", "Sales")
-                        break
-        else:
+            # Fallback to staff/admin if no sales users
+            if not sales_pool:
+                sales_pool = await db.users.find(
+                    {"role": {"$in": ["staff", "admin"]}, "is_active": {"$ne": False}},
+                    {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1, "role": 1, "is_active": 1}
+                ).to_list(50)
+            assigned_sales_id = resolve_sales_assignment(customer, sales_pool)
+        if assigned_sales_id:
             su = await db.users.find_one({"id": assigned_sales_id}, {"_id": 0, "full_name": 1})
-            if su:
-                assigned_sales_name = su.get("full_name", "Sales")
+            assigned_sales_name = (su or {}).get("full_name", "")
+
+        # --- Build order with SEPARATED customer_name / payer_name ---
+        customer_name = resolve_customer_name(invoice)
+        payer_name = resolve_payer_name(invoice)
 
         order_doc = {
             "id": order_id,
@@ -158,7 +163,7 @@ async def finance_approve_proof(payload: dict, request: Request):
             "quote_id": invoice.get("quote_id"),
             "customer_id": invoice.get("customer_id"),
             "user_id": invoice.get("customer_id"),
-            "customer_name": invoice.get("customer_name") or "",
+            "customer_name": customer_name,
             "customer_email": invoice.get("customer_email") or "",
             "type": invoice.get("type", "product"),
             "status": "assigned",
@@ -171,7 +176,7 @@ async def finance_approve_proof(payload: dict, request: Request):
             "total": invoice.get("total_amount", 0),
             "delivery": invoice.get("delivery", {}),
             "delivery_phone": (invoice.get("delivery") or {}).get("phone", ""),
-            "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+            "payer_name": payer_name,
             "vendor_ids": vendor_ids,
             "assigned_vendor_id": vendor_ids[0] if vendor_ids else None,
             "assigned_sales_id": assigned_sales_id,
@@ -186,53 +191,38 @@ async def finance_approve_proof(payload: dict, request: Request):
         await db.sales_assignments.insert_one({
             "id": str(uuid4()), "customer_id": invoice.get("customer_id"),
             "invoice_id": invoice.get("id"), "order_id": order_id,
-            "sales_owner_id": assigned_sales_id, "sales_owner_name": assigned_sales_name,
+            "sales_owner_id": assigned_sales_id or "", "sales_owner_name": assigned_sales_name or "",
             "status": "active_followup", "created_at": now,
         })
 
+        # --- Notifications via service builders ---
         # Sales notification
         if assigned_sales_id:
-            await db.notifications.insert_one({
-                "id": str(uuid4()), "recipient_user_id": assigned_sales_id,
-                "recipient_role": "sales",
-                "title": "New Order Assigned to You",
-                "message": f"Order {order_doc['order_number']} has been assigned to you.",
-                "type": "info", "is_read": False, "created_at": now,
-                "target_url": f"/staff/orders",
-            })
+            notif = build_sales_order_assigned_notification(order_doc, assigned_sales_id)
+            await db.notifications.insert_one(notif)
 
         # Create vendor orders + notifications for each vendor
         for vid in vendor_ids:
             vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
             vo_id = str(uuid4())
-            await db.vendor_orders.insert_one({
+            vo_doc = {
                 "id": vo_id, "vendor_id": vid, "order_id": order_id,
                 "customer_id": invoice.get("customer_id"),
-                "assigned_sales_id": assigned_sales_id,
-                "sales_owner_name": assigned_sales_name,
+                "assigned_sales_id": assigned_sales_id or "",
+                "sales_owner_name": assigned_sales_name or "",
                 "order_number": order_doc["order_number"],
                 "status": "assigned", "items": vitems, "created_at": now,
-            })
-            await db.notifications.insert_one({
-                "id": str(uuid4()), "target_type": "vendor", "target_id": vid,
-                "recipient_role": "partner", "recipient_user_id": vid,
-                "title": "New Order Assigned",
-                "message": f"You have a new vendor order for order {order_doc['order_number']}",
-                "type": "info", "is_read": False, "created_at": now,
-                "target_url": "/partner/orders",
-            })
+            }
+            await db.vendor_orders.insert_one(vo_doc)
+            vo_doc.pop("_id", None)
+            notif = build_vendor_order_assigned_notification(vo_doc, vid)
+            await db.notifications.insert_one(notif)
 
-        # Customer notification
+        # Customer notification — "Payment Approved"
         customer_id = invoice.get("customer_id")
         if customer_id:
-            await db.notifications.insert_one({
-                "id": str(uuid4()), "recipient_user_id": customer_id,
-                "recipient_role": "customer",
-                "title": "Order Confirmed",
-                "message": f"Your order {order_doc['order_number']} has been confirmed and is being processed.",
-                "type": "success", "is_read": False, "created_at": now,
-                "target_url": f"/account/orders/{order_id}",
-            })
+            notif = build_customer_payment_approved_notification(invoice, customer_id, order=order_doc)
+            await db.notifications.insert_one(notif)
 
         await db.order_events.insert_one({
             "id": str(uuid4()), "order_id": order_id,

@@ -880,7 +880,9 @@ async def register(data: UserCreate):
 async def login(data: UserLogin):
     # 1. Check main users collection (customers + admin staff)
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    if user and verify_password(data.password, user.get("password_hash", "")):
+    # Check both password_hash and password fields (demo sales users use 'password')
+    pw_hash = user.get("password_hash") or user.get("password", "") if user else ""
+    if user and pw_hash and verify_password(data.password, pw_hash):
         if not user.get("is_active", True):
             raise HTTPException(status_code=403, detail="Account is deactivated")
         
