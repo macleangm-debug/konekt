@@ -12,45 +12,63 @@ Build a B2B e-commerce platform for Konekt with strict role-based views (Custome
 ## Canonical Routing Rules
 - `/dashboard/*` → Redirects to `/account/*`
 - `/partner/fulfillment` → Redirects to `/partner/orders`
-- Admin orders API: `/api/admin/orders-ops`
+- Admin orders API: `/api/admin/orders-ops` (list + detail + status + release)
 - Admin invoices API: `/api/admin/invoices` (enriched handler in `admin_routes.py`)
 - Vendor orders API: `/api/vendor/orders`
 - Customer invoices: `/api/customer/invoices`
 - Customer orders: `/api/customer/orders`
 
 ## Key DB Schema
-- `orders`: Core transaction
+- `orders`: Core transaction. Has both `_id` (ObjectId) and `id` (UUID)
 - `vendor_orders`: Created upon payment approval, linked to `order_id`
-- `notifications`: Unified collection for all roles, mapped by `user_id`
-- `payment_proofs`: Stores `payer_name`, bubbles up to invoices
+- `invoices`: Has `order_id` linking back to orders. Stores `payer_name` from proof submission
+- `notifications`: Unified collection for all roles
+- `payment_proofs`: Stores `payer_name` from customer proof submissions
+- `payment_proof_submissions`: Alternate proof storage
 - `sales_assignments`: Maps sales users to orders
 - `quotes`: Internal auto-approved quotes for product traceability
 
-## What's Been Implemented
+## Completed Work
 
-### Session 1-5 (Previous)
-- Full platform build with role-based login/routing
-- Admin, Customer, Vendor, Sales dashboards
-- Invoice CRUD, Payment proof submission/approval
-- CRM, Quotes, Deliveries, Settings
+### Session 6 — Route & API Cleanup
+- Vendor Orders Cleanup Pass
+- 6-Item UI Cleanup Pass
+- Route/API Cleanup Audit
+- P0 Route Deletion & Assignment
 
-### Session 6 — Route & API Cleanup (Completed)
-- Vendor Orders Cleanup Pass (MyOrdersPage, Drawer, API)
-- 6-Item UI Cleanup Pass (Admin tables enriched, sign-out moved to header)
-- Unresolved Fixes Pass (Customer-safe timeline labels, real notifications mapped)
-- Route/API Cleanup Audit (`/dashboard/*` redirected to `/account/*`, fulfillment disabled)
-- P0 Route Deletion & Assignment (Unified admin orders onto `/api/admin/orders-ops`)
+### Session 7 — Final Canonical Flow Fix Pack (2026-03-28)
+1. payer_name on admin/customer invoice tables
+2. Payment status labels (human-readable)
+3. "Approved Payment" state
+4. Customer order sales contact card
+5. Vendor order creation at approval
+6. Internal auto-approved product quote
+7. Stale route cleanup
+8. Notification routing fix
 
-### Session 7 — Final Canonical Flow Fix Pack (Completed ✅ — 2026-03-28)
-1. **payer_name on admin invoices** — Fixed in `admin_routes.py` list_invoices. Enriches from: invoice → payment_proof → billing → customer name.
-2. **payer_name on customer invoices** — Fixed in `customer_invoice_routes.py`. Detail endpoint also checks payment_proofs.
-3. **Payment status labels** — Human-readable labels: "Paid in Full", "Payment Under Review", "Approved Payment", "Awaiting Payment", "Payment Rejected". Fixed in `admin_routes.py`, `payment_status_wording_service.py`, `PaymentStatusBadge.jsx`, `InvoicesPageV2.jsx`.
-4. **"Approved Payment" state** — Backend sets `payment_status: "approved"` at proof approval (not "paid"). Maps to "Approved Payment" label.
-5. **Customer order sales contact** — `CustomerAssignedSalesCard.jsx` shows real Konekt sales contact (name, phone, email) on customer order detail.
-6. **Vendor order creation at approval** — `admin_flow_fixes_routes.py` creates vendor_orders + notifications for each vendor at proof approval.
-7. **Internal auto-approved product quote** — Created at proof approval for product-type orders.
-8. **Stale route cleanup** — Fixed all `/dashboard/*` links to `/account/*`. NotificationBell redirect fixed.
-9. **Notification routing** — All target_urls use canonical paths: `/account/orders/{id}`, `/partner/orders`, `/staff/orders`.
+### Session 7b — Exact Patch Manifest v2 (2026-03-28)
+1. **customer_invoice_routes.py** — `_enrich_invoice` made async; payer_name resolves from proof → submission → billing → customer (correct priority)
+2. **admin_routes.py** — list_invoices enrichment: customer_name fallback to email/billing when user lookup fails
+3. **order_ops_routes.py** — List endpoint: full enrichment with customer_email/phone, sales_name/email/phone, vendor_email/phone, payer_name, approved_at/by + reverse invoice lookup
+4. **order_ops_routes.py** — Detail endpoint: reverse invoice lookup, payment_proof payer from proofs collection, flat enriched fields
+5. **order_ops_routes.py** — `serialize_doc` fixed: preserves existing UUID `id` over ObjectId conversion
+6. **order_ops_routes.py** — Added `release-to-vendor` endpoint to canonical orders-ops
+7. **adminApi.js** — `getOrderDetail` unified to `/api/admin/orders-ops/{id}` (was `/api/admin/orders/{id}`)
+8. **Verified**: PartnerFulfillmentPage deleted, no stale fulfillment aliases, no /dashboard links in /account pages
+
+## Required Response Fields (from manifest)
+
+### Admin Invoices
+customer_name, payer_name, payment_status_label, invoice_status, linked_ref
+
+### Admin Orders (list + detail)
+customer_name, customer_email, customer_phone, sales_name, sales_email, sales_phone, vendor_name, vendor_email, vendor_phone, payer_name, approved_at, approved_by
+
+### Vendor Orders
+vendor_order_no, sales_name, sales_phone, sales_email, base_price, status, priority
+
+### Customer Invoices
+payer_name, payment_status_label
 
 ## Prioritized Backlog
 
