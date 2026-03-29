@@ -25,67 +25,67 @@ Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Cust
 - Unified /login with role-based redirect
 - Canonical /account/* for customers, /admin/* for admins, /partner/* for vendors
 - Product catalog, service catalog, quotes, invoices, orders
-- Admin order management with enriched data
 
 ### Phase 2: Data Enrichment & Assignment (Done)
-- Automated vendor assignment from product catalog at payment approval
-- Automated sales rep assignment via round-robin at payment approval
-- Payer name / customer name separation (from payment proofs)
-- Notification generation on payment approval (customer, admin, vendor, sales)
-- 3 demo sales users seeded
-- Modular backend services in /backend/services/
+- Automated vendor/sales assignment at payment approval
+- Payer name / customer name STRICT separation
+- Notification generation on payment approval
+- 3 demo sales users seeded, modular services in /backend/services/
 
 ### Phase 3: Stripe Payment Gateway — Sandbox (Done)
-- Stripe checkout session creation for invoice payments
-- Payment status polling (frontend + backend)
-- payment_transactions collection for audit trail
-- Pay Invoice button on customer invoice drawer
-- Payment success/cancel URL handling with banner messages
-- Stripe webhook handler at /api/webhook/stripe
+- Stripe checkout session, status polling, webhook handler
+- Pay Invoice button, payment success/cancel URL handling
 
 ### Phase 4: Surgical Fix Pack (Done — March 29, 2026)
-1. **Admin customer_name vs payer_name separation** — Both columns in admin orders table, distinct values
-2. **Vendor assignment persistence** — vendor_orders created with vendor_order_no, base_price at approval
-3. **approved_by / approved_at** — Written on both invoice and order at approval time, visible in admin table
-4. **Vendor order visibility** — Orders appear in /partner/orders from vendor_orders collection
-5. **Vendor privacy** — Customer identity (name/phone/email) excluded from vendor API/UI
-6. **Dashboard link cleanup** — All /dashboard/* links normalized to /account/*
+- approved_by/approved_at on invoice and order at approval
+- vendor_orders created with vendor_order_no, base_price
+- Vendor privacy: no customer identity in API/UI
+- Dashboard link cleanup: /dashboard/* → /account/*
 
-### Phase 5: 5-Point Acceptance Verification (Done)
-1. ✅ Customer invoice shows payer name correctly
-2. ✅ Customer payment approval notification appears and links to invoice
-3. ✅ Customer order drawer shows real assigned sales person + contact
-4. ✅ Admin sees customer name, payer name, assigned sales, assigned vendor, approved by
-5. ✅ Vendor sees orders (privacy-compliant: no customer identity)
+### Phase 5: File-by-File Surgical Patch (Done — March 29, 2026)
+- **STRICT payer/customer separation**: Removed ALL customer_name→payer fallbacks from customer_invoice_routes.py, admin_facade_routes.py, order_ops_routes.py
+- **Checkout payer prefill**: Payer name auto-prefilled from customer account with "Change" button
+- **Admin invoice list**: customer_name and payer_name are distinct columns
+- **Admin orders**: customer_name, payer_name, sales, vendor, approved_by all enriched
+- **Vendor privacy**: Only vendor-safe fields returned (no customer identity)
 
-## Go-Live Readiness Status (11/18)
-### Passing
-- company_name, company_email, company_phone, address, currency, tax_rate, payment_terms, bank_name, sku_prefix, payment_gateway, payment_gateway_keys
-
-### Needs Admin Action
-- logo, tax_number, business_registration_number
-- bank_account_name, bank_account_number
-- resend_key, sender_email (Resend API key required)
+### Acceptance Gates — ALL GREEN
+| Gate | Status |
+|------|--------|
+| Checkout payer prefill from account | ✅ |
+| Customer invoice payer column | ✅ |
+| Customer order drawer sales contact | ✅ |
+| Admin invoice customer vs payer | ✅ |
+| Admin order enrichment (all fields) | ✅ |
+| Admin UI Payer + Approved By columns | ✅ |
+| Vendor orders vendor-safe only | ✅ |
+| Vendor UI no Customer column | ✅ |
+| Payer/customer value separation | ✅ |
 
 ## Key API Endpoints
-- `POST /api/payments/stripe/checkout/invoice` — Create Stripe checkout session
+- `POST /api/payments/stripe/checkout/invoice` — Stripe checkout session
 - `GET /api/payments/stripe/checkout/status/{session_id}` — Poll payment status
 - `POST /api/webhook/stripe` — Stripe webhook
-- `GET /api/admin/orders-ops` — Admin enriched orders (customer, payer, sales, vendor, approved_by)
+- `GET /api/admin/orders-ops` — Admin enriched orders
+- `GET /api/admin/invoices/list` — Admin enriched invoices
 - `POST /api/admin-flow-fixes/finance/approve-proof` — Payment approval orchestrator
 - `GET /api/vendor/orders` — Vendor orders (privacy-compliant)
-- `GET /api/customer/invoices` — Customer invoices with payer_name
+- `GET /api/customer/invoices` — Customer invoices
 - `GET /api/customer/orders` — Customer orders with sales contact
 - `GET /api/customer/notifications` — Customer notifications
-- `GET /api/admin/go-live-readiness` — Launch readiness checklist
+
+## Go-Live Readiness (11/18)
+### Needs Admin Action
+- logo, tax_number, business_registration_number, bank_account_name/number
+- resend_key, sender_email (Resend API key required)
 
 ## Upcoming Tasks (P1)
-- End-to-end payment flow testing with real Stripe test cards
+- End-to-end Stripe payment test with real test cards
 - Resend email integration (requires user API key)
 - Final admin configuration (logo, TIN, bank details)
 
 ## Backlog (P2)
-- Configure Twilio WhatsApp (blocked on API keys)
+- Twilio WhatsApp (blocked on API keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
