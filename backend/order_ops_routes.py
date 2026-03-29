@@ -146,7 +146,7 @@ async def list_orders(
             )
         # Extract payer and approval info from the resolved invoice
         if inv:
-            payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or ""
+            payer = inv.get("payer_name") or ""
             if payer:
                 order["payer_name"] = payer
             order["approved_at"] = order.get("approved_at") or inv.get("approved_at") or inv.get("paid_at") or ""

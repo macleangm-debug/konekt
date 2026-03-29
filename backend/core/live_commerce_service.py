@@ -377,14 +377,101 @@ class LiveCommerceService:
         invoice_status = "paid" if fully_paid else "partially_paid"
         await self.db.invoices.update_one(
             {"id": invoice.get("id")},
-            {"$set": {"status": invoice_status, "payment_status": "approved", "updated_at": now}},
+            {"$set": {
+                "status": invoice_status,
+                "payment_status": "approved",
+                "approved_by": approver_role,
+                "approved_at": now,
+                "updated_at": now,
+            }},
         )
 
         order_doc = None
         if fully_paid:
             existing_order = await self.db.orders.find_one({"invoice_id": invoice.get("id")})
+
+            # Resolve customer_name from user record if missing on invoice
+            customer_name = invoice.get("customer_name") or ""
+            if not customer_name:
+                cust_user = await self.db.users.find_one(
+                    {"$or": [{"id": invoice.get("customer_id")}, {"email": invoice.get("customer_email")}]},
+                    {"_id": 0, "full_name": 1, "email": 1}
+                )
+                if cust_user:
+                    customer_name = cust_user.get("full_name") or cust_user.get("email") or ""
+            if not customer_name:
+                customer_name = invoice.get("customer_email") or "-"
+
+            # Resolve customer_email from user record if missing
+            customer_email = invoice.get("customer_email") or ""
+            if not customer_email:
+                ce_user = await self.db.users.find_one({"id": invoice.get("customer_id")}, {"_id": 0, "email": 1})
+                if ce_user:
+                    customer_email = ce_user.get("email") or ""
+
+            # Resolve payer_name — STRICT: only from proof/submission payer_name, NEVER customer_name
+            payer_name = proof.get("payer_name") or invoice.get("payer_name") or "-"
+
+            # Resolve vendor_ids from invoice items
+            vendor_ids = list({item.get("vendor_id") for item in invoice.get("items", []) if item.get("vendor_id")})
+            assigned_vendor_id = vendor_ids[0] if vendor_ids else ""
+
             if existing_order:
-                order_doc = self._clean(existing_order)
+                # Update existing order with assignment/approval fields
+                await self.db.orders.update_one(
+                    {"id": existing_order.get("id")},
+                    {"$set": {
+                        "assigned_sales_id": assigned_sales_id or existing_order.get("assigned_sales_id") or "",
+                        "assigned_sales_name": assigned_sales_name or existing_order.get("assigned_sales_name") or "",
+                        "assigned_vendor_id": assigned_vendor_id or existing_order.get("assigned_vendor_id") or "",
+                        "approved_by": approver_role,
+                        "approved_at": now,
+                        "payer_name": payer_name,
+                        "customer_name": customer_name,
+                        "customer_email": customer_email,
+                        "payment_status": "paid",
+                        "updated_at": now,
+                    }}
+                )
+                order_doc = self._clean(await self.db.orders.find_one({"id": existing_order.get("id")}))
+                order_id = existing_order.get("id")
+
+                # Create vendor_orders if not already created
+                for idx, vid in enumerate(vendor_ids):
+                    existing_vo = await self.db.vendor_orders.find_one({"order_id": order_id, "vendor_id": vid})
+                    if not existing_vo:
+                        vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
+                        base_price = sum(self._money(x.get("vendor_price") or x.get("unit_price") or x.get("price") or 0) * int(x.get("quantity") or 1) for x in vitems)
+                        await self.db.vendor_orders.insert_one({
+                            "id": str(uuid4()),
+                            "vendor_id": vid,
+                            "order_id": order_id,
+                            "vendor_order_no": f"VO-{existing_order.get('order_number','ORD')}-{idx+1}",
+                            "customer_id": invoice.get("customer_id"),
+                            "assigned_sales_id": assigned_sales_id or "",
+                            "sales_owner_name": assigned_sales_name or "",
+                            "order_number": existing_order.get("order_number", ""),
+                            "base_price": base_price,
+                            "status": "assigned",
+                            "items": vitems,
+                            "created_at": now,
+                            "updated_at": now,
+                        })
+
+                # Create sales_assignment if not already created
+                existing_sa = await self.db.sales_assignments.find_one({"order_id": order_id})
+                if not existing_sa and assigned_sales_id:
+                    await self.db.sales_assignments.insert_one({
+                        "id": str(uuid4()),
+                        "customer_id": invoice.get("customer_id"),
+                        "invoice_id": invoice.get("id"),
+                        "order_id": order_id,
+                        "sales_owner_id": assigned_sales_id,
+                        "sales_owner_name": assigned_sales_name or "",
+                        "status": "active_followup",
+                        "created_at": now,
+                        "updated_at": now,
+                    })
             else:
                 order_id = str(uuid4())
                 order_doc = {
@@ -394,8 +481,8 @@ class LiveCommerceService:
                     "checkout_id": invoice.get("checkout_id"),
                     "quote_id": invoice.get("quote_id"),
                     "customer_id": invoice.get("customer_id"),
-                    "customer_email": invoice.get("customer_email"),
-                    "customer_name": invoice.get("customer_name"),
+                    "customer_email": customer_email,
+                    "customer_name": customer_name,
                     "user_id": invoice.get("customer_id"),
                     "type": invoice.get("type", "product"),
                     "status": "created",
@@ -407,12 +494,13 @@ class LiveCommerceService:
                     "total_amount": invoice_total,
                     "total": invoice_total,
                     "delivery": invoice.get("delivery", {}),
-                    "vendor_ids": invoice.get("vendor_ids", []),
+                    "vendor_ids": vendor_ids,
                     "assigned_sales_id": assigned_sales_id,
                     "assigned_sales_name": assigned_sales_name,
-                    "assigned_vendor_id": (invoice.get("vendor_ids") or [None])[0],
-                    "invoice_id": invoice.get("id"),
-                    "payer_name": invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-",
+                    "assigned_vendor_id": assigned_vendor_id,
+                    "payer_name": payer_name,
+                    "approved_by": approver_role,
+                    "approved_at": now,
                     "created_at": now,
                     "updated_at": now,
                 }
@@ -430,19 +518,21 @@ class LiveCommerceService:
                         "updated_at": now,
                     }
                 )
-                vendor_ids = {item.get("vendor_id") for item in invoice.get("items", []) if item.get("vendor_id")}
-                for vendor_id in vendor_ids:
-                    vendor_items = [item for item in invoice.get("items", []) if item.get("vendor_id") == vendor_id]
+                for idx, vid in enumerate(vendor_ids):
+                    vendor_items = [item for item in invoice.get("items", []) if item.get("vendor_id") == vid]
+                    base_price = sum(self._money(x.get("vendor_price") or x.get("unit_price") or x.get("price") or 0) * int(x.get("quantity") or 1) for x in vendor_items)
                     await self.db.vendor_orders.insert_one(
                         {
                             "id": str(uuid4()),
-                            "vendor_id": vendor_id,
+                            "vendor_id": vid,
                             "order_id": order_id,
+                            "vendor_order_no": f"VO-{order_doc['order_number']}-{idx+1}",
                             "customer_id": invoice.get("customer_id"),
                             "assigned_sales_id": assigned_sales_id,
                             "sales_owner_name": assigned_sales_name or "",
                             "order_number": order_doc.get("order_number", ""),
-                            "status": "ready_to_fulfill",
+                            "base_price": base_price,
+                            "status": "assigned",
                             "items": vendor_items,
                             "created_at": now,
                             "updated_at": now,
@@ -472,6 +562,27 @@ class LiveCommerceService:
                     )
                 except Exception:
                     pass
+
+            # Create customer notification — "Payment Approved"
+            customer_id = invoice.get("customer_id")
+            if customer_id:
+                actual_user = await self.db.users.find_one(
+                    {"$or": [{"id": customer_id}, {"email": invoice.get("customer_email")}]},
+                    {"_id": 0, "id": 1}
+                )
+                notif_user_id = (actual_user or {}).get("id") or customer_id
+                await self.db.notifications.insert_one({
+                    "id": str(uuid4()),
+                    "user_id": notif_user_id,
+                    "role": "customer",
+                    "event_type": "payment_approved",
+                    "title": "Payment Approved",
+                    "message": f"Your payment for invoice {invoice.get('invoice_number', '')} has been approved. View your invoice, then track your order.",
+                    "target_url": "/account/invoices",
+                    "target_ref": invoice.get("invoice_number") or invoice.get("id"),
+                    "read": False,
+                    "created_at": now,
+                })
 
         return {
             "fully_paid": fully_paid,
