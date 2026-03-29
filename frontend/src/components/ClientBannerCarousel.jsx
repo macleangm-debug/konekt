@@ -24,7 +24,7 @@ const banners = [
     description: "Invite clients and earn points on every successful referral",
     bgColor: "bg-gradient-to-r from-emerald-600 to-emerald-500",
     ctaText: "Learn More",
-    ctaHref: "/dashboard/referrals",
+    ctaHref: "/account/referrals",
   },
 ];
 

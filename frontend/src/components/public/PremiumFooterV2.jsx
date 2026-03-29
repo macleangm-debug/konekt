@@ -37,7 +37,7 @@ export default function PremiumFooterV2() {
         <div>
           <div className="font-bold mb-4">Business</div>
           <div className="space-y-3 text-slate-300">
-            <Link to="/dashboard/referrals" className="block hover:text-[#D4A843] transition flex items-center gap-2">
+            <Link to="/account/referrals" className="block hover:text-[#D4A843] transition flex items-center gap-2">
               <Gift className="w-4 h-4 text-[#D4A843]" /> Referrals & Rewards
             </Link>
             <Link to="/launch-country" className="block hover:text-white transition">Country expansion</Link>

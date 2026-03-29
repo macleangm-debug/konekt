@@ -23,21 +23,21 @@ import { Button } from "../ui/button";
 import BrandLogo from "../branding/BrandLogo";
 
 const navItems = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, exact: true },
+  { label: "Dashboard", href: "/account", icon: LayoutDashboard, exact: true },
   { type: "divider", label: "Orders & Sales" },
-  { label: "Orders", href: "/dashboard/orders", icon: Package },
-  { label: "Quotes", href: "/dashboard/quotes", icon: FileText },
-  { label: "Invoices", href: "/dashboard/invoices", icon: Receipt },
+  { label: "Orders", href: "/account/orders", icon: Package },
+  { label: "Quotes", href: "/account/quotes", icon: FileText },
+  { label: "Invoices", href: "/account/invoices", icon: Receipt },
   { type: "divider", label: "Services" },
-  { label: "Designs", href: "/dashboard/designs", icon: Palette },
-  { label: "Service Requests", href: "/dashboard/service-requests", icon: ClipboardList },
-  { label: "Maintenance", href: "/dashboard/maintenance", icon: Wrench },
+  { label: "Designs", href: "/account/designs", icon: Palette },
+  { label: "Service Requests", href: "/account/service-requests", icon: ClipboardList },
+  { label: "Maintenance", href: "/account/maintenance", icon: Wrench },
   { type: "divider", label: "Account" },
-  { label: "Statement", href: "/dashboard/statement", icon: FileBarChart2 },
-  { label: "Addresses", href: "/dashboard/addresses", icon: MapPin },
+  { label: "Statement", href: "/account/statement", icon: FileBarChart2 },
+  { label: "Addresses", href: "/account/addresses", icon: MapPin },
   { type: "divider", label: "Rewards" },
-  { label: "Referrals", href: "/dashboard/referrals", icon: Gift },
-  { label: "Points", href: "/dashboard/points", icon: Coins },
+  { label: "Referrals", href: "/account/referrals", icon: Gift },
+  { label: "Points", href: "/account/points", icon: Coins },
 ];
 
 export default function CustomerPortalLayout() {

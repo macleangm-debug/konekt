@@ -21,37 +21,37 @@ const quickCards = [
     title: "My Orders",
     description: "Track active and completed orders",
     icon: Package,
-    href: "/dashboard/orders",
+    href: "/account/orders",
   },
   {
     title: "My Quotes",
     description: "Review quote requests and approvals",
     icon: FileText,
-    href: "/dashboard/quotes",
+    href: "/account/quotes",
   },
   {
     title: "My Designs",
     description: "Saved design drafts and creative jobs",
     icon: Palette,
-    href: "/dashboard/designs",
+    href: "/account/designs",
   },
   {
     title: "Invoices",
     description: "View invoices and payment history",
     icon: Receipt,
-    href: "/dashboard/invoices",
+    href: "/account/invoices",
   },
   {
     title: "My Referrals",
     description: "Share your code and earn rewards",
     icon: Gift,
-    href: "/dashboard/referrals",
+    href: "/account/referrals",
   },
   {
     title: "My Points",
     description: "View your points balance and activity",
     icon: Coins,
-    href: "/dashboard/points",
+    href: "/account/points",
   },
 ];
 
@@ -143,7 +143,7 @@ export default function CustomerDashboard() {
           <section className="rounded-3xl border bg-white p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">Recent Orders</h2>
-              <Link to="/dashboard/orders" className="text-sm font-medium text-[#2D3E50]">
+              <Link to="/account/orders" className="text-sm font-medium text-[#2D3E50]">
                 View all
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default function CustomerDashboard() {
           <section className="rounded-3xl border bg-white p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">Open Quotes</h2>
-              <Link to="/dashboard/quotes" className="text-sm font-medium text-[#2D3E50]">
+              <Link to="/account/quotes" className="text-sm font-medium text-[#2D3E50]">
                 View all
               </Link>
             </div>
@@ -270,7 +270,7 @@ export default function CustomerDashboard() {
             </Link>
 
             <Link
-              to="/dashboard/orders"
+              to="/account/orders"
               className="rounded-2xl border bg-slate-50 p-5 hover:bg-slate-100 transition flex items-start gap-4"
             >
               <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center">

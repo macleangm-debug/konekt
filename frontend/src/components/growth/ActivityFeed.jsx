@@ -106,7 +106,7 @@ export function ActivityFeed({ limit = 10, showHeader = true, compact = false })
       {showHeader && (
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-[#20364D]">Recent Activity</h3>
-          <Link to="/dashboard/activity" className="text-sm text-[#20364D] hover:underline">
+          <Link to="/account/activity" className="text-sm text-[#20364D] hover:underline">
             View All
           </Link>
         </div>

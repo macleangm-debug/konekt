@@ -40,7 +40,7 @@ export default function CustomerQuoteDetailPage() {
       if (invoice?.id) {
         navigate(`/dashboard/invoices/${invoice.id}`);
       } else {
-        navigate("/dashboard/invoices");
+        navigate("/account/invoices");
       }
     } catch (error) {
       console.error("Failed to approve quote:", error);
@@ -92,7 +92,7 @@ export default function CustomerQuoteDetailPage() {
     return (
       <div className="p-6 md:p-8 text-center">
         <p className="text-slate-500 mb-4">Quote not found.</p>
-        <Link to="/dashboard/quotes">
+        <Link to="/account/quotes">
           <Button variant="outline">Back to Quotes</Button>
         </Link>
       </div>
@@ -105,7 +105,7 @@ export default function CustomerQuoteDetailPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6" data-testid="quote-detail-page">
       {/* Back link */}
       <Link
-        to="/dashboard/quotes"
+        to="/account/quotes"
         className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
         data-testid="back-to-quotes"
       >

@@ -18,7 +18,7 @@ export default function PublicFooter() {
               Start a Request
             </Link>
             <Link 
-              to="/dashboard/referrals" 
+              to="/account/referrals" 
               className="rounded-xl border border-white/20 px-5 py-3 font-semibold hover:bg-white/5 transition-colors"
               data-testid="footer-refer-earn-btn"
             >
@@ -58,7 +58,7 @@ export default function PublicFooter() {
             <Link to="/how-it-works" className="block hover:text-white transition-colors">How It Works</Link>
             <Link to="/contact" className="block hover:text-white transition-colors">Contact</Link>
             <Link to="/partners/apply" className="block hover:text-white transition-colors">Partner Program</Link>
-            <Link to="/dashboard/referrals" className="block hover:text-white transition-colors">Referral Program</Link>
+            <Link to="/account/referrals" className="block hover:text-white transition-colors">Referral Program</Link>
           </div>
         </div>
 

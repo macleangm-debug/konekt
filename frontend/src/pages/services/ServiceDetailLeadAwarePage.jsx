@@ -360,7 +360,7 @@ export default function ServiceDetailLeadAwarePage() {
               </p>
               <div className="mt-6 text-center">
                 <Link
-                  to="/dashboard/service-requests"
+                  to="/account/service-requests"
                   className="text-[#20364D] font-semibold hover:underline"
                 >
                   View my service requests →

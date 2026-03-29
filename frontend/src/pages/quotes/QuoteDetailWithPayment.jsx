@@ -28,7 +28,7 @@ export default function QuoteDetailWithPayment() {
       setQuote(res.data);
     } catch (err) {
       toast.error("Failed to load quote");
-      navigate("/dashboard/quotes");
+      navigate("/account/quotes");
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function QuoteDetailWithPayment() {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500">Quote not found</p>
-        <Link to="/dashboard/quotes" className="text-[#20364D] font-medium mt-2 inline-block">
+        <Link to="/account/quotes" className="text-[#20364D] font-medium mt-2 inline-block">
           ← Back to Quotes
         </Link>
       </div>
@@ -93,7 +93,7 @@ export default function QuoteDetailWithPayment() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link to="/dashboard/quotes" className="p-2 hover:bg-slate-100 rounded-lg transition">
+          <Link to="/account/quotes" className="p-2 hover:bg-slate-100 rounded-lg transition">
             <ArrowLeft className="w-5 h-5 text-slate-600" />
           </Link>
           <div>

@@ -92,7 +92,7 @@ export default function CustomerInvoicesPage() {
           ctaLabel="Browse Services"
           ctaHref="/services"
           secondaryCtaLabel="View Quotes"
-          secondaryCtaHref="/dashboard/quotes"
+          secondaryCtaHref="/account/quotes"
           testId="empty-invoices"
         />
       </div>

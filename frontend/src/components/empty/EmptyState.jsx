@@ -83,7 +83,7 @@ export function EmptyInvoices() {
     <EmptyState
       title="No invoices yet"
       message="Invoices will appear here after you pay for quotes."
-      link="/dashboard/quotes"
+      link="/account/quotes"
       button="View Quotes"
       icon="invoices"
     />

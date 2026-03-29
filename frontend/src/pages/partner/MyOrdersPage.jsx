@@ -183,7 +183,6 @@ export default function MyOrdersPage() {
                 <tr className="border-b bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className="px-5 py-3.5">Date</th>
                   <th className="px-5 py-3.5">Vendor Order No</th>
-                  <th className="px-5 py-3.5">Customer</th>
                   <th className="px-5 py-3.5">Source Type</th>
                   <th className="px-5 py-3.5">Base Price</th>
                   <th className="px-5 py-3.5">Status</th>
@@ -200,7 +199,6 @@ export default function MyOrdersPage() {
                   >
                     <td className="px-5 py-4 text-sm text-slate-600">{row.date || "-"}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-[#20364D]">{row.vendor_order_no || row.id?.slice(0, 12)}</td>
-                    <td className="px-5 py-4 text-sm text-slate-600">{row.customer_name || "-"}</td>
                     <td className="px-5 py-4 text-sm text-slate-600 capitalize">{row.source_type || "-"}</td>
                     <td className="px-5 py-4 text-sm font-semibold text-[#20364D]">{row.base_price ? `TZS ${Number(row.base_price).toLocaleString()}` : "-"}</td>
                     <td className="px-5 py-4"><StatusBadge status={row.fulfillment_state || row.status} /></td>

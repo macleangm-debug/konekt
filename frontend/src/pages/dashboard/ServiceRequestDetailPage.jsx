@@ -73,7 +73,7 @@ export default function ServiceRequestDetailPage() {
           <h2 className="text-2xl font-bold text-slate-700">Request not found</h2>
           <p className="text-slate-500 mt-2">The requested service request could not be found.</p>
           <Link 
-            to="/dashboard/service-requests" 
+            to="/account/service-requests" 
             className="inline-flex items-center gap-2 mt-6 text-[#2D3E50] font-semibold"
           >
             <ArrowLeft size={16} />
@@ -87,7 +87,7 @@ export default function ServiceRequestDetailPage() {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6" data-testid="service-request-detail-page">
       <Link 
-        to="/dashboard/service-requests" 
+        to="/account/service-requests" 
         className="inline-flex items-center gap-2 text-slate-600 hover:text-[#2D3E50] transition-colors"
         data-testid="back-to-requests"
       >

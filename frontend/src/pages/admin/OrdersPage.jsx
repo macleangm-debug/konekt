@@ -103,6 +103,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fulfillment</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Assigned Sales</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Assigned Vendor</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Approved By</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -116,8 +117,9 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
                     <td className="px-4 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{row.sales_owner || "Unassigned"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{row.sales_owner || row.sales_name || "Unassigned"}</td>
                     <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.vendor_name || row.vendor_count || "-"}</td>
+                    <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.approved_by || "-"}</td>
                   </tr>
                 ))}
               </tbody>

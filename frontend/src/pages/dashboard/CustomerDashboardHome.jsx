@@ -174,7 +174,7 @@ export default function CustomerDashboardHome() {
         <ActionCard
           title="Book Maintenance Service"
           text="Request service and support for office machines and equipment from anywhere."
-          href="/dashboard/maintenance"
+          href="/account/maintenance"
           icon={Wrench}
           cta="Book service"
           testId="action-maintenance"
@@ -182,7 +182,7 @@ export default function CustomerDashboardHome() {
         <ActionCard
           title="Pay Outstanding Invoice"
           text="Complete pending payments securely and keep your work moving without delays."
-          href="/dashboard/invoices"
+          href="/account/invoices"
           icon={Receipt}
           cta="View invoices"
           testId="action-invoices"
@@ -190,7 +190,7 @@ export default function CustomerDashboardHome() {
         <ActionCard
           title="Track My Orders"
           text="View your active, completed, and in-progress orders and stay updated."
-          href="/dashboard/orders"
+          href="/account/orders"
           icon={Package}
           cta="Open orders"
           testId="action-orders"
@@ -198,7 +198,7 @@ export default function CustomerDashboardHome() {
         <ActionCard
           title="Review My Quotes"
           text="Preview, approve, and convert quotes into invoices from your portal."
-          href="/dashboard/quotes"
+          href="/account/quotes"
           icon={FileText}
           cta="Open quotes"
           testId="action-quotes"
@@ -206,7 +206,7 @@ export default function CustomerDashboardHome() {
         <ActionCard
           title="Refer & Earn Points"
           text="Invite clients and partners, earn points, and use them on future purchases and services."
-          href="/dashboard/referrals"
+          href="/account/referrals"
           icon={Gift}
           cta="Open referrals"
           testId="action-referrals"

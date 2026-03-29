@@ -400,7 +400,7 @@ export default function QuoteRequestPage() {
             {isLoggedIn && (
               <button
                 type="button"
-                onClick={() => navigate("/dashboard/business-pricing")}
+                onClick={() => navigate("/account/business-pricing")}
                 className="rounded-xl border px-6 py-4 font-semibold text-slate-600 hover:bg-slate-50 transition"
               >
                 Use Account Form Instead

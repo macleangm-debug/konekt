@@ -135,7 +135,7 @@ export default function CreativeServiceDetailPage() {
           state: { projectDraft: res.data },
         });
       } else {
-        navigate("/dashboard/designs");
+        navigate("/account/designs");
       }
     } catch (error) {
       console.error(error);

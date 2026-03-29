@@ -125,7 +125,7 @@ export default function CustomerDashboardV3() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link to="/dashboard/quotes" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-quotes">
+        <Link to="/account/quotes" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-quotes">
           <div className="flex items-center justify-between">
             <FileText className="w-6 h-6 text-blue-600" />
             {stats.pendingQuotes > 0 && (
@@ -151,7 +151,7 @@ export default function CustomerDashboardV3() {
           <h3 className="text-2xl font-semibold text-[#0f172a]">{stats.orders}</h3>
         </Link>
 
-        <Link to="/dashboard/invoices" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-invoices">
+        <Link to="/account/invoices" className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all hover:-translate-y-0.5 group" data-testid="stat-invoices">
           <Receipt className="w-6 h-6 text-green-600" />
           <p className="text-sm text-[#64748b] mt-3">Invoices</p>
           <h3 className="text-2xl font-semibold text-[#0f172a]">{stats.invoices}</h3>

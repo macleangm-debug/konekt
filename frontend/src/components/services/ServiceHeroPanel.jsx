@@ -26,7 +26,7 @@ export default function ServiceHeroPanel({ accountMode = false }) {
                 Request Quote
               </Link>
               <Link 
-                to={accountMode ? "/dashboard/business-pricing" : "/services-discover"} 
+                to={accountMode ? "/account/business-pricing" : "/services-discover"} 
                 className="rounded-xl border px-5 py-3 font-semibold text-[#20364D] text-center hover:bg-slate-50 transition"
                 data-testid="secondary-cta"
               >

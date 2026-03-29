@@ -117,7 +117,7 @@ export default function DashboardCommandCenter() {
 
       {/* Stats Grid */}
       <div className="grid md:grid-cols-4 gap-4">
-        <Link to="/dashboard/quotes" className="p-6 border rounded-2xl bg-white hover:shadow-lg transition group">
+        <Link to="/account/quotes" className="p-6 border rounded-2xl bg-white hover:shadow-lg transition group">
           <div className="flex items-center justify-between">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition">
               <FileText className="w-5 h-5 text-blue-600" />
@@ -147,7 +147,7 @@ export default function DashboardCommandCenter() {
           <h2 className="text-3xl font-bold text-[#20364D] mt-1">{stats.orders}</h2>
         </Link>
 
-        <Link to="/dashboard/invoices" className="p-6 border rounded-2xl bg-white hover:shadow-lg transition group">
+        <Link to="/account/invoices" className="p-6 border rounded-2xl bg-white hover:shadow-lg transition group">
           <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition">
             <Receipt className="w-5 h-5 text-green-600" />
           </div>
@@ -173,7 +173,7 @@ export default function DashboardCommandCenter() {
         <div className="border rounded-2xl bg-white p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-lg text-[#20364D]">Recent Activity</h3>
-            <Link to="/dashboard/quotes" className="text-sm text-[#20364D] hover:underline">
+            <Link to="/account/quotes" className="text-sm text-[#20364D] hover:underline">
               View All
             </Link>
           </div>

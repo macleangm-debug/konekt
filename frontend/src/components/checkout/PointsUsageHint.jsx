@@ -17,7 +17,7 @@ export default function PointsUsageHint({ points = 0 }) {
           <p className="text-sm text-slate-600 mt-2">
             Eligible products and services may allow you to use your points at checkout.
           </p>
-          <Link to="/dashboard/points" className="inline-flex mt-3 text-sm font-semibold text-[#2D3E50] hover:underline">
+          <Link to="/account/points" className="inline-flex mt-3 text-sm font-semibold text-[#2D3E50] hover:underline">
             View my points
           </Link>
         </div>

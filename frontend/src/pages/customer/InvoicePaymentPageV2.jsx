@@ -128,7 +128,7 @@ export default function InvoicePaymentPageV2() {
         <SurfaceCard className="text-center py-12">
           <p className="text-slate-600 mb-6">The invoice may have been removed or you may not have access to it.</p>
           <Link 
-            to="/dashboard/invoices" 
+            to="/account/invoices" 
             className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -157,7 +157,7 @@ export default function InvoicePaymentPageV2() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link 
-              to="/dashboard/invoices"
+              to="/account/invoices"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
             >
               View All Invoices
@@ -181,7 +181,7 @@ export default function InvoicePaymentPageV2() {
         subtitle="Pay this invoice using bank transfer and upload proof. No manual invoice ID entry needed."
         actions={
           <Link 
-            to="/dashboard/invoices"
+            to="/account/invoices"
             className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
           >
             <ArrowLeft className="w-4 h-4" />

@@ -154,7 +154,7 @@ export default function ServiceDetailContent() {
       
       // Navigate to success or dashboard
       if (user) {
-        navigate("/dashboard/service-requests");
+        navigate("/account/service-requests");
       } else {
         navigate("/services", { state: { success: true } });
       }

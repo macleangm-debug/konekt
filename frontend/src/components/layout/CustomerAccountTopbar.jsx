@@ -12,8 +12,8 @@ export default function CustomerAccountTopbar({ onLogout }) {
         name="Client"
         onLogout={onLogout}
         menu={[
-          { label: "Orders", href: "/dashboard/orders" },
-          { label: "Invoices", href: "/dashboard/invoices" },
+          { label: "Orders", href: "/account/orders" },
+          { label: "Invoices", href: "/account/invoices" },
           { label: "Help", href: "/help/customer" },
         ]}
       />

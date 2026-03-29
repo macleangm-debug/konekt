@@ -72,8 +72,8 @@ export default function DashboardOverviewPageV2() {
   const quickActions = [
     { label: "Browse Marketplace", href: "/marketplace", icon: ShoppingBag },
     { label: "Request Service", href: "/services", icon: Wrench },
-    { label: "View Quotes", href: "/dashboard/quotes", icon: FileText },
-    { label: "View Invoices", href: "/dashboard/invoices", icon: Receipt },
+    { label: "View Quotes", href: "/account/quotes", icon: FileText },
+    { label: "View Invoices", href: "/account/invoices", icon: Receipt },
   ];
 
   return (
@@ -145,7 +145,7 @@ export default function DashboardOverviewPageV2() {
       <SurfaceCard>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-[#20364D]">Recent Orders</h2>
-          <Link to="/dashboard/orders" className="text-sm font-medium text-[#20364D] hover:underline flex items-center gap-1">
+          <Link to="/account/orders" className="text-sm font-medium text-[#20364D] hover:underline flex items-center gap-1">
             View all <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

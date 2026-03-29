@@ -1,0 +1,68 @@
+{
+  "summary": "Konekt Surgical Fix Pack v137 - All 6 fixes verified. 20/20 backend tests PASSED. Frontend UI verified via Playwright. All fixes working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_surgical_fix_pack_v137.py",
+    "/app/test_reports/pytest/pytest_results_surgical_fix_v137.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_surgical_fix_pack_v137.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 6 surgical fixes verified and working. FIX1: Admin orders show separate customer_name and payer_name columns. FIX2: Vendor orders have vendor_order_no, base_price, and status fields. FIX3: Orders and invoices have approved_by and approved_at fields populated after approval. FIX4: Vendor orders endpoint returns orders from vendor_orders collection with sales contact info. FIX5: Vendor orders API does NOT expose customer_name, customer_phone, or customer_email (privacy protected). FIX6: CustomerPortalLayout navigation uses /account/* paths, and /dashboard/* routes redirect to /account/*.",
+  "features_tested": {
+    "FIX1_customer_payer_separation": {
+      "status": "PASS",
+      "details": "Admin orders at /api/admin/orders-ops returns customer_name and payer_name as separate fields. UI shows both columns with different values (e.g., Customer: 'Demo Customer', Payer: 'John', 'Mac Geofrey', 'Federica', etc.)"
+    },
+    "FIX2_vendor_order_creation": {
+      "status": "PASS",
+      "details": "Vendor orders have vendor_order_no (e.g., '6248fb8b-4a7'), base_price (e.g., TZS 60,000), and status fields. Created at payment approval with status='assigned'."
+    },
+    "FIX3_approval_fields": {
+      "status": "PASS",
+      "details": "Orders and invoices have approved_by and approved_at fields populated after approval. Admin orders table shows 'Approved By' column."
+    },
+    "FIX4_vendor_order_visibility": {
+      "status": "PASS",
+      "details": "GET /api/vendor/orders returns orders from vendor_orders collection with sales contact info (sales_name, sales_phone, sales_email). Shows 6 orders for demo partner."
+    },
+    "FIX5_vendor_privacy_api": {
+      "status": "PASS",
+      "details": "Vendor orders API response does NOT contain customer_name, customer_phone, or customer_email fields. Privacy protected."
+    },
+    "FIX5_vendor_privacy_ui": {
+      "status": "PASS",
+      "details": "Vendor orders table at /partner/orders does NOT show a Customer column. Table shows: Date, Vendor Order No, Source Type, Base Price, Status, Priority."
+    },
+    "FIX6_dashboard_links_cleanup": {
+      "status": "PASS",
+      "details": "CustomerPortalLayout.jsx navigation uses /account/* paths. /dashboard/* routes redirect to /account/*. No /dashboard/ links in active customer navigation."
+    },
+    "FIX3_admin_ui_approved_by": {
+      "status": "PASS",
+      "details": "Admin orders table shows 'Approved By' column header and displays approval info for each order."
+    }
+  }
+}

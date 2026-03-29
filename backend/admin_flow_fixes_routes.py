@@ -113,7 +113,12 @@ async def finance_approve_proof(payload: dict, request: Request):
     await db.payment_proof_submissions.update_one({"id": payment_proof_id}, {"$set": {
         "status": "approved", "approved_by": approver_role, "approved_at": now,
     }})
-    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {"status": "paid", "payment_status": "approved"}})
+    await db.invoices.update_one({"id": invoice["id"]}, {"$set": {
+        "status": "paid",
+        "payment_status": "approved",
+        "approved_by": approver_role,
+        "approved_at": now,
+    }})
     existing_order = await db.orders.find_one({"invoice_id": invoice["id"]})
     order_doc = None
     if not existing_order:
@@ -195,6 +200,8 @@ async def finance_approve_proof(payload: dict, request: Request):
             "assigned_vendor_id": vendor_ids[0] if vendor_ids else None,
             "assigned_sales_id": assigned_sales_id,
             "assigned_sales_name": assigned_sales_name,
+            "approved_by": approver_role,
+            "approved_at": now,
             "invoice_id": invoice.get("id"),
             "created_at": now, "updated_at": now,
         }
@@ -216,15 +223,18 @@ async def finance_approve_proof(payload: dict, request: Request):
             await db.notifications.insert_one(notif)
 
         # Create vendor orders + notifications for each vendor
-        for vid in vendor_ids:
+        for idx, vid in enumerate(vendor_ids):
             vitems = [x for x in invoice.get("items", []) if x.get("vendor_id") == vid]
             vo_id = str(uuid4())
+            base_price = sum(float(x.get("vendor_price") or x.get("unit_price") or x.get("price") or 0) * int(x.get("quantity") or 1) for x in vitems)
             vo_doc = {
                 "id": vo_id, "vendor_id": vid, "order_id": order_id,
+                "vendor_order_no": f"VO-{order_doc['order_number']}-{idx+1}",
                 "customer_id": invoice.get("customer_id"),
                 "assigned_sales_id": assigned_sales_id or "",
                 "sales_owner_name": assigned_sales_name or "",
                 "order_number": order_doc["order_number"],
+                "base_price": base_price,
                 "status": "assigned", "items": vitems, "created_at": now,
             }
             await db.vendor_orders.insert_one(vo_doc)

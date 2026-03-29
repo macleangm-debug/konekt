@@ -14,19 +14,19 @@ function getActions(role) {
       return [
         { label: "Queue", href: "/staff/opportunities", icon: Target },
         { label: "Follow-ups", href: "/staff/alerts", icon: AlertCircle },
-        { label: "Profile", href: "/dashboard/profile", icon: User },
+        { label: "Profile", href: "/account/profile", icon: User },
       ];
     case "operations":
       return [
         { label: "Tasks", href: "/staff/operations-tasks", icon: Clipboard },
         { label: "Deliveries", href: "/admin/delivery-notes", icon: ShoppingBag },
-        { label: "Profile", href: "/dashboard/profile", icon: User },
+        { label: "Profile", href: "/account/profile", icon: User },
       ];
     case "supervisor":
       return [
         { label: "Team", href: "/admin/staff-performance", icon: Users },
         { label: "Alerts", href: "/admin/sla-alerts", icon: AlertCircle },
-        { label: "Profile", href: "/dashboard/profile", icon: User },
+        { label: "Profile", href: "/account/profile", icon: User },
       ];
     case "partner":
     case "delivery_partner":
@@ -51,9 +51,9 @@ function getActions(role) {
     default:
       // Customer
       return [
-        { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
-        { label: "Services", href: "/dashboard/services", icon: Wrench },
-        { label: "Profile", href: "/dashboard/profile", icon: User },
+        { label: "Orders", href: "/account/orders", icon: ShoppingBag },
+        { label: "Services", href: "/account/services", icon: Wrench },
+        { label: "Profile", href: "/account/profile", icon: User },
       ];
   }
 }

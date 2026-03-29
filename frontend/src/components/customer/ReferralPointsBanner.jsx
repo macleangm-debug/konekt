@@ -79,7 +79,7 @@ export default function ReferralPointsBanner({ points: propPoints, referralCode:
         </div>
 
         <div className="flex gap-3 flex-wrap">
-          <Link to="/dashboard/referrals">
+          <Link to="/account/referrals">
             <Button
               className="bg-[#D4A843] hover:bg-[#c49a3d] text-[#20364D]"
               data-testid="refer-friends-btn"
@@ -87,7 +87,7 @@ export default function ReferralPointsBanner({ points: propPoints, referralCode:
               Refer Friends
             </Button>
           </Link>
-          <Link to="/dashboard/points">
+          <Link to="/account/points">
             <Button
               variant="outline"
               className="border-white/20 text-white hover:bg-white/10"

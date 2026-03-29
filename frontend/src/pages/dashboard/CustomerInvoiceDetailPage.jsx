@@ -92,7 +92,7 @@ export default function CustomerInvoiceDetailPage() {
     return (
       <div className="p-6 md:p-8 text-center">
         <p className="text-slate-500 mb-4">Invoice not found.</p>
-        <Link to="/dashboard/invoices">
+        <Link to="/account/invoices">
           <Button variant="outline">Back to Invoices</Button>
         </Link>
       </div>
@@ -106,7 +106,7 @@ export default function CustomerInvoiceDetailPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6" data-testid="invoice-detail-page">
       {/* Back link */}
       <Link
-        to="/dashboard/invoices"
+        to="/account/invoices"
         className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
         data-testid="back-to-invoices"
       >

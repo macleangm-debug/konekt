@@ -8,7 +8,7 @@ const promoItems = [
     id: 1,
     icon: Gift,
     label: "Refer a friend and earn points on every order they make",
-    href: "/dashboard/referrals",
+    href: "/account/referrals",
     cta: "Share Now",
     color: "text-[#D4A843]",
     bg: "bg-[#D4A843]/10",

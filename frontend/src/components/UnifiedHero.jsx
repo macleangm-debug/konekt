@@ -33,7 +33,7 @@ const fallbackSlides = [
     primary_cta_label: "Browse Services",
     primary_cta_url: "/creative-services",
     secondary_cta_label: "My Projects",
-    secondary_cta_url: "/dashboard/designs",
+    secondary_cta_url: "/account/designs",
     quick_steps: [
       "Choose service",
       "Submit brief",

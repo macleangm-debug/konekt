@@ -144,11 +144,13 @@ async def list_orders(
                 {"$or": [{"order_id": order.get("id")}, {"linked_order_id": order.get("id")}]},
                 {"_id": 0, "payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1}
             )
-            if inv:
-                payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or inv.get("customer_name") or "-"
+        # Extract payer and approval info from the resolved invoice
+        if inv:
+            payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or ""
+            if payer:
                 order["payer_name"] = payer
-                order["approved_at"] = inv.get("approved_at") or inv.get("paid_at") or ""
-                order["approved_by"] = inv.get("approved_by") or ""
+            order["approved_at"] = order.get("approved_at") or inv.get("approved_at") or inv.get("paid_at") or ""
+            order["approved_by"] = order.get("approved_by") or inv.get("approved_by") or ""
         if "payer_name" not in order:
             # Try payment_proofs as last resort
             proof = None

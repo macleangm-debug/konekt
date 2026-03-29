@@ -76,7 +76,7 @@ export default function CreativeProjectDetailPage() {
       <div className="bg-slate-50 min-h-screen p-10">
         <div className="text-center">
           <p className="text-slate-600">Project not found</p>
-          <Link to="/dashboard/designs" className="text-[#2D3E50] underline mt-4 inline-block">
+          <Link to="/account/designs" className="text-[#2D3E50] underline mt-4 inline-block">
             Back to projects
           </Link>
         </div>
@@ -89,7 +89,7 @@ export default function CreativeProjectDetailPage() {
       <div className="max-w-6xl mx-auto px-6 py-12 grid xl:grid-cols-[1fr_360px] gap-8">
         <div className="space-y-6">
           <div className="rounded-3xl border bg-white p-6" data-testid="project-header">
-            <Link to="/dashboard/designs" className="text-sm text-slate-500 hover:underline mb-4 inline-block">
+            <Link to="/account/designs" className="text-sm text-slate-500 hover:underline mb-4 inline-block">
               &larr; Back to projects
             </Link>
             <h1 className="text-3xl font-bold">{project.service_title}</h1>

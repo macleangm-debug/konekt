@@ -115,13 +115,13 @@ export default function HelpPageV3() {
             <h3 className="font-bold text-[#20364D]">Quick Actions</h3>
           </div>
           <div className="space-y-3">
-            <Link to="/dashboard/quotes" className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+            <Link to="/account/quotes" className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
               <span className="text-slate-700">View My Quotes</span>
               <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
-            <Link to="/dashboard/invoices" className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
+            <Link to="/account/invoices" className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition">
               <span className="text-slate-700">View My Invoices</span>
               <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

@@ -105,7 +105,7 @@ export default function PointsPage() {
           title="No points activity yet"
           text="Start referring people to Konekt and your points history will appear here."
           ctaLabel="Open Referrals"
-          ctaHref="/dashboard/referrals"
+          ctaHref="/account/referrals"
           secondaryCtaLabel="Browse Services"
           secondaryCtaHref="/services"
           testId="empty-points"

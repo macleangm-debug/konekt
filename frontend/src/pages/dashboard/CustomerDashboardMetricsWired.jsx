@@ -39,7 +39,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
 
       {/* Metrics Grid */}
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <Link to="/dashboard/quotes" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
+        <Link to="/account/quotes" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
               <FileText className="w-6 h-6 text-blue-600" />
@@ -49,7 +49,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
           <div className="text-4xl font-bold text-[#20364D]">{data?.quotes_count || 0}</div>
         </Link>
 
-        <Link to="/dashboard/orders" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
+        <Link to="/account/orders" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition">
               <ShoppingBag className="w-6 h-6 text-green-600" />
@@ -59,7 +59,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
           <div className="text-4xl font-bold text-[#20364D]">{data?.orders_count || 0}</div>
         </Link>
 
-        <Link to="/dashboard/invoices" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
+        <Link to="/account/invoices" className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition group">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition">
               <Receipt className="w-6 h-6 text-purple-600" />
@@ -86,7 +86,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
       <div className="rounded-[2rem] border bg-white p-8">
         <div className="flex items-center justify-between mb-6">
           <div className="text-2xl font-bold text-[#20364D]">Recent Activity</div>
-          <Link to="/dashboard/orders" className="text-sm text-[#20364D] font-semibold hover:underline">
+          <Link to="/account/orders" className="text-sm text-[#20364D] font-semibold hover:underline">
             View All
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-6">
         <Link 
-          to="/dashboard/explore" 
+          to="/account/explore" 
           className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition text-center"
         >
           <ShoppingBag className="w-8 h-8 mx-auto text-[#20364D] mb-3" />
@@ -128,7 +128,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
         </Link>
         
         <Link 
-          to="/dashboard/service-requests" 
+          to="/account/service-requests" 
           className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition text-center"
         >
           <FileText className="w-8 h-8 mx-auto text-[#20364D] mb-3" />
@@ -137,7 +137,7 @@ export default function CustomerDashboardMetricsWired({ userId }) {
         </Link>
         
         <Link 
-          to="/dashboard/help" 
+          to="/account/help" 
           className="rounded-[2rem] border bg-white p-6 hover:shadow-lg transition text-center"
         >
           <Receipt className="w-8 h-8 mx-auto text-[#20364D] mb-3" />

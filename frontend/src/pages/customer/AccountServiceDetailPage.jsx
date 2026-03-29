@@ -136,7 +136,7 @@ export default function AccountServiceDetailPage() {
         <PageHeader title="Service Not Found" subtitle="The service you're looking for doesn't exist." />
         <div className="text-center">
           <Link 
-            to="/dashboard/services" 
+            to="/account/services" 
             className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -155,7 +155,7 @@ export default function AccountServiceDetailPage() {
           subtitle="You are in account mode, so you can go directly into the structured service request or business pricing flow."
         />
         <Link 
-          to="/dashboard/services" 
+          to="/account/services" 
           className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[#20364D]"
         >
           <ArrowLeft className="w-4 h-4" />

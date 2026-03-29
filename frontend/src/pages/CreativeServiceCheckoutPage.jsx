@@ -143,7 +143,7 @@ export default function CreativeServiceCheckoutPage() {
       return;
     }
 
-    navigate("/dashboard/designs", {
+    navigate("/account/designs", {
       state: { attribution: attributionData },
     });
   };

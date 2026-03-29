@@ -125,7 +125,7 @@ export default function InvoicePaymentPage() {
         <div className="rounded-[2rem] border bg-white p-8 text-center">
           <p className="text-slate-600 mb-6">The invoice may have been removed or you may not have access to it.</p>
           <Link 
-            to="/dashboard/invoices" 
+            to="/account/invoices" 
             className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -178,7 +178,7 @@ export default function InvoicePaymentPage() {
         subtitle="Pay this invoice using bank transfer and upload proof without entering an invoice ID manually."
         actions={
           <Link 
-            to="/dashboard/invoices"
+            to="/account/invoices"
             className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 font-medium text-slate-600 hover:bg-slate-50"
           >
             <ArrowLeft className="w-4 h-4" />

@@ -13,7 +13,7 @@ const cards = [
   {
     title: "Refer friends and earn points",
     text: "Grow your rewards every time your referrals complete purchases.",
-    href: "/dashboard/referrals",
+    href: "/account/referrals",
     cta: "Refer & Earn",
     icon: Gift,
   },
