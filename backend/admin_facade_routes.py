@@ -146,16 +146,11 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
             proof = _clean(proof)
         inv["rejection_reason"] = (proof or {}).get("rejection_reason", "") if (proof or {}).get("status") == "rejected" else ""
         inv["source_type"] = "Quote" if inv.get("quote_id") else "Cart"
-        # Payer name priority: invoice.payer_name → proof.payer_name → billing.invoice_client_name → customer_name
+        # Payer name priority: invoice.payer_name → proof.payer_name (NEVER customer_name)
         payer = inv.get("payer_name") or ""
         if not payer and proof:
             payer = (proof or {}).get("payer_name") or ""
-        if not payer:
-            billing = inv.get("billing") or {}
-            payer = billing.get("invoice_client_name") or ""
-        if not payer:
-            payer = inv.get("customer_name") or inv.get("customer_email") or "-"
-        inv["payer_name"] = payer
+        inv["payer_name"] = payer or "-"
         # Enrich customer_name from users collection if missing
         if not inv.get("customer_name") or inv.get("customer_name") == "-":
             cid = inv.get("customer_id") or inv.get("user_id") or inv.get("customer_user_id")

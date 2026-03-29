@@ -53,30 +53,25 @@ async def _enrich_invoice(doc):
                 if cust:
                     doc["customer_name"] = cust.get("full_name") or cemail
 
-    # Payer name resolution chain
+    # Payer name resolution — strict: only from payer_name fields, NEVER from customer_name
     payer = doc.get("payer_name") or ""
     if not payer:
         proof = await db.payment_proofs.find_one(
             {"invoice_id": doc.get("id")},
-            {"_id": 0, "payer_name": 1, "customer_name": 1},
+            {"_id": 0, "payer_name": 1},
             sort=[("created_at", -1)]
         )
         if proof:
-            payer = proof.get("payer_name") or proof.get("customer_name") or ""
+            payer = proof.get("payer_name") or ""
     if not payer:
         submission = await db.payment_proof_submissions.find_one(
             {"invoice_id": doc.get("id")},
-            {"_id": 0, "payer_name": 1, "customer_name": 1},
+            {"_id": 0, "payer_name": 1},
             sort=[("created_at", -1)]
         )
         if submission:
-            payer = submission.get("payer_name") or submission.get("customer_name") or ""
-    if not payer:
-        billing = doc.get("billing") or {}
-        payer = billing.get("invoice_client_name") or ""
-    if not payer:
-        payer = doc.get("customer_name") or doc.get("customer_email") or "-"
-    doc["payer_name"] = payer
+            payer = submission.get("payer_name") or ""
+    doc["payer_name"] = payer or "-"
     return doc
 
 

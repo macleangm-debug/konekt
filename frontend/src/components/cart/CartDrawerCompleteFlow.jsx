@@ -39,6 +39,7 @@ export default function CartDrawerCompleteFlow() {
   });
   const [proof, setProof] = useState({ payer_name: "", amount_paid: "", file_url: "", file_name: "" });
   const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [isEditingPayer, setIsEditingPayer] = useState(false);
 
   const loadPrefill = useCallback(async () => {
     if (!open) return;
@@ -66,8 +67,18 @@ export default function CartDrawerCompleteFlow() {
   useEffect(() => { loadPrefill(); }, [loadPrefill]);
 
   useEffect(() => {
-    if (!open) { setStep("cart"); setInvoiceResult(null); setPaymentIntent(null); setProofSubmitted(false); }
+    if (!open) { setStep("cart"); setInvoiceResult(null); setPaymentIntent(null); setProofSubmitted(false); setIsEditingPayer(false); }
   }, [open]);
+
+  // Prefill payer_name from customer account name when payment step opens
+  useEffect(() => {
+    if (step === "payment" && !proof.payer_name) {
+      const customerName = form.invoice_client_name || form.client_name || user?.full_name || "";
+      if (customerName) {
+        setProof(prev => ({ ...prev, payer_name: customerName }));
+      }
+    }
+  }, [step, form.invoice_client_name, form.client_name, user?.full_name, proof.payer_name]);
 
   useEffect(() => {
     if (sameAsContact) {
@@ -328,7 +339,18 @@ export default function CartDrawerCompleteFlow() {
               <div className="rounded-2xl border border-slate-200 p-4 space-y-3" data-testid="proof-upload-section">
                 <h3 className="text-base font-bold text-[#20364D]">Upload Payment Proof</h3>
                 <p className="text-xs text-slate-500">Capture or upload your bank transfer confirmation.</p>
-                <input data-testid="proof-payer-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Payer Name" value={proof.payer_name} onChange={(e) => setProof({ ...proof, payer_name: e.target.value })} />
+                <div>
+                  <label className="text-xs text-slate-500 mb-1 block">Payer Name</label>
+                  {isEditingPayer ? (
+                    <input data-testid="proof-payer-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Payer Name" value={proof.payer_name} onChange={(e) => setProof({ ...proof, payer_name: e.target.value })} autoFocus />
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <div data-testid="proof-payer-name-display" className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm bg-slate-50 text-[#20364D] font-medium">{proof.payer_name || "-"}</div>
+                      <button type="button" data-testid="change-payer-btn" onClick={() => setIsEditingPayer(true)} className="text-xs font-semibold text-[#20364D] hover:underline whitespace-nowrap">Change</button>
+                    </div>
+                  )}
+                  <p className="text-[10px] text-slate-400 mt-1">This is the name registered on your account. Change it only if the bank transfer was made by a different payer.</p>
+                </div>
 
                 <div>
                   <p className="text-xs text-slate-500 mb-1.5">Amount Paid</p>

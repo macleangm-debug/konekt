@@ -166,7 +166,7 @@ async def list_orders(
             if proof and proof.get("payer_name"):
                 order["payer_name"] = proof["payer_name"]
             else:
-                order["payer_name"] = order.get("customer_name") or "-"
+                order["payer_name"] = "-"
         if "approved_at" not in order:
             order["approved_at"] = ""
         if "approved_by" not in order:
