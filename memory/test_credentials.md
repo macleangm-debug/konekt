@@ -29,3 +29,9 @@
 - Email: `janeth.sales@konekt.demo`
 - Password: `Sales123!`
 - Team: Products
+
+## Test Activated Customer (created via invite)
+- Email: `testcust@example.com`
+- Password: `TestPass123!`
+- Portal: `/account`
+- Created by: neema.sales@konekt.demo
