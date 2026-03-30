@@ -122,6 +122,8 @@ export default function CheckoutPageV2() {
     if (cartItems.length) validatePoints();
   }, [cartItems, subtotal]);
 
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -132,6 +134,11 @@ export default function CheckoutPageV2() {
 
     if (cartItems.length === 0) {
       toast.error("Your cart is empty");
+      return;
+    }
+
+    if (!paymentConfirmed) {
+      toast.error("Please confirm payment acknowledgment before proceeding");
       return;
     }
 
@@ -287,10 +294,7 @@ export default function CheckoutPageV2() {
                 data-testid="checkout-notes"
               />
             </SurfaceCard>
-          </div>
 
-          {/* Right Column - Payment & Totals */}
-          <div className="space-y-6">
             {/* Points & Totals */}
             <SurfaceCard>
               <div className="text-2xl font-bold text-[#20364D]">Rewards & Totals</div>
@@ -342,61 +346,98 @@ export default function CheckoutPageV2() {
                 )}
               </div>
             </SurfaceCard>
+          </div>
 
-            {/* Payment Methods */}
-            <SurfaceCard>
-              <div className="text-2xl font-bold text-[#20364D]">Payment Method</div>
-              <div className="space-y-3 mt-5">
-                <PaymentMethodOption
-                  label="Bank Transfer"
-                  description="Pay using the displayed bank details, then upload payment proof."
-                  active
-                  selected={selectedMethod === "bank_transfer"}
-                  onClick={() => setSelectedMethod("bank_transfer")}
-                  data-testid="payment-bank-transfer"
-                />
-
-                <PaymentMethodOption
-                  label="Mobile Money"
-                  description="M-Pesa, Tigo Pesa, Airtel Money integration pending."
-                  disabled
-                  data-testid="payment-mobile-money"
-                />
-
-                <PaymentMethodOption
-                  label="Card Payment"
-                  description="Visa, Mastercard integration pending."
-                  disabled
-                  data-testid="payment-card"
-                />
-
-                <PaymentMethodOption
-                  label="KwikPay"
-                  description="Online gateway integration pending."
-                  disabled
-                  data-testid="payment-kwikpay"
-                />
-              </div>
-
-              {selectedMethod === "bank_transfer" && (
-                <div className="rounded-2xl border bg-[#F4E7BF] p-4 mt-6 text-sm text-[#8B6A10]">
-                  <div className="font-semibold mb-2">Bank Details (Tanzania)</div>
-                  <div><strong>Account Name:</strong> {tzSettings.account_name}</div>
-                  <div className="mt-1"><strong>Account Number:</strong> {tzSettings.account_number}</div>
-                  <div className="mt-1"><strong>Bank:</strong> {tzSettings.bank_name}</div>
-                  <div className="mt-1"><strong>SWIFT:</strong> {tzSettings.swift}</div>
+          {/* Right Column - Payment Method + Payment Confirmation (2-col desktop, stacked mobile) */}
+          <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Payment Method */}
+              <SurfaceCard className="md:col-span-1">
+                <div className="text-lg font-bold text-[#20364D]">Payment Method</div>
+                <div className="space-y-3 mt-4">
+                  <PaymentMethodOption
+                    label="Bank Transfer"
+                    description="Pay using the displayed bank details, then upload payment proof."
+                    active
+                    selected={selectedMethod === "bank_transfer"}
+                    onClick={() => setSelectedMethod("bank_transfer")}
+                    data-testid="payment-bank-transfer"
+                  />
+                  <PaymentMethodOption
+                    label="Mobile Money"
+                    description="M-Pesa, Tigo Pesa, Airtel Money integration pending."
+                    disabled
+                    data-testid="payment-mobile-money"
+                  />
+                  <PaymentMethodOption
+                    label="Card Payment"
+                    description="Visa, Mastercard integration pending."
+                    disabled
+                    data-testid="payment-card"
+                  />
+                  <PaymentMethodOption
+                    label="KwikPay"
+                    description="Online gateway integration pending."
+                    disabled
+                    data-testid="payment-kwikpay"
+                  />
                 </div>
-              )}
+              </SurfaceCard>
 
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full mt-6 rounded-xl bg-[#D4A843] px-5 py-3 font-semibold text-[#17283C] hover:bg-[#c49a3d] transition disabled:opacity-50"
-                data-testid="checkout-submit-btn"
-              >
-                {submitting ? "Processing..." : "Continue with Bank Transfer"}
-              </button>
-            </SurfaceCard>
+              {/* Payment Confirmation */}
+              <SurfaceCard className="md:col-span-1">
+                <div className="text-lg font-bold text-[#20364D]">Payment Confirmation</div>
+
+                {selectedMethod === "bank_transfer" && (
+                  <div className="rounded-2xl border bg-[#F4E7BF] p-4 mt-4 text-sm text-[#8B6A10]">
+                    <div className="font-semibold mb-2">Bank Details (Tanzania)</div>
+                    <div><strong>Account Name:</strong> {tzSettings.account_name}</div>
+                    <div className="mt-1"><strong>Account Number:</strong> {tzSettings.account_number}</div>
+                    <div className="mt-1"><strong>Bank:</strong> {tzSettings.bank_name}</div>
+                    <div className="mt-1"><strong>SWIFT:</strong> {tzSettings.swift}</div>
+                  </div>
+                )}
+
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-2xl border bg-slate-50 p-4">
+                    <div className="flex justify-between py-1 font-bold text-[#20364D]">
+                      <span>Amount Due</span>
+                      <span data-testid="confirmation-amount-due">
+                        TZS {Number(validation?.checkout?.final_total || subtotal).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border hover:bg-slate-50 transition" data-testid="payment-confirmation-label">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfirmed}
+                      onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-slate-300 text-[#20364D] focus:ring-[#20364D]"
+                      data-testid="payment-confirmation-checkbox"
+                    />
+                    <span className="text-sm text-slate-600">
+                      I confirm I will make this payment via the selected method. I understand that the order will only be processed after payment proof is submitted and approved.
+                    </span>
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={submitting || !paymentConfirmed}
+                    className="w-full rounded-xl bg-[#D4A843] px-5 py-3 font-semibold text-[#17283C] hover:bg-[#c49a3d] transition disabled:opacity-40 disabled:cursor-not-allowed"
+                    data-testid="checkout-submit-btn"
+                  >
+                    {submitting ? "Processing..." : "Continue with Bank Transfer"}
+                  </button>
+
+                  {!paymentConfirmed && (
+                    <p className="text-xs text-slate-400 text-center">
+                      Please confirm payment acknowledgment to proceed
+                    </p>
+                  )}
+                </div>
+              </SurfaceCard>
+            </div>
           </div>
         </div>
       </form>

@@ -32,6 +32,9 @@ export default function CheckoutPage() {
   const [availableCampaigns, setAvailableCampaigns] = useState([]);
   const [detectedAffiliate, setDetectedAffiliate] = useState(null);
 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("bank_transfer");
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+
   const deliveryFee = 0;
   
   // Calculate totals with discounts
@@ -126,6 +129,11 @@ export default function CheckoutPage() {
 
     if (!items.length) {
       setError("Your cart is empty");
+      return;
+    }
+
+    if (!paymentConfirmed) {
+      setError("Please confirm payment acknowledgment before proceeding");
       return;
     }
 
@@ -385,14 +393,112 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* Payment Method + Payment Confirmation — 2-col desktop, stacked mobile */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Payment Method */}
+              <div className="rounded-3xl border bg-white p-6" data-testid="payment-method-section">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-[#2D3E50]">
+                  <CreditCard className="w-5 h-5" />
+                  Payment Method
+                </h2>
+                <div className="space-y-3 mt-4">
+                  <label
+                    className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${
+                      selectedPaymentMethod === "bank_transfer" ? "border-[#2D3E50] bg-slate-50 ring-1 ring-[#2D3E50]" : "border-slate-200 hover:border-slate-300"
+                    }`}
+                    data-testid="payment-bank-transfer"
+                  >
+                    <input type="radio" name="payment_method" value="bank_transfer" checked={selectedPaymentMethod === "bank_transfer"}
+                      onChange={() => setSelectedPaymentMethod("bank_transfer")} className="w-4 h-4 text-[#2D3E50]" />
+                    <div>
+                      <div className="font-semibold text-sm">Bank Transfer</div>
+                      <div className="text-xs text-slate-500">Pay via bank details, then upload proof</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 opacity-50 cursor-not-allowed" data-testid="payment-mobile-money">
+                    <input type="radio" name="payment_method" disabled className="w-4 h-4" />
+                    <div>
+                      <div className="font-semibold text-sm">Mobile Money</div>
+                      <div className="text-xs text-slate-400">M-Pesa, Tigo Pesa — coming soon</div>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 opacity-50 cursor-not-allowed" data-testid="payment-card">
+                    <input type="radio" name="payment_method" disabled className="w-4 h-4" />
+                    <div>
+                      <div className="font-semibold text-sm">Card Payment</div>
+                      <div className="text-xs text-slate-400">Visa, Mastercard — coming soon</div>
+                    </div>
+                  </label>
+                </div>
+
+                {selectedPaymentMethod === "bank_transfer" && (
+                  <div className="rounded-xl bg-[#F4E7BF] p-4 mt-4 text-sm text-[#8B6A10]">
+                    <div className="font-semibold mb-2">Bank Details (Tanzania)</div>
+                    <div><strong>Account Name:</strong> KONEKT LIMITED</div>
+                    <div className="mt-1"><strong>Account Number:</strong> 015C8841347002</div>
+                    <div className="mt-1"><strong>Bank:</strong> CRDB BANK</div>
+                    <div className="mt-1"><strong>SWIFT:</strong> CORUTZTZ</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Payment Confirmation */}
+              <div className="rounded-3xl border bg-white p-6" data-testid="payment-confirmation-section">
+                <h2 className="text-lg font-bold flex items-center gap-2 text-[#2D3E50]">
+                  <ShieldCheck className="w-5 h-5" />
+                  Payment Confirmation
+                </h2>
+
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-xl bg-slate-50 border p-4">
+                    <div className="flex justify-between py-1 text-sm">
+                      <span className="text-slate-500">Order Total</span>
+                      <span className="font-bold text-[#2D3E50]" data-testid="confirmation-total">
+                        TZS {grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+                    {totalDiscount > 0 && (
+                      <div className="flex justify-between py-1 text-sm text-emerald-600">
+                        <span>Discount Applied</span>
+                        <span>-TZS {totalDiscount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-1 text-sm">
+                      <span className="text-slate-500">Payment Method</span>
+                      <span className="font-medium capitalize">{selectedPaymentMethod.replace(/_/g, " ")}</span>
+                    </div>
+                  </div>
+
+                  <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl border hover:bg-slate-50 transition" data-testid="payment-confirmation-label">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfirmed}
+                      onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#2D3E50] focus:ring-[#2D3E50]"
+                      data-testid="payment-confirmation-checkbox"
+                    />
+                    <span className="text-sm text-slate-600">
+                      I confirm I will make this payment via the selected method. I understand the order will be processed after payment proof is submitted and approved.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
-              disabled={submitting}
-              className="w-full rounded-xl bg-[#2D3E50] text-white py-4 font-semibold text-lg disabled:opacity-50 transition"
+              disabled={submitting || !paymentConfirmed}
+              className="w-full rounded-xl bg-[#2D3E50] text-white py-4 font-semibold text-lg disabled:opacity-40 disabled:cursor-not-allowed transition"
               data-testid="checkout-submit"
             >
-              {submitting ? "Submitting Order..." : "Submit Order"}
+              {submitting ? "Submitting Order..." : !paymentConfirmed ? "Confirm Payment to Submit" : "Submit Order"}
             </button>
+
+            {!paymentConfirmed && (
+              <p className="text-xs text-slate-400 text-center -mt-3">
+                Check the payment confirmation box above to proceed
+              </p>
+            )}
           </form>
 
           <aside className="rounded-3xl border bg-white p-8 h-fit sticky top-24">
