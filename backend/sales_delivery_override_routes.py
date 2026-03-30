@@ -45,22 +45,22 @@ async def sales_update_delivery_status(
     """
     from services.sales_delivery_override_service import can_sales_update_status
     from services.product_delivery_status_workflow import SALES_LOGISTICS_STATUSES
+    from services.status_transition_policy import can_transition
 
     db = request.app.mongodb
     new_status = payload.get("status")
     if not new_status:
         raise HTTPException(400, "status is required")
 
-    if new_status not in set(SALES_LOGISTICS_STATUSES):
-        raise HTTPException(400, f"Invalid logistics status. Allowed: {SALES_LOGISTICS_STATUSES}")
-
     doc = await db.vendor_orders.find_one({"id": vendor_order_id})
     if not doc:
         raise HTTPException(404, "Vendor order not found")
 
     current = doc.get("status", "")
-    if not can_sales_update_status(current) and current not in SALES_LOGISTICS_STATUSES:
-        raise HTTPException(400, f"Cannot update from current status '{current}'. Vendor must first mark Ready for Pickup.")
+    # Use centralized transition policy
+    allowed, reason = can_transition("sales", current, new_status)
+    if not allowed:
+        raise HTTPException(400, reason)
 
     now = datetime.now(timezone.utc).isoformat()
     await db.vendor_orders.update_one(

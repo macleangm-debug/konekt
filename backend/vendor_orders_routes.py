@@ -215,6 +215,7 @@ async def update_vendor_order_status(
     """
     from services.product_delivery_status_workflow import VENDOR_INTERNAL_STATUSES
     from services.sales_delivery_override_service import can_vendor_update_status
+    from services.status_transition_policy import can_transition, normalize_status
 
     user = await get_partner_user_from_header(authorization)
     partner_id = user["partner_id"]
@@ -227,14 +228,13 @@ async def update_vendor_order_status(
         raise HTTPException(status_code=404, detail="Vendor order not found")
 
     new_status = payload.get("status")
-    # Vendor can only set statuses up to ready_for_pickup
-    vendor_allowed = set(VENDOR_INTERNAL_STATUSES) | {"accepted", "quality_check", "ready", "issue_reported", "processing", "ready_for_pickup"}
-    if new_status not in vendor_allowed:
-        raise HTTPException(status_code=400, detail=f"Invalid status for vendor. Allowed: {sorted(vendor_allowed)}")
+    new_status = normalize_status(new_status)
 
-    # Map 'ready' to 'ready_for_pickup' for backward compat
-    if new_status == "ready":
-        new_status = "ready_for_pickup"
+    # Use centralized transition policy
+    current_status = doc.get("status", "assigned")
+    allowed, reason = can_transition("vendor", current_status, new_status)
+    if not allowed:
+        raise HTTPException(status_code=400, detail=reason)
 
     now = datetime.now(timezone.utc).isoformat()
     update = {"status": new_status, "updated_at": now}
