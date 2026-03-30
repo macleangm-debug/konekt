@@ -14,97 +14,76 @@ Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Cust
 - **Vendor Privacy** — VAT-inclusive base cost only, no Konekt margins/public prices
 - **Margin Engine Priority** — Individual product > Product Group > Global (default 20%)
 - **Delivery Workflow Split** — Vendor→ready_for_pickup, Sales→logistics
-- **Vendor Release** — Only show released work based on payment/credit policies
-- **Vendor Capabilities** — One account model, admin approves products/services/promo
 - **Guest Activation** — Guest checkout/requests auto-create invited accounts
 - **Sample Flow** — Request→Sample Quote→Approval→Actual Production Order
 - **Centralized Services** — All business logic flows through /services layer (Packs 1-7)
+- **Unified Public Intake** — All public forms (contact, quote, business pricing) → Requests module
 
 ## What's Implemented
 
 ### Core Platform
 - React + FastAPI + MongoDB full-stack, role-based auth, product catalog, checkout, invoicing, Stripe sandbox
 
-### Checkout 2-Column Layout
-- Payment Method + Payment Confirmation side-by-side on desktop, stacked on mobile
-- Payment confirmation checkbox REQUIRED
+### Backend Stability Centralization (Packs 1-7)
+- Pack 1: Order Write Service, Timeline, Assignment Orchestrator, Status Policy
+- Pack 2-3: Assignment + Status Transition policies (wired)
+- Pack 4: Notification Dispatch with click target registry
+- Pack 5: Payer/Customer Separation (hardened, DB-backed)
+- Pack 6: Request→Quote Conversion
+- Pack 7: Guest Identity Link (hardened)
 
-### Margin + Delivery + Notifications Pack
-- Payment queue customer/payer separation
-- Clickable notifications (Approved→orders, Rejected→invoices)
-- Compact admin orders table (7 columns)
-- Delivery logistics workflow, sales delivery override
-- Hybrid margin engine (percentage, fixed_amount, tiered)
+### Public Intake Consolidation — COMPLETED 2026-03-30
+- **Unified Requests Module**: All public forms write to `requests` collection
+- **New endpoints**: `/api/public-requests` (generic) + `/api/public-requests/contact` (contact-specific)
+- **6 supported request types**: contact_general, service_quote, business_pricing, product_bulk, promo_custom, promo_sample
+- **CRM Bridge**: Admin/Sales can convert any request → CRM lead via `/api/admin/requests/{id}/convert-to-lead`
+- **Status Management**: Admin can update request CRM stage via `/api/admin/requests/{id}/status`
+- **Contact Page Rewired**: No longer mocked — persists to Requests with reference number
+- **Quote Request Page Rewired**: Posts to `/api/public-requests` (not `guest_leads`)
+- **URL-driven types**: `/request-quote?type=business_pricing` shows "Request Business Pricing" title
+- **Business Pricing CTA Fixed**: Contact page CTA now links to `/request-quote?type=business_pricing`
+- **Shared Frontend Utilities**: `formatters.js` (DD/MM/YYYY, TZS money), `PhoneNumberField`, `CurrencyInput`
+- **Guest Account Linking**: All public submissions auto-create invited accounts
 
-### Vendor Release + Capabilities Pack
-- Vendor capability governance (admin approves products/services/promo)
-- Payment release policy engine, vendor visibility filter
-- Vendor price privacy, default 20% margin seed
-
-### Sales Service Workflow + Customer Invite Pack
-- Sales customer creation + invite, account activation
-- Service quote engine (vendor cost → auto margin)
-- Quote→invoice automation with phased payment terms
-
-### Guest Checkout + Requests + Sample Flow Pack
-- Guest checkout auto-creates invited account with activation link
-- Request module: 4 types (product_bulk, promo_custom, promo_sample, service_quote)
-- Public request buttons + in-account quick request form
-- CTA registry for frontend button configs
-- Sales/admin request management (list, assign, convert to quote)
-- Sample workflow: request → sample quote → approve → actual production order quote
-- Payment selection page shows activation banner for guests
-- Email sending MOCKED (requires Resend)
-
-### Backend Stability Centralization (Packs 1-7) — COMPLETED 2026-03-30
-- **Pack 1 (Order Write Service)**: Centralized order creation via `order_write_service.py` — guest order creation delegated from route to service with safeguard logging
-- **Pack 1 (Order Timeline)**: Centralized event logging via `order_timeline_service.py`
-- **Pack 1 (Assignment Orchestrator)**: Centralized sales+vendor assignment via `order_assignment_orchestrator_service.py`
-- **Pack 1 (Status Policy)**: Role-based status transitions via `order_status_policy_service.py`
-- **Pack 2 (Assignment Policy)**: Deterministic assignment resolution via `assignment_policy_service.py` — WIRED
-- **Pack 3 (Status Transition)**: Role-based transition rules via `status_transition_policy.py` — WIRED
-- **Pack 4 (Notification Dispatch)**: Centralized notification creation via `notification_dispatch_service.py` with click target registry
-- **Pack 5 (Payer/Customer Separation)**: Hardened DB-backed resolution via `payer_customer_separation_service.py`
-- **Pack 6 (Request Conversion)**: Shared request→quote service via `request_conversion_service.py` with default 20% margin
-- **Pack 7 (Guest Identity Link)**: Hardened guest-to-account flow via `guest_checkout_activation_service.py` with `ensure_invited_user` + `create_guest_account_link`
+### Other Completed Work
+- Checkout 2-Column Layout
+- Margin + Delivery + Notifications Pack
+- Vendor Release + Capabilities Pack
+- Sales Service Workflow + Customer Invite Pack
+- Guest Checkout + Requests + Sample Flow Pack
 
 ## Service Architecture
 ```
 /app/backend/services/
-├── order_write_service.py              # Pack 1: Order creation entry point
-├── order_timeline_service.py           # Pack 1: Event logging
-├── order_assignment_orchestrator_service.py  # Pack 1: Assignment orchestration
-├── order_status_policy_service.py      # Pack 1: Status transitions
-├── assignment_policy_service.py        # Pack 2: Deterministic assignment
-├── status_transition_policy.py         # Pack 3: Role-based status rules
-├── notification_dispatch_service.py    # Pack 4: Notification dispatch
-├── payer_customer_separation_service.py # Pack 5: Party identity separation
-├── request_conversion_service.py       # Pack 6: Request→Quote conversion
-├── guest_checkout_activation_service.py # Pack 7: Guest account linking
-├── margin_calculator.py                # Hybrid margin engine
-├── sample_flow_engine.py               # Sample workflow states
-├── promotional_request_builder.py      # Request builders
-└── ... (other services)
+├── public_request_intake_service.py    # Public intake → Requests
+├── request_crm_bridge_service.py       # Request → CRM Lead
+├── order_write_service.py              # Centralized order creation
+├── order_timeline_service.py           # Event logging
+├── order_assignment_orchestrator_service.py
+├── order_status_policy_service.py
+├── assignment_policy_service.py
+├── status_transition_policy.py
+├── notification_dispatch_service.py
+├── payer_customer_separation_service.py
+├── request_conversion_service.py
+├── guest_checkout_activation_service.py
+├── margin_calculator.py
+├── sample_flow_engine.py
+└── ...
 ```
 
 ## Key API Endpoints
-- `POST /api/admin/payments/{id}/approve` — Payment approval
-- `GET /api/admin/orders-ops` — Admin orders
-- `GET /api/vendor/orders` — Filtered vendor orders
-- `GET/POST /api/admin/margin-rules` + `/calculate` — Margin engine
-- `GET/POST /api/admin/vendor-capabilities` — Capability governance
-- `GET/POST /api/admin/payment-release-policies` — Release policies
-- `POST /api/sales/customers/create-with-invite` — Customer invite
-- `POST /api/auth/activate` — Account activation
-- `POST /api/sales/service-quotes` — Service quotes
-- `POST /api/requests` — Public + authenticated requests (4 types)
-- `GET /api/requests/ctas` — CTA button config
-- `GET /api/admin/requests` — List/manage requests
-- `POST /api/admin/requests/{id}/create-quote` — Request→quote
-- `POST /api/admin/samples/from-request/{id}` — Sample workflow
-- `POST /api/admin/samples/{id}/approve` — Sample approval
-- `POST /api/admin/samples/{id}/create-actual-order-quote` — Production order
+### Public Intake (NEW)
+- `POST /api/public-requests` — Generic public request (any of 6 types)
+- `POST /api/public-requests/contact` — Contact form submission
+### Admin CRM (NEW)
+- `POST /api/admin/requests/{id}/convert-to-lead` — Request → Lead
+- `PUT /api/admin/requests/{id}/status` — Update CRM stage
+### Existing
+- `POST /api/requests` — Original request endpoint (now accepts 6 types)
+- `GET /api/admin/requests` — All request types visible
 - `POST /api/guest/orders` — Guest order creation
+- `POST /api/admin/margin-rules/calculate` — Margin engine
 
 ## Upcoming Tasks (P1)
 - Production Operations Tooling + Print Asset QA
@@ -119,8 +98,7 @@ Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Cust
 - Mobile-first optimization
 
 ## Testing Status
-- Iteration 146: 100% (42/42) — Backend Stability Refactoring (Packs 1-7)
+- Iteration 148: 100% (20/20 backend + frontend) — Public Intake Consolidation
+- Iteration 147: 100% (25/25) — Post-Refactoring E2E Validation
+- Iteration 146: 100% (42/42) — Backend Stability Refactoring
 - Iteration 145: 100% (25/25) — Guest Checkout + Requests + Sample Flow
-- Iteration 144: 100% (24/24) — Full E2E comprehensive
-- Iteration 143: 100% (20/20) — Vendor Release + Sales Workflow
-- Iteration 142: 100% (20/20) — Margin + Delivery + Notifications
