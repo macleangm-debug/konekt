@@ -2708,6 +2708,10 @@ app.include_router(public_payment_info_router)
 from invoice_branding_routes import router as invoice_branding_router
 app.include_router(invoice_branding_router)
 
+from public_request_routes import router as public_request_router
+app.include_router(public_request_router)
+
+
 
 
 

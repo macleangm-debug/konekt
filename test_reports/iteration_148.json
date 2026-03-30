@@ -1,0 +1,72 @@
+{
+  "summary": "Iteration 148 - Public Intake Consolidation Testing. All 20 backend API tests passed (100%). Frontend testing verified contact page and quote request page render correctly with proper form fields. Admin dashboard shows Service Leads with various request types. Minor frontend issue: Quote request page title doesn't change for ?type=business_pricing URL param.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "QuoteRequestPage",
+        "issue": "URL param ?type=business_pricing does not change page title from 'Request a Quote' to 'Request Business Pricing'",
+        "selector": "h1",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Contact page Business Pricing CTA",
+        "issues": ["Business Pricing CTA button visible but data-testid not found - may need to verify href attribute"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_public_intake_consolidation_v148.py",
+    "/app/test_reports/pytest/pytest_results_public_intake_v148.xml"
+  ],
+  "action_items": [
+    "MINOR: Verify QuoteRequestPage uses TYPE_CONFIG correctly for business_pricing type - title should change based on URL param"
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_public_intake_consolidation_v148.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 passed)",
+    "frontend": "95% (all pages render, minor title issue)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "sales": "neema.sales@konekt.demo / Sales123!",
+    "vendor": "demo.partner@konekt.com / Partner123! (endpoint: /api/partner-auth/login)"
+  },
+  "seed_data_creation": "Created test requests via API during testing (contact_general, service_quote, business_pricing, product_bulk, promo_sample)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 148 tested public intake consolidation. All new endpoints work: POST /api/public-requests/contact creates contact_general requests with account_invite, POST /api/public-requests creates service_quote and business_pricing requests, Admin GET /api/admin/requests shows all request types, Admin POST /api/admin/requests/{id}/convert-to-lead works, Admin PUT /api/admin/requests/{id}/status works. Regression tests pass: POST /api/requests (product_bulk, promo_sample, service_quote), GET /api/requests/ctas, guest checkout, margin calculation (10000→12000). Frontend: Contact page renders with all form fields, Quote request page renders but title doesn't change for business_pricing type. Admin Service Leads page shows requests.",
+  "feature_verification_results": {
+    "NEW_contact_endpoint": {"status": "PASS", "details": "POST /api/public-requests/contact creates contact_general request with request_number and account_invite"},
+    "NEW_public_requests_service_quote": {"status": "PASS", "details": "POST /api/public-requests with request_type=service_quote works"},
+    "NEW_public_requests_business_pricing": {"status": "PASS", "details": "POST /api/public-requests with request_type=business_pricing works"},
+    "NEW_invalid_request_type_400": {"status": "PASS", "details": "Invalid request_type returns 400 error"},
+    "NEW_admin_get_requests": {"status": "PASS", "details": "GET /api/admin/requests returns all request types"},
+    "NEW_admin_convert_to_lead": {"status": "PASS", "details": "POST /api/admin/requests/{id}/convert-to-lead creates lead"},
+    "NEW_admin_update_status": {"status": "PASS", "details": "PUT /api/admin/requests/{id}/status updates CRM stage/status"},
+    "REGRESSION_product_bulk": {"status": "PASS", "details": "POST /api/requests with type=product_bulk works"},
+    "REGRESSION_promo_sample": {"status": "PASS", "details": "POST /api/requests with type=promo_sample works"},
+    "REGRESSION_service_quote_original": {"status": "PASS", "details": "POST /api/requests with type=service_quote works"},
+    "REGRESSION_ctas": {"status": "PASS", "details": "GET /api/requests/ctas returns CTA configs"},
+    "REGRESSION_guest_checkout": {"status": "PASS", "details": "POST /api/guest/orders creates order with account_invite"},
+    "REGRESSION_admin_orders_ops": {"status": "PASS", "details": "GET /api/admin/orders-ops works"},
+    "REGRESSION_margin_calculation": {"status": "PASS", "details": "base_cost=10000 returns selling_price=12000 (20% margin)"},
+    "REGRESSION_role_logins": {"status": "PASS", "details": "All 4 role logins work (admin, customer, sales, vendor)"},
+    "FRONTEND_contact_page": {"status": "PASS", "details": "Contact page renders with all form fields (name, email, company, phone, subject, message)"},
+    "FRONTEND_quote_request_page": {"status": "PARTIAL", "details": "Page renders but title doesn't change for ?type=business_pricing"},
+    "FRONTEND_admin_service_leads": {"status": "PASS", "details": "Admin Service Leads page shows requests with various types"}
+  },
+  "mocked_apis": {
+    "email_sending": "Email sending is MOCKED - logged to email_logs collection, not actually dispatched. Requires Resend integration for production."
+  }
+}

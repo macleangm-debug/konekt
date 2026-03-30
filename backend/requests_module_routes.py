@@ -68,7 +68,7 @@ async def create_request(payload: dict, request: Request, user: dict = Depends(_
     """
     db = request.app.mongodb
     request_type = payload.get("request_type")
-    valid_types = {"product_bulk", "promo_custom", "promo_sample", "service_quote"}
+    valid_types = {"product_bulk", "promo_custom", "promo_sample", "service_quote", "contact_general", "business_pricing"}
     if request_type not in valid_types:
         raise HTTPException(400, f"request_type must be one of: {valid_types}")
 
@@ -246,3 +246,38 @@ async def create_quote_from_request(request_id: str, payload: dict, request: Req
     await db.requests.update_one({"id": request_id}, {"$set": {"status": "quoted", "linked_quote_id": quote_id, "updated_at": now}})
 
     return {"ok": True, "quote_id": quote_id, "quote_number": quote_number, "selling_price": quote_data["selling_price"]}
+
+
+@router.post("/api/admin/requests/{request_id}/convert-to-lead")
+async def convert_request_to_lead(request_id: str, request: Request, user: dict = Depends(_require_staff)):
+    """Convert a request into a CRM lead."""
+    db = request.app.mongodb
+    from services.request_crm_bridge_service import convert_request_to_lead as crm_convert
+
+    req = await db.requests.find_one({"id": request_id})
+    if not req:
+        raise HTTPException(404, "Request not found")
+
+    req.pop("_id", None)
+    lead = await crm_convert(db, req, user)
+    lead.pop("_id", None)
+    return {"ok": True, "lead_id": lead.get("id"), "request_id": request_id}
+
+
+@router.put("/api/admin/requests/{request_id}/status")
+async def update_request_status(request_id: str, payload: dict, request: Request, user: dict = Depends(_require_staff)):
+    """Update request CRM stage/status."""
+    db = request.app.mongodb
+    now = _now()
+    updates = {"updated_at": now}
+    if payload.get("status"):
+        updates["status"] = payload["status"]
+    if payload.get("crm_stage"):
+        updates["crm_stage"] = payload["crm_stage"]
+    if payload.get("contact_status"):
+        updates["contact_status"] = payload["contact_status"]
+
+    result = await db.requests.update_one({"id": request_id}, {"$set": updates})
+    if result.matched_count == 0:
+        raise HTTPException(404, "Request not found")
+    return {"ok": True}

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Mail, Phone, MapPin, MessageSquare, Building2, Clock } from "lucide-react";
+import { Mail, Phone, MapPin, Building2, Clock } from "lucide-react";
 import BrandButton from "../../components/ui/BrandButton";
 import SurfaceCard from "../../components/ui/SurfaceCard";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -11,23 +12,30 @@ export default function ContactPageContent() {
     name: "",
     email: "",
     company: "",
+    phone_prefix: "+255",
     phone: "",
     subject: "",
     message: "",
   });
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
-      // Mock submission for now
-      await new Promise(r => setTimeout(r, 1000));
-      toast.success("Message sent! We'll get back to you shortly.");
-      setForm({ name: "", email: "", company: "", phone: "", subject: "", message: "" });
+      const res = await fetch(`${API}/api/public-requests/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || "Failed to submit");
+      setSuccess(data);
+      toast.success(`Message received! Reference: ${data.request_number}`);
+      setForm({ name: "", email: "", company: "", phone_prefix: "+255", phone: "", subject: "", message: "" });
     } catch (err) {
-      toast.error("Failed to send message. Please try again.");
+      toast.error(err.message || "Failed to send message. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -43,98 +51,113 @@ export default function ContactPageContent() {
       </div>
 
       <div className="grid lg:grid-cols-5 gap-10">
-        {/* Contact Form */}
         <div className="lg:col-span-3">
           <SurfaceCard>
-            <h2 className="text-xl font-bold mb-6">Send us a Message</h2>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Your Name *</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3"
-                    required
-                    data-testid="contact-name"
-                  />
+            {success ? (
+              <div className="text-center py-8" data-testid="contact-success">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-8 h-8 text-green-600" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3"
-                    required
-                    data-testid="contact-email"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
-                  <input
-                    type="text"
-                    value={form.company}
-                    onChange={(e) => setForm({ ...form, company: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3"
-                    data-testid="contact-company"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full border rounded-xl px-4 py-3"
-                    data-testid="contact-phone"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Subject *</label>
-                <select
-                  value={form.subject}
-                  onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-3"
-                  required
-                  data-testid="contact-subject"
+                <h2 className="text-xl font-bold text-[#20364D]">Message Received</h2>
+                <p className="text-slate-600 mt-2">Reference: <span className="font-semibold">{success.request_number}</span></p>
+                <p className="text-slate-500 mt-1 text-sm">Our team will get back to you within 24 hours.</p>
+                <button
+                  onClick={() => setSuccess(null)}
+                  className="mt-6 text-[#20364D] font-medium underline"
+                  data-testid="contact-send-another"
                 >
-                  <option value="">Select a subject...</option>
-                  <option value="bulk_pricing">Bulk Pricing Inquiry</option>
-                  <option value="contract_terms">Contract Terms & Conditions</option>
-                  <option value="recurring_orders">Recurring Order Setup</option>
-                  <option value="services">Service Inquiry</option>
-                  <option value="support">General Support</option>
-                  <option value="other">Other</option>
-                </select>
+                  Send another message
+                </button>
               </div>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold mb-6">Send us a Message</h2>
+                <form onSubmit={handleSubmit} className="space-y-5" data-testid="contact-form">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Your Name *</label>
+                      <input
+                        type="text"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                        required
+                        data-testid="contact-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                        required
+                        data-testid="contact-email"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Message *</label>
-                <textarea
-                  value={form.message}
-                  onChange={(e) => setForm({ ...form, message: e.target.value })}
-                  className="w-full border rounded-xl px-4 py-3 min-h-[150px]"
-                  required
-                  placeholder="Tell us about your requirements..."
-                  data-testid="contact-message"
-                />
-              </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Company</label>
+                      <input
+                        type="text"
+                        value={form.company}
+                        onChange={(e) => setForm({ ...form, company: e.target.value })}
+                        className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                        data-testid="contact-company"
+                      />
+                    </div>
+                    <PhoneNumberField
+                      prefix={form.phone_prefix}
+                      number={form.phone}
+                      onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                      onNumberChange={(v) => setForm({ ...form, phone: v })}
+                      testIdPrefix="contact-phone"
+                    />
+                  </div>
 
-              <BrandButton type="submit" className="w-full" variant="primary" disabled={loading}>
-                {loading ? "Sending..." : "Send Message"}
-              </BrandButton>
-            </form>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Subject *</label>
+                    <select
+                      value={form.subject}
+                      onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl px-4 py-3"
+                      required
+                      data-testid="contact-subject"
+                    >
+                      <option value="">Select a subject...</option>
+                      <option value="bulk_pricing">Bulk Pricing Inquiry</option>
+                      <option value="contract_terms">Contract Terms & Conditions</option>
+                      <option value="recurring_orders">Recurring Order Setup</option>
+                      <option value="services">Service Inquiry</option>
+                      <option value="support">General Support</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Message *</label>
+                    <textarea
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      className="w-full border border-slate-300 rounded-xl px-4 py-3 min-h-[150px]"
+                      required
+                      placeholder="Tell us about your requirements..."
+                      data-testid="contact-message"
+                    />
+                  </div>
+
+                  <BrandButton type="submit" className="w-full" variant="primary" disabled={loading} data-testid="contact-submit-btn">
+                    {loading ? "Sending..." : "Send Message"}
+                  </BrandButton>
+                </form>
+              </>
+            )}
           </SurfaceCard>
         </div>
 
-        {/* Contact Info */}
         <div className="lg:col-span-2 space-y-6">
           <SurfaceCard>
             <h3 className="font-bold mb-4">Contact Information</h3>
@@ -174,13 +197,13 @@ export default function ContactPageContent() {
           <SurfaceCard className="bg-[#20364D] text-white">
             <div className="flex items-center gap-3 mb-3">
               <Building2 className="w-6 h-6 text-[#D4A843]" />
-              <h3 className="font-bold">Business Accounts</h3>
+              <h3 className="font-bold text-white">Business Accounts</h3>
             </div>
-            <p className="text-slate-200 text-sm">
-              Need contract pricing, recurring orders, or dedicated account management? 
+            <p className="text-white/85 text-sm leading-6">
+              Need contract pricing, recurring orders, or dedicated account management?
               Our business team can set up a tailored solution for your company.
             </p>
-            <BrandButton href="/request-quote" variant="gold" className="mt-4">
+            <BrandButton href="/request-quote?type=business_pricing" variant="gold" className="mt-5" data-testid="contact-business-pricing-cta">
               Request Business Pricing
             </BrandButton>
           </SurfaceCard>
@@ -191,7 +214,7 @@ export default function ContactPageContent() {
               <h3 className="font-bold">Response Time</h3>
             </div>
             <p className="text-slate-600 text-sm">
-              We typically respond to inquiries within 24 hours on business days. 
+              We typically respond to inquiries within 24 hours on business days.
               For urgent matters, please call us directly.
             </p>
           </SurfaceCard>
