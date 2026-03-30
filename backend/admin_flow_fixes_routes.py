@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from uuid import uuid4
+import os
 from fastapi import APIRouter, Request, HTTPException
 from referral_commission_governance_routes import create_commissions_for_order
 from services.payer_customer_separation_service import resolve_customer_name, resolve_payer_name
@@ -100,6 +101,20 @@ async def finance_approve_proof(payload: dict, request: Request):
     approver_role = payload.get("approver_role", "finance")
     if approver_role not in ["finance", "admin"]:
         raise HTTPException(status_code=403, detail="Only finance/admin can approve")
+
+    # Resolve real admin identity from Authorization header
+    approver_name = approver_role
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.startswith("Bearer "):
+        try:
+            import jwt as pyjwt
+            token_payload = pyjwt.decode(auth_header.split(" ", 1)[1], os.getenv("JWT_SECRET", "konekt-secret"), algorithms=["HS256"])
+            admin_user = await db.users.find_one({"id": token_payload.get("user_id")}, {"_id": 0, "full_name": 1, "email": 1})
+            if admin_user:
+                approver_name = admin_user.get("full_name") or admin_user.get("email") or approver_role
+        except Exception:
+            pass
+
     proof = await db.payment_proofs.find_one({"id": payment_proof_id})
     if not proof:
         raise HTTPException(status_code=404, detail="Payment proof not found")
@@ -108,15 +123,15 @@ async def finance_approve_proof(payload: dict, request: Request):
         raise HTTPException(status_code=404, detail="Invoice not found")
     now = _now()
     await db.payment_proofs.update_one({"id": payment_proof_id}, {"$set": {
-        "status": "approved", "approved_at": now, "approved_by_role": approver_role,
+        "status": "approved", "approved_at": now, "approved_by_role": approver_name,
     }})
     await db.payment_proof_submissions.update_one({"id": payment_proof_id}, {"$set": {
-        "status": "approved", "approved_by": approver_role, "approved_at": now,
+        "status": "approved", "approved_by": approver_name, "approved_at": now,
     }})
     await db.invoices.update_one({"id": invoice["id"]}, {"$set": {
         "status": "paid",
         "payment_status": "approved",
-        "approved_by": approver_role,
+        "approved_by": approver_name,
         "approved_at": now,
     }})
     existing_order = await db.orders.find_one({"invoice_id": invoice["id"]})
@@ -126,14 +141,28 @@ async def finance_approve_proof(payload: dict, request: Request):
         ts = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
 
         # --- Vendor auto-assignment from product owners ---
-        vendor_ids = invoice.get("vendor_ids") or []
-        if not vendor_ids:
-            for item in invoice.get("items", []):
-                # Check product ownership for vendor assignment
-                product = await db.products.find_one({"id": item.get("product_id")}, {"_id": 0})
-                vid = resolve_vendor_from_product(product or item) if product else item.get("vendor_id")
-                if vid and vid not in vendor_ids:
-                    vendor_ids.append(vid)
+        vendor_ids = []
+        for item in invoice.get("items", []):
+            vid = None
+            product_id = item.get("product_id") or item.get("sku")
+            if product_id:
+                product = await db.products.find_one(
+                    {"$or": [{"id": product_id}, {"sku": product_id}]},
+                    {"_id": 0, "vendor_id": 1, "owner_vendor_id": 1, "uploaded_by_vendor_id": 1, "partner_id": 1}
+                )
+                if product:
+                    vid = product.get("vendor_id") or product.get("owner_vendor_id") or product.get("uploaded_by_vendor_id") or product.get("partner_id")
+            if not vid:
+                vid = item.get("vendor_id")
+            # Map to real partner_id
+            if vid:
+                partner = await db.partner_users.find_one(
+                    {"$or": [{"partner_id": vid}, {"id": vid}]},
+                    {"_id": 0, "partner_id": 1}
+                )
+                real_vid = partner["partner_id"] if partner else vid
+                if real_vid not in vendor_ids:
+                    vendor_ids.append(real_vid)
 
         # --- Sales auto-assignment ---
         assigned_sales_id = payload.get("assigned_sales_id")
@@ -200,7 +229,7 @@ async def finance_approve_proof(payload: dict, request: Request):
             "assigned_vendor_id": vendor_ids[0] if vendor_ids else None,
             "assigned_sales_id": assigned_sales_id,
             "assigned_sales_name": assigned_sales_name,
-            "approved_by": approver_role,
+            "approved_by": approver_name,
             "approved_at": now,
             "invoice_id": invoice.get("id"),
             "created_at": now, "updated_at": now,

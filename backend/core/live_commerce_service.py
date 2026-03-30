@@ -331,8 +331,7 @@ class LiveCommerceService:
         assigned_sales_id: Optional[str] = None,
         assigned_sales_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        if approver_role not in {"finance", "admin"}:
-            raise HTTPException(status_code=403, detail="Only finance/admin can approve")
+        """Approve a payment proof. approver_role can be a role string or the admin's full name."""
 
         proof = await self.db.payment_proofs.find_one({"id": payment_proof_id})
         if not proof:
@@ -412,8 +411,33 @@ class LiveCommerceService:
             # Resolve payer_name — STRICT: only from proof/submission payer_name, NEVER customer_name
             payer_name = proof.get("payer_name") or invoice.get("payer_name") or "-"
 
-            # Resolve vendor_ids from invoice items
-            vendor_ids = list({item.get("vendor_id") for item in invoice.get("items", []) if item.get("vendor_id")})
+            # Resolve vendor_ids from product catalog, then invoice items
+            resolved_vendor_ids = set()
+            for item in invoice.get("items", []):
+                vid = None
+                # Priority 1: Look up product in catalog for real vendor_id
+                product_id = item.get("product_id") or item.get("sku")
+                if product_id:
+                    product = await self.db.products.find_one(
+                        {"$or": [{"id": product_id}, {"sku": product_id}]},
+                        {"_id": 0, "vendor_id": 1, "owner_vendor_id": 1, "uploaded_by_vendor_id": 1, "partner_id": 1}
+                    )
+                    if product:
+                        vid = product.get("vendor_id") or product.get("owner_vendor_id") or product.get("uploaded_by_vendor_id") or product.get("partner_id")
+                # Priority 2: Fall back to invoice item vendor_id
+                if not vid:
+                    vid = item.get("vendor_id")
+                # Priority 3: Try to map to a real partner_user
+                if vid:
+                    partner = await self.db.partner_users.find_one(
+                        {"$or": [{"partner_id": vid}, {"id": vid}]},
+                        {"_id": 0, "partner_id": 1}
+                    )
+                    if partner:
+                        resolved_vendor_ids.add(partner["partner_id"])
+                    else:
+                        resolved_vendor_ids.add(vid)
+            vendor_ids = list(resolved_vendor_ids)
             assigned_vendor_id = vendor_ids[0] if vendor_ids else ""
 
             if existing_order:

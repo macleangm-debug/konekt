@@ -1,0 +1,78 @@
+{
+  "summary": "Approval Flow v140 - All 8 CRITICAL tests PASSED. POST /api/admin/payments/{proof_id}/approve creates orders with approved_by='Konekt Administrator' (real admin name from JWT), approved_at=valid ISO timestamp. Vendor orders created with correct vendor_id matching partner login. Vendor privacy protected (no customer_name/phone/email exposed). Admin order detail shows payer_name separate from customer_name. Customer order drawer shows real sales contact (Janeth Msuya, +255710000001, janeth.sales@konekt.demo).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_approval_flow_v140.py",
+    "/app/test_reports/pytest/pytest_results_approval_flow_v140.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_approval_flow_v140.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "Approved payment proof 8a216c50-e5f2-4e86-9202-3df950940979, created order KON-ORD-20260330081904",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All CRITICAL approval flow tests passing. LiveCommerceService.approve_payment_proof() correctly populates: approved_by='Konekt Administrator' (real admin name from JWT via admin_facade_routes.py), approved_at=valid ISO timestamp. Vendor orders created with vendor_id matching partner's login id (69b827eae21f56c57362c6b7). Vendor privacy protected - /api/vendor/orders does NOT expose customer_name, customer_phone, customer_email. Admin orders table shows separate Customer and Payer columns. Customer order drawer shows real sales contact with Call and Email buttons.",
+  "approval_flow_verification": {
+    "CRITICAL-1_approved_by_real_name": {
+      "status": "PASS",
+      "details": "Order created with approved_by='Konekt Administrator' (real admin name from JWT, NOT 'admin' or 'finance'), approved_at='2026-03-30T08:19:04.551505+00:00' (valid ISO)"
+    },
+    "CRITICAL-2_assigned_vendor_id": {
+      "status": "PASS",
+      "details": "Order has assigned_vendor_id field. Vendor_ids resolved from product catalog via LiveCommerceService."
+    },
+    "CRITICAL-3_vendor_order_vendor_id": {
+      "status": "PASS",
+      "details": "Vendor orders created with vendor_id matching partner's login id. VO-KON-ORD-20260330081615-1 has vendor_id=69b827eae21f56c57362c6b7"
+    },
+    "CRITICAL-4_vendor_sees_order": {
+      "status": "PASS",
+      "details": "Vendor at /api/vendor/orders sees 6 orders including VO-KON-ORD-20260330081615-1 with base_price=75000, status=assigned"
+    },
+    "CRITICAL-5_vendor_privacy": {
+      "status": "PASS",
+      "details": "Vendor orders do NOT contain customer_name, customer_phone, customer_email. Table columns: Date, Vendor Order No, Source Type, Base Price, Status, Priority"
+    },
+    "CRITICAL-6_admin_order_detail": {
+      "status": "PASS",
+      "details": "Admin order detail shows payer_name='Don' (from proof), customer_name='Demo Customer' (separate), approved_by='Konekt Administrator', approved_at=valid ISO"
+    },
+    "CRITICAL-7_vendor_name_resolved": {
+      "status": "PASS",
+      "details": "Admin order detail shows vendor_orders with vendor_name='John Demo' resolved from partner_users.full_name"
+    },
+    "CRITICAL-8_customer_sales_contact": {
+      "status": "PASS",
+      "details": "Customer order drawer shows real sales contact: Janeth Msuya, +255710000001, janeth.sales@konekt.demo with Call and Email buttons"
+    },
+    "SEPARATION_payer_vs_customer": {
+      "status": "PASS",
+      "details": "Admin orders table shows separate Customer and Payer columns. Example: Customer='Demo Customer', Payer='Don'"
+    }
+  },
+  "screenshots": [
+    ".screenshots/admin_orders_v140.png - Admin orders table with Customer, Payer, Approved By columns showing 'Konekt Administrator'",
+    ".screenshots/vendor_orders_v140.png - Vendor orders table with NO Customer column (privacy protected), shows VO-KON-ORD-20260330081615-1",
+    ".screenshots/customer_orders_v140.png - Customer orders list",
+    ".screenshots/customer_order_drawer_v140.png - Customer order drawer with real sales contact (Janeth Msuya, +255710000001)"
+  ]
+}

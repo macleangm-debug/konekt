@@ -224,8 +224,8 @@ async def get_order(order_id: str):
     for vo in raw_vos:
         vo = serialize_doc(vo)
         vid = vo.get("vendor_id", "")
-        vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "company_name": 1, "phone": 1, "email": 1})
-        vo["vendor_name"] = (vp or {}).get("company_name") or (vp or {}).get("name") or vid[:12]
+        vp = await db.partner_users.find_one({"partner_id": vid}, {"_id": 0, "name": 1, "full_name": 1, "company_name": 1, "phone": 1, "email": 1})
+        vo["vendor_name"] = (vp or {}).get("company_name") or (vp or {}).get("full_name") or (vp or {}).get("name") or vid[:12]
         vo["vendor_phone"] = (vp or {}).get("phone", "")
         vo["vendor_email"] = (vp or {}).get("email", "")
         vendor_orders.append(vo)
@@ -246,25 +246,22 @@ async def get_order(order_id: str):
     # Events timeline
     events = [serialize_doc(e) for e in await db.order_events.find({"order_id": oid}).sort("created_at", 1).to_list(100)]
 
-    # Payment info from invoice + proof
+    # Payment info from invoice + proof — STRICT payer separation
     payment_proof = None
     if invoice:
         payer = invoice.get("payer_name") or ""
         if not payer:
-            # Check payment_proofs collection
             proof_doc = await db.payment_proofs.find_one(
                 {"invoice_id": invoice.get("id")},
-                {"_id": 0, "payer_name": 1, "customer_name": 1},
+                {"_id": 0, "payer_name": 1},
                 sort=[("created_at", -1)]
             )
             if proof_doc:
-                payer = proof_doc.get("payer_name") or proof_doc.get("customer_name") or ""
-        if not payer:
-            payer = (invoice.get("billing") or {}).get("invoice_client_name") or invoice.get("customer_name") or "-"
+                payer = proof_doc.get("payer_name") or ""
         payment_proof = {
-            "payer_name": payer,
+            "payer_name": payer or "-",
             "approved_by": invoice.get("approved_by") or "-",
-            "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "-",
+            "approved_at": invoice.get("approved_at") or invoice.get("paid_at") or "",
             "payment_status": invoice.get("payment_status") or invoice.get("status") or "-",
         }
 
@@ -299,9 +296,9 @@ async def get_order(order_id: str):
         "vendor_name": vendor_orders[0].get("vendor_name") if vendor_orders else "-",
         "vendor_email": vendor_orders[0].get("vendor_email") if vendor_orders else "",
         "vendor_phone": vendor_orders[0].get("vendor_phone") if vendor_orders else "",
-        "payer_name": (payment_proof or {}).get("payer_name") or order.get("customer_name") or "-",
-        "approved_at": (payment_proof or {}).get("approved_at") or "",
-        "approved_by": (payment_proof or {}).get("approved_by") or "",
+        "payer_name": (payment_proof or {}).get("payer_name") or order.get("payer_name") or "-",
+        "approved_at": (payment_proof or {}).get("approved_at") or order.get("approved_at") or "",
+        "approved_by": (payment_proof or {}).get("approved_by") or order.get("approved_by") or "",
     }
 
 

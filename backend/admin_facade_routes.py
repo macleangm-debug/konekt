@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 from uuid import uuid4
+import os
 
 from fastapi import APIRouter, Query, Request, HTTPException
 
@@ -79,10 +80,24 @@ async def payment_detail(payment_proof_id: str, request: Request):
 
 @router.post("/payments/{payment_proof_id}/approve")
 async def approve_payment(payment_proof_id: str, payload: dict, request: Request):
-    service = LiveCommerceService(request.app.mongodb)
+    db = request.app.mongodb
+    # Resolve real admin identity from Authorization header
+    approver_name = payload.get("approver_role", "admin")
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.startswith("Bearer "):
+        try:
+            import jwt as pyjwt
+            token_payload = pyjwt.decode(auth_header.split(" ", 1)[1], os.getenv("JWT_SECRET", "konekt-secret"), algorithms=["HS256"])
+            admin_user = await db.users.find_one({"id": token_payload.get("user_id")}, {"_id": 0, "full_name": 1, "email": 1, "id": 1})
+            if admin_user:
+                approver_name = admin_user.get("full_name") or admin_user.get("email") or admin_user.get("id") or approver_name
+        except Exception:
+            pass
+
+    service = LiveCommerceService(db)
     result = await service.approve_payment_proof(
         payment_proof_id=payment_proof_id,
-        approver_role=payload.get("approver_role", "admin"),
+        approver_role=approver_name,
         assigned_sales_id=payload.get("assigned_sales_id"),
         assigned_sales_name=payload.get("assigned_sales_name"),
     )
