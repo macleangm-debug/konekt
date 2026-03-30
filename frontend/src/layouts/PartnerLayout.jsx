@@ -102,7 +102,6 @@ export default function PartnerLayout() {
           <div className="flex-1">
             <div className="text-xs text-slate-500">{partner?.name || "Loading..."}</div>
           </div>
-          <NotificationBell tokenKey="partner_token" defaultRedirect="/partner" />
         </div>
 
         <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">

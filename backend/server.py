@@ -2444,6 +2444,24 @@ app.include_router(sales_delivery_override_router)
 from margin_engine_routes import router as margin_engine_router
 app.include_router(margin_engine_router)
 
+# Vendor Capability Governance (admin manages vendor product/service/promo approvals)
+from vendor_capability_governance_routes import router as vendor_capability_governance_router
+app.include_router(vendor_capability_governance_router)
+
+# Payment Release Policy (controls when vendor orders become visible)
+from payment_release_policy_routes import router as payment_release_policy_router
+app.include_router(payment_release_policy_router)
+
+# Sales Service Workflow (customer invite, service quotes, quote→invoice)
+from sales_service_workflow_routes import router as sales_service_workflow_router
+app.include_router(sales_service_workflow_router)
+
+# Account Activation (public route for invite-based password set)
+from account_activation_routes import router as account_activation_router
+app.include_router(account_activation_router)
+
+
+
 
 # Payment Timeline
 from payment_timeline_routes import router as payment_timeline_router
@@ -2705,9 +2723,17 @@ async def startup_event():
     app.mongodb = db
     # Initialize automation engine
     automation = init_automation_engine(db, EmailService)
-    # Start automation engine in background (uncomment for production)
-    # await automation.start()
     logger.info("Sales automation engine initialized (manual mode)")
+
+    # Seed default 20% product margin if none exists
+    existing_global = await db.margin_rules.find_one({"scope": "global", "active": True})
+    if not existing_global:
+        from services.default_margin_seed import DEFAULT_PRODUCT_MARGIN_RULE
+        from uuid import uuid4
+        from datetime import datetime, timezone
+        rule = {**DEFAULT_PRODUCT_MARGIN_RULE, "id": str(uuid4()), "created_at": datetime.now(timezone.utc).isoformat(), "updated_at": datetime.now(timezone.utc).isoformat()}
+        await db.margin_rules.insert_one(rule)
+        logger.info("Seeded default 20%% product margin rule")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

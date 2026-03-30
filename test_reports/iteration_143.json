@@ -1,0 +1,92 @@
+{
+  "summary": "Iteration 143 - Konekt B2B Vendor Release + Margin + Sales Service Workflow Pack. All 21 features tested and verified: Vendor capability governance (CRUD + can-create check), Payment release policies (CRUD + check-release with full/partial/manual), Vendor orders visibility filter (excludes unreleased work, no selling_price/margin), Sales service workflow (customer invite, service quotes with 20% auto-margin, quote→invoice), Account activation (token validation + password set + login), Default 20% margin rule, Partner notification bell in top-right topbar.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/auth/activate",
+        "issue": "Fixed: Account activation was not setting is_active=True, causing login to fail. Added is_active=True to activation update.",
+        "priority": "FIXED"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vendor_release_margin_sales_workflow_v143.py",
+    "/app/test_reports/pytest/pytest_results_vendor_release_margin_v143.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_vendor_release_margin_sales_workflow_v143.py",
+    "/app/backend/account_activation_routes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123! (endpoint: /api/partner-auth/login)",
+    "sales": "neema.sales@konekt.demo / Sales123!",
+    "test_activated_customer": "testcust@example.com / TestPass123!"
+  },
+  "seed_data_creation": "None - used existing test data. vendor-demo-001 profile exists with products=approved, services=pending. Global payment release policy exists (full_upfront, after_full_payment). Global 20% margin rule exists.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All features from vendor_release_margin_sales_workflow_pack verified. Key endpoints: /api/admin/vendor-capabilities (CRUD + can-create), /api/admin/payment-release-policies (CRUD + check-release), /api/vendor/orders (excludes unreleased work), /api/sales/customers/create-with-invite, /api/sales/service-quotes (auto 20% margin), /api/auth/activate/validate + /api/auth/activate. Partner notification bell is in PartnerAccountTopbar (top-right), not sidebar. Email sending is MOCKED (logged to email_logs collection).",
+  "feature_verification_results": {
+    "F1_vendor_capability_governance": {
+      "status": "PASS",
+      "details": "POST /api/admin/vendor-capabilities creates vendor profile with capability statuses. GET /{id}/can-create?listing_type=product returns allowed:true for approved, allowed:false for pending."
+    },
+    "F2_payment_release_policies": {
+      "status": "PASS",
+      "details": "POST /api/admin/payment-release-policies creates release policy. POST /check-release returns can_release:true for full payment, can_release:false for partial, can_release:true for manual_release:true."
+    },
+    "F3_vendor_orders_visibility": {
+      "status": "PASS",
+      "details": "GET /api/vendor/orders excludes unreleased statuses (pending_payment, under_review, etc). Vendor order items only show vendor_price, not selling_price or margin."
+    },
+    "F4_sales_customer_invite": {
+      "status": "PASS",
+      "details": "POST /api/sales/customers/create-with-invite creates customer + invite token. Returns invite_url for activation."
+    },
+    "F5_service_quote_auto_margin": {
+      "status": "PASS",
+      "details": "POST /api/sales/service-quotes with vendor_cost=1000 returns selling_price=1200 (20% margin auto-applied). margin_applied_automatically=true."
+    },
+    "F6_quote_to_invoice": {
+      "status": "PASS",
+      "details": "POST /api/sales/service-quotes/{id}/accept creates invoice automatically with payment_terms (advance + final phases)."
+    },
+    "F7_account_activation": {
+      "status": "PASS",
+      "details": "GET /api/auth/activate/validate validates token. POST /api/auth/activate sets password and activates account. Activated customer can login."
+    },
+    "F8_default_margin_rule": {
+      "status": "PASS",
+      "details": "Global 20% margin rule exists in margin_rules collection (scope=global, method=percentage, value=20, active=true)."
+    },
+    "F9_partner_notification_bell": {
+      "status": "PASS",
+      "details": "Notification bell is in PartnerAccountTopbar (top-right), not in sidebar. Verified via Playwright test."
+    },
+    "F10_activation_page_ui": {
+      "status": "PASS",
+      "details": "Account activation page at /activate-account renders correctly. Shows error for invalid token, has password fields and submit button."
+    }
+  },
+  "screenshots": [
+    ".screenshots/activation_page_v143.png",
+    ".screenshots/partner_topbar_bell_v143.png"
+  ],
+  "mocked_apis": {
+    "email_sending": "Email sending is MOCKED - logged to email_logs collection, not actually dispatched. Requires Resend integration for production."
+  }
+}

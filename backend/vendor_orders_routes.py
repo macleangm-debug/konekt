@@ -45,8 +45,8 @@ async def list_vendor_orders(
     """
     List vendor orders for the logged-in vendor/partner.
     Reads ONLY from vendor_orders collection.
-    Enriches each order with customer name, sales contact, and timeline.
-    Does NOT expose vendor identity on customer views.
+    Vendor sees ONLY released work (no pending-payment / unreleased orders).
+    Vendor sees ONLY their VAT-inclusive base cost, never Konekt public price or margin.
     """
     user = await get_partner_user_from_header(authorization)
     partner_id = user["partner_id"]
@@ -55,11 +55,22 @@ async def list_vendor_orders(
     if status:
         query["status"] = status
 
+    # Vendor visibility: exclude unreleased work
+    # Vendor should NOT see: pending_payment, under_review, awaiting_payment
+    excluded_statuses = {"pending_payment", "pending_payment_confirmation", "under_review", "awaiting_payment", "draft", "quote_pending"}
+    if not status:
+        query["status"] = {"$nin": list(excluded_statuses)}
+
     raw = await db.vendor_orders.find(query).sort("created_at", -1).to_list(length=500)
     rows = []
 
     for doc in raw:
         row = _clean(doc)
+
+        # Additional release check: if vendor_order has release_status field
+        if row.get("release_status") == "unreleased":
+            continue
+
         order_id = row.get("order_id")
 
         # Enrich from parent order
@@ -138,6 +149,18 @@ async def list_vendor_orders(
         if not base_price:
             base_price = row.get("vendor_total") or row.get("total_amount") or row.get("total") or 0
 
+        # Strip item-level Konekt pricing — vendor sees only their cost
+        vendor_safe_items = []
+        for item in row.get("items", []):
+            vendor_safe_items.append({
+                "name": item.get("name", ""),
+                "description": item.get("description", ""),
+                "quantity": item.get("quantity", 1),
+                "vendor_price": item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or item.get("price") or 0,
+                "specifications": item.get("specifications", ""),
+                "sku": item.get("sku", ""),
+            })
+
         rows.append({
             "id": row.get("id"),
             "vendor_order_no": vendor_order_no,
@@ -153,7 +176,7 @@ async def list_vendor_orders(
             "sales_name": sales_name,
             "sales_phone": sales_phone,
             "sales_email": sales_email,
-            "items": row.get("items", []),
+            "items": vendor_safe_items,
             "timeline": timeline,
         })
 

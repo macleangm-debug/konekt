@@ -355,6 +355,7 @@ import ClientProfilePage from "@/pages/customer/ClientProfilePage";
 
 // Auth Pages
 import StaffLoginPage from "@/pages/auth/StaffLoginPage";
+import ActivateAccountPage from "@/pages/auth/ActivateAccountPage";
 import LoginChooserPage from "@/pages/auth/LoginChooserPage";
 import CustomerLoginPage from "@/pages/auth/CustomerLoginPage";
 import AffiliateRegisterPage from "@/pages/auth/AffiliateRegisterPage";
@@ -486,6 +487,9 @@ function App() {
             <StaffLoginPage />
           </AdminAuthProvider>
         } />
+
+        {/* Account Activation (public, no auth) */}
+        <Route path="/activate-account" element={<ActivateAccountPage />} />
         
         {/* Admin Routes — redirect /admin/login to unified /login */}
         <Route path="/admin/login" element={<Navigate to="/login" replace />} />
