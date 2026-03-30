@@ -8,74 +8,57 @@ Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Cust
 - **Backend**: FastAPI (Python 3.11) with Motor (async MongoDB)
 - **Database**: MongoDB (Konekt DB)
 - **Payments**: Stripe (sandbox), KwikPay (pending keys)
-- **Email**: Resend (pending API key)
-- **Messaging**: Twilio WhatsApp (pending API keys)
 
-## Active Approval Path (CRITICAL)
+## Active Approval Path (CRITICAL — DO NOT MODIFY WRONG FILE)
 **Frontend**: PaymentsQueuePage.jsx → `adminApi.approvePayment()` → `POST /api/admin/payments/{proof_id}/approve`
-**Backend**: admin_facade_routes.py → `LiveCommerceService.approve_payment_proof()` in `/app/backend/core/live_commerce_service.py`
-
-This is the ONLY active approval path. Do NOT modify `admin_flow_fixes_routes.py` for approval logic — it's a secondary/backup path.
+**Backend**: `admin_facade_routes.py` → resolves admin name from JWT → calls `LiveCommerceService.approve_payment_proof()` in `/app/backend/core/live_commerce_service.py`
 
 ### Fields written at approval:
-- **Invoice**: `approved_by`, `approved_at`, `status=paid`, `payment_status=approved`
-- **Order**: `approved_by`, `approved_at`, `assigned_sales_id`, `assigned_sales_name`, `assigned_vendor_id`, `payer_name` (strict)
-- **Vendor Order**: `vendor_id`, `order_id`, `vendor_order_no`, `base_price`, `status=assigned`
+- **Invoice**: `approved_by=<real admin name>`, `approved_at=<ISO timestamp>`
+- **Order**: `approved_by`, `approved_at`, `assigned_sales_id`, `assigned_sales_name`, `assigned_vendor_id`, `payer_name` (strict from proof only)
+- **Vendor Order**: `vendor_id=<real partner_id>`, `vendor_order_no`, `base_price`, `status=assigned`
 - **Sales Assignment**: `sales_owner_id`, `sales_owner_name`, `status=active_followup`
 - **Notification**: `title=Payment Approved`, `target_url=/account/invoices`
 
-### Payer/Customer Separation Rule
-- `customer_name` = registered customer/business name (from user record or invoice)
-- `payer_name` = ONLY from `proof.payer_name` or `submission.payer_name` or `invoice.payer_name`
-- NEVER fall back from customer_name to payer_name or vice versa
+### Vendor ID Resolution Chain (at approval):
+1. Product catalog: `product.vendor_id` → `product.owner_vendor_id` → `product.uploaded_by_vendor_id` → `product.partner_id`
+2. Fall back to `item.vendor_id` from invoice
+3. Map to real `partner_users.partner_id` via DB lookup
 
-## Completed Features
+### Payer/Customer Separation Rule (STRICT)
+- `customer_name` = from user record or invoice customer fields ONLY
+- `payer_name` = from `proof.payer_name` or `submission.payer_name` or `invoice.payer_name` ONLY
+- NEVER: `proof.customer_name`, `billing.invoice_client_name`, `order.customer_name` as payer
 
-### Phase 1-3: Core Platform + Stripe (Done)
-- Unified /login, canonical routing, product/invoice/order system
+## Completed Features (All Verified)
+- Unified /login with role-based redirect
+- Canonical routing: /account/*, /admin/*, /partner/*
 - Stripe sandbox checkout, webhook, status polling
-
-### Phase 4-5: Surgical Fixes (Done)
-- Strict payer/customer separation across all routes
-- Vendor privacy (no customer identity)
-- Dashboard link cleanup (/dashboard/* → /account/*)
+- Strict payer/customer separation across ALL routes
+- Real admin name in approved_by (JWT-resolved)
+- Product-based vendor_id resolution matching real partners
+- Vendor privacy (no customer identity in API/UI)
+- Customer notification on approval
 - Checkout payer name prefill
+- Dashboard link cleanup
 
-### Phase 6: Active Approval Flow Fix (Done — March 29, 2026)
-- Fixed LiveCommerceService.approve_payment_proof() — the ACTUAL active path
-- All fields now persist: approved_by, approved_at, vendor_order, sales_assignment, notification
-- Existing orders get updated with assignments when re-approved
-- Customer name resolved from user record when missing on invoice
-
-## Acceptance Gates — ALL GREEN (Iteration 139)
-| Gate | Status |
-|------|--------|
-| Order: approved_by populated | ✅ admin |
-| Order: approved_at valid ISO | ✅ 2026-03-29T15:36:48 |
-| Order: assigned_sales_id | ✅ sales-demo-001 |
-| Order: assigned_vendor_id | ✅ from items |
-| Order: payer_name strict | ✅ from proof only |
-| Invoice: approved_by/at | ✅ |
-| Vendor order created | ✅ with vendor_order_no, base_price |
-| Sales assignment created | ✅ |
-| Customer notification | ✅ Payment Approved |
-| Admin UI columns | ✅ Payer, Approved By |
-| Vendor privacy | ✅ no customer identity |
-| Customer sales contact | ✅ real name/phone/email |
-
-## Key API Endpoints
-- `POST /api/admin/payments/{id}/approve` — **ACTIVE** approval path
-- `GET /api/admin/orders-ops` — Admin enriched orders
-- `GET /api/admin/invoices/list` — Admin enriched invoices
-- `GET /api/vendor/orders` — Vendor orders (privacy-compliant)
-- `GET /api/customer/invoices` — Customer invoices
-- `GET /api/customer/orders` — Customer orders with sales contact
-- `POST /api/payments/stripe/checkout/invoice` — Stripe checkout
+## Acceptance Gates — ALL GREEN (Iteration 140)
+| Gate | Status | Value |
+|------|--------|-------|
+| approved_by real name | ✅ | Konekt Administrator |
+| approved_at valid ISO | ✅ | 2026-03-30T08:19:04 |
+| assigned_vendor_id | ✅ | 69b827eae21f56c57362c6b7 |
+| vendor_order created | ✅ | VO-KON-ORD-* with base_price |
+| vendor sees order | ✅ | 6 orders in /partner/orders |
+| vendor privacy | ✅ | No customer identity |
+| payer ≠ customer | ✅ | payer=Don, customer=Demo Customer |
+| admin order detail | ✅ | All fields populated |
+| customer sales contact | ✅ | Janeth Msuya / +255710000001 |
 
 ## Upcoming Tasks (P1)
 - End-to-end Stripe payment test with real test cards
 - Resend email integration (requires user API key)
-- Admin data entry: logo, TIN, BRN, bank account details
+- Admin data entry: logo, TIN, BRN, bank details
 
 ## Backlog (P2)
 - Twilio WhatsApp (blocked on API keys)
