@@ -139,6 +139,63 @@ async def create_guest_order(
         discount_amount=payload.campaign_discount,
     )
 
+    # Guest checkout → account activation flow
+    # If guest email doesn't have an active account, create invited user + link
+    invite_info = None
+    guest_email = (payload.customer_email or "").strip().lower()
+    if guest_email:
+        existing_user = await db.users.find_one({"email": guest_email, "account_status": "active"})
+        if not existing_user:
+            from services.guest_checkout_activation_service import build_guest_checkout_account_invite, build_guest_activation_url
+            from uuid import uuid4 as _uuid4
+
+            # Check if invited user already exists
+            invited_user = await db.users.find_one({"email": guest_email})
+            if not invited_user:
+                customer_id = str(_uuid4())
+                invited_user = {
+                    "id": customer_id,
+                    "email": guest_email,
+                    "full_name": payload.customer_name or "",
+                    "phone": payload.customer_phone or "",
+                    "role": "customer",
+                    "account_status": "invited",
+                    "created_at": now.isoformat() if hasattr(now, 'isoformat') else str(now),
+                    "updated_at": now.isoformat() if hasattr(now, 'isoformat') else str(now),
+                }
+                await db.users.insert_one(invited_user)
+            else:
+                customer_id = invited_user.get("id", str(invited_user.get("_id", "")))
+
+            checkout_data = {"email": guest_email, "id": order_id, "request_id": None}
+            user_ref = {"id": customer_id}
+            link = build_guest_checkout_account_invite(checkout_data, user_ref)
+            link["id"] = str(_uuid4())
+            await db.guest_checkout_account_links.insert_one(link)
+
+            # Also create invite in customer_invites for the activation route
+            await db.customer_invites.insert_one({
+                "id": str(_uuid4()),
+                "customer_user_id": customer_id,
+                "customer_email": guest_email,
+                "customer_name": payload.customer_name or "",
+                "created_by_sales_user_id": None,
+                "invite_token": link["invite_token"],
+                "status": "pending",
+                "expires_at": link.get("expires_at"),
+                "accepted_at": None,
+                "created_at": link["created_at"],
+            })
+
+            import os
+            base_url = os.environ.get("FRONTEND_URL", os.environ.get("REACT_APP_BACKEND_URL", ""))
+            invite_url = build_guest_activation_url(base_url, link["invite_token"])
+            invite_info = {
+                "invite_token": link["invite_token"],
+                "invite_url": invite_url,
+                "customer_id": customer_id,
+            }
+
     return {
         "id": order_id,
         "order_id": order_id,
@@ -147,6 +204,7 @@ async def create_guest_order(
         "message": "Order created successfully",
         "affiliate_attributed": bool(doc.get("affiliate_code") or doc.get("affiliate_email")),
         "campaign_applied": bool(doc.get("campaign_id")),
+        "account_invite": invite_info,
     }
 
 

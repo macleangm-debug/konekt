@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Smartphone, Building2, CreditCard, Shield } from "lucide-react";
 import { paymentApi } from "../lib/paymentApi";
+import GuestCheckoutActivationBanner from "../components/requests/GuestCheckoutActivationBanner";
 
 export default function PaymentSelectionPage() {
   const [params] = useSearchParams();
@@ -13,6 +14,7 @@ export default function PaymentSelectionPage() {
   const email = params.get("email") || "";
   const amount = params.get("amount") || "";
   const customerName = location.state?.customerName || "";
+  const accountInvite = location.state?.accountInvite || null;
   
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
@@ -83,6 +85,13 @@ export default function PaymentSelectionPage() {
             </div>
           )}
         </div>
+
+        {/* Account Activation Banner (shown for guest checkout) */}
+        {accountInvite && (
+          <div className="mb-6">
+            <GuestCheckoutActivationBanner accountInvite={accountInvite} customerName={customerName} />
+          </div>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Bank Transfer - Primary Active Method */}

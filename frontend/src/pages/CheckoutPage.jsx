@@ -174,16 +174,18 @@ export default function CheckoutPage() {
       const res = await api.post("/api/guest/orders", payload);
       const orderId = res.data.id || res.data.order_id;
       const orderNumber = res.data.order_number;
+      const accountInvite = res.data.account_invite;
       
       clearCart();
       
-      // Redirect to payment selection
+      // Redirect to payment selection with account invite info
       navigate(
         `/payment/select?target_type=order&target_id=${orderId}&email=${encodeURIComponent(form.email)}&amount=${grandTotal}`,
         {
           state: {
             customerName: form.full_name,
             orderNumber: orderNumber,
+            accountInvite: accountInvite,
           },
         }
       );

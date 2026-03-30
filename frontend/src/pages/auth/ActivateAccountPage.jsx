@@ -25,16 +25,24 @@ export default function ActivateAccountPage() {
       return;
     }
     fetch(`${API}/api/auth/activate/validate?token=${encodeURIComponent(token)}`)
-      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
-      .then(({ ok, data }) => {
-        if (ok && data.valid) {
-          setTokenData(data);
-        } else {
-          setError(data.detail || "Invalid or expired token.");
+      .then(async (r) => {
+        try {
+          const data = await r.json();
+          if (r.ok && data.valid) {
+            setTokenData(data);
+          } else {
+            setError(data.detail || "Invalid or expired token.");
+          }
+        } catch (parseError) {
+          setError("Invalid or expired token.");
         }
         setValidating(false);
       })
-      .catch(() => { setError("Network error."); setValidating(false); });
+      .catch((err) => { 
+        console.error("Activation validation error:", err);
+        setError("Network error. Please try again."); 
+        setValidating(false); 
+      });
   }, [token]);
 
   const handleActivate = async (e) => {

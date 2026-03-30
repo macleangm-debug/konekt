@@ -2461,6 +2461,15 @@ from account_activation_routes import router as account_activation_router
 app.include_router(account_activation_router)
 
 
+# Requests Module (public + authenticated requests, sales/admin management)
+from requests_module_routes import router as requests_module_router
+app.include_router(requests_module_router)
+
+# Sample Flow (promo sample → quote → approve → actual order)
+from sample_flow_routes import router as sample_flow_router
+app.include_router(sample_flow_router)
+
+
 
 
 # Payment Timeline
