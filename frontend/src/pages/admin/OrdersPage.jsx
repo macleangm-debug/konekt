@@ -97,13 +97,9 @@ export default function OrdersPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Order #</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payment</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fulfillment</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Assigned Sales</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Assigned Vendor</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden lg:table-cell">Approved By</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -113,13 +109,9 @@ export default function OrdersPage() {
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
                     <td className="px-4 py-3 text-slate-700">{row.customer_name || "-"}</td>
                     <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{row.payer_name || "-"}</td>
-                    <td className="px-4 py-3 text-slate-600">{row.source_type || row.type || "-"}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
                     <td className="px-4 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{row.sales_owner || row.sales_name || "Unassigned"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.vendor_name || row.vendor_count || "-"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden lg:table-cell">{row.approved_by || "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -145,6 +137,7 @@ export default function OrdersPage() {
                 <div><strong>Linked Invoice:</strong> {detail.invoice?.invoice_number || "-"}</div>
                 {detail.quote && <div><strong>Linked Quote:</strong> {detail.quote.quote_number || "-"}</div>}
                 <div><strong>Amount:</strong> <span className="font-semibold text-[#20364D]">{money(detail.order?.total_amount || detail.order?.total)}</span></div>
+                <div><strong>Approved By:</strong> {detail.payment_proof?.approved_by || detail.order?.approved_by || "-"}</div>
               </div>
             </section>
 
@@ -236,7 +229,7 @@ export default function OrdersPage() {
             <section className="pt-4 border-t border-slate-200 space-y-3" data-testid="drawer-admin-actions">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Actions</p>
               <div className="grid grid-cols-2 gap-2">
-                {["assigned", "in_progress", "quality_check", "ready", "completed", "cancelled"].map((s) => (
+                {["assigned", "in_progress", "quality_check", "ready_for_pickup", "picked_up", "in_transit", "delivered", "completed", "cancelled"].map((s) => (
                   <button key={s} onClick={() => handleStatusUpdate(s)} disabled={actionLoading || detail.order?.status === s}
                     className={`rounded-xl border px-3 py-2.5 text-xs font-semibold capitalize transition-colors disabled:opacity-40 ${
                       detail.order?.status === s ? "bg-[#20364D] text-white border-[#20364D]" : "border-slate-200 text-slate-600 hover:bg-slate-50"

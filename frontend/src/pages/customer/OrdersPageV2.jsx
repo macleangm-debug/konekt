@@ -20,6 +20,8 @@ function fulfillMeta(s, order) {
       "In Progress": { cls: "bg-amber-100 text-amber-700" },
       "Quality Check": { cls: "bg-purple-100 text-purple-700" },
       "Ready": { cls: "bg-teal-100 text-teal-700" },
+      "In Transit": { cls: "bg-indigo-100 text-indigo-700" },
+      "Delivered": { cls: "bg-green-100 text-green-700" },
       "Completed": { cls: "bg-emerald-100 text-emerald-700" },
       "Requested": { cls: "bg-slate-100 text-slate-600" },
       "Scheduled": { cls: "bg-blue-100 text-blue-700" },
@@ -31,8 +33,10 @@ function fulfillMeta(s, order) {
     return { label, cls: (map[label] || { cls: "bg-blue-100 text-blue-700" }).cls };
   }
   const st = (s || "processing").toLowerCase();
-  if (st === "completed" || st === "delivered") return { label: "Completed", cls: "bg-emerald-100 text-emerald-700" };
-  if (st === "ready_to_fulfill" || st === "ready" || st === "shipped") return { label: "Ready", cls: "bg-blue-100 text-blue-700" };
+  if (st === "completed") return { label: "Completed", cls: "bg-emerald-100 text-emerald-700" };
+  if (st === "delivered") return { label: "Delivered", cls: "bg-green-100 text-green-700" };
+  if (st === "in_transit") return { label: "In Transit", cls: "bg-indigo-100 text-indigo-700" };
+  if (st === "picked_up" || st === "ready_for_pickup" || st === "ready_to_fulfill" || st === "ready" || st === "shipped") return { label: "Ready", cls: "bg-teal-100 text-teal-700" };
   if (st === "in_progress") return { label: "In Progress", cls: "bg-amber-100 text-amber-700" };
   if (st === "cancelled") return { label: "Cancelled", cls: "bg-red-100 text-red-700" };
   if (st === "paid") return { label: "Confirmed", cls: "bg-blue-100 text-blue-700" };

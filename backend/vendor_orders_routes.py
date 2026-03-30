@@ -187,8 +187,12 @@ async def update_vendor_order_status(
 ):
     """
     Vendor updates vendor order status.
-    Allowed transitions: assigned → accepted → in_progress → fulfilled | issue_reported
+    Vendor controls: assigned → work_scheduled → in_progress → ready_for_pickup
+    Sales controls logistics after ready_for_pickup (picked_up → in_transit → delivered → completed)
     """
+    from services.product_delivery_status_workflow import VENDOR_INTERNAL_STATUSES
+    from services.sales_delivery_override_service import can_vendor_update_status
+
     user = await get_partner_user_from_header(authorization)
     partner_id = user["partner_id"]
 
@@ -200,9 +204,14 @@ async def update_vendor_order_status(
         raise HTTPException(status_code=404, detail="Vendor order not found")
 
     new_status = payload.get("status")
-    allowed = {"assigned", "accepted", "work_scheduled", "in_progress", "quality_check", "ready", "completed", "issue_reported", "processing"}
-    if new_status not in allowed:
-        raise HTTPException(status_code=400, detail=f"Invalid status. Allowed: {allowed}")
+    # Vendor can only set statuses up to ready_for_pickup
+    vendor_allowed = set(VENDOR_INTERNAL_STATUSES) | {"accepted", "quality_check", "ready", "issue_reported", "processing", "ready_for_pickup"}
+    if new_status not in vendor_allowed:
+        raise HTTPException(status_code=400, detail=f"Invalid status for vendor. Allowed: {sorted(vendor_allowed)}")
+
+    # Map 'ready' to 'ready_for_pickup' for backward compat
+    if new_status == "ready":
+        new_status = "ready_for_pickup"
 
     now = datetime.now(timezone.utc).isoformat()
     update = {"status": new_status, "updated_at": now}
@@ -213,9 +222,10 @@ async def update_vendor_order_status(
     filter_q = {"id": doc.get("id")} if doc.get("id") else {"_id": doc["_id"]}
     await db.vendor_orders.update_one(filter_q, {"$set": update})
 
-    # Log event
+    # Also update parent order status
     order_id = doc.get("order_id")
     if order_id:
+        await db.orders.update_one({"id": order_id}, {"$set": {"status": new_status, "current_status": new_status, "updated_at": now}})
         await db.order_events.insert_one({
             "id": str(ObjectId()),
             "order_id": order_id,

@@ -8,9 +8,8 @@ const STATUS_FLOW = {
   assigned: { next: "work_scheduled", label: "Schedule Work", icon: Play, color: "bg-cyan-600 hover:bg-cyan-700" },
   work_scheduled: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
   accepted: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
-  in_progress: { next: "ready", label: "Mark Ready", icon: CheckCircle, color: "bg-teal-600 hover:bg-teal-700" },
+  in_progress: { next: "ready_for_pickup", label: "Mark Ready for Pickup", icon: CheckCircle, color: "bg-teal-600 hover:bg-teal-700" },
   processing: { next: "in_progress", label: "Start Work", icon: Play, color: "bg-amber-600 hover:bg-amber-700" },
-  ready: { next: "completed", label: "Mark Completed", icon: CheckCircle, color: "bg-green-600 hover:bg-green-700" },
 };
 
 function StatusBadgeDrawer({ status }) {
@@ -24,6 +23,10 @@ function StatusBadgeDrawer({ status }) {
     processing: "bg-yellow-100 text-yellow-700",
     quality_check: "bg-purple-100 text-purple-700",
     ready: "bg-teal-100 text-teal-700",
+    ready_for_pickup: "bg-teal-100 text-teal-700",
+    picked_up: "bg-blue-100 text-blue-700",
+    in_transit: "bg-indigo-100 text-indigo-700",
+    delivered: "bg-green-100 text-green-700",
     fulfilled: "bg-green-100 text-green-700",
     completed: "bg-emerald-100 text-emerald-700",
     issue_reported: "bg-red-100 text-red-700",
@@ -44,7 +47,9 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
 
   const currentStatus = order?.fulfillment_state || order?.status || "processing";
   const nextAction = STATUS_FLOW[currentStatus];
-  const isTerminal = ["completed", "issue_reported"].includes(currentStatus);
+  // Vendor terminal states: ready_for_pickup (handed off to sales), completed, issue_reported
+  const isTerminal = ["completed", "issue_reported", "ready_for_pickup", "picked_up", "in_transit", "delivered"].includes(currentStatus);
+  const isHandedToSales = ["ready_for_pickup", "picked_up", "in_transit", "delivered", "completed"].includes(currentStatus);
 
   const handleStatusUpdate = async (newStatus) => {
     setUpdating(true);
@@ -249,7 +254,9 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
           {isTerminal && (
             <span className="flex items-center gap-2 text-sm font-medium text-green-600" data-testid="terminal-status-label">
               <CheckCircle className="w-4 h-4" />
-              {currentStatus === "issue_reported" ? "Issue Reported" : "Order Completed"}
+              {currentStatus === "issue_reported" ? "Issue Reported" 
+                : isHandedToSales ? "Handed to Konekt Sales for Logistics" 
+                : "Order Completed"}
             </span>
           )}
         </div>

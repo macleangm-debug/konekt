@@ -298,16 +298,40 @@ class LiveCommerceService:
         for proof in rows:
             payment = await self.db.payments.find_one({"id": proof.get("payment_id")})
             invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
-            profile = await self.db.customer_profiles.find_one({"customer_id": proof.get("customer_id")})
+
+            # --- Strict party separation (same logic as orders) ---
+            # customer_name = registered business/customer name (NEVER payer_name)
+            customer_name = ""
+            cust_id = proof.get("customer_id") or (invoice or {}).get("customer_id") or (invoice or {}).get("user_id")
+            if cust_id:
+                cust_user = await self.db.users.find_one(
+                    {"$or": [{"id": cust_id}, {"email": proof.get("customer_email")}]},
+                    {"_id": 0, "full_name": 1, "email": 1}
+                )
+                if cust_user:
+                    customer_name = cust_user.get("full_name") or cust_user.get("email") or ""
+            if not customer_name:
+                customer_name = (invoice or {}).get("customer_name") or ""
+            if not customer_name:
+                customer_name = proof.get("customer_email") or (invoice or {}).get("customer_email") or "-"
+
+            # payer_name = proof submitter name (NEVER customer_name)
+            payer_name = proof.get("payer_name") or ""
+            if not payer_name:
+                submission = await self.db.payment_proof_submissions.find_one(
+                    {"id": proof.get("id")}, {"_id": 0, "payer_name": 1}
+                )
+                payer_name = (submission or {}).get("payer_name") or "-"
+
             item = {
                 "payment_proof_id": proof.get("id"),
                 "payment_id": proof.get("payment_id"),
                 "invoice_id": proof.get("invoice_id"),
                 "invoice_number": (invoice or {}).get("invoice_number", ""),
                 "customer_id": proof.get("customer_id"),
-                "customer_name": proof.get("payer_name") or (profile or {}).get("contact_name") or (invoice or {}).get("customer_name", ""),
+                "customer_name": customer_name,
                 "customer_email": proof.get("customer_email") or (invoice or {}).get("customer_email", ""),
-                "payer_name": proof.get("payer_name", ""),
+                "payer_name": payer_name,
                 "amount_paid": proof.get("amount_paid", 0),
                 "amount_due": (payment or {}).get("amount_due", 0),
                 "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0),
@@ -587,7 +611,7 @@ class LiveCommerceService:
                 except Exception:
                     pass
 
-            # Create customer notification — "Payment Approved"
+            # Create customer notification — "Payment Approved" → opens Orders
             customer_id = invoice.get("customer_id")
             if customer_id:
                 actual_user = await self.db.users.find_one(
@@ -601,9 +625,10 @@ class LiveCommerceService:
                     "role": "customer",
                     "event_type": "payment_approved",
                     "title": "Payment Approved",
-                    "message": f"Your payment for invoice {invoice.get('invoice_number', '')} has been approved. View your invoice, then track your order.",
-                    "target_url": "/account/invoices",
-                    "target_ref": invoice.get("invoice_number") or invoice.get("id"),
+                    "message": f"Your payment for invoice {invoice.get('invoice_number', '')} has been approved. You can now track your order progress.",
+                    "target_url": "/account/orders",
+                    "target_ref": (order_doc or {}).get("order_number") or invoice.get("invoice_number") or invoice.get("id"),
+                    "cta_label": "Track Order",
                     "read": False,
                     "created_at": now,
                 })
@@ -633,10 +658,34 @@ class LiveCommerceService:
             {"id": proof.get("payment_id")},
             {"$set": {"status": "proof_rejected", "review_status": "rejected", "updated_at": now}},
         )
+        invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
         await self.db.invoices.update_one(
             {"id": proof.get("invoice_id")},
             {"$set": {"status": "pending_payment", "payment_status": "pending", "updated_at": now}},
         )
+
+        # Create customer notification — "Payment Rejected" → opens Invoices
+        customer_id = proof.get("customer_id") or (invoice or {}).get("customer_id")
+        if customer_id:
+            actual_user = await self.db.users.find_one(
+                {"$or": [{"id": customer_id}, {"email": proof.get("customer_email")}]},
+                {"_id": 0, "id": 1}
+            )
+            notif_user_id = (actual_user or {}).get("id") or customer_id
+            await self.db.notifications.insert_one({
+                "id": str(uuid4()),
+                "user_id": notif_user_id,
+                "role": "customer",
+                "event_type": "payment_rejected",
+                "title": "Payment Rejected",
+                "message": f"Your payment submission for invoice {(invoice or {}).get('invoice_number', '')} was rejected. Reason: {reason or 'Not specified'}. Please review and resubmit.",
+                "target_url": "/account/invoices",
+                "target_ref": (invoice or {}).get("invoice_number") or (invoice or {}).get("id"),
+                "cta_label": "Open Invoice",
+                "read": False,
+                "created_at": now,
+            })
+
         return {"ok": True}
 
     async def customer_workspace(self, customer_id: str) -> Dict[str, Any]:

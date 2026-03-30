@@ -121,14 +121,19 @@ export default function PaymentsQueuePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-slate-50 p-4">
                 <p className="text-xs text-slate-500">Customer</p>
-                <p className="font-semibold text-[#20364D] mt-1">{detail.proof?.payer_name || detail.invoice?.customer_name || "-"}</p>
+                <p className="font-semibold text-[#20364D] mt-1" data-testid="drawer-customer-name">{detail.invoice?.customer_name || "-"}</p>
                 <p className="text-xs text-slate-500 mt-1">{detail.invoice?.customer_email || ""}</p>
               </div>
               <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs text-slate-500">Amount</p>
-                <p className="font-semibold text-green-700 text-lg mt-1">{money(detail.proof?.amount_paid)}</p>
-                <p className="text-xs text-slate-500 mt-1">of {money(detail.payment?.total_invoice_amount || detail.invoice?.total_amount)}</p>
+                <p className="text-xs text-slate-500">Payer</p>
+                <p className="font-semibold text-[#20364D] mt-1" data-testid="drawer-payer-name">{detail.proof?.payer_name || "-"}</p>
               </div>
+            </div>
+
+            <div className="rounded-2xl bg-green-50 p-4">
+              <p className="text-xs text-slate-500">Amount</p>
+              <p className="font-semibold text-green-700 text-lg mt-1">{money(detail.proof?.amount_paid)}</p>
+              <p className="text-xs text-slate-500 mt-1">of {money(detail.payment?.total_invoice_amount || detail.invoice?.total_amount)}</p>
             </div>
 
             {detail.proof?.file_url && (

@@ -2436,6 +2436,15 @@ app.include_router(sales_queue_router)
 from sales_orders_routes import router as sales_orders_router
 app.include_router(sales_orders_router)
 
+# Sales Delivery Override (logistics status updates by sales team)
+from sales_delivery_override_routes import router as sales_delivery_override_router
+app.include_router(sales_delivery_override_router)
+
+# Margin Engine (hybrid margin rules: percentage, fixed, tiered)
+from margin_engine_routes import router as margin_engine_router
+app.include_router(margin_engine_router)
+
+
 # Payment Timeline
 from payment_timeline_routes import router as payment_timeline_router
 app.include_router(payment_timeline_router)

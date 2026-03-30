@@ -124,7 +124,7 @@ class TestStripeCheckout:
         # Try to create Stripe checkout session
         res = requests.post(
             f"{BASE_URL}/api/payments/stripe/checkout/invoice",
-            json={"invoice_id": invoice_id, "origin_url": "https://konekt-live-payments.preview.emergentagent.com"},
+            json={"invoice_id": invoice_id, "origin_url": "https://konekt-payments-fix.preview.emergentagent.com"},
             headers=headers
         )
         
