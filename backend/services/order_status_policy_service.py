@@ -2,7 +2,10 @@
 Pack 1 — Order Status Policy Service
 Wraps status_transition_policy for order-level operations.
 """
+import logging
 from services.status_transition_policy import can_transition, normalize_status
+
+logger = logging.getLogger("order_status_policy")
 
 
 async def update_order_status(db, order_id: str, new_status: str, role: str, actor_id: str = "", actor_name: str = "") -> dict:
@@ -30,5 +33,6 @@ async def update_order_status(db, order_id: str, new_status: str, role: str, act
         {"$set": {"status": new_status, "current_status": new_status, "updated_at": now}}
     )
     await log_order_event(db, order_id, f"status_change_{new_status}", f"{role}:{actor_id}", actor_name)
+    logger.info("[order_status_policy] order=%s status=%s by %s:%s", order_id, new_status, role, actor_id)
 
     return {"ok": True, "status": new_status}

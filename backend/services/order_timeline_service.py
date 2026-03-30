@@ -2,8 +2,11 @@
 Pack 1 — Order Timeline Service
 Centralized status history/event logging.
 """
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
+
+logger = logging.getLogger("order_timeline_service")
 
 
 async def log_order_event(db, order_id: str, event: str, actor: str, actor_name: str = "", details: dict = None):
@@ -17,6 +20,7 @@ async def log_order_event(db, order_id: str, event: str, actor: str, actor_name:
         "details": details or {},
         "created_at": datetime.now(timezone.utc).isoformat(),
     })
+    logger.info("[order_timeline] event=%s order=%s actor=%s", event, order_id, actor)
 
 
 async def get_order_timeline(db, order_id: str) -> list:

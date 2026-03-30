@@ -1,0 +1,116 @@
+{
+  "summary": "Iteration 146 - Backend Stability Refactoring (Packs 1-7 Centralization) - FULL REGRESSION PASS. All 42 backend tests passed (25 from v145 + 17 new v146 tests). The refactoring moved order creation logic into centralized services without changing endpoint signatures, payloads, or response shapes. Guest checkout, request submissions, sample flows, 20% margin math, and mocked email logging all remain intact.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_backend_stability_refactor_v146.py",
+    "/app/backend/tests/test_requests_sample_flow_v145.py",
+    "/app/test_reports/pytest/pytest_results_stability_refactor_v146.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_backend_stability_refactor_v146.py"
+  ],
+  "success_rate": {
+    "backend": "100% (42/42 passed - 25 v145 + 17 v146)",
+    "frontend": "100%"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "partner": "demo.partner@konekt.com / Partner123! (endpoint: /api/partner-auth/login)",
+    "sales": "neema.sales@konekt.demo / Sales123!"
+  },
+  "seed_data_creation": "None - used existing test data. Created test requests, orders, and sample workflows during testing.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 146 verified backend stability refactoring (Packs 1-7). All centralized services work correctly: 1) order_write_service.py handles guest order creation, 2) order_timeline_service.py logs events, 3) guest_checkout_activation_service.py creates account invites, 4) payer_customer_separation_service.py separates customer_name and payer_name, 5) notification_dispatch_service.py handles notifications. Key verified endpoints: POST /api/guest/orders (response shape: id, order_id, order_number, status='pending', message, account_invite), GET /api/guest/orders/{id}, GET /api/admin/orders-ops (enriched with customer_name, payer_name, status), GET /api/admin/orders-ops/{id} (full enrichment), POST /api/requests, GET /api/requests/ctas, POST /api/admin/margin-rules/calculate (10000→12000 = 20% margin), GET /api/admin/margin-rules, GET /api/vendor/orders, POST /api/admin/samples/from-request/{id}. All role logins work (admin, customer, sales, vendor).",
+  "feature_verification_results": {
+    "F1_guest_order_response_shape": {
+      "status": "PASS",
+      "details": "POST /api/guest/orders returns id, order_id, order_number, status='pending', message='Order created successfully', account_invite"
+    },
+    "F2_guest_order_retrieval": {
+      "status": "PASS",
+      "details": "GET /api/guest/orders/{order_id} returns order details"
+    },
+    "F3_admin_orders_ops_list": {
+      "status": "PASS",
+      "details": "GET /api/admin/orders-ops returns list with customer_name, payer_name, status fields"
+    },
+    "F4_admin_orders_ops_detail": {
+      "status": "PASS",
+      "details": "GET /api/admin/orders-ops/{order_id} returns enriched response with customer, vendor, sales info"
+    },
+    "F5_admin_login": {
+      "status": "PASS",
+      "details": "Admin login via /api/auth/login works"
+    },
+    "F6_customer_login": {
+      "status": "PASS",
+      "details": "Customer login via /api/auth/login works"
+    },
+    "F7_sales_login": {
+      "status": "PASS",
+      "details": "Sales login via /api/auth/login works"
+    },
+    "F8_vendor_login": {
+      "status": "PASS",
+      "details": "Vendor login via /api/partner-auth/login works"
+    },
+    "F9_product_bulk_request": {
+      "status": "PASS",
+      "details": "POST /api/requests with request_type=product_bulk and guest_email works"
+    },
+    "F10_request_ctas": {
+      "status": "PASS",
+      "details": "GET /api/requests/ctas returns CTA configurations"
+    },
+    "F11_margin_calculation": {
+      "status": "PASS",
+      "details": "POST /api/admin/margin-rules/calculate with base_cost=10000 returns selling_price=12000 (20% margin)"
+    },
+    "F12_margin_rules_list": {
+      "status": "PASS",
+      "details": "GET /api/admin/margin-rules returns margin rules list"
+    },
+    "F13_vendor_orders": {
+      "status": "PASS",
+      "details": "GET /api/vendor/orders returns list for vendor"
+    },
+    "F14_sample_flow": {
+      "status": "PASS",
+      "details": "POST /api/admin/samples/from-request/{id} creates sample workflow with 20% margin (1000→1200)"
+    },
+    "F15_order_timeline_events": {
+      "status": "PASS",
+      "details": "Guest order creation triggers timeline event logging"
+    },
+    "F16_payer_customer_separation": {
+      "status": "PASS",
+      "details": "Admin order detail has separate customer_name and payer_name fields"
+    },
+    "F17_guest_checkout_activation": {
+      "status": "PASS",
+      "details": "Guest checkout creates invited user account and activation link in response"
+    }
+  },
+  "mocked_apis": {
+    "email_sending": "Email sending is MOCKED - logged to email_logs collection, not actually dispatched. Requires Resend integration for production."
+  },
+  "refactoring_verification": {
+    "order_write_service": "VERIFIED - Guest order creation delegated to create_guest_order_via_service",
+    "order_timeline_service": "VERIFIED - Timeline events logged via log_order_event",
+    "guest_checkout_activation_service": "VERIFIED - Account invites created via build_guest_checkout_account_invite",
+    "payer_customer_separation_service": "VERIFIED - customer_name and payer_name resolved separately",
+    "notification_dispatch_service": "VERIFIED - Centralized notification dispatch working"
+  }
+}

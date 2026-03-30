@@ -2,7 +2,11 @@
 Customer Order Routes - Public-facing order creation and retrieval
 Supports guest checkout without authentication
 Includes affiliate attribution and campaign discount application
+
+Step 2 Refactor: Order creation delegated to order_write_service.
+Route signature, payload shape, and response shape remain UNCHANGED.
 """
+import logging
 from datetime import datetime
 from uuid import uuid4
 import os
@@ -14,11 +18,17 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from checkout_attribution_service import resolve_affiliate_attribution, log_campaign_usage
 
+# --- Service imports (Pack 1) ---
+from services.order_write_service import create_guest_order_via_service
+from services.order_timeline_service import log_order_event
+
+logger = logging.getLogger("customer_order_routes")
+
 router = APIRouter(tags=["Customer Orders"])
 
 # Database connection (same pattern as server.py)
-client = AsyncIOMotorClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
-db = client[os.environ.get('DB_NAME', 'konekt')]
+client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
+db = client[os.environ.get('DB_NAME')]
 
 
 class OrderLineItem(BaseModel):
@@ -74,27 +84,14 @@ async def create_guest_order(
     
     Supports campaign discount application via campaign_id
     """
+    logger.info("[customer_order_routes] route entered — create_guest_order")
+
     now = datetime.utcnow()
     order_number = f"ORD-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
     doc = payload.model_dump()
-    doc["order_number"] = order_number
-    doc["status"] = "pending"
-    doc["current_status"] = "pending"
-    doc["payment_status"] = "unpaid"
-    doc["total_amount"] = payload.total  # Also store as total_amount for analytics
-    doc["status_history"] = [
-        {
-            "status": "pending",
-            "note": "Order submitted by customer",
-            "timestamp": now,
-        }
-    ]
-    doc["is_guest_order"] = True
-    doc["created_at"] = now
-    doc["updated_at"] = now
 
-    # Handle affiliate attribution - resolve using service
+    # ---- Affiliate attribution (kept in route — depends on request/cookies) ----
     effective_affiliate_code = payload.affiliate_code or affiliate_code
     affiliate = await resolve_affiliate_attribution(
         db,
@@ -110,14 +107,13 @@ async def create_guest_order(
         doc["affiliate_email"] = payload.affiliate_email
         doc["affiliate_code"] = payload.affiliate_code
 
-    # Handle campaign attribution
+    # ---- Campaign attribution ----
     if payload.campaign_id:
         doc["campaign_id"] = payload.campaign_id
         doc["campaign_name"] = payload.campaign_name
         doc["campaign_discount"] = payload.campaign_discount
         doc["campaign_reward_type"] = payload.campaign_reward_type
         
-        # Apply campaign discount to total if provided
         if payload.campaign_discount > 0:
             original_total = doc.get("total", 0)
             doc["original_total"] = original_total
@@ -125,10 +121,20 @@ async def create_guest_order(
             doc["total_amount"] = doc["total"]
             doc["discount"] = (doc.get("discount") or 0) + payload.campaign_discount
 
-    result = await db.orders.insert_one(doc)
-    order_id = str(result.inserted_id)
+    # ---- Normalize base fields for service ----
+    doc["order_number"] = order_number
+    doc["status"] = "pending"
+    doc["current_status"] = "pending"
+    doc["payment_status"] = "unpaid"
+    doc["total_amount"] = doc.get("total_amount", payload.total)
+    doc["is_guest_order"] = True
 
-    # Log campaign usage for tracking
+    # ---- Delegate to centralized order write service ----
+    order_doc, order_id = await create_guest_order_via_service(db, doc, order_number)
+
+    logger.info("[customer_order_routes] service create called — order %s created", order_number)
+
+    # ---- Campaign usage logging (post-insert, non-blocking) ----
     await log_campaign_usage(
         db,
         campaign_id=payload.campaign_id,
@@ -139,8 +145,7 @@ async def create_guest_order(
         discount_amount=payload.campaign_discount,
     )
 
-    # Guest checkout → account activation flow
-    # If guest email doesn't have an active account, create invited user + link
+    # ---- Guest checkout → account activation flow ----
     invite_info = None
     guest_email = (payload.customer_email or "").strip().lower()
     if guest_email:
@@ -149,7 +154,6 @@ async def create_guest_order(
             from services.guest_checkout_activation_service import build_guest_checkout_account_invite, build_guest_activation_url
             from uuid import uuid4 as _uuid4
 
-            # Check if invited user already exists
             invited_user = await db.users.find_one({"email": guest_email})
             if not invited_user:
                 customer_id = str(_uuid4())
@@ -173,7 +177,6 @@ async def create_guest_order(
             link["id"] = str(_uuid4())
             await db.guest_checkout_account_links.insert_one(link)
 
-            # Also create invite in customer_invites for the activation route
             await db.customer_invites.insert_one({
                 "id": str(_uuid4()),
                 "customer_user_id": customer_id,
@@ -187,7 +190,6 @@ async def create_guest_order(
                 "created_at": link["created_at"],
             })
 
-            import os
             base_url = os.environ.get("FRONTEND_URL", os.environ.get("REACT_APP_BACKEND_URL", ""))
             invite_url = build_guest_activation_url(base_url, link["invite_token"])
             invite_info = {
@@ -196,14 +198,15 @@ async def create_guest_order(
                 "customer_id": customer_id,
             }
 
+    # ---- Response shape UNCHANGED ----
     return {
         "id": order_id,
         "order_id": order_id,
         "order_number": order_number,
         "status": "pending",
         "message": "Order created successfully",
-        "affiliate_attributed": bool(doc.get("affiliate_code") or doc.get("affiliate_email")),
-        "campaign_applied": bool(doc.get("campaign_id")),
+        "affiliate_attributed": bool(order_doc.get("affiliate_code") or order_doc.get("affiliate_email")),
+        "campaign_applied": bool(order_doc.get("campaign_id")),
         "account_invite": invite_info,
     }
 
