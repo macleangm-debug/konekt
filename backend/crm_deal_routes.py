@@ -26,7 +26,14 @@ def serialize_doc(doc):
 
 @router.get("/leads/{lead_id}")
 async def get_lead_detail(lead_id: str):
-    lead = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
+    # Try ObjectId lookup first, then fallback to custom id field
+    lead = None
+    try:
+        lead = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
+    except Exception:
+        pass
+    if not lead:
+        lead = await db.crm_leads.find_one({"id": lead_id})
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
 

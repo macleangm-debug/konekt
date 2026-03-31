@@ -159,13 +159,16 @@ async def list_leads(
 @router.get("/crm/leads/{lead_id}")
 async def get_lead(lead_id: str):
     """Get a specific lead"""
+    doc = None
     try:
         doc = await db.crm_leads.find_one({"_id": ObjectId(lead_id)})
-        if not doc:
-            raise HTTPException(status_code=404, detail="Lead not found")
-        return serialize_doc(doc)
     except Exception:
+        pass
+    if not doc:
+        doc = await db.crm_leads.find_one({"id": lead_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Lead not found")
+    return serialize_doc(doc)
 
 
 class LeadStatusUpdate(BaseModel):

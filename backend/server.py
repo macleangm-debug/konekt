@@ -2755,11 +2755,60 @@ async def startup_event():
     existing_global = await db.margin_rules.find_one({"scope": "global", "active": True})
     if not existing_global:
         from services.default_margin_seed import DEFAULT_PRODUCT_MARGIN_RULE
-        from uuid import uuid4
-        from datetime import datetime, timezone
-        rule = {**DEFAULT_PRODUCT_MARGIN_RULE, "id": str(uuid4()), "created_at": datetime.now(timezone.utc).isoformat(), "updated_at": datetime.now(timezone.utc).isoformat()}
+        _seed_id = str(uuid.uuid4())
+        _seed_now = datetime.now(timezone.utc).isoformat()
+        rule = {**DEFAULT_PRODUCT_MARGIN_RULE, "id": _seed_id, "created_at": _seed_now, "updated_at": _seed_now}
         await db.margin_rules.insert_one(rule)
         logger.info("Seeded default 20%% product margin rule")
+
+    # Migrate old leads from 'leads' collection to 'crm_leads' (one-time compat)
+    try:
+        old_leads_cursor = db.leads.find({"request_id": {"$exists": True}})
+        migrated = 0
+        async for old_lead in old_leads_cursor:
+            req_id = old_lead.get("request_id")
+            if not req_id:
+                continue
+            already = await db.crm_leads.find_one({"source_request_id": req_id})
+            if already:
+                continue
+            now_iso = datetime.now(timezone.utc).isoformat()
+            crm_doc = {
+                "contact_name": old_lead.get("customer_name", ""),
+                "name": old_lead.get("customer_name", ""),
+                "email": old_lead.get("customer_email", ""),
+                "company_name": old_lead.get("company_name", ""),
+                "phone": old_lead.get("phone", ""),
+                "phone_prefix": old_lead.get("phone_prefix", "+255"),
+                "source": "request",
+                "industry": "",
+                "notes": old_lead.get("notes", ""),
+                "status": old_lead.get("status", "new"),
+                "stage": old_lead.get("status", "new_lead"),
+                "lead_score": 0,
+                "estimated_value": 0,
+                "expected_value": 0,
+                "assigned_to": old_lead.get("assigned_sales_owner_id") or "",
+                "city": "",
+                "country": "Tanzania",
+                "source_request_id": req_id,
+                "source_request_type": old_lead.get("source_request_type", ""),
+                "source_request_reference": "",
+                "converted_from_request": True,
+                "created_at": old_lead.get("created_at", now_iso) if isinstance(old_lead.get("created_at"), str) else (old_lead.get("created_at").isoformat() if old_lead.get("created_at") else now_iso),
+                "updated_at": now_iso,
+                "created_by": old_lead.get("created_by"),
+                "timeline": [],
+                "activities": [],
+            }
+            result = await db.crm_leads.insert_one(crm_doc)
+            new_id = str(result.inserted_id)
+            await db.requests.update_one({"id": req_id}, {"$set": {"linked_lead_id": new_id}})
+            migrated += 1
+        if migrated > 0:
+            logger.info("Migrated %d old leads from 'leads' to 'crm_leads'", migrated)
+    except Exception as e:
+        logger.warning("Lead migration check: %s", e)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

@@ -1,11 +1,10 @@
 """
 Request CRM Bridge Service
-Converts a Request into a CRM lead.
+Converts a Request into a CRM lead in the crm_leads collection.
 Used by Sales/Admin actions only.
 """
 import logging
 from datetime import datetime, timezone
-from uuid import uuid4
 
 logger = logging.getLogger("request_crm_bridge")
 
@@ -16,40 +15,72 @@ def _now():
 
 async def convert_request_to_lead(db, request_doc: dict, actor: dict) -> dict:
     """
-    Converts a request into a CRM lead.
-    Idempotent — returns existing lead if already converted.
+    Converts a request into a CRM lead (crm_leads collection).
+    Idempotent - returns existing lead if already converted.
     """
-    existing = await db.leads.find_one({"request_id": request_doc["id"]})
+    request_id = request_doc["id"]
+
+    # Idempotency: check if this request was already converted
+    existing = await db.crm_leads.find_one({"source_request_id": request_id})
     if existing:
-        existing.pop("_id", None)
+        existing["id"] = str(existing.pop("_id"))
         return existing
 
     now = _now()
-    lead_id = str(uuid4())
-    lead_doc = {
-        "id": lead_id,
-        "request_id": request_doc["id"],
-        "source": "request",
-        "source_request_type": request_doc.get("request_type"),
-        "customer_name": request_doc.get("guest_name") or request_doc.get("customer_name", ""),
-        "customer_email": request_doc.get("guest_email") or request_doc.get("customer_email", ""),
-        "company_name": request_doc.get("company_name", ""),
-        "phone_prefix": request_doc.get("phone_prefix", "+255"),
-        "phone": request_doc.get("phone", ""),
-        "notes": request_doc.get("notes", ""),
-        "status": "new",
-        "assigned_sales_owner_id": request_doc.get("assigned_sales_owner_id"),
-        "created_at": now,
-        "updated_at": now,
-        "created_by": actor.get("id") if actor else None,
-    }
-    await db.leads.insert_one(lead_doc)
+    contact_name = request_doc.get("guest_name") or request_doc.get("customer_name", "")
+    email = request_doc.get("guest_email") or request_doc.get("customer_email", "")
 
+    lead_doc = {
+        # CRM-standard fields (aligned with admin_routes.py create_lead)
+        "contact_name": contact_name,
+        "name": contact_name,
+        "email": email,
+        "company_name": request_doc.get("company_name", ""),
+        "phone": request_doc.get("phone", ""),
+        "phone_prefix": request_doc.get("phone_prefix", "+255"),
+        "source": "request",
+        "industry": "",
+        "notes": request_doc.get("notes") or request_doc.get("message", ""),
+        "status": "new",
+        "stage": "new_lead",
+        "lead_score": 0,
+        "estimated_value": 0,
+        "expected_value": 0,
+        "assigned_to": request_doc.get("assigned_sales_owner_id") or "",
+        "city": "",
+        "country": "Tanzania",
+
+        # Traceability fields
+        "source_request_id": request_id,
+        "source_request_type": request_doc.get("request_type", ""),
+        "source_request_reference": request_doc.get("request_number", ""),
+        "converted_from_request": True,
+
+        # Timestamps
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        "created_by": actor.get("id") if actor else None,
+
+        # Timeline & activities
+        "timeline": [{
+            "label": "Lead created from request",
+            "event_type": "created",
+            "note": f"Converted from {request_doc.get('request_type', 'request')} #{request_doc.get('request_number', 'N/A')}",
+            "created_at": now.isoformat(),
+            "actor": actor.get("email") if actor else "system",
+        }],
+        "activities": [],
+    }
+
+    result = await db.crm_leads.insert_one(lead_doc)
+    lead_id_str = str(result.inserted_id)
+
+    # Update request with linked CRM lead
     await db.requests.update_one(
-        {"id": request_doc["id"]},
+        {"id": request_id},
         {
             "$set": {
-                "linked_lead_id": lead_id,
+                "linked_lead_id": lead_id_str,
                 "status": "converted_to_lead",
                 "crm_stage": "lead",
                 "updated_at": now,
@@ -64,5 +95,9 @@ async def convert_request_to_lead(db, request_doc: dict, actor: dict) -> dict:
             },
         },
     )
-    logger.info("[crm_bridge] request %s converted to lead %s by %s", request_doc["id"], lead_id, (actor or {}).get("id"))
+
+    # Return with id = stringified ObjectId (matches CRM page expectations)
+    lead_doc.pop("_id", None)
+    lead_doc["id"] = lead_id_str
+    logger.info("[crm_bridge] request %s converted to CRM lead %s by %s", request_id, lead_id_str, (actor or {}).get("id"))
     return lead_doc

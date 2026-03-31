@@ -1,0 +1,55 @@
+{
+  "summary": "Phase 2 CRM/Inbox Fixes - Iteration 150. All 13 backend API tests passed (100%). All frontend UI tests passed (100%). Convert-to-lead flow correctly writes to crm_leads collection, CRM page shows converted leads with traceability fields, table columns are in correct order, row click opens side drawer (not navigation), Requests Inbox shows 'Open in CRM' button for converted requests, and all drawer actions (note/follow-up/stage) work correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase2_crm_inbox_v150.py",
+    "/app/test_reports/pytest/pytest_results_phase2_crm_inbox_v150.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_phase2_crm_inbox_v150.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Created test requests and leads during testing (TEST_CRM_Convert_*, TEST_Idempotent_*, Test Company Playwright)",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 150 tested Phase 2 CRM/Inbox Fixes. All features verified: 1) GET /api/admin/crm/leads returns leads including converted ones with converted_from_request=true, source_request_id, source_request_type fields. 2) POST /api/admin/requests/{id}/convert-to-lead converts request to crm_leads collection and returns lead_id. 3) Idempotency works - converting same request twice returns existing lead. 4) GET /api/admin/crm-deals/leads/{id} returns lead detail with timeline and related documents. 5) CRM intelligence routes work: add note, schedule follow-up, update stage. 6) CRM page table columns in correct order: Date Created, Lead Name, Company, Source, Owner, Stage, Status, Last Activity, Next Follow-up, Actions. 7) Row click opens side drawer (not navigation to new page). 8) Drawer shows all sections: lead info grid, timeline, related docs, add note, follow-up, stage update. 9) 'Converted from Request' card shows for converted leads. 10) Requests Inbox shows 'Open in CRM' button for converted requests. 11) 'Open in CRM' navigates to /admin/crm and auto-opens lead drawer. 12) CRM add lead form still works (regression). 13) Requests inbox still loads correctly (regression).",
+  "feature_verification_results": {
+    "CRM_LEADS_LIST": {"status": "PASS", "details": "GET /api/admin/crm/leads returns list of leads"},
+    "CRM_LEADS_CONVERTED_FIELDS": {"status": "PASS", "details": "Converted leads have converted_from_request=true, source_request_id, source_request_type"},
+    "CONVERT_REQUEST_TO_LEAD": {"status": "PASS", "details": "POST /api/admin/requests/{id}/convert-to-lead creates lead in crm_leads collection"},
+    "CONVERT_IDEMPOTENCY": {"status": "PASS", "details": "Converting same request twice returns existing lead_id"},
+    "CRM_LEAD_DETAIL": {"status": "PASS", "details": "GET /api/admin/crm-deals/leads/{id} returns lead with timeline and related docs"},
+    "CRM_ADD_NOTE": {"status": "PASS", "details": "POST /api/admin/crm-intelligence/leads/{id}/note adds note to timeline"},
+    "CRM_SCHEDULE_FOLLOWUP": {"status": "PASS", "details": "POST /api/admin/crm-intelligence/leads/{id}/follow-up schedules follow-up"},
+    "CRM_UPDATE_STAGE": {"status": "PASS", "details": "POST /api/admin/crm-intelligence/leads/{id}/status updates lead stage"},
+    "CRM_DASHBOARD": {"status": "PASS", "details": "GET /api/admin/crm-intelligence/dashboard returns summary, by_stage, by_source"},
+    "REQUESTS_INBOX_LIST": {"status": "PASS", "details": "GET /api/admin/requests returns list of requests"},
+    "REQUESTS_INBOX_DETAIL": {"status": "PASS", "details": "GET /api/admin/requests/{id} returns request detail"},
+    "CRM_ADD_LEAD_FORM": {"status": "PASS", "details": "POST /api/admin/crm/leads creates new lead (regression)"},
+    "UI_TABLE_COLUMNS_ORDER": {"status": "PASS", "details": "Columns: Date Created, Lead Name, Company, Source, Owner, Stage, Status, Last Activity, Next Follow-up, Actions"},
+    "UI_ROW_CLICK_DRAWER": {"status": "PASS", "details": "Row click opens side drawer, does NOT navigate to new page"},
+    "UI_DRAWER_SECTIONS": {"status": "PASS", "details": "Drawer shows: lead info grid, timeline, related docs, add note, follow-up, stage update"},
+    "UI_CONVERTED_FROM_REQUEST_CARD": {"status": "PASS", "details": "Drawer shows 'Converted from Request' card for converted leads"},
+    "UI_OPEN_IN_CRM_BUTTON": {"status": "PASS", "details": "Requests Inbox shows 'Open in CRM' button for converted requests"},
+    "UI_OPEN_IN_CRM_NAVIGATION": {"status": "PASS", "details": "'Open in CRM' navigates to /admin/crm and auto-opens lead drawer"}
+  },
+  "mocked_apis": {
+    "email_sending": "Email sending is MOCKED - logged to email_logs collection, not actually dispatched. Requires Resend integration for production."
+  }
+}

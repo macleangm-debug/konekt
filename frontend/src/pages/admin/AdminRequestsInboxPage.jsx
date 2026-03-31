@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { formatDateDMY } from "../../lib/formatters";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import EmptyState from "../../components/admin/shared/EmptyState";
-import { Inbox, ArrowRightCircle, Search, Filter } from "lucide-react";
+import { Inbox, ArrowRightCircle, Search, Filter, ExternalLink } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -19,6 +20,7 @@ const TYPE_BADGES = {
 const STATUS_OPTIONS = ["All", "submitted", "in_review", "converted_to_lead", "quoted", "closed"];
 
 export default function AdminRequestsInboxPage() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -220,7 +222,17 @@ export default function AdminRequestsInboxPage() {
                 </button>
               )}
               {selected.linked_lead_id && (
-                <div className="text-center text-green-600 font-medium py-3">Already converted to lead</div>
+                <div className="space-y-3 mt-4">
+                  <div className="text-center text-green-600 font-medium py-1">Already converted to lead</div>
+                  <button
+                    onClick={() => navigate(`/admin/crm?openLead=${selected.linked_lead_id}`)}
+                    className="w-full rounded-xl bg-[#D4A843] text-[#2D3E50] py-3 font-semibold hover:bg-[#c49933] transition inline-flex items-center justify-center gap-2"
+                    data-testid="open-in-crm-btn"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Open in CRM
+                  </button>
+                </div>
               )}
             </div>
           </div>
