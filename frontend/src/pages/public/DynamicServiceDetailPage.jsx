@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
 import PublicFooter from "../../components/PublicFooter";
 import ServicePageTemplate from "../../components/services/ServicePageTemplate";
-import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -82,65 +81,65 @@ const FALLBACK_SERVICES = {
     slug: "showroom-design",
     group_key: "printing_branding",
     group_name: "Printing & Branding",
-    name: "Showroom Design",
-    description: "Design and execution support for branded showrooms and display environments that present products or services more effectively.",
+    name: "Showroom & Exhibition Design",
+    description: "Coordination of showroom setup, exhibition booth graphics, branded display areas, and event-specific branding.",
     includes: [
-      "Showroom layout thinking and branding direction",
-      "Display structures and branded surfaces",
-      "Installation and finishing coordination",
+      "Booth and stand design coordination",
+      "Branded backdrops, banners, and display panels",
+      "Event branding collateral and logistics support",
     ],
     for_who: [
-      "Retail and corporate environments",
-      "Brands with physical display spaces",
-      "Teams that want more professional merchandising presentation",
+      "Businesses exhibiting at trade shows or expos",
+      "Companies setting up showrooms or pop-up spaces",
+      "Teams coordinating conference or event branding",
     ],
     process_steps: [
-      { title: "Brief", description: "Discuss space purpose, customer journey, and display goals." },
-      { title: "Site + design review", description: "Konekt aligns concept direction with physical context." },
-      { title: "Commercial alignment", description: "Scope, pricing, materials, and timeline are confirmed." },
-      { title: "Execution", description: "Production and installation are coordinated to completion." },
+      { title: "Brief", description: "Capture booth size, event context, branding assets, and timeline." },
+      { title: "Design", description: "Visual concepts are produced for approval." },
+      { title: "Production", description: "Approved materials go into production." },
+      { title: "Setup & support", description: "On-site setup or delivery coordination." },
     ],
     why_konekt: [
-      "Good fit for design + execution workflows",
-      "Better coordination between branding and physical setup",
-      "Useful for launch, refresh, or campaign spaces",
+      "One-stop coordination for exhibition branding",
+      "From design to setup, tracked end to end",
+      "Supports single events or multi-location rollouts",
     ],
-    pricing_guidance: "Pricing depends on concept scope, fabrication needs, materials, and installation conditions.",
+    pricing_guidance: "Pricing depends on booth dimensions, materials, design complexity, and on-site requirements.",
     faqs: [
-      { q: "Can this include signage and printed display material?", a: "Yes, showroom design can be combined with printing, signage, and branded materials." },
+      { q: "Can Konekt manage the full event branding package?", a: "Yes — from design to production and setup coordination." },
     ],
   },
-  "billboard-signs": {
-    key: "billboard-signs",
-    slug: "billboard-signs",
+  "packaging-labels": {
+    key: "packaging-labels",
+    slug: "packaging-labels",
     group_key: "printing_branding",
     group_name: "Printing & Branding",
-    name: "Billboard Signs",
-    description: "Large-format billboard signage coordination including branding, fabrication support, installation, and maintenance-oriented execution planning.",
+    name: "Packaging & Labels",
+    description: "Custom packaging, product labels, and branded wrapping coordination for retail, food, industrial, or consumer use.",
     includes: [
-      "Billboard sign production coordination",
-      "Branding artwork and print surface handling",
-      "Installation workflow and execution planning",
+      "Product labels and sticker printing",
+      "Custom packaging design and production",
+      "Branded wrapping, boxes, and bags",
     ],
     for_who: [
-      "Businesses with outdoor visibility needs",
-      "Campaign teams and location-based promotions",
-      "Organizations requiring branded public-facing signage",
+      "Product-based businesses needing branded packaging",
+      "Food and beverage companies with labeling needs",
+      "Retailers wanting consistent packaging standards",
     ],
     process_steps: [
-      { title: "Requirement capture", description: "Discuss location, size, branding, and installation context." },
-      { title: "Technical review", description: "Site conditions and structural needs are reviewed." },
-      { title: "Quote + approval", description: "Commercial and execution scope is agreed." },
-      { title: "Fabrication + install", description: "Billboard assets are produced and installed." },
+      { title: "Requirement review", description: "Capture product specs, quantities, and branding elements." },
+      { title: "Design alignment", description: "Packaging design or label artwork is coordinated." },
+      { title: "Sampling", description: "Samples produced for approval before bulk run." },
+      { title: "Production & delivery", description: "Bulk order produced and delivered." },
     ],
     why_konekt: [
-      "Combines branding coordination with execution planning",
-      "Better visibility over outdoor signage workflow",
-      "Useful for one-off campaign or long-term placement",
+      "Coordinated packaging across multiple SKUs",
+      "Design and production managed through one point",
+      "Scalable for growing brands",
     ],
-    pricing_guidance: "Pricing depends on billboard size, fabrication complexity, site location, and installation conditions.",
+    pricing_guidance: "Pricing depends on packaging type, material, print finish, and order volume.",
     faqs: [
-      { q: "Does this require a site visit?", a: "In most cases yes, because billboard work is location and structure-dependent." },
+      { q: "Can I get samples before committing?", a: "Yes — sampling is part of the standard workflow." },
     ],
   },
 };
@@ -149,126 +148,43 @@ export default function DynamicServiceDetailPage() {
   const { slug } = useParams();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showGuestLead, setShowGuestLead] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [leadForm, setLeadForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    company_name: "",
-    country: "Tanzania",
-    region: "",
-    need_summary: "",
-  });
-  
-  const isLoggedIn = useMemo(() => Boolean(localStorage.getItem("konekt_token") || localStorage.getItem("token")), []);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        // Try to fetch from API
-        let found = null;
-        
-        try {
-          const res = await fetch(`${API_URL}/api/public-services/types`);
-          if (res.ok) {
-            const services = await res.json();
-            found = services.find((x) => x.slug === slug || x.key === slug);
-          }
-        } catch (err) {
-          console.log("Public services API not available");
-        }
-        
-        // Try service catalog
-        if (!found) {
-          try {
-            const res = await fetch(`${API_URL}/api/service-catalog/services`);
-            if (res.ok) {
-              const services = await res.json();
-              found = services.find((x) => x.slug === slug || x.key === slug);
-            }
-          } catch (err) {
-            console.log("Service catalog API not available");
-          }
-        }
-        
-        // Use fallback data if available
-        if (!found && FALLBACK_SERVICES[slug]) {
-          found = FALLBACK_SERVICES[slug];
-        }
-        
-        if (found) {
+        // Try API first
+        const res = await fetch(`${API_URL}/api/service-catalog/types/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
           setService({
-            ...found,
-            key: found.key || found.slug || slug,
-            name: found.name,
-            description: found.description || found.short_description,
-            group_name: found.group_name || found.category,
-            includes: found.includes || [],
-            for_who: found.for_who || [],
-            process_steps: found.process_steps || [],
-            why_konekt: found.why_konekt || [],
-            faqs: found.faqs || [],
-            pricing_guidance: found.pricing_guidance,
+            ...data,
+            key: data.key || data.slug || slug,
+            name: data.name,
+            description: data.description || data.short_description,
+            group_name: data.group_name || data.category,
+            includes: data.includes || [],
+            for_who: data.for_who || [],
+            process_steps: data.process_steps || [],
+            why_konekt: data.why_konekt || [],
+            faqs: data.faqs || [],
+            pricing_guidance: data.pricing_guidance,
           });
+          return;
         }
-      } finally {
-        setLoading(false);
+      } catch {}
+
+      // Fallback to static data
+      const found = FALLBACK_SERVICES[slug];
+      if (found) {
+        setService({
+          ...found,
+          key: found.key || found.slug || slug,
+        });
       }
     };
-    load();
+    load().finally(() => setLoading(false));
   }, [slug]);
-
-  const submitGuestLead = async (e) => {
-    e.preventDefault();
-    
-    if (!leadForm.full_name || !leadForm.email || !leadForm.phone) {
-      toast.error("Please fill in name, email, and phone");
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      const res = await fetch(`${API_URL}/api/guest-leads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          full_name: leadForm.full_name,
-          email: leadForm.email,
-          phone: leadForm.phone,
-          company: leadForm.company_name,
-          country_code: leadForm.country === "Tanzania" ? "TZ" : leadForm.country,
-          intent_type: "service_interest",
-          intent_payload: {
-            service_key: service?.key || slug,
-            service_name: service?.name,
-            region: leadForm.region,
-            need_summary: leadForm.need_summary,
-          },
-          source: "website",
-        }),
-      });
-      
-      if (!res.ok) throw new Error("Failed to submit");
-      
-      toast.success("Your interest has been captured. Konekt will follow up with you.");
-      setShowGuestLead(false);
-      setLeadForm({
-        full_name: "",
-        email: "",
-        phone: "",
-        company_name: "",
-        country: "Tanzania",
-        region: "",
-        need_summary: "",
-      });
-    } catch (err) {
-      toast.error("Failed to submit. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -288,9 +204,9 @@ export default function DynamicServiceDetailPage() {
         <PublicNavbarV2 />
         <div className="max-w-4xl mx-auto px-6 py-16 text-center">
           <h1 className="text-3xl font-bold text-[#20364D]">Service Not Found</h1>
-          <p className="text-slate-600 mt-3">The service you're looking for doesn't exist or has been removed.</p>
-          <Link 
-            to="/services" 
+          <p className="text-slate-600 mt-3">The service you are looking for does not exist or has been removed.</p>
+          <Link
+            to="/services"
             className="inline-flex items-center gap-2 mt-6 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -305,108 +221,18 @@ export default function DynamicServiceDetailPage() {
   return (
     <div className="min-h-screen bg-slate-50" data-testid="dynamic-service-detail-page">
       <PublicNavbarV2 />
-      
       <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Breadcrumb */}
         <div className="mb-8">
-          <Link 
-            to="/services" 
+          <Link
+            to="/services"
             className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[#20364D]"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Services
           </Link>
         </div>
-        
-        <ServicePageTemplate
-          service={service}
-          isLoggedIn={isLoggedIn}
-          onGuestLeadClick={() => setShowGuestLead(true)}
-          accountMode={false}
-        />
-
-        {/* Guest Lead Form */}
-        {showGuestLead && (
-          <form onSubmit={submitGuestLead} className="rounded-[2rem] border bg-white p-8 mt-8" data-testid="guest-lead-form">
-            <div className="text-2xl font-bold text-[#20364D]">Leave your details</div>
-            <p className="text-slate-600 mt-3">
-              Not ready to create an account yet? Leave your details and Konekt can follow up on this service need.
-            </p>
-
-            <div className="grid gap-4 mt-6">
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Full name *" 
-                value={leadForm.full_name} 
-                onChange={(e) => setLeadForm({ ...leadForm, full_name: e.target.value })}
-                data-testid="guest-fullname"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Email *" 
-                type="email"
-                value={leadForm.email} 
-                onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                data-testid="guest-email"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Phone *" 
-                value={leadForm.phone} 
-                onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
-                data-testid="guest-phone"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Company name (optional)" 
-                value={leadForm.company_name} 
-                onChange={(e) => setLeadForm({ ...leadForm, company_name: e.target.value })}
-                data-testid="guest-company"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Country" 
-                value={leadForm.country} 
-                onChange={(e) => setLeadForm({ ...leadForm, country: e.target.value })}
-                data-testid="guest-country"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Region / city" 
-                value={leadForm.region} 
-                onChange={(e) => setLeadForm({ ...leadForm, region: e.target.value })}
-                data-testid="guest-region"
-              />
-              <textarea 
-                className="border rounded-xl px-4 py-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Briefly describe what you need" 
-                value={leadForm.need_summary} 
-                onChange={(e) => setLeadForm({ ...leadForm, need_summary: e.target.value })}
-                data-testid="guest-summary"
-              />
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button 
-                type="submit" 
-                disabled={submitting}
-                className="rounded-xl bg-[#D4A843] text-[#17283C] px-5 py-3 font-semibold hover:bg-[#c49a3d] transition disabled:opacity-50"
-                data-testid="submit-guest-lead-btn"
-              >
-                {submitting ? "Submitting..." : "Submit Details"}
-              </button>
-              <button 
-                type="button"
-                onClick={() => setShowGuestLead(false)}
-                className="rounded-xl border px-5 py-3 font-semibold text-slate-600 hover:bg-slate-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
+        <ServicePageTemplate service={service} />
       </main>
-      
       <PublicFooter />
     </div>
   );

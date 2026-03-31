@@ -42,7 +42,9 @@ const defaultCountries = [
 ];
 
 export default function ExpansionPremiumPage() {
-  const [selectedCountry, setSelectedCountry] = useState("KE");
+  // Read country from query param if provided
+  const queryCountry = new URLSearchParams(window.location.search).get("country");
+  const [selectedCountry, setSelectedCountry] = useState(queryCountry || "KE");
   const [submitting, setSubmitting] = useState(false);
   const [interestForm, setInterestForm] = useState({
     full_name: "",

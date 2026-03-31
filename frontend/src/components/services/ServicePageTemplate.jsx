@@ -5,34 +5,13 @@ import ServiceFaqBlock from "./ServiceFaqBlock";
 
 export default function ServicePageTemplate({
   service,
-  isLoggedIn = false,
-  onGuestLeadClick,
-  accountMode = false,
 }) {
   const navigate = useNavigate();
 
-  const requestService = () => {
-    if (accountMode || isLoggedIn) {
-      navigate(`/dashboard/service-requests/new?service=${service.key}`);
-      return;
-    }
-    if (onGuestLeadClick) {
-      onGuestLeadClick();
-      return;
-    }
-    navigate(`/login/customer?next=${encodeURIComponent(`/dashboard/service-requests/new?service=${service.key}`)}`);
-  };
+  const slug = service.slug || service.key || "";
 
   const requestQuote = () => {
-    if (accountMode || isLoggedIn) {
-      navigate(`/dashboard/business-pricing?service=${service.key}`);
-      return;
-    }
-    if (onGuestLeadClick) {
-      onGuestLeadClick();
-      return;
-    }
-    navigate(`/login/customer?next=${encodeURIComponent(`/dashboard/business-pricing?service=${service.key}`)}`);
+    navigate(`/request-quote?type=service_quote&service=${encodeURIComponent(slug)}&category=${encodeURIComponent(service.group_key || "")}`);
   };
 
   return (
@@ -52,58 +31,57 @@ export default function ServicePageTemplate({
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
           <button
             type="button"
-            onClick={requestService}
+            onClick={requestQuote}
             className="rounded-xl bg-[#D4A843] text-[#17283C] px-5 py-3 font-semibold hover:bg-[#c49a3d] transition"
             data-testid="start-service-request-btn"
           >
-            Start Service Request
-          </button>
-
-          <button
-            type="button"
-            onClick={requestQuote}
-            className="rounded-xl border border-white/20 px-5 py-3 font-semibold text-white hover:bg-white/10 transition"
-            data-testid="request-quote-btn"
-          >
-            Request Quote
+            Request a Quote
           </button>
         </div>
       </section>
 
       {/* What's Included & Who It's For */}
       <section className="grid lg:grid-cols-[1fr_1fr] gap-6">
-        <div className="rounded-[2rem] border bg-white p-8" data-testid="service-includes">
-          <div className="text-2xl font-bold text-[#20364D]">What this service includes</div>
-          <ul className="space-y-3 mt-5 text-slate-700">
-            {(service.includes || []).map((item, idx) => (
-              <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
-            ))}
-          </ul>
-        </div>
+        {(service.includes || []).length > 0 && (
+          <div className="rounded-[2rem] border bg-white p-8" data-testid="service-includes">
+            <div className="text-2xl font-bold text-[#20364D]">What this service includes</div>
+            <ul className="space-y-3 mt-5 text-slate-700">
+              {service.includes.map((item, idx) => (
+                <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
-        <div className="rounded-[2rem] border bg-white p-8" data-testid="service-for-who">
-          <div className="text-2xl font-bold text-[#20364D]">Who this is for</div>
-          <ul className="space-y-3 mt-5 text-slate-700">
-            {(service.for_who || []).map((item, idx) => (
-              <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
-            ))}
-          </ul>
-        </div>
+        {(service.for_who || []).length > 0 && (
+          <div className="rounded-[2rem] border bg-white p-8" data-testid="service-for-who">
+            <div className="text-2xl font-bold text-[#20364D]">Who this is for</div>
+            <ul className="space-y-3 mt-5 text-slate-700">
+              {service.for_who.map((item, idx) => (
+                <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Process Steps */}
-      <ServiceProcessSteps steps={service.process_steps || []} />
+      {(service.process_steps || []).length > 0 && (
+        <ServiceProcessSteps steps={service.process_steps} />
+      )}
 
       {/* Why Konekt & Pricing */}
       <section className="grid lg:grid-cols-[1fr_1fr] gap-6">
-        <div className="rounded-[2rem] border bg-white p-8" data-testid="why-konekt">
-          <div className="text-2xl font-bold text-[#20364D]">Why choose Konekt</div>
-          <ul className="space-y-3 mt-5 text-slate-700">
-            {(service.why_konekt || []).map((item, idx) => (
-              <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
-            ))}
-          </ul>
-        </div>
+        {(service.why_konekt || []).length > 0 && (
+          <div className="rounded-[2rem] border bg-white p-8" data-testid="why-konekt">
+            <div className="text-2xl font-bold text-[#20364D]">Why choose Konekt</div>
+            <ul className="space-y-3 mt-5 text-slate-700">
+              {service.why_konekt.map((item, idx) => (
+                <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="rounded-[2rem] border bg-white p-8" data-testid="pricing-guidance">
           <div className="text-2xl font-bold text-[#20364D]">Pricing guidance</div>
@@ -112,38 +90,31 @@ export default function ServicePageTemplate({
           </p>
 
           <div className="rounded-2xl border bg-slate-50 px-4 py-4 mt-6 text-sm text-slate-600">
-            Logged-in users submit structured requests inside their account. Guests can leave contact details for follow-up.
+            Submit a request and our team will prepare a detailed quote with turnaround times.
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <ServiceFaqBlock faqs={service.faqs || []} />
+      {(service.faqs || []).length > 0 && (
+        <ServiceFaqBlock faqs={service.faqs} />
+      )}
 
       {/* Bottom CTA */}
       <section className="rounded-[2rem] border bg-white p-8" data-testid="service-cta-bottom">
         <div className="text-3xl font-bold text-[#20364D]">Ready to proceed?</div>
         <p className="text-slate-600 mt-4 text-lg">
-          Move into the request or quote workflow and let Konekt coordinate the next steps.
+          Submit your requirements and let Konekt coordinate the next steps.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-8">
           <button
             type="button"
-            onClick={requestService}
-            className="rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#17283c] transition"
-            data-testid="bottom-start-service-btn"
-          >
-            Start Service Request
-          </button>
-
-          <button
-            type="button"
             onClick={requestQuote}
-            className="rounded-xl border px-5 py-3 font-semibold text-[#20364D] hover:bg-slate-50 transition"
+            className="rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#17283c] transition"
             data-testid="bottom-request-quote-btn"
           >
-            Request Quote
+            Request a Quote
           </button>
         </div>
       </section>

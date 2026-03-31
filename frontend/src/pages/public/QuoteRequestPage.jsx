@@ -46,6 +46,10 @@ const TYPE_CONFIG = {
     title: "Request Business Pricing",
     description: "Ideal for recurring orders, account-managed supply, and contract pricing discussions.",
   },
+  product_bulk: {
+    title: "Request Product Quote",
+    description: "Get pricing for bulk orders, custom configurations, or product availability in your region.",
+  },
 };
 
 export default function QuoteRequestPage() {

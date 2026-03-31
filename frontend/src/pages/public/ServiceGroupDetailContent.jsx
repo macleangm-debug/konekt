@@ -131,13 +131,22 @@ export default function ServiceGroupDetailContent() {
                   </div>
                 )}
 
-                <Link 
-                  to={`/services/${groupSlug}/${service.slug || service.key}`}
-                  className="inline-flex items-center gap-1 mt-4 font-semibold text-[#20364D] hover:text-[#B8860B] transition"
-                >
-                  Request Service
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
+                <div className="flex items-center gap-3 mt-4">
+                  <Link 
+                    to={`/services/${groupSlug}/${service.slug || service.key}`}
+                    className="inline-flex items-center gap-1 font-semibold text-[#20364D] hover:text-[#B8860B] transition"
+                  >
+                    Learn More
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <Link
+                    to={`/request-quote?type=service_quote&service=${encodeURIComponent(service.slug || service.key)}&category=${encodeURIComponent(groupSlug)}`}
+                    className="inline-flex items-center gap-1 font-semibold text-[#D4A843] hover:text-[#b8860b] transition"
+                    data-testid={`request-quote-${service.key}`}
+                  >
+                    Request Quote
+                  </Link>
+                </div>
               </div>
             </SurfaceCard>
           ))}
