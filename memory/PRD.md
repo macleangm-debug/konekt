@@ -1,98 +1,86 @@
 # Konekt B2B E-Commerce Platform — PRD
 
-## Original Problem Statement
-Build a B2B e-commerce platform (Konekt) for Tanzania. Role-based views for Customer, Admin, Vendor/Partner, and Sales.
+## Product Vision
+B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Customer, Vendor, Sales), CRM pipeline, marketplace, quoting, ordering, and fulfillment workflows.
 
-## Architecture
-- **Frontend**: React + Shadcn/UI + Tailwind CSS
-- **Backend**: FastAPI + Motor (async MongoDB)
-- **Database**: MongoDB
-- **Payments**: Stripe (sandbox), Bank Transfer
+## Core Architecture
+- **Frontend**: React (Vite/CRA), Tailwind CSS, Shadcn/UI
+- **Backend**: FastAPI (Python), MongoDB (Motor async driver)
+- **Auth**: JWT-based with role-based access
+- **Payments**: Stripe sandbox integration
 
-## What's Implemented
+## System of Record
+- Requests = intake (public)
+- CRM = qualification / pipeline
+- Quotes = proposals
+- Orders = execution
 
-### Core Platform
-- Role-based auth, product catalog, checkout, invoicing, Stripe sandbox
-- Backend stability centralization (Packs 1-7)
-- Unified public intake → Requests module
-- Admin Requests Inbox + CRM bridge
+## User Roles
+- **Admin** (`/admin`): Full platform management, CRM, orders, finance, partnerships
+- **Customer** (`/account`): Browse marketplace, submit requests, view orders/invoices
+- **Vendor/Partner** (`/partner`): Manage assigned vendor orders, update fulfillment
+- **Sales/Staff** (`/staff`): CRM pipeline work, request handling, delivery coordination
 
-### Phase 1 — Stabilization (COMPLETED)
-- Login/session privacy, market settings, African phone prefixes, unified request forms
+## Key Domain Separations
+- **Customer vs Payer**: `customer_name` from business records, `payer_name` from payment proof — never cross-reference
+- **Vendor Privacy**: Vendors see only their order, base price, Konekt sales contact — no customer identity, no margins
+- **Direct Sales vs Partnerships**: CRM handles direct sales pipeline; Partnerships handles affiliate/referral/commission channels
 
-### Phase 2 — CRM/Inbox Fixes (COMPLETED)
-- Convert-to-lead CRM visibility, traceability, "Open in CRM" button, CRM drawer pattern
+---
 
-### Phase 3 — Marketplace + Service UX (COMPLETED)
-- Service page template, marketplace API unification, country selector redesign
+## Completed Work
 
-### Pack A — Market Selector + Marketplace Taxonomy (COMPLETED 2026-03-31)
-**A1. Market Selector in Top Nav**
-- Non-blocking dropdown in PublicNavbarV2 (TZ flag + code)
-- Tanzania = "Available — Shop", others = "Coming Soon — Waitlist" → redirect to `/launch-country`
-- Config sourced from `marketAvailability.js`
+### Phase 1 — Core Platform Stabilization
+- Unified `/login` with role-based routing
+- JWT auth with admin seeding
+- Dashboard, Orders, Quotes, Invoices, Customers, Products modules
+- Role-based sidebar with moduleKey filtering
 
-**A2. Catalog Taxonomy Backend**
-- Seeded 4 groups → 23 categories → 59 subcategories
-- Products mapped to taxonomy via `group_id`, `category_id`, `category_name`
-- `GET /api/marketplace/taxonomy` — full tree for filters
-- `GET /api/marketplace/products/search` now supports `group_id`, `category_id`, `subcategory_id` filters
-- Admin CRUD: `/api/admin/catalog/groups|categories|subcategories`
+### Phase 2 — CRM/Inbox Fixes
+- Convert-to-lead from Requests Inbox writes to `crm_leads`
+- CRM drawer pattern (view lead, add note, schedule follow-up, update stage)
+- "Open in CRM" action from requests
 
-**A3. Marketplace Filter Sidebar**
-- Cascading Group → Category → Subcategory dropdown panel
-- Filters update URL params and product results in real-time
-- "Clear all" to reset
+### Phase 3 — Marketplace + Service UX
+- Unified `/api/products/search` API for marketplace
+- Removal of inline forms on service pages
+- Dual guest/logged-in cart logic
+- Market selector top nav integration
+- Taxonomy filter sidebar (Group → Category → Subcategory)
 
-### Pack B — Products & Services Admin + Vendor Intake (COMPLETED 2026-03-31)
-**B1. Admin Products & Services Module**
-- Route: `/admin/products-services`
-- Overview tab: 6 stat cards (groups, categories, subcategories, products, submissions, pending)
-- Taxonomy tab: add groups, categories, subcategories with CRUD
-- Submissions tab: vendor submission review queue with table + drawer
+### Phase 4 — Admin Products & Services + Vendor Submission
+- Admin product/service CRUD with taxonomy assignment
+- Vendor product submission flow
+- Stock management foundations
 
-**B2. Vendor Product Submission Flow**
-- Route: `/partner/product-submissions`
-- Form: product name, description, base cost, visibility mode, taxonomy mapping, min quantity
-- Submissions saved to `vendor_product_submissions` with `review_status: pending`
-- Vendor sees list of their submissions with status indicators
+### Phase 5 — CRM Consolidation & Partnerships Domain (Current)
+- **Sidebar Restructure**: 6 clean groups — Sales, Operations, Finance, Catalog, Partnerships, Settings
+- **CRM Tab Consolidation**: Unified CRM page with 6 tabs (All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence)
+- **Service Leads absorbed into CRM**: No longer a standalone sidebar item
+- **CRM Intelligence absorbed into CRM**: No longer a standalone sidebar item
+- **Partnerships Domain**: New sidebar group with Affiliates (active), Referrals (placeholder), Commissions (placeholder)
+- **Duplicate cleanup**: Removed duplicate Products nav, Stock Items from sidebar
+- **Backend**: `/api/partnerships/summary` API endpoint
 
-**B3. Margin Application + Publishing**
-- Admin approves submission → applies configurable margin % → publishes to `products` collection
-- Published product immediately appears in marketplace search
-- Admin can reject or request changes with notes
-- Vendor never sees margin calculation, only base cost
+---
 
-### Data Model
-```
-catalog_groups: { id, market_code, type, name, slug, is_active, sort_order }
-catalog_categories: { id, group_id, name, slug, is_active, sort_order }
-catalog_subcategories: { id, category_id, group_id, name, slug, is_active, sort_order }
-vendor_product_submissions: { id, vendor_id, product_name, base_cost, visibility_mode, group_id, category_id, subcategory_id, review_status, approved_product_id }
-```
+## Backlog
 
-### Key API Endpoints
-- `GET /api/marketplace/taxonomy` — Full taxonomy tree
-- `GET /api/marketplace/products/search` — Unified product search with taxonomy filters
-- `GET /api/admin/catalog/summary` — Catalog stats
-- `POST /api/admin/catalog/groups|categories|subcategories` — CRUD
-- `POST /api/vendor/catalog/submissions` — Vendor submit product
-- `POST /api/admin/catalog/submissions/{id}/approve` — Approve + publish with margin
-- `POST /api/admin/catalog/submissions/{id}/reject` — Reject with notes
+### P1 — Next Up
+- Add "Create Quote" action from CRM drawer (prefill from linked request/contact, preserve traceability)
 
-## Upcoming Tasks
-### Lead-to-Quote CRM Drawer Action (P1)
-- "Create Quote" from CRM drawer, prefill from request
-
-### Backlog (P2)
+### P2 — Future
+- Twilio WhatsApp integration (blocked on API key)
+- Resend email integration (blocked on API key)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
-- Twilio WhatsApp / Resend email (blocked on API keys)
 
-## Testing Status
-- Iteration 152: 100% (13/13 backend + all frontend) — Pack A+B
-- Iteration 151: 100% — Phase 3 Marketplace + Service UX
-- Iteration 150: 100% — Phase 2 CRM/Inbox
-- Iteration 149: 100% — Phase 1 Stabilization
+---
+
+## Test History
+- Iteration 150: Phase 2 — 100% Pass
+- Iteration 151: Phase 3 — 100% Pass
+- Iteration 152: Market/Taxonomy — 100% Pass
+- Iteration 153: CRM Consolidation & Partnerships — 100% Pass (17/17 features verified)

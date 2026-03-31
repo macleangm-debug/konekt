@@ -922,8 +922,8 @@ function ServiceLeadsTabContent({ leads, loading, search, onSearchChange, onStat
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {leads.map((row) => (
-                  <tr key={row.id} className="hover:bg-slate-50 transition-colors" data-testid={`service-lead-row-${row.id}`}>
+                {leads.map((row, idx) => (
+                  <tr key={row.id || `sl-${idx}`} className="hover:bg-slate-50 transition-colors" data-testid={`service-lead-row-${row.id || idx}`}>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{formatDate(row.created_at)}</td>
                     <td className="px-4 py-3 font-medium text-[#20364D]">{row.customer_name}</td>
                     <td className="px-4 py-3 text-[#20364D]">{row.title}</td>
