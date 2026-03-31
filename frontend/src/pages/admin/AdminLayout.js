@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle
+  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -72,6 +72,7 @@ const navItems = [
   { path: '/admin/customers', label: 'Customers', icon: Contact, moduleKey: 'crm' },
   { type: 'divider', label: 'Operations', moduleKey: 'tasks' },
   { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders' },
+  { path: '/admin/requests-inbox', label: 'Requests Inbox', icon: Inbox, moduleKey: 'support', highlight: true },
   { path: '/admin/service-leads', label: 'Service Leads', icon: Briefcase, moduleKey: 'support' },
   { path: '/admin/affiliate-manager', label: 'Affiliates', icon: Megaphone, moduleKey: 'crm' },
   { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', highlight: true },

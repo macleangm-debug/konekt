@@ -119,6 +119,9 @@ import SlaAlertsPage from "@/pages/admin/SlaAlertsPage";
 // Service Leads CRM Table
 import ServiceLeadsCrmTable from "@/components/services/ServiceLeadsCrmTable";
 
+// Requests Inbox
+import AdminRequestsInboxPage from "@/pages/admin/AdminRequestsInboxPage";
+
 // Referral + Commission Governance Components
 import AdminAffiliateManagerSimple from "@/components/admin/AdminAffiliateManagerSimple";
 
@@ -582,6 +585,8 @@ function App() {
           <Route path="partner-settlements" element={<PartnerSettlementsAdminPage />} />
           {/* Service Leads CRM */}
           <Route path="service-leads" element={<ServiceLeadsCrmTable />} />
+          {/* Requests Inbox */}
+          <Route path="requests-inbox" element={<AdminRequestsInboxPage />} />
           {/* Affiliate Manager */}
           <Route path="affiliate-manager" element={<AdminAffiliateManagerSimple />} />
           {/* Service Taxonomy */}
