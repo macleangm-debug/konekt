@@ -12,15 +12,43 @@ export default function LoginPageV2() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState(true);
 
   useEffect(() => {
-    // Check if already logged in — redirect based on stored role
-    const role = localStorage.getItem("userRole");
-    const hasToken = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");
-    if (hasToken && role) {
-      navigate(getDashboardPath(role));
-    }
+    // Validate token on mount — only redirect if token is genuinely valid
+    const validateSession = async () => {
+      const role = localStorage.getItem("userRole");
+      const hasToken = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");
+      if (!hasToken || !role) {
+        setValidating(false);
+        return;
+      }
+      try {
+        const tokenVal = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");
+        const res = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${tokenVal}` } });
+        if (res.data && res.data.role) {
+          // Token valid — redirect to dashboard
+          navigate(getDashboardPath(res.data.role));
+        } else {
+          clearAllAuth();
+        }
+      } catch {
+        // Token invalid/expired — clear and show login
+        clearAllAuth();
+      } finally {
+        setValidating(false);
+      }
+    };
+    validateSession();
   }, [navigate]);
+
+  if (validating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-[#0f172a] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

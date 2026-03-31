@@ -25,6 +25,8 @@ const SERVICE_CATEGORIES = [
   { value: "technical", label: "Technical Support" },
   { value: "business_support", label: "Business Support" },
   { value: "uniforms", label: "Uniforms & Workwear" },
+  { value: "office_equipment", label: "Office Equipment" },
+  { value: "promotional_materials", label: "Promotional Materials" },
   { value: "other", label: "Other / Not Sure" },
 ];
 
@@ -139,8 +141,15 @@ export default function QuoteRequestPage() {
               Our team will review your request and get back to you within 24 hours.
             </p>
             {submitted.account_invite && (
-              <div className="mt-6 rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800" data-testid="quote-activation-banner">
-                An account has been created for you. Check your email to activate it and track your request.
+              <div className="mt-6 rounded-xl bg-blue-50 border-2 border-blue-200 p-5 text-left" data-testid="quote-activation-banner">
+                <p className="font-bold text-blue-900">Your Konekt account has been created</p>
+                <p className="text-blue-800 text-sm mt-1">Activate it to track requests, quotes, invoices, and orders.</p>
+                <a
+                  href={submitted.account_invite.invite_url}
+                  className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-5 py-2.5 font-semibold hover:bg-blue-700 transition"
+                >
+                  Activate Account
+                </a>
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">

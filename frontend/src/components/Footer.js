@@ -2,8 +2,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 import BrandLogo from './branding/BrandLogo';
+import { useMarketSettings } from '../hooks/useMarketSettings';
 
 export default function Footer() {
+  const market = useMarketSettings();
   return (
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white mt-auto" data-testid="footer">
       <div className="container mx-auto px-6 md:px-12 lg:px-24 py-12">
@@ -58,15 +60,15 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-white/70">
               <li className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-secondary" />
-                <span>+255 XXX XXX XXX</span>
+                <span>{market.phone}</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-secondary" />
-                <span>hello@konekt.co.tz</span>
+                <span>{market.email}</span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-secondary mt-0.5" />
-                <span>Dar es Salaam, Tanzania</span>
+                <span>{market.address}</span>
               </li>
             </ul>
           </div>

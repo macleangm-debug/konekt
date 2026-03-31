@@ -2713,6 +2713,19 @@ app.include_router(public_request_router)
 
 
 
+# Market Settings API
+from services.market_settings_resolver import get_market_settings, get_market_settings_from_db
+
+@app.get("/api/market-settings")
+async def market_settings_endpoint(request: Request):
+    """Public endpoint for market settings (phone, email, currency, etc.)"""
+    try:
+        settings = await get_market_settings_from_db(request.app.mongodb)
+    except Exception:
+        settings = get_market_settings()
+    return settings
+
+
 
 
 # Mount static directory for listing media uploads

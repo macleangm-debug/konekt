@@ -1,6 +1,5 @@
 import React from "react";
-
-const DEFAULT_PREFIXES = ["+255", "+254", "+256", "+27", "+44", "+1"];
+import AFRICAN_PHONE_PREFIXES from "../../config/africanPhonePrefixes";
 
 export default function PhoneNumberField({
   label = "Phone",
@@ -8,7 +7,6 @@ export default function PhoneNumberField({
   number = "",
   onPrefixChange,
   onNumberChange,
-  prefixes = DEFAULT_PREFIXES,
   required = false,
   testIdPrefix = "phone",
 }) {
@@ -22,12 +20,12 @@ export default function PhoneNumberField({
         <select
           value={prefix}
           onChange={(e) => onPrefixChange?.(e.target.value)}
-          className="border border-slate-300 rounded-xl px-3 py-3 bg-white min-w-[110px]"
+          className="border border-slate-300 rounded-xl px-3 py-3 bg-white min-w-[120px] text-sm"
           data-testid={`${testIdPrefix}-prefix`}
         >
-          {prefixes.map((item) => (
-            <option key={item} value={item}>
-              {item}
+          {AFRICAN_PHONE_PREFIXES.map((item) => (
+            <option key={item.code} value={item.prefix}>
+              {item.label}
             </option>
           ))}
         </select>

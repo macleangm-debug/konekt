@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { useMarketSettings } from "../hooks/useMarketSettings";
 
 export default function PublicFooter() {
+  const market = useMarketSettings();
   return (
     <footer className="bg-[#20364D] text-white mt-20" data-testid="public-footer">
       {/* Pre-footer CTA strip */}
@@ -80,15 +82,15 @@ export default function PublicFooter() {
           <div className="space-y-3 text-slate-300 text-sm">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              <span>info@konekt.co.tz</span>
+              <span>{market.email}</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              <span>+255 XXX XXX XXX</span>
+              <span>{market.phone}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              <span>Dar es Salaam, Tanzania</span>
+              <span>{market.address}</span>
             </div>
             <a 
               href="https://wa.me/" 

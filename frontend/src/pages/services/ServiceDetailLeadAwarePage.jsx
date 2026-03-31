@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
 import PublicFooter from "../../components/PublicFooter";
 import SoftLeadCaptureModal from "../../components/auth/SoftLeadCaptureModal";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Check } from "lucide-react";
 
@@ -17,13 +18,13 @@ export default function ServiceDetailLeadAwarePage() {
   const [leadForm, setLeadForm] = useState({
     full_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     company_name: "",
-    country: "Tanzania",
-    region: "",
     need_summary: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(null);
   
   const isLoggedIn = useMemo(() => Boolean(localStorage.getItem("konekt_token") || localStorage.getItem("token")), []);
 
@@ -78,65 +79,49 @@ export default function ServiceDetailLeadAwarePage() {
   }, [slug]);
 
   const goAccountRequest = () => {
-    const nextPath = `/dashboard/service-requests/new?service=${service?.key || slug}`;
-    if (!isLoggedIn) {
-      navigate(`/login/customer?next=${encodeURIComponent(nextPath)}`);
-      return;
-    }
-    navigate(nextPath);
+    navigate(`/request-quote?type=service_quote&service=${encodeURIComponent(service?.name || slug)}&category=${encodeURIComponent(service?.category || '')}`);
   };
 
   const requestBusinessQuote = () => {
-    const nextPath = `/dashboard/business-pricing?service=${service?.key || slug}`;
-    if (!isLoggedIn) {
-      navigate(`/login/customer?next=${encodeURIComponent(nextPath)}`);
-      return;
-    }
-    navigate(nextPath);
+    navigate(`/request-quote?type=business_pricing&service=${encodeURIComponent(service?.name || slug)}`);
   };
 
   const submitGuestLead = async (e) => {
     e.preventDefault();
     
-    if (!leadForm.full_name || !leadForm.email || !leadForm.phone) {
-      toast.error("Please fill in name, email, and phone");
+    if (!leadForm.full_name || !leadForm.email) {
+      toast.error("Please fill in name and email");
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/guest-leads`, {
+      const res = await fetch(`${API_URL}/api/public-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          full_name: leadForm.full_name,
-          email: leadForm.email,
+          request_type: "service_quote",
+          guest_name: leadForm.full_name,
+          guest_email: leadForm.email,
+          phone_prefix: leadForm.phone_prefix,
           phone: leadForm.phone,
-          company: leadForm.company_name,
-          country_code: leadForm.country === "Tanzania" ? "TZ" : leadForm.country,
-          intent_type: "service_interest",
-          intent_payload: {
+          company_name: leadForm.company_name,
+          service_name: service?.name || slug,
+          service_slug: service?.key || slug,
+          source_page: `/service/${slug}`,
+          notes: leadForm.need_summary,
+          details: {
             service_key: service?.key || slug,
             service_name: service?.name,
-            region: leadForm.region,
-            need_summary: leadForm.need_summary,
+            service_category: service?.category,
           },
-          source: "website",
         }),
       });
 
       if (!res.ok) throw new Error("Failed to submit");
-
-      toast.success("Thanks! Your interest has been captured and our team will follow up.");
-      setLeadForm({
-        full_name: "",
-        email: "",
-        phone: "",
-        company_name: "",
-        country: "Tanzania",
-        region: "",
-        need_summary: "",
-      });
+      const data = await res.json();
+      setSubmitted(data);
+      toast.success(`Request submitted: ${data.request_number}`);
     } catch (err) {
       toast.error("Failed to submit. Please try again.");
     } finally {
@@ -269,12 +254,29 @@ export default function ServiceDetailLeadAwarePage() {
             </div>
           </div>
 
-          {/* Right - Guest Lead Form or Logged-in Message */}
-          {!isLoggedIn ? (
+          {/* Right - Guest Request Form or Success/LoggedIn */}
+          {submitted ? (
+            <div className="rounded-[2rem] border bg-white p-8 h-fit text-center" data-testid="service-request-success">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-xl font-bold text-[#20364D]">Request Received</h2>
+              <p className="text-slate-600 mt-2">Reference: <span className="font-semibold">{submitted.request_number}</span></p>
+              <p className="text-slate-500 text-sm mt-1">Our team will review your request and get back to you within 24 hours.</p>
+              {submitted.account_invite && (
+                <div className="mt-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-left" data-testid="service-activation-banner">
+                  <p className="font-bold text-blue-900 text-sm">Your Konekt account has been created</p>
+                  <p className="text-blue-800 text-xs mt-1">Activate it to track requests, quotes, invoices, and orders.</p>
+                  <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">Activate Account</a>
+                </div>
+              )}
+              <button onClick={() => setSubmitted(null)} className="mt-6 text-[#20364D] font-medium underline text-sm">Submit another request</button>
+            </div>
+          ) : !isLoggedIn ? (
             <form onSubmit={submitGuestLead} className="rounded-[2rem] border bg-white p-8 h-fit" data-testid="guest-lead-form">
-              <div className="text-2xl font-bold text-[#20364D]">Not ready to create an account?</div>
+              <div className="text-2xl font-bold text-[#20364D]">Quick Service Request</div>
               <p className="text-slate-600 mt-3">
-                Leave your details and Konekt can follow up on this service need.
+                Leave your details and we'll prepare a quote for this service.
               </p>
 
               <div className="grid gap-4 mt-6">
@@ -283,6 +285,7 @@ export default function ServiceDetailLeadAwarePage() {
                   placeholder="Full name *" 
                   value={leadForm.full_name} 
                   onChange={(e) => setLeadForm({ ...leadForm, full_name: e.target.value })}
+                  required
                   data-testid="lead-fullname"
                 />
                 <input 
@@ -291,14 +294,15 @@ export default function ServiceDetailLeadAwarePage() {
                   type="email"
                   value={leadForm.email} 
                   onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                  required
                   data-testid="lead-email"
                 />
-                <input 
-                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                  placeholder="Phone *" 
-                  value={leadForm.phone} 
-                  onChange={(e) => setLeadForm({ ...leadForm, phone: e.target.value })}
-                  data-testid="lead-phone"
+                <PhoneNumberField
+                  prefix={leadForm.phone_prefix}
+                  number={leadForm.phone}
+                  onPrefixChange={(v) => setLeadForm({ ...leadForm, phone_prefix: v })}
+                  onNumberChange={(v) => setLeadForm({ ...leadForm, phone: v })}
+                  testIdPrefix="lead-phone"
                 />
                 <input 
                   className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
@@ -306,20 +310,6 @@ export default function ServiceDetailLeadAwarePage() {
                   value={leadForm.company_name} 
                   onChange={(e) => setLeadForm({ ...leadForm, company_name: e.target.value })}
                   data-testid="lead-company"
-                />
-                <input 
-                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                  placeholder="Country" 
-                  value={leadForm.country} 
-                  onChange={(e) => setLeadForm({ ...leadForm, country: e.target.value })}
-                  data-testid="lead-country"
-                />
-                <input 
-                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                  placeholder="Region / city" 
-                  value={leadForm.region} 
-                  onChange={(e) => setLeadForm({ ...leadForm, region: e.target.value })}
-                  data-testid="lead-region"
                 />
                 <textarea 
                   className="border rounded-xl px-4 py-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
@@ -336,13 +326,13 @@ export default function ServiceDetailLeadAwarePage() {
                 data-testid="submit-lead-btn"
                 className="mt-6 w-full rounded-xl bg-[#D4A843] text-[#17283C] px-5 py-3 font-semibold hover:bg-[#c49a3d] transition disabled:opacity-50"
               >
-                {submitting ? "Submitting..." : "Submit Details"}
+                {submitting ? "Submitting..." : "Submit Request"}
               </button>
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-slate-500">
                   Already have an account?{" "}
-                  <Link to="/login/customer" className="text-[#20364D] font-semibold hover:underline">
+                  <Link to="/login" className="text-[#20364D] font-semibold hover:underline">
                     Sign in
                   </Link>
                 </p>

@@ -2,8 +2,10 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Mail, Phone, MapPin, Gift, FileText, Users } from "lucide-react";
 import BrandLogo from "../branding/BrandLogo";
+import { useMarketSettings } from "../../hooks/useMarketSettings";
 
 export default function PremiumFooterV2() {
+  const market = useMarketSettings();
   return (
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white" data-testid="premium-footer">
       <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-2 xl:grid-cols-5 gap-10">
@@ -51,15 +53,15 @@ export default function PremiumFooterV2() {
           <div className="space-y-3 text-slate-300">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              info@konekt.co.tz
+              {market.email}
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              +255 XXX XXX XXX
+              {market.phone}
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Dar es Salaam, Tanzania
+              {market.address}
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-white/10">

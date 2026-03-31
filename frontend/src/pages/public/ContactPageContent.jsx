@@ -3,11 +3,13 @@ import { Mail, Phone, MapPin, Building2, Clock } from "lucide-react";
 import BrandButton from "../../components/ui/BrandButton";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { useMarketSettings } from "../../hooks/useMarketSettings";
 import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
 export default function ContactPageContent() {
+  const market = useMarketSettings();
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -61,6 +63,18 @@ export default function ContactPageContent() {
                 <h2 className="text-xl font-bold text-[#20364D]">Message Received</h2>
                 <p className="text-slate-600 mt-2">Reference: <span className="font-semibold">{success.request_number}</span></p>
                 <p className="text-slate-500 mt-1 text-sm">Our team will get back to you within 24 hours.</p>
+                {success.account_invite && (
+                  <div className="mt-5 rounded-xl bg-blue-50 border-2 border-blue-200 p-5 text-left" data-testid="contact-activation-banner">
+                    <p className="font-bold text-blue-900">Your Konekt account has been created</p>
+                    <p className="text-blue-800 text-sm mt-1">Activate it to track requests, quotes, invoices, and orders.</p>
+                    <a
+                      href={success.account_invite.invite_url}
+                      className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-5 py-2.5 font-semibold hover:bg-blue-700 transition"
+                    >
+                      Activate Account
+                    </a>
+                  </div>
+                )}
                 <button
                   onClick={() => setSuccess(null)}
                   className="mt-6 text-[#20364D] font-medium underline"
@@ -168,7 +182,7 @@ export default function ContactPageContent() {
                 </div>
                 <div>
                   <p className="font-medium">Email</p>
-                  <p className="text-slate-600 text-sm">sales@konekt.co.tz</p>
+                  <p className="text-slate-600 text-sm">{market.email}</p>
                   <p className="text-slate-500 text-xs mt-1">For sales and business inquiries</p>
                 </div>
               </div>
@@ -178,8 +192,8 @@ export default function ContactPageContent() {
                 </div>
                 <div>
                   <p className="font-medium">Phone</p>
-                  <p className="text-slate-600 text-sm">+255 XXX XXX XXX</p>
-                  <p className="text-slate-500 text-xs mt-1">Mon-Fri, 9am - 6pm EAT</p>
+                  <p className="text-slate-600 text-sm">{market.phone}</p>
+                  <p className="text-slate-500 text-xs mt-1">{market.business_hours}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -188,18 +202,18 @@ export default function ContactPageContent() {
                 </div>
                 <div>
                   <p className="font-medium">Office</p>
-                  <p className="text-slate-600 text-sm">Dar es Salaam, Tanzania</p>
+                  <p className="text-slate-600 text-sm">{market.address}</p>
                 </div>
               </div>
             </div>
           </SurfaceCard>
 
-          <SurfaceCard className="bg-[#20364D] text-white">
+          <SurfaceCard className="border-2 border-[#D4A843]/30 bg-[#FDFAF3]">
             <div className="flex items-center gap-3 mb-3">
               <Building2 className="w-6 h-6 text-[#D4A843]" />
-              <h3 className="font-bold text-white">Business Accounts</h3>
+              <h3 className="font-bold text-[#20364D]">Business Accounts</h3>
             </div>
-            <p className="text-white/85 text-sm leading-6">
+            <p className="text-slate-700 text-sm leading-6">
               Need contract pricing, recurring orders, or dedicated account management?
               Our business team can set up a tailored solution for your company.
             </p>
