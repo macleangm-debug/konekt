@@ -1,0 +1,114 @@
+{
+  "summary": "Sidebar Restructure, CRM Consolidation, and Partnerships Domain - All tests pass. Verified sidebar groups (Sales, Operations, Finance, Catalog, Partnerships, Settings), CRM 6-tab consolidation, and Partnerships routes.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "console_warnings": [
+      {
+        "component": "CRMPageV2 - Service Leads Tab",
+        "issue": "React key warning: 'Encountered two children with the same key' - some service leads have null IDs",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sidebar_crm_partnerships.py",
+    "/app/test_reports/pytest/pytest_results_sidebar_crm_partnerships.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Service leads with null IDs cause React key warnings - consider using index or unique identifier fallback"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sidebar_crm_partnerships.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sidebar restructure complete. Verified: (1) Sidebar has 6 groups: Sales (CRM, Quotes, Customers), Operations (Orders, Requests Inbox, Deliveries), Finance (Payments Queue, Invoices), Catalog (Products & Services), Partnerships (Affiliates, Referrals, Commissions), Settings (Business Settings, Users, Help). (2) CRM page has 6 tabs: All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence. (3) Service Leads and CRM Intelligence are NOT standalone sidebar items. (4) Partnerships routes work: /admin/partnerships/affiliates loads Affiliates page, /admin/partnerships/referrals and /admin/partnerships/commissions show Coming Soon placeholder. (5) Lead drawer works when clicking lead rows. (6) Backend APIs all working: /api/partnerships/summary, /api/admin/crm-intelligence/dashboard, /api/admin-flow-fixes/sales/service-leads, /api/admin/sales-kpis/summary, /api/admin/marketing-performance/sources.",
+  "feature_verification_results": {
+    "SIDEBAR_STRUCTURE": {
+      "status": "PASS",
+      "details": "6 groups verified: Sales, Operations, Finance, Catalog, Partnerships, Settings"
+    },
+    "CRM_SINGLE_ENTRY": {
+      "status": "PASS",
+      "details": "Only one CRM entry under Sales group (not CRM Pipeline)"
+    },
+    "SERVICE_LEADS_NOT_STANDALONE": {
+      "status": "PASS",
+      "details": "Service Leads is NOT a standalone sidebar item"
+    },
+    "CRM_INTELLIGENCE_NOT_STANDALONE": {
+      "status": "PASS",
+      "details": "CRM Intelligence is NOT a standalone sidebar item"
+    },
+    "AFFILIATES_UNDER_PARTNERSHIPS": {
+      "status": "PASS",
+      "details": "Affiliates is under Partnerships group, NOT Operations"
+    },
+    "NO_DUPLICATE_PRODUCTS": {
+      "status": "PASS",
+      "details": "Only 'Products & Services' exists under Catalog, no duplicate 'Products'"
+    },
+    "PARTNERSHIPS_GROUP": {
+      "status": "PASS",
+      "details": "Partnerships group exists with Affiliates, Referrals, Commissions"
+    },
+    "CRM_6_TABS": {
+      "status": "PASS",
+      "details": "CRM page has 6 tabs: All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence"
+    },
+    "CRM_ALL_LEADS_TAB": {
+      "status": "PASS",
+      "details": "All Leads tab shows lead table with data"
+    },
+    "CRM_SERVICE_LEADS_TAB": {
+      "status": "PASS",
+      "details": "Service Leads tab loads and displays service leads data"
+    },
+    "CRM_INTELLIGENCE_TAB": {
+      "status": "PASS",
+      "details": "Intelligence tab shows dashboard with Total Leads, Won, Lost, Sales Summary, Pipeline by Stage, Lead Sources, Marketing Source Performance"
+    },
+    "CRM_PIPELINE_TAB": {
+      "status": "PASS",
+      "details": "Pipeline tab shows Kanban board view with columns: New, Contacted, Qualified, Proposal, Negotiation, Won, Lost"
+    },
+    "CRM_LEAD_DRAWER": {
+      "status": "PASS",
+      "details": "Lead drawer opens when clicking lead row, shows lead details, timeline, add note, schedule follow-up, update stage"
+    },
+    "PARTNERSHIPS_AFFILIATES_PAGE": {
+      "status": "PASS",
+      "details": "Affiliates page loads at /admin/partnerships/affiliates with create form and partners list"
+    },
+    "PARTNERSHIPS_REFERRALS_COMING_SOON": {
+      "status": "PASS",
+      "details": "Referrals shows Coming Soon page at /admin/partnerships/referrals"
+    },
+    "PARTNERSHIPS_COMMISSIONS_COMING_SOON": {
+      "status": "PASS",
+      "details": "Commissions shows Coming Soon page at /admin/partnerships/commissions"
+    },
+    "BACKEND_PARTNERSHIPS_API": {
+      "status": "PASS",
+      "details": "GET /api/partnerships/summary returns affiliates count, referrals count, pending_commissions, paid_out"
+    }
+  },
+  "mocked_apis": {
+    "email_sending": "Email sending is MOCKED - logged to email_logs collection, not actually dispatched"
+  }
+}

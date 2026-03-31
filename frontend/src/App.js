@@ -382,6 +382,9 @@ import SuppliersPage from "@/pages/admin/SuppliersPage";
 import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
 import AdminProductsServicesPage from "@/pages/admin/AdminProductsServicesPage";
 
+// Partnership Placeholder
+import PartnershipComingSoonPage from "@/pages/admin/PartnershipComingSoonPage";
+
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 import SalesDashboardV2 from "@/pages/staff/SalesDashboardV2";
@@ -538,6 +541,10 @@ function App() {
           <Route path="affiliate-payouts" element={<AffiliatePayoutsPage />} />
           <Route path="affiliate-settings" element={<AffiliateSettingsPage />} />
           <Route path="affiliate-campaigns" element={<AffiliateCampaignsPage />} />
+          {/* Partnerships Routes */}
+          <Route path="partnerships/affiliates" element={<AffiliatesPage />} />
+          <Route path="partnerships/referrals" element={<PartnershipComingSoonPage title="Referrals" />} />
+          <Route path="partnerships/commissions" element={<PartnershipComingSoonPage title="Commissions" />} />
           <Route path="payments/record" element={<RecordPaymentPage />} />
           <Route path="launch-readiness" element={<LaunchReadinessPage />} />
           <Route path="audit" element={<AuditLogPage />} />
