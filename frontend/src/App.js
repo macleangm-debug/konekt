@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { CartDrawerProvider } from "@/contexts/CartDrawerContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 import { bootstrapAffiliateAttribution } from "@/lib/attribution";
+import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithValidation";
 
 // Components
 import Navbar from "@/components/Navbar";
@@ -385,6 +386,10 @@ import AdminProductsServicesPage from "@/pages/admin/AdminProductsServicesPage";
 // Partnership Placeholder
 import PartnershipComingSoonPage from "@/pages/admin/PartnershipComingSoonPage";
 
+// Catalog Taxonomy + Vendor Capabilities
+import CatalogTaxonomyPage from "@/pages/admin/CatalogTaxonomyPage";
+import VendorCapabilityAssignmentPage from "@/pages/admin/VendorCapabilityAssignmentPage";
+
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 import SalesDashboardV2 from "@/pages/staff/SalesDashboardV2";
@@ -456,7 +461,7 @@ function CustomerRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
   
-  return children;
+  return <ProtectedRouteWithValidation tokenKey="konekt_token">{children}</ProtectedRouteWithValidation>;
 }
 
 function App() {
@@ -567,6 +572,8 @@ function App() {
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />
           <Route path="products-services" element={<AdminProductsServicesPage />} />
+          <Route path="catalog-taxonomy" element={<CatalogTaxonomyPage />} />
+          <Route path="vendor-capabilities" element={<VendorCapabilityAssignmentPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
 import PublicFooter from "../../components/PublicFooter";
-import ServicePageTemplate from "../../components/services/ServicePageTemplate";
+import ServicePageTemplateV2 from "../../components/services/ServicePageTemplateV2";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -231,7 +231,16 @@ export default function DynamicServiceDetailPage() {
             Back to Services
           </Link>
         </div>
-        <ServicePageTemplate service={service} />
+        <ServicePageTemplateV2
+          slug={service.key || slug}
+          title={service.name}
+          overview={service.description}
+          included={service.includes || []}
+          idealFor={service.for_who || []}
+          benefits={service.why_konekt || []}
+          howItWorks={(service.process_steps || []).map((s) => s.title || s)}
+          faqs={(service.faqs || []).map((f) => ({ question: f.q || f.question, answer: f.a || f.answer }))}
+        />
       </main>
       <PublicFooter />
     </div>

@@ -674,14 +674,26 @@ export default function CRMPageV2() {
               </div>
             )}
 
-            {/* Kanban View */}
+            {/* Kanban View — Draggable */}
             {effectiveViewMode === "kanban" && (
-              <div className="grid xl:grid-cols-7 gap-4 overflow-x-auto pb-4">
+              <div className="grid xl:grid-cols-7 gap-4 overflow-x-auto pb-4" data-testid="crm-kanban">
                 {leadStatuses.map((stage) => {
                   const stageLeads = tabFilteredLeads.filter((l) => l.status === stage);
                   const stageValue = stageLeads.reduce((acc, l) => acc + (Number(l.estimated_value) || 0), 0);
                   return (
-                    <div key={stage} className="rounded-2xl border bg-white p-4 min-h-[450px] min-w-[240px]">
+                    <div
+                      key={stage}
+                      className="rounded-2xl border bg-white p-4 min-h-[450px] min-w-[240px] transition-colors"
+                      data-testid={`kanban-col-${stage}`}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("bg-[#D4A843]/5", "border-[#D4A843]"); }}
+                      onDragLeave={(e) => { e.currentTarget.classList.remove("bg-[#D4A843]/5", "border-[#D4A843]"); }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove("bg-[#D4A843]/5", "border-[#D4A843]");
+                        const leadId = e.dataTransfer.getData("text/plain");
+                        if (leadId) changeStatus(leadId, stage);
+                      }}
+                    >
                       <div className="font-semibold capitalize mb-1 flex items-center gap-2">
                         <span className={`w-3 h-3 rounded-full ${statusKanbanColors[stage]}`} />
                         {stage.replace("_", " ")}
@@ -693,24 +705,17 @@ export default function CRMPageV2() {
                         {stageLeads.map((lead) => (
                           <div
                             key={lead.id}
-                            className="rounded-xl border bg-slate-50 p-3 hover:shadow-sm transition-shadow cursor-pointer"
+                            draggable
+                            onDragStart={(e) => { e.dataTransfer.setData("text/plain", lead.id); e.dataTransfer.effectAllowed = "move"; }}
+                            className="rounded-xl border bg-slate-50 p-3 hover:shadow-sm transition-shadow cursor-grab active:cursor-grabbing active:shadow-md active:border-[#D4A843]"
                             onClick={() => openDrawer(lead)}
+                            data-testid={`kanban-card-${lead.id}`}
                           >
                             <div className="font-medium text-sm">{lead.company_name || lead.contact_name}</div>
                             <div className="text-xs text-slate-600 mt-1">{lead.contact_name}</div>
                             {lead.estimated_value ? (
                               <div className="text-xs text-[#D4A843] font-medium mt-2">TZS {Number(lead.estimated_value).toLocaleString()}</div>
                             ) : null}
-                            <div className="flex items-center gap-2 mt-3">
-                              <select
-                                value={lead.status}
-                                onChange={(e) => { e.stopPropagation(); changeStatus(lead.id, e.target.value); }}
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-xs border rounded px-1 py-0.5 flex-1"
-                              >
-                                {leadStatuses.map((s) => (<option key={s} value={s}>{s}</option>))}
-                              </select>
-                            </div>
                           </div>
                         ))}
                         {stageLeads.length === 0 && (

@@ -3,7 +3,7 @@ import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
-import MarketplaceFilterSidebar from "../../components/marketplace/MarketplaceFilterSidebar";
+import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import { Package, FileText, ShoppingCart, Search } from "lucide-react";
 
 function money(v) {
@@ -16,14 +16,15 @@ export default function MarketplaceBrowsePageContent() {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
 
   // Taxonomy data
   const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
   const [filters, setFilters] = useState({
-    group_id: searchParams.get("group_id") || null,
-    category_id: searchParams.get("category_id") || null,
-    subcategory_id: searchParams.get("subcategory_id") || null,
+    q: searchParams.get("q") || "",
+    group_id: searchParams.get("group_id") || "",
+    category_id: searchParams.get("category_id") || "",
+    subcategory_id: searchParams.get("subcategory_id") || "",
+    sort: searchParams.get("sort") || "relevance",
   });
 
   const isLoggedIn = useMemo(
@@ -42,19 +43,24 @@ export default function MarketplaceBrowsePageContent() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (searchValue) params.set("q", searchValue);
+      if (filters.q) params.set("q", filters.q);
       if (filters.group_id) params.set("group_id", filters.group_id);
       if (filters.category_id) params.set("category_id", filters.category_id);
       if (filters.subcategory_id) params.set("subcategory_id", filters.subcategory_id);
 
       const res = await api.get(`/api/marketplace/products/search?${params.toString()}`);
-      setItems(res.data || []);
+      let results = res.data || [];
+      // Client-side sort
+      if (filters.sort === "newest") results.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      if (filters.sort === "price_low") results.sort((a, b) => (a.customer_price || a.price || 0) - (b.customer_price || b.price || 0));
+      if (filters.sort === "price_high") results.sort((a, b) => (b.customer_price || b.price || 0) - (a.customer_price || a.price || 0));
+      setItems(results);
     } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [searchValue, filters]);
+  }, [filters]);
 
   useEffect(() => {
     load();
@@ -63,10 +69,11 @@ export default function MarketplaceBrowsePageContent() {
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
     const params = new URLSearchParams();
-    if (searchValue) params.set("q", searchValue);
+    if (newFilters.q) params.set("q", newFilters.q);
     if (newFilters.group_id) params.set("group_id", newFilters.group_id);
     if (newFilters.category_id) params.set("category_id", newFilters.category_id);
     if (newFilters.subcategory_id) params.set("subcategory_id", newFilters.subcategory_id);
+    if (newFilters.sort && newFilters.sort !== "relevance") params.set("sort", newFilters.sort);
     setSearchParams(params, { replace: true });
   };
 
@@ -83,61 +90,40 @@ export default function MarketplaceBrowsePageContent() {
         <p className="text-slate-600 mt-1">Discover products and services available for your business.</p>
       </div>
 
-      {/* Search bar */}
-      <div className="mb-6">
-        <div className="relative max-w-2xl">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-            data-testid="search-products-input"
+      {/* Inline Filter Rail */}
+      <InlineMarketplaceFilterRail
+        filters={filters}
+        onChange={handleFilterChange}
+        groups={taxonomy.groups}
+        categories={taxonomy.categories}
+        subcategories={taxonomy.subcategories}
+        resultCount={items.length}
+      />
+
+      {/* Products — 4-card desktop grid */}
+      <section className="mt-6">
+        {loading ? (
+          <ListingGridSkeleton />
+        ) : items.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="marketplace-grid">
+            {items.map((item) => (
+              <MarketplaceProductCard
+                key={item.id}
+                product={item}
+                isLoggedIn={isLoggedIn}
+                onRequestQuote={requestProductQuote}
+              />
+            ))}
+          </div>
+        ) : (
+          <PremiumEmptyState
+            title="No products found"
+            description="Try another search term or clear filters to browse all products."
+            ctaLabel="Clear filters"
+            ctaHref="/marketplace"
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6">
-        {/* Sidebar */}
-        <MarketplaceFilterSidebar
-          groups={taxonomy.groups}
-          categories={taxonomy.categories}
-          subcategories={taxonomy.subcategories}
-          selectedFilters={filters}
-          onChange={handleFilterChange}
-        />
-
-        {/* Products */}
-        <section>
-          {loading ? (
-            <ListingGridSkeleton />
-          ) : items.length > 0 ? (
-            <>
-              <div className="text-xs text-slate-400 mb-3">
-                {items.length} product{items.length !== 1 ? "s" : ""} found
-              </div>
-              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {items.map((item) => (
-                  <MarketplaceProductCard
-                    key={item.id}
-                    product={item}
-                    isLoggedIn={isLoggedIn}
-                    onRequestQuote={requestProductQuote}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <PremiumEmptyState
-              title="No products found"
-              description="Try another search term or clear filters to browse all products."
-              ctaLabel="Clear filters"
-              ctaHref="/marketplace"
-            />
-          )}
-        </section>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import ServiceDetailShowcase from "../../components/services/ServiceDetailShowca
 import ServiceQuoteRequestFormV2 from "../../components/services/ServiceQuoteRequestFormV2";
 import MultiPromoCustomizationBuilder from "../../components/promotions/MultiPromoCustomizationBuilder";
 import MultiServiceRequestBuilder from "../../components/services/MultiServiceRequestBuilder";
+import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -49,6 +50,8 @@ export default function MarketplaceUnifiedPageV3() {
   const { user } = useAuth();
   const [showPromoBuilder, setShowPromoBuilder] = useState(false);
   const [showServiceBuilder, setShowServiceBuilder] = useState(false);
+  const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
+  const [inlineFilters, setInlineFilters] = useState({ q: "", group_id: "", category_id: "", subcategory_id: "", sort: "relevance" });
 
   useEffect(() => {
     api.get("/api/service-request-templates").then((res) => {
@@ -61,16 +64,27 @@ export default function MarketplaceUnifiedPageV3() {
       }));
       setServices(rows);
     }).catch(() => {});
+
+    // Load taxonomy for filter rail
+    api.get("/api/marketplace/taxonomy")
+      .then((res) => setTaxonomy(res.data || { groups: [], categories: [], subcategories: [] }))
+      .catch(() => {});
   }, []);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
     try {
       const search = new URLSearchParams();
-      if (searchQuery) search.set("q", searchQuery);
-      if (groupFilter) search.set("group", groupFilter);
+      if (inlineFilters.q) search.set("q", inlineFilters.q);
+      if (inlineFilters.group_id) search.set("group_id", inlineFilters.group_id);
+      if (inlineFilters.category_id) search.set("category_id", inlineFilters.category_id);
+      if (inlineFilters.subcategory_id) search.set("subcategory_id", inlineFilters.subcategory_id);
       const res = await api.get(`/api/marketplace/products/search?${search.toString()}`);
-      const prods = res.data || [];
+      let prods = res.data || [];
+      // Client-side sort
+      if (inlineFilters.sort === "newest") prods.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+      if (inlineFilters.sort === "price_low") prods.sort((a, b) => (a.customer_price || a.price || 0) - (b.customer_price || b.price || 0));
+      if (inlineFilters.sort === "price_high") prods.sort((a, b) => (b.customer_price || b.price || 0) - (a.customer_price || a.price || 0));
       setAllProducts(prods);
       const uniqueGroups = [...new Set(prods.map((p) => p.group_name).filter(Boolean))];
       setGroups(uniqueGroups);
@@ -78,7 +92,7 @@ export default function MarketplaceUnifiedPageV3() {
       setAllProducts([]);
     }
     setLoading(false);
-  }, [searchQuery, groupFilter]);
+  }, [inlineFilters]);
 
   useEffect(() => { loadProducts(); }, [loadProducts]);
 
@@ -137,34 +151,16 @@ export default function MarketplaceUnifiedPageV3() {
         ))}
       </div>
 
-      {/* Search & Filter */}
+      {/* Search & Filter — Inline Rail */}
       {(tab === "products" || tab === "promo") && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4" data-testid="marketplace-search">
-          <div className="grid md:grid-cols-[1fr_auto] gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none"
-                data-testid="product-search"
-              />
-            </div>
-            {groups.length > 0 && (
-              <select
-                value={groupFilter}
-                onChange={(e) => setGroupFilter(e.target.value)}
-                className="border border-slate-200 rounded-xl px-4 py-3 text-sm bg-white text-[#20364D] min-w-[180px]"
-                data-testid="group-filter"
-              >
-                <option value="">All Groups</option>
-                {groups.map((g) => <option key={g} value={g}>{g}</option>)}
-              </select>
-            )}
-          </div>
-        </div>
+        <InlineMarketplaceFilterRail
+          filters={inlineFilters}
+          onChange={setInlineFilters}
+          groups={taxonomy.groups}
+          categories={taxonomy.categories}
+          subcategories={taxonomy.subcategories}
+          resultCount={filteredProducts.length}
+        />
       )}
 
       {/* Products Content */}
@@ -189,13 +185,13 @@ export default function MarketplaceUnifiedPageV3() {
           ) : (
             <>
               {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
               {Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : visibleProducts.length > 0 ? (
             <>
               <p className="text-xs text-slate-400">{filteredProducts.length} {tab === "promo" ? "promotional item" : "product"}{filteredProducts.length !== 1 ? "s" : ""}</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {visibleProducts.map((product) => (
                   <ProductCardCompact key={product.id} product={product} onDetail={setDetailItem} isPromo={tab === "promo"} />
                 ))}

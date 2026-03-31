@@ -107,7 +107,7 @@ export default function PublicNavbarV2() {
 
         <div className="hidden lg:flex items-center gap-3">
           <MarketSelectorNav />
-          <BrandButton href="/dashboard" variant="ghost">
+          <BrandButton href="/login" variant="ghost">
             Login
           </BrandButton>
           <BrandButton href="/request-quote" variant="gold">
@@ -181,7 +181,7 @@ export default function PublicNavbarV2() {
               )
             )}
             <div className="pt-3 border-t space-y-2">
-              <BrandButton href="/dashboard" variant="ghost" className="w-full">
+              <BrandButton href="/login" variant="ghost" className="w-full">
                 Login
               </BrandButton>
               <BrandButton href="/request-quote" variant="gold" className="w-full">
