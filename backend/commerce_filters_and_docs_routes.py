@@ -128,31 +128,53 @@ async def marketplace_filters():
     }
 
 @marketplace_router.get("/products/search")
-async def search_products(q: Optional[str] = None, group_slug: Optional[str] = None, subgroup_slug: Optional[str] = None):
-    """Search products with optional filters"""
+async def search_products(
+    q: Optional[str] = None,
+    group_slug: Optional[str] = None,
+    subgroup_slug: Optional[str] = None,
+    group_id: Optional[str] = None,
+    category_id: Optional[str] = None,
+    subcategory_id: Optional[str] = None,
+    group: Optional[str] = None,
+):
+    """Search products with optional filters (legacy + taxonomy)"""
     query = {"is_active": True}
+
+    # Legacy slug filters
     if group_slug:
         query["$or"] = [{"group_slug": group_slug}, {"branch": group_slug}]
     if subgroup_slug:
         query["subgroup_slug"] = subgroup_slug
-    
+
+    # Taxonomy filters
+    if group_id:
+        query["group_id"] = group_id
+    if category_id:
+        query["category_id"] = category_id
+    if subcategory_id:
+        query["subcategory_id"] = subcategory_id
+
+    # Simple group name filter (from marketplace page)
+    if group and not group_id:
+        query["group_name"] = group
+
     rows = await db.products.find(query).sort("name", 1).to_list(length=2000)
-    
+
     q_norm = (q or "").strip().lower()
-    
+
     def matches(row):
         if not q_norm:
             return True
         hay = " ".join([
-            str(row.get("name", "")), 
-            str(row.get("group_name", "")), 
-            str(row.get("subgroup_name", "")), 
+            str(row.get("name", "")),
+            str(row.get("group_name", "")),
+            str(row.get("subgroup_name", "")),
             str(row.get("description", "")),
             str(row.get("branch", "")),
             str(row.get("category", ""))
         ]).lower()
         return q_norm in hay
-    
+
     filtered = [row for row in rows if matches(row)]
     out = []
     for row in filtered:

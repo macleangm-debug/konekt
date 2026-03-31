@@ -144,6 +144,11 @@ from vendor_orders_routes import router as vendor_orders_router
 from stripe_payment_routes import router as stripe_payment_router
 from stripe_webhook_routes import router as stripe_webhook_router
 
+# Marketplace Taxonomy & Vendor Catalog Routes
+from routes.marketplace_taxonomy_routes import router as marketplace_taxonomy_router
+from routes.vendor_catalog_routes import router as vendor_catalog_router
+from routes.admin_catalog_routes import router as admin_catalog_router
+
 # Service Orchestration Routes
 from service_catalog_routes import router as service_catalog_router
 from service_form_template_routes import router as service_form_template_router
@@ -2564,9 +2569,9 @@ from customer_in_account_service_routes import router as customer_in_account_ser
 # Customer Checkout Quote
 from customer_checkout_quote_routes import router as customer_checkout_quote_router
 
-# Admin Catalog Setup
-from admin_catalog_routes import router as admin_catalog_router
-app.include_router(admin_catalog_router)
+# Admin Catalog Setup (legacy services/products catalog)
+from admin_catalog_routes import router as admin_catalog_setup_router
+app.include_router(admin_catalog_setup_router)
 
 # Admin Deliveries
 from admin_deliveries_routes import router as admin_deliveries_router
@@ -2710,6 +2715,9 @@ app.include_router(invoice_branding_router)
 
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
+app.include_router(marketplace_taxonomy_router)
+app.include_router(vendor_catalog_router)
+app.include_router(admin_catalog_router)
 
 
 
@@ -2760,6 +2768,13 @@ async def startup_event():
         rule = {**DEFAULT_PRODUCT_MARGIN_RULE, "id": _seed_id, "created_at": _seed_now, "updated_at": _seed_now}
         await db.margin_rules.insert_one(rule)
         logger.info("Seeded default 20%% product margin rule")
+
+    # Seed catalog taxonomy if empty
+    try:
+        from services.catalog_taxonomy_service import seed_taxonomy
+        await seed_taxonomy(db)
+    except Exception as e:
+        logger.warning("Taxonomy seed: %s", e)
 
     # Migrate old leads from 'leads' collection to 'crm_leads' (one-time compat)
     try:

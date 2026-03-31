@@ -8,7 +8,7 @@ export const adminSidebarLinks = [
   { label: "Customers", href: "/admin/customer-accounts" },
   { label: "Vendors", href: "/admin/partners" },
   { label: "Affiliates & Referrals", href: "/admin/affiliates" },
-  { label: "Products & Services", href: "/admin/products" },
+  { label: "Products & Services", href: "/admin/products-services" },
   { label: "Business Settings", href: "/admin/settings" },
   { label: "Users & Roles", href: "/admin/users" },
 ];

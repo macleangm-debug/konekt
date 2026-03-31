@@ -255,6 +255,7 @@ import AccountServicesPageV2 from "@/pages/account/AccountServicesPageV2";
 import InvoiceDetailInAccountPage from "@/pages/account/InvoiceDetailInAccountPage";
 import ProductSubgroupsManagerPage from "@/pages/admin/ProductSubgroupsManagerPage";
 import VendorProductsManagerPage from "@/pages/vendor/VendorProductsManagerPage";
+import VendorProductSubmissionsPage from "@/pages/vendor/VendorProductSubmissionsPage";
 
 // Launch Critical Pack - New Components
 import OrderDetailPageV2 from "@/pages/account/OrderDetailPageV2";
@@ -379,6 +380,7 @@ import DeliveryNotesPage from "@/pages/admin/DeliveryNotesPage";
 import GoodsReceivingPage from "@/pages/admin/GoodsReceivingPage";
 import SuppliersPage from "@/pages/admin/SuppliersPage";
 import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
+import AdminProductsServicesPage from "@/pages/admin/AdminProductsServicesPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -557,6 +559,7 @@ function App() {
           <Route path="goods-receiving" element={<GoodsReceivingPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />
+          <Route path="products-services" element={<AdminProductsServicesPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
@@ -663,6 +666,7 @@ function App() {
           <Route path="vendor-dashboard" element={<VendorDashboardPage />} />
           {/* Vendor Products */}
           <Route path="vendor-products" element={<VendorProductsManagerPage />} />
+          <Route path="product-submissions" element={<VendorProductSubmissionsPage />} />
           {/* Vendor Help */}
           <Route path="vendor-help" element={<HelpVendorPage />} />
         </Route>

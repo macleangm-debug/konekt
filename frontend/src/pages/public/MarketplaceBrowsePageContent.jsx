@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
-import PageHeader from "../../components/ui/PageHeader";
-import FilterBar from "../../components/ui/FilterBar";
-import { Package, FileText, ShoppingCart } from "lucide-react";
+import MarketplaceFilterSidebar from "../../components/marketplace/MarketplaceFilterSidebar";
+import { Package, FileText, ShoppingCart, Search } from "lucide-react";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
@@ -16,62 +15,59 @@ export default function MarketplaceBrowsePageContent() {
   const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
-  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchValue, setSearchValue] = useState(searchParams.get("q") || "");
-  const [groupFilter, setGroupFilter] = useState(searchParams.get("group") || "");
+
+  // Taxonomy data
+  const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
+  const [filters, setFilters] = useState({
+    group_id: searchParams.get("group_id") || null,
+    category_id: searchParams.get("category_id") || null,
+    subcategory_id: searchParams.get("subcategory_id") || null,
+  });
 
   const isLoggedIn = useMemo(
     () => Boolean(localStorage.getItem("konekt_token") || localStorage.getItem("token")),
     []
   );
 
-  const load = async () => {
+  // Load taxonomy once
+  useEffect(() => {
+    api.get("/api/marketplace/taxonomy")
+      .then((res) => setTaxonomy(res.data || { groups: [], categories: [], subcategories: [] }))
+      .catch(() => {});
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchValue) params.set("q", searchValue);
-      if (groupFilter) params.set("group", groupFilter);
+      if (filters.group_id) params.set("group_id", filters.group_id);
+      if (filters.category_id) params.set("category_id", filters.category_id);
+      if (filters.subcategory_id) params.set("subcategory_id", filters.subcategory_id);
 
-      // Single source of truth: /api/marketplace/products/search
       const res = await api.get(`/api/marketplace/products/search?${params.toString()}`);
-      const prods = res.data || [];
-      setItems(prods);
-      const uniqueGroups = [...new Set(prods.map((p) => p.group_name).filter(Boolean))];
-      setGroups(uniqueGroups);
+      setItems(res.data || []);
     } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchValue, filters]);
 
   useEffect(() => {
     load();
-  }, [groupFilter]);
+  }, [load]);
 
-  const handleSearch = (value) => {
-    setSearchValue(value);
-    if (value) {
-      searchParams.set("q", value);
-    } else {
-      searchParams.delete("q");
-    }
-    setSearchParams(searchParams, { replace: true });
-  };
-
-  const handleSearchSubmit = () => {
-    load();
-  };
-
-  const updateGroupFilter = (value) => {
-    setGroupFilter(value);
-    if (value) {
-      searchParams.set("group", value);
-    } else {
-      searchParams.delete("group");
-    }
-    setSearchParams(searchParams, { replace: true });
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+    const params = new URLSearchParams();
+    if (searchValue) params.set("q", searchValue);
+    if (newFilters.group_id) params.set("group_id", newFilters.group_id);
+    if (newFilters.category_id) params.set("category_id", newFilters.category_id);
+    if (newFilters.subcategory_id) params.set("subcategory_id", newFilters.subcategory_id);
+    setSearchParams(params, { replace: true });
   };
 
   const requestProductQuote = (product) => {
@@ -80,58 +76,68 @@ export default function MarketplaceBrowsePageContent() {
     );
   };
 
-  const filterConfig = [
-    {
-      name: "group",
-      value: groupFilter,
-      onChange: updateGroupFilter,
-      placeholder: "All Groups",
-      options: groups.map((g) => ({ value: g, label: g })),
-    },
-  ];
-
   return (
     <div className="max-w-7xl mx-auto px-6 py-8" data-testid="marketplace-browse-content">
-      <PageHeader
-        title="Marketplace"
-        subtitle="Discover products and services available for your business."
-      />
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-[#20364D]">Marketplace</h1>
+        <p className="text-slate-600 mt-1">Discover products and services available for your business.</p>
+      </div>
 
-      <FilterBar
-        searchValue={searchValue}
-        onSearchChange={handleSearch}
-        onSearchSubmit={handleSearchSubmit}
-        searchPlaceholder="Search products..."
-        filters={filterConfig}
-        className="mb-6"
-      />
+      {/* Search bar */}
+      <div className="mb-6">
+        <div className="relative max-w-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search products..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
+            data-testid="search-products-input"
+          />
+        </div>
+      </div>
 
-      {loading ? (
-        <ListingGridSkeleton />
-      ) : items.length > 0 ? (
-        <>
-          <div className="text-xs text-[#94a3b8] mb-3">
-            {items.length} product{items.length !== 1 ? "s" : ""} found
-          </div>
-          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {items.map((item) => (
-              <MarketplaceProductCard
-                key={item.id}
-                product={item}
-                isLoggedIn={isLoggedIn}
-                onRequestQuote={requestProductQuote}
-              />
-            ))}
-          </div>
-        </>
-      ) : (
-        <PremiumEmptyState
-          title="No products found"
-          description="Try another search term or clear filters to browse all products."
-          ctaLabel="Clear filters"
-          ctaHref="/marketplace"
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)] gap-6">
+        {/* Sidebar */}
+        <MarketplaceFilterSidebar
+          groups={taxonomy.groups}
+          categories={taxonomy.categories}
+          subcategories={taxonomy.subcategories}
+          selectedFilters={filters}
+          onChange={handleFilterChange}
         />
-      )}
+
+        {/* Products */}
+        <section>
+          {loading ? (
+            <ListingGridSkeleton />
+          ) : items.length > 0 ? (
+            <>
+              <div className="text-xs text-slate-400 mb-3">
+                {items.length} product{items.length !== 1 ? "s" : ""} found
+              </div>
+              <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {items.map((item) => (
+                  <MarketplaceProductCard
+                    key={item.id}
+                    product={item}
+                    isLoggedIn={isLoggedIn}
+                    onRequestQuote={requestProductQuote}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <PremiumEmptyState
+              title="No products found"
+              description="Try another search term or clear filters to browse all products."
+              ctaLabel="Clear filters"
+              ctaHref="/marketplace"
+            />
+          )}
+        </section>
+      </div>
     </div>
   );
 }

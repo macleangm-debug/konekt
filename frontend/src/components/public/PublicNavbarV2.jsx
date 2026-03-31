@@ -4,6 +4,7 @@ import BrandButton from "../ui/BrandButton";
 import { Menu, X, FileText, ChevronDown } from "lucide-react";
 import BrandLogo from "../branding/BrandLogo";
 import { serviceNavigationGroups } from "../services/ServiceNavigationDropdownData";
+import MarketSelectorNav from "../navigation/MarketSelectorNav";
 
 export default function PublicNavbarV2() {
   const [open, setOpen] = useState(false);
@@ -105,6 +106,7 @@ export default function PublicNavbarV2() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
+          <MarketSelectorNav />
           <BrandButton href="/dashboard" variant="ghost">
             Login
           </BrandButton>
