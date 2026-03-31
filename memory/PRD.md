@@ -6,7 +6,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ## Core Architecture
 - **Frontend**: React (Vite/CRA), Tailwind CSS, Shadcn/UI
 - **Backend**: FastAPI (Python), MongoDB (Motor async driver)
-- **Auth**: JWT-based with role-based access
+- **Auth**: JWT-based with role-based access + session validation
 - **Payments**: Stripe sandbox integration
 
 ## System of Record
@@ -16,7 +16,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Orders = execution
 
 ## User Roles
-- **Admin** (`/admin`): Full platform management, CRM, orders, finance, partnerships
+- **Admin** (`/admin`): Full platform management, CRM, orders, finance, partnerships, catalog
 - **Customer** (`/account`): Browse marketplace, submit requests, view orders/invoices
 - **Vendor/Partner** (`/partner`): Manage assigned vendor orders, update fulfillment
 - **Sales/Staff** (`/staff`): CRM pipeline work, request handling, delivery coordination
@@ -46,28 +46,46 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Removal of inline forms on service pages
 - Dual guest/logged-in cart logic
 - Market selector top nav integration
-- Taxonomy filter sidebar (Group → Category → Subcategory)
+- Taxonomy filter sidebar (Group > Category > Subcategory)
 
 ### Phase 4 — Admin Products & Services + Vendor Submission
 - Admin product/service CRUD with taxonomy assignment
 - Vendor product submission flow
 - Stock management foundations
 
-### Phase 5 — CRM Consolidation & Partnerships Domain (Current)
-- **Sidebar Restructure**: 6 clean groups — Sales, Operations, Finance, Catalog, Partnerships, Settings
-- **CRM Tab Consolidation**: Unified CRM page with 6 tabs (All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence)
-- **Service Leads absorbed into CRM**: No longer a standalone sidebar item
-- **CRM Intelligence absorbed into CRM**: No longer a standalone sidebar item
-- **Partnerships Domain**: New sidebar group with Affiliates (active), Referrals (placeholder), Commissions (placeholder)
-- **Duplicate cleanup**: Removed duplicate Products nav, Stock Items from sidebar
-- **Backend**: `/api/partnerships/summary` API endpoint
+### Phase 5 — CRM Consolidation & Partnerships Domain
+- Sidebar restructured into 6 groups: Sales, Operations, Finance, Catalog, Partnerships, Settings
+- CRM tab consolidation: All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence
+- Service Leads + CRM Intelligence absorbed into CRM tabs
+- Partnerships domain created: Affiliates, Referrals (placeholder), Commissions (placeholder)
+
+### Phase 6 — Deep Implementation (Current — 7 Steps)
+1. **Login/Session Privacy Fix**: Login CTA routes to `/login`, `ProtectedRouteWithValidation` validates sessions, stale tokens cleared on auth failure
+2. **Catalog Taxonomy Admin UI**: `/admin/catalog-taxonomy` with 3 sections (Products, Promotional Materials, Services), CRUD for groups/categories/subcategories
+3. **Vendor Capability Assignment**: `/admin/vendor-capabilities` — assign vendor expertise by taxonomy + capability type (products/services/both)
+4. **Unified Marketplace Filter Rail**: Inline filters (search + group + category + subcategory + sort) replacing sidebar, 4-card desktop grid, applied to both public and in-account marketplace
+5. **Service Page Template V2**: Standardized template with Hero, Overview, What's Included, Who It's For, How It Works, Benefits, FAQ, CTA — all CTAs route to `/request-quote?type=service_quote&service=<slug>`
+6. **Service Routing Cleanup**: `DynamicServiceDetailPage` uses `ServicePageTemplateV2` with proper CTA mapping
+7. **Draggable CRM Kanban**: HTML5 drag-and-drop on CRM Pipeline tab — drag lead cards between columns to persist status changes via API
+
+---
+
+## Current Sidebar Structure
+```
+Sales: CRM, Quotes, Customers
+Operations: Orders, Requests Inbox, Deliveries
+Finance: Payments Queue, Invoices
+Catalog: Products & Services, Catalog Taxonomy, Vendor Capabilities
+Partnerships: Affiliates, Referrals, Commissions
+Settings: Business Settings, Users, Help
+```
 
 ---
 
 ## Backlog
 
 ### P1 — Next Up
-- Add "Create Quote" action from CRM drawer (prefill from linked request/contact, preserve traceability)
+- Add "Create Quote" action from CRM drawer (prefill from linked request/contact)
 
 ### P2 — Future
 - Twilio WhatsApp integration (blocked on API key)
@@ -83,4 +101,5 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Iteration 150: Phase 2 — 100% Pass
 - Iteration 151: Phase 3 — 100% Pass
 - Iteration 152: Market/Taxonomy — 100% Pass
-- Iteration 153: CRM Consolidation & Partnerships — 100% Pass (17/17 features verified)
+- Iteration 153: CRM Consolidation & Partnerships — 100% Pass
+- Iteration 154: Deep Implementation (7 Steps) — 100% Pass (21 features verified)
