@@ -141,6 +141,8 @@ from public_marketplace_routes import router as public_marketplace_router
 from media_upload_routes import router as media_upload_router
 from partner_excel_import_routes import router as partner_excel_import_router
 from vendor_orders_routes import router as vendor_orders_router
+from vendors_admin_routes import router as vendors_admin_router
+from margin_admin_routes import router as margin_admin_router
 from stripe_payment_routes import router as stripe_payment_router
 from stripe_webhook_routes import router as stripe_webhook_router
 
@@ -2220,6 +2222,8 @@ async def sidebar_counts(user: dict = Depends(get_admin_user)):
 app.include_router(api_router)
 # IMPORTANT: admin_facade_router must be included BEFORE admin_router
 # because admin_router has /orders/{order_id} which would catch /orders/list
+app.include_router(vendors_admin_router)
+app.include_router(margin_admin_router)
 app.include_router(admin_facade_router)
 app.include_router(admin_router)
 

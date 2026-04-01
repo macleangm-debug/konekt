@@ -649,7 +649,7 @@ async def vendors_list(request: Request, search: Optional[str] = Query(default=N
         out.append(p)
     return out
 
-@router.get("/vendors/{vendor_id:path}")
+@router.get("/vendors/{vendor_id}")
 async def vendor_detail(vendor_id: str, request: Request):
     db = request.app.mongodb
     partner = await db.partners.find_one({"id": vendor_id})
@@ -661,7 +661,7 @@ async def vendor_detail(vendor_id: str, request: Request):
     orders = [_clean(o) for o in await db.vendor_orders.find({"vendor_id": vendor_key}).sort("created_at", -1).to_list(50)]
     return {"vendor": _clean(partner), "orders": orders}
 
-@router.post("/vendors/{vendor_id:path}/toggle-status")
+@router.post("/vendors/{vendor_id}/toggle-status")
 async def toggle_vendor_status(vendor_id: str, request: Request):
     db = request.app.mongodb
     partner = await db.partners.find_one({"id": vendor_id})

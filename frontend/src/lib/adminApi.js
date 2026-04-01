@@ -155,6 +155,23 @@ export const adminApi = {
   // Sidebar Counts
   getSidebarCounts: () => api.get("/api/admin/sidebar-counts"),
 
+  // Vendor Admin
+  getVendors: (params) => api.get("/api/admin/vendors", { params }),
+  getVendorStats: () => api.get("/api/admin/vendors/stats"),
+  getVendorDetail: (id) => api.get(`/api/admin/vendors/${id}`),
+  createVendor: (data) => api.post("/api/admin/vendors", data),
+  updateVendor: (id, data) => api.put(`/api/admin/vendors/${id}`, data),
+  seedTaxonomy: () => api.post("/api/admin/vendors/taxonomy/seed"),
+  getTaxonomy: (params) => api.get("/api/admin/vendors/taxonomy", { params }),
+  addSupplyRecord: (vendorId, data) => api.post(`/api/admin/vendors/${vendorId}/supply`, data),
+  getSupplyRecords: (vendorId) => api.get(`/api/admin/vendors/${vendorId}/supply`),
+
+  // Margins
+  getGlobalMargins: () => api.get("/api/admin/margins/global"),
+  updateGlobalMargins: (data) => api.put("/api/admin/margins/global", data),
+  resolvePrice: (data) => api.post("/api/admin/margins/resolve", data),
+  previewMargins: () => api.post("/api/admin/margins/preview"),
+
   // Customers 360 (merged)
   getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),
   getCustomers360Stats: () => api.get("/api/admin/customers-360/stats"),
