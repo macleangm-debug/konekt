@@ -27,53 +27,60 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - CRM "Create Quote" action in lead drawer
 - Quick Price Check widget on admin dashboard
 
-### Phase 15 — Pack 2 Commercial Workflow (01 Apr 2026)
-**Inline Quote Editor**
-- `QuoteEditorPage.jsx` — Full editor with customer panel, line items with descriptions (QuoteLineDescriptionField), quantity, unit price, auto-calculated totals
-- Pricing summary with adjustable tax rate, discount, and total
-- "Save Quote" and "Save & Send" actions
-- Route: `/admin/quotes/:id/edit`
+### Phase 15 — Pack 2 Commercial Workflow
+- Inline Quote Editor with line items, descriptions, pricing, tax/discount
+- Quote PUT API with sync to both canonical and fallback collections
+- CRM enhancements: clickable related quotes, existing quote count
+- Full traceability: Request → Lead → Quote → Order
 
-**Quote PUT API**
-- `PUT /api/admin/quotes-v2/{quote_id}` — Updates line_items, customer info, pricing, notes
-- Rejects edits on converted quotes (400)
-- Syncs to both canonical and fallback collections
+### Phase 16 — Pack 3 Operations Intelligence (01 Apr 2026)
+**Notification Registry (Centralized)**
+- `notification_registry_service.py` — single MongoDB query source for all badge counts
+- `GET /api/admin/notifications/summary` — structured summary with `new_count`, `action_required_count`, `badge_count`, `badge_type` per section (6 sections)
+- `GET /api/admin/sidebar-counts` — flattened view from same registry (no duplicate logic)
+- Sidebar badges now consume centralized endpoint exclusively
 
-**CRM Enhancements**
-- "Create Quote" button creates real draft in MongoDB, navigates to quote preview
-- Related quotes in CRM drawer are clickable (navigate to preview)
-- Existing quote count shown when quotes linked to lead
+**KPI Card Migration (5 pages)**
+- Orders: 5 cards (Total, New, Assigned, In Progress, Completed) — click-to-filter
+- Customers: 6 cards (Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders) — click-to-filter
+- Payments Queue: 4 cards (Total, Pending, Approved, Rejected) — click-to-filter
+- Invoices: 6 cards (Total, Draft, Sent, Paid, Overdue, Unpaid)
+- Deliveries: 5 cards (Total, Issued, In Transit, Delivered, Cancelled)
+- All use `StandardSummaryCardsRow` component with consistent accent colors
 
-**Full Traceability Chain**
-- Request → Lead: `source_request_id`, `converted_from_request`
-- Lead → Quote: `lead_id`, `created_from_crm`
-- Quote → Order: `quote_id`, `quote_number`, `order_type: quote_converted`
+**Assignment Scoring Service**
+- `assignment_scoring_service.py` — weighted scoring (capability_match 50%, availability 30%, turnaround 10%, workload 10%)
+- `log_assignment_decision()` — audit trail with candidate list, winning score, override_by, timestamp
+- Preserves manual override with logged rationale
 
-**Pack 3 Light Prep**
-- Audited notification sources (10+ types across 5 services)
-- Mapped assignment hooks (vendor, sales, lead owner)
-- Identified KPI card migration opportunities
-- Documented in `/app/memory/pack3_operations_audit.md`
+**Statement Email Send**
+- `POST /api/admin/customers/{id}/send-statement` — builds real statement from customer's orders/invoices
+- MOCKED email delivery (ready for Resend integration)
+- Logs to `statement_delivery_log` collection with full statement summary
+- `SendStatementButton` component in customer drawer (compact style) + toast feedback
+
+**Drawer Standardization**
+- Navy-tinted blur overlay (`bg-[#20364D]/30 backdrop-blur-[3px]`) on all admin drawers
+- Invoices page drawer updated to match standard
 
 ---
 
 ## Key Technical Concepts
-- **Business Settings Single Source of Truth:** `business_settings` MongoDB collection, `/public` endpoint for document generation
+- **Centralized Notification Registry:** Single `/api/admin/notifications/summary` endpoint is the source of truth for all sidebar badge counts. No duplicate count logic in layout components.
+- **Business Settings Single Source of Truth:** `business_settings` collection + `/public` endpoint for document generation
 - **Margin Hierarchy:** product > subcategory > category > group > global default
+- **Assignment Audit Trail:** Every assignment logs candidate list, scores, selection, and manual override
 - **Traceability Chain:** Request → Lead → Quote → Order with IDs at each link
-- **Payer/Customer Separation:** customer_name from accounts, payer_name from payment proofs
-- **Vendor Privacy:** Vendors see only their vendor_order_no, base_price, work details
 
 ## Backlog
 
 ### P1 — Upcoming
-- Pack 3 Operations Intelligence (notification registry, KPI card migration, assignment audit trail)
 - End-to-end Stripe test with real test cards
-- Statement of Account send via email
+- Statement email delivery via Resend (when keys available)
+- Assignment scoring integration with vendor smart assignment UI
 
 ### P2 — Future
 - Twilio WhatsApp notifications (blocked on keys)
-- Resend email integration (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
@@ -83,4 +90,5 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ## Test History
 - Iteration 161: Vendor Margin UX Packs 1-3 — 100%
 - Iteration 162: P1 Admin + CRM Quote Pack — 100%
-- Iteration 163: Pack 2 Commercial Workflow — 100% (19/19 backend + all frontend verified)
+- Iteration 163: Pack 2 Commercial Workflow — 100% (19/19 backend)
+- Iteration 164: Pack 3 Operations Intelligence — 100% (20/20 backend + all frontend verified)
