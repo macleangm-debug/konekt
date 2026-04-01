@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
+import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
 import { Package, FileText, ShoppingCart, Search } from "lucide-react";
 
 function money(v) {
@@ -124,6 +125,8 @@ export default function MarketplaceBrowsePageContent() {
           />
         )}
       </section>
+
+      <CantFindWhatYouNeedBanner className="mt-8" />
     </div>
   );
 }

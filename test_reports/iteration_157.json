@@ -1,0 +1,89 @@
+{
+  "summary": "Pack 1 - Service & Promo Experience Fix testing completed. All 15 backend tests passed (100%). All frontend features verified: 6 service pages resolve correctly with static fallback data, in-account marketplace shows 24 services (20+ requirement met), PromoMultiBlankBuilder submits multi-item promo requests with promo_items array, CantFindWhatYouNeedBanner visible on service/marketplace pages with working CTA, QuoteRequestPage 'Other / Not Sure' lane sends contact_general request type, URL pre-selection works for service_quote and promo_custom.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pack1_service_promo_v157.py",
+    "/app/test_reports/pytest/pytest_results_pack1_v157.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "comprehensiveServiceData.js contains 21 service entries with full content - all services from navigation dropdown have static fallback",
+    "DynamicServiceDetailPage.jsx correctly falls back to getServiceBySlug() when API returns 404",
+    "MarketplaceUnifiedPageV3.jsx merges API data with static data using getAllServicesForGrid() - shows 24 services",
+    "PromoMultiBlankBuilder.jsx correctly submits to /api/requests with request_type=promo_custom and promo_items array in details",
+    "CantFindWhatYouNeedBanner.jsx correctly navigates to /request-quote on CTA click",
+    "QuoteRequestPage.jsx correctly maps 'other' primary_need to contact_general request_type",
+    "public_request_intake_service.py includes contact_general in VALID_PUBLIC_REQUEST_TYPES",
+    "requests_module_routes.py includes contact_general in valid_types for /api/requests endpoint"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pack1_service_promo_v157.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "customer": "demo.customer@konekt.com / Demo123!",
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "Created test requests via /api/public-requests and /api/requests for service_quote, promo_custom, promo_sample, contact_general types",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Pack 1 stabilization complete. All 21 services from comprehensiveServiceData.js resolve correctly via static fallback. Service pages tested: fumigation-services, office-branding, deep-office-cleaning, cctv-installation, graphic-design-support, printer-servicing - all show correct content without 'Service Not Found'. In-account marketplace Services tab shows 24 service cards (merged from API + static data). PromoMultiBlankBuilder tested with multi-item submission - promo_items array correctly stored in request details. CantFindWhatYouNeedBanner visible on service detail pages, public marketplace, and in-account marketplace - CTA navigates to /request-quote. QuoteRequestPage 'Other / Not Sure' lane correctly sends contact_general request type. URL pre-selection tested: ?type=service_quote pre-selects Services lane, ?type=promo_custom pre-selects Promo lane. Service Request CTA on service pages routes to /request-quote?type=service_quote&service=<slug>. All requests appear in admin Requests Inbox (not guest_leads).",
+  "features_tested": {
+    "service_page_resolution": {
+      "fumigation-services": "PASS - Shows Fumigation Services content",
+      "office-branding": "PASS - Shows Office Branding content",
+      "deep-office-cleaning": "PASS - Shows Deep Office Cleaning content",
+      "cctv-installation": "PASS - Shows CCTV Installation content",
+      "graphic-design-support": "PASS - Shows Graphic Design Support content",
+      "printer-servicing": "PASS - Shows Printer Servicing content"
+    },
+    "in_account_marketplace_services": {
+      "services_tab_visible": "PASS - Services tab present in tab order",
+      "tab_order": "PASS - Products, Promotional Materials, Services",
+      "service_count": "PASS - 24 services displayed (20+ requirement met)",
+      "service_card_grid": "PASS - ServiceCardGrid renders all services"
+    },
+    "promo_multi_blank_builder": {
+      "form_display": "PASS - PromoMultiBlankBuilder form displayed",
+      "add_items": "PASS - Can add multiple promo items",
+      "item_fields": "PASS - Each item has name/qty/print-type/notes",
+      "submission": "PASS - Submits to /api/requests with request_type=promo_custom",
+      "promo_items_array": "PASS - promo_items array stored in details"
+    },
+    "cant_find_banner": {
+      "service_detail_page": "PASS - Banner visible on service pages",
+      "public_marketplace": "PASS - Banner visible on public marketplace",
+      "in_account_marketplace": "PASS - Banner visible on in-account marketplace",
+      "cta_navigation": "PASS - CTA navigates to /request-quote"
+    },
+    "quote_request_page": {
+      "other_lane": "PASS - 'Other / Not Sure' lane sends contact_general",
+      "service_quote": "PASS - Services lane sends service_quote",
+      "promo_custom": "PASS - Promo lane sends promo_custom",
+      "promo_sample": "PASS - Promo sample option available",
+      "url_preselection_service": "PASS - ?type=service_quote pre-selects Services",
+      "url_preselection_promo": "PASS - ?type=promo_custom pre-selects Promo"
+    },
+    "service_cta_routing": {
+      "request_service_btn": "PASS - Routes to /request-quote?type=service_quote&service=<slug>"
+    },
+    "admin_requests_inbox": {
+      "requests_visible": "PASS - All request types visible in admin inbox",
+      "service_quote_requests": "PASS - service_quote requests in inbox",
+      "promo_custom_requests": "PASS - promo_custom requests in inbox",
+      "promo_sample_requests": "PASS - promo_sample requests in inbox",
+      "contact_general_requests": "PASS - contact_general requests in inbox"
+    }
+  }
+}

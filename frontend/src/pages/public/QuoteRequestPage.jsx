@@ -13,6 +13,7 @@ const PRIMARY_OPTIONS = [
   { value: "products", label: "Products" },
   { value: "promo", label: "Promotional Materials" },
   { value: "services", label: "Services" },
+  { value: "other", label: "Other / Not Sure" },
 ];
 
 const PRODUCT_OPTIONS = [
@@ -90,7 +91,8 @@ export default function QuoteRequestPage() {
     if (form.primary_need === "products") return "product_bulk";
     if (form.primary_need === "promo") return form.promo_action || "promo_custom";
     if (form.primary_need === "services") return "service_quote";
-    return "";
+    if (form.primary_need === "other") return "contact_general";
+    return "contact_general";
   };
 
   const handleSubmit = async (e) => {
@@ -99,6 +101,7 @@ export default function QuoteRequestPage() {
     if (!form.primary_need) return toast.error("Please choose what you need first");
     if (form.primary_need === "services" && !form.service_category) return toast.error("Please select a service category");
     if (form.primary_need === "products" && !form.product_category) return toast.error("Please select a product category");
+    if (form.primary_need === "other" && !form.message) return toast.error("Please describe what you need");
 
     setSubmitting(true);
     try {

@@ -8,8 +8,11 @@ import ServiceCardGrid from "../../components/services/ServiceCardGrid";
 import ServiceDetailShowcase from "../../components/services/ServiceDetailShowcase";
 import ServiceQuoteRequestFormV2 from "../../components/services/ServiceQuoteRequestFormV2";
 import MultiPromoCustomizationBuilder from "../../components/promotions/MultiPromoCustomizationBuilder";
+import PromoMultiBlankBuilder from "../../components/requests/PromoMultiBlankBuilder";
 import MultiServiceRequestBuilder from "../../components/services/MultiServiceRequestBuilder";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
+import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
+import { getAllServicesForGrid } from "../../data/comprehensiveServiceData";
 import { useAuth } from "../../contexts/AuthContext";
 
 const TABS = [
@@ -50,16 +53,22 @@ export default function MarketplaceUnifiedPageV3() {
   const [inlineFilters, setInlineFilters] = useState({ q: "", group_id: "", category_id: "", subcategory_id: "", sort: "relevance" });
 
   useEffect(() => {
+    const staticServices = getAllServicesForGrid();
     api.get("/api/service-request-templates").then((res) => {
-      const rows = (res.data || []).map((x) => ({
+      const apiRows = (res.data || []).map((x) => ({
         service_key: x.service_key,
         service_name: x.service_name,
         short_description: x.short_description || `Get a tailored quote for ${x.service_name}`,
         long_description: x.long_description,
         highlights: x.highlights,
       }));
-      setServices(rows);
-    }).catch(() => {});
+      // Merge: API data takes priority, then fill from static catalog
+      const apiKeys = new Set(apiRows.map((r) => r.service_key));
+      const merged = [...apiRows, ...staticServices.filter((s) => !apiKeys.has(s.service_key))];
+      setServices(merged);
+    }).catch(() => {
+      setServices(staticServices);
+    });
 
     api.get("/api/marketplace/taxonomy")
       .then((res) => setTaxonomy(res.data || { groups: [], categories: [], subcategories: [] }))
@@ -136,21 +145,17 @@ export default function MarketplaceUnifiedPageV3() {
       {(tab === "products" || tab === "promo") && (
         <>
           {tab === "promo" && (
-            <div className="flex items-center gap-3">
-              <button onClick={() => setShowPromoBuilder(!showPromoBuilder)} data-testid="toggle-promo-builder"
+            <div className="flex items-center gap-3 flex-wrap">
+              <button onClick={() => { setShowPromoBuilder(!showPromoBuilder); }} data-testid="toggle-promo-builder"
                 className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors ${showPromoBuilder ? "bg-[#20364D] text-white" : "border border-slate-200 text-[#20364D] hover:bg-slate-50"}`}>
-                {showPromoBuilder ? "Browse Promotional Materials" : "Build Promotional Quote"}
+                {showPromoBuilder ? "Browse Promotional Materials" : "Build Custom Promo Request"}
               </button>
             </div>
           )}
 
           {tab === "promo" && showPromoBuilder ? (
-            <MultiPromoCustomizationBuilder
-              customerId={user?.id || "guest"}
-              promoProducts={filteredProducts}
-              onSubmitted={() => setShowPromoBuilder(false)}
-            />
-          ) : (
+            <PromoMultiBlankBuilder onSubmitted={() => setShowPromoBuilder(false)} />
+          ) : tab === "promo" || tab === "products" ? (
             <>
               {loading ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -179,7 +184,7 @@ export default function MarketplaceUnifiedPageV3() {
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </>
       )}
 
@@ -201,6 +206,8 @@ export default function MarketplaceUnifiedPageV3() {
       )}
 
       <ProductPromoDetailModalV2 item={detailItem} open={!!detailItem} onClose={() => setDetailItem(null)} isPromo={tab === "promo"} />
+
+      <CantFindWhatYouNeedBanner className="mt-4" />
     </div>
   );
 }
