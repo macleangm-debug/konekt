@@ -9,8 +9,13 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - **Auth**: JWT-based with role-based access + session validation
 - **Payments**: Stripe sandbox integration
 
+## 3 Commercial Lanes
+1. **Products** — Office equipment, stationery, PPE, furniture. Request type: `product_bulk`
+2. **Promotional Materials** — Branded merchandise, uniforms, signage, print. Request types: `promo_custom`, `promo_sample`
+3. **Services** — Installation, branding, cleaning, technical support. Request type: `service_quote`
+
 ## System of Record
-- Requests = intake (public)
+- Requests = intake (public + in-account)
 - CRM = qualification / pipeline
 - Quotes = proposals
 - Orders = execution
@@ -25,6 +30,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - **Customer vs Payer**: `customer_name` from business records, `payer_name` from payment proof — never cross-reference
 - **Vendor Privacy**: Vendors see only their order, base price, Konekt sales contact — no customer identity, no margins
 - **Direct Sales vs Partnerships**: CRM handles direct sales pipeline; Partnerships handles affiliate/referral/commission channels
+- **3 Commercial Lanes**: Products, Promotional Materials, and Services are never mixed in UI or request payloads
 
 ---
 
@@ -59,14 +65,24 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Service Leads + CRM Intelligence absorbed into CRM tabs
 - Partnerships domain created: Affiliates, Referrals (placeholder), Commissions (placeholder)
 
-### Phase 6 — Deep Implementation (Current — 7 Steps)
-1. **Login/Session Privacy Fix**: Login CTA routes to `/login`, `ProtectedRouteWithValidation` validates sessions, stale tokens cleared on auth failure
-2. **Catalog Taxonomy Admin UI**: `/admin/catalog-taxonomy` with 3 sections (Products, Promotional Materials, Services), CRUD for groups/categories/subcategories
-3. **Vendor Capability Assignment**: `/admin/vendor-capabilities` — assign vendor expertise by taxonomy + capability type (products/services/both)
-4. **Unified Marketplace Filter Rail**: Inline filters (search + group + category + subcategory + sort) replacing sidebar, 4-card desktop grid, applied to both public and in-account marketplace
-5. **Service Page Template V2**: Standardized template with Hero, Overview, What's Included, Who It's For, How It Works, Benefits, FAQ, CTA — all CTAs route to `/request-quote?type=service_quote&service=<slug>`
-6. **Service Routing Cleanup**: `DynamicServiceDetailPage` uses `ServicePageTemplateV2` with proper CTA mapping
-7. **Draggable CRM Kanban**: HTML5 drag-and-drop on CRM Pipeline tab — drag lead cards between columns to persist status changes via API
+### Phase 6 — Deep Implementation (7 Steps)
+1. Login/Session Privacy Fix
+2. Catalog Taxonomy Admin UI
+3. Vendor Capability Assignment
+4. Unified Marketplace Filter Rail
+5. Service Page Template V2
+6. Service Routing Cleanup
+7. Draggable CRM Kanban
+
+### Phase 7 — 3 Commercial Lanes (Surgical Patch Pack)
+1. `ServiceNavigationDropdownData.js` — Items enriched with `requestType`, `marketplaceTab` metadata
+2. `HomeBusinessSolutionsSection.jsx` — 3 lane cards (Products, Promotional Materials, Services) + CTAs
+3. `FeaturedMarketplaceSection.jsx` — `getListingMeta()` classifies items into correct lane with badges
+4. `QuickRequestForm.jsx` — 2-step flow: lane picker → request type selector
+5. `MarketplaceUnifiedPageV3.jsx` — Tab order: Products > Promotional Materials > Services, promo/product filtering
+6. `QuoteRequestPage.jsx` — "What do you need?" lane picker, conditional sections, canonical `request_type`
+7. `MarketplaceBrowsePageContent.jsx` — Text updated to include "promotional materials"
+8. `HomepageV2Content.jsx` — Added HomeBusinessSolutionsSection to landing page
 
 ---
 
@@ -85,9 +101,14 @@ Settings: Business Settings, Users, Help
 ## Backlog
 
 ### P1 — Next Up
-- Add "Create Quote" action from CRM drawer (prefill from linked request/contact)
+- Add "Create Quote" action from CRM drawer (prefill from linked request/contact, preserve traceability)
+- Payment Queue Data Enrichment (Customer vs Payer names)
+- Shorten Admin Orders table
+- Product Delivery Logistics Workflow (Vendor Ready → Sales Picked Up → In Transit → Delivered)
+- Hybrid Margin Engine
 
 ### P2 — Future
+- Admin data entry configuration (TIN, BRN, bank account details)
 - Twilio WhatsApp integration (blocked on API key)
 - Resend email integration (blocked on API key)
 - One-click reorder / Saved Carts
@@ -103,3 +124,4 @@ Settings: Business Settings, Users, Help
 - Iteration 152: Market/Taxonomy — 100% Pass
 - Iteration 153: CRM Consolidation & Partnerships — 100% Pass
 - Iteration 154: Deep Implementation (7 Steps) — 100% Pass (21 features verified)
+- Iteration 155: 3 Commercial Lanes (Surgical Patches) — 100% Pass (10 features verified)
