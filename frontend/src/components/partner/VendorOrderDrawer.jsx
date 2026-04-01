@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, MessageSquare } from "lucide-react";
+import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, MessageSquare, Calendar } from "lucide-react";
 import partnerApi from "../../lib/partnerApi";
+import VendorEtaInput from "../vendor/VendorEtaInput";
 
 const STATUS_FLOW = {
   ready_to_fulfill: { next: "assigned", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
@@ -138,6 +139,21 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
           )}
         </div>
       </section>
+
+      {/* Vendor ETA */}
+      {!["completed", "cancelled", "delivered"].includes(currentStatus) && (
+        <VendorEtaInput
+          vendorOrderId={order?.id}
+          currentEta={order?.vendor_promised_date}
+          onUpdated={() => onStatusUpdate?.()}
+        />
+      )}
+      {order?.vendor_promised_date && ["completed", "delivered"].includes(currentStatus) && (
+        <div className="rounded-xl border bg-slate-50 p-4 text-sm" data-testid="eta-display">
+          <div className="flex items-center gap-2 text-slate-500 mb-1"><Calendar className="w-3.5 h-3.5" />Promised Delivery</div>
+          <div className="font-semibold text-[#20364D]">{new Date(order.vendor_promised_date).toLocaleDateString()}</div>
+        </div>
+      )}
 
       {/* Konekt Sales Contact */}
       <section className="rounded-xl border p-4" data-testid="drawer-sales-contact">

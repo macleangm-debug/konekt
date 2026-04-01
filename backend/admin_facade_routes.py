@@ -59,9 +59,7 @@ async def dashboard_pending_actions(request: Request):
 @router.get("/payments/queue")
 async def payments_queue(request: Request, search: Optional[str] = Query(default=None), status: Optional[str] = Query(default=None)):
     service = LiveCommerceService(request.app.mongodb)
-    all_proofs = await service.finance_queue(customer_query=search)
-    if status:
-        all_proofs = [p for p in all_proofs if p.get("status") == status]
+    all_proofs = await service.finance_queue(customer_query=search, status_filter=status if status and status != "all" else None)
     return all_proofs
 
 @router.get("/payments/{payment_proof_id}")
@@ -72,10 +70,40 @@ async def payment_detail(payment_proof_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Payment proof not found")
     payment = await db.payments.find_one({"id": proof.get("payment_id")})
     invoice = await db.invoices.find_one({"id": proof.get("invoice_id")})
+
+    # Enrich with customer contact details
+    cust_id = proof.get("customer_id") or (invoice or {}).get("customer_id") or (invoice or {}).get("user_id")
+    customer_contact = {}
+    if cust_id:
+        cust_user = await db.users.find_one(
+            {"$or": [{"id": cust_id}, {"email": proof.get("customer_email")}]},
+            {"_id": 0, "full_name": 1, "email": 1, "phone": 1, "company_name": 1}
+        )
+        if cust_user:
+            customer_contact = {
+                "full_name": cust_user.get("full_name", ""),
+                "email": cust_user.get("email", ""),
+                "phone": cust_user.get("phone", ""),
+                "company_name": cust_user.get("company_name", ""),
+            }
+
+    # Fetch approval history from audit_logs
+    approval_history = []
+    logs = await db.audit_logs.find({"target_id": payment_proof_id}).sort("created_at", 1).to_list(20)
+    for log in logs:
+        approval_history.append({
+            "action": log.get("action", ""),
+            "actor_role": log.get("actor_role", ""),
+            "details": log.get("details", {}),
+            "created_at": str(log.get("created_at", "")),
+        })
+
     return {
         "proof": _clean(proof),
         "payment": _clean(payment),
         "invoice": _clean(invoice),
+        "customer_contact": customer_contact,
+        "approval_history": approval_history,
     }
 
 @router.post("/payments/{payment_proof_id}/approve")
@@ -721,6 +749,20 @@ async def catalog_promo_items(request: Request):
     if not rows:
         rows = await db.products.find({"is_promotional": True}).to_list(500)
     return [_clean(p) for p in rows]
+
+@router.get("/vendor-assignment/suggest")
+async def suggest_vendor_assignment(
+    request: Request,
+    capabilities: Optional[str] = Query(default=None),
+    limit: int = Query(default=5, ge=1, le=20),
+):
+    """Return ranked vendor candidates based on capabilities, availability, and workload."""
+    from services.vendor_assignment_engine import get_vendor_candidates
+    db = request.app.mongodb
+    cap_list = [c.strip() for c in capabilities.split(",")] if capabilities else []
+    candidates = await get_vendor_candidates(db, cap_list, limit)
+    return {"candidates": candidates}
+
 
 # ─── SETTINGS ─────────────────────────────────────────────────────────────────
 

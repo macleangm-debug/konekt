@@ -128,3 +128,64 @@ async def get_logistics_status(
         "can_sales_update": can_update,
         "next_statuses": next_statuses,
     }
+
+
+@router.post("/delivery/{vendor_order_id}/internal-buffer")
+async def set_internal_buffer_date(
+    vendor_order_id: str,
+    payload: dict,
+    request: Request,
+    user: dict = Depends(_get_sales_user),
+):
+    """Sales/Admin sets an internal buffer date (1-2 day buffer on top of vendor promised date)."""
+    db = request.app.mongodb
+    doc = await db.vendor_orders.find_one({"id": vendor_order_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Vendor order not found")
+
+    internal_target_date = payload.get("internal_target_date")
+    if not internal_target_date:
+        raise HTTPException(400, "Internal target date required")
+
+    now = datetime.now(timezone.utc).isoformat()
+    await db.vendor_orders.update_one({"id": vendor_order_id}, {"$set": {
+        "internal_target_date": internal_target_date,
+        "buffer_set_by": user.get("full_name") or user.get("email"),
+        "buffer_set_at": now,
+        "updated_at": now,
+    }})
+
+    order_id = doc.get("order_id")
+    if order_id:
+        await db.orders.update_one({"id": order_id}, {"$set": {
+            "internal_target_date": internal_target_date,
+            "updated_at": now,
+        }})
+
+    return {
+        "ok": True,
+        "vendor_promised_date": doc.get("vendor_promised_date"),
+        "internal_target_date": internal_target_date,
+    }
+
+
+@router.get("/delivery/{vendor_order_id}/dates")
+async def get_delivery_dates(
+    vendor_order_id: str,
+    request: Request,
+    user: dict = Depends(_get_sales_user),
+):
+    """Get vendor promised date and internal buffer date for a vendor order."""
+    db = request.app.mongodb
+    doc = await db.vendor_orders.find_one({"id": vendor_order_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Vendor order not found")
+
+    return {
+        "vendor_order_id": doc.get("id"),
+        "vendor_promised_date": doc.get("vendor_promised_date"),
+        "internal_target_date": doc.get("internal_target_date"),
+        "buffer_set_by": doc.get("buffer_set_by"),
+        "buffer_set_at": doc.get("buffer_set_at"),
+        "eta_updated_at": doc.get("eta_updated_at"),
+    }

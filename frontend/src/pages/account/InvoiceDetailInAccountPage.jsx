@@ -24,15 +24,20 @@ export default function InvoiceDetailInAccountPage() {
   }, [invoiceId]);
 
   const getStatusInfo = (status) => {
+    // Check both status and payment_status for paid detection
+    const isPaid = status === "paid" || invoice?.payment_status === "paid" || invoice?.payment_status === "fully_paid";
+    if (isPaid) return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100", label: "Paid" };
     switch (status) {
-      case "paid":
-        return { icon: CheckCircle, color: "text-green-600", bg: "bg-green-100", label: "Paid" };
       case "overdue":
         return { icon: AlertCircle, color: "text-red-600", bg: "bg-red-100", label: "Overdue" };
+      case "partially_paid":
+        return { icon: Clock, color: "text-blue-600", bg: "bg-blue-100", label: "Partially Paid" };
       default:
         return { icon: Clock, color: "text-amber-600", bg: "bg-amber-100", label: "Pending Payment" };
     }
   };
+
+  const resolvedStatus = (invoice?.payment_status === "paid" || invoice?.payment_status === "fully_paid") ? "paid" : invoice?.status;
 
   if (loading) {
     return (
@@ -54,7 +59,7 @@ export default function InvoiceDetailInAccountPage() {
     );
   }
 
-  const statusInfo = getStatusInfo(invoice.status);
+  const statusInfo = getStatusInfo(resolvedStatus);
   const StatusIcon = statusInfo.icon;
 
   return (

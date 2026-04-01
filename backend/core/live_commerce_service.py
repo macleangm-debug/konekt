@@ -291,22 +291,24 @@ class LiveCommerceService:
             "status": "under_review",
         }
 
-    async def finance_queue(self, customer_query: Optional[str] = None) -> List[Dict[str, Any]]:
-        query: Dict[str, Any] = {"status": "uploaded"}
-        rows = await self.db.payment_proofs.find(query).sort("created_at", -1).to_list(length=300)
+    async def finance_queue(self, customer_query: Optional[str] = None, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        query: Dict[str, Any] = {}
+        if status_filter:
+            query["status"] = status_filter
+        rows = await self.db.payment_proofs.find(query).sort("created_at", -1).to_list(length=500)
         out: List[Dict[str, Any]] = []
         for proof in rows:
             payment = await self.db.payments.find_one({"id": proof.get("payment_id")})
             invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
 
             # --- Strict party separation (same logic as orders) ---
-            # customer_name = registered business/customer name (NEVER payer_name)
             customer_name = ""
             cust_id = proof.get("customer_id") or (invoice or {}).get("customer_id") or (invoice or {}).get("user_id")
+            cust_user = None
             if cust_id:
                 cust_user = await self.db.users.find_one(
                     {"$or": [{"id": cust_id}, {"email": proof.get("customer_email")}]},
-                    {"_id": 0, "full_name": 1, "email": 1}
+                    {"_id": 0, "full_name": 1, "email": 1, "phone": 1, "company_name": 1}
                 )
                 if cust_user:
                     customer_name = cust_user.get("full_name") or cust_user.get("email") or ""
@@ -323,6 +325,19 @@ class LiveCommerceService:
                 )
                 payer_name = (submission or {}).get("payer_name") or "-"
 
+            # Contact details
+            contact_phone = (cust_user or {}).get("phone", "") or (invoice or {}).get("phone", "")
+            contact_email = proof.get("customer_email") or (cust_user or {}).get("email", "") or (invoice or {}).get("customer_email", "")
+            company_name = (cust_user or {}).get("company_name", "") or (invoice or {}).get("company_name", "")
+
+            # Payment reference
+            payment_reference = proof.get("payment_reference") or proof.get("reference") or (payment or {}).get("reference") or ""
+
+            # Approval history
+            approved_by = proof.get("approved_by") or ""
+            approved_at = proof.get("approved_at") or ""
+            rejection_reason = proof.get("rejection_reason") or ""
+
             item = {
                 "payment_proof_id": proof.get("id"),
                 "payment_id": proof.get("payment_id"),
@@ -330,19 +345,25 @@ class LiveCommerceService:
                 "invoice_number": (invoice or {}).get("invoice_number", ""),
                 "customer_id": proof.get("customer_id"),
                 "customer_name": customer_name,
-                "customer_email": proof.get("customer_email") or (invoice or {}).get("customer_email", ""),
+                "customer_email": contact_email,
                 "payer_name": payer_name,
+                "contact_phone": contact_phone,
+                "company_name": company_name,
+                "payment_reference": payment_reference,
                 "amount_paid": proof.get("amount_paid", 0),
                 "amount_due": (payment or {}).get("amount_due", 0),
-                "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0),
+                "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0) or (invoice or {}).get("total_amount", 0) or (invoice or {}).get("total", 0),
                 "payment_mode": (payment or {}).get("payment_mode", "full"),
                 "file_url": proof.get("file_url", ""),
                 "status": proof.get("status", "uploaded"),
                 "items": (invoice or {}).get("items", []),
                 "created_at": str(proof.get("created_at", "")),
+                "approved_by": approved_by,
+                "approved_at": str(approved_at) if approved_at else "",
+                "rejection_reason": rejection_reason,
             }
             if customer_query:
-                haystack = f"{item['customer_name']} {item['customer_email']} {item['invoice_number']}".lower()
+                haystack = f"{item['customer_name']} {item['customer_email']} {item['invoice_number']} {item['payer_name']}".lower()
                 if customer_query.lower() not in haystack:
                     continue
             out.append(item)

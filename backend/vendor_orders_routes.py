@@ -314,3 +314,51 @@ async def add_vendor_order_note(
         })
 
     return {"ok": True, "note": note_entry}
+
+
+@router.post("/orders/{vendor_order_id}/eta")
+async def set_vendor_eta(
+    vendor_order_id: str,
+    payload: dict,
+    authorization: Optional[str] = Header(None),
+):
+    """Vendor sets a promised delivery/completion date for the order."""
+    user = await get_partner_user_from_header(authorization)
+    partner_id = user["partner_id"]
+
+    doc = await db.vendor_orders.find_one({
+        "$or": [{"id": vendor_order_id}, {"_id": ObjectId(vendor_order_id) if len(vendor_order_id) == 24 else "never"}],
+        "vendor_id": partner_id,
+    })
+    if not doc:
+        raise HTTPException(status_code=404, detail="Vendor order not found")
+
+    promised_date = payload.get("promised_date")
+    if not promised_date:
+        raise HTTPException(status_code=400, detail="Promised delivery date is required")
+
+    now = datetime.now(timezone.utc).isoformat()
+    filter_q = {"id": doc.get("id")} if doc.get("id") else {"_id": doc["_id"]}
+    await db.vendor_orders.update_one(filter_q, {"$set": {
+        "vendor_promised_date": promised_date,
+        "eta_updated_at": now,
+        "updated_at": now,
+    }})
+
+    # Also update parent order with vendor ETA
+    order_id = doc.get("order_id")
+    if order_id:
+        await db.orders.update_one({"id": order_id}, {"$set": {
+            "vendor_promised_date": promised_date,
+            "updated_at": now,
+        }})
+        await db.order_events.insert_one({
+            "id": str(ObjectId()),
+            "order_id": order_id,
+            "event": "vendor_eta_set",
+            "actor": f"vendor:{partner_id}",
+            "note": f"Vendor promised delivery: {promised_date}",
+            "created_at": now,
+        })
+
+    return {"ok": True, "vendor_promised_date": promised_date}

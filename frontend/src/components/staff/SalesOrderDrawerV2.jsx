@@ -1,5 +1,6 @@
-import React from "react";
-import { X, Package, User, Truck, Phone, Mail, MapPin, FileText, Calendar, DollarSign, Briefcase } from "lucide-react";
+import React, { useState } from "react";
+import { X, Package, User, Truck, Phone, Mail, MapPin, FileText, Calendar, DollarSign, Briefcase, Loader2 } from "lucide-react";
+import api from "../../lib/api";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function shortDate(v) { return v ? String(v).slice(0, 10) : "-"; }
@@ -44,6 +45,21 @@ function InfoRow({ label, value }) {
 }
 
 export default function SalesOrderDrawerV2({ order, onClose }) {
+  const [bufferDate, setBufferDate] = useState(order?.internal_target_date || "");
+  const [savingBuffer, setSavingBuffer] = useState(false);
+
+  const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
+  const saveBufferDate = async () => {
+    if (!bufferDate || !order?.vendor_order_id) return;
+    setSavingBuffer(true);
+    try {
+      await api.post(`/api/sales/delivery/${order.vendor_order_id}/internal-buffer`, {
+        internal_target_date: bufferDate,
+      }, { headers: { Authorization: `Bearer ${token}` } });
+    } catch {}
+    setSavingBuffer(false);
+  };
+
   if (!order) return null;
 
   const sales = order.sales || {};
@@ -168,12 +184,43 @@ export default function SalesOrderDrawerV2({ order, onClose }) {
             </Section>
           )}
 
-          {/* Dates */}
-          <Section icon={Calendar} title="Timeline">
+          {/* Dates & Delivery Tracking */}
+          <Section icon={Calendar} title="Timeline & Delivery">
             <InfoRow label="Created" value={shortDate(order.created_at)} />
             <InfoRow label="Updated" value={shortDate(order.updated_at)} />
             {order.delivery?.estimated_delivery && (
               <InfoRow label="Est. Delivery" value={shortDate(order.delivery.estimated_delivery)} />
+            )}
+            {order.vendor_promised_date && (
+              <InfoRow label="Vendor Promised" value={shortDate(order.vendor_promised_date)} />
+            )}
+            {order.internal_target_date && (
+              <InfoRow label="Internal Target" value={shortDate(order.internal_target_date)} />
+            )}
+            {order.vendor_order_id && (
+              <div className="mt-3 pt-3 border-t">
+                <label className="text-xs font-semibold text-slate-500">Internal Buffer Date</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    type="date"
+                    value={bufferDate}
+                    onChange={(e) => setBufferDate(e.target.value)}
+                    className="flex-1 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+                    data-testid="internal-buffer-date"
+                  />
+                  <button
+                    onClick={saveBufferDate}
+                    disabled={savingBuffer || !bufferDate}
+                    className="rounded-lg bg-[#20364D] text-white px-3 py-1.5 text-sm font-semibold disabled:opacity-40"
+                    data-testid="save-buffer-date-btn"
+                  >
+                    {savingBuffer ? <Loader2 className="w-3 h-3 animate-spin" /> : "Set"}
+                  </button>
+                </div>
+                {order.vendor_promised_date && (
+                  <p className="text-xs text-slate-400 mt-1">Vendor promised: {shortDate(order.vendor_promised_date)} — add 1-2 day buffer</p>
+                )}
+              </div>
             )}
           </Section>
         </div>
