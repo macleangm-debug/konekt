@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import api from "../../lib/api";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import {
   CreditCard, CheckCircle2, XCircle, Clock, FileText, Eye,
   User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight,
@@ -154,7 +155,9 @@ export default function PaymentsQueuePage() {
               <tr key={p.payment_proof_id} className="border-b last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDrawer(p)} data-testid={`payment-row-${p.payment_proof_id}`}>
                 <td className="px-4 py-3 text-slate-600">{p.created_at ? new Date(p.created_at).toLocaleDateString() : "-"}</td>
                 <td className="px-4 py-3 font-medium text-[#20364D]">{p.invoice_number || "-"}</td>
-                <td className="px-4 py-3">{p.customer_name || "-"}</td>
+                <td className="px-4 py-3">
+                  <CustomerLinkCell customerId={p.customer_id} customerName={p.customer_name} />
+                </td>
                 <td className="px-4 py-3 text-slate-600">{p.payer_name || "-"}</td>
                 <td className="px-4 py-3 text-right font-medium">TZS {Number(p.amount_paid || 0).toLocaleString()}</td>
                 <td className="px-4 py-3"><StatusBadge status={p.status} /></td>

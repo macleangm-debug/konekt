@@ -4,6 +4,7 @@ import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X,
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 
 const CRM_TABS = [
   { key: "all", label: "All Leads" },
@@ -930,7 +931,9 @@ function ServiceLeadsTabContent({ leads, loading, search, onSearchChange, onStat
                 {leads.map((row, idx) => (
                   <tr key={row.id || `sl-${idx}`} className="hover:bg-slate-50 transition-colors" data-testid={`service-lead-row-${row.id || idx}`}>
                     <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{formatDate(row.created_at)}</td>
-                    <td className="px-4 py-3 font-medium text-[#20364D]">{row.customer_name}</td>
+                    <td className="px-4 py-3">
+                      <CustomerLinkCell customerId={row.customer_id} customerName={row.customer_name} />
+                    </td>
                     <td className="px-4 py-3 text-[#20364D]">{row.title}</td>
                     <td className="px-4 py-3">
                       <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{row.lead_type}</span>

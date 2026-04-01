@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Printer, Calendar } from "lucide-react";
-import axios from "axios";
-
-const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+import { adminApi } from "@/lib/adminApi";
+import StatusBadge from "@/components/admin/shared/StatusBadge";
+import { Printer, Download, Calendar, ArrowUpDown } from "lucide-react";
 
 const fmtDate = (d) => {
   if (!d) return "-";
@@ -10,7 +9,12 @@ const fmtDate = (d) => {
   catch { return d; }
 };
 
-export default function MyStatementPageV2() {
+const fmtMoney = (val) => {
+  if (val === null || val === undefined) return "TZS 0";
+  return `TZS ${Number(val).toLocaleString("en-US", { minimumFractionDigits: 0 })}`;
+};
+
+export default function StatementOfAccountTab({ customerId }) {
   const [statement, setStatement] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState("");
@@ -19,16 +23,11 @@ export default function MyStatementPageV2() {
 
   const loadStatement = async () => {
     setLoading(true);
-    const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
-    if (!token) { setLoading(false); return; }
     try {
       const params = {};
       if (dateFrom) params.date_from = new Date(dateFrom).toISOString();
       if (dateTo) params.date_to = new Date(dateTo).toISOString();
-      const res = await axios.get(`${API_URL}/api/account/me/statement`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params,
-      });
+      const res = await adminApi.getCustomer360Statement(customerId, params);
       setStatement(res.data);
     } catch {
       setStatement(null);
@@ -36,7 +35,7 @@ export default function MyStatementPageV2() {
     setLoading(false);
   };
 
-  useEffect(() => { loadStatement(); }, []);
+  useEffect(() => { loadStatement(); }, [customerId]);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -50,12 +49,16 @@ export default function MyStatementPageV2() {
         th, td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
         th { background: #f8fafc; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; color: #64748b; }
         .text-right { text-align: right; }
-        h2 { margin: 0 0 8px; font-size: 20px; }
-        .meta { color: #64748b; font-size: 13px; }
-        .totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
-        .totals div { padding: 12px; background: #f8fafc; border-radius: 8px; }
-        .totals .label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
-        .totals .value { font-size: 18px; font-weight: 800; color: #1e293b; margin-top: 4px; }
+        .debit { color: #b91c1c; }
+        .credit { color: #047857; }
+        h2 { margin: 0 0 4px; font-size: 20px; }
+        .meta { color: #64748b; font-size: 13px; margin-bottom: 16px; }
+        .summary-row { background: #f1f5f9; font-weight: 700; }
+        .header-block { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .totals-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .totals-grid div { padding: 12px; background: #f8fafc; border-radius: 8px; }
+        .totals-grid .label { font-size: 10px; text-transform: uppercase; color: #94a3b8; font-weight: 600; }
+        .totals-grid .value { font-size: 18px; font-weight: 800; color: #1e293b; margin-top: 4px; }
         @media print { body { padding: 0; } }
       </style></head><body>
       ${content.innerHTML}
@@ -67,39 +70,26 @@ export default function MyStatementPageV2() {
   };
 
   if (loading) {
-    return (
-      <div data-testid="statement-page" className="py-12 text-center text-sm text-slate-400">
-        Loading your statement...
-      </div>
-    );
+    return <div className="py-12 text-center text-sm text-slate-400">Loading statement...</div>;
   }
 
   if (!statement) {
-    return (
-      <div data-testid="statement-page" className="py-12 text-center text-sm text-slate-400">
-        Unable to load statement. Please try again.
-      </div>
-    );
+    return <div className="py-12 text-center text-sm text-slate-400">Unable to load statement.</div>;
   }
 
   const s = statement;
 
   return (
-    <div data-testid="statement-page" className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[#20364D]">My Statement</h1>
-        <p className="mt-1 text-sm text-slate-500">View your account activity, invoices, and payment history.</p>
-      </div>
-
+    <div className="space-y-4">
       {/* Date Range Filter */}
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">From</label>
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            data-testid="my-statement-date-from"
+            data-testid="statement-date-from"
             className="mt-1 block rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
           />
         </div>
@@ -109,13 +99,13 @@ export default function MyStatementPageV2() {
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            data-testid="my-statement-date-to"
+            data-testid="statement-date-to"
             className="mt-1 block rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400"
           />
         </div>
         <button
           onClick={loadStatement}
-          data-testid="my-statement-filter-btn"
+          data-testid="statement-filter-btn"
           className="rounded-lg bg-[#20364D] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2a4560] transition-colors"
         >
           <Calendar className="mr-1.5 inline-block h-3.5 w-3.5" />
@@ -124,24 +114,27 @@ export default function MyStatementPageV2() {
         <div className="flex-1" />
         <button
           onClick={handlePrint}
-          data-testid="my-statement-print-btn"
+          data-testid="statement-print-btn"
           className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
         >
           <Printer className="mr-1.5 inline-block h-3.5 w-3.5" />
-          Print Statement
+          Print
         </button>
       </div>
 
       {/* Printable Content */}
       <div ref={printRef}>
-        <div className="mb-4">
-          <h2 className="text-xl font-extrabold text-[#20364D]">Statement of Account</h2>
-          <p className="text-sm text-slate-500">
-            {s.customer_name}{s.customer_company && s.customer_company !== "-" ? ` — ${s.customer_company}` : ""}
-          </p>
-          <p className="text-xs text-slate-400 mt-1">
-            Period: {fmtDate(s.period_from)} to {fmtDate(s.period_to)}
-          </p>
+        {/* Statement Header */}
+        <div className="header-block mb-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#20364D]">Statement of Account</h2>
+            <p className="text-sm text-slate-500">
+              {s.customer_name}{s.customer_company && s.customer_company !== "-" ? ` — ${s.customer_company}` : ""}
+            </p>
+            <p className="text-xs text-slate-400 mt-1">
+              Period: {fmtDate(s.period_from)} to {fmtDate(s.period_to)}
+            </p>
+          </div>
         </div>
 
         {/* Summary Totals */}
@@ -151,30 +144,30 @@ export default function MyStatementPageV2() {
             <div className="mt-1 text-lg font-extrabold text-[#20364D]">{s.opening_balance_fmt}</div>
           </div>
           <div className="rounded-xl border border-red-200 bg-red-50/60 p-3.5">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-red-400">Total Invoiced</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-red-400">Total Debits</div>
             <div className="mt-1 text-lg font-extrabold text-red-700">{s.total_debits_fmt}</div>
           </div>
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Total Paid</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">Total Credits</div>
             <div className="mt-1 text-lg font-extrabold text-emerald-700">{s.total_credits_fmt}</div>
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3.5">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Balance Due</div>
+            <div className="text-[10px] font-bold uppercase tracking-widest text-blue-400">Closing Balance</div>
             <div className="mt-1 text-lg font-extrabold text-blue-700">{s.closing_balance_fmt}</div>
           </div>
         </div>
 
         {/* Ledger Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full text-sm" data-testid="my-statement-table">
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="w-full text-sm" data-testid="statement-table">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-left">
                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Date</th>
                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Type</th>
                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Reference</th>
                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">Description</th>
-                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Invoiced</th>
-                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Paid</th>
+                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Debit</th>
+                <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Credit</th>
                 <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-right">Balance</th>
               </tr>
             </thead>

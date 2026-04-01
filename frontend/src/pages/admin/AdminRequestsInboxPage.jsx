@@ -4,6 +4,7 @@ import axios from "axios";
 import { formatDateDMY } from "../../lib/formatters";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import EmptyState from "../../components/admin/shared/EmptyState";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import { Inbox, ArrowRightCircle, Search, Filter, ExternalLink } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -140,8 +141,14 @@ export default function AdminRequestsInboxPage() {
                   <td className="px-4 py-3 whitespace-nowrap">{formatDateDMY(r.created_at)}</td>
                   <td className="px-4 py-3 font-mono text-xs">{r.request_number || "-"}</td>
                   <td className="px-4 py-3">
-                    <div className="font-medium">{r.guest_name || "-"}</div>
-                    <div className="text-xs text-slate-400">{r.guest_email || "-"}</div>
+                    {r.customer_id ? (
+                      <CustomerLinkCell customerId={r.customer_id} customerName={r.guest_name || r.company_name} />
+                    ) : (
+                      <div>
+                        <div className="font-medium">{r.guest_name || "-"}</div>
+                        <div className="text-xs text-slate-400">{r.guest_email || "-"}</div>
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">{r.company_name || "-"}</td>
                   <td className="px-4 py-3">{typeBadge(r.request_type)}</td>

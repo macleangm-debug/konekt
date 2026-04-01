@@ -149,6 +149,12 @@ export const adminApi = {
   getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),
   getCustomers360Stats: () => api.get("/api/admin/customers-360/stats"),
   getCustomer360Detail: (customerId) => api.get(`/api/admin/customers-360/${customerId}`),
+  getCustomer360Statement: (customerId, params) => api.get(`/api/admin/customers-360/${customerId}/statement`, { params }),
+  getCustomer360Orders: (customerId) => api.get(`/api/admin/customers-360/${customerId}/orders`),
+  getCustomer360Invoices: (customerId) => api.get(`/api/admin/customers-360/${customerId}/invoices`),
+  getCustomer360Quotes: (customerId) => api.get(`/api/admin/customers-360/${customerId}/quotes`),
+  getCustomer360Requests: (customerId) => api.get(`/api/admin/customers-360/${customerId}/requests`),
+  getCustomer360Payments: (customerId) => api.get(`/api/admin/customers-360/${customerId}/payments`),
 };
 
 export default adminApi;

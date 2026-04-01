@@ -7,6 +7,7 @@ import PaymentTermsCard from "@/components/admin/PaymentTermsCard";
 import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
 import BrandLogo from "@/components/branding/BrandLogo";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 
 const invoiceStatuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"];
 const statusColors = {
@@ -240,7 +241,9 @@ export default function InvoicesPage() {
                 <tr key={invoice.id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
                   <td className="px-5 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>
                   <td className="px-5 py-4 font-semibold text-[#20364D]">{invoice.invoice_number}</td>
-                  <td className="px-5 py-4 text-slate-600">{invoice.customer_name || invoice.customer_company || "-"}</td>
+                  <td className="px-5 py-4">
+                    <CustomerLinkCell customerId={invoice.customer_id} customerName={invoice.customer_name || invoice.customer_company} />
+                  </td>
                   <td className="px-5 py-4 text-slate-600 capitalize">{invoice.source_type || invoice.type || "-"}</td>
                   <td className="px-5 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
                   <td className="px-5 py-4 text-slate-600">{invoice.payer_name || "-"}</td>

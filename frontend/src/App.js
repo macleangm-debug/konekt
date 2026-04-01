@@ -70,6 +70,7 @@ import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
 import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPageMerged from "@/pages/admin/CustomersPageMerged";
+import CustomerProfilePage from "@/pages/admin/CustomerProfilePage";
 import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
@@ -536,6 +537,7 @@ function App() {
           <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPageMerged />} />
+          <Route path="customers/:id" element={<CustomerProfilePage />} />
           <Route path="payments" element={<PaymentsQueuePage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />

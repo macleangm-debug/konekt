@@ -4,6 +4,7 @@ import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import { ShoppingCart, Truck, CheckCircle, Clock, Package } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -107,7 +108,9 @@ export default function OrdersPage() {
                   <tr key={row.id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`order-row-${row.id}`}>
                     <td className="px-4 py-3 text-xs text-slate-500">{fmtDate(row.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">{row.customer_name || "-"}</td>
+                    <td className="px-4 py-3">
+                      <CustomerLinkCell customerId={row.customer_id} customerName={row.customer_name} />
+                    </td>
                     <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{row.payer_name || "-"}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>

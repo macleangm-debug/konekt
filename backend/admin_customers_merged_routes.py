@@ -1,11 +1,13 @@
 """
-Merged Customers API — List + Stats + 360 Detail
+Merged Customers API — List + Stats + 360 Detail + Statement of Account
 Combines users (role=customer) with aggregated order/invoice/quote data.
 Computes customer status: Active (30d) / At Risk (31-90d) / Inactive (90d+)
 """
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Request, Query
 from typing import Optional
+from services.customer_profile_service import get_profile_summary
+from services.statement_of_account_service import generate_statement
 
 router = APIRouter(prefix="/api/admin/customers-360", tags=["Customers Merged"])
 
@@ -78,8 +80,6 @@ async def customers_stats(request: Request):
     """Return aggregate stats for the stats cards."""
     db = request.app.mongodb
     now = datetime.now(timezone.utc)
-    active_cutoff = now - timedelta(days=ACTIVE_DAYS)
-    at_risk_cutoff = now - timedelta(days=AT_RISK_DAYS)
 
     total = await db.users.count_documents({"role": "customer"})
 
@@ -249,6 +249,19 @@ async def customer_detail_360(customer_id: str, request: Request):
     created_at = user.get("created_at")
     created_str = created_at.isoformat() if isinstance(created_at, datetime) else created_at
 
+    # Profile KPIs (enrichment)
+    profile_kpis = await get_profile_summary(db, uid)
+
+    # Requests counts
+    total_requests = await db.requests.count_documents({"customer_id": uid})
+    active_requests = await db.requests.count_documents(
+        {"customer_id": uid, "status": {"$nin": ["completed", "cancelled", "closed"]}}
+    )
+
+    # Payments counts
+    total_payments = await db.payment_proofs.count_documents({"customer_id": uid})
+    approved_payments = await db.payment_proofs.count_documents({"customer_id": uid, "status": "approved"})
+
     return {
         "id": uid,
         "name": user.get("full_name") or user.get("email", ""),
@@ -276,9 +289,157 @@ async def customer_detail_360(customer_id: str, request: Request):
             "unpaid_invoices": unpaid_invoices,
             "total_orders": total_orders,
             "active_orders": active_orders,
+            "total_requests": total_requests,
+            "active_requests": active_requests,
+            "total_payments": total_payments,
+            "approved_payments": approved_payments,
         },
+        "profile_kpis": profile_kpis,
         "recent_quotes": [fmt_quote(q) for q in recent_quotes_raw],
         "recent_invoices": [fmt_invoice(i) for i in recent_invoices_raw],
         "recent_orders": [fmt_order(o) for o in recent_orders_raw],
         "notes": "",
+    }
+
+
+# ─── Statement of Account ───────────────────────────────────────────
+@router.get("/{customer_id}/statement")
+async def customer_statement(
+    customer_id: str,
+    request: Request,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+):
+    """Finance-clean Statement of Account: invoices (debits) + approved payments (credits) + running balance."""
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        user = await db.users.find_one({"email": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    return await generate_statement(db, uid, date_from, date_to)
+
+
+# ─── Full Transaction Lists (for Profile Page tabs) ─────────────────
+@router.get("/{customer_id}/orders")
+async def customer_all_orders(customer_id: str, request: Request, limit: int = Query(default=100, le=500)):
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    orders = await db.orders.find({"customer_id": uid}).sort("created_at", -1).to_list(length=limit)
+    return [_fmt_order_full(o) for o in orders]
+
+
+@router.get("/{customer_id}/invoices")
+async def customer_all_invoices(customer_id: str, request: Request, limit: int = Query(default=100, le=500)):
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    invoices = await db.invoices.find({"customer_id": uid}).sort("created_at", -1).to_list(length=limit)
+    return [_fmt_invoice_full(i) for i in invoices]
+
+
+@router.get("/{customer_id}/quotes")
+async def customer_all_quotes(customer_id: str, request: Request, limit: int = Query(default=100, le=500)):
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    quotes = await db.quotes.find({"customer_id": uid}).sort("created_at", -1).to_list(length=limit)
+    return [_fmt_quote_full(q) for q in quotes]
+
+
+@router.get("/{customer_id}/requests")
+async def customer_all_requests(customer_id: str, request: Request, limit: int = Query(default=100, le=500)):
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    reqs = await db.requests.find({"customer_id": uid}).sort("created_at", -1).to_list(length=limit)
+    return [_fmt_request_full(r) for r in reqs]
+
+
+@router.get("/{customer_id}/payments")
+async def customer_all_payments(customer_id: str, request: Request, limit: int = Query(default=100, le=500)):
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    uid = user.get("id") or str(user.get("_id", ""))
+    payments = await db.payment_proofs.find({"customer_id": uid}).sort("created_at", -1).to_list(length=limit)
+    return [_fmt_payment_full(p) for p in payments]
+
+
+# ─── Formatters for full transaction lists ───────────────────────────
+def _fmt_order_full(o):
+    o = _serialize(o)
+    return {
+        "id": o.get("id", ""),
+        "order_no": o.get("order_number", o.get("id", "")),
+        "amount": _fmt_money(o.get("total_amount")),
+        "raw_amount": o.get("total_amount", 0),
+        "fulfillment_state": o.get("status", "-"),
+        "payment_status": o.get("payment_status", "-"),
+        "date": o.get("created_at", ""),
+        "customer_name": o.get("customer_name", ""),
+        "items_count": len(o.get("items", [])),
+    }
+
+
+def _fmt_invoice_full(i):
+    i = _serialize(i)
+    return {
+        "id": i.get("id", ""),
+        "invoice_no": i.get("invoice_number", i.get("id", "")),
+        "amount": _fmt_money(i.get("total_amount")),
+        "raw_amount": i.get("total_amount", 0),
+        "payment_status": i.get("status", "-"),
+        "date": i.get("created_at", ""),
+        "due_date": i.get("due_date", ""),
+    }
+
+
+def _fmt_quote_full(q):
+    q = _serialize(q)
+    return {
+        "id": q.get("id", ""),
+        "quote_no": q.get("quote_number", q.get("id", "")),
+        "amount": _fmt_money(q.get("total_amount")),
+        "raw_amount": q.get("total_amount", 0),
+        "status": q.get("status", "-"),
+        "date": q.get("created_at", ""),
+        "valid_until": q.get("valid_until", ""),
+    }
+
+
+def _fmt_request_full(r):
+    r = _serialize(r)
+    return {
+        "id": r.get("id", ""),
+        "type": r.get("type", r.get("request_type", "-")),
+        "subject": r.get("subject", r.get("title", r.get("product_name", "-"))),
+        "status": r.get("status", "-"),
+        "date": r.get("created_at", ""),
+        "source": r.get("source", "-"),
+    }
+
+
+def _fmt_payment_full(p):
+    p = _serialize(p)
+    return {
+        "id": p.get("id", ""),
+        "reference": p.get("payment_reference", p.get("id", "")),
+        "amount": _fmt_money(p.get("amount")),
+        "raw_amount": p.get("amount", 0),
+        "status": p.get("status", "-"),
+        "payer_name": p.get("payer_name", "-"),
+        "date": p.get("created_at", ""),
+        "method": p.get("payment_method", "-"),
     }

@@ -5,6 +5,7 @@ import StatusBadge from "@/components/admin/shared/StatusBadge";
 import FilterBar from "@/components/admin/shared/FilterBar";
 import EmptyState from "@/components/admin/shared/EmptyState";
 import CustomerDrawer360 from "@/components/admin/customers/CustomerDrawer360";
+import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -52,6 +53,7 @@ export default function CustomersPageMerged() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [kpiFilter, setKpiFilter] = useState(""); // "unpaid" or "active_orders"
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -70,11 +72,12 @@ export default function CustomersPageMerged() {
     adminApi.getCustomers360Stats().then((r) => setStats(r.data)).catch(() => {});
   }, []);
 
-  const openDrawer = async (row) => {
+  const openDrawer = async (customerId) => {
+    const row = rows.find(r => r.id === customerId) || { id: customerId };
     setSelected(row);
     setLoadingDetail(true);
     try {
-      const res = await adminApi.getCustomer360Detail(row.id);
+      const res = await adminApi.getCustomer360Detail(customerId);
       setDetail(res.data);
     } catch { setDetail(null); }
     setLoadingDetail(false);
@@ -83,20 +86,33 @@ export default function CustomersPageMerged() {
   const closeDrawer = () => { setSelected(null); setDetail(null); };
 
   const setStatusAndLoad = (s) => {
+    setKpiFilter("");
     setStatusFilter((prev) => (prev === s ? "" : s));
   };
+
+  const toggleKpiFilter = (f) => {
+    setKpiFilter((prev) => (prev === f ? "" : f));
+    setStatusFilter("");
+  };
+
+  // Apply KPI filtering
+  const filteredRows = rows.filter((row) => {
+    if (kpiFilter === "unpaid") return row.active_invoices > 0;
+    if (kpiFilter === "active_orders") return row.total_orders > 0;
+    return true;
+  });
 
   return (
     <div className="space-y-4" data-testid="customers-page-merged">
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="customer-stats-cards">
-          <StatCard label="Total" value={stats.total} icon={Users} accent="slate" onClick={() => setStatusFilter("")} active={!statusFilter} />
+          <StatCard label="Total" value={stats.total} icon={Users} accent="slate" onClick={() => { setStatusFilter(""); setKpiFilter(""); }} active={!statusFilter && !kpiFilter} />
           <StatCard label="Active" value={stats.active} icon={UserCheck} accent="emerald" onClick={() => setStatusAndLoad("active")} active={statusFilter === "active"} />
           <StatCard label="At Risk" value={stats.at_risk} icon={AlertTriangle} accent="amber" onClick={() => setStatusAndLoad("at_risk")} active={statusFilter === "at_risk"} />
           <StatCard label="Inactive" value={stats.inactive} icon={UserX} accent="red" onClick={() => setStatusAndLoad("inactive")} active={statusFilter === "inactive"} />
-          <StatCard label="Unpaid Invoices" value={stats.with_unpaid_invoices} icon={Receipt} accent="violet" />
-          <StatCard label="Active Orders" value={stats.with_active_orders} icon={ShoppingCart} accent="blue" />
+          <StatCard label="Unpaid Invoices" value={stats.with_unpaid_invoices} icon={Receipt} accent="violet" onClick={() => toggleKpiFilter("unpaid")} active={kpiFilter === "unpaid"} />
+          <StatCard label="Active Orders" value={stats.with_active_orders} icon={ShoppingCart} accent="blue" onClick={() => toggleKpiFilter("active_orders")} active={kpiFilter === "active_orders"} />
         </div>
       )}
 
@@ -105,7 +121,7 @@ export default function CustomersPageMerged() {
         <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-bold text-[#20364D]">Customers</h1>
-            <p className="mt-0.5 text-sm text-slate-500">{rows.length} customer{rows.length !== 1 ? "s" : ""} — click a row for full 360 view</p>
+            <p className="mt-0.5 text-sm text-slate-500">{filteredRows.length} customer{filteredRows.length !== 1 ? "s" : ""} — click a name for Customer 360</p>
           </div>
         </div>
 
@@ -124,7 +140,7 @@ export default function CustomersPageMerged() {
           <select
             data-testid="customer-status-filter"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setKpiFilter(""); }}
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none"
           >
             {STATUS_OPTIONS.map((o) => (
@@ -151,18 +167,23 @@ export default function CustomersPageMerged() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan={9} className="px-5 py-10 text-center text-sm text-slate-400">Loading customers...</td></tr>
-              ) : rows.length === 0 ? (
+              ) : filteredRows.length === 0 ? (
                 <tr><td colSpan={9} className="py-0"><EmptyState icon={Users} title="No customers found" subtitle="Customers will appear here when they register." /></td></tr>
               ) : (
-                rows.map((row) => (
+                filteredRows.map((row) => (
                   <tr
                     key={row.id}
-                    onClick={() => openDrawer(row)}
-                    className={`cursor-pointer transition-colors hover:bg-slate-50 ${selected?.id === row.id ? "bg-blue-50/50" : ""}`}
+                    className={`transition-colors hover:bg-slate-50 ${selected?.id === row.id ? "bg-blue-50/50" : ""}`}
                     data-testid={`customer-row-${row.id}`}
                   >
                     <td className="px-5 py-3.5 text-xs text-slate-500">{fmtDate(row.last_activity_at)}</td>
-                    <td className="px-5 py-3.5 text-sm font-semibold text-[#20364D]">{row.name}</td>
+                    <td className="px-5 py-3.5">
+                      <CustomerLinkCell
+                        customerId={row.id}
+                        customerName={row.name}
+                        onClickDrawer={openDrawer}
+                      />
+                    </td>
                     <td className="px-5 py-3.5 text-sm text-slate-600 hidden md:table-cell">{row.email}</td>
                     <td className="px-5 py-3.5 text-sm text-slate-600 hidden lg:table-cell">{row.company}</td>
                     <td className="px-5 py-3.5 hidden lg:table-cell">

@@ -1597,6 +1597,57 @@ Product branches:
 2. Office Equipment: Tech Accessories, Desk Organizers, Office Supplies
 3. KonektSeries: Our exclusive branded clothing line with pre-designed hats, caps, and shorts (ready-to-buy, no customization needed)"""
 
+# ─── Customer-facing Statement of Account ──────────────────────────
+@api_router.get("/account/me/statement")
+async def my_statement(
+    user: dict = Depends(get_current_user),
+    date_from: str = None,
+    date_to: str = None,
+):
+    """Customer's own Statement of Account — same finance truth as admin side."""
+    from services.statement_of_account_service import generate_statement as gen_stmt
+    customer_id = user.get("id") or user.get("customer_id")
+    return await gen_stmt(db, customer_id, date_from, date_to)
+
+
+@api_router.get("/account/me/invoices")
+async def my_invoices(user: dict = Depends(get_current_user)):
+    """Customer's own invoices list."""
+    uid = user.get("id")
+    invoices = await db.invoices.find({"customer_id": uid}).sort("created_at", -1).to_list(length=200)
+    result = []
+    for i in invoices:
+        i.pop("_id", None)
+        result.append({
+            "id": i.get("id", ""),
+            "invoice_no": i.get("invoice_number", i.get("id", "")),
+            "amount": i.get("total_amount", 0),
+            "status": i.get("status", "-"),
+            "date": i.get("created_at", ""),
+            "due_date": i.get("due_date", ""),
+        })
+    return result
+
+
+@api_router.get("/account/me/payments")
+async def my_payments(user: dict = Depends(get_current_user)):
+    """Customer's own payments list."""
+    uid = user.get("id")
+    payments = await db.payment_proofs.find({"customer_id": uid}).sort("created_at", -1).to_list(length=200)
+    result = []
+    for p in payments:
+        p.pop("_id", None)
+        result.append({
+            "id": p.get("id", ""),
+            "reference": p.get("payment_reference", p.get("id", "")),
+            "amount": p.get("amount", 0),
+            "status": p.get("status", "-"),
+            "date": p.get("created_at", ""),
+            "method": p.get("payment_method", "-"),
+        })
+    return result
+
+
 @api_router.post("/chat")
 async def chat_with_assistant(data: ChatRequest, user: dict = Depends(get_optional_user)):
     if not EMERGENT_LLM_KEY:
