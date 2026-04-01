@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Truck, Plus, Check } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { Truck, Plus, Check, Package, Clock, CheckCircle, XCircle } from "lucide-react";
 import api from "../../lib/api";
+import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 
 export default function DeliveryNotesPage() {
   const [items, setItems] = useState([]);
@@ -79,12 +80,21 @@ export default function DeliveryNotesPage() {
     }
   };
 
+  const deliveryStats = useMemo(() => {
+    const total = items.length;
+    const issued = items.filter(i => i.status === "issued").length;
+    const inTransit = items.filter(i => i.status === "in_transit").length;
+    const delivered = items.filter(i => i.status === "delivered").length;
+    const cancelled = items.filter(i => i.status === "cancelled").length;
+    return { total, issued, inTransit, delivered, cancelled };
+  }, [items]);
+
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen space-y-6" data-testid="delivery-notes-page">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-[#2D3E50]">Delivery Notes</h1>
-          <p className="mt-2 text-slate-600">Dispatch stock for orders and invoices</p>
+          <h1 className="text-2xl font-bold text-[#20364D]">Delivery Notes</h1>
+          <p className="mt-0.5 text-sm text-slate-500">Dispatch stock for orders and invoices</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
@@ -95,6 +105,18 @@ export default function DeliveryNotesPage() {
           Create Delivery Note
         </button>
       </div>
+
+      {/* Stat Cards */}
+      <StandardSummaryCardsRow
+        columns={5}
+        cards={[
+          { label: "Total", value: deliveryStats.total, icon: Truck, accent: "slate" },
+          { label: "Issued", value: deliveryStats.issued, icon: Package, accent: "blue" },
+          { label: "In Transit", value: deliveryStats.inTransit, icon: Clock, accent: "amber" },
+          { label: "Delivered", value: deliveryStats.delivered, icon: CheckCircle, accent: "emerald" },
+          { label: "Cancelled", value: deliveryStats.cancelled, icon: XCircle, accent: "red" },
+        ]}
+      />
 
       {showForm && (
         <div className="rounded-3xl border bg-white p-6 space-y-4" data-testid="delivery-note-form">

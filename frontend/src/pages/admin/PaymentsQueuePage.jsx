@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import api from "../../lib/api";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import {
   CreditCard, CheckCircle2, XCircle, Clock, FileText, Eye,
   User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight,
@@ -107,29 +108,15 @@ export default function PaymentsQueuePage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-testid="payments-stats-cards">
-        {[
-          { key: "all", label: "Total", value: statusCounts.all, Icon: CreditCard, accent: "border-slate-200", iconBg: "bg-slate-100", iconColor: "text-slate-600" },
-          { key: "uploaded", label: "Pending", value: statusCounts.uploaded, Icon: Clock, accent: "border-amber-200", iconBg: "bg-amber-100", iconColor: "text-amber-700" },
-          { key: "approved", label: "Approved", value: statusCounts.approved, Icon: CheckCircle2, accent: "border-emerald-200", iconBg: "bg-emerald-100", iconColor: "text-emerald-700" },
-          { key: "rejected", label: "Rejected", value: statusCounts.rejected, Icon: XCircle, accent: "border-red-200", iconBg: "bg-red-100", iconColor: "text-red-700" },
-        ].map(({ key, label, value, Icon, accent, iconBg, iconColor }) => (
-          <button
-            key={key}
-            onClick={() => setStatusFilter(key)}
-            data-testid={`stat-card-${label.toLowerCase()}`}
-            className={`flex items-center gap-3 rounded-xl border bg-white p-4 text-left transition-all hover:shadow-sm ${accent} ${statusFilter === key ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
-          >
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
-              <Icon className={`h-5 w-5 ${iconColor}`} />
-            </div>
-            <div>
-              <div className="text-2xl font-extrabold text-[#20364D]">{value}</div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-            </div>
-          </button>
-        ))}
-      </div>
+      <StandardSummaryCardsRow
+        columns={4}
+        cards={[
+          { label: "Total", value: statusCounts.all, icon: CreditCard, accent: "slate", onClick: () => setStatusFilter("all"), active: statusFilter === "all" },
+          { label: "Pending", value: statusCounts.uploaded, icon: Clock, accent: "amber", onClick: () => setStatusFilter("uploaded"), active: statusFilter === "uploaded" },
+          { label: "Approved", value: statusCounts.approved, icon: CheckCircle2, accent: "emerald", onClick: () => setStatusFilter("approved"), active: statusFilter === "approved" },
+          { label: "Rejected", value: statusCounts.rejected, icon: XCircle, accent: "red", onClick: () => setStatusFilter("rejected"), active: statusFilter === "rejected" },
+        ]}
+      />
 
       {/* Search */}
       <input

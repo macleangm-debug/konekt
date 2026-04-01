@@ -5,36 +5,11 @@ import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
-
-function StatCard({ label, value, icon: Icon, accent, onClick, active }) {
-  const colors = {
-    slate: { border: "border-slate-200", iconBg: "bg-slate-100", text: "text-slate-600" },
-    amber: { border: "border-amber-200", iconBg: "bg-amber-100", text: "text-amber-700" },
-    blue: { border: "border-blue-200", iconBg: "bg-blue-100", text: "text-blue-700" },
-    violet: { border: "border-violet-200", iconBg: "bg-violet-100", text: "text-violet-700" },
-    emerald: { border: "border-emerald-200", iconBg: "bg-emerald-100", text: "text-emerald-700" },
-  };
-  const c = colors[accent] || colors.slate;
-  return (
-    <button
-      onClick={onClick}
-      data-testid={`stat-card-${label.toLowerCase().replace(/\s/g, "-")}`}
-      className={`flex items-center gap-3 rounded-xl border bg-white p-4 text-left transition-all hover:shadow-sm ${c.border} ${active ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
-    >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.iconBg}`}>
-        <Icon className={`h-5 w-5 ${c.text}`} />
-      </div>
-      <div>
-        <div className="text-2xl font-extrabold text-[#20364D]">{value ?? 0}</div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-      </div>
-    </button>
-  );
-}
 
 const TABS = [
   { key: "", label: "All Orders", icon: ShoppingCart },
@@ -97,12 +72,17 @@ export default function OrdersPage() {
 
       {/* Stat Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-4" data-testid="orders-stats-cards">
-          <StatCard label="Total" value={stats.total} icon={ClipboardList} accent="slate" onClick={() => setTab("")} active={tab === ""} />
-          <StatCard label="New" value={stats.new} icon={Clock} accent="amber" onClick={() => setTab("new")} active={tab === "new"} />
-          <StatCard label="Assigned" value={stats.assigned} icon={Package} accent="blue" onClick={() => setTab("assigned")} active={tab === "assigned"} />
-          <StatCard label="In Progress" value={stats.in_progress} icon={Truck} accent="violet" onClick={() => setTab("in_progress")} active={tab === "in_progress"} />
-          <StatCard label="Completed" value={stats.completed} icon={CheckCircle} accent="emerald" onClick={() => setTab("completed")} active={tab === "completed"} />
+        <div className="mb-4">
+          <StandardSummaryCardsRow
+            columns={5}
+            cards={[
+              { label: "Total", value: stats.total, icon: ClipboardList, accent: "slate", onClick: () => setTab(""), active: tab === "" },
+              { label: "New", value: stats.new, icon: Clock, accent: "amber", onClick: () => setTab("new"), active: tab === "new" },
+              { label: "Assigned", value: stats.assigned, icon: Package, accent: "blue", onClick: () => setTab("assigned"), active: tab === "assigned" },
+              { label: "In Progress", value: stats.in_progress, icon: Truck, accent: "violet", onClick: () => setTab("in_progress"), active: tab === "in_progress" },
+              { label: "Completed", value: stats.completed, icon: CheckCircle, accent: "emerald", onClick: () => setTab("completed"), active: tab === "completed" },
+            ]}
+          />
         </div>
       )}
 

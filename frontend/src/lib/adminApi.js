@@ -193,6 +193,12 @@ export const adminApi = {
 
   // Quick Price Check
   quickPriceCheck: (data) => api.post("/api/admin/margins/resolve", data),
+
+  // Statement Delivery
+  sendStatement: (customerId) => api.post(`/api/admin/customers/${customerId}/send-statement`),
+
+  // Notification Summary
+  getNotificationSummary: () => api.get("/api/admin/notifications/summary"),
 };
 
 export default adminApi;

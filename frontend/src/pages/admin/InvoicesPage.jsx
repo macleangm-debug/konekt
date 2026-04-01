@@ -8,6 +8,7 @@ import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
 import BrandLogo from "@/components/branding/BrandLogo";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 
 const invoiceStatuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"];
 const statusColors = {
@@ -43,7 +44,7 @@ function InvoiceDrawer({ invoice, onClose, onStatusChange, onSend }) {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" data-testid="admin-invoice-drawer">
-      <button className="absolute inset-0 bg-black/35" onClick={onClose} />
+      <button className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px]" onClick={onClose} />
       <div className="relative w-full max-w-[520px] h-full bg-white shadow-2xl border-l border-slate-200 overflow-y-auto">
         <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f] px-6 py-5 text-white">
           <div className="flex items-start justify-between gap-4">
@@ -188,26 +189,17 @@ export default function InvoicesPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="invoices-stats-cards">
-        {[
-          { label: "Total", value: invStats.total, Icon: FileText, border: "border-slate-200", iconBg: "bg-slate-100", iconColor: "text-slate-600" },
-          { label: "Draft", value: invStats.draft, Icon: Clock, border: "border-amber-200", iconBg: "bg-amber-100", iconColor: "text-amber-700" },
-          { label: "Sent", value: invStats.sent, Icon: Send, border: "border-blue-200", iconBg: "bg-blue-100", iconColor: "text-blue-700" },
-          { label: "Paid", value: invStats.paid, Icon: CheckCircle, border: "border-emerald-200", iconBg: "bg-emerald-100", iconColor: "text-emerald-700" },
-          { label: "Overdue", value: invStats.overdue, Icon: AlertTriangle, border: "border-red-200", iconBg: "bg-red-100", iconColor: "text-red-700" },
-          { label: "Unpaid", value: invStats.unpaid, Icon: CreditCard, border: "border-violet-200", iconBg: "bg-violet-100", iconColor: "text-violet-700" },
-        ].map(({ label, value, Icon, border, iconBg, iconColor }) => (
-          <div key={label} className={`flex items-center gap-3 rounded-xl border bg-white p-4 ${border}`} data-testid={`stat-card-${label.toLowerCase()}`}>
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
-              <Icon className={`h-5 w-5 ${iconColor}`} />
-            </div>
-            <div>
-              <div className="text-2xl font-extrabold text-[#20364D]">{value}</div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <StandardSummaryCardsRow
+        columns={6}
+        cards={[
+          { label: "Total", value: invStats.total, icon: FileText, accent: "slate" },
+          { label: "Draft", value: invStats.draft, icon: Clock, accent: "amber" },
+          { label: "Sent", value: invStats.sent, icon: Send, accent: "blue" },
+          { label: "Paid", value: invStats.paid, icon: CheckCircle, accent: "emerald" },
+          { label: "Overdue", value: invStats.overdue, icon: AlertTriangle, accent: "red" },
+          { label: "Unpaid", value: invStats.unpaid, icon: CreditCard, accent: "violet" },
+        ]}
+      />
 
       {/* Collapsible create form */}
       {showForm && (

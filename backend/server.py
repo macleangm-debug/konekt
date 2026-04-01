@@ -113,6 +113,7 @@ from sales_kpi_routes import router as sales_kpi_router
 from marketing_performance_routes import router as marketing_performance_router
 from crm_deal_routes import router as crm_deal_router
 from customer_account_routes import router as customer_account_router
+from customer_statement_delivery_routes import router as statement_delivery_router
 from crm_relationship_routes import router as crm_relationship_router
 from staff_dashboard_routes import router as staff_dashboard_router
 from supervisor_team_routes import router as supervisor_team_router
@@ -2202,21 +2203,22 @@ async def health():
 # ─── Sidebar Notification Counts ─────────────────────────────────────
 @api_router.get("/admin/sidebar-counts")
 async def sidebar_counts(user: dict = Depends(get_admin_user)):
-    """Returns actionable counts for sidebar badges. State/action-based, not view-based."""
-    orders_new = await db.orders.count_documents({"status": {"$in": ["pending", "new", "submitted"]}})
-    requests_unresolved = await db.requests.count_documents({"status": {"$in": ["submitted", "pending", "new", "in_review"]}})
-    payments_pending = await db.payment_proofs.count_documents({"status": {"$in": ["submitted", "pending"]}})
-    deliveries_active = await db.deliveries.count_documents({"status": {"$in": ["pending", "ready_for_pickup", "in_transit"]}})
-    # Also check vendor_orders for delivery signals
-    vendor_orders_active = await db.vendor_orders.count_documents({"delivery_status": {"$in": ["pending", "ready_for_pickup", "in_transit"]}})
-    deliveries_total = deliveries_active + vendor_orders_active
-
+    """Returns actionable counts for sidebar badges from centralized notification registry."""
+    from services.notification_registry_service import build_notification_summary
+    summary = await build_notification_summary(db)
+    # Flatten to badge_count for sidebar consumption
     return {
-        "orders": orders_new,
-        "requests_inbox": requests_unresolved,
-        "payments_queue": payments_pending,
-        "deliveries": deliveries_total,
+        key: section["badge_count"]
+        for key, section in summary.items()
+        if isinstance(section, dict) and "badge_count" in section
     }
+
+
+@api_router.get("/admin/notifications/summary")
+async def notification_summary(user: dict = Depends(get_admin_user)):
+    """Full notification summary with new_count + action_required_count per section."""
+    from services.notification_registry_service import build_notification_summary
+    return await build_notification_summary(db)
 
 # Include routers
 app.include_router(api_router)
@@ -2375,6 +2377,7 @@ app.include_router(sales_kpi_router)
 app.include_router(marketing_performance_router)
 app.include_router(crm_deal_router)
 app.include_router(customer_account_router)
+app.include_router(statement_delivery_router)
 app.include_router(crm_relationship_router)
 app.include_router(staff_dashboard_router)
 app.include_router(supervisor_team_router)

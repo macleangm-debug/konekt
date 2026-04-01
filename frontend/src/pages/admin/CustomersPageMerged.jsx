@@ -6,6 +6,8 @@ import FilterBar from "@/components/admin/shared/FilterBar";
 import EmptyState from "@/components/admin/shared/EmptyState";
 import CustomerDrawer360 from "@/components/admin/customers/CustomerDrawer360";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
+import SendStatementButton from "@/components/customers/SendStatementButton";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -19,33 +21,6 @@ const fmtDate = (d) => {
   try { return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); }
   catch { return d; }
 };
-
-function StatCard({ label, value, icon: Icon, accent, onClick, active }) {
-  const colors = {
-    slate: { bg: "bg-white", border: "border-slate-200", text: "text-slate-600", iconBg: "bg-slate-100" },
-    emerald: { bg: "bg-white", border: "border-emerald-200", text: "text-emerald-700", iconBg: "bg-emerald-100" },
-    amber: { bg: "bg-white", border: "border-amber-200", text: "text-amber-700", iconBg: "bg-amber-100" },
-    red: { bg: "bg-white", border: "border-red-200", text: "text-red-700", iconBg: "bg-red-100" },
-    violet: { bg: "bg-white", border: "border-violet-200", text: "text-violet-700", iconBg: "bg-violet-100" },
-    blue: { bg: "bg-white", border: "border-blue-200", text: "text-blue-700", iconBg: "bg-blue-100" },
-  };
-  const c = colors[accent] || colors.slate;
-  return (
-    <button
-      onClick={onClick}
-      data-testid={`stat-card-${label.toLowerCase().replace(/\s/g, "-")}`}
-      className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all hover:shadow-sm ${c.border} ${c.bg} ${active ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
-    >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.iconBg}`}>
-        <Icon className={`h-5 w-5 ${c.text}`} />
-      </div>
-      <div>
-        <div className="text-2xl font-extrabold text-[#20364D]">{value ?? 0}</div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
-      </div>
-    </button>
-  );
-}
 
 export default function CustomersPageMerged() {
   const [rows, setRows] = useState([]);
@@ -106,14 +81,17 @@ export default function CustomersPageMerged() {
     <div className="space-y-4" data-testid="customers-page-merged">
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="customer-stats-cards">
-          <StatCard label="Total" value={stats.total} icon={Users} accent="slate" onClick={() => { setStatusFilter(""); setKpiFilter(""); }} active={!statusFilter && !kpiFilter} />
-          <StatCard label="Active" value={stats.active} icon={UserCheck} accent="emerald" onClick={() => setStatusAndLoad("active")} active={statusFilter === "active"} />
-          <StatCard label="At Risk" value={stats.at_risk} icon={AlertTriangle} accent="amber" onClick={() => setStatusAndLoad("at_risk")} active={statusFilter === "at_risk"} />
-          <StatCard label="Inactive" value={stats.inactive} icon={UserX} accent="red" onClick={() => setStatusAndLoad("inactive")} active={statusFilter === "inactive"} />
-          <StatCard label="Unpaid Invoices" value={stats.with_unpaid_invoices} icon={Receipt} accent="violet" onClick={() => toggleKpiFilter("unpaid")} active={kpiFilter === "unpaid"} />
-          <StatCard label="Active Orders" value={stats.with_active_orders} icon={ShoppingCart} accent="blue" onClick={() => toggleKpiFilter("active_orders")} active={kpiFilter === "active_orders"} />
-        </div>
+        <StandardSummaryCardsRow
+          columns={6}
+          cards={[
+            { label: "Total", value: stats.total, icon: Users, accent: "slate", onClick: () => { setStatusFilter(""); setKpiFilter(""); }, active: !statusFilter && !kpiFilter },
+            { label: "Active", value: stats.active, icon: UserCheck, accent: "emerald", onClick: () => setStatusAndLoad("active"), active: statusFilter === "active" },
+            { label: "At Risk", value: stats.at_risk, icon: AlertTriangle, accent: "amber", onClick: () => setStatusAndLoad("at_risk"), active: statusFilter === "at_risk" },
+            { label: "Inactive", value: stats.inactive, icon: UserX, accent: "red", onClick: () => setStatusAndLoad("inactive"), active: statusFilter === "inactive" },
+            { label: "Unpaid Invoices", value: stats.with_unpaid_invoices, icon: Receipt, accent: "violet", onClick: () => toggleKpiFilter("unpaid"), active: kpiFilter === "unpaid" },
+            { label: "Active Orders", value: stats.with_active_orders, icon: ShoppingCart, accent: "blue", onClick: () => toggleKpiFilter("active_orders"), active: kpiFilter === "active_orders" },
+          ]}
+        />
       )}
 
       {/* Table Card */}
@@ -208,13 +186,16 @@ export default function CustomersPageMerged() {
         <div className="fixed inset-0 z-50 flex justify-end" data-testid="customer-profile-drawer-overlay">
           <div className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px]" onClick={closeDrawer} />
           <div className="relative flex w-full max-w-2xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-            <button
-              onClick={closeDrawer}
-              data-testid="close-customer-drawer"
-              className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+              {detail?.id && <SendStatementButton customerId={detail.id} customerName={detail.company || detail.name} compact />}
+              <button
+                onClick={closeDrawer}
+                data-testid="close-customer-drawer"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             {loadingDetail ? (
               <div className="flex flex-1 items-center justify-center">
                 <div className="text-sm text-slate-400">Loading customer profile...</div>
