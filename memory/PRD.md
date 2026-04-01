@@ -15,69 +15,62 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 3. **Services** — Request type: `service_quote`
 4. **Fallback** — `contact_general`
 
-## Delivery Status Workflow
-- **Vendor controls**: assigned → work_scheduled → in_progress → ready_for_pickup
-- **Sales controls**: picked_up → in_transit → delivered → completed
-- **Vendor ETA**: vendor_promised_date set by vendor
-- **Internal Buffer**: internal_target_date set by sales/admin (1-2 day buffer)
-
 ---
 
 ## Completed Work
 
 ### Phases 1-8 — Core through E2E UAT
 - Full platform: Login, Dashboard, Orders, Quotes, Invoices, Customers, Products, CRM, Marketplace
-- 3 Commercial Lanes (Products, Promo, Services) with lane-first request flow
-- Full E2E UAT (4 flows: Product Order, Service Request, Promo Custom, Promo Sample)
 
 ### Phase 9 — Pack 1: Service & Promo Experience Fix
-- 21 services with full static content fallback (no more "Service Not Found")
-- PromoMultiBlankBuilder for multi-item promo requests
-- CantFindWhatYouNeedBanner across marketplace and service pages
-- "Other / Not Sure" fallback lane → contact_general
+- 21 services with full static content fallback
+- PromoMultiBlankBuilder, CantFindWhatYouNeedBanner
+- "Other / Not Sure" fallback → contact_general
 
 ### Phase 10 — Pack 4: Finance + Vendor Scheduling & Assignment
-- **Payment state persistence**: Approved/rejected payments remain visible in queue with status badges
-- **Richer payment drawer**: Customer name, payer name, contact phone, company name, payment reference, invoice link, approval history
-- **Invoice paid status**: Fixed detection of fully paid invoices (checks payment_status field)
-- **Vendor ETA input**: POST /api/vendor/orders/{id}/eta — vendor submits promised delivery date
-- **Internal buffer dates**: POST /api/sales/delivery/{id}/internal-buffer — sales sets internal target date
-- **Smart vendor assignment**: GET /api/admin/vendor-assignment/suggest — ranked candidates by capability, availability, workload
+- Payment state persistence, richer drawer
+- Vendor ETA input, internal buffer dates
+- Smart vendor assignment engine
 
 ### Phase 11 — Pack 2: Customer 360 + Statement of Account (01 Apr 2026)
-- **Backend Services**: `customer_profile_service.py` (profile KPI aggregation), `statement_of_account_service.py` (running balance from invoices/payments)
-- **6 New API Endpoints**: `/{id}/statement`, `/{id}/orders`, `/{id}/invoices`, `/{id}/quotes`, `/{id}/requests`, `/{id}/payments`
-- **Customer-facing APIs**: `GET /api/account/me/statement`, `/me/invoices`, `/me/payments`
-- **Enriched Detail Endpoint**: `profile_kpis` and extended `summary` with requests/payments counts
-- **CustomerLinkCell Component**: Clickable customer names wired into Orders, Payments Queue, Invoices, Requests Inbox, CRM service leads, Customers list
-- **CustomerDrawer360 Upgrade**: 8 tabs (Overview, Requests, Orders, Quotes, Invoices, Payments, Statement, Notes), "View Full Profile" button, enriched KPI cards
-- **StatementOfAccountTab**: Finance-clean ledger with running balance, date range picker, print functionality
-- **CustomerProfilePage**: Full-page profile at `/admin/customers/:id` with 8 tabs and back navigation
-- **Customer-facing MyStatementPageV2**: Rewired to use real statement API at `/account/statement`
-- **KPI Card Filtering**: Stat cards filter the customer table (Active, At Risk, Inactive, Unpaid Invoices, Active Orders)
+- Profile KPI aggregation, Statement of Account (running balance)
+- 6 new customer detail APIs + customer-facing statement
+- CustomerLinkCell wired into Orders, Payments, Invoices, Requests, CRM, Customers
+- CustomerDrawer360 with 8 tabs + "Full Profile" button
+- CustomerProfilePage at /admin/customers/:id
+- KPI card filtering on Customers list
+
+### Phase 12 — Pack 3: List Page Standardization + Notifications (01 Apr 2026)
+- **Sidebar notification badges**: Red count badges on Orders, Requests Inbox, Payments Queue, Deliveries — state/action-based (not view-based)
+- **Backend**: `GET /api/admin/sidebar-counts`, `GET /api/admin/orders-ops/stats`, `GET /api/admin/payments/stats`, `GET /api/admin/invoices/stats`
+- **Orders stat cards**: 5 clickable cards (Total, New, Assigned, In Progress, Completed) replacing old tab filters
+- **Payments Queue stat cards**: 4 clickable cards (Total, Pending, Approved, Rejected) replacing old tab filters
+- **Invoices stat cards**: 6 display cards (Total, Draft, Sent, Paid, Overdue, Unpaid)
+- **Deliveries page redesign**: Full table-based layout with KPI stat cards, search, CustomerLinkCell, detail drawer (from card layout)
+- **Request Inbox company name fix**: Backend enriches company_name from user profile when missing
 
 ---
 
 ## Backlog
 
-### P0 — In Progress
-- Pack 3: List Page Standardization + Notifications
-
 ### P1 — Upcoming
 - Create Quote action from CRM drawer
 - Hybrid Margin Engine
+- Send Statement button (email with PDF — build now, dispatch when Resend available)
 
 ### P2 — Future
 - Admin data entry configuration (TIN, BRN, bank)
 - Twilio WhatsApp / Resend email (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
+- Mobile-first optimization
 
 ---
 
 ## Test History
 - Iteration 155: 3 Commercial Lanes — 100% Pass
-- Iteration 156: Full E2E UAT (4 Flows) — 100% Pass (29 tests)
-- Iteration 157: Pack 1 Service & Promo Fix — 100% Pass (15 backend + frontend)
-- Iteration 158: Pack 4 Finance + Vendor Scheduling — 100% Pass (15 backend + frontend)
-- Iteration 159: Pack 2 Customer 360 + Statement — 92% Backend / 100% Frontend (minor auth gaps on list endpoints)
+- Iteration 156: Full E2E UAT (4 Flows) — 100% Pass
+- Iteration 157: Pack 1 Service & Promo Fix — 100% Pass
+- Iteration 158: Pack 4 Finance + Vendor Scheduling — 100% Pass
+- Iteration 159: Pack 2 Customer 360 + Statement — 92% Backend / 100% Frontend
+- Iteration 160: Pack 3 List Page Standardization — 100% Backend (19/19) / 100% Frontend
