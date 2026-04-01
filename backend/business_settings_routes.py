@@ -5,16 +5,34 @@ Single source of truth for invoices, quotes, statements, and public contact.
 """
 from datetime import datetime, timezone
 import os
-from fastapi import APIRouter, Depends
+import jwt
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorClient
 
 router = APIRouter(prefix="/api/admin/business-settings", tags=["Business Settings"])
+
+security = HTTPBearer()
 
 # Database connection
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 db_name = os.environ.get('DB_NAME', 'konekt_db')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
+
+JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+
+
+async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
+        if not user or user.get("role") not in ("admin", "staff"):
+            raise HTTPException(status_code=403, detail="Admin access required")
+        return user
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 DEFAULT_SETTINGS = {
@@ -79,7 +97,7 @@ def serialize_doc(doc):
 
 
 @router.get("")
-async def get_business_settings():
+async def get_business_settings(user: dict = Depends(get_admin_user)):
     doc = await db.business_settings.find_one({})
 
     if not doc:
@@ -95,7 +113,7 @@ async def get_business_settings():
 
 
 @router.put("")
-async def update_business_settings(payload: dict):
+async def update_business_settings(payload: dict, user: dict = Depends(get_admin_user)):
     existing = await db.business_settings.find_one({})
 
     clean_payload = {k: v for k, v in payload.items() if k in DEFAULT_SETTINGS and k not in {"created_at"}}
