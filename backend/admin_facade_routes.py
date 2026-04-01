@@ -56,6 +56,16 @@ async def dashboard_pending_actions(request: Request):
 
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
+@router.get("/payments/stats")
+async def payments_stats(request: Request):
+    """Payment queue stat cards."""
+    db = request.app.mongodb
+    total = await db.payment_proofs.count_documents({})
+    pending = await db.payment_proofs.count_documents({"status": {"$in": ["submitted", "pending"]}})
+    approved = await db.payment_proofs.count_documents({"status": "approved"})
+    rejected = await db.payment_proofs.count_documents({"status": "rejected"})
+    return {"total": total, "pending": pending, "approved": approved, "rejected": rejected}
+
 @router.get("/payments/queue")
 async def payments_queue(request: Request, search: Optional[str] = Query(default=None), status: Optional[str] = Query(default=None)):
     service = LiveCommerceService(request.app.mongodb)
@@ -216,6 +226,18 @@ async def invoices_list(request: Request, search: Optional[str] = Query(default=
         inv["linked_ref"] = linked_ref
         out.append(inv)
     return out
+
+@router.get("/invoices/stats")
+async def invoices_stats_facade(request: Request):
+    """Invoice stat cards."""
+    db = request.app.mongodb
+    total = await db.invoices.count_documents({})
+    draft = await db.invoices.count_documents({"status": "draft"})
+    sent = await db.invoices.count_documents({"status": {"$in": ["sent", "issued"]}})
+    paid = await db.invoices.count_documents({"status": "paid"})
+    overdue = await db.invoices.count_documents({"status": "overdue"})
+    unpaid = await db.invoices.count_documents({"status": {"$in": ["unpaid", "pending", "partially_paid"]}})
+    return {"total": total, "draft": draft, "sent": sent, "paid": paid, "overdue": overdue, "unpaid": unpaid}
 
 @router.get("/invoices/{invoice_id}")
 async def invoice_detail(invoice_id: str, request: Request):

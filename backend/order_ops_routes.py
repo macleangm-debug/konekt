@@ -55,6 +55,17 @@ def serialize_doc(doc):
     return doc
 
 
+@router.get("/stats")
+async def orders_stats():
+    """Order stat cards."""
+    total = await db.orders.count_documents({})
+    new_count = await db.orders.count_documents({"status": {"$in": ["new", "pending", "submitted"]}})
+    assigned = await db.orders.count_documents({"status": {"$in": ["assigned", "ready_to_fulfill", "processing"]}})
+    in_progress = await db.orders.count_documents({"status": {"$in": ["in_progress", "work_scheduled"]}})
+    completed = await db.orders.count_documents({"status": {"$in": ["completed", "delivered", "fulfilled"]}})
+    return {"total": total, "new": new_count, "assigned": assigned, "in_progress": in_progress, "completed": completed}
+
+
 @router.get("")
 async def list_orders(
     status: Optional[str] = None,

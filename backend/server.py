@@ -2196,6 +2196,26 @@ async def root():
 async def health():
     return {"status": "healthy"}
 
+
+# ─── Sidebar Notification Counts ─────────────────────────────────────
+@api_router.get("/admin/sidebar-counts")
+async def sidebar_counts(user: dict = Depends(get_admin_user)):
+    """Returns actionable counts for sidebar badges. State/action-based, not view-based."""
+    orders_new = await db.orders.count_documents({"status": {"$in": ["pending", "new", "submitted"]}})
+    requests_unresolved = await db.requests.count_documents({"status": {"$in": ["submitted", "pending", "new", "in_review"]}})
+    payments_pending = await db.payment_proofs.count_documents({"status": {"$in": ["submitted", "pending"]}})
+    deliveries_active = await db.deliveries.count_documents({"status": {"$in": ["pending", "ready_for_pickup", "in_transit"]}})
+    # Also check vendor_orders for delivery signals
+    vendor_orders_active = await db.vendor_orders.count_documents({"delivery_status": {"$in": ["pending", "ready_for_pickup", "in_transit"]}})
+    deliveries_total = deliveries_active + vendor_orders_active
+
+    return {
+        "orders": orders_new,
+        "requests_inbox": requests_unresolved,
+        "payments_queue": payments_pending,
+        "deliveries": deliveries_total,
+    }
+
 # Include routers
 app.include_router(api_router)
 # IMPORTANT: admin_facade_router must be included BEFORE admin_router

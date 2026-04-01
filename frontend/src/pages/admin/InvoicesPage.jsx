@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Receipt, Download, Send, Search, RefreshCcw, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Receipt, Download, Send, Search, RefreshCcw, X, ChevronDown, ChevronUp, FileText, CreditCard, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import { calculateTotals, formatMoney } from "@/utils/finance";
 import CustomerSummaryCard from "@/components/admin/CustomerSummaryCard";
@@ -168,13 +168,45 @@ export default function InvoicesPage() {
     return (inv.invoice_number?.toLowerCase().includes(t) || inv.customer_name?.toLowerCase().includes(t) || inv.customer_company?.toLowerCase().includes(t));
   });
 
+  // Stats from local data
+  const invStats = {
+    total: invoices.length,
+    draft: invoices.filter(i => i.status === "draft").length,
+    sent: invoices.filter(i => ["sent", "issued"].includes(i.status)).length,
+    paid: invoices.filter(i => i.status === "paid" || i.status === "approved").length,
+    overdue: invoices.filter(i => i.status === "overdue").length,
+    unpaid: invoices.filter(i => ["unpaid", "pending", "pending_payment", "awaiting_payment_proof", "partially_paid"].includes(i.status)).length,
+  };
+
   return (
-    <div className="space-y-6" data-testid="invoices-page">
+    <div className="space-y-4" data-testid="invoices-page">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-[#20364D]">Invoices</h1><p className="text-slate-500 text-sm">Manage invoices — create, track, and send</p></div>
         <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 bg-[#20364D] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#2a4a66] transition" data-testid="create-invoice-btn">
           {showForm ? <><ChevronUp className="w-4 h-4" /> Close Form</> : <><Receipt className="w-4 h-4" /> Create Invoice</>}
         </button>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6" data-testid="invoices-stats-cards">
+        {[
+          { label: "Total", value: invStats.total, Icon: FileText, border: "border-slate-200", iconBg: "bg-slate-100", iconColor: "text-slate-600" },
+          { label: "Draft", value: invStats.draft, Icon: Clock, border: "border-amber-200", iconBg: "bg-amber-100", iconColor: "text-amber-700" },
+          { label: "Sent", value: invStats.sent, Icon: Send, border: "border-blue-200", iconBg: "bg-blue-100", iconColor: "text-blue-700" },
+          { label: "Paid", value: invStats.paid, Icon: CheckCircle, border: "border-emerald-200", iconBg: "bg-emerald-100", iconColor: "text-emerald-700" },
+          { label: "Overdue", value: invStats.overdue, Icon: AlertTriangle, border: "border-red-200", iconBg: "bg-red-100", iconColor: "text-red-700" },
+          { label: "Unpaid", value: invStats.unpaid, Icon: CreditCard, border: "border-violet-200", iconBg: "bg-violet-100", iconColor: "text-violet-700" },
+        ].map(({ label, value, Icon, border, iconBg, iconColor }) => (
+          <div key={label} className={`flex items-center gap-3 rounded-xl border bg-white p-4 ${border}`} data-testid={`stat-card-${label.toLowerCase()}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
+              <Icon className={`h-5 w-5 ${iconColor}`} />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#20364D]">{value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Collapsible create form */}

@@ -5,10 +5,36 @@ import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
-import { ShoppingCart, Truck, CheckCircle, Clock, Package } from "lucide-react";
+import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
+
+function StatCard({ label, value, icon: Icon, accent, onClick, active }) {
+  const colors = {
+    slate: { border: "border-slate-200", iconBg: "bg-slate-100", text: "text-slate-600" },
+    amber: { border: "border-amber-200", iconBg: "bg-amber-100", text: "text-amber-700" },
+    blue: { border: "border-blue-200", iconBg: "bg-blue-100", text: "text-blue-700" },
+    violet: { border: "border-violet-200", iconBg: "bg-violet-100", text: "text-violet-700" },
+    emerald: { border: "border-emerald-200", iconBg: "bg-emerald-100", text: "text-emerald-700" },
+  };
+  const c = colors[accent] || colors.slate;
+  return (
+    <button
+      onClick={onClick}
+      data-testid={`stat-card-${label.toLowerCase().replace(/\s/g, "-")}`}
+      className={`flex items-center gap-3 rounded-xl border bg-white p-4 text-left transition-all hover:shadow-sm ${c.border} ${active ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
+    >
+      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${c.iconBg}`}>
+        <Icon className={`h-5 w-5 ${c.text}`} />
+      </div>
+      <div>
+        <div className="text-2xl font-extrabold text-[#20364D]">{value ?? 0}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
+      </div>
+    </button>
+  );
+}
 
 const TABS = [
   { key: "", label: "All Orders", icon: ShoppingCart },
@@ -27,6 +53,7 @@ export default function OrdersPage() {
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [stats, setStats] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -38,6 +65,7 @@ export default function OrdersPage() {
 
   useEffect(() => { load(); }, [tab]);
   useEffect(() => { const t = setTimeout(load, 300); return () => clearTimeout(t); }, [search]);
+  useEffect(() => { adminApi.getOrdersStats().then(r => setStats(r.data)).catch(() => {}); }, []);
 
   const openDetail = async (row) => {
     setSelected(row);
@@ -62,27 +90,21 @@ export default function OrdersPage() {
 
   return (
     <div data-testid="orders-page">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-2xl font-bold text-[#20364D]">Orders</h1>
-        <p className="text-slate-500 mt-1 text-sm">Track orders from creation through fulfillment. Release to vendors when ready.</p>
+        <p className="text-slate-500 mt-1 text-sm">Track orders from creation through fulfillment.</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-5 overflow-x-auto pb-1" data-testid="order-tabs">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
-              tab === t.key ? "bg-[#20364D] text-white" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-            data-testid={`tab-${t.key || "all"}`}
-          >
-            <t.icon size={16} />
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Stat Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 mb-4" data-testid="orders-stats-cards">
+          <StatCard label="Total" value={stats.total} icon={ClipboardList} accent="slate" onClick={() => setTab("")} active={tab === ""} />
+          <StatCard label="New" value={stats.new} icon={Clock} accent="amber" onClick={() => setTab("new")} active={tab === "new"} />
+          <StatCard label="Assigned" value={stats.assigned} icon={Package} accent="blue" onClick={() => setTab("assigned")} active={tab === "assigned"} />
+          <StatCard label="In Progress" value={stats.in_progress} icon={Truck} accent="violet" onClick={() => setTab("in_progress")} active={tab === "in_progress"} />
+          <StatCard label="Completed" value={stats.completed} icon={CheckCircle} accent="emerald" onClick={() => setTab("completed")} active={tab === "completed"} />
+        </div>
+      )}
 
       <FilterBar search={search} onSearchChange={setSearch} />
 

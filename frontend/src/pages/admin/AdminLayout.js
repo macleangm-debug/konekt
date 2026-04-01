@@ -70,11 +70,11 @@ const navItems = [
   { path: '/admin/quotes', label: 'Quotes', icon: FileText, moduleKey: 'quotes' },
   { path: '/admin/customers', label: 'Customers', icon: Contact, moduleKey: 'crm' },
   { type: 'divider', label: 'Operations', moduleKey: 'orders' },
-  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders' },
-  { path: '/admin/requests-inbox', label: 'Requests Inbox', icon: Inbox, moduleKey: 'support', highlight: true },
-  { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders' },
+  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders', badgeKey: 'orders' },
+  { path: '/admin/requests-inbox', label: 'Requests Inbox', icon: Inbox, moduleKey: 'support', badgeKey: 'requests_inbox' },
+  { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', badgeKey: 'deliveries' },
   { type: 'divider', label: 'Finance', moduleKey: 'finance' },
-  { path: '/admin/payments', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance' },
+  { path: '/admin/payments', label: 'Payments Queue', icon: CreditCard, moduleKey: 'finance', badgeKey: 'payments_queue' },
   { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
   { type: 'divider', label: 'Catalog', moduleKey: 'inventory' },
   { path: '/admin/products-services', label: 'Products & Services', icon: Package, moduleKey: 'inventory' },
@@ -119,6 +119,25 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const { admin, logout } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [badgeCounts, setBadgeCounts] = React.useState({});
+
+  // Poll sidebar counts every 30 seconds
+  React.useEffect(() => {
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("konekt_admin_token");
+    if (!token) return;
+    const API = process.env.REACT_APP_BACKEND_URL || "";
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch(`${API}/api/admin/sidebar-counts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) setBadgeCounts(await res.json());
+      } catch {}
+    };
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
   
   // Get filtered navigation based on user role
   const filteredNavItems = React.useMemo(() => {
@@ -179,7 +198,12 @@ export default function AdminLayout() {
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
-                  {item.highlight && !isActive(item.path, item.exact) && (
+                  {item.badgeKey && badgeCounts[item.badgeKey] > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-red-500 text-white" data-testid={`badge-${item.badgeKey}`}>
+                      {badgeCounts[item.badgeKey] > 99 ? "99+" : badgeCounts[item.badgeKey]}
+                    </span>
+                  )}
+                  {item.highlight && !isActive(item.path, item.exact) && !item.badgeKey && (
                     <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full">NEW</span>
                   )}
                 </Link>

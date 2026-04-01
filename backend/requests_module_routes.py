@@ -171,14 +171,22 @@ async def list_requests(
     results = []
     for doc in docs:
         row = _clean(doc)
-        # Enrich with customer name
+        # Enrich with customer name and company
         if row.get("customer_user_id"):
-            cust = await db.users.find_one({"id": row["customer_user_id"]}, {"_id": 0, "full_name": 1, "email": 1})
+            cust = await db.users.find_one(
+                {"id": row["customer_user_id"]},
+                {"_id": 0, "full_name": 1, "email": 1, "company": 1}
+            )
             row["customer_name"] = (cust or {}).get("full_name", row.get("guest_name", ""))
             row["customer_email"] = (cust or {}).get("email", row.get("guest_email", ""))
+            row["company_name"] = row.get("company_name") or (cust or {}).get("company", "") or ""
+            row["customer_id"] = row["customer_user_id"]
         else:
             row["customer_name"] = row.get("guest_name", "")
             row["customer_email"] = row.get("guest_email", "")
+            # Fallback company_name from request fields
+            if not row.get("company_name"):
+                row["company_name"] = row.get("company", "") or ""
         results.append(row)
     return results
 

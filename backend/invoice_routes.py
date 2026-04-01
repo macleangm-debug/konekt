@@ -40,6 +40,18 @@ def serialize_doc(doc):
     return doc
 
 
+@router.get("/stats")
+async def invoices_stats():
+    """Invoice stat cards."""
+    total = await db.invoices.count_documents({})
+    draft = await db.invoices.count_documents({"status": "draft"})
+    sent = await db.invoices.count_documents({"status": {"$in": ["sent", "issued"]}})
+    paid = await db.invoices.count_documents({"status": "paid"})
+    overdue = await db.invoices.count_documents({"status": "overdue"})
+    unpaid = await db.invoices.count_documents({"status": {"$in": ["unpaid", "pending", "partially_paid"]}})
+    return {"total": total, "draft": draft, "sent": sent, "paid": paid, "overdue": overdue, "unpaid": unpaid}
+
+
 @router.post("")
 async def create_invoice(payload: InvoiceCreateNew):
     """Create a new invoice with auto-applied customer payment terms and due date"""

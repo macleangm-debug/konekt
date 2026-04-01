@@ -100,24 +100,33 @@ export default function PaymentsQueuePage() {
   };
 
   return (
-    <div data-testid="payments-queue-page" className="space-y-6">
+    <div data-testid="payments-queue-page" className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold text-[#20364D]">Payments Queue</h1>
         <p className="text-sm text-slate-500 mt-1">Review, approve, or reject payment proofs submitted by customers.</p>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex flex-wrap gap-2" data-testid="payment-status-tabs">
-        {STATUS_TABS.map(tab => (
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-testid="payments-stats-cards">
+        {[
+          { key: "all", label: "Total", value: statusCounts.all, Icon: CreditCard, accent: "border-slate-200", iconBg: "bg-slate-100", iconColor: "text-slate-600" },
+          { key: "uploaded", label: "Pending", value: statusCounts.uploaded, Icon: Clock, accent: "border-amber-200", iconBg: "bg-amber-100", iconColor: "text-amber-700" },
+          { key: "approved", label: "Approved", value: statusCounts.approved, Icon: CheckCircle2, accent: "border-emerald-200", iconBg: "bg-emerald-100", iconColor: "text-emerald-700" },
+          { key: "rejected", label: "Rejected", value: statusCounts.rejected, Icon: XCircle, accent: "border-red-200", iconBg: "bg-red-100", iconColor: "text-red-700" },
+        ].map(({ key, label, value, Icon, accent, iconBg, iconColor }) => (
           <button
-            key={tab.key}
-            onClick={() => setStatusFilter(tab.key)}
-            data-testid={`payment-tab-${tab.key}`}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
-              statusFilter === tab.key ? "bg-[#20364D] text-white" : "text-[#20364D] border hover:bg-slate-50"
-            }`}
+            key={key}
+            onClick={() => setStatusFilter(key)}
+            data-testid={`stat-card-${label.toLowerCase()}`}
+            className={`flex items-center gap-3 rounded-xl border bg-white p-4 text-left transition-all hover:shadow-sm ${accent} ${statusFilter === key ? "ring-2 ring-offset-1 ring-blue-400" : ""}`}
           >
-            {tab.label}
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
+              <Icon className={`h-5 w-5 ${iconColor}`} />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#20364D]">{value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</div>
+            </div>
           </button>
         ))}
       </div>

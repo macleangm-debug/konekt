@@ -144,6 +144,16 @@ export const adminApi = {
   // Order detail & release (canonical — uses orders-ops)
   getOrderDetail: (orderId) => api.get(`/api/admin/orders-ops/${orderId}`),
   releaseToVendor: (orderId, payload) => api.post(`/api/admin/orders-ops/${orderId}/release-to-vendor`, payload),
+  getOrdersStats: () => api.get("/api/admin/orders-ops/stats"),
+
+  // Payments Stats
+  getPaymentsStats: () => api.get("/api/admin/payments/stats"),
+
+  // Invoices Stats
+  getInvoicesStats: () => api.get("/api/admin/invoices/stats"),
+
+  // Sidebar Counts
+  getSidebarCounts: () => api.get("/api/admin/sidebar-counts"),
 
   // Customers 360 (merged)
   getCustomers360List: (params) => api.get("/api/admin/customers-360/list", { params }),
