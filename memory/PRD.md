@@ -13,6 +13,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 1. **Products** — Office equipment, stationery, PPE, furniture. Request type: `product_bulk`
 2. **Promotional Materials** — Branded merchandise, uniforms, signage, print. Request types: `promo_custom`, `promo_sample`
 3. **Services** — Installation, branding, cleaning, technical support. Request type: `service_quote`
+4. **Fallback** — "Other / Not Sure" → `contact_general`
 
 ## System of Record
 - Requests = intake (public + in-account)
@@ -27,10 +28,9 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - **Sales/Staff** (`/staff`): CRM pipeline work, request handling, delivery coordination
 
 ## Key Domain Separations
-- **Customer vs Payer**: `customer_name` from business records, `payer_name` from payment proof — never cross-reference
-- **Vendor Privacy**: Vendors see only their order, base price, Konekt sales contact — no customer identity, no margins
-- **Direct Sales vs Partnerships**: CRM handles direct sales pipeline; Partnerships handles affiliate/referral/commission channels
-- **3 Commercial Lanes**: Products, Promotional Materials, and Services are never mixed in UI or request payloads
+- **Customer vs Payer**: `customer_name` from business records, `payer_name` from payment proof
+- **Vendor Privacy**: Vendors see only their order, base price, Konekt sales contact
+- **3 Commercial Lanes**: Products, Promotional Materials, Services never mixed
 
 ## Delivery Status Workflow
 - **Vendor controls**: assigned → work_scheduled → in_progress → ready_for_pickup
@@ -41,88 +41,57 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 
 ## Completed Work
 
-### Phase 1 — Core Platform Stabilization
-- Unified `/login` with role-based routing
-- JWT auth with admin seeding
+### Phase 1-6 — Core Platform through Deep Implementation
+- Unified login, JWT auth, role-based routing
 - Dashboard, Orders, Quotes, Invoices, Customers, Products modules
-- Role-based sidebar with moduleKey filtering
-
-### Phase 2 — CRM/Inbox Fixes
-- Convert-to-lead from Requests Inbox writes to `crm_leads`
-- CRM drawer pattern (view lead, add note, schedule follow-up, update stage)
-- "Open in CRM" action from requests
-
-### Phase 3 — Marketplace + Service UX
-- Unified `/api/products/search` API for marketplace
-- Removal of inline forms on service pages
-- Dual guest/logged-in cart logic
-- Market selector top nav integration
-- Taxonomy filter sidebar (Group > Category > Subcategory)
-
-### Phase 4 — Admin Products & Services + Vendor Submission
-- Admin product/service CRUD with taxonomy assignment
-- Vendor product submission flow
-- Stock management foundations
-
-### Phase 5 — CRM Consolidation & Partnerships Domain
-- Sidebar restructured into 6 groups: Sales, Operations, Finance, Catalog, Partnerships, Settings
-- CRM tab consolidation: All Leads, Service Leads, Product Leads, Request Conversions, Pipeline, Intelligence
-- Partnerships domain created: Affiliates, Referrals, Commissions
-
-### Phase 6 — Deep Implementation (7 Steps)
-1. Login/Session Privacy Fix
-2. Catalog Taxonomy Admin UI
-3. Vendor Capability Assignment
-4. Unified Marketplace Filter Rail
-5. Service Page Template V2
-6. Service Routing Cleanup
-7. Draggable CRM Kanban
+- CRM consolidation (tabbed views, Kanban board, convert-to-lead)
+- Marketplace with taxonomy filter rail
+- Vendor submission + capability assignment
+- Partnerships domain (Affiliates, Referrals, Commissions)
 
 ### Phase 7 — 3 Commercial Lanes (Surgical Patch Pack)
-1. ServiceNavigationDropdownData enriched with requestType, marketplaceTab
-2. HomeBusinessSolutionsSection with 3 lane cards on landing page
-3. FeaturedMarketplaceSection with getListingMeta() lane classification
-4. QuickRequestForm with 2-step lane-first flow
-5. MarketplaceUnifiedPageV3 tabs: Products > Promo > Services
-6. QuoteRequestPage with "What do you need?" lane picker
-7. MarketplaceBrowsePageContent text updated
-8. HomepageV2Content imports HomeBusinessSolutionsSection
+- ServiceNavigationDropdownData enriched with requestType, marketplaceTab
+- HomeBusinessSolutionsSection with 3 lane cards
+- FeaturedMarketplaceSection with getListingMeta() lane classification
+- QuickRequestForm with 2-step lane-first flow
+- MarketplaceUnifiedPageV3 tabs: Products > Promo > Services
+- QuoteRequestPage with "What do you need?" lane picker
 
-### Phase 8 — Full E2E UAT Validation
-- **Flow B (Service Request)**: Guest → service_quote → Admin inbox → Convert to lead → CRM ✅
-- **Flow D (Promo Sample)**: Guest → promo_sample → Admin inbox ✅
-- **Flow C (Promo Custom)**: Guest → promo_custom → Admin inbox ✅
-- **Flow A (Product Order)**: Customer → checkout → payment queue → admin approve ✅
-- **Vendor Visibility**: Privacy enforced, no customer_price/margin ✅
-- **Vendor Status Flow**: assigned→work_scheduled→in_progress→ready_for_pickup ✅
-- **Sales Delivery Override**: picked_up→in_transit→delivered→completed ✅
-- **CRM Flow**: Request → Lead conversion → Stage updates ✅
-- **Identity Verification**: payer_name separate from customer_name ✅
-- **Request Types**: All 4 canonical types validated ✅
+### Phase 8 — Full E2E UAT (4 Flows)
+- Flow A (Product Order), B (Service Request), C (Promo Custom), D (Promo Sample) — all passed
+- Vendor visibility, sales delivery override, CRM flow, identity verification — all verified
+
+### Phase 9 — Pack 1: Service & Promo Experience Fix (COMPLETED)
+- **comprehensiveServiceData.js**: 21 service entries with full content (description, includes, for_who, process_steps, why_konekt, faqs)
+- **DynamicServiceDetailPage.jsx**: Uses getServiceBySlug() fallback — no more "Service Not Found" for any mapped service
+- **MarketplaceUnifiedPageV3.jsx**: Services tab merges API + static data (24 services showing)
+- **PromoMultiBlankBuilder.jsx**: Multi-item promo request builder (item name, quantity, print/customization type, notes per item)
+- **CantFindWhatYouNeedBanner.jsx**: "Can't find what you're looking for?" banner on service pages, public marketplace, in-account marketplace
+- **QuoteRequestPage.jsx**: Added "Other / Not Sure" lane → routes to `contact_general` request type
+- All requests land in unified Requests Inbox
 
 ---
 
 ## Backlog
 
-### P1 — Next Up
-- Add "Create Quote" action from CRM drawer (prefill from linked request/contact, preserve traceability)
-- Payment Queue Data Enrichment (Customer vs Payer names in UI)
-- Shorten Admin Orders table
+### P0 — In Progress
+- Pack 4: Finance + Vendor Scheduling & Assignment
+- Pack 2: Customer 360 + Statement of Account
+- Pack 3: List Page Standardization + Notifications
+
+### P1 — Upcoming
+- Create Quote action from CRM drawer
 - Hybrid Margin Engine
 
 ### P2 — Future
-- Admin data entry configuration (TIN, BRN, bank account details)
-- Twilio WhatsApp integration (blocked on API key)
-- Resend email integration (blocked on API key)
+- Admin data entry configuration (TIN, BRN, bank)
+- Twilio WhatsApp / Resend email (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
-- Advanced Analytics dashboard
-- Mobile-first optimization
 
 ---
 
 ## Test History
-- Iteration 153: CRM Consolidation & Partnerships — 100% Pass
-- Iteration 154: Deep Implementation (7 Steps) — 100% Pass (21 features verified)
-- Iteration 155: 3 Commercial Lanes (Surgical Patches) — 100% Pass (10 features verified)
-- Iteration 156: Full E2E UAT (4 Flows) — 100% Pass (29 backend + all frontend verified)
+- Iteration 155: 3 Commercial Lanes — 100% Pass
+- Iteration 156: Full E2E UAT (4 Flows) — 100% Pass (29 tests)
+- Iteration 157: Pack 1 Service & Promo Fix — 100% Pass (15 backend + all frontend)
