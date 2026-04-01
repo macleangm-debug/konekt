@@ -6,6 +6,7 @@ import {
   TrendingUp, Clock, CheckCircle, Package, ArrowRight,
   Settings, Activity, Truck
 } from "lucide-react";
+import QuickPriceCheckWidget from "../../components/admin/QuickPriceCheckWidget";
 
 export default function AdminDashboardV2() {
   const [stats, setStats] = useState({
@@ -299,6 +300,9 @@ export default function AdminDashboardV2() {
           </div>
         )}
       </div>
+
+      {/* Quick Price Check */}
+      <QuickPriceCheckWidget />
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-4 gap-4">

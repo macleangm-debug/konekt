@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X, Eye, Calendar, UserCheck, Tag, Clock, ExternalLink, TrendingUp, BarChart3 } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X, Eye, Calendar, UserCheck, Tag, Clock, ExternalLink, TrendingUp, BarChart3, FileText } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -85,6 +85,7 @@ function formatDateTime(val) {
 
 export default function CRMPageV2() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -106,6 +107,7 @@ export default function CRMPageV2() {
   const [savingNote, setSavingNote] = useState(false);
   const [savingFollowUp, setSavingFollowUp] = useState(false);
   const [savingStage, setSavingStage] = useState(false);
+  const [creatingQuote, setCreatingQuote] = useState(false);
 
   // CRM Settings
   const [crmSettings, setCrmSettings] = useState(null);
@@ -245,6 +247,32 @@ export default function CRMPageV2() {
     setDrawerOpen(false);
     setDrawerLead(null);
     setDrawerRelated(null);
+  };
+
+  const createQuoteFromDrawer = async () => {
+    if (!drawerLead) return;
+    setCreatingQuote(true);
+    try {
+      const leadId = drawerLead.id || drawerLead._id;
+      const res = await adminApi.createQuoteFromLead(leadId, {
+        line_items: [{ description: "Item", quantity: 1, unit_price: 0, total: 0 }],
+        subtotal: 0,
+        tax: 0,
+        discount: 0,
+        total: 0,
+        currency: "TZS",
+        source_lead_id: leadId,
+        created_from_crm: true,
+      });
+      const quoteId = res.data?.id;
+      closeDrawer();
+      if (quoteId) {
+        navigate(`/admin/quotes/${quoteId}`);
+      }
+    } catch (err) {
+      console.error("Failed to create quote from lead:", err);
+    }
+    setCreatingQuote(false);
   };
 
   const createLead = async (e) => {
@@ -772,6 +800,17 @@ export default function CRMPageV2() {
                   </div>
                 </div>
               )}
+
+              {/* Create Quote Action */}
+              <button
+                onClick={createQuoteFromDrawer}
+                disabled={creatingQuote}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#20364D] py-3 text-sm font-bold hover:bg-[#c49933] disabled:opacity-40 transition-colors"
+                data-testid="crm-create-quote-btn"
+              >
+                <FileText className="h-4 w-4" />
+                {creatingQuote ? "Creating Quote..." : "Create Quote"}
+              </button>
 
               {/* Timeline */}
               <div data-testid="lead-timeline-section">

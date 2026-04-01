@@ -78,7 +78,7 @@ export default function InvoicePreviewPage() {
 
   const loadSettings = async () => {
     try {
-      const res = await api.get("/api/admin/settings/company");
+      const res = await api.get("/api/admin/business-settings/public");
       setSettings(res.data || {});
     } catch (error) {
       console.error("Failed to load settings:", error);

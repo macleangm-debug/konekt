@@ -97,7 +97,7 @@ import ServiceRequestsAdminPage from "@/pages/admin/ServiceRequestsAdminPage";
 import ServiceRequestAdminDetailPage from "@/pages/admin/ServiceRequestAdminDetailPage";
 import ServiceRequestsPage from "@/pages/dashboard/ServiceRequestsPage";
 import ServiceRequestDetailPage from "@/pages/dashboard/ServiceRequestDetailPage";
-import BusinessSettingsPage from "@/pages/admin/BusinessSettingsPage";
+import BusinessSettingsPage from "@/pages/admin/AdminBusinessSettingsPage";
 import AdminConfigurationHubPage from "@/pages/admin/AdminConfigurationHubPage";
 import CrmIntelligencePage from "@/pages/admin/CrmIntelligencePage";
 import CrmSettingsPage from "@/pages/admin/CrmSettingsPage";

@@ -182,6 +182,17 @@ export const adminApi = {
   getCustomer360Quotes: (customerId) => api.get(`/api/admin/customers-360/${customerId}/quotes`),
   getCustomer360Requests: (customerId) => api.get(`/api/admin/customers-360/${customerId}/requests`),
   getCustomer360Payments: (customerId) => api.get(`/api/admin/customers-360/${customerId}/payments`),
+
+  // Business Settings (single source of truth)
+  getBusinessSettings: () => api.get("/api/admin/business-settings"),
+  updateBusinessSettings: (data) => api.put("/api/admin/business-settings", data),
+  getPublicBusinessInfo: () => api.get("/api/admin/business-settings/public"),
+
+  // CRM Quote Draft
+  createQuoteFromLead: (leadId, data) => api.post(`/api/admin/crm-relationships/leads/${leadId}/create-quote`, data),
+
+  // Quick Price Check
+  quickPriceCheck: (data) => api.post("/api/admin/margins/resolve", data),
 };
 
 export default adminApi;

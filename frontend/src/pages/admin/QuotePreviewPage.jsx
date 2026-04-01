@@ -34,7 +34,7 @@ export default function QuotePreviewPage() {
   const loadQuote = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/api/admin/quotes/${id}`);
+      const res = await api.get(`/api/admin/quotes-v2/${id}`);
       setQuote(res.data);
     } catch (error) {
       console.error("Failed to load quote:", error);
@@ -46,7 +46,7 @@ export default function QuotePreviewPage() {
 
   const loadSettings = async () => {
     try {
-      const res = await api.get("/api/admin/settings/company");
+      const res = await api.get("/api/admin/business-settings/public");
       setSettings(res.data || {});
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -77,7 +77,7 @@ export default function QuotePreviewPage() {
 
   const updateStatus = async (newStatus) => {
     try {
-      await api.put(`/api/admin/quotes/${id}`, { status: newStatus });
+      await api.patch(`/api/admin/quotes-v2/${id}/status`, null, { params: { status: newStatus } });
       toast.success(`Quote marked as ${newStatus}`);
       loadQuote();
     } catch (error) {
@@ -88,7 +88,7 @@ export default function QuotePreviewPage() {
 
   const convertToOrder = async () => {
     try {
-      const res = await api.post(`/api/admin/quotes/${id}/convert-to-order`);
+      const res = await api.post(`/api/admin/quotes-v2/convert-to-order`, { quote_id: id });
       toast.success("Quote converted to order");
       navigate(`/admin/orders`);
     } catch (error) {
