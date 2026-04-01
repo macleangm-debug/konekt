@@ -802,15 +802,22 @@ export default function CRMPageV2() {
               )}
 
               {/* Create Quote Action */}
-              <button
-                onClick={createQuoteFromDrawer}
-                disabled={creatingQuote}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#20364D] py-3 text-sm font-bold hover:bg-[#c49933] disabled:opacity-40 transition-colors"
-                data-testid="crm-create-quote-btn"
-              >
-                <FileText className="h-4 w-4" />
-                {creatingQuote ? "Creating Quote..." : "Create Quote"}
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={createQuoteFromDrawer}
+                  disabled={creatingQuote}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#20364D] py-3 text-sm font-bold hover:bg-[#c49933] disabled:opacity-40 transition-colors"
+                  data-testid="crm-create-quote-btn"
+                >
+                  <FileText className="h-4 w-4" />
+                  {creatingQuote ? "Creating Quote..." : "Create Quote"}
+                </button>
+                {drawerRelated?.quotes?.length > 0 && (
+                  <div className="text-center text-xs text-slate-500">
+                    {drawerRelated.quotes.length} existing quote{drawerRelated.quotes.length > 1 ? "s" : ""} linked to this lead
+                  </div>
+                )}
+              </div>
 
               {/* Timeline */}
               <div data-testid="lead-timeline-section">
@@ -836,7 +843,9 @@ export default function CRMPageV2() {
                   <h3 className="font-semibold text-sm text-slate-700 mb-3 uppercase tracking-wide">Related Documents</h3>
                   <div className="space-y-2">
                     {(drawerRelated.quotes || []).map((q) => (
-                      <RelatedRow key={q.id} title={q.quote_number || "Quote"} subtitle={`TZS ${Number(q.total || 0).toLocaleString()} - ${q.status || "\u2014"}`} />
+                      <div key={q.id} onClick={() => { closeDrawer(); navigate(`/admin/quotes/${q.id}`); }} className="cursor-pointer hover:bg-slate-50 rounded-xl transition-colors">
+                        <RelatedRow title={q.quote_number || "Quote"} subtitle={`TZS ${Number(q.total || 0).toLocaleString()} - ${q.status || "\u2014"}`} />
+                      </div>
                     ))}
                     {(drawerRelated.invoices || []).map((inv) => (
                       <RelatedRow key={inv.id} title={inv.invoice_number || "Invoice"} subtitle={`TZS ${Number(inv.total || 0).toLocaleString()} - ${inv.status || "\u2014"}`} />

@@ -146,6 +146,48 @@ async def get_quote(quote_id: str):
         raise HTTPException(status_code=404, detail="Quote not found")
 
 
+@router.put("/{quote_id}")
+async def update_quote(quote_id: str, payload: dict):
+    """Update quote details: line items, customer info, pricing, notes"""
+    now = datetime.now(timezone.utc)
+    quotes_collection = await get_quote_collection(db)
+
+    quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
+    target_collection = quotes_collection
+    if not quote:
+        fallback = db.quotes if quotes_collection.name == "quotes_v2" else db.quotes_v2
+        quote = await fallback.find_one({"_id": ObjectId(quote_id)})
+        if quote:
+            target_collection = fallback
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+
+    if quote.get("status") == "converted":
+        raise HTTPException(status_code=400, detail="Cannot edit a converted quote")
+
+    allowed_fields = {
+        "customer_name", "customer_email", "customer_company", "customer_phone",
+        "line_items", "subtotal", "tax", "discount", "total",
+        "notes", "currency", "payment_terms", "valid_until",
+    }
+    update_data = {k: v for k, v in payload.items() if k in allowed_fields}
+    update_data["updated_at"] = now.isoformat()
+
+    await target_collection.update_one(
+        {"_id": ObjectId(quote_id)},
+        {"$set": update_data}
+    )
+    # Sync to the other collection
+    other_collection = db.quotes if target_collection.name == "quotes_v2" else db.quotes_v2
+    await other_collection.update_one(
+        {"_id": ObjectId(quote_id)},
+        {"$set": update_data}
+    )
+
+    updated = await target_collection.find_one({"_id": ObjectId(quote_id)})
+    return serialize_doc(updated)
+
+
 @router.patch("/{quote_id}/status")
 async def update_quote_status(quote_id: str, status: str = Query(...), triggered_by_user_id: str = Query(default=None), triggered_by_role: str = Query(default="admin")):
     """Update quote status with workflow-linked notifications"""

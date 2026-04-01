@@ -82,6 +82,7 @@ import AffiliateSettingsPage from "@/pages/admin/AffiliateSettingsPage";
 import AffiliateCampaignsPage from "@/pages/admin/AffiliateCampaignsPage";
 import StatementPage from "@/pages/admin/StatementPage";
 import QuotePreviewPage from "@/pages/admin/QuotePreviewPage";
+import QuoteEditorPage from "@/pages/admin/QuoteEditorPage";
 import InvoicePreviewPage from "@/pages/admin/InvoicePreviewPage";
 import InventoryVariantsPage from "@/pages/admin/InventoryVariantsPage";
 import WarehousesPage from "@/pages/admin/WarehousesPage";
@@ -535,6 +536,7 @@ function App() {
           <Route path="invoices/:id" element={<InvoicePreviewPage />} />
           <Route path="quotes" element={<QuotesRequestsPage />} />
           <Route path="quotes/:id" element={<QuotePreviewPage />} />
+          <Route path="quotes/:id/edit" element={<QuoteEditorPage />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />
           <Route path="settings" element={<AdminSettings />} />
           <Route path="settings/company" element={<CompanySettingsPage />} />
