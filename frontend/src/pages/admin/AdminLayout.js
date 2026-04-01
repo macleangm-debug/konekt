@@ -86,6 +86,7 @@ const navItems = [
   { path: '/admin/partnerships/commissions', label: 'Commissions', icon: Coins, moduleKey: 'partners' },
   { type: 'divider', label: 'Settings', moduleKey: 'settings' },
   { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
+  { path: '/admin/documents', label: 'Documents', icon: FileText, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },
 ];

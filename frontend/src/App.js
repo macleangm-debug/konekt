@@ -71,6 +71,7 @@ import QuotesRequestsPage from "@/pages/admin/QuotesRequestsPage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPageMerged from "@/pages/admin/CustomersPageMerged";
 import CustomerProfilePage from "@/pages/admin/CustomerProfilePage";
+import AdminDocumentsPage from "@/pages/admin/AdminDocumentsPage";
 import HeroBannersPage from "@/pages/admin/HeroBannersPage";
 import ReferralSettingsPage from "@/pages/admin/ReferralSettingsPage";
 import AffiliatesPage from "@/pages/admin/AffiliatesPage";
@@ -561,6 +562,7 @@ function App() {
           <Route path="service-requests" element={<ServiceRequestsAdminPage />} />
           <Route path="service-requests/:requestId" element={<ServiceRequestAdminDetailPage />} />
           <Route path="business-settings" element={<BusinessSettingsPage />} />
+          <Route path="documents" element={<AdminDocumentsPage />} />
           <Route path="payment-settings" element={<PaymentSettingsPage />} />
           <Route path="configuration" element={<AdminConfigurationHubPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />

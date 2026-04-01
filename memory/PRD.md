@@ -41,13 +41,17 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - KPI card filtering on Customers list
 
 ### Phase 12 — Pack 3: List Page Standardization + Notifications (01 Apr 2026)
-- **Sidebar notification badges**: Red count badges on Orders, Requests Inbox, Payments Queue, Deliveries — state/action-based (not view-based)
-- **Backend**: `GET /api/admin/sidebar-counts`, `GET /api/admin/orders-ops/stats`, `GET /api/admin/payments/stats`, `GET /api/admin/invoices/stats`
-- **Orders stat cards**: 5 clickable cards (Total, New, Assigned, In Progress, Completed) replacing old tab filters
-- **Payments Queue stat cards**: 4 clickable cards (Total, Pending, Approved, Rejected) replacing old tab filters
-- **Invoices stat cards**: 6 display cards (Total, Draft, Sent, Paid, Overdue, Unpaid)
-- **Deliveries page redesign**: Full table-based layout with KPI stat cards, search, CustomerLinkCell, detail drawer (from card layout)
-- **Request Inbox company name fix**: Backend enriches company_name from user profile when missing
+- Sidebar notification badges (Orders, Requests Inbox, Deliveries, Payments Queue)
+- Orders stat cards (5), Payments Queue stat cards (4), Invoices stat cards (6)
+- Deliveries page full redesign (KPI cards, table, drawer, CustomerLinkCell)
+- Request Inbox company name fix (backend enrichment)
+
+### Vendor Partner Presentation — Documents Page (01 Apr 2026)
+- New `/admin/documents` page in sidebar navigation
+- 8-slide print-ready vendor/partner presentation deck
+- Covers: Konekt overview, 3 commercial lanes, vendor journey, payment structures (Pre-Paid, Weekly Settlement, Milestone, Monthly Account, Escrow), vendor portal privacy, closing
+- AI-generated branded graphics (hero banner, workflow, payment, trust shield)
+- Print/Save as PDF functionality via browser print dialog
 
 ---
 
@@ -56,7 +60,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ### P1 — Upcoming
 - Create Quote action from CRM drawer
 - Hybrid Margin Engine
-- Send Statement button (email with PDF — build now, dispatch when Resend available)
+- Send Statement button (email with PDF)
 
 ### P2 — Future
 - Admin data entry configuration (TIN, BRN, bank)
@@ -68,9 +72,6 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ---
 
 ## Test History
-- Iteration 155: 3 Commercial Lanes — 100% Pass
-- Iteration 156: Full E2E UAT (4 Flows) — 100% Pass
-- Iteration 157: Pack 1 Service & Promo Fix — 100% Pass
-- Iteration 158: Pack 4 Finance + Vendor Scheduling — 100% Pass
-- Iteration 159: Pack 2 Customer 360 + Statement — 92% Backend / 100% Frontend
-- Iteration 160: Pack 3 List Page Standardization — 100% Backend (19/19) / 100% Frontend
+- Iteration 155-158: Packs 1, 4 — 100% Pass
+- Iteration 159: Pack 2 Customer 360 — 92% Backend / 100% Frontend
+- Iteration 160: Pack 3 List Page Standardization — 100% Backend / 100% Frontend
