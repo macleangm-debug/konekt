@@ -7,6 +7,7 @@ import TrustStrip from "../components/public/TrustStrip";
 import ClientTrustStrip from "../components/public/ClientTrustStrip";
 import CategoryShowcase from "../components/public/CategoryShowcase";
 import FeaturedMarketplaceSection from "../components/public/FeaturedMarketplaceSection";
+import HomeBusinessSolutionsSection from "../components/public/HomeBusinessSolutionsSection";
 import HowItWorksSection from "../components/public/HowItWorksSection";
 import WhyChooseSection from "../components/public/WhyChooseSection";
 import TrustSignalsGrid from "../components/public/TrustSignalsGrid";
@@ -70,6 +71,7 @@ export default function HomepageV2Content() {
       <CategoryShowcase />
       <LandingBusinessProofSection />
       <FeaturedMarketplaceSection listings={Array.isArray(listings) ? listings.slice(0, 8) : []} />
+      <HomeBusinessSolutionsSection />
       <div id="how-it-works">
         <HowItWorksSection />
       </div>

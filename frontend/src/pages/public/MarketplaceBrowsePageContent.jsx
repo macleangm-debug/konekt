@@ -87,7 +87,7 @@ export default function MarketplaceBrowsePageContent() {
     <div className="max-w-7xl mx-auto px-6 py-8" data-testid="marketplace-browse-content">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#20364D]">Marketplace</h1>
-        <p className="text-slate-600 mt-1">Discover products and services available for your business.</p>
+        <p className="text-slate-600 mt-1">Browse products, promotional materials, and services available for your business.</p>
       </div>
 
       {/* Inline Filter Rail */}
@@ -117,8 +117,8 @@ export default function MarketplaceBrowsePageContent() {
           </div>
         ) : (
           <PremiumEmptyState
-            title="No products found"
-            description="Try another search term or clear filters to browse all products."
+            title="No listings found"
+            description="Try another search term or clear filters to browse all products, promotional materials, and services."
             ctaLabel="Clear filters"
             ctaHref="/marketplace"
           />
