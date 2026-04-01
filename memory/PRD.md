@@ -44,12 +44,23 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - **Internal buffer dates**: POST /api/sales/delivery/{id}/internal-buffer — sales sets internal target date
 - **Smart vendor assignment**: GET /api/admin/vendor-assignment/suggest — ranked candidates by capability, availability, workload
 
+### Phase 11 — Pack 2: Customer 360 + Statement of Account (01 Apr 2026)
+- **Backend Services**: `customer_profile_service.py` (profile KPI aggregation), `statement_of_account_service.py` (running balance from invoices/payments)
+- **6 New API Endpoints**: `/{id}/statement`, `/{id}/orders`, `/{id}/invoices`, `/{id}/quotes`, `/{id}/requests`, `/{id}/payments`
+- **Customer-facing APIs**: `GET /api/account/me/statement`, `/me/invoices`, `/me/payments`
+- **Enriched Detail Endpoint**: `profile_kpis` and extended `summary` with requests/payments counts
+- **CustomerLinkCell Component**: Clickable customer names wired into Orders, Payments Queue, Invoices, Requests Inbox, CRM service leads, Customers list
+- **CustomerDrawer360 Upgrade**: 8 tabs (Overview, Requests, Orders, Quotes, Invoices, Payments, Statement, Notes), "View Full Profile" button, enriched KPI cards
+- **StatementOfAccountTab**: Finance-clean ledger with running balance, date range picker, print functionality
+- **CustomerProfilePage**: Full-page profile at `/admin/customers/:id` with 8 tabs and back navigation
+- **Customer-facing MyStatementPageV2**: Rewired to use real statement API at `/account/statement`
+- **KPI Card Filtering**: Stat cards filter the customer table (Active, At Risk, Inactive, Unpaid Invoices, Active Orders)
+
 ---
 
 ## Backlog
 
 ### P0 — In Progress
-- Pack 2: Customer 360 + Statement of Account
 - Pack 3: List Page Standardization + Notifications
 
 ### P1 — Upcoming
@@ -69,3 +80,4 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Iteration 156: Full E2E UAT (4 Flows) — 100% Pass (29 tests)
 - Iteration 157: Pack 1 Service & Promo Fix — 100% Pass (15 backend + frontend)
 - Iteration 158: Pack 4 Finance + Vendor Scheduling — 100% Pass (15 backend + frontend)
+- Iteration 159: Pack 2 Customer 360 + Statement — 92% Backend / 100% Frontend (minor auth gaps on list endpoints)
