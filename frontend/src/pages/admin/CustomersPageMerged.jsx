@@ -206,7 +206,7 @@ export default function CustomersPageMerged() {
       {/* Wide Profile Drawer */}
       {selected && (
         <div className="fixed inset-0 z-50 flex justify-end" data-testid="customer-profile-drawer-overlay">
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={closeDrawer} />
+          <div className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px]" onClick={closeDrawer} />
           <div className="relative flex w-full max-w-2xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
             <button
               onClick={closeDrawer}

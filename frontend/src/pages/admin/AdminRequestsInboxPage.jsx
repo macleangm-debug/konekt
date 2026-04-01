@@ -5,6 +5,7 @@ import { formatDateDMY } from "../../lib/formatters";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import EmptyState from "../../components/admin/shared/EmptyState";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import { Inbox, ArrowRightCircle, Search, Filter, ExternalLink } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -180,16 +181,7 @@ export default function AdminRequestsInboxPage() {
 
       {/* Detail panel */}
       {selected && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex justify-end" onClick={() => setSelected(null)}>
-          <div
-            className="w-full max-w-lg bg-white h-full overflow-y-auto p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-            data-testid="request-detail-panel"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Request Detail</h2>
-              <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
-            </div>
+        <StandardDrawerShell open={!!selected} onClose={() => setSelected(null)} title="Request Detail" subtitle={selected.request_number || "Request"}>
             <div className="space-y-4 text-sm">
               <Row label="Reference" value={selected.request_number} />
               <Row label="Type" value={typeBadge(selected.request_type)} />
@@ -242,8 +234,7 @@ export default function AdminRequestsInboxPage() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </StandardDrawerShell>
       )}
     </div>
   );

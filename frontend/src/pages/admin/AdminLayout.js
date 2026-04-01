@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox, UserCheck
+  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox, UserCheck, Truck
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -79,6 +79,8 @@ const navItems = [
   { type: 'divider', label: 'Catalog', moduleKey: 'inventory' },
   { path: '/admin/products-services', label: 'Products & Services', icon: Package, moduleKey: 'inventory' },
   { path: '/admin/catalog-taxonomy', label: 'Catalog Taxonomy', icon: Layers, moduleKey: 'inventory' },
+  { path: '/admin/vendors', label: 'Vendors', icon: Truck, moduleKey: 'inventory' },
+  { path: '/admin/margins', label: 'Margins', icon: Percent, moduleKey: 'inventory' },
   { path: '/admin/vendor-capabilities', label: 'Vendor Capabilities', icon: UserCheck, moduleKey: 'inventory' },
   { type: 'divider', label: 'Partnerships', moduleKey: 'partners' },
   { path: '/admin/partnerships/affiliates', label: 'Affiliates', icon: Megaphone, moduleKey: 'partners' },

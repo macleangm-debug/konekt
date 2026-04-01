@@ -391,6 +391,8 @@ import PartnershipComingSoonPage from "@/pages/admin/PartnershipComingSoonPage";
 // Catalog Taxonomy + Vendor Capabilities
 import CatalogTaxonomyPage from "@/pages/admin/CatalogTaxonomyPage";
 import VendorCapabilityAssignmentPage from "@/pages/admin/VendorCapabilityAssignmentPage";
+import VendorListPage from "@/pages/admin/VendorListPage";
+import MarginAdminPage from "@/pages/admin/MarginAdminPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -578,6 +580,8 @@ function App() {
           <Route path="products-services" element={<AdminProductsServicesPage />} />
           <Route path="catalog-taxonomy" element={<CatalogTaxonomyPage />} />
           <Route path="vendor-capabilities" element={<VendorCapabilityAssignmentPage />} />
+          <Route path="vendors" element={<VendorListPage />} />
+          <Route path="margins" element={<MarginAdminPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />

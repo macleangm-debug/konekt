@@ -152,12 +152,7 @@ export default function VendorListPage() {
 
       {/* Table */}
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <FilterBar>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input type="text" placeholder="Search vendors..." value={search} onChange={e => setSearch(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm outline-none focus:border-blue-400" data-testid="vendor-search" />
-          </div>
-        </FilterBar>
+        <FilterBar search={search} onSearchChange={setSearch} />
 
         <div className="overflow-x-auto">
           <table className="w-full" data-testid="vendors-table">
