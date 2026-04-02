@@ -34,50 +34,57 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Full traceability: Request → Lead → Quote → Order
 
 ### Phase 16 — Pack 3 Operations Intelligence (01 Apr 2026)
-**Notification Registry (Centralized)**
-- `notification_registry_service.py` — single MongoDB query source for all badge counts
-- `GET /api/admin/notifications/summary` — structured summary with `new_count`, `action_required_count`, `badge_count`, `badge_type` per section (6 sections)
-- `GET /api/admin/sidebar-counts` — flattened view from same registry (no duplicate logic)
-- Sidebar badges now consume centralized endpoint exclusively
+- Notification Registry (centralized badge counts)
+- KPI Card Migration (5 pages with StandardSummaryCardsRow)
+- Assignment Scoring Service with audit trail
+- Statement Email Send (MOCKED - waiting for Resend keys)
+- Drawer standardization (navy-tinted blur overlay)
 
-**KPI Card Migration (5 pages)**
-- Orders: 5 cards (Total, New, Assigned, In Progress, Completed) — click-to-filter
-- Customers: 6 cards (Total, Active, At Risk, Inactive, Unpaid Invoices, Active Orders) — click-to-filter
-- Payments Queue: 4 cards (Total, Pending, Approved, Rejected) — click-to-filter
-- Invoices: 6 cards (Total, Draft, Sent, Paid, Overdue, Unpaid)
-- Deliveries: 5 cards (Total, Issued, In Transit, Delivered, Cancelled)
-- All use `StandardSummaryCardsRow` component with consistent accent colors
+### Phase 17 — Performance & Governance Pack: Phase 1 (01 Apr 2026)
+**Sales Performance & Assignment**
+- `sales_performance_service.py` — 5-metric scoring (Customer Rating 30%, Conversion Rate 25%, Revenue 20%, Response Speed 15%, Follow-up Compliance 10%)
+- `sales_capability_service.py` — lanes, categories, workload limits CRUD
+- `sales_assignment_service.py` — ownership continuity gate + weighted scored assignment
+- `SalesPerformancePage.jsx` — admin team view with stat cards, table, search, zone filtering
+- `PerformanceCell.jsx` + `PerformanceBreakdownDrawer.jsx` — shared clickable cell + breakdown drawer
+- Role-safe: sales see only own score (no tip field in breakdown)
 
-**Assignment Scoring Service**
-- `assignment_scoring_service.py` — weighted scoring (capability_match 50%, availability 30%, turnaround 10%, workload 10%)
-- `log_assignment_decision()` — audit trail with candidate list, winning score, override_by, timestamp
-- Preserves manual override with logged rationale
-
-**Statement Email Send**
-- `POST /api/admin/customers/{id}/send-statement` — builds real statement from customer's orders/invoices
-- MOCKED email delivery (ready for Resend integration)
-- Logs to `statement_delivery_log` collection with full statement summary
-- `SendStatementButton` component in customer drawer (compact style) + toast feedback
-
-**Drawer Standardization**
-- Navy-tinted blur overlay (`bg-[#20364D]/30 backdrop-blur-[3px]`) on all admin drawers
-- Invoices page drawer updated to match standard
+### Phase 18 — Performance & Governance Pack: Phase 2 (02 Apr 2026)
+**Vendor Performance & Assignment Intelligence**
+- `vendor_performance_service.py` — 5-metric scoring from real vendor_orders data:
+  - Timeliness 25% (ETA vs actual completion)
+  - Quality 25% (completion rate, issue/return rate)
+  - Responsiveness 20% (assignment to first action)
+  - Internal Rating 20% (anonymous reviewer scores)
+  - Process Compliance 10% (ETA set, notes, proper status flow)
+- `vendor_performance_routes.py`:
+  - `GET /api/admin/vendor-performance/team` — admin sees all vendor scores
+  - `GET /api/admin/vendor-performance/team/{vendorId}` — admin full breakdown
+  - `GET /api/vendor/my-performance` — vendor self-view (role-safe)
+- Admin Vendor List: Performance column added (clickable, opens breakdown drawer)
+- `VendorMyPerformancePage.jsx` — vendor self-view with score card, breakdown bars, improvement tips, last updated
+- Sidebar: "My Performance" link added to vendor navigation
+- **Strict visibility**: Customer cannot access vendor performance (403/401 enforced)
 
 ---
 
 ## Key Technical Concepts
-- **Centralized Notification Registry:** Single `/api/admin/notifications/summary` endpoint is the source of truth for all sidebar badge counts. No duplicate count logic in layout components.
-- **Business Settings Single Source of Truth:** `business_settings` collection + `/public` endpoint for document generation
-- **Margin Hierarchy:** product > subcategory > category > group > global default
-- **Assignment Audit Trail:** Every assignment logs candidate list, scores, selection, and manual override
-- **Traceability Chain:** Request → Lead → Quote → Order with IDs at each link
+- **Ownership Continuity Gate**: If a client/company already has an assigned owner, new requests route to that owner. Only score/assign when no owner exists.
+- **Role-Safe Visibility**: Sales see only own score; Vendors see only own score; Admin sees all. Raw rater identity is anonymous.
+- **Centralized Notification Registry**: Single `/api/admin/notifications/summary` endpoint for all sidebar badges.
+- **Business Settings Single Source of Truth**: `business_settings` collection + `/public` endpoint for document generation
+- **Margin Hierarchy**: product > subcategory > category > group > global default
+- **Vendor Privacy**: Customers never see vendor scores, names, or internal ratings.
 
 ## Backlog
+
+### P0 — Next
+- Phase 3: Unified Performance Governance (centralized settings CRUD for thresholds, sample size, recency weighting, trend logic)
+- Phase 4: Client Ownership + Routing Control (full ownership model, individual vs corporate, admin reassignment audit)
 
 ### P1 — Upcoming
 - End-to-end Stripe test with real test cards
 - Statement email delivery via Resend (when keys available)
-- Assignment scoring integration with vendor smart assignment UI
 
 ### P2 — Future
 - Twilio WhatsApp notifications (blocked on keys)
@@ -91,4 +98,6 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Iteration 161: Vendor Margin UX Packs 1-3 — 100%
 - Iteration 162: P1 Admin + CRM Quote Pack — 100%
 - Iteration 163: Pack 2 Commercial Workflow — 100% (19/19 backend)
-- Iteration 164: Pack 3 Operations Intelligence — 100% (20/20 backend + all frontend verified)
+- Iteration 164: Pack 3 Operations Intelligence — 100% (20/20 backend + all frontend)
+- Iteration 165: Phase 1 Sales Performance & Assignment — 100% (18/18 backend + all frontend)
+- Iteration 166: Phase 2 Vendor Performance & Assignment — 100% (10/10 backend + all frontend)
