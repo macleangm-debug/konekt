@@ -217,6 +217,7 @@ import GoToMarketConfigPage from "@/pages/admin/GoToMarketConfigPage";
 import AffiliatePartnerManagerPage from "@/pages/admin/AffiliatePartnerManagerPage";
 import AffiliatePartnerDetailPage from "@/pages/admin/AffiliatePartnerDetailPage";
 import VendorDashboardPage from "@/pages/partner/VendorDashboardPage";
+import VendorMyPerformancePage from "@/pages/partner/VendorMyPerformancePage";
 import HelpCustomerPage from "@/pages/help/HelpCustomerPage";
 import HelpAdminPage from "@/pages/help/HelpAdminPage";
 import HelpAffiliatePage from "@/pages/help/HelpAffiliatePage";
@@ -690,6 +691,7 @@ function App() {
           <Route path="affiliate-help" element={<HelpAffiliatePage />} />
           {/* Vendor Dashboard */}
           <Route path="vendor-dashboard" element={<VendorDashboardPage />} />
+          <Route path="vendor-performance" element={<VendorMyPerformancePage />} />
           {/* Vendor Products */}
           <Route path="vendor-products" element={<VendorProductsManagerPage />} />
           <Route path="product-submissions" element={<VendorProductSubmissionsPage />} />

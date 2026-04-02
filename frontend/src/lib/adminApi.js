@@ -207,6 +207,10 @@ export const adminApi = {
   getSalesCapabilities: (userId) => api.get(`/api/admin/sales-performance/capabilities/${userId}`),
   updateSalesCapabilities: (userId, data) => api.put(`/api/admin/sales-performance/capabilities/${userId}`, data),
   runSalesAssignment: (data) => api.post("/api/admin/sales-performance/assign", data),
+
+  // Vendor Performance
+  getVendorTeamPerformance: () => api.get("/api/admin/vendor-performance/team"),
+  getVendorPerformanceDetail: (vendorId) => api.get(`/api/admin/vendor-performance/team/${vendorId}`),
 };
 
 export default adminApi;

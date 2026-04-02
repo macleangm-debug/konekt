@@ -3,6 +3,8 @@ import { adminApi } from "@/lib/adminApi";
 import StatusBadge from "@/components/admin/shared/StatusBadge";
 import FilterBar from "@/components/admin/shared/FilterBar";
 import EmptyState from "@/components/admin/shared/EmptyState";
+import PerformanceCell from "@/components/performance/PerformanceCell";
+import PerformanceBreakdownDrawer from "@/components/performance/PerformanceBreakdownDrawer";
 import {
   Users, UserCheck, UserX, Package, Star, Building2,
   Search, Plus, X, Truck, Clock,
@@ -58,6 +60,8 @@ export default function VendorListPage() {
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [perfMap, setPerfMap] = useState({});
+  const [perfDrawer, setPerfDrawer] = useState(null);
 
   // Create form
   const [newVendor, setNewVendor] = useState({ name: "", email: "", phone: "", company: "", capability_type: "products" });
@@ -72,6 +76,18 @@ export default function VendorListPage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { adminApi.getVendorStats().then(r => setStats(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    adminApi.getVendorTeamPerformance()
+      .then(r => {
+        const map = {};
+        (r.data?.team || []).forEach(v => {
+          if (v.vendor_id) map[v.vendor_id] = v;
+          if (v.email) map[v.email] = v;
+        });
+        setPerfMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const openDrawer = async (vendor) => {
     setSelected(vendor);
@@ -81,6 +97,13 @@ export default function VendorListPage() {
       setDetail(res.data);
     } catch { setDetail(null); }
     setLoadingDetail(false);
+  };
+
+  const openPerfDrawer = async (vendorId) => {
+    try {
+      const res = await adminApi.getVendorPerformanceDetail(vendorId);
+      setPerfDrawer(res.data);
+    } catch { setPerfDrawer(null); }
   };
 
   const handleCreate = async () => {
@@ -161,6 +184,7 @@ export default function VendorListPage() {
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Vendor</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Company</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Capability</th>
+                <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Performance</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden lg:table-cell">Taxonomy</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-center">Supply</th>
                 <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 hidden md:table-cell">Updated</th>
@@ -169,10 +193,12 @@ export default function VendorListPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan={7} className="px-5 py-10 text-center text-sm text-slate-400">Loading vendors...</td></tr>
+                <tr><td colSpan={8} className="px-5 py-10 text-center text-sm text-slate-400">Loading vendors...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="py-0"><EmptyState icon={Users} title="No vendors found" subtitle="Add vendors to manage supply and capabilities." /></td></tr>
-              ) : filtered.map((v) => (
+                <tr><td colSpan={8} className="py-0"><EmptyState icon={Users} title="No vendors found" subtitle="Add vendors to manage supply and capabilities." /></td></tr>
+              ) : filtered.map((v) => {
+                const vPerf = perfMap[v.id] || perfMap[v.email];
+                return (
                 <tr key={v.id} className={`cursor-pointer transition-colors hover:bg-slate-50 ${selected?.id === v.id ? "bg-blue-50/50" : ""}`} onClick={() => openDrawer(v)} data-testid={`vendor-row-${v.id}`}>
                   <td className="px-5 py-3.5">
                     <div className="font-semibold text-[#20364D]">{v.name}</div>
@@ -184,6 +210,17 @@ export default function VendorListPage() {
                       {CAP_LABELS[v.capability_type] || v.capability_type}
                     </span>
                   </td>
+                  <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+                    {vPerf ? (
+                      <PerformanceCell
+                        score={vPerf.performance_score}
+                        zone={vPerf.performance_zone}
+                        onClick={() => openPerfDrawer(vPerf.vendor_id)}
+                      />
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5 text-xs text-slate-500 hidden lg:table-cell max-w-[200px] truncate">
                     {v.taxonomy_names?.join(", ") || "-"}
                   </td>
@@ -191,7 +228,8 @@ export default function VendorListPage() {
                   <td className="px-5 py-3.5 text-xs text-slate-400 hidden md:table-cell">{fmtDate(v.updated_at)}</td>
                   <td className="px-5 py-3.5"><StatusBadge status={v.status} /></td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -264,6 +302,12 @@ export default function VendorListPage() {
           </div>
         </div>
       )}
+      {/* Performance Breakdown Drawer */}
+      <PerformanceBreakdownDrawer
+        open={!!perfDrawer}
+        onClose={() => setPerfDrawer(null)}
+        data={perfDrawer}
+      />
     </div>
   );
 }

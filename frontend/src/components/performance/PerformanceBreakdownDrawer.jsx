@@ -35,7 +35,7 @@ export default function PerformanceBreakdownDrawer({ open, onClose, data }) {
   const score = data.performance_score ?? 0;
 
   return (
-    <StandardDrawerShell open={open} onClose={onClose} title={data.sales_name || data.name || "Performance"} subtitle="Performance Breakdown">
+    <StandardDrawerShell open={open} onClose={onClose} title={data.sales_name || data.vendor_name || data.name || "Performance"} subtitle="Performance Breakdown">
       {/* Score Header */}
       <div className="flex items-center gap-4 mb-6" data-testid="performance-header">
         <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#20364D]">
@@ -44,6 +44,11 @@ export default function PerformanceBreakdownDrawer({ open, onClose, data }) {
         <div>
           <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${zb.bg}`}>{zb.label}</span>
           <p className="text-sm text-slate-500 mt-1">Based on {data.sample_size || 0} data points</p>
+          {data.last_updated && (
+            <p className="text-[10px] text-slate-400 mt-0.5" data-testid="performance-last-updated">
+              Last updated: {new Date(data.last_updated).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+            </p>
+          )}
         </div>
       </div>
 

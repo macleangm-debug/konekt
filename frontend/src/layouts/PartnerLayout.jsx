@@ -63,6 +63,7 @@ export default function PartnerLayout() {
   // Vendor-specific nav items
   const vendorItems = [
     { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
+    { path: "/partner/vendor-performance", label: "My Performance", icon: BarChart3 },
     { path: "/partner/product-submissions", label: "Submit Products", icon: Package },
     { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
   ];

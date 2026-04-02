@@ -2408,6 +2408,10 @@ app.include_router(public_marketplace_router)
 app.include_router(media_upload_router)
 app.include_router(partner_excel_import_router)
 app.include_router(vendor_orders_router)
+
+from vendor_performance_routes import router as vendor_performance_router
+app.include_router(vendor_performance_router)
+
 app.include_router(stripe_payment_router)
 app.include_router(stripe_webhook_router)
 
