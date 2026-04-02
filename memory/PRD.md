@@ -26,60 +26,62 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - 5-metric vendor scoring from real vendor_orders data
 - Admin vendor list Performance column + breakdown drawer
 - Vendor self-view page (My Performance) with KPI cards + improvement tips
-- Customer access blocked (403/401)
 
 ### Phase 19 — Unified Performance Governance (02 Apr 2026)
 - Centralized settings CRUD for weights, thresholds, min sample size
 - Both scoring services read from `performance_governance` collection
-- Admin config page with dual-pane Sales/Vendor weight sliders
-- Audit log tracking all settings changes
+- Admin config page with dual-pane weight sliders + audit log
 
-### Phase 20 — Client Ownership + Routing Control: Steps 1-5 (02 Apr 2026)
-**Data Model:**
-- `companies` collection (id, name, normalized_name, domain, owner_sales_id, industry, client_type="company")
-- `contacts` collection (id, name, email, phone, company_id, position, client_type="contact")
-- `individual_clients` collection (id, name, email, phone, owner_sales_id, client_type="individual")
+### Phase 20 — Client Ownership + Routing Control (02 Apr 2026) ✅ COMPLETE
+**Data Model (Step 1):**
+- `companies` (id, name, normalized_name, domain, owner_sales_id, industry, client_type, status)
+- `contacts` (id, name, email, phone, company_id, position, client_type, status)
+- `individual_clients` (id, name, email, phone, owner_sales_id, client_type, status)
 
-**Ownership Routing Engine (`ownership_routing_service.py`):**
-- Centralized `resolve_owner()` called by ALL inbound creation paths
-- Resolution priority: exact company_id > contact email > individual email > phone > domain match > company name match > auto-assign
-- Name normalization (strips Ltd/Limited/Inc/Corp)
-- Free email domain filtering (gmail/yahoo/hotmail not used for corporate matching)
-- Duplicate prevention (auto-links contacts instead of creating duplicates)
+**Ownership Routing Engine (Step 2):**
+- Centralized `resolve_owner()` — mandatory service for all inbound creation
+- Resolution priority: exact company_id → contact email → individual email → phone → domain match → company name match → auto-assign
+- Name normalization (strips 16 suffixes), free email domain exclusion (14 domains)
 
-**Routing Integration:**
-- CRM lead creation → ownership routing injected
-- Request creation → ownership routing injected
-- Public request intake → ownership routing injected
-- Sales lead creation → ownership routing injected
+**Routing Integration (Step 3):**
+- CRM lead creation, request creation, public request intake, sales lead creation → all call resolve_owner()
 
-**Sales Visibility Enforcement:**
+**Sales Visibility Enforcement (Step 4):**
 - Leads: non-admin sees only assigned_to=self
-- Requests: non-admin sees only sales_owner_id/assigned_sales_owner_id=self
+- Requests: non-admin sees only owned requests
 
-**Admin Reassignment Tool (`/admin/client-reassignment`):**
-- Search across companies, contacts, individuals
-- View current owner, select new owner, enter reason
-- Full audit logging (entity, previous_owner, new_owner, reason, changed_by, timestamp)
-- Reassignment History table with all audit entries
-- Stats cards (companies, contacts, individuals, reassignments, unowned)
+**Admin Reassignment Tool (Step 5):**
+- `/admin/client-reassignment` with search, current owner display, new owner select, reason input
+- Full audit logging, reassignment history table, stats cards
+
+**Edge Cases (Step 6):**
+- Duplicate company prevention by domain AND normalized name
+- Duplicate individual prevention by email AND phone
+- Pre-creation `check-duplicate` endpoint
+- Contact auto-linking to existing company (no duplicate company creation)
+
+**UI Behavior Enforcement (Step 7):**
+- Customer order response strips: assigned_sales_owner_id, ownership_company_id, ownership_individual_id, ownership_resolution, sales_owner_id, assigned_sales_id
+- Customer 403 on all client-ownership endpoints
+- Vendor 403 on admin endpoints
+
+**Performance Integration (Step 8):**
+- Sales performance now includes portfolio data (owned_companies, owned_individuals)
+- Performance tied to owned portfolio via ownership_routing
 
 ---
 
 ## Key Technical Concepts
-- **Ownership Continuity Gate**: Existing company/individual → keep owner. Only auto-assign for new entities.
-- **Mandatory Routing Service**: ALL inbound creation paths must call `resolve_owner()`. No bypass allowed.
-- **Role-Safe Visibility**: Sales see own data only. Admin sees all. Customer sees none of internal routing/ownership.
-- **Centralized Performance Governance**: Single collection drives weights/thresholds for all scoring.
-- **Company Name Normalization**: Strips suffixes, lowercases, removes punctuation for matching.
-- **Free Email Exclusion**: Gmail/Yahoo/Hotmail domains not used for corporate domain matching.
+- **Ownership Continuity Gate**: Existing entity → keep owner. Only auto-assign for new entities.
+- **Mandatory Routing Service**: ALL inbound creation paths must call resolve_owner(). No bypass.
+- **Role-Safe Visibility**: Sales see own data only. Admin sees all. Customer sees zero internal data.
+- **Performance Governance**: Single collection drives weights/thresholds for all scoring.
+- **Duplicate Prevention**: Domain match, name normalization, email/phone matching before creation.
 
 ## Backlog
 
-### P0 — Next
-- Phase 4 Steps 6-8: Edge cases (duplicate prevention, name mismatch, email domain edge cases), UI behavior enforcement, performance integration with owned portfolio
-
 ### P1 — Upcoming
+- Phase 5: Portfolio + Reactivation Engine (user to define scope)
 - End-to-end Stripe test with real test cards
 - Statement email delivery via Resend (when keys available)
 
@@ -88,7 +90,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
-- Portfolio + Reactivation Engine
+- Territory scaling, enterprise sales workflows
 
 ---
 
@@ -96,4 +98,5 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Iteration 165: Phase 1 Sales Performance — 100%
 - Iteration 166: Phase 2 Vendor Performance — 100%
 - Iteration 167: Phase 3 Unified Governance — 100%
-- Iteration 168: Phase 4 Client Ownership Steps 1-5 — 100% (17/17 backend + all frontend)
+- Iteration 168: Phase 4 Steps 1-5 — 100% (17/17)
+- Iteration 169: Phase 4 Steps 6-8 — 100% (22/22)
