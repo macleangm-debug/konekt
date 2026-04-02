@@ -26,61 +26,43 @@ Full platform with CRM, Orders, Quotes, Invoices, Vendor Margin Engine, Notifica
 Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin config page.
 
 ### Phase 20 — Client Ownership + Routing Control (02 Apr 2026)
-- Companies/Contacts/Individual Clients data model
-- Centralized `resolve_owner()` routing engine
-- Routing integration into CRM leads, requests, public requests, sales leads
-- Sales visibility enforcement
-- Admin reassignment tool with audit logging
-- Duplicate prevention (domain, name normalization, email/phone)
-- Customer-facing UI leak prevention
-- Performance integration with portfolio data
+Companies/Contacts/Individual Clients model, resolve_owner() engine, ownership continuity routing, admin reassignment tool, duplicate prevention, visibility enforcement.
 
 ### Phase 21 — Portfolio + Reactivation Engine (02 Apr 2026)
-**Portfolio Dashboard (`/staff/portfolio`):**
-- KPI cards: Total Clients, Active, At Risk, Inactive, Revenue, Overdue Tasks
-- Client list with classification filters (All/Active/At Risk/Inactive/Lost)
-- Action buttons per client (Quote, Email, Call)
-- Client activity tracking from orders, quotes, requests
-
-**Reactivation Engine:**
-- Activity-based classification: Active (<=60d), At Risk (60-89d), Inactive (90-179d), Lost (180+d)
-- Auto-generated reactivation tasks for at-risk/inactive clients
-- Task outcomes: Reactivated, No Response, Not Interested, Lost
-- Suggested actions based on classification
-- Idempotent task generation (no duplicates)
-
-**Admin Portfolio Overview (`/admin/portfolio-overview`):**
-- Portfolio by owner: companies, individuals, total clients
-- Pending tasks, completed tasks, reactivation rate per owner
-- Summary stats across all owners
+Portfolio Dashboard for sales owners, activity-based classification (Active/At Risk/Inactive/Lost), auto-generated reactivation tasks, admin portfolio overview.
 
 ### Phase 22 — Stock-First Vendor Assignment Engine (02 Apr 2026)
-**Type-Aware Assignment Dispatcher:**
-- Product orders → Stock-First Engine (supply records, atomic reservation)
-- Promo orders → Capability + Blank Availability Engine
-- Service orders → Capability + Availability + Performance Engine
-
-**Stock-First Product Assignment:**
-- Priority chain: Exact stock → Partial stock → Made-to-order → On-demand → Product owner → Unassigned
+- Type-aware dispatcher: Product (stock-first), Promo (capability), Service (capability + performance)
 - Atomic stock reservation via MongoDB findOneAndUpdate (prevents double-booking)
-- Vendor eligibility: only excludes suspended/blocked/critically-underperforming; risk-zone vendors allowed with warning
-- Per-item vendor assignment with primary vendor determination
+- Assignment decision audit trail: engine, candidates, vendor, reason, fallback, per-item assignments
+- Admin endpoints: candidates preview, explain, decisions history
 
-**Assignment Decision Audit Trail:**
-- Every assignment persists: engine used, candidates snapshot, chosen vendor, reason code, fallback reason, item assignments
-- `/api/admin/assignment/explain/{order_id}` reads from stored record (not reconstructed)
-- `/api/admin/assignment/candidates/{product_id}` previews ranked candidates without reserving
-- `/api/admin/assignment/decisions` lists recent decisions with engine filter
+### Phase 23 — Dormant Client Alert System + Assignment Transparency UI (02 Apr 2026)
+**Pack 1 — Dormant Client Alert System:**
+- Company-level dormancy rollup (activity aggregated across ALL contacts under a company)
+- Individual client direct classification
+- Thresholds: Active (<=60d), At Risk (61-89d), Inactive (90-179d), Lost (180+d)
+- Admin endpoints: summary with per-owner breakdown, alerts list with status/owner filters, reactivate action
+- Staff endpoints: own dormant clients and summary (role-scoped)
+- Frontend: DormantClientAlertsPage with owner breakdown cards, status filter tabs, actionable table (Open Client, Create Quote, Create Follow-up, Reactivate, Reassign)
 
-**Integration:**
-- `live_commerce_service.py` approve_payment_proof() uses type-aware assignment
-- Order assignment orchestrator dispatches to correct engine by order type
-- Legacy vendor resolution kept as fallback
+**Pack 2 — Assignment Reasoning Transparency UI:**
+- AssignmentReasonBadge with human-readable labels for all engine reason codes
+- AssignmentDecisionDrawer with engine info, chosen vendor, per-item assignments, candidates snapshot
+- AssignmentDecisionHistoryPage with engine filter
+- Integrated into admin Orders drawer (inline reasoning + "View full reasoning" link)
 
 **New API Endpoints:**
-- `GET /api/admin/assignment/candidates/{product_id}?quantity=N` — Preview ranked vendors
-- `GET /api/admin/assignment/explain/{order_id}` — Stored assignment reasoning
-- `GET /api/admin/assignment/decisions?limit=N&engine=X` — Recent decisions
+- `GET /api/admin/dormant-clients/summary`
+- `GET /api/admin/dormant-clients/alerts?status=&owner=`
+- `POST /api/admin/dormant-clients/{client_id}/reactivate`
+- `GET /api/staff/dormant-clients/mine`
+- `GET /api/staff/dormant-clients/summary`
+- `POST /api/staff/dormant-clients/{client_id}/reactivate`
+
+**New Frontend Routes:**
+- `/admin/dormant-clients` — Dormant Client Alerts (admin)
+- `/admin/assignment-decisions` — Assignment Decision History (admin)
 
 ---
 
@@ -88,16 +70,14 @@ Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin con
 - **Ownership Continuity**: Existing client → keep owner. Only auto-assign for new entities.
 - **Mandatory Routing**: ALL inbound creation paths call resolve_owner(). No bypass.
 - **Role-Safe Visibility**: Sales see own data. Admin sees all. Customer sees zero internal data.
-- **Reactivation Buckets**: Activity-based classification drives automated task generation.
-- **Duplicate Prevention**: Domain, normalized name, email/phone matching before creation.
+- **Company-Level Dormancy**: Corporate dormancy evaluated by rolling up activity across all company contacts.
 - **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock. Atomic reservation prevents double-booking.
 - **Type-Aware Dispatch**: Product, Promo, and Service orders use separate assignment engines.
+- **Stored Reasoning**: Assignment decisions persist engine/candidates/reason — never reconstructed from guesses.
 
 ## Backlog
 
 ### P1 — Upcoming
-- Dormant Client Alert System (proactive notifications when client crosses "At Risk" threshold)
-- Assignment reasoning transparency UI for admins (showing "Assigned because: allocated stock available")
 - End-to-end Stripe test with real test cards
 
 ### P2 — Future
@@ -117,3 +97,4 @@ Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin con
 - Iteration 169: Client Ownership Steps 6-8 — 100% (22/22)
 - Iteration 170: Portfolio + Reactivation Engine — 100% (23/23)
 - Iteration 171: Stock-First Vendor Assignment Engine — 100% (22/22)
+- Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16 + UI)
