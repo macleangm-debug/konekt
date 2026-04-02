@@ -1,0 +1,138 @@
+{
+  "summary": "Phase 5 Portfolio & Reactivation Engine testing complete. All 23 backend tests passed (100%). Frontend UI verified - portfolio dashboard and admin overview pages working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Staff pages",
+        "issues": ["Staff pages don't have a sidebar navigation - 'My Portfolio' link defined in staff-sidebar-links.js but no sidebar component renders it. Users must navigate directly to /staff/portfolio"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_portfolio_reactivation_v170.py",
+    "/app/test_reports/pytest/pytest_results_portfolio_reactivation_v170.xml"
+  ],
+  "action_items": [
+    "Consider adding a staff sidebar component that uses staff-sidebar-links.js to provide navigation (low priority - direct URL navigation works)"
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_portfolio_reactivation_v170.py"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 tests passed)",
+    "frontend": "95% (all features work, minor navigation UX issue)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Sales: neema.sales@konekt.demo / Sales123!, Customer: demo.customer@konekt.com / Demo123!",
+  "seed_data_creation": "Test data from previous iterations used (Neema owns 6 clients, 4 reactivation tasks)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 5 Portfolio & Reactivation Engine complete. All features verified: (1) GET /api/sales/portfolio returns portfolio with total_clients, buckets, clients, total_revenue, (2) Client classification working (active <=60 days, at_risk 60-89, inactive 90-179, lost 180+), (3) GET /api/sales/portfolio/tasks returns reactivation tasks, (4) POST /api/sales/portfolio/generate-tasks creates tasks idempotently, (5) PUT /api/sales/portfolio/tasks/{taskId} updates status/outcome, (6) GET /api/admin/portfolio/overview returns all owners with stats, (7) GET /api/admin/portfolio/{salesId} returns specific owner portfolio, (8) POST /api/admin/portfolio/{salesId}/generate-tasks works, (9) Customer gets 403 on all portfolio endpoints, (10) Sales gets 403 on admin portfolio endpoints, (11) Portfolio page at /staff/portfolio shows KPI cards, tasks, client list with filters, (12) Admin portfolio overview at /admin/portfolio-overview shows owner table, (13) Task outcome buttons work (reactivated, no_response, not_interested, lost), (14) Regression tests pass for client ownership and sales performance.",
+  "features_tested": {
+    "1_sales_portfolio_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/sales/portfolio",
+      "details": "Returns total_clients, buckets (active/at_risk/inactive/lost), clients array, total_revenue"
+    },
+    "2_client_classification": {
+      "status": "PASS",
+      "details": "Active (<=60 days), At Risk (60-89 days), Inactive (90-179 days), Lost (180+ days)"
+    },
+    "3_reactivation_tasks_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/sales/portfolio/tasks",
+      "details": "Returns tasks array with id, entity_name, status, classification, suggested_action"
+    },
+    "4_generate_tasks_idempotent": {
+      "status": "PASS",
+      "endpoint": "POST /api/sales/portfolio/generate-tasks",
+      "details": "Creates tasks for at-risk/inactive clients, no duplicates on repeat calls"
+    },
+    "5_update_task_outcome": {
+      "status": "PASS",
+      "endpoint": "PUT /api/sales/portfolio/tasks/{taskId}",
+      "details": "Updates status and outcome (reactivated, no_response, not_interested, lost)"
+    },
+    "6_admin_portfolio_overview": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/portfolio/overview",
+      "details": "Returns owners array with sales_id, sales_name, companies, individuals, pending_tasks, reactivation_rate"
+    },
+    "7_admin_owner_portfolio": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/portfolio/{salesId}",
+      "details": "Returns specific owner's full portfolio data"
+    },
+    "8_admin_generate_tasks": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/portfolio/{salesId}/generate-tasks",
+      "details": "Admin can generate tasks for any sales owner"
+    },
+    "9_customer_access_denied_sales": {
+      "status": "PASS",
+      "details": "Customer gets 403 on /api/sales/portfolio and /api/sales/portfolio/tasks"
+    },
+    "10_customer_access_denied_admin": {
+      "status": "PASS",
+      "details": "Customer gets 403 on /api/admin/portfolio/overview and /api/admin/portfolio/{salesId}"
+    },
+    "11_sales_access_denied_admin": {
+      "status": "PASS",
+      "details": "Sales user gets 403 on /api/admin/portfolio/overview"
+    },
+    "12_portfolio_ui_kpi_cards": {
+      "status": "PASS",
+      "details": "Portfolio page shows Total Clients, Active, At Risk, Inactive, Revenue, Overdue Tasks cards"
+    },
+    "13_portfolio_ui_tasks": {
+      "status": "PASS",
+      "details": "Reactivation tasks section shows task cards with outcome buttons"
+    },
+    "14_portfolio_ui_client_list": {
+      "status": "PASS",
+      "details": "Client list with filter tabs (All, Active, At Risk, Inactive, Lost)"
+    },
+    "15_portfolio_ui_generate_btn": {
+      "status": "PASS",
+      "details": "Generate Tasks button present and functional"
+    },
+    "16_admin_overview_ui": {
+      "status": "PASS",
+      "details": "Admin portfolio overview shows summary stats and owner table"
+    },
+    "17_admin_sidebar_link": {
+      "status": "PASS",
+      "details": "Portfolio Overview link present in admin sidebar"
+    },
+    "18_staff_sidebar_link": {
+      "status": "PARTIAL",
+      "details": "My Portfolio link defined in config but staff pages don't have sidebar - direct URL navigation works"
+    },
+    "19_regression_client_ownership": {
+      "status": "PASS",
+      "details": "Client ownership stats, companies, individuals endpoints still work"
+    },
+    "20_regression_sales_performance": {
+      "status": "PASS",
+      "details": "Sales performance team and my performance endpoints still work"
+    },
+    "21_data_integrity_buckets": {
+      "status": "PASS",
+      "details": "Bucket sum equals total_clients"
+    },
+    "22_data_integrity_clients": {
+      "status": "PASS",
+      "details": "Clients array length equals total_clients"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

@@ -204,6 +204,7 @@ import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
 
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
+import PortfolioDashboardPage from "@/pages/staff/PortfolioDashboardPage";
 
 // Sales Orders
 import SalesOrdersPageV2 from "@/pages/staff/SalesOrdersPageV2";
@@ -398,6 +399,7 @@ import MarginAdminPage from "@/pages/admin/MarginAdminPage";
 import SalesPerformancePage from "@/pages/admin/SalesPerformancePage";
 import PerformanceGovernancePage from "@/pages/admin/PerformanceGovernancePage";
 import ClientReassignmentPage from "@/pages/admin/ClientReassignmentPage";
+import AdminPortfolioOverviewPage from "@/pages/admin/AdminPortfolioOverviewPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -591,6 +593,7 @@ function App() {
           <Route path="sales-performance" element={<SalesPerformancePage />} />
           <Route path="performance-governance" element={<PerformanceGovernancePage />} />
           <Route path="client-reassignment" element={<ClientReassignmentPage />} />
+          <Route path="portfolio-overview" element={<AdminPortfolioOverviewPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
@@ -831,6 +834,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <SalesCommissionDashboardPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/portfolio" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <PortfolioDashboardPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

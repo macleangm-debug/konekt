@@ -227,6 +227,15 @@ export const adminApi = {
   createIndividual: (data) => api.post("/api/admin/client-ownership/individuals", data),
   reassignClient: (data) => api.post("/api/admin/client-ownership/reassign", data),
   getReassignmentLog: () => api.get("/api/admin/client-ownership/reassignment-log"),
+
+  // Portfolio & Reactivation
+  getMyPortfolio: () => api.get("/api/sales/portfolio"),
+  getMyReactivationTasks: () => api.get("/api/sales/portfolio/tasks"),
+  generateReactivationTasks: () => api.post("/api/sales/portfolio/generate-tasks"),
+  updateReactivationTask: (taskId, data) => api.put(`/api/sales/portfolio/tasks/${taskId}`, data),
+  getAdminPortfolioOverview: () => api.get("/api/admin/portfolio/overview"),
+  getAdminOwnerPortfolio: (salesId) => api.get(`/api/admin/portfolio/${salesId}`),
+  adminGenerateTasks: (salesId) => api.post(`/api/admin/portfolio/${salesId}/generate-tasks`),
 };
 
 export default adminApi;
