@@ -400,6 +400,8 @@ import SalesPerformancePage from "@/pages/admin/SalesPerformancePage";
 import PerformanceGovernancePage from "@/pages/admin/PerformanceGovernancePage";
 import ClientReassignmentPage from "@/pages/admin/ClientReassignmentPage";
 import AdminPortfolioOverviewPage from "@/pages/admin/AdminPortfolioOverviewPage";
+import DormantClientAlertsPage from "@/pages/admin/DormantClientAlertsPage";
+import AssignmentDecisionHistoryPage from "@/pages/admin/AssignmentDecisionHistoryPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -594,6 +596,8 @@ function App() {
           <Route path="performance-governance" element={<PerformanceGovernancePage />} />
           <Route path="client-reassignment" element={<ClientReassignmentPage />} />
           <Route path="portfolio-overview" element={<AdminPortfolioOverviewPage />} />
+          <Route path="dormant-clients" element={<DormantClientAlertsPage />} />
+          <Route path="assignment-decisions" element={<AssignmentDecisionHistoryPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />

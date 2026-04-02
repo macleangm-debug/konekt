@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, ShoppingCart, Package, Users, Settings, 
   LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox, UserCheck, Truck
+  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox, UserCheck, Truck, AlertTriangle
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -91,6 +91,8 @@ const navItems = [
   { path: '/admin/performance-governance', label: 'Performance Settings', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/client-reassignment', label: 'Client Ownership', icon: Users, moduleKey: 'settings' },
   { path: '/admin/portfolio-overview', label: 'Portfolio Overview', icon: BarChart3, moduleKey: 'settings' },
+  { path: '/admin/dormant-clients', label: 'Dormant Alerts', icon: AlertTriangle, moduleKey: 'settings' },
+  { path: '/admin/assignment-decisions', label: 'Assignment Decisions', icon: Route, moduleKey: 'settings' },
   { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
   { path: '/admin/documents', label: 'Documents', icon: FileText, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },

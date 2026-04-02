@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import adminApi from "../../lib/adminApi";
+import api from "../../lib/api";
 import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
-import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList } from "lucide-react";
+import AssignmentReasonBadge from "../../components/assignment/AssignmentReasonBadge";
+import AssignmentDecisionDrawer from "../../components/assignment/AssignmentDecisionDrawer";
+import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList, Eye } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
@@ -29,6 +32,8 @@ export default function OrdersPage() {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [stats, setStats] = useState(null);
+  const [showAssignmentDrawer, setShowAssignmentDrawer] = useState(false);
+  const [assignmentExplain, setAssignmentExplain] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -45,9 +50,15 @@ export default function OrdersPage() {
   const openDetail = async (row) => {
     setSelected(row);
     setLoadingDetail(true);
+    setAssignmentExplain(null);
     try {
       const res = await adminApi.getOrder(row.id);
       setDetail(res.data);
+      // Fetch assignment explanation in parallel
+      try {
+        const explainRes = await api.get(`/api/admin/assignment/explain/${row.id}`);
+        setAssignmentExplain(explainRes.data);
+      } catch {}
     } catch { setDetail(null); }
     setLoadingDetail(false);
   };
@@ -178,9 +189,39 @@ export default function OrdersPage() {
                   )) : <div className="text-slate-400">No vendor assigned</div>}
                 </div>
               </div>
+              {/* Assignment Reasoning */}
+              {assignmentExplain && (
+                <div className="mt-3 pt-3 border-t border-slate-100" data-testid="assignment-reasoning-inline">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-slate-400 font-semibold">Assignment Reasoning</span>
+                    <AssignmentReasonBadge reasonCode={assignmentExplain.reason_code} />
+                  </div>
+                  <div className="text-xs text-slate-500">{assignmentExplain.reason_detail}</div>
+                  {assignmentExplain.fallback_reason && (
+                    <div className="text-xs text-amber-600 mt-1">Fallback: {assignmentExplain.fallback_reason}</div>
+                  )}
+                  {assignmentExplain.item_assignments && assignmentExplain.item_assignments.length > 1 && (
+                    <div className="mt-2 space-y-1">
+                      {assignmentExplain.item_assignments.map((ia, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs">
+                          <span className="text-slate-500">{ia.product_name || `Item ${ia.item_index + 1}`}:</span>
+                          <span className="text-slate-700">{ia.vendor_name}</span>
+                          <AssignmentReasonBadge reasonCode={ia.reason_code} />
+                          {ia.reserved && <span className="text-emerald-600">({ia.reserved_qty} reserved)</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setShowAssignmentDrawer(true)}
+                    className="mt-2 flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                    data-testid="view-full-reasoning-btn"
+                  >
+                    <Eye className="h-3 w-3" /> View full reasoning
+                  </button>
+                </div>
+              )}
             </section>
-
-            {/* D. Payment */}
             {detail.payment_proof && (
               <section className="rounded-2xl border p-4" data-testid="drawer-payment">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Payment</p>
@@ -267,6 +308,11 @@ export default function OrdersPage() {
           <p className="text-slate-500">Could not load details.</p>
         )}
       </DetailDrawer>
+      <AssignmentDecisionDrawer
+        orderId={selected?.id}
+        open={showAssignmentDrawer}
+        onClose={() => setShowAssignmentDrawer(false)}
+      />
     </div>
   );
 }
