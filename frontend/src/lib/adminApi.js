@@ -199,6 +199,14 @@ export const adminApi = {
 
   // Notification Summary
   getNotificationSummary: () => api.get("/api/admin/notifications/summary"),
+
+  // Sales Performance
+  getSalesTeamPerformance: () => api.get("/api/admin/sales-performance/team"),
+  getSalesDetail: (userId) => api.get(`/api/admin/sales-performance/team/${userId}`),
+  getMyPerformance: () => api.get("/api/admin/sales-performance/me"),
+  getSalesCapabilities: (userId) => api.get(`/api/admin/sales-performance/capabilities/${userId}`),
+  updateSalesCapabilities: (userId, data) => api.put(`/api/admin/sales-performance/capabilities/${userId}`, data),
+  runSalesAssignment: (data) => api.post("/api/admin/sales-performance/assign", data),
 };
 
 export default adminApi;

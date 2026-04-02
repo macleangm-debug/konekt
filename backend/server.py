@@ -114,6 +114,7 @@ from marketing_performance_routes import router as marketing_performance_router
 from crm_deal_routes import router as crm_deal_router
 from customer_account_routes import router as customer_account_router
 from customer_statement_delivery_routes import router as statement_delivery_router
+from sales_performance_routes import router as sales_performance_router
 from crm_relationship_routes import router as crm_relationship_router
 from staff_dashboard_routes import router as staff_dashboard_router
 from supervisor_team_routes import router as supervisor_team_router
@@ -2378,6 +2379,7 @@ app.include_router(marketing_performance_router)
 app.include_router(crm_deal_router)
 app.include_router(customer_account_router)
 app.include_router(statement_delivery_router)
+app.include_router(sales_performance_router)
 app.include_router(crm_relationship_router)
 app.include_router(staff_dashboard_router)
 app.include_router(supervisor_team_router)
