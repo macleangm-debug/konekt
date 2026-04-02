@@ -54,14 +54,33 @@ Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin con
 - Pending tasks, completed tasks, reactivation rate per owner
 - Summary stats across all owners
 
-**API Endpoints:**
-- `GET /api/sales/portfolio` — sales own portfolio
-- `GET /api/sales/portfolio/tasks` — own reactivation tasks
-- `POST /api/sales/portfolio/generate-tasks` — generate tasks
-- `PUT /api/sales/portfolio/tasks/{taskId}` — update outcome
-- `GET /api/admin/portfolio/overview` — all owners overview
-- `GET /api/admin/portfolio/{salesId}` — specific owner portfolio
-- `POST /api/admin/portfolio/{salesId}/generate-tasks` — admin generate
+### Phase 22 — Stock-First Vendor Assignment Engine (02 Apr 2026)
+**Type-Aware Assignment Dispatcher:**
+- Product orders → Stock-First Engine (supply records, atomic reservation)
+- Promo orders → Capability + Blank Availability Engine
+- Service orders → Capability + Availability + Performance Engine
+
+**Stock-First Product Assignment:**
+- Priority chain: Exact stock → Partial stock → Made-to-order → On-demand → Product owner → Unassigned
+- Atomic stock reservation via MongoDB findOneAndUpdate (prevents double-booking)
+- Vendor eligibility: only excludes suspended/blocked/critically-underperforming; risk-zone vendors allowed with warning
+- Per-item vendor assignment with primary vendor determination
+
+**Assignment Decision Audit Trail:**
+- Every assignment persists: engine used, candidates snapshot, chosen vendor, reason code, fallback reason, item assignments
+- `/api/admin/assignment/explain/{order_id}` reads from stored record (not reconstructed)
+- `/api/admin/assignment/candidates/{product_id}` previews ranked candidates without reserving
+- `/api/admin/assignment/decisions` lists recent decisions with engine filter
+
+**Integration:**
+- `live_commerce_service.py` approve_payment_proof() uses type-aware assignment
+- Order assignment orchestrator dispatches to correct engine by order type
+- Legacy vendor resolution kept as fallback
+
+**New API Endpoints:**
+- `GET /api/admin/assignment/candidates/{product_id}?quantity=N` — Preview ranked vendors
+- `GET /api/admin/assignment/explain/{order_id}` — Stored assignment reasoning
+- `GET /api/admin/assignment/decisions?limit=N&engine=X` — Recent decisions
 
 ---
 
@@ -71,16 +90,19 @@ Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin con
 - **Role-Safe Visibility**: Sales see own data. Admin sees all. Customer sees zero internal data.
 - **Reactivation Buckets**: Activity-based classification drives automated task generation.
 - **Duplicate Prevention**: Domain, normalized name, email/phone matching before creation.
+- **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock. Atomic reservation prevents double-booking.
+- **Type-Aware Dispatch**: Product, Promo, and Service orders use separate assignment engines.
 
 ## Backlog
 
 ### P1 — Upcoming
+- Dormant Client Alert System (proactive notifications when client crosses "At Risk" threshold)
+- Assignment reasoning transparency UI for admins (showing "Assigned because: allocated stock available")
 - End-to-end Stripe test with real test cards
-- Statement email delivery via Resend (when keys available)
-- Territory scaling and enterprise sales workflows
 
 ### P2 — Future
 - Twilio WhatsApp notifications (blocked on keys)
+- Resend email integration (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
@@ -94,3 +116,4 @@ Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin con
 - Iteration 168: Client Ownership Steps 1-5 — 100% (17/17)
 - Iteration 169: Client Ownership Steps 6-8 — 100% (22/22)
 - Iteration 170: Portfolio + Reactivation Engine — 100% (23/23)
+- Iteration 171: Stock-First Vendor Assignment Engine — 100% (22/22)
