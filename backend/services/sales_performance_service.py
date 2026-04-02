@@ -1,6 +1,7 @@
 """
 Sales Performance Service — Calculates real performance scores from MongoDB data.
 Role-safe: sales see only own score, admin sees all. No rater identity exposed.
+Reads weights/thresholds from performance_governance collection when available.
 """
 from datetime import datetime, timezone, timedelta
 
@@ -13,15 +14,29 @@ DEFAULT_WEIGHTS = {
     "customer_rating": 0.30,
 }
 
-THRESHOLDS = {"excellent": 85, "safe": 70, "risk": 50}
+DEFAULT_THRESHOLDS = {"excellent": 85, "safe": 70, "risk": 50}
+DEFAULT_MIN_SAMPLE = 5
 
 
-def get_zone(score, min_sample=5, sample_size=0):
+async def _load_governance(db):
+    """Load governance settings if available, else defaults."""
+    doc = await db.performance_governance.find_one({"key": "settings"}, {"_id": 0})
+    if doc and "sales" in doc:
+        s = doc["sales"]
+        return (
+            s.get("weights", DEFAULT_WEIGHTS),
+            s.get("thresholds", DEFAULT_THRESHOLDS),
+            s.get("min_sample_size", DEFAULT_MIN_SAMPLE),
+        )
+    return DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS, DEFAULT_MIN_SAMPLE
+
+
+def get_zone(score, thresholds, min_sample=5, sample_size=0):
     if sample_size < min_sample:
         return "developing"
-    if score >= THRESHOLDS["excellent"]:
+    if score >= thresholds.get("excellent", 85):
         return "excellent"
-    if score >= THRESHOLDS["safe"]:
+    if score >= thresholds.get("safe", 70):
         return "safe"
     return "risk"
 
@@ -38,6 +53,7 @@ def generate_tips(breakdown):
 
 async def compute_sales_performance(db, sales_user_id: str, sales_name: str = ""):
     """Compute real performance from leads, quotes, orders, and ratings."""
+    weights, thresholds, min_sample = await _load_governance(db)
     now = datetime.now(timezone.utc)
     thirty_days_ago = (now - timedelta(days=30)).isoformat()
 
@@ -93,15 +109,15 @@ async def compute_sales_performance(db, sales_user_id: str, sales_name: str = ""
     sample_size = leads_total + rating_count
 
     breakdown = [
-        {"key": "customer_rating", "label": "Customer Rating", "raw_score": round(customer_rating_raw), "weight": DEFAULT_WEIGHTS["customer_rating"], "weighted": round(customer_rating_raw * DEFAULT_WEIGHTS["customer_rating"], 1), "tip": "Ensure timely communication and clear expectations."},
-        {"key": "conversion_rate", "label": "Conversion Rate", "raw_score": round(conversion_raw), "weight": DEFAULT_WEIGHTS["conversion_rate"], "weighted": round(conversion_raw * DEFAULT_WEIGHTS["conversion_rate"], 1), "tip": "Focus on qualifying leads before quoting."},
-        {"key": "revenue_contribution", "label": "Revenue Contribution", "raw_score": round(revenue_raw), "weight": DEFAULT_WEIGHTS["revenue_contribution"], "weighted": round(revenue_raw * DEFAULT_WEIGHTS["revenue_contribution"], 1), "tip": "Prioritize high-value opportunities."},
-        {"key": "response_speed", "label": "Response Speed", "raw_score": round(response_raw), "weight": DEFAULT_WEIGHTS["response_speed"], "weighted": round(response_raw * DEFAULT_WEIGHTS["response_speed"], 1), "tip": "Add first note within 24 hours of lead assignment."},
-        {"key": "follow_up_compliance", "label": "Follow-up Compliance", "raw_score": round(followup_raw), "weight": DEFAULT_WEIGHTS["follow_up_compliance"], "weighted": round(followup_raw * DEFAULT_WEIGHTS["follow_up_compliance"], 1), "tip": "Set follow-up dates on every active lead."},
+        {"key": "customer_rating", "label": "Customer Rating", "raw_score": round(customer_rating_raw), "weight": weights.get("customer_rating", 0.30), "weighted": round(customer_rating_raw * weights.get("customer_rating", 0.30), 1), "tip": "Ensure timely communication and clear expectations."},
+        {"key": "conversion_rate", "label": "Conversion Rate", "raw_score": round(conversion_raw), "weight": weights.get("conversion_rate", 0.25), "weighted": round(conversion_raw * weights.get("conversion_rate", 0.25), 1), "tip": "Focus on qualifying leads before quoting."},
+        {"key": "revenue_contribution", "label": "Revenue Contribution", "raw_score": round(revenue_raw), "weight": weights.get("revenue_contribution", 0.20), "weighted": round(revenue_raw * weights.get("revenue_contribution", 0.20), 1), "tip": "Prioritize high-value opportunities."},
+        {"key": "response_speed", "label": "Response Speed", "raw_score": round(response_raw), "weight": weights.get("response_speed", 0.15), "weighted": round(response_raw * weights.get("response_speed", 0.15), 1), "tip": "Add first note within 24 hours of lead assignment."},
+        {"key": "follow_up_compliance", "label": "Follow-up Compliance", "raw_score": round(followup_raw), "weight": weights.get("follow_up_compliance", 0.10), "weighted": round(followup_raw * weights.get("follow_up_compliance", 0.10), 1), "tip": "Set follow-up dates on every active lead."},
     ]
 
     total_score = round(sum(b["weighted"] for b in breakdown))
-    zone = get_zone(total_score, sample_size=sample_size)
+    zone = get_zone(total_score, thresholds, min_sample=min_sample, sample_size=sample_size)
     tips = generate_tips(breakdown)
 
     return {

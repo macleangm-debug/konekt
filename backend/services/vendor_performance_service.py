@@ -1,6 +1,7 @@
 """
 Vendor Performance Service — Computes real performance scores from operational data.
 Role-safe: vendor sees only own score, admin sees all. No rater identity exposed.
+Reads weights/thresholds from performance_governance collection when available.
 
 Metrics:
   1. Responsiveness (20%) — time from assignment to first status update/note
@@ -20,15 +21,29 @@ DEFAULT_WEIGHTS = {
     "rating": 0.20,
 }
 
-THRESHOLDS = {"excellent": 85, "safe": 70, "risk": 50}
+DEFAULT_THRESHOLDS = {"excellent": 85, "safe": 70, "risk": 50}
+DEFAULT_MIN_SAMPLE = 3
 
 
-def get_zone(score, min_sample=3, sample_size=0):
+async def _load_governance(db):
+    """Load governance settings if available, else defaults."""
+    doc = await db.performance_governance.find_one({"key": "settings"}, {"_id": 0})
+    if doc and "vendor" in doc:
+        v = doc["vendor"]
+        return (
+            v.get("weights", DEFAULT_WEIGHTS),
+            v.get("thresholds", DEFAULT_THRESHOLDS),
+            v.get("min_sample_size", DEFAULT_MIN_SAMPLE),
+        )
+    return DEFAULT_WEIGHTS, DEFAULT_THRESHOLDS, DEFAULT_MIN_SAMPLE
+
+
+def get_zone(score, thresholds, min_sample=3, sample_size=0):
     if sample_size < min_sample:
         return "developing"
-    if score >= THRESHOLDS["excellent"]:
+    if score >= thresholds.get("excellent", 85):
         return "excellent"
-    if score >= THRESHOLDS["safe"]:
+    if score >= thresholds.get("safe", 70):
         return "safe"
     return "risk"
 
@@ -45,6 +60,7 @@ def generate_vendor_tips(breakdown):
 
 async def compute_vendor_performance(db, vendor_id: str, vendor_name: str = ""):
     """Compute real performance from vendor_orders operational data."""
+    weights, thresholds, min_sample = await _load_governance(db)
     now = datetime.now(timezone.utc)
 
     # Get all vendor orders for this vendor
@@ -148,38 +164,38 @@ async def compute_vendor_performance(db, vendor_id: str, vendor_name: str = ""):
     breakdown = [
         {
             "key": "timeliness", "label": "Timeliness",
-            "raw_score": round(timeliness_raw), "weight": DEFAULT_WEIGHTS["timeliness"],
-            "weighted": round(timeliness_raw * DEFAULT_WEIGHTS["timeliness"], 1),
+            "raw_score": round(timeliness_raw), "weight": weights.get("timeliness", 0.25),
+            "weighted": round(timeliness_raw * weights.get("timeliness", 0.25), 1),
             "tip": "Set realistic ETAs and complete orders before the promised date."
         },
         {
             "key": "quality", "label": "Quality",
-            "raw_score": round(quality_raw), "weight": DEFAULT_WEIGHTS["quality"],
-            "weighted": round(quality_raw * DEFAULT_WEIGHTS["quality"], 1),
+            "raw_score": round(quality_raw), "weight": weights.get("quality", 0.25),
+            "weighted": round(quality_raw * weights.get("quality", 0.25), 1),
             "tip": "Minimize cancellations and returns. Ensure deliverables meet specifications."
         },
         {
             "key": "responsiveness", "label": "Responsiveness",
-            "raw_score": round(responsiveness_raw), "weight": DEFAULT_WEIGHTS["responsiveness"],
-            "weighted": round(responsiveness_raw * DEFAULT_WEIGHTS["responsiveness"], 1),
+            "raw_score": round(responsiveness_raw), "weight": weights.get("responsiveness", 0.20),
+            "weighted": round(responsiveness_raw * weights.get("responsiveness", 0.20), 1),
             "tip": "Acknowledge new orders quickly with a status update or note."
         },
         {
             "key": "rating", "label": "Internal Rating",
-            "raw_score": round(rating_raw), "weight": DEFAULT_WEIGHTS["rating"],
-            "weighted": round(rating_raw * DEFAULT_WEIGHTS["rating"], 1),
+            "raw_score": round(rating_raw), "weight": weights.get("rating", 0.20),
+            "weighted": round(rating_raw * weights.get("rating", 0.20), 1),
             "tip": "Maintain good communication and quality to earn high internal ratings."
         },
         {
             "key": "compliance", "label": "Process Compliance",
-            "raw_score": round(compliance_raw), "weight": DEFAULT_WEIGHTS["compliance"],
-            "weighted": round(compliance_raw * DEFAULT_WEIGHTS["compliance"], 1),
+            "raw_score": round(compliance_raw), "weight": weights.get("compliance", 0.10),
+            "weighted": round(compliance_raw * weights.get("compliance", 0.10), 1),
             "tip": "Always set an ETA, add progress notes, and follow the status workflow."
         },
     ]
 
     total_score = round(sum(b["weighted"] for b in breakdown))
-    zone = get_zone(total_score, sample_size=sample_size)
+    zone = get_zone(total_score, thresholds, min_sample=min_sample, sample_size=sample_size)
     tips = generate_vendor_tips(breakdown)
 
     return {

@@ -211,6 +211,11 @@ export const adminApi = {
   // Vendor Performance
   getVendorTeamPerformance: () => api.get("/api/admin/vendor-performance/team"),
   getVendorPerformanceDetail: (vendorId) => api.get(`/api/admin/vendor-performance/team/${vendorId}`),
+
+  // Performance Governance
+  getPerformanceGovernance: () => api.get("/api/admin/performance-governance/settings"),
+  updatePerformanceGovernance: (data) => api.put("/api/admin/performance-governance/settings", data),
+  getPerformanceGovernanceAudit: () => api.get("/api/admin/performance-governance/audit"),
 };
 
 export default adminApi;

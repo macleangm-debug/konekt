@@ -2412,6 +2412,9 @@ app.include_router(vendor_orders_router)
 from vendor_performance_routes import router as vendor_performance_router
 app.include_router(vendor_performance_router)
 
+from performance_governance_routes import router as perf_governance_router
+app.include_router(perf_governance_router)
+
 app.include_router(stripe_payment_router)
 app.include_router(stripe_webhook_router)
 
