@@ -138,6 +138,13 @@ async def enrich_order(order):
     # DO NOT expose vendor identity to customer
     order.pop("vendor_ids", None)
     order.pop("vendor", None)
+    # DO NOT expose internal routing/ownership to customer
+    order.pop("assigned_sales_owner_id", None)
+    order.pop("ownership_company_id", None)
+    order.pop("ownership_individual_id", None)
+    order.pop("ownership_resolution", None)
+    order.pop("sales_owner_id", None)
+    order.pop("assigned_sales_id", None)
 
     return order
 

@@ -108,6 +108,10 @@ async def compute_sales_performance(db, sales_user_id: str, sales_name: str = ""
 
     sample_size = leads_total + rating_count
 
+    # Portfolio data: count owned companies + individuals for context
+    owned_companies = await db.companies.count_documents({"owner_sales_id": sales_user_id, "status": "active"})
+    owned_individuals = await db.individual_clients.count_documents({"owner_sales_id": sales_user_id, "status": "active"})
+
     breakdown = [
         {"key": "customer_rating", "label": "Customer Rating", "raw_score": round(customer_rating_raw), "weight": weights.get("customer_rating", 0.30), "weighted": round(customer_rating_raw * weights.get("customer_rating", 0.30), 1), "tip": "Ensure timely communication and clear expectations."},
         {"key": "conversion_rate", "label": "Conversion Rate", "raw_score": round(conversion_raw), "weight": weights.get("conversion_rate", 0.25), "weighted": round(conversion_raw * weights.get("conversion_rate", 0.25), 1), "tip": "Focus on qualifying leads before quoting."},
@@ -126,6 +130,10 @@ async def compute_sales_performance(db, sales_user_id: str, sales_name: str = ""
         "performance_score": total_score,
         "performance_zone": zone,
         "sample_size": sample_size,
+        "portfolio": {
+            "owned_companies": owned_companies,
+            "owned_individuals": owned_individuals,
+        },
         "breakdown": breakdown,
         "tips": tips,
         "computed_at": now.isoformat(),

@@ -99,13 +99,27 @@ async def create_company_endpoint(payload: dict, user: dict = Depends(get_auth_u
     name = payload.get("name", "").strip()
     if not name:
         raise HTTPException(status_code=400, detail="Company name required")
+
+    # Duplicate prevention: check by domain first, then by normalized name
+    from services.client_ownership_service import find_company_by_domain, find_company_by_name, normalize_company_name, extract_domain
+    domain = payload.get("domain", "").lower().strip()
+    if domain:
+        existing = await find_company_by_domain(db, domain)
+        if existing:
+            return {"duplicate": True, "existing": existing, "message": f"Company with domain '{domain}' already exists: {existing['name']}"}
+    normalized = normalize_company_name(name)
+    if normalized:
+        existing = await find_company_by_name(db, name)
+        if existing:
+            return {"duplicate": True, "existing": existing, "message": f"Similar company already exists: {existing['name']}"}
+
     # Default owner = current user for sales, or specified owner
     owner_id = payload.get("owner_sales_id", "")
     if not owner_id and user.get("role") in ("sales", "staff"):
         owner_id = user.get("id", "")
     company = await create_company(
         db, name=name,
-        domain=payload.get("domain", ""),
+        domain=domain or extract_domain(payload.get("contact_email", "")),
         owner_sales_id=owner_id,
         industry=payload.get("industry", ""),
         notes=payload.get("notes", ""),
@@ -168,14 +182,29 @@ async def get_individuals(
 @router.post("/api/admin/client-ownership/individuals")
 async def create_individual_endpoint(payload: dict, user: dict = Depends(get_auth_user)):
     require_admin_or_sales(user)
+    email = payload.get("email", "").strip().lower()
+    phone = payload.get("phone", "").strip()
+
+    # Duplicate prevention: check by email, then phone
+    if email:
+        from services.client_ownership_service import find_individual_by_email
+        existing = await find_individual_by_email(db, email)
+        if existing:
+            return {"duplicate": True, "existing": existing, "message": f"Individual with email '{email}' already exists: {existing['name']}"}
+    if phone:
+        from services.client_ownership_service import find_individual_by_phone
+        existing = await find_individual_by_phone(db, phone)
+        if existing:
+            return {"duplicate": True, "existing": existing, "message": f"Individual with matching phone already exists: {existing['name']}"}
+
     owner_id = payload.get("owner_sales_id", "")
     if not owner_id and user.get("role") in ("sales", "staff"):
         owner_id = user.get("id", "")
     individual = await create_individual(
         db,
         name=payload.get("name", ""),
-        email=payload.get("email", ""),
-        phone=payload.get("phone", ""),
+        email=email,
+        phone=phone,
         owner_sales_id=owner_id,
         notes=payload.get("notes", ""),
         created_by=user.get("id", ""),
@@ -288,6 +317,41 @@ async def get_reassignment_log(user: dict = Depends(get_auth_user)):
     require_admin(user)
     docs = await db.reassignment_audit_log.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
     return {"entries": docs}
+
+
+# ===== DUPLICATE CHECK =====
+
+@router.post("/api/admin/client-ownership/check-duplicate")
+async def check_duplicate(payload: dict, user: dict = Depends(get_auth_user)):
+    """Pre-creation duplicate check. Returns matches if found."""
+    require_admin_or_sales(user)
+    from services.client_ownership_service import (
+        find_company_by_domain, find_company_by_name,
+        find_contact_by_email, find_individual_by_email,
+        extract_domain,
+    )
+    matches = []
+    email = payload.get("email", "").strip().lower()
+    company_name = payload.get("company_name", "").strip()
+    domain = extract_domain(email) if email else ""
+
+    if email:
+        contact = await find_contact_by_email(db, email)
+        if contact:
+            matches.append({"type": "contact", "name": contact["name"], "email": contact["email"], "company_id": contact.get("company_id", "")})
+        individual = await find_individual_by_email(db, email)
+        if individual:
+            matches.append({"type": "individual", "name": individual["name"], "email": individual["email"], "owner_sales_id": individual.get("owner_sales_id", "")})
+    if domain:
+        company = await find_company_by_domain(db, domain)
+        if company:
+            matches.append({"type": "company", "name": company["name"], "domain": company.get("domain", ""), "owner_sales_id": company.get("owner_sales_id", "")})
+    if company_name:
+        company = await find_company_by_name(db, company_name)
+        if company:
+            matches.append({"type": "company", "name": company["name"], "domain": company.get("domain", ""), "owner_sales_id": company.get("owner_sales_id", "")})
+
+    return {"has_duplicates": len(matches) > 0, "matches": matches}
 
 
 # ===== STATS =====

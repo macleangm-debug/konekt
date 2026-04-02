@@ -1,0 +1,145 @@
+{
+  "summary": "Phase 4 Steps 6-8 Edge Case Hardening testing complete. All 22 backend tests passed (100%). Fixed missing portfolio data in sales performance team endpoint.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_client_ownership_edge_cases_v169.py",
+    "/app/test_reports/pytest/pytest_results_client_ownership_edge_v169.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_client_ownership_edge_cases_v169.py",
+    "/app/backend/sales_performance_routes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "Test companies, contacts, and individuals created with TEST_ prefix during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 4 Steps 6-8 complete. All edge case hardening features verified: (1) Duplicate company prevention by domain and normalized name works, (2) Duplicate individual prevention by email works, (3) Pre-creation check-duplicate endpoint returns matches for email/domain/company_name, (4) Name normalization strips all suffixes (ltd, limited, inc, corp, etc.) and is case-insensitive, (5) Free email domains (gmail, yahoo, etc.) are excluded from corporate domain matching, (6) Customer order response correctly strips ownership fields, (7) Sales performance team endpoint now includes portfolio data (owned_companies, owned_individuals), (8) All regression tests pass (CRM lead routing, admin reassignment, vendor performance, governance settings).",
+  "features_tested": {
+    "1_duplicate_company_by_domain": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/companies",
+      "details": "Creating company with existing domain returns {duplicate: true, existing: {...}}"
+    },
+    "2_duplicate_company_by_normalized_name": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/companies",
+      "details": "'Acme Tanzania Ltd' vs 'Acme Tanzania Limited' correctly detected as duplicate via normalized_name matching"
+    },
+    "3_name_normalization_suffixes": {
+      "status": "PASS",
+      "details": "All suffixes stripped: ltd, limited, inc, incorporated, corp, corporation, llc, plc, co, company, group, gmbh, pty, pvt, sa, srl, ag"
+    },
+    "4_case_insensitive_matching": {
+      "status": "PASS",
+      "details": "'ACME TANZANIA LIMITED', 'acme tanzania', 'Acme Tanzania Ltd' all match correctly"
+    },
+    "5_duplicate_individual_by_email": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/individuals",
+      "details": "Creating individual with existing email returns {duplicate: true, existing: {...}}"
+    },
+    "6_duplicate_individual_by_phone": {
+      "status": "PASS",
+      "details": "Phone duplicate check also implemented and working"
+    },
+    "7_check_duplicate_email": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/check-duplicate",
+      "details": "Returns matches for email (contacts and individuals)"
+    },
+    "8_check_duplicate_domain": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/check-duplicate",
+      "details": "Extracts domain from email and returns company matches"
+    },
+    "9_check_duplicate_company_name": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/check-duplicate",
+      "details": "Returns company matches by normalized name"
+    },
+    "10_free_email_exclusion_gmail": {
+      "status": "PASS",
+      "details": "gmail.com domain NOT used for corporate domain matching"
+    },
+    "11_free_email_exclusion_yahoo": {
+      "status": "PASS",
+      "details": "yahoo.com domain NOT used for corporate domain matching"
+    },
+    "12_free_email_domains_list": {
+      "status": "PASS",
+      "details": "All 14 free email domains excluded: gmail, yahoo, hotmail, outlook, live, aol, icloud, mail, protonmail, zoho, yandex, gmx, fastmail, tutanota"
+    },
+    "13_customer_orders_strips_ownership": {
+      "status": "PASS",
+      "endpoint": "GET /api/customer/orders",
+      "details": "Response correctly strips: assigned_sales_owner_id, ownership_company_id, ownership_individual_id, ownership_resolution, sales_owner_id, assigned_sales_id"
+    },
+    "14_customer_access_denied": {
+      "status": "PASS",
+      "details": "Customer gets 403 on all /api/admin/client-ownership/* endpoints"
+    },
+    "15_sales_performance_portfolio_team": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/sales-performance/team",
+      "details": "Now includes portfolio.owned_companies and portfolio.owned_individuals for each team member (FIXED during testing)"
+    },
+    "16_sales_performance_portfolio_individual": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/sales-performance/team/{user_id}",
+      "details": "Includes portfolio data in individual performance response"
+    },
+    "17_regression_crm_lead_routing": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/crm/leads",
+      "details": "CRM lead creation with company routing still works correctly"
+    },
+    "18_regression_admin_reassignment": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/reassign",
+      "details": "Admin reassignment with audit log still works correctly"
+    },
+    "19_regression_vendor_performance": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/vendor-performance/team",
+      "details": "Vendor performance endpoint still works"
+    },
+    "20_regression_governance_settings": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/performance-governance/settings",
+      "details": "Performance governance settings endpoint still works"
+    },
+    "21_new_entity_auto_assign": {
+      "status": "PASS",
+      "details": "Ownership routing for new entity (no matches) auto-assigns via scoring engine"
+    },
+    "22_contact_auto_creation": {
+      "status": "PASS",
+      "details": "Contact under existing company auto-creates contact record"
+    }
+  },
+  "fixes_applied": {
+    "sales_performance_portfolio": {
+      "file": "/app/backend/sales_performance_routes.py",
+      "issue": "Team endpoint (/api/admin/sales-performance/team) was not including portfolio data",
+      "fix": "Added portfolio field to team member response: portfolio: perf.get('portfolio', {'owned_companies': 0, 'owned_individuals': 0})"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

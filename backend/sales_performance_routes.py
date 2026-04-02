@@ -61,6 +61,7 @@ async def get_team_performance(user: dict = Depends(get_user)):
             "performance_score": perf["performance_score"],
             "performance_zone": perf["performance_zone"],
             "sample_size": perf["sample_size"],
+            "portfolio": perf.get("portfolio", {"owned_companies": 0, "owned_individuals": 0}),
         })
 
     results.sort(key=lambda x: x["performance_score"], reverse=True)
