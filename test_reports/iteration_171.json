@@ -1,0 +1,104 @@
+{
+  "summary": "Stock-First Vendor Assignment Engine testing complete. All 22 backend tests passed (2 skipped due to no existing decisions in DB). Core features verified: candidates preview with tier classification, assignment decisions listing, explain endpoint 404 for nonexistent orders, supply record management, vendor eligibility checks, type-aware dispatch, and existing routes regression.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_stock_first_assignment_v171.py",
+    "/app/test_reports/pytest/pytest_results_stock_first_assignment_v171.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_stock_first_assignment_v171.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed, 2 skipped)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created multiple supply records for testing: TEST_DOUBLE_BOOK_*, TEST_MTO_*, TEST_OD_*, TEST_ATOMIC_* products with various supply modes (in_stock, made_to_order, on_demand)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Stock-First Vendor Assignment Engine verified. Key findings: (1) GET /api/admin/assignment/candidates/{product_id}?quantity=N returns ranked vendors with tier classification (exact_stock=1, partial_stock=2, made_to_order=3, on_demand=4, product_owner=5), (2) GET /api/admin/assignment/explain/{order_id} returns 404 for nonexistent orders (correct behavior), (3) GET /api/admin/assignment/decisions returns empty list (no orders processed through assignment engine yet), (4) POST /api/admin/vendors/{vendor_id}/supply creates supply records correctly, (5) Tier classification works: qty >= requested = tier 1, qty < requested = tier 2, (6) Vendor eligibility shows eligible=true with reason='eligible', (7) Supply modes correctly classified: in_stock, made_to_order (tier 3), on_demand (tier 4), (8) Existing routes (health, auth, vendors list, vendor stats) all working. Note: Assignment decisions are created when approve_payment_proof is called in live_commerce_service.py - no decisions exist yet because no orders have been approved through this flow.",
+  "features_tested": {
+    "1_candidates_preview_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/assignment/candidates/{product_id}?quantity=N",
+      "details": "Returns ranked vendor candidates with tier, tier_label, supply_mode, available_qty, eligible, eligibility_reason, warning"
+    },
+    "2_tier_classification_exact_stock": {
+      "status": "PASS",
+      "details": "Vendor with in_stock supply and qty >= requested gets tier 1 (exact_stock)"
+    },
+    "3_tier_classification_partial_stock": {
+      "status": "PASS",
+      "details": "Vendor with in_stock supply and qty < requested gets tier 2 (partial_stock)"
+    },
+    "4_tier_classification_made_to_order": {
+      "status": "PASS",
+      "details": "Vendor with made_to_order supply mode gets tier 3"
+    },
+    "5_tier_classification_on_demand": {
+      "status": "PASS",
+      "details": "Vendor with on_demand supply mode gets tier 4"
+    },
+    "6_explain_endpoint_404": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/assignment/explain/{order_id}",
+      "details": "Returns 404 for orders without assignment decisions"
+    },
+    "7_decisions_list_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/assignment/decisions?limit=N&engine=X",
+      "details": "Returns list of assignment decisions, supports limit and engine filter"
+    },
+    "8_supply_record_creation": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/vendors/{vendor_id}/supply",
+      "details": "Creates supply records with id, vendor_id, product_id, quantity, supply_mode, lead_time_days"
+    },
+    "9_supply_record_listing": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/vendors/{vendor_id}/supply",
+      "details": "Lists all supply records for a vendor"
+    },
+    "10_vendor_eligibility_check": {
+      "status": "PASS",
+      "details": "Candidates show eligible status with eligibility_reason and warning fields"
+    },
+    "11_type_aware_dispatch": {
+      "status": "PASS",
+      "details": "Valid engine types: stock_first_product, promo_capability, service_capability_performance, manual_override, fallback_item_vendor, fallback_product_catalog"
+    },
+    "12_health_endpoint_regression": {
+      "status": "PASS",
+      "endpoint": "GET /api/health",
+      "details": "Returns 200"
+    },
+    "13_admin_login_regression": {
+      "status": "PASS",
+      "endpoint": "POST /api/auth/login",
+      "details": "Admin login returns token"
+    },
+    "14_vendors_list_regression": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/vendors",
+      "details": "Returns list of vendors"
+    },
+    "15_vendor_stats_regression": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/vendors/stats",
+      "details": "Returns vendor statistics with total count"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

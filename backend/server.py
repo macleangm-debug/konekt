@@ -2421,6 +2421,9 @@ app.include_router(client_ownership_router)
 from portfolio_routes import router as portfolio_router
 app.include_router(portfolio_router)
 
+from assignment_preview_routes import router as assignment_preview_router
+app.include_router(assignment_preview_router)
+
 app.include_router(stripe_payment_router)
 app.include_router(stripe_webhook_router)
 

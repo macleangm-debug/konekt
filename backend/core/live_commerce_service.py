@@ -456,39 +456,59 @@ class LiveCommerceService:
             # Resolve payer_name — STRICT: only from proof/submission payer_name, NEVER customer_name
             payer_name = proof.get("payer_name") or invoice.get("payer_name") or "-"
 
-            # Resolve vendor_ids from product catalog, then invoice items
-            resolved_vendor_ids = set()
-            for item in invoice.get("items", []):
-                vid = None
-                # Priority 1: Look up product in catalog for real vendor_id
-                product_id = item.get("product_id") or item.get("sku")
-                if product_id:
-                    product = await self.db.products.find_one(
-                        {"$or": [{"id": product_id}, {"sku": product_id}]},
-                        {"_id": 0, "vendor_id": 1, "owner_vendor_id": 1, "uploaded_by_vendor_id": 1, "partner_id": 1}
+            # ── Type-aware vendor assignment via Stock-First engine ──
+            order_type = (invoice.get("type") or "product").lower()
+            temp_order_id = str(uuid4())  # pre-generate for stock reservation
+
+            try:
+                from services.assignment_policy_service import resolve_vendor_assignment
+                assigned_vendor_id, assigned_vendor_name_resolved, vendor_ids, _decision = (
+                    await resolve_vendor_assignment(
+                        self.db,
+                        items=invoice.get("items", []),
+                        order_type=order_type,
+                        order_id=temp_order_id,
                     )
-                    if product:
-                        vid = product.get("vendor_id") or product.get("owner_vendor_id") or product.get("uploaded_by_vendor_id") or product.get("partner_id")
-                # Priority 2: Fall back to invoice item vendor_id
-                if not vid:
-                    vid = item.get("vendor_id")
-                # Priority 3: Try to map to a real partner_user
-                if vid:
-                    partner = await self.db.partner_users.find_one(
-                        {"$or": [{"partner_id": vid}, {"id": vid}]},
-                        {"_id": 0, "partner_id": 1}
-                    )
-                    if partner:
-                        resolved_vendor_ids.add(partner["partner_id"])
-                    else:
-                        resolved_vendor_ids.add(vid)
-            vendor_ids = list(resolved_vendor_ids)
-            assigned_vendor_id = vendor_ids[0] if vendor_ids else ""
+                )
+                assigned_vendor_id = assigned_vendor_id or ""
+            except Exception:
+                # Fallback: resolve vendor_ids from product catalog (legacy path)
+                import logging as _lg
+                _lg.getLogger("live_commerce").warning("Stock-first engine failed, using legacy vendor resolution")
+                resolved_vendor_ids = set()
+                for item in invoice.get("items", []):
+                    vid = None
+                    product_id = item.get("product_id") or item.get("sku")
+                    if product_id:
+                        product = await self.db.products.find_one(
+                            {"$or": [{"id": product_id}, {"sku": product_id}]},
+                            {"_id": 0, "vendor_id": 1, "owner_vendor_id": 1, "uploaded_by_vendor_id": 1, "partner_id": 1}
+                        )
+                        if product:
+                            vid = product.get("vendor_id") or product.get("owner_vendor_id") or product.get("uploaded_by_vendor_id") or product.get("partner_id")
+                    if not vid:
+                        vid = item.get("vendor_id")
+                    if vid:
+                        partner = await self.db.partner_users.find_one(
+                            {"$or": [{"partner_id": vid}, {"id": vid}]},
+                            {"_id": 0, "partner_id": 1}
+                        )
+                        if partner:
+                            resolved_vendor_ids.add(partner["partner_id"])
+                        else:
+                            resolved_vendor_ids.add(vid)
+                vendor_ids = list(resolved_vendor_ids)
+                assigned_vendor_id = vendor_ids[0] if vendor_ids else ""
 
             if existing_order:
+                order_id = existing_order.get("id")
+                # Update assignment decision to reference real order_id
+                await self.db.assignment_decisions.update_many(
+                    {"order_id": temp_order_id}, {"$set": {"order_id": order_id}}
+                )
                 # Update existing order with assignment/approval fields
                 await self.db.orders.update_one(
-                    {"id": existing_order.get("id")},
+                    {"id": order_id},
                     {"$set": {
                         "assigned_sales_id": assigned_sales_id or existing_order.get("assigned_sales_id") or "",
                         "assigned_sales_name": assigned_sales_name or existing_order.get("assigned_sales_name") or "",
@@ -502,8 +522,7 @@ class LiveCommerceService:
                         "updated_at": now,
                     }}
                 )
-                order_doc = self._clean(await self.db.orders.find_one({"id": existing_order.get("id")}))
-                order_id = existing_order.get("id")
+                order_doc = self._clean(await self.db.orders.find_one({"id": order_id}))
 
                 # Create vendor_orders if not already created
                 for idx, vid in enumerate(vendor_ids):
@@ -542,7 +561,7 @@ class LiveCommerceService:
                         "updated_at": now,
                     })
             else:
-                order_id = str(uuid4())
+                order_id = temp_order_id  # reuse pre-generated ID so stock reservations reference correct order
                 order_doc = {
                     "id": order_id,
                     "order_number": f"KON-ORD-{self._stamp()}",
