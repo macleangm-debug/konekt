@@ -105,6 +105,30 @@ async def create_public_request(db, payload: dict, user: Optional[dict] = None) 
     await db.requests.insert_one(doc)
     logger.info("[public_intake] created request %s type=%s email=%s", doc["request_number"], request_type, guest_email)
 
+    # --- Ownership Routing: resolve sales owner ---
+    try:
+        from services.ownership_routing_service import resolve_owner
+        resolution = await resolve_owner(
+            db,
+            email=guest_email or (user.get("email", "") if user else ""),
+            phone=phone or "",
+            company_name=doc.get("company_name", ""),
+            contact_name=guest_name or (user.get("full_name", "") if user else ""),
+            created_by="public_request_intake",
+        )
+        if resolution.get("owner_sales_id"):
+            await db.requests.update_one(
+                {"id": request_id},
+                {"$set": {
+                    "assigned_sales_owner_id": resolution["owner_sales_id"],
+                    "sales_owner_id": resolution["owner_sales_id"],
+                    "ownership_company_id": resolution.get("company_id", ""),
+                    "ownership_resolution": resolution.get("resolution_type", ""),
+                }}
+            )
+    except Exception:
+        pass  # Graceful fallback — don't block request creation
+
     # Auto-link or create invited account for guests
     invite_info = None
     if not customer_user_id and guest_email:

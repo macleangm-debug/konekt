@@ -2415,6 +2415,9 @@ app.include_router(vendor_performance_router)
 from performance_governance_routes import router as perf_governance_router
 app.include_router(perf_governance_router)
 
+from client_ownership_routes import router as client_ownership_router
+app.include_router(client_ownership_router)
+
 app.include_router(stripe_payment_router)
 app.include_router(stripe_webhook_router)
 

@@ -397,6 +397,7 @@ import VendorListPage from "@/pages/admin/VendorListPage";
 import MarginAdminPage from "@/pages/admin/MarginAdminPage";
 import SalesPerformancePage from "@/pages/admin/SalesPerformancePage";
 import PerformanceGovernancePage from "@/pages/admin/PerformanceGovernancePage";
+import ClientReassignmentPage from "@/pages/admin/ClientReassignmentPage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -589,6 +590,7 @@ function App() {
           <Route path="margins" element={<MarginAdminPage />} />
           <Route path="sales-performance" element={<SalesPerformancePage />} />
           <Route path="performance-governance" element={<PerformanceGovernancePage />} />
+          <Route path="client-reassignment" element={<ClientReassignmentPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />

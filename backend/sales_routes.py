@@ -139,7 +139,7 @@ def create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
         limit: int = 20,
         user: dict = Depends(get_admin_user)
     ):
-        """Get all leads with filtering"""
+        """Get leads. Sales users only see owned leads; admin sees all."""
         query = {}
         if status:
             query["status"] = status
@@ -153,6 +153,10 @@ def create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
                 {"email": {"$regex": search, "$options": "i"}},
                 {"company": {"$regex": search, "$options": "i"}}
             ]
+
+        # Sales visibility enforcement: non-admin sees only assigned leads
+        if user.get("role") not in ("admin",):
+            query["assigned_to"] = user.get("id", "")
         
         total = await db.leads.count_documents(query)
         leads = await db.leads.find(query, {"_id": 0}).sort("created_at", -1).skip((page-1)*limit).limit(limit).to_list(limit)
@@ -169,8 +173,32 @@ def create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
         data: LeadCreateRequest,
         user: dict = Depends(get_admin_user)
     ):
-        """Create a new lead"""
+        """Create a new lead with ownership routing."""
         lead_id = str(uuid.uuid4())
+
+        # --- Ownership Routing ---
+        owner_id = data.assigned_to
+        ownership_data = {}
+        if not owner_id:
+            try:
+                from services.ownership_routing_service import resolve_owner
+                resolution = await resolve_owner(
+                    db,
+                    email=data.email or "",
+                    phone=data.phone or "",
+                    company_name=data.company or "",
+                    contact_name=data.name or "",
+                    created_by=user["id"],
+                )
+                owner_id = resolution.get("owner_sales_id", "")
+                ownership_data = {
+                    "ownership_company_id": resolution.get("company_id", ""),
+                    "ownership_individual_id": resolution.get("individual_id", ""),
+                    "ownership_resolution": resolution.get("resolution_type", ""),
+                }
+            except Exception:
+                pass
+
         lead_doc = {
             "id": lead_id,
             "name": data.name,
@@ -182,20 +210,21 @@ def create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
             "status": "new",
             "estimated_value": data.estimated_value,
             "notes": data.notes,
-            "assigned_to": data.assigned_to,
+            "assigned_to": owner_id,
             "tags": data.tags,
             "last_contact": None,
             "next_follow_up": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-            "created_by": user["id"]
+            "created_by": user["id"],
+            **ownership_data,
         }
         await db.leads.insert_one(lead_doc)
         
         # Update sales team member stats if assigned
-        if data.assigned_to:
+        if owner_id:
             await db.sales_team.update_one(
-                {"user_id": data.assigned_to},
+                {"user_id": owner_id},
                 {"$inc": {"total_leads": 1, "current_active_leads": 1}}
             )
         

@@ -1,0 +1,129 @@
+{
+  "summary": "Phase 4 Client Ownership + Routing Control testing complete. All 17 backend tests passed (100%). Frontend Client Reassignment page fully functional with stats, search, reassignment panel, and audit log.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_client_ownership_routing_v168.py",
+    "/app/test_reports/pytest/pytest_results_client_ownership_v168.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_client_ownership_routing_v168.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Sales: neema.sales@konekt.demo / Sales123!, Customer: demo.customer@konekt.com / Demo123!",
+  "seed_data_creation": "Test companies, contacts, and individuals created with TEST_ prefix during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 4 Client Ownership complete. Companies stored in 'companies' collection with normalized_name and domain. Contacts in 'contacts' collection linked via company_id. Individuals in 'individual_clients' collection with owner_sales_id. Reassignment audit in 'reassignment_audit_log' collection. Ownership routing service at services/ownership_routing_service.py resolves owner via: exact company_id > contact email > individual email > phone > domain match > company name match > auto-assign. Sales visibility filter uses $or query on sales_owner_id and assigned_sales_owner_id fields.",
+  "features_tested": {
+    "1_company_crud": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/companies",
+      "details": "Creates company with normalized_name (strips Ltd/Inc/Corp suffixes) and lowercase domain. Returns id, name, normalized_name, domain, owner_sales_id, client_type='company'."
+    },
+    "2_contact_crud": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/contacts",
+      "details": "Creates contact linked to company_id. Email stored lowercase. Returns id, name, email, phone, company_id, position, client_type='contact'."
+    },
+    "3_individual_crud": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/individuals",
+      "details": "Creates individual client with owner_sales_id. Returns id, name, email, phone, owner_sales_id, client_type='individual'."
+    },
+    "4_unified_search": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/client-ownership/search?q=acme",
+      "details": "Searches across companies, contacts, and individuals. Returns results with type, id, name, detail, owner_sales_id. Admin sees all; sales sees only owned."
+    },
+    "5_ownership_stats": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/client-ownership/stats",
+      "details": "Returns total_companies, total_contacts, total_individuals, total_reassignments, unowned_companies, unowned_individuals."
+    },
+    "6_admin_reassignment": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/client-ownership/reassign",
+      "details": "Changes owner_sales_id on company or individual. Creates audit entry with entity_type, entity_id, entity_name, previous_owner_id/name, new_owner_id/name, reason, changed_by_id/name, created_at."
+    },
+    "7_reassignment_audit_log": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/client-ownership/reassignment-log",
+      "details": "Returns audit history entries sorted by created_at descending. Each entry has entity_type, entity_name, previous_owner_name, new_owner_name, reason, changed_by_name, created_at."
+    },
+    "8_ownership_routing_existing_company": {
+      "status": "PASS",
+      "details": "CRM lead creation with email from known company domain resolves to existing company owner via domain match. Sets assigned_sales_owner_id, ownership_company_id, ownership_resolution='existing_company'."
+    },
+    "9_ownership_routing_auto_assign": {
+      "status": "PASS",
+      "details": "CRM lead creation with unknown contact auto-assigns new owner via sales_assignment_service scoring. Creates new company or individual entity. Sets ownership_resolution='new_company' or 'new_individual'."
+    },
+    "10_request_ownership_routing": {
+      "status": "PASS",
+      "endpoint": "POST /api/requests",
+      "details": "Request creation resolves owner via ownership_routing_service. Sets sales_owner_id, ownership_company_id, ownership_resolution on request document."
+    },
+    "11_sales_visibility_leads": {
+      "status": "PASS",
+      "endpoint": "GET /api/sales/leads",
+      "details": "Sales user sees only leads where assigned_to matches their user_id. Admin sees all leads."
+    },
+    "12_sales_visibility_requests": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/requests",
+      "details": "Sales user sees only requests where sales_owner_id or assigned_sales_owner_id matches their user_id. Admin sees all requests."
+    },
+    "13_customer_access_denied": {
+      "status": "PASS",
+      "details": "Customer role gets 403 Forbidden on all /api/admin/client-ownership/* endpoints."
+    },
+    "14_admin_reassignment_page_ui": {
+      "status": "PASS",
+      "route": "/admin/client-reassignment",
+      "details": "Page loads with stats row (6 stat cards), search panel with input and results, reassignment panel with selected entity details/new owner dropdown/reason textarea/confirm button, audit log table with entity/previous/new/reason/by/date columns."
+    },
+    "15_sidebar_link": {
+      "status": "PASS",
+      "component": "AdminLayout sidebar",
+      "details": "Client Ownership link visible in sidebar under Settings section."
+    },
+    "16_regression_crm_lead": {
+      "status": "PASS",
+      "endpoint": "POST /api/admin/crm/leads",
+      "details": "CRM lead creation still works with ownership routing integration."
+    },
+    "17_regression_request": {
+      "status": "PASS",
+      "endpoint": "POST /api/requests",
+      "details": "Request creation still works with ownership routing integration."
+    },
+    "18_regression_sales_performance": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/sales-performance/team",
+      "details": "Sales performance endpoint still works."
+    },
+    "19_regression_vendor_performance": {
+      "status": "PASS",
+      "endpoint": "GET /api/admin/vendor-performance/team",
+      "details": "Vendor performance endpoint still works."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "ownership_data_note": "Test data created: Companies with TEST_ prefix, contacts linked to companies, individuals with owner_sales_id. Existing data: Acme Tanzania Ltd (domain: acme.co.tz, owner: sales-demo-002 after reassignment), Mary Kamara contact (mary@acme.co.tz). Sales user IDs: sales-demo-001 (Janeth Msuya), sales-demo-002 (Brian Kweka), sales-demo-003 (Neema Mallya)."
+}

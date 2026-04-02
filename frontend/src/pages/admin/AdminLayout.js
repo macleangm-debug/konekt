@@ -89,6 +89,7 @@ const navItems = [
   { type: 'divider', label: 'Settings', moduleKey: 'settings' },
   { path: '/admin/sales-performance', label: 'Sales Performance', icon: TrendingUp, moduleKey: 'settings' },
   { path: '/admin/performance-governance', label: 'Performance Settings', icon: Settings, moduleKey: 'settings' },
+  { path: '/admin/client-reassignment', label: 'Client Ownership', icon: Users, moduleKey: 'settings' },
   { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
   { path: '/admin/documents', label: 'Documents', icon: FileText, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },

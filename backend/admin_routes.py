@@ -99,7 +99,8 @@ from crm_timeline_service import add_lead_timeline_event
 
 @router.post("/crm/leads")
 async def create_lead(payload: CRMLeadCreate):
-    """Create a new CRM lead with scoring and timeline"""
+    """Create a new CRM lead with scoring, timeline, and ownership routing."""
+    from services.ownership_routing_service import resolve_owner
     now = datetime.now(timezone.utc)
     
     # Get CRM settings for default follow-up days
@@ -119,6 +120,24 @@ async def create_lead(payload: CRMLeadCreate):
     # Set default stage if not provided
     if not doc.get("stage"):
         doc["stage"] = doc.get("status", "new_lead")
+    
+    # --- Ownership Routing ---
+    # If not manually assigned, resolve owner through centralized routing
+    if not doc.get("assigned_to"):
+        resolution = await resolve_owner(
+            db,
+            email=doc.get("email", ""),
+            phone=doc.get("phone", ""),
+            company_name=doc.get("company_name", ""),
+            contact_name=doc.get("contact_name", ""),
+            created_by="crm_lead_creation",
+        )
+        doc["assigned_sales_owner_id"] = resolution.get("owner_sales_id", "")
+        doc["ownership_company_id"] = resolution.get("company_id", "")
+        doc["ownership_individual_id"] = resolution.get("individual_id", "")
+        doc["ownership_resolution"] = resolution.get("resolution_type", "")
+    else:
+        doc["assigned_sales_owner_id"] = doc.get("assigned_to", "")
     
     # Compute lead score
     doc["lead_score"] = compute_lead_score(doc)

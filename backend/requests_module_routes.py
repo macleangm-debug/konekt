@@ -104,6 +104,32 @@ async def create_request(payload: dict, request: Request, user: dict = Depends(_
         "created_at": now,
         "updated_at": now,
     }
+
+    # --- Ownership Routing: resolve sales owner before saving ---
+    try:
+        from services.ownership_routing_service import resolve_owner
+        contact_email = guest_email or ""
+        if user:
+            contact_email = user.get("email", "")
+        contact_name = guest_name or ""
+        if user:
+            contact_name = user.get("full_name") or user.get("name", "")
+        company_name = payload.get("company_name", "") or payload.get("details", {}).get("company_name", "")
+
+        resolution = await resolve_owner(
+            db,
+            email=contact_email,
+            phone=payload.get("phone", ""),
+            company_name=company_name,
+            contact_name=contact_name,
+            created_by="request_creation",
+        )
+        doc["sales_owner_id"] = resolution.get("owner_sales_id") or None
+        doc["ownership_company_id"] = resolution.get("company_id", "")
+        doc["ownership_resolution"] = resolution.get("resolution_type", "")
+    except Exception:
+        pass  # Graceful fallback — don't block request creation
+
     await db.requests.insert_one(doc)
 
     # If guest, also create invited account
@@ -159,13 +185,20 @@ async def list_requests(
     request_type: Optional[str] = None,
     status: Optional[str] = None,
 ):
-    """List all requests for sales/admin."""
+    """List requests. Sales users only see owned requests; admin sees all."""
     db = request.app.mongodb
     query = {}
     if request_type:
         query["request_type"] = request_type
     if status:
         query["status"] = status
+
+    # Sales visibility enforcement: non-admin sees only owned requests
+    if user.get("role") not in ("admin",):
+        query["$or"] = [
+            {"sales_owner_id": user.get("id", "")},
+            {"assigned_sales_owner_id": user.get("id", "")},
+        ]
 
     docs = await db.requests.find(query).sort("created_at", -1).to_list(500)
     results = []

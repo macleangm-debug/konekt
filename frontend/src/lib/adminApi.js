@@ -216,6 +216,17 @@ export const adminApi = {
   getPerformanceGovernance: () => api.get("/api/admin/performance-governance/settings"),
   updatePerformanceGovernance: (data) => api.put("/api/admin/performance-governance/settings", data),
   getPerformanceGovernanceAudit: () => api.get("/api/admin/performance-governance/audit"),
+
+  // Client Ownership
+  getClientOwnershipStats: () => api.get("/api/admin/client-ownership/stats"),
+  searchClients: (q) => api.get(`/api/admin/client-ownership/search?q=${encodeURIComponent(q)}`),
+  getCompanies: (search = "") => api.get(`/api/admin/client-ownership/companies?search=${encodeURIComponent(search)}`),
+  getCompanyDetail: (id) => api.get(`/api/admin/client-ownership/companies/${id}`),
+  createCompany: (data) => api.post("/api/admin/client-ownership/companies", data),
+  getIndividuals: (search = "") => api.get(`/api/admin/client-ownership/individuals?search=${encodeURIComponent(search)}`),
+  createIndividual: (data) => api.post("/api/admin/client-ownership/individuals", data),
+  reassignClient: (data) => api.post("/api/admin/client-ownership/reassign", data),
+  getReassignmentLog: () => api.get("/api/admin/client-ownership/reassignment-log"),
 };
 
 export default adminApi;
