@@ -6,7 +6,7 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ## Core Architecture
 - **Frontend**: React (CRA), Tailwind CSS, Shadcn/UI
 - **Backend**: FastAPI (Python), MongoDB (Motor async driver)
-- **Auth**: JWT-based with role-based access + session validation
+- **Auth**: JWT-based with role-based access
 - **Payments**: Stripe sandbox integration
 
 ---
@@ -14,89 +14,83 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 ## Completed Work
 
 ### Phases 1-16 — Core through Operations Intelligence
-- Full platform: Login, Dashboard, Orders, Quotes, Invoices, Customers, Products, CRM, Marketplace
-- Vendor Margin Engine, StandardDrawerShell, Notification Registry, KPI Cards
-- Stripe Sandbox, Business Settings, Inline Quote Editor, Commercial Workflow
+Full platform with CRM, Orders, Quotes, Invoices, Vendor Margin Engine, Notification Registry, KPI Cards, Stripe, Business Settings, Commercial Workflow.
 
 ### Phase 17 — Sales Performance & Assignment (01 Apr 2026)
-- 5-metric scoring engine, capability CRUD, ownership-aware auto-assignment
-- SalesPerformancePage with team view, PerformanceCell, PerformanceBreakdownDrawer
+5-metric scoring engine, capability CRUD, ownership-aware auto-assignment, SalesPerformancePage.
 
 ### Phase 18 — Vendor Performance & Assignment (02 Apr 2026)
-- 5-metric vendor scoring from real vendor_orders data
-- Admin vendor list Performance column + breakdown drawer
-- Vendor self-view page (My Performance) with KPI cards + improvement tips
+5-metric vendor scoring, admin vendor list Performance column, vendor self-view page.
 
 ### Phase 19 — Unified Performance Governance (02 Apr 2026)
-- Centralized settings CRUD for weights, thresholds, min sample size
-- Both scoring services read from `performance_governance` collection
-- Admin config page with dual-pane weight sliders + audit log
+Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin config page.
 
-### Phase 20 — Client Ownership + Routing Control (02 Apr 2026) ✅ COMPLETE
-**Data Model (Step 1):**
-- `companies` (id, name, normalized_name, domain, owner_sales_id, industry, client_type, status)
-- `contacts` (id, name, email, phone, company_id, position, client_type, status)
-- `individual_clients` (id, name, email, phone, owner_sales_id, client_type, status)
+### Phase 20 — Client Ownership + Routing Control (02 Apr 2026)
+- Companies/Contacts/Individual Clients data model
+- Centralized `resolve_owner()` routing engine
+- Routing integration into CRM leads, requests, public requests, sales leads
+- Sales visibility enforcement
+- Admin reassignment tool with audit logging
+- Duplicate prevention (domain, name normalization, email/phone)
+- Customer-facing UI leak prevention
+- Performance integration with portfolio data
 
-**Ownership Routing Engine (Step 2):**
-- Centralized `resolve_owner()` — mandatory service for all inbound creation
-- Resolution priority: exact company_id → contact email → individual email → phone → domain match → company name match → auto-assign
-- Name normalization (strips 16 suffixes), free email domain exclusion (14 domains)
+### Phase 21 — Portfolio + Reactivation Engine (02 Apr 2026)
+**Portfolio Dashboard (`/staff/portfolio`):**
+- KPI cards: Total Clients, Active, At Risk, Inactive, Revenue, Overdue Tasks
+- Client list with classification filters (All/Active/At Risk/Inactive/Lost)
+- Action buttons per client (Quote, Email, Call)
+- Client activity tracking from orders, quotes, requests
 
-**Routing Integration (Step 3):**
-- CRM lead creation, request creation, public request intake, sales lead creation → all call resolve_owner()
+**Reactivation Engine:**
+- Activity-based classification: Active (<=60d), At Risk (60-89d), Inactive (90-179d), Lost (180+d)
+- Auto-generated reactivation tasks for at-risk/inactive clients
+- Task outcomes: Reactivated, No Response, Not Interested, Lost
+- Suggested actions based on classification
+- Idempotent task generation (no duplicates)
 
-**Sales Visibility Enforcement (Step 4):**
-- Leads: non-admin sees only assigned_to=self
-- Requests: non-admin sees only owned requests
+**Admin Portfolio Overview (`/admin/portfolio-overview`):**
+- Portfolio by owner: companies, individuals, total clients
+- Pending tasks, completed tasks, reactivation rate per owner
+- Summary stats across all owners
 
-**Admin Reassignment Tool (Step 5):**
-- `/admin/client-reassignment` with search, current owner display, new owner select, reason input
-- Full audit logging, reassignment history table, stats cards
-
-**Edge Cases (Step 6):**
-- Duplicate company prevention by domain AND normalized name
-- Duplicate individual prevention by email AND phone
-- Pre-creation `check-duplicate` endpoint
-- Contact auto-linking to existing company (no duplicate company creation)
-
-**UI Behavior Enforcement (Step 7):**
-- Customer order response strips: assigned_sales_owner_id, ownership_company_id, ownership_individual_id, ownership_resolution, sales_owner_id, assigned_sales_id
-- Customer 403 on all client-ownership endpoints
-- Vendor 403 on admin endpoints
-
-**Performance Integration (Step 8):**
-- Sales performance now includes portfolio data (owned_companies, owned_individuals)
-- Performance tied to owned portfolio via ownership_routing
+**API Endpoints:**
+- `GET /api/sales/portfolio` — sales own portfolio
+- `GET /api/sales/portfolio/tasks` — own reactivation tasks
+- `POST /api/sales/portfolio/generate-tasks` — generate tasks
+- `PUT /api/sales/portfolio/tasks/{taskId}` — update outcome
+- `GET /api/admin/portfolio/overview` — all owners overview
+- `GET /api/admin/portfolio/{salesId}` — specific owner portfolio
+- `POST /api/admin/portfolio/{salesId}/generate-tasks` — admin generate
 
 ---
 
 ## Key Technical Concepts
-- **Ownership Continuity Gate**: Existing entity → keep owner. Only auto-assign for new entities.
-- **Mandatory Routing Service**: ALL inbound creation paths must call resolve_owner(). No bypass.
-- **Role-Safe Visibility**: Sales see own data only. Admin sees all. Customer sees zero internal data.
-- **Performance Governance**: Single collection drives weights/thresholds for all scoring.
-- **Duplicate Prevention**: Domain match, name normalization, email/phone matching before creation.
+- **Ownership Continuity**: Existing client → keep owner. Only auto-assign for new entities.
+- **Mandatory Routing**: ALL inbound creation paths call resolve_owner(). No bypass.
+- **Role-Safe Visibility**: Sales see own data. Admin sees all. Customer sees zero internal data.
+- **Reactivation Buckets**: Activity-based classification drives automated task generation.
+- **Duplicate Prevention**: Domain, normalized name, email/phone matching before creation.
 
 ## Backlog
 
 ### P1 — Upcoming
-- Phase 5: Portfolio + Reactivation Engine (user to define scope)
 - End-to-end Stripe test with real test cards
 - Statement email delivery via Resend (when keys available)
+- Territory scaling and enterprise sales workflows
 
 ### P2 — Future
 - Twilio WhatsApp notifications (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
-- Territory scaling, enterprise sales workflows
 
 ---
 
 ## Test History
-- Iteration 165: Phase 1 Sales Performance — 100%
-- Iteration 166: Phase 2 Vendor Performance — 100%
-- Iteration 167: Phase 3 Unified Governance — 100%
-- Iteration 168: Phase 4 Steps 1-5 — 100% (17/17)
-- Iteration 169: Phase 4 Steps 6-8 — 100% (22/22)
+- Iteration 165: Sales Performance — 100%
+- Iteration 166: Vendor Performance — 100%
+- Iteration 167: Unified Governance — 100%
+- Iteration 168: Client Ownership Steps 1-5 — 100% (17/17)
+- Iteration 169: Client Ownership Steps 6-8 — 100% (22/22)
+- Iteration 170: Portfolio + Reactivation Engine — 100% (23/23)
