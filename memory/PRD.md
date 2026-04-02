@@ -40,46 +40,45 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Statement Email Send (MOCKED - waiting for Resend keys)
 - Drawer standardization (navy-tinted blur overlay)
 
-### Phase 17 — Performance & Governance Pack: Phase 1 (01 Apr 2026)
-**Sales Performance & Assignment**
-- `sales_performance_service.py` — 5-metric scoring (Customer Rating 30%, Conversion Rate 25%, Revenue 20%, Response Speed 15%, Follow-up Compliance 10%)
+### Phase 17 — Performance Pack: Phase 1 — Sales Performance (01 Apr 2026)
+- `sales_performance_service.py` — 5-metric scoring (Customer Rating, Conversion, Revenue, Response Speed, Follow-up)
 - `sales_capability_service.py` — lanes, categories, workload limits CRUD
 - `sales_assignment_service.py` — ownership continuity gate + weighted scored assignment
 - `SalesPerformancePage.jsx` — admin team view with stat cards, table, search, zone filtering
 - `PerformanceCell.jsx` + `PerformanceBreakdownDrawer.jsx` — shared clickable cell + breakdown drawer
 - Role-safe: sales see only own score (no tip field in breakdown)
 
-### Phase 18 — Performance & Governance Pack: Phase 2 (02 Apr 2026)
-**Vendor Performance & Assignment Intelligence**
-- `vendor_performance_service.py` — 5-metric scoring from real vendor_orders data:
-  - Timeliness 25% (ETA vs actual completion)
-  - Quality 25% (completion rate, issue/return rate)
-  - Responsiveness 20% (assignment to first action)
-  - Internal Rating 20% (anonymous reviewer scores)
-  - Process Compliance 10% (ETA set, notes, proper status flow)
-- `vendor_performance_routes.py`:
-  - `GET /api/admin/vendor-performance/team` — admin sees all vendor scores
-  - `GET /api/admin/vendor-performance/team/{vendorId}` — admin full breakdown
-  - `GET /api/vendor/my-performance` — vendor self-view (role-safe)
-- Admin Vendor List: Performance column added (clickable, opens breakdown drawer)
-- `VendorMyPerformancePage.jsx` — vendor self-view with score card, breakdown bars, improvement tips, last updated
-- Sidebar: "My Performance" link added to vendor navigation
-- **Strict visibility**: Customer cannot access vendor performance (403/401 enforced)
+### Phase 18 — Performance Pack: Phase 2 — Vendor Performance (02 Apr 2026)
+- `vendor_performance_service.py` — 5-metric scoring: Timeliness (25%), Quality (25%), Responsiveness (20%), Internal Rating (20%), Process Compliance (10%)
+- `vendor_performance_routes.py` — admin team/detail + vendor self-view
+- Admin Vendor List: Performance column (clickable → breakdown drawer)
+- `VendorMyPerformancePage.jsx` — vendor self-view (standard partner shell layout with KPI stat cards)
+- **Strict visibility**: Customer cannot access vendor performance (403/401)
+
+### Phase 19 — Performance Pack: Phase 3 — Unified Governance (02 Apr 2026)
+- `performance_governance_service.py` — centralized CRUD for weights, thresholds, min sample size
+- `performance_governance_routes.py` — admin-only GET/PUT/audit endpoints
+- Both sales and vendor scoring now read from `performance_governance` collection
+- `PerformanceGovernancePage.jsx` — admin config page with dual-pane (Sales/Vendor) weight sliders, threshold inputs, min sample
+- Audit log with change history tracking
+- Save/Reset/last saved timestamp + admin name
+- Sidebar: "Performance Settings" link in admin Settings section
+
+**Layout Standardization Rule**: All pages accessible from a sidebar must inherit the same shell for that role — no custom content frames, no shifted widths or card alignments.
 
 ---
 
 ## Key Technical Concepts
-- **Ownership Continuity Gate**: If a client/company already has an assigned owner, new requests route to that owner. Only score/assign when no owner exists.
-- **Role-Safe Visibility**: Sales see only own score; Vendors see only own score; Admin sees all. Raw rater identity is anonymous.
-- **Centralized Notification Registry**: Single `/api/admin/notifications/summary` endpoint for all sidebar badges.
-- **Business Settings Single Source of Truth**: `business_settings` collection + `/public` endpoint for document generation
-- **Margin Hierarchy**: product > subcategory > category > group > global default
-- **Vendor Privacy**: Customers never see vendor scores, names, or internal ratings.
+- **Ownership Continuity Gate**: Preserves existing client/company sales owner for new requests
+- **Role-Safe Visibility**: Sales see only own score; Vendors see only own; Admin sees all
+- **Centralized Notification Registry**: Single endpoint for all sidebar badges
+- **Performance Governance**: Single `performance_governance` collection drives weights/thresholds for all scoring
+- **Vendor Privacy**: Customers never see vendor scores/names/internal ratings
+- **Layout Shell Rule**: Every sidebar page inherits role-specific shell (admin/partner/sales/customer)
 
 ## Backlog
 
 ### P0 — Next
-- Phase 3: Unified Performance Governance (centralized settings CRUD for thresholds, sample size, recency weighting, trend logic)
 - Phase 4: Client Ownership + Routing Control (full ownership model, individual vs corporate, admin reassignment audit)
 
 ### P1 — Upcoming
@@ -101,3 +100,4 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 - Iteration 164: Pack 3 Operations Intelligence — 100% (20/20 backend + all frontend)
 - Iteration 165: Phase 1 Sales Performance & Assignment — 100% (18/18 backend + all frontend)
 - Iteration 166: Phase 2 Vendor Performance & Assignment — 100% (10/10 backend + all frontend)
+- Iteration 167: Phase 3 Unified Governance + Layout Fix — 100% (13/13 backend + all frontend)
