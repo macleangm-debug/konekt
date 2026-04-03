@@ -98,21 +98,44 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - `/partner/bulk-import` — Vendor Bulk Import Page (3-step flow)
 - `/admin/vendor-supply-review` — Admin Vendor Supply Review Page
 
+### Phase 26 — Marketplace Publish + Admin Config Wiring + Sidebar Alignment (03 Apr 2026)
+**Approved Product → Marketplace Publishing:**
+- When admin approves a vendor submission, a canonical product record is created/updated in `products` collection
+- Idempotent: re-approval updates existing product, no duplicate marketplace entries
+- Canonical product visible in: marketplace search, account marketplace, product detail pages
+- Product detail API hides vendor identity (vendor_id, vendor_name, vendor_product_code stripped)
+- Product detail page with breadcrumb navigation (Marketplace > Category > Product)
+- ProductCardCompact updated with "Detail" link to standalone product detail page
+- Support for `primary_image` field alongside existing `image_url`
+
+**Business Settings Wiring:**
+- `business_settings_resolver_service.py` — provides identity/bank/currency/contact/footer blocks
+- Statement of Account print header reads company name, TIN, BRN, address from business settings
+- Business settings already consumed by: Quote Preview, Invoice Preview, Statement Print
+
+**Sidebar Alignment:**
+- Admin sidebar: "Supply Review" added under Catalog section
+- Customer sidebar: "Services" link added between Marketplace and My Orders
+- Customer sidebar: "My Statement" icon changed from Dashboard to ClipboardList
+
+**New API Endpoint:**
+- `GET /api/marketplace/products/{product_id}` — Public product detail (vendor identity hidden)
+
 ---
 
 ## Key Technical Concepts
+- **Canonical Products:** Approved vendor submissions materialize into the `products` collection — the single source of truth for marketplace, cart, and order flows.
 - **Vendor Role Policy**: product/promo vendors → marketplace access. Service vendors → task-only.
 - **Country-Aware Defaults**: Phone prefix, currency, tax labels adapt to selected market.
 - **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock.
 - **Stored Reasoning**: Assignment decisions persist engine/candidates/reason.
 - **Company-Level Dormancy**: Corporate dormancy evaluated by rolling up all contacts' activity.
 - **Invite Token Flow**: MOCKED email → vendor creates password via activation URL.
+- **Business Settings Resolver**: Single source of truth for company identity across quotes, invoices, statements, footer/contact blocks.
 
 ## Backlog
 
 ### P1 — Upcoming
-- Flow approved products/variants into public marketplace and in-account product detail pages
-- Admin data entry configuration (system logo, TIN, BRN, bank account details)
 - End-to-end Stripe test with real test cards
 
 ### P2 — Future
@@ -131,3 +154,4 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Iteration 173: Vendor Onboarding + Catalog Workspace — 100% (20/20 + UI)
 - Iteration 174: Product Upload, Variants & Bulk Import — 92% (23/25 + frontend 100%)
 - Iteration 174b: Added Download CSV Template + Download Error Rows to Bulk Import (vendor + admin)
+- Iteration 175: Marketplace Publish + Admin Config + Sidebar Alignment — 100% (19/19 backend + frontend 100%)
