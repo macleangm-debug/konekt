@@ -402,6 +402,8 @@ import ClientReassignmentPage from "@/pages/admin/ClientReassignmentPage";
 import AdminPortfolioOverviewPage from "@/pages/admin/AdminPortfolioOverviewPage";
 import DormantClientAlertsPage from "@/pages/admin/DormantClientAlertsPage";
 import AssignmentDecisionHistoryPage from "@/pages/admin/AssignmentDecisionHistoryPage";
+import VendorOnboardingPage from "@/pages/admin/VendorOnboardingPage";
+import UnifiedCatalogWorkspacePage from "@/pages/admin/UnifiedCatalogWorkspacePage";
 
 // Staff pages
 import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
@@ -598,6 +600,8 @@ function App() {
           <Route path="portfolio-overview" element={<AdminPortfolioOverviewPage />} />
           <Route path="dormant-clients" element={<DormantClientAlertsPage />} />
           <Route path="assignment-decisions" element={<AssignmentDecisionHistoryPage />} />
+          <Route path="vendor-onboarding" element={<VendorOnboardingPage />} />
+          <Route path="catalog" element={<UnifiedCatalogWorkspacePage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />

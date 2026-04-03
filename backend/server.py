@@ -2427,6 +2427,15 @@ app.include_router(assignment_preview_router)
 from dormant_client_routes import router as dormant_client_router
 app.include_router(dormant_client_router)
 
+from vendor_onboarding_routes import router as vendor_onboarding_router
+app.include_router(vendor_onboarding_router)
+
+from vendor_invite_routes import router as vendor_invite_router
+app.include_router(vendor_invite_router)
+
+from catalog_workspace_routes import router as catalog_workspace_router
+app.include_router(catalog_workspace_router)
+
 app.include_router(stripe_payment_router)
 app.include_router(stripe_webhook_router)
 
