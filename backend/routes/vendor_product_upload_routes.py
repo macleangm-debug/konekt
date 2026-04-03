@@ -124,6 +124,12 @@ async def upload_product(payload: ProductUploadIn, authorization: Optional[str] 
     if not can_vendor_upload_products(vendor_profile):
         raise HTTPException(403, "Service-only vendors cannot upload products")
 
+    # Validate required fields
+    if not payload.product.product_name or not payload.product.product_name.strip():
+        raise HTTPException(400, "Product name is required")
+    if payload.supply.base_price_vat_inclusive <= 0:
+        raise HTTPException(400, "Base price must be greater than 0")
+
     # Resolve taxonomy names for display
     product_dict = payload.product.dict()
 

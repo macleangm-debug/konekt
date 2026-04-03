@@ -37,7 +37,7 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Invite token flow: generate → validate → activate (email MOCKED until Resend configured)
 
 **Unified Catalog Workspace:**
-- Tabbed overview: Products, Services, Taxonomy, Vendor Supply
+- Tabbed overview: Products, Services, Taxonomy, Vendor Supply, Imports
 - Catalog stats endpoint with aggregated counts
 
 **New API Endpoints:**
@@ -54,6 +54,50 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - `/admin/vendor-onboarding` — Multi-step vendor onboarding
 - `/admin/catalog` — Unified catalog workspace
 
+### Phase 25 — Product Upload, Variants & Bulk Import (03 Apr 2026)
+**Taxonomy-driven Product Upload:**
+- Single product upload with structural separation: product definition + vendor supply + variants
+- All submissions land as `pending_review` — no live catalog items until admin approval
+- Backend capability enforcement: service-only vendors blocked from product uploads
+- Taxonomy filtering by vendor capabilities (group_ids/category_ids from vendor_capabilities)
+- Image URL validation (max 10, primary image rule, valid URL format)
+
+**Variant System:**
+- Size/Color/Model dimensions per variant
+- Per-variant SKU, quantity, optional price override, optional image URL
+
+**2-Step Bulk Import (CSV/XLS/XLSX):**
+- Step 1 (validate): Parse file → validate taxonomy → store validation session server-side
+- Step 2 (confirm): Reference stored session → persist only valid rows as pending_review
+- Prevents mismatch between preview and actual import
+- Error highlighting per row with taxonomy mismatch detection
+
+**Admin Vendor Supply Review:**
+- View all vendor product submissions (pending/approved/rejected filter)
+- Expand to see product details + variants + supply data
+- Approve/Reject/Request Changes with notes
+- View vendor import jobs with status tracking
+
+**New API Endpoints:**
+- `POST /api/vendor/products/upload` — Single product submission
+- `GET /api/vendor/products/taxonomy` — Capability-filtered taxonomy
+- `GET /api/vendor/products/my-submissions` — Vendor's own submissions
+- `GET /api/vendor/products/my-submissions/{id}` — Specific submission
+- `POST /api/vendor/products/import/validate` — Bulk import step 1
+- `POST /api/vendor/products/import/{job_id}/confirm` — Bulk import step 2
+- `GET /api/vendor/products/import/jobs` — Import job history
+- `GET /api/vendor/products/import/jobs/{id}` — Import job detail
+- `GET /api/admin/vendor-supply/submissions` — Admin list submissions
+- `GET /api/admin/vendor-supply/submissions/{id}` — Admin get submission
+- `POST /api/admin/vendor-supply/submissions/{id}/review` — Admin approve/reject
+- `GET /api/admin/vendor-supply/import-jobs` — Admin list import jobs
+- `GET /api/admin/vendor-supply/import-jobs/{id}` — Admin import job detail
+
+**New Frontend Routes:**
+- `/partner/product-upload` — Vendor Product Upload Page (5 sections)
+- `/partner/bulk-import` — Vendor Bulk Import Page (3-step flow)
+- `/admin/vendor-supply-review` — Admin Vendor Supply Review Page
+
 ---
 
 ## Key Technical Concepts
@@ -67,10 +111,12 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 ## Backlog
 
 ### P1 — Upcoming
+- Flow approved products/variants into public marketplace and in-account product detail pages
+- Admin data entry configuration (system logo, TIN, BRN, bank account details)
 - End-to-end Stripe test with real test cards
-- Resend email integration for vendor invites (blocked on API key)
 
 ### P2 — Future
+- Resend email integration (blocked on API key)
 - Twilio WhatsApp notifications (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
@@ -83,3 +129,4 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Iteration 171: Stock-First Vendor Assignment Engine — 100% (22/22)
 - Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16)
 - Iteration 173: Vendor Onboarding + Catalog Workspace — 100% (20/20 + UI)
+- Iteration 174: Product Upload, Variants & Bulk Import — 92% (23/25 + frontend 100%)
