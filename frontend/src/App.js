@@ -552,7 +552,6 @@ function App() {
           <Route path="quotes/:id/edit" element={<QuoteEditorPage />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />
           <Route path="settings" element={<AdminSettings />} />
-          <Route path="settings/company" element={<CompanySettingsPage />} />
           <Route path="production" element={<ProductionQueuePage />} />
           <Route path="customers" element={<CustomersPageMerged />} />
           <Route path="customers/:id" element={<CustomerProfilePage />} />
@@ -581,7 +580,6 @@ function App() {
           <Route path="business-settings" element={<BusinessSettingsPage />} />
           <Route path="documents" element={<AdminDocumentsPage />} />
           <Route path="payment-settings" element={<PaymentSettingsPage />} />
-          <Route path="configuration" element={<AdminConfigurationHubPage />} />
           <Route path="crm-intelligence" element={<CrmIntelligencePage />} />
           <Route path="crm-settings" element={<CrmSettingsPage />} />
           <Route path="crm/leads/:leadId" element={<LeadDetailPage />} />
@@ -592,9 +590,12 @@ function App() {
           <Route path="goods-receiving" element={<GoodsReceivingPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />
-          <Route path="products-services" element={<AdminProductsServicesPage />} />
-          <Route path="catalog-taxonomy" element={<CatalogTaxonomyPage />} />
-          <Route path="vendor-capabilities" element={<VendorCapabilityAssignmentPage />} />
+          {/* Retired routes → redirect to canonical pages */}
+          <Route path="products-services" element={<Navigate to="/admin/catalog" replace />} />
+          <Route path="catalog-taxonomy" element={<Navigate to="/admin/catalog" replace />} />
+          <Route path="vendor-capabilities" element={<Navigate to="/admin/vendors" replace />} />
+          <Route path="settings/company" element={<Navigate to="/admin/business-settings" replace />} />
+          <Route path="configuration" element={<Navigate to="/admin/business-settings" replace />} />
           <Route path="vendors" element={<VendorListPage />} />
           <Route path="margins" element={<MarginAdminPage />} />
           <Route path="sales-performance" element={<SalesPerformancePage />} />

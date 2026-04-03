@@ -2246,8 +2246,7 @@ app.include_router(quote_pipeline_router)
 # Include admin operations router (CRM, Inventory, Invoices, Tasks, Quotes)
 app.include_router(admin_ops_router)
 
-# Include settings router
-app.include_router(settings_router)
+# Legacy settings_router deregistered — superseded by business_settings_router
 
 # Include quote routes (v2)
 app.include_router(quote_router)
@@ -2344,7 +2343,6 @@ app.include_router(upload_service_files_router)
 app.include_router(points_checkout_router)
 app.include_router(points_apply_router)
 app.include_router(launch_hardening_router)
-app.include_router(affiliate_admin_router)
 app.include_router(affiliate_dashboard_router)
 app.include_router(team_role_router)
 app.include_router(audit_router)
@@ -2593,10 +2591,6 @@ app.include_router(payment_timeline_router)
 from sales_intelligence_routes import router as sales_intelligence_router
 app.include_router(sales_intelligence_router)
 
-# Staff Performance (staff + supervisor dashboards)
-from staff_performance_routes import router as staff_performance_router
-app.include_router(staff_performance_router)
-
 # Commission + Margin Distribution Engine
 from commission_margin_engine_routes import router as commission_margin_engine_router
 app.include_router(commission_margin_engine_router)
@@ -2655,9 +2649,7 @@ app.include_router(affiliate_partner_manager_router)
 from vendor_partner_portal_routes import router as vendor_partner_portal_router
 app.include_router(vendor_partner_portal_router)
 
-# Admin Settings Hub
-from admin_settings_hub_routes import router as admin_settings_hub_router
-app.include_router(admin_settings_hub_router)
+# Legacy admin_settings_hub deregistered — superseded by business_settings_router
 
 # Smart Partner Ecosystem
 from smart_partner_ecosystem_routes import router as smart_partner_ecosystem_router
@@ -2781,9 +2773,7 @@ app.include_router(dashboard_metrics_router)
 from sales_rating_routes import router as sales_rating_router
 app.include_router(sales_rating_router)
 
-# Branding Settings Routes
-from branding_settings_routes import router as branding_settings_router
-app.include_router(branding_settings_router)
+# Legacy branding_settings deregistered — superseded by business_settings_router
 
 # Enterprise PDF Routes
 from enterprise_pdf_routes import router as enterprise_pdf_router
@@ -2826,8 +2816,7 @@ app.include_router(multi_request_router)
 from public_payment_info_routes import router as public_payment_info_router
 app.include_router(public_payment_info_router)
 
-from invoice_branding_routes import router as invoice_branding_router
-app.include_router(invoice_branding_router)
+# Legacy invoice_branding deregistered — superseded by business_settings_router
 
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)

@@ -1,0 +1,72 @@
+{
+  "summary": "Iteration 176: Phase 26 Cleanup & Canonicalization testing complete. 15/15 backend tests passed (100%). All frontend redirects and sidebar items verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase26_cleanup_v176.py",
+    "/app/test_reports/pytest/pytest_results_phase26_cleanup_v176.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_phase26_cleanup_v176.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (all redirects and sidebar items verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!, Vendor: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "No new seed data created",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 26 Cleanup & Canonicalization fully verified. Key findings: (1) Deregistered routes return 404: /api/admin/settings/company, /api/admin/branding-settings, /api/admin/settings-hub, (2) Canonical route /api/admin/business-settings returns 200, (3) /api/admin/business-settings/public returns company data without auth, (4) Frontend redirects work: /admin/products-services → /admin/catalog, /admin/catalog-taxonomy → /admin/catalog, /admin/vendor-capabilities → /admin/vendors, (5) Admin sidebar has NO forbidden items (Products & Services, Catalog Taxonomy, Vendor Capabilities), (6) Admin sidebar has all required items (Catalog Workspace, Supply Review, Vendors, Vendor Onboarding, Margins), (7) Customer sidebar has all canonical items (Dashboard, Marketplace, Services, My Orders, Quotes, Invoices, Recurring Plans, Referrals & Rewards, My Statement, My Account, Help), (8) Marketplace search returns approved products, (9) Product detail page at /account/marketplace/{id} works, (10) Vendor supply review at /admin/vendor-supply-review works.",
+  "features_tested": {
+    "deregistered_routes_return_404": {
+      "settings_company": "PASS - /api/admin/settings/company returns 404",
+      "branding_settings": "PASS - /api/admin/branding-settings returns 404",
+      "settings_hub": "PASS - /api/admin/settings-hub returns 404"
+    },
+    "canonical_routes_work": {
+      "business_settings": "PASS - /api/admin/business-settings returns 200",
+      "business_settings_public": "PASS - /api/admin/business-settings/public returns company data"
+    },
+    "frontend_redirects": {
+      "products_services_to_catalog": "PASS - /admin/products-services → /admin/catalog",
+      "catalog_taxonomy_to_catalog": "PASS - /admin/catalog-taxonomy → /admin/catalog",
+      "vendor_capabilities_to_vendors": "PASS - /admin/vendor-capabilities → /admin/vendors"
+    },
+    "admin_sidebar": {
+      "no_forbidden_items": "PASS - No Products & Services, Catalog Taxonomy, or Vendor Capabilities",
+      "has_required_items": "PASS - Has Catalog Workspace, Supply Review, Vendors, Vendor Onboarding, Margins"
+    },
+    "customer_sidebar": {
+      "has_all_canonical_items": "PASS - Dashboard, Marketplace, Services, My Orders, Quotes, Invoices, Recurring Plans, Referrals & Rewards, My Statement, My Account, Help"
+    },
+    "marketplace_functionality": {
+      "search_returns_products": "PASS - Marketplace search returns approved products",
+      "product_detail_works": "PASS - Product detail page at /account/marketplace/{id} works"
+    },
+    "vendor_supply_review": {
+      "page_loads": "PASS - /admin/vendor-supply-review page loads correctly"
+    },
+    "health_and_auth": {
+      "health_endpoint": "PASS - Returns healthy",
+      "admin_auth": "PASS - Admin login works",
+      "customer_auth": "PASS - Customer login works"
+    },
+    "no_duplicate_routes": {
+      "docs_endpoint": "PASS - /docs endpoint loads (no duplicate route conflicts)"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
