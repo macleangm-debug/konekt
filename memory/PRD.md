@@ -13,76 +13,65 @@ B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Cu
 
 ## Completed Work
 
-### Phases 1-16 — Core through Operations Intelligence
-Full platform with CRM, Orders, Quotes, Invoices, Vendor Margin Engine, Notification Registry, KPI Cards, Stripe, Business Settings, Commercial Workflow.
-
-### Phase 17 — Sales Performance & Assignment (01 Apr 2026)
-5-metric scoring engine, capability CRUD, ownership-aware auto-assignment, SalesPerformancePage.
-
-### Phase 18 — Vendor Performance & Assignment (02 Apr 2026)
-5-metric vendor scoring, admin vendor list Performance column, vendor self-view page.
-
-### Phase 19 — Unified Performance Governance (02 Apr 2026)
-Centralized settings CRUD for weights/thresholds/min sample, dual-pane admin config page.
-
-### Phase 20 — Client Ownership + Routing Control (02 Apr 2026)
-Companies/Contacts/Individual Clients model, resolve_owner() engine, ownership continuity routing, admin reassignment tool, duplicate prevention, visibility enforcement.
-
-### Phase 21 — Portfolio + Reactivation Engine (02 Apr 2026)
-Portfolio Dashboard for sales owners, activity-based classification (Active/At Risk/Inactive/Lost), auto-generated reactivation tasks, admin portfolio overview.
+### Phases 1-21 — Core through Portfolio + Reactivation
+Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs, Stripe, Business Settings, Sales/Vendor Performance, Governance, Client Ownership, Portfolio + Reactivation.
 
 ### Phase 22 — Stock-First Vendor Assignment Engine (02 Apr 2026)
 - Type-aware dispatcher: Product (stock-first), Promo (capability), Service (capability + performance)
 - Atomic stock reservation via MongoDB findOneAndUpdate (prevents double-booking)
-- Assignment decision audit trail: engine, candidates, vendor, reason, fallback, per-item assignments
+- Assignment decision audit trail with stored reasoning (not reconstructed)
 - Admin endpoints: candidates preview, explain, decisions history
 
-### Phase 23 — Dormant Client Alert System + Assignment Transparency UI (02 Apr 2026)
-**Pack 1 — Dormant Client Alert System:**
-- Company-level dormancy rollup (activity aggregated across ALL contacts under a company)
-- Individual client direct classification
-- Thresholds: Active (<=60d), At Risk (61-89d), Inactive (90-179d), Lost (180+d)
-- Admin endpoints: summary with per-owner breakdown, alerts list with status/owner filters, reactivate action
-- Staff endpoints: own dormant clients and summary (role-scoped)
-- Frontend: DormantClientAlertsPage with owner breakdown cards, status filter tabs, actionable table (Open Client, Create Quote, Create Follow-up, Reactivate, Reassign)
+### Phase 23 — Dormant Client Alerts + Assignment Transparency UI (02 Apr 2026)
+- Company-level dormancy rollup (activity across ALL contacts)
+- Admin + staff (role-scoped) endpoints with summary, alerts, reactivation
+- Actionable page: Open Client, Quote, Follow-up, Reactivate, Reassign
+- Assignment reasoning in admin Orders drawer + full history page
 
-**Pack 2 — Assignment Reasoning Transparency UI:**
-- AssignmentReasonBadge with human-readable labels for all engine reason codes
-- AssignmentDecisionDrawer with engine info, chosen vendor, per-item assignments, candidates snapshot
-- AssignmentDecisionHistoryPage with engine filter
-- Integrated into admin Orders drawer (inline reasoning + "View full reasoning" link)
+### Phase 24 — Unified Vendor Onboarding + Catalog Workspace (03 Apr 2026)
+**Country-Aware Vendor Onboarding:**
+- Market context service: 6 markets (TZ/KE/UG/RW/NG/ZA) with phone prefix, currency, support info
+- 5-step onboarding form: Market → Details → Role → Capabilities → Review & Invite
+- Vendor role classification: product_vendor, promo_vendor, service_vendor, hybrid_vendor
+- Marketplace permission enforcement: only product/promo/hybrid vendors can publish items
+- Invite token flow: generate → validate → activate (email MOCKED until Resend configured)
+
+**Unified Catalog Workspace:**
+- Tabbed overview: Products, Services, Taxonomy, Vendor Supply
+- Catalog stats endpoint with aggregated counts
 
 **New API Endpoints:**
-- `GET /api/admin/dormant-clients/summary`
-- `GET /api/admin/dormant-clients/alerts?status=&owner=`
-- `POST /api/admin/dormant-clients/{client_id}/reactivate`
-- `GET /api/staff/dormant-clients/mine`
-- `GET /api/staff/dormant-clients/summary`
-- `POST /api/staff/dormant-clients/{client_id}/reactivate`
+- `GET /api/admin/vendor-onboarding/markets`
+- `GET /api/admin/vendor-onboarding/market-context/{country_code}`
+- `GET /api/admin/vendor-onboarding/role-preview?capability_type=X`
+- `POST /api/admin/vendor-onboarding`
+- `GET /api/admin/vendor-onboarding/invites`
+- `GET /api/vendor-invite/validate/{token}`
+- `POST /api/vendor-invite/activate`
+- `GET /api/admin/catalog-workspace/stats`
 
 **New Frontend Routes:**
-- `/admin/dormant-clients` — Dormant Client Alerts (admin)
-- `/admin/assignment-decisions` — Assignment Decision History (admin)
+- `/admin/vendor-onboarding` — Multi-step vendor onboarding
+- `/admin/catalog` — Unified catalog workspace
 
 ---
 
 ## Key Technical Concepts
-- **Ownership Continuity**: Existing client → keep owner. Only auto-assign for new entities.
-- **Mandatory Routing**: ALL inbound creation paths call resolve_owner(). No bypass.
-- **Role-Safe Visibility**: Sales see own data. Admin sees all. Customer sees zero internal data.
-- **Company-Level Dormancy**: Corporate dormancy evaluated by rolling up activity across all company contacts.
-- **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock. Atomic reservation prevents double-booking.
-- **Type-Aware Dispatch**: Product, Promo, and Service orders use separate assignment engines.
-- **Stored Reasoning**: Assignment decisions persist engine/candidates/reason — never reconstructed from guesses.
+- **Vendor Role Policy**: product/promo vendors → marketplace access. Service vendors → task-only.
+- **Country-Aware Defaults**: Phone prefix, currency, tax labels adapt to selected market.
+- **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock.
+- **Stored Reasoning**: Assignment decisions persist engine/candidates/reason.
+- **Company-Level Dormancy**: Corporate dormancy evaluated by rolling up all contacts' activity.
+- **Invite Token Flow**: MOCKED email → vendor creates password via activation URL.
 
 ## Backlog
 
 ### P1 — Upcoming
 - End-to-end Stripe test with real test cards
+- Resend email integration for vendor invites (blocked on API key)
 
 ### P2 — Future
 - Twilio WhatsApp notifications (blocked on keys)
-- Resend email integration (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
@@ -90,11 +79,7 @@ Portfolio Dashboard for sales owners, activity-based classification (Active/At R
 ---
 
 ## Test History
-- Iteration 165: Sales Performance — 100%
-- Iteration 166: Vendor Performance — 100%
-- Iteration 167: Unified Governance — 100%
-- Iteration 168: Client Ownership Steps 1-5 — 100% (17/17)
-- Iteration 169: Client Ownership Steps 6-8 — 100% (22/22)
-- Iteration 170: Portfolio + Reactivation Engine — 100% (23/23)
+- Iterations 165-170: Phases 17-21 — 100%
 - Iteration 171: Stock-First Vendor Assignment Engine — 100% (22/22)
-- Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16 + UI)
+- Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16)
+- Iteration 173: Vendor Onboarding + Catalog Workspace — 100% (20/20 + UI)
