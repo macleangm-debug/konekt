@@ -9,6 +9,7 @@ const TABS = [
   { key: "services", label: "Services", icon: Wrench },
   { key: "taxonomy", label: "Taxonomy", icon: Tag },
   { key: "supply", label: "Vendor Supply", icon: Truck },
+  { key: "imports", label: "Imports", icon: FileText },
 ];
 
 export default function UnifiedCatalogWorkspacePage() {
@@ -123,9 +124,20 @@ export default function UnifiedCatalogWorkspacePage() {
       {tab === "supply" && (
         <div className="rounded-lg border bg-white p-6 text-center" data-testid="catalog-supply-tab">
           <Truck className="h-8 w-8 text-slate-300 mx-auto mb-2" />
-          <p className="text-sm text-slate-600 mb-3">Vendor supply records are managed per-vendor from the Vendor detail page.</p>
-          <Button variant="outline" size="sm" onClick={() => window.location.href = "/admin/vendors"} data-testid="go-to-vendors">
-            Open Vendors
+          <p className="text-sm text-slate-600 mb-3">Review pending vendor product submissions, approve or reject supply entries.</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/admin/vendor-supply-review"} data-testid="go-to-vendor-supply">
+            Open Vendor Supply Review
+          </Button>
+        </div>
+      )}
+
+      {/* Imports Tab */}
+      {tab === "imports" && (
+        <div className="rounded-lg border bg-white p-6 text-center" data-testid="catalog-imports-tab">
+          <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+          <p className="text-sm text-slate-600 mb-3">View vendor bulk import jobs, validation results, and processed rows.</p>
+          <Button variant="outline" size="sm" onClick={() => window.location.href = "/admin/vendor-supply-review"} data-testid="go-to-imports">
+            Open Import Jobs
           </Button>
         </div>
       )}

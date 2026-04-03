@@ -2835,6 +2835,12 @@ app.include_router(marketplace_taxonomy_router)
 app.include_router(vendor_catalog_router)
 app.include_router(admin_catalog_router)
 
+from routes.vendor_product_upload_routes import router as vendor_product_upload_router
+app.include_router(vendor_product_upload_router)
+
+from routes.admin_supply_review_routes import router as admin_supply_review_router
+app.include_router(admin_supply_review_router)
+
 
 
 # Market Settings API

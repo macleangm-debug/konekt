@@ -262,6 +262,9 @@ import InvoiceDetailInAccountPage from "@/pages/account/InvoiceDetailInAccountPa
 import ProductSubgroupsManagerPage from "@/pages/admin/ProductSubgroupsManagerPage";
 import VendorProductsManagerPage from "@/pages/vendor/VendorProductsManagerPage";
 import VendorProductSubmissionsPage from "@/pages/vendor/VendorProductSubmissionsPage";
+import VendorProductUploadPage from "@/pages/vendor/VendorProductUploadPage";
+import VendorBulkImportPage from "@/pages/vendor/VendorBulkImportPage";
+import AdminVendorSupplyReviewPage from "@/pages/admin/AdminVendorSupplyReviewPage";
 
 // Launch Critical Pack - New Components
 import OrderDetailPageV2 from "@/pages/account/OrderDetailPageV2";
@@ -602,6 +605,7 @@ function App() {
           <Route path="assignment-decisions" element={<AssignmentDecisionHistoryPage />} />
           <Route path="vendor-onboarding" element={<VendorOnboardingPage />} />
           <Route path="catalog" element={<UnifiedCatalogWorkspacePage />} />
+          <Route path="vendor-supply-review" element={<AdminVendorSupplyReviewPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
@@ -710,6 +714,8 @@ function App() {
           {/* Vendor Products */}
           <Route path="vendor-products" element={<VendorProductsManagerPage />} />
           <Route path="product-submissions" element={<VendorProductSubmissionsPage />} />
+          <Route path="product-upload" element={<VendorProductUploadPage />} />
+          <Route path="bulk-import" element={<VendorBulkImportPage />} />
           {/* Vendor Help */}
           <Route path="vendor-help" element={<HelpVendorPage />} />
         </Route>

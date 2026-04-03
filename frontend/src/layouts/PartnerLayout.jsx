@@ -64,7 +64,9 @@ export default function PartnerLayout() {
   const vendorItems = [
     { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
     { path: "/partner/vendor-performance", label: "My Performance", icon: BarChart3 },
-    { path: "/partner/product-submissions", label: "Submit Products", icon: Package },
+    { path: "/partner/product-upload", label: "Add Product", icon: PlusCircle },
+    { path: "/partner/bulk-import", label: "Bulk Import", icon: Upload },
+    { path: "/partner/product-submissions", label: "My Submissions", icon: Package },
     { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
   ];
 

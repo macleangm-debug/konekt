@@ -10,7 +10,7 @@ const reviewStatusColors = {
 };
 
 function authHeaders() {
-  const token = localStorage.getItem("konekt_token") || localStorage.getItem("token");
+  const token = localStorage.getItem("partner_token") || localStorage.getItem("konekt_token") || localStorage.getItem("token");
   return { Authorization: `Bearer ${token}` };
 }
 
