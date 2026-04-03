@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Package, CheckCircle2, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, FileSpreadsheet, Loader2, MessageSquare } from "lucide-react";
+import { Package, CheckCircle2, XCircle, Clock, AlertCircle, ChevronDown, ChevronUp, FileSpreadsheet, Loader2, MessageSquare, Download } from "lucide-react";
 import api from "@/lib/api";
 
 const STATUS_CONFIG = {
@@ -295,6 +295,23 @@ export default function AdminVendorSupplyReviewPage() {
 
       {tab === "imports" && (
         <div data-testid="import-jobs-tab">
+          {/* Template for admin to share with vendors */}
+          <div className="flex items-center justify-between rounded-lg bg-slate-100 border px-4 py-3 mb-4">
+            <p className="text-xs text-slate-600">Share this template with vendors to standardize product imports</p>
+            <button onClick={() => {
+              const cols = ["vendor_product_code","product_name","brand","category","subcategory","short_description","full_description","base_price_vat_inclusive","lead_time_days","supply_mode","variant_size","variant_color","variant_model","quantity","sku","image_1_url","image_2_url","image_3_url"];
+              const sample = ["VP-001","HP LaserJet Pro","HP","Printers","Laser Printers","Compact printer","High-speed mono laser","1200000","5","in_stock","Standard","","","10","HP-LJ-001","https://example.com/img.jpg","",""];
+              const notes = [["# NOTES: Category/subcategory must match catalog taxonomy. Each row = one product or variant. Delete note rows before uploading."]];
+              const csv = [...notes,[cols],[sample]].map(r => r.map(c => { const s = String(c??""); return s.includes(",") ? `"${s}"` : s; }).join(",")).join("\n");
+              const blob = new Blob([csv], { type: "text/csv" });
+              const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "konekt_product_import_template.csv"; a.click();
+            }}
+              className="flex items-center gap-1 bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-800 transition-colors"
+              data-testid="admin-download-template-btn">
+              <Download className="w-3 h-3" /> Download Template
+            </button>
+          </div>
+
           {importJobs.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <FileSpreadsheet className="w-10 h-10 mx-auto mb-2 text-slate-300" />

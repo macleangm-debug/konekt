@@ -130,3 +130,4 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16)
 - Iteration 173: Vendor Onboarding + Catalog Workspace — 100% (20/20 + UI)
 - Iteration 174: Product Upload, Variants & Bulk Import — 92% (23/25 + frontend 100%)
+- Iteration 174b: Added Download CSV Template + Download Error Rows to Bulk Import (vendor + admin)

@@ -9,6 +9,65 @@ function authHeaders() {
 
 const STEPS = { UPLOAD: "upload", PREVIEW: "preview", CONFIRMED: "confirmed" };
 
+const TEMPLATE_COLUMNS = [
+  "vendor_product_code", "product_name", "brand", "category", "subcategory",
+  "short_description", "full_description", "base_price_vat_inclusive",
+  "lead_time_days", "supply_mode", "variant_size", "variant_color",
+  "variant_model", "quantity", "sku", "image_1_url", "image_2_url", "image_3_url",
+];
+
+const SAMPLE_ROW = [
+  "VP-001", "HP LaserJet Pro M404dn", "HP", "Printers", "Laser Printers",
+  "Compact mono laser printer", "High-speed mono laser with duplex and networking",
+  "1200000", "5", "in_stock", "Standard", "", "",
+  "10", "HP-LJ-M404-STD", "https://example.com/hp-m404.jpg", "", "",
+];
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(c => {
+    const s = String(c ?? "");
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadTemplate() {
+  const noteRows = [
+    ["# NOTES: Category and subcategory values must match your catalog taxonomy exactly."],
+    ["# Each row can represent one product or one variant of a product."],
+    ["# Required columns: product_name, category, base_price_vat_inclusive. Delete these note rows before uploading."],
+  ];
+  downloadCSV([...noteRows, TEMPLATE_COLUMNS, SAMPLE_ROW], "konekt_product_import_template.csv");
+}
+
+function downloadErrorRows(errorRows) {
+  if (!errorRows?.length) return;
+  const header = ["row_number", "errors", ...TEMPLATE_COLUMNS];
+  const rows = errorRows.map(r => {
+    const d = r.data || {};
+    const p = d.product || {};
+    const s = d.supply || {};
+    const v = d.variant || {};
+    return [
+      r.row_number,
+      (r.errors || []).join("; "),
+      s.vendor_product_code || "", p.product_name || "", p.brand || "",
+      p.category_name || "", p.subcategory_name || "",
+      p.short_description || "", p.full_description || "",
+      s.base_price_vat_inclusive || "", s.lead_time_days || "", s.supply_mode || "",
+      v.size || "", v.color || "", v.model || "",
+      v.quantity || s.default_quantity || "", v.sku || "",
+      (p.images || [])[0] || "", (p.images || [])[1] || "", (p.images || [])[2] || "",
+    ];
+  });
+  downloadCSV([header, ...rows], "konekt_import_errors.csv");
+}
+
 export default function VendorBulkImportPage() {
   const [step, setStep] = useState(STEPS.UPLOAD);
   const [file, setFile] = useState(null);
@@ -128,6 +187,19 @@ export default function VendorBulkImportPage() {
       {/* Step 1: Upload */}
       {step === STEPS.UPLOAD && (
         <div className="rounded-xl border bg-white p-6" data-testid="upload-step">
+          {/* Template Download */}
+          <div className="flex items-center justify-between rounded-lg bg-slate-900 text-white px-4 py-3 mb-5">
+            <div>
+              <p className="text-sm font-medium">Start with the import template</p>
+              <p className="text-xs text-slate-400 mt-0.5">Pre-formatted CSV with all columns, a sample row, and notes</p>
+            </div>
+            <button onClick={downloadTemplate}
+              className="flex items-center gap-1.5 bg-white text-slate-900 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-slate-100 transition-colors"
+              data-testid="download-template-btn">
+              <Download className="w-3.5 h-3.5" /> Download CSV Template
+            </button>
+          </div>
+
           <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-slate-400 transition-colors">
             <Upload className="w-10 h-10 text-slate-300 mx-auto mb-3" />
             <p className="text-sm text-slate-600 mb-2">
@@ -211,6 +283,11 @@ export default function VendorBulkImportPage() {
                 ))}
               </div>
               <p className="text-xs text-red-500 mt-2">These rows will be skipped during import.</p>
+              <button onClick={() => downloadErrorRows(errorRows)}
+                className="mt-2 flex items-center gap-1 text-xs text-red-600 hover:text-red-800 font-medium"
+                data-testid="download-errors-btn">
+                <Download className="w-3 h-3" /> Download error rows as CSV
+              </button>
             </div>
           )}
 
