@@ -15,6 +15,7 @@ export default function MyStatementPageV2() {
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [company, setCompany] = useState({});
   const printRef = useRef();
 
   const loadStatement = async () => {
@@ -36,7 +37,10 @@ export default function MyStatementPageV2() {
     setLoading(false);
   };
 
-  useEffect(() => { loadStatement(); }, []);
+  useEffect(() => {
+    loadStatement();
+    axios.get(`${API_URL}/api/admin/business-settings/public`).then(r => setCompany(r.data || {})).catch(() => {});
+  }, []);
 
   const handlePrint = () => {
     const content = printRef.current;
@@ -134,9 +138,26 @@ export default function MyStatementPageV2() {
 
       {/* Printable Content */}
       <div ref={printRef}>
+        {/* Company Header (visible in print) */}
+        <div className="flex items-start justify-between border-b-2 border-[#20364D] pb-4 mb-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#20364D]">{company.company_name || "Konekt"}</h2>
+            {company.tin && <p className="text-xs text-slate-500">TIN: {company.tin}</p>}
+            {company.brn && <p className="text-xs text-slate-500">BRN: {company.brn}</p>}
+            {(company.address || company.city) && (
+              <p className="text-xs text-slate-500 mt-1">{[company.address, company.city, company.country].filter(Boolean).join(", ")}</p>
+            )}
+            {company.phone && <p className="text-xs text-slate-500">{company.phone}</p>}
+            {company.email && <p className="text-xs text-slate-500">{company.email}</p>}
+          </div>
+          <div className="text-right">
+            <h3 className="text-lg font-bold text-[#20364D] uppercase tracking-wide">Statement of Account</h3>
+            <p className="text-xs text-slate-400 mt-1">Generated: {fmtDate(new Date().toISOString())}</p>
+          </div>
+        </div>
+
         <div className="mb-4">
-          <h2 className="text-xl font-extrabold text-[#20364D]">Statement of Account</h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm font-semibold text-slate-700">
             {s.customer_name}{s.customer_company && s.customer_company !== "-" ? ` — ${s.customer_company}` : ""}
           </p>
           <p className="text-xs text-slate-400 mt-1">

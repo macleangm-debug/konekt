@@ -167,8 +167,11 @@ async def search_products(
             return True
         hay = " ".join([
             str(row.get("name", "")),
+            str(row.get("brand", "")),
             str(row.get("group_name", "")),
             str(row.get("subgroup_name", "")),
+            str(row.get("category_name", "")),
+            str(row.get("subcategory_name", "")),
             str(row.get("description", "")),
             str(row.get("branch", "")),
             str(row.get("category", ""))
@@ -182,6 +185,32 @@ async def search_products(
         del row["_id"]
         out.append(row)
     return out
+
+
+@marketplace_router.get("/products/{product_id}")
+async def get_product_detail(product_id: str):
+    """Get a single product by ID for detail view."""
+    from bson import ObjectId
+    product = None
+    # Try by uuid id field first
+    product = await db.products.find_one({"id": product_id})
+    # Fallback to MongoDB ObjectId
+    if not product:
+        try:
+            product = await db.products.find_one({"_id": ObjectId(product_id)})
+        except Exception:
+            pass
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    product["id"] = str(product["_id"])
+    del product["_id"]
+    # Hide vendor-internal fields from public
+    product.pop("vendor_id", None)
+    product.pop("vendor_name", None)
+    product.pop("source_submission_id", None)
+    product.pop("vendor_product_code", None)
+    return product
+
 
 # ==================== DOCUMENT PDF HOOKS ====================
 

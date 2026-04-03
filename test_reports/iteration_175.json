@@ -1,0 +1,82 @@
+{
+  "summary": "Iteration 175: Approved Products → Marketplace Wiring, Admin Data Entry Configuration, and Sidebar Alignment testing complete. 19/19 backend tests passed (100%). All frontend pages verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_approved_product_marketplace_v175.py",
+    "/app/test_reports/pytest/pytest_results_approved_product_marketplace_v175.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_approved_product_marketplace_v175.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (all pages and flows verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!, Vendor: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "Created test submissions with TEST_ prefix during testing (TEST_ApprovalProduct, TEST_IdempotentProduct, TEST_MarketplaceSearch, TEST_DetailHideVendor, TEST_RejectProduct, TEST_InvalidStatus)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 175 Approved Products → Marketplace Wiring fully verified. Key findings: (1) POST /api/admin/vendor-supply/submissions/{id}/review with status=approved creates canonical product in products collection via publish_approved_submission service, (2) Re-approving same submission updates existing product (idempotent - no duplicates), (3) GET /api/marketplace/products/search returns approved vendor products with is_active=true, (4) GET /api/marketplace/products/{product_id} hides vendor_id, vendor_name, source_submission_id, vendor_product_code from public, (5) GET /api/admin/business-settings/public returns company info from DB without auth, (6) Admin sidebar shows 'Supply Review' under CATALOG section, (7) Customer sidebar shows 'Services' link between Marketplace and My Orders, (8) Customer marketplace at /account/marketplace shows products with Detail button, (9) Product detail page at /account/marketplace/{productId} renders with breadcrumb navigation, (10) Statement of Account page at /account/statement loads business settings for company header.",
+  "features_tested": {
+    "vendor_submission_approval": {
+      "approve_creates_product": "PASS - Approval creates canonical product in products collection",
+      "idempotent_reapproval": "PASS - Re-approval updates existing product, no duplicates",
+      "reject_submission": "PASS - Rejection does not create product",
+      "invalid_status_400": "PASS - Invalid status returns 400",
+      "nonexistent_404": "PASS - Non-existent submission returns 404"
+    },
+    "marketplace_search": {
+      "returns_active_products": "PASS - Returns products with is_active=true",
+      "search_with_query": "PASS - Filters by query string",
+      "includes_vendor_products": "PASS - Approved vendor products appear in search"
+    },
+    "product_detail": {
+      "hides_vendor_info": "PASS - vendor_id, vendor_name, source_submission_id, vendor_product_code hidden",
+      "returns_404_invalid": "PASS - Returns 404 for non-existent product"
+    },
+    "business_settings_public": {
+      "returns_company_info": "PASS - Returns company_name, trading_name, tin, brn, address, phone, email, bank info"
+    },
+    "admin_sidebar": {
+      "supply_review_under_catalog": "PASS - Supply Review link under CATALOG section"
+    },
+    "customer_sidebar": {
+      "services_link_position": "PASS - Services link between Marketplace and My Orders"
+    },
+    "customer_marketplace": {
+      "page_loads": "PASS - MarketplaceUnifiedPageV3 renders",
+      "product_cards_with_detail": "PASS - Product cards have Detail button",
+      "detail_navigates_to_product": "PASS - Detail button navigates to /account/marketplace/{id}"
+    },
+    "product_detail_page": {
+      "page_loads": "PASS - AccountProductDetailPage renders",
+      "breadcrumb_navigation": "PASS - Breadcrumb shows Marketplace > Product Name",
+      "back_to_marketplace": "PASS - Back to Marketplace link works"
+    },
+    "statement_page": {
+      "page_loads": "PASS - MyStatementPageV2 renders",
+      "company_header": "PASS - Shows company info from business settings",
+      "ledger_table": "PASS - Shows transactions with opening/closing balance"
+    },
+    "health_and_auth": {
+      "health_endpoint": "PASS - Returns healthy",
+      "admin_auth": "PASS - Admin login works",
+      "customer_auth": "PASS - Customer login works",
+      "vendor_auth": "PASS - Vendor login works (partner-auth endpoint returns access_token)"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

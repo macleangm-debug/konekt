@@ -16,6 +16,7 @@ from services.product_upload_service import (
     get_submission_by_id,
 )
 from services.product_import_service import list_all_import_jobs, get_import_job
+from services.approved_product_publish_service import publish_approved_submission
 
 logger = logging.getLogger("admin_supply_review_routes")
 
@@ -94,7 +95,13 @@ async def admin_review_submission(
     result = await review_submission(db, submission_id, payload.status, payload.notes, reviewed_by)
     if not result:
         raise HTTPException(404, "Submission not found")
-    return {"ok": True, "submission": result}
+
+    # Auto-publish to canonical products collection on approval
+    published_product = None
+    if payload.status == "approved":
+        published_product = await publish_approved_submission(db, result, reviewed_by)
+
+    return {"ok": True, "submission": result, "published_product": published_product}
 
 
 # ─── Import Jobs ──────────────────────────────────────────

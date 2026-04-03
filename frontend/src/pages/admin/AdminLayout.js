@@ -83,6 +83,7 @@ const navItems = [
   { path: '/admin/products-services', label: 'Products & Services', icon: Package, moduleKey: 'inventory' },
   { path: '/admin/catalog-taxonomy', label: 'Catalog Taxonomy', icon: Layers, moduleKey: 'inventory' },
   { path: '/admin/catalog', label: 'Catalog Workspace', icon: Columns3, moduleKey: 'inventory' },
+  { path: '/admin/vendor-supply-review', label: 'Supply Review', icon: CheckSquare, moduleKey: 'inventory' },
   { path: '/admin/vendors', label: 'Vendors', icon: Truck, moduleKey: 'inventory' },
   { path: '/admin/vendor-onboarding', label: 'Vendor Onboarding', icon: UserCheck, moduleKey: 'inventory' },
   { path: '/admin/margins', label: 'Margins', icon: Percent, moduleKey: 'inventory' },

@@ -20,7 +20,7 @@ export default function ProductPromoDetailModalV2({ item, open, onClose, isPromo
   if (!open || !item) return null;
 
   const price = item.price ?? item.base_price ?? item.blank_unit_price ?? item.unit_price ?? 0;
-  const images = item.images || item.variant_images || (item.image_url ? [item.image_url] : []);
+  const images = item.images || item.variant_images || (item.image_url ? [item.image_url] : item.primary_image ? [item.primary_image] : []);
   const colors = (item.colors || item.available_colors || []).map(c => typeof c === "object" ? (c.name || c.color || JSON.stringify(c)) : c);
   const sizes = (item.sizes || item.available_sizes || []).map(s => typeof s === "object" ? (s.name || s.size || JSON.stringify(s)) : s);
 

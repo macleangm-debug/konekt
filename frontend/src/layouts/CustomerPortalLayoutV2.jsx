@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, ShoppingBag, FileText, Receipt, 
-  LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store, UserCircle
+  LogOut, Menu, X, RefreshCcw, Users, Building2, HelpCircle, Store, UserCircle, Wrench, ClipboardList
 } from "lucide-react";
 import NotificationBell from "../components/shared/NotificationBell";
 import PartnerProfileDropdown from "../components/partners/PartnerProfileDropdown";
@@ -12,12 +12,13 @@ import CartTopbarButton from "../components/topbar/CartTopbarButton";
 const nav = [
   { label: "Dashboard", href: "/account", icon: LayoutDashboard },
   { label: "Marketplace", href: "/account/marketplace", icon: Store },
+  { label: "Services", href: "/account/services", icon: Wrench },
   { label: "My Orders", href: "/account/orders", icon: ShoppingBag },
   { label: "Quotes", href: "/account/quotes", icon: FileText },
   { label: "Invoices", href: "/account/invoices", icon: Receipt },
   { label: "Recurring Plans", href: "/account/recurring-plans", icon: RefreshCcw },
   { label: "Referrals & Rewards", href: "/account/referrals", icon: Users },
-  { label: "My Statement", href: "/account/statement", icon: LayoutDashboard },
+  { label: "My Statement", href: "/account/statement", icon: ClipboardList },
   { label: "My Account", href: "/account/my-account", icon: UserCircle },
   { label: "Help", href: "/help/customer", icon: HelpCircle },
 ];
