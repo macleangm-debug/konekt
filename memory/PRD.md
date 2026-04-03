@@ -155,3 +155,4 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Iteration 174: Product Upload, Variants & Bulk Import — 92% (23/25 + frontend 100%)
 - Iteration 174b: Added Download CSV Template + Download Error Rows to Bulk Import (vendor + admin)
 - Iteration 175: Marketplace Publish + Admin Config + Sidebar Alignment — 100% (19/19 backend + frontend 100%)
+- Iteration 176: Phase 26 Cleanup & Canonicalization — 100% (15/15 backend + frontend 100%)
