@@ -2,20 +2,23 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   ChevronLeft, Heart, Share2, Check, 
-  Package, Truck, Clock, ChevronRight, FileText, Send
+  Package, Truck, Clock, ChevronRight, FileText, ShoppingCart
 } from "lucide-react";
 import axios from "axios";
+import { toast } from "sonner";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import BrandButton from "../../components/ui/BrandButton";
 import BrandBadge from "../../components/ui/BrandBadge";
 import BusinessPricingCtaBox from "../../components/public/BusinessPricingCtaBox";
+import { useCart } from "../../contexts/CartContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function MarketplaceListingDetailContent() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
   const [listing, setListing] = useState(null);
   const [related, setRelated] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -186,13 +189,26 @@ export default function MarketplaceListingDetailContent() {
               <BrandButton
                 variant="primary"
                 className="flex-1"
-                data-testid="order-now-btn"
-                onClick={() => navigate(
-                  `/order-request?product_id=${encodeURIComponent(listing.id || slug)}&name=${encodeURIComponent(listing.name || "")}&price=${encodeURIComponent(listing.customer_price || 0)}&category=${encodeURIComponent(listing.category || "")}`
-                )}
+                data-testid="add-to-cart-btn"
+                onClick={() => {
+                  addItem({
+                    product_id: listing.id || slug,
+                    product_name: listing.name || "",
+                    quantity: quantity,
+                    unit_price: Number(listing.customer_price || listing.price || listing.base_price || 0),
+                    subtotal: quantity * Number(listing.customer_price || listing.price || listing.base_price || 0),
+                    size: null,
+                    color: null,
+                    print_method: null,
+                    listing_type: listing.listing_type || "product",
+                    image_url: images[0] || "",
+                    category: listing.category || "",
+                  });
+                  toast.success(`${listing.name} added to cart`);
+                }}
               >
-                <Send className="w-5 h-5 mr-2" />
-                Order Now
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                Add to Cart
               </BrandButton>
             </div>
           ) : (

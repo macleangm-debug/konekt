@@ -1,0 +1,325 @@
+"""
+Public Guest Commerce Routes
+Handles: guest checkout, guest payment proof, account detection & order linking.
+Uses the same `orders` + `payment_proof_submissions` collections as account orders.
+"""
+import os
+import logging
+from datetime import datetime, timezone
+from uuid import uuid4
+from fastapi import APIRouter, HTTPException
+from motor.motor_asyncio import AsyncIOMotorClient
+
+logger = logging.getLogger("public_commerce")
+
+MONGO_URL = os.environ["MONGO_URL"]
+DB_NAME = os.environ.get("DB_NAME", "konekt")
+client = AsyncIOMotorClient(MONGO_URL)
+db = client[DB_NAME]
+
+router = APIRouter(prefix="/api/public", tags=["Public Commerce"])
+
+
+def _now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _order_number():
+    return f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+
+# ─── Account Detection ────────────────────────────────────
+
+async def _detect_account(email: str, phone: str = ""):
+    """Check if an account already exists by email or phone."""
+    if email:
+        user = await db.users.find_one(
+            {"email": email.strip().lower(), "account_status": "active"},
+            {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1},
+        )
+        if user:
+            return user
+    if phone:
+        user = await db.users.find_one(
+            {"phone": phone.strip(), "account_status": "active"},
+            {"_id": 0, "id": 1, "full_name": 1, "email": 1, "phone": 1},
+        )
+        if user:
+            return user
+    return None
+
+
+# ─── Guest Checkout ───────────────────────────────────────
+
+@router.post("/checkout")
+async def public_checkout(payload: dict):
+    """
+    Create a real order from a guest cart.
+    Uses the same `orders` collection as account orders.
+    """
+    items = payload.get("items", [])
+    if not items:
+        raise HTTPException(400, "Cart is empty")
+
+    customer_name = (payload.get("customer_name") or payload.get("full_name") or "").strip()
+    customer_email = (payload.get("email") or payload.get("customer_email") or "").strip().lower()
+    customer_phone = (payload.get("phone") or payload.get("customer_phone") or "").strip()
+    company_name = (payload.get("company_name") or payload.get("company") or "").strip()
+
+    if not customer_name or not customer_email or not customer_phone:
+        raise HTTPException(400, "Name, email, and phone are required")
+
+    # Calculate totals
+    total = 0
+    order_items = []
+    for item in items:
+        qty = int(item.get("quantity", 1))
+        price = float(item.get("unit_price") or item.get("price") or 0)
+        subtotal = qty * price
+        total += subtotal
+        order_items.append({
+            "product_id": item.get("product_id", ""),
+            "product_name": item.get("product_name") or item.get("name", ""),
+            "quantity": qty,
+            "unit_price": price,
+            "subtotal": subtotal,
+            "size": item.get("size"),
+            "color": item.get("color"),
+            "variant": item.get("variant"),
+            "listing_type": item.get("listing_type", "product"),
+        })
+
+    now = _now()
+    order_number = _order_number()
+    order_id = str(uuid4())
+
+    # Detect existing account
+    existing_account = await _detect_account(customer_email, customer_phone)
+    linked_user_id = None
+    account_link_status = "unlinked"
+    if existing_account:
+        linked_user_id = existing_account.get("id")
+        account_link_status = "linked"
+
+    order_doc = {
+        "id": order_id,
+        "order_number": order_number,
+        "customer_name": customer_name,
+        "customer_email": customer_email,
+        "customer_phone": customer_phone,
+        "company_name": company_name,
+        "customer_id": linked_user_id,
+        "payer_name": "",
+        "items": order_items,
+        "total_amount": total,
+        "total": total,
+        "subtotal": total,
+        "tax": 0,
+        "discount": 0,
+        "delivery_address": payload.get("delivery_address", ""),
+        "city": payload.get("city", ""),
+        "country": payload.get("country", "Tanzania"),
+        "notes": payload.get("notes", ""),
+        "status": "pending",
+        "current_status": "awaiting_payment_proof",
+        "payment_status": "pending_submission",
+        "order_status": "awaiting_payment_proof",
+        "pipeline_stage": "payment_verification",
+        "type": "product",
+        "source_type": "public_checkout",
+        "is_guest_order": not bool(linked_user_id),
+        "linked_user_id": linked_user_id,
+        "account_link_status": account_link_status,
+        "assigned_sales_id": None,
+        "assigned_vendor_id": None,
+        "approved_by": None,
+        "status_history": [{
+            "status": "awaiting_payment_proof",
+            "note": "Guest order submitted via public checkout",
+            "timestamp": now,
+        }],
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    await db.orders.insert_one(order_doc)
+    logger.info("Guest order created: %s (%s) by %s", order_number, order_id, customer_email)
+
+    # Create guest account invite if no existing account
+    account_info = None
+    if not linked_user_id:
+        from services.guest_checkout_activation_service import create_guest_account_link
+        invite = await create_guest_account_link(
+            db,
+            guest_email=customer_email,
+            order_id=order_id,
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+        )
+        if invite:
+            account_info = {
+                "type": "create_account",
+                "message": "Create your Konekt account to track this order",
+                "invite_url": invite.get("invite_url", ""),
+                "invite_token": invite.get("invite_token", ""),
+            }
+    else:
+        account_info = {
+            "type": "login",
+            "message": "Log in to your Konekt account to track this order",
+            "user_email": existing_account.get("email", ""),
+        }
+
+    # Get bank details for payment
+    settings = await db.business_settings.find_one({}, {"_id": 0})
+    bank = {}
+    if settings:
+        bank = {
+            "bank_name": settings.get("bank_name", "CRDB Bank PLC"),
+            "account_name": settings.get("account_name", "Konekt Ltd"),
+            "account_number": settings.get("bank_account_number", ""),
+            "swift": settings.get("swift_code", "CORUTZTZ"),
+            "branch": settings.get("bank_branch", "Dar es Salaam"),
+        }
+    if not bank.get("account_number"):
+        bank = {
+            "bank_name": "CRDB Bank PLC",
+            "account_name": "KONEKT LIMITED",
+            "account_number": "015C8841347002",
+            "swift": "CORUTZTZ",
+            "branch": "Dar es Salaam Main",
+        }
+
+    return {
+        "ok": True,
+        "order_id": order_id,
+        "order_number": order_number,
+        "total": total,
+        "items_count": len(order_items),
+        "payment_status": "pending_submission",
+        "bank_details": bank,
+        "account_info": account_info,
+    }
+
+
+# ─── Guest Payment Proof ─────────────────────────────────
+
+@router.post("/payment-proof")
+async def public_payment_proof(payload: dict):
+    """
+    Submit payment proof for a guest order.
+    Creates the same kind of record as the account payment proof flow.
+    """
+    order_number = (payload.get("order_number") or "").strip()
+    email = (payload.get("email") or payload.get("customer_email") or "").strip().lower()
+
+    if not order_number:
+        raise HTTPException(400, "Order number is required")
+    if not email:
+        raise HTTPException(400, "Email is required for verification")
+
+    # Find the order
+    order = await db.orders.find_one({"order_number": order_number})
+    if not order:
+        raise HTTPException(404, "Order not found")
+
+    # Verify email matches
+    order_email = (order.get("customer_email") or "").strip().lower()
+    if order_email != email:
+        raise HTTPException(403, "Email does not match the order")
+
+    now = _now()
+    proof_doc = {
+        "id": str(uuid4()),
+        "order_id": order.get("id"),
+        "order_number": order_number,
+        "invoice_id": None,
+        "customer_email": email,
+        "customer_name": order.get("customer_name", ""),
+        "customer_user_id": order.get("linked_user_id"),
+        "customer_id": order.get("linked_user_id") or order.get("customer_id"),
+        "amount_paid": float(payload.get("amount_paid", 0) or 0),
+        "currency": payload.get("currency", "TZS"),
+        "payment_date": payload.get("payment_date", now),
+        "bank_reference": payload.get("bank_reference", ""),
+        "payment_method": payload.get("payment_method", "bank_transfer"),
+        "proof_file_url": payload.get("proof_file_url", ""),
+        "proof_file_name": payload.get("proof_file_name", ""),
+        "notes": payload.get("notes", ""),
+        "payer_name": payload.get("payer_name") or order.get("customer_name", ""),
+        "is_guest_submission": True,
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    await db.payment_proof_submissions.insert_one(proof_doc)
+
+    # Update order status
+    await db.orders.update_one(
+        {"id": order.get("id")},
+        {"$set": {
+            "payment_status": "pending_review",
+            "order_status": "awaiting_payment_verification",
+            "current_status": "awaiting_payment_verification",
+            "pipeline_stage": "payment_verification",
+            "payer_name": proof_doc["payer_name"],
+            "updated_at": now,
+        },
+        "$push": {
+            "status_history": {
+                "status": "awaiting_payment_verification",
+                "note": f"Payment proof submitted (Ref: {proof_doc['bank_reference'] or 'N/A'})",
+                "timestamp": now,
+            }
+        }},
+    )
+
+    logger.info("Guest payment proof submitted for order %s by %s", order_number, email)
+
+    # Re-detect account for CTA
+    existing_account = await _detect_account(email)
+    account_info = None
+    if existing_account:
+        account_info = {
+            "type": "login",
+            "message": "Log in to your Konekt account to track this order",
+            "user_email": existing_account.get("email", ""),
+        }
+    else:
+        account_info = {
+            "type": "create_account",
+            "message": "Create your Konekt account to track this order",
+        }
+
+    return {
+        "ok": True,
+        "order_number": order_number,
+        "payment_status": "pending_review",
+        "message": "Payment proof submitted. Our team will verify and process your order.",
+        "account_info": account_info,
+    }
+
+
+# ─── Order Status (public tracking) ──────────────────────
+
+@router.get("/order-status/{order_number}")
+async def public_order_status(order_number: str, email: str = ""):
+    """Allow guest to check order status by order number + email."""
+    order = await db.orders.find_one(
+        {"order_number": order_number},
+        {"_id": 0, "id": 1, "order_number": 1, "status": 1, "current_status": 1,
+         "payment_status": 1, "total": 1, "items": 1, "created_at": 1,
+         "customer_name": 1, "customer_email": 1},
+    )
+    if not order:
+        raise HTTPException(404, "Order not found")
+
+    if email:
+        order_email = (order.get("customer_email") or "").lower()
+        if order_email != email.strip().lower():
+            raise HTTPException(403, "Email does not match")
+
+    # Strip sensitive fields
+    order.pop("customer_email", None)
+    return order

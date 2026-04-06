@@ -2839,6 +2839,9 @@ app.include_router(canonical_public_marketplace_router)
 app.include_router(canonical_account_marketplace_router)
 app.include_router(canonical_account_orders_router)
 
+from routes.public_commerce_routes import router as public_commerce_router
+app.include_router(public_commerce_router)
+
 
 
 # Market Settings API

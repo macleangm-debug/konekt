@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import { Package, FileText, ShoppingCart, Search } from "lucide-react";
+import { toast } from "sonner";
+import { useCart } from "../../contexts/CartContext";
 import api from "../../lib/api";
 import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
-import { Package, FileText, ShoppingCart, Search } from "lucide-react";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
@@ -126,6 +128,7 @@ export default function MarketplaceBrowsePageContent() {
 }
 
 function MarketplaceProductCard({ product, onRequestQuote }) {
+  const { addItem } = useCart();
   const price =
     product?.customer_price ??
     product?.price ??
@@ -133,7 +136,24 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
     product?.unit_price ??
     0;
 
-  const orderUrl = `/order-request?product_id=${encodeURIComponent(product.id || "")}&name=${encodeURIComponent(product.name || "")}&price=${encodeURIComponent(price)}&category=${encodeURIComponent(product.category || product.group_name || "")}`;
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({
+      product_id: product.id,
+      product_name: product.name,
+      quantity: 1,
+      unit_price: Number(price),
+      subtotal: Number(price),
+      size: null,
+      color: null,
+      print_method: null,
+      listing_type: product.listing_type || "product",
+      image_url: product.image_url || product.images?.[0] || product.hero_image || "",
+      category: product.category || product.group_name || "",
+    });
+    toast.success(`${product.name} added to cart`);
+  };
 
   return (
     <div
@@ -183,13 +203,13 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
               <FileText className="w-3 h-3" /> Quote
             </button>
 
-            <Link
-              to={orderUrl}
+            <button
+              onClick={handleAddToCart}
               className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center gap-1"
-              data-testid={`order-product-${product.id}`}
+              data-testid={`add-to-cart-${product.id}`}
             >
-              <ShoppingCart className="w-3 h-3" /> Order
-            </Link>
+              <ShoppingCart className="w-3 h-3" /> Add to Cart
+            </button>
           </div>
         </div>
       </div>

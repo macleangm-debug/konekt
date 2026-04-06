@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BrandButton from "../ui/BrandButton";
-import { Menu, X, FileText, ChevronDown } from "lucide-react";
+import { Menu, X, FileText, ChevronDown, ShoppingCart } from "lucide-react";
 import BrandLogo from "../branding/BrandLogo";
 import { serviceNavigationGroups } from "../services/ServiceNavigationDropdownData";
 import MarketSelectorNav from "../navigation/MarketSelectorNav";
+import { useCart } from "../../contexts/CartContext";
 
 export default function PublicNavbarV2() {
   const [open, setOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const dropdownRef = useRef(null);
+  let cartCount = 0;
+  try { const cart = useCart(); cartCount = cart.itemCount || 0; } catch(e) {}
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -107,6 +110,18 @@ export default function PublicNavbarV2() {
 
         <div className="hidden lg:flex items-center gap-3">
           <MarketSelectorNav />
+          <Link
+            to="/cart"
+            className="relative p-2 rounded-xl text-slate-700 hover:bg-slate-50 transition"
+            data-testid="navbar-cart-btn"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[#D4A843] text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center" data-testid="navbar-cart-count">
+                {cartCount}
+              </span>
+            )}
+          </Link>
           <BrandButton href="/login" variant="ghost">
             Login
           </BrandButton>
@@ -181,6 +196,15 @@ export default function PublicNavbarV2() {
               )
             )}
             <div className="pt-3 border-t space-y-2">
+              <Link
+                to="/cart"
+                className="flex items-center gap-2 rounded-xl px-3 py-3 hover:bg-slate-50 font-medium text-slate-700"
+                onClick={() => setOpen(false)}
+                data-testid="mobile-cart-link"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Cart {cartCount > 0 && <span className="bg-[#D4A843] text-white text-xs rounded-full px-2 py-0.5">{cartCount}</span>}
+              </Link>
               <BrandButton href="/login" variant="ghost" className="w-full">
                 Login
               </BrandButton>

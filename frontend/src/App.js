@@ -342,6 +342,9 @@ import AccountServiceDetailPage from "@/pages/customer/AccountServiceDetailPage"
 // Quote Request Page
 import QuoteRequestPage from "@/pages/public/QuoteRequestPage";
 import PublicOrderRequestPage from "@/pages/public/PublicOrderRequestPage";
+import PublicCartPage from "@/pages/public/PublicCartPage";
+import PublicCheckoutPage from "@/pages/public/PublicCheckoutPage";
+import PublicPaymentProofPage from "@/pages/public/PublicPaymentProofPage";
 
 // New Premium Layouts & Pages
 import PublicSiteLayout from "@/layouts/PublicSiteLayout";
@@ -756,6 +759,9 @@ function App() {
           <Route index element={<HomepageV2Content />} />
           <Route path="marketplace" element={<MarketplaceBrowsePageContent />} />
           <Route path="marketplace/:slug" element={<MarketplaceListingDetailContent />} />
+          <Route path="cart" element={<PublicCartPage />} />
+          <Route path="checkout" element={<PublicCheckoutPage />} />
+          <Route path="payment-proof" element={<PublicPaymentProofPage />} />
           <Route path="order-request" element={<PublicOrderRequestPage />} />
           <Route path="services" element={<ServicesPageContent />} />
           <Route path="services/:groupSlug" element={<ServiceGroupDetailContent />} />
