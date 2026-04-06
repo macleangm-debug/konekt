@@ -197,13 +197,50 @@ Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/accoun
 - `POST /api/admin/notifications/test`
 - `GET /api/admin/notifications/logs`
 
+### Phase 30 — Payment Flow UX Polish (06 Apr 2026)
+**Polished the unified 3-stage /checkout page (Pack 1):**
+
+- Bank Details UI: Rich visual block with bank name, account name, account number, branch, SWIFT, currency from canonical `/api/public/payment-info`
+- Copy buttons on all bank detail fields + payment reference
+- Highlighted payment reference block with order number
+- Payment instructions + "what happens next" messaging
+- Admin verification note ("payment verified before processing")
+- Drag-and-drop file upload for payment proof (images: JPG/PNG/WebP, PDF, max 10MB)
+- File preview (image thumbnails, PDF icon), upload progress bar, error/retry states
+- New backend endpoint: `POST /api/public/upload-proof-file` for file uploads
+- Post-proof account CTA: "Log in" (if account exists) or "Create account" (if not) — shown ONLY after successful proof submission
+- Step bar labels: Cart → Details → Payment & Proof
+- Order summary stays visible at all stages
+- Mobile-first stacked layout
+
+### Phase 31 — Landing Page Upgrade (06 Apr 2026)
+**High-converting landing page (Pack 2):**
+
+Sections (in order):
+1. Hero: "Order Business Supplies, Printing & Services — Fast, Verified, and Fully Managed" + Browse Products / Request a Quote CTAs
+2. How It Works: 4 steps (Browse or Request → Place Order & Pay → We Verify & Assign → Delivery & Tracking)
+3. Trust Signals: Verified Vendors, Payment Verification, Dedicated Support
+4. Featured Categories: Office Equipment, Office Stationery, Promotional Materials, Business Services (linked to marketplace)
+5. Testimonials: 3 business quotes
+6. Payment Trust Block: "Your payment is verified before any order is processed"
+7. CTA Section: "Ready to Place Your Order?" with dual CTAs
+
+### Phase 32 — Footer + Content Pages (06 Apr 2026)
+**Full footer structure and legal/help content (Pack 3):**
+
+- Footer enhanced to 5 columns: Brand, Marketplace, Company, Business, Contact
+- Company column: About Konekt, Help Center, Privacy Policy, Terms of Service, Contact Us
+- Bottom bar: Privacy + Terms quick links
+- `/privacy` — Privacy Policy page
+- `/terms` — Terms of Service page
+- `/help` — Public Help Center with FAQ accordion (Ordering, Payment, Delivery, Account sections)
+- `/about` — Already existed, validated
+
 ## Backlog
 
 ### P1 — Upcoming
-- Payment Flow UX Polish (bank details UI, proof upload polish, guest→account transition)
-- Landing Page Upgrade (hero, "How it works", trust signals)
-- Footer + Content Pages (About, Help, Policies)
 - End-to-end Stripe test with real test cards
+- Product detail page (conversion-focused)
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
@@ -228,3 +265,5 @@ Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/accoun
 - Iteration 179: Guest Commerce Flow (Cart + Checkout + Payment Proof + Account Linking) — 100% (17/17 backend + 8/8 frontend)
 - Iteration 180: Unified 3-Stage Checkout Flow (Details → Payment & Proof → Confirmation) — 100% (15/15 backend + 35/35 frontend)
 - Iteration 181: Notification Settings E2E — 100% (11/11 backend + all frontend verified)
+- Iteration 182: Checkout Flow Pack 1 Polish — 100% (19/19 backend + all frontend verified)
+- Iteration 183: Landing Page + Footer + Content Pages — 100% (16/16 frontend verified)
