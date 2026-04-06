@@ -239,8 +239,8 @@ export default function PublicCheckoutPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // VAT state (fetched from canonical source)
-  const [vatPercent, setVatPercent] = useState(0);
+  // VAT state (fetched from canonical source, 18% default)
+  const [vatPercent, setVatPercent] = useState(18);
 
   // Fetch VAT rate on mount
   useEffect(() => {

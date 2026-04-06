@@ -236,11 +236,36 @@ Sections (in order):
 - `/help` — Public Help Center with FAQ accordion (Ordering, Payment, Delivery, Account sections)
 - `/about` — Already existed, validated
 
+### Phase 33 — Marketplace UX Pack (06 Apr 2026)
+**Vendor language removal + Mobile filters + VAT parity:**
+
+**A. Vendor Language Removal (Global Sweep)**
+- Replaced ALL customer-facing vendor/supplier terminology with safe alternatives
+- Pages cleaned: Landing page, Privacy Policy, Terms of Service, Help Center, Product Detail, Testimonials, Expansion Landing
+- Safe replacements: "supply network", "fulfillment network", "fulfillment partners", "verified sourcing"
+- Zero vendor language remaining in any public page/component
+
+**B. Mobile Filter Drawer**
+- Desktop (lg+): Keeps existing inline 5-column filter rail (search, group, category, subcategory, sort)
+- Mobile (<lg): Horizontal bar with [Filter] + [Sort] buttons + result count
+- Bottom sheet drawer opens on Filter tap with Group/Category/Subcategory selects
+- Sort dropdown on Sort tap
+- Selected filter chips visible on both viewports with "Clear all" button
+- No route changes
+
+**C. VAT Parity (Canonical Pricing)**
+- Created `checkout_totals_service.py` — single source of truth for subtotal + VAT + total
+- Guest checkout now applies 18% VAT (same as account checkout)
+- `GET /api/public/payment-info` now returns `vat_percent`
+- `POST /api/public/checkout` response now includes `subtotal`, `vat_percent`, `vat_amount`, `total`
+- Account checkout reads VAT from same canonical source (`/api/public/payment-info`)
+- OrderSummary displays: Subtotal, VAT (18%), Total on all stages
+
 ## Backlog
 
 ### P1 — Upcoming
 - End-to-end Stripe test with real test cards
-- Product detail page (conversion-focused)
+- Conversion-focused product detail page
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
@@ -267,3 +292,4 @@ Sections (in order):
 - Iteration 181: Notification Settings E2E — 100% (11/11 backend + all frontend verified)
 - Iteration 182: Checkout Flow Pack 1 Polish — 100% (19/19 backend + all frontend verified)
 - Iteration 183: Landing Page + Footer + Content Pages — 100% (16/16 frontend verified)
+- Iteration 184: Vendor Language Removal + Mobile Filters + VAT Parity — 100% backend, 90% frontend (VAT display fixed post-test)
