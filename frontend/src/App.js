@@ -359,6 +359,9 @@ import ServiceDetailContent from "@/pages/public/ServiceDetailContent";
 import TrackOrderPageContent from "@/pages/public/TrackOrderPageContent";
 import AboutPageContent from "@/pages/public/AboutPageContent";
 import ContactPageContent from "@/pages/public/ContactPageContent";
+import PrivacyPolicyPage from "@/pages/public/PrivacyPolicyPage";
+import TermsOfServicePage from "@/pages/public/TermsOfServicePage";
+import PublicHelpPage from "@/pages/public/PublicHelpPage";
 
 // New Premium Customer Pages
 import DashboardOverviewPageV2 from "@/pages/customer/DashboardOverviewPageV2";
@@ -772,6 +775,9 @@ function App() {
           <Route path="track-order" element={<TrackOrderPageContent />} />
           <Route path="about" element={<AboutPageContent />} />
           <Route path="contact" element={<ContactPageContent />} />
+          <Route path="privacy" element={<PrivacyPolicyPage />} />
+          <Route path="terms" element={<TermsOfServicePage />} />
+          <Route path="help" element={<PublicHelpPage />} />
         </Route>
         
         {/* /dashboard/* — Redirect to canonical /account/* */}

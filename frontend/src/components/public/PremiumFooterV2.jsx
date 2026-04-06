@@ -9,7 +9,7 @@ export default function PremiumFooterV2() {
   return (
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white" data-testid="premium-footer">
       <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-2 xl:grid-cols-5 gap-10">
-        <div className="xl:col-span-2">
+        <div className="xl:col-span-1">
           <BrandLogo size="lg" variant="light" className="mb-4" />
           <p className="text-white/60 mt-0 max-w-md leading-relaxed text-sm">
             Business products, services, and fulfillment support through one connected ecosystem.
@@ -27,12 +27,23 @@ export default function PremiumFooterV2() {
         <div>
           <div className="font-bold mb-4">Marketplace</div>
           <div className="space-y-3 text-slate-300">
-            <Link to="/marketplace" className="block hover:text-white transition">Browse listings</Link>
+            <Link to="/marketplace" className="block hover:text-white transition">Browse Products</Link>
             <Link to="/services" className="block hover:text-white transition">Services</Link>
             <Link to="/request-quote" className="block hover:text-white transition flex items-center gap-2">
               <FileText className="w-4 h-4" /> Request Quote
             </Link>
-            <Link to="/track-order" className="block hover:text-white transition">Track order</Link>
+            <Link to="/track-order" className="block hover:text-white transition">Track Order</Link>
+          </div>
+        </div>
+
+        <div>
+          <div className="font-bold mb-4">Company</div>
+          <div className="space-y-3 text-slate-300">
+            <Link to="/about" className="block hover:text-white transition">About Konekt</Link>
+            <Link to="/help" className="block hover:text-white transition">Help Center</Link>
+            <Link to="/privacy" className="block hover:text-white transition">Privacy Policy</Link>
+            <Link to="/terms" className="block hover:text-white transition">Terms of Service</Link>
+            <Link to="/contact" className="block hover:text-white transition">Contact Us</Link>
           </div>
         </div>
 
@@ -42,14 +53,14 @@ export default function PremiumFooterV2() {
             <Link to="/account/referrals" className="block hover:text-[#D4A843] transition flex items-center gap-2">
               <Gift className="w-4 h-4 text-[#D4A843]" /> Referrals & Rewards
             </Link>
-            <Link to="/launch-country" className="block hover:text-white transition">Country expansion</Link>
-            <Link to="/login" className="block hover:text-white transition">Partner portal</Link>
-            <Link to="/dashboard" className="block hover:text-white transition">Customer account</Link>
+            <Link to="/launch-country" className="block hover:text-white transition">Country Expansion</Link>
+            <Link to="/login" className="block hover:text-white transition">Partner Portal</Link>
+            <Link to="/dashboard" className="block hover:text-white transition">Customer Account</Link>
           </div>
         </div>
 
         <div>
-          <div className="font-bold mb-4">Support</div>
+          <div className="font-bold mb-4">Contact</div>
           <div className="space-y-3 text-slate-300">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
@@ -73,9 +84,13 @@ export default function PremiumFooterV2() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-5 text-sm text-slate-400 flex flex-col md:flex-row gap-3 justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-5 text-sm text-slate-400 flex flex-col md:flex-row gap-3 justify-between items-center">
           <div>© {new Date().getFullYear()} Konekt. All rights reserved.</div>
-          <div>Built for modern African business operations.</div>
+          <div className="flex items-center gap-4">
+            <Link to="/privacy" className="hover:text-white transition">Privacy</Link>
+            <Link to="/terms" className="hover:text-white transition">Terms</Link>
+            <span>Built for modern African business operations.</span>
+          </div>
         </div>
       </div>
     </footer>
