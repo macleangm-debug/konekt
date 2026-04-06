@@ -7,7 +7,7 @@ import os
 import logging
 from datetime import datetime, timezone
 from uuid import uuid4
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, File, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
 
 logger = logging.getLogger("public_commerce")
@@ -367,3 +367,41 @@ async def public_order_status(order_number: str, email: str = ""):
     # Strip sensitive fields
     order.pop("customer_email", None)
     return order
+
+
+# ─── Payment Proof File Upload ────────────────────────────
+
+PROOF_UPLOAD_DIR = "/app/backend/uploads/payment_proofs"
+os.makedirs(PROOF_UPLOAD_DIR, exist_ok=True)
+ALLOWED_PROOF_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
+MAX_PROOF_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+@router.post("/upload-proof-file")
+async def upload_proof_file(file: UploadFile = File(...)):
+    """Upload a payment proof image or PDF. Returns the file URL."""
+    if not file.filename:
+        raise HTTPException(400, "No filename provided")
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_PROOF_EXTENSIONS:
+        raise HTTPException(400, f"Unsupported file type. Allowed: {', '.join(ALLOWED_PROOF_EXTENSIONS)}")
+
+    content = await file.read()
+    if len(content) > MAX_PROOF_SIZE:
+        raise HTTPException(400, "File too large. Max size: 10MB")
+
+    file_id = str(uuid4())
+    safe_name = f"{file_id}{ext}"
+    full_path = os.path.join(PROOF_UPLOAD_DIR, safe_name)
+
+    with open(full_path, "wb") as f:
+        f.write(content)
+
+    return {
+        "ok": True,
+        "file_name": file.filename,
+        "url": f"/uploads/payment_proofs/{safe_name}",
+        "size": len(content),
+        "content_type": file.content_type,
+    }
