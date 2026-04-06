@@ -34,7 +34,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "What happens after I submit payment proof?",
-        a: "Our admin team reviews and verifies your payment. Once verified, your order is assigned to a vendor and moves into fulfillment."
+        a: "Our admin team reviews and verifies your payment. Once verified, your order moves into managed fulfillment."
       },
       {
         q: "How long does payment verification take?",
@@ -52,7 +52,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: "What are the delivery timelines?",
-        a: "Delivery times vary by product and vendor. Standard orders are typically fulfilled within 3-7 business days."
+        a: "Delivery times vary by product and fulfillment partner. Standard orders are typically fulfilled within 3-7 business days."
       },
     ],
   },

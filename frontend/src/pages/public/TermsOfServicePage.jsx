@@ -23,7 +23,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-bold text-[#20364D]">1. Acceptance of Terms</h2>
           <p className="text-slate-600 leading-relaxed">
             By using the Konekt platform, you agree to these Terms of Service. Konekt provides a
-            B2B marketplace connecting businesses with verified vendors for products and services.
+            B2B marketplace connecting businesses with verified fulfillment partners for products and services.
           </p>
         </section>
 
@@ -31,7 +31,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-bold text-[#20364D]">2. Ordering & Payment</h2>
           <p className="text-slate-600 leading-relaxed">
             Orders placed on Konekt are subject to payment verification. All payments must be verified
-            by our admin team before orders are processed and assigned to vendors. Konekt reserves
+            by our admin team before orders are processed and assigned for fulfillment. Konekt reserves
             the right to reject orders or payment proofs that do not meet verification requirements.
           </p>
         </section>
@@ -48,18 +48,18 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">4. Fulfillment & Delivery</h2>
           <p className="text-slate-600 leading-relaxed">
-            Konekt coordinates fulfillment through its verified vendor network. Delivery timelines
-            are estimates and may vary based on product availability, vendor location, and logistics.
+            Konekt coordinates fulfillment through its verified supply network. Delivery timelines
+            are estimates and may vary based on product availability, location, and logistics.
             Konekt will communicate any delays through your registered contact details.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-[#20364D]">5. Vendor Network</h2>
+          <h2 className="text-xl font-bold text-[#20364D]">5. Fulfillment Network</h2>
           <p className="text-slate-600 leading-relaxed">
-            Vendors on the Konekt platform are independently vetted. While Konekt manages the
+            Fulfillment partners on the Konekt platform are independently vetted. While Konekt manages the
             ordering and payment process, individual product quality and fulfillment are the
-            responsibility of the assigned vendor under Konekt's oversight.
+            responsibility of the assigned fulfillment partner under Konekt's oversight.
           </p>
         </section>
 

@@ -1,0 +1,70 @@
+{
+  "summary": "Iteration 184: Tested vendor language removal, mobile filter drawer, and VAT parity. Backend APIs working correctly. Vendor language successfully removed from all customer-facing pages. Mobile filter drawer working as expected. ISSUE FOUND: Checkout Order Summary sidebar does not display VAT breakdown (Subtotal, VAT 18%, Total) even though backend returns correct VAT data.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "PublicCheckoutPage - OrderSummary",
+        "issue": "VAT breakdown (Subtotal, VAT 18%, Total) not displayed in Order Summary sidebar. Shows only 'Total TZS 8,000' instead of showing Subtotal TZS 8,000, VAT 18% TZS 1,440, Total TZS 9,440. The 'Amount to Transfer' section correctly shows TZS 9,440.",
+        "selector": "[data-testid='checkout-summary'], [data-testid='vat-line']",
+        "priority": "HIGH",
+        "root_cause": "The OrderSummary component has hasVat check (vatPercent > 0 && vatAmount > 0) but VAT line is not rendering. The displayVatPercent and displayVatAmount props may not be passed correctly or the component is not re-rendering after orderSnapshot is set.",
+        "file": "/app/frontend/src/pages/public/PublicCheckoutPage.jsx",
+        "lines": "54-104, 696-706"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_184.json",
+    "/app/test_reports/pytest/pytest_results_checkout_v182.xml"
+  ],
+  "action_items": [
+    "Fix VAT display in PublicCheckoutPage OrderSummary component - the hasVat condition or prop passing needs debugging",
+    "Verify that displayVatPercent and displayVatAmount are correctly calculated and passed to OrderSummary",
+    "Check if orderSnapshot.vat_percent and orderSnapshot.vat_amount are being set correctly after API response"
+  ],
+  "critical_code_review_comments": [
+    "PublicCheckoutPage.jsx line 416-419: displayVatPercent and displayVatAmount calculation looks correct but VAT line not rendering",
+    "OrderSummary component line 56: hasVat = vatPercent > 0 && vatAmount > 0 - check if props are numbers or undefined"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (2/2 API tests passed)",
+    "frontend": "90% (vendor language removal PASS, mobile filter PASS, VAT display PARTIAL FAIL)"
+  },
+  "test_credentials": "No login required for public pages",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "VAT parity backend is working correctly - /api/public/payment-info returns vat_percent:18, /api/public/checkout returns correct subtotal/vat_amount/total. The issue is frontend-only: OrderSummary component in PublicCheckoutPage.jsx is not displaying the VAT breakdown even though the data is available. The 'Amount to Transfer' section correctly shows the VAT-inclusive total (e.g., TZS 9,440 for an 8,000 item), but the Order Summary sidebar shows only 'Total TZS 8,000' without Subtotal and VAT 18% lines.",
+  "features_tested": {
+    "vendor_language_removal": {
+      "landing_page": "PASS - No vendor/supplier language in hero, how-it-works, trust signals, testimonials",
+      "privacy_page": "PASS - Uses 'supply network' and 'fulfillment' terminology",
+      "terms_page": "PASS - Uses 'Fulfillment Network' and 'fulfillment partner' terminology",
+      "help_page": "PASS - Uses 'fulfillment' terminology",
+      "product_detail": "PASS - Shows 'Verified sourcing' not 'Vetted suppliers'"
+    },
+    "mobile_filter_drawer": {
+      "desktop_1920px": "PASS - Shows inline filter rail with search, group, category, subcategory, sort dropdowns",
+      "mobile_375px": "PASS - Shows compact search bar + horizontal Filter/Sort buttons",
+      "filter_drawer": "PASS - Opens bottom sheet with Group, Category, Subcategory selects",
+      "sort_dropdown": "PASS - Shows sort options (Relevance, Newest, Low→High, High→Low)"
+    },
+    "vat_parity": {
+      "api_payment_info": "PASS - Returns vat_percent: 18",
+      "api_checkout": "PASS - Returns subtotal, vat_percent, vat_amount, total correctly",
+      "checkout_amount_to_transfer": "PASS - Shows correct VAT-inclusive total",
+      "checkout_order_summary": "FAIL - Does not show VAT breakdown (Subtotal, VAT 18%, Total)"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

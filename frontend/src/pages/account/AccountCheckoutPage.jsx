@@ -39,10 +39,10 @@ export default function AccountCheckoutPage() {
         const parsedCart = storedCart ? JSON.parse(storedCart) : [];
         setCart(parsedCart);
         
-        // Load VAT from settings
+        // Load VAT from canonical source
         try {
-          const settingsRes = await api.get("/api/admin/settings-hub");
-          const vat = settingsRes.data?.commercial?.vat_percent || 18;
+          const paymentInfoRes = await api.get("/api/public/payment-info");
+          const vat = paymentInfoRes.data?.vat_percent || 18;
           setVatPercent(vat);
         } catch (e) {
           // Use default VAT

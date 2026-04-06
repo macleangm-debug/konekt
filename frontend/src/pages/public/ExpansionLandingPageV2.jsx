@@ -175,7 +175,7 @@ export default function ExpansionLandingPageV2() {
             <div className="grid gap-4">
               <select className="border rounded-xl px-4 py-3" value={partnerForm.application_type} onChange={(e) => setPartnerForm({ ...partnerForm, application_type: e.target.value })}>
                 <option value="country_operator">Country Operating Partner</option>
-                <option value="product_partner">Product Supplier</option>
+                <option value="product_partner">Product Partner</option>
                 <option value="service_partner">Service Provider</option>
                 <option value="delivery_partner">Delivery Partner</option>
               </select>

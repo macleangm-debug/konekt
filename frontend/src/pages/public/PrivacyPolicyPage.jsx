@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
             <li>Process and fulfill your orders</li>
             <li>Verify payments and prevent fraud</li>
             <li>Communicate order updates and confirmations</li>
-            <li>Assign vendors and manage fulfillment</li>
+            <li>Coordinate fulfillment and manage delivery</li>
             <li>Provide customer support</li>
             <li>Improve our platform and services</li>
           </ul>
@@ -44,8 +44,8 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">3. Information Sharing</h2>
           <p className="text-slate-600 leading-relaxed">
-            We share order-relevant information with our verified vendor network solely for the purpose
-            of fulfilling your orders. Vendors receive only the minimum information needed to complete
+            We share order-relevant information with our verified supply network solely for the purpose
+            of fulfilling your orders. Fulfillment partners receive only the minimum information needed to complete
             their assigned work. We do not sell your personal information to third parties.
           </p>
         </section>

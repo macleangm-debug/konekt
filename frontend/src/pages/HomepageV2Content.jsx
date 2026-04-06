@@ -32,7 +32,7 @@ function HeroSection() {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed" data-testid="hero-subtext">
-            Konekt connects you to trusted vendors, verifies your payment, and ensures
+            Konekt connects you to a verified supply network, verifies your payment, and ensures
             your order is delivered — all in one seamless process.
           </p>
 
@@ -79,7 +79,7 @@ function HowItWorksSection() {
     {
       num: "3",
       title: "We Verify & Assign",
-      text: "Konekt verifies payment and assigns the right vendor to fulfill your order.",
+      text: "Konekt verifies payment and coordinates fulfillment through our verified supply network.",
       Icon: ShieldCheck,
     },
     {
@@ -130,8 +130,8 @@ function HowItWorksSection() {
 function TrustSignalsSection() {
   const signals = [
     {
-      title: "Verified Vendors",
-      text: "Every vendor in the Konekt network is vetted and approved before they fulfill a single order.",
+      title: "Verified Supply Network",
+      text: "Every fulfillment partner in the Konekt network is vetted and approved before they handle a single order.",
     },
     {
       title: "Payment Verification",
@@ -149,7 +149,7 @@ function TrustSignalsSection() {
         <div className="max-w-2xl mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">Why Businesses Trust Konekt</h2>
           <p className="text-slate-600 mt-3 text-base md:text-lg">
-            Trusted by growing businesses. A reliable vendor network you can count on.
+            Trusted by growing businesses. A reliable fulfillment network you can count on.
           </p>
         </div>
 
@@ -246,7 +246,7 @@ function FeaturedCategoriesSection() {
 function TestimonialsSection() {
   const testimonials = [
     {
-      quote: "Konekt makes it easier to coordinate supplies, services, and delivery without running through multiple vendors.",
+      quote: "Konekt makes it easier to coordinate supplies, services, and delivery without running through multiple channels.",
       name: "Operations Manager",
       company: "Growing SME",
     },

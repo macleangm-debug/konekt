@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
+from services.checkout_totals_service import get_vat_percent, calculate_totals
 
 logger = logging.getLogger("public_commerce")
 
@@ -74,14 +75,13 @@ async def public_checkout(payload: dict):
     if not customer_name or not customer_email or not customer_phone:
         raise HTTPException(400, "Name, email, and phone are required")
 
-    # Calculate totals
-    total = 0
+    # Calculate totals using canonical service (same logic as account checkout)
+    vat_percent = await get_vat_percent(db)
     order_items = []
     for item in items:
         qty = int(item.get("quantity", 1))
         price = float(item.get("unit_price") or item.get("price") or 0)
         subtotal = qty * price
-        total += subtotal
         order_items.append({
             "product_id": item.get("product_id", ""),
             "product_name": item.get("product_name") or item.get("name", ""),
@@ -93,6 +93,8 @@ async def public_checkout(payload: dict):
             "variant": item.get("variant"),
             "listing_type": item.get("listing_type", "product"),
         })
+
+    totals = calculate_totals(order_items, vat_percent)
 
     now = _now()
     order_number = _order_number()
@@ -116,10 +118,12 @@ async def public_checkout(payload: dict):
         "customer_id": linked_user_id,
         "payer_name": "",
         "items": order_items,
-        "total_amount": total,
-        "total": total,
-        "subtotal": total,
-        "tax": 0,
+        "total_amount": totals["total"],
+        "total": totals["total"],
+        "subtotal": totals["subtotal"],
+        "vat_percent": totals["vat_percent"],
+        "vat_amount": totals["vat_amount"],
+        "tax": totals["vat_amount"],
         "discount": 0,
         "delivery_address": payload.get("delivery_address", ""),
         "city": payload.get("city", ""),
@@ -203,7 +207,7 @@ async def public_checkout(payload: dict):
     await _notif().fire("customer_order_received", customer_email, {
         "customer_name": customer_name,
         "order_number": order_number,
-        "total": f"{total:,.0f}",
+        "total": f"{totals['total']:,.0f}",
         "items_summary": items_summary,
         "bank_name": bank.get("bank_name", ""),
         "account_name": bank.get("account_name", ""),
@@ -216,7 +220,10 @@ async def public_checkout(payload: dict):
         "ok": True,
         "order_id": order_id,
         "order_number": order_number,
-        "total": total,
+        "subtotal": totals["subtotal"],
+        "vat_percent": totals["vat_percent"],
+        "vat_amount": totals["vat_amount"],
+        "total": totals["total"],
         "items_count": len(order_items),
         "payment_status": "pending_submission",
         "bank_details": bank,

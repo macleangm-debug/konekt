@@ -240,7 +240,7 @@ export default function MarketplaceListingDetailPage() {
                 </div>
                 <div>
                   <p className="font-medium text-sm">Quality Assured</p>
-                  <p className="text-xs text-slate-500">Vetted suppliers</p>
+                  <p className="text-xs text-slate-500">Verified sourcing</p>
                 </div>
               </div>
             </div>

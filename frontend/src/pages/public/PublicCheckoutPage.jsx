@@ -51,8 +51,9 @@ function StepBar({ current }) {
 }
 
 // ─── Order summary (reused across stages) ───────
-function OrderSummary({ orderItems, orderTotal, orderCount, orderNumber, compact }) {
+function OrderSummary({ orderItems, orderTotal, orderCount, orderNumber, compact, vatPercent, vatAmount, subtotal }) {
   if (!orderItems || orderItems.length === 0) return null;
+  const hasVat = vatPercent > 0 && vatAmount > 0;
   return (
     <div className={`rounded-2xl border bg-white p-5 ${compact ? "" : "sticky top-24"}`} data-testid="checkout-summary">
       <h2 className="text-base font-bold text-[#20364D] mb-1">Order Summary</h2>
@@ -80,9 +81,23 @@ function OrderSummary({ orderItems, orderTotal, orderCount, orderNumber, compact
           </div>
         ))}
       </div>
-      <div className="border-t mt-3 pt-3 flex justify-between font-bold text-[#20364D] text-lg">
-        <span>Total</span>
-        <span>{money(orderTotal)}</span>
+      <div className="border-t mt-3 pt-3 space-y-1.5">
+        {hasVat && (
+          <>
+            <div className="flex justify-between text-sm text-slate-600">
+              <span>Subtotal</span>
+              <span>{money(subtotal || orderTotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-slate-600" data-testid="vat-line">
+              <span>VAT ({vatPercent}%)</span>
+              <span>{money(vatAmount)}</span>
+            </div>
+          </>
+        )}
+        <div className="flex justify-between font-bold text-[#20364D] text-lg">
+          <span>Total</span>
+          <span data-testid="summary-total">{money(orderTotal)}</span>
+        </div>
       </div>
     </div>
   );
@@ -224,6 +239,19 @@ export default function PublicCheckoutPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // VAT state (fetched from canonical source)
+  const [vatPercent, setVatPercent] = useState(0);
+
+  // Fetch VAT rate on mount
+  useEffect(() => {
+    fetch(`${API_URL}/api/public/payment-info`)
+      .then(r => r.json())
+      .then(d => {
+        setVatPercent(d.vat_percent || 0);
+      })
+      .catch(() => {});
+  }, []);
+
   // Forms
   const [form, setForm] = useState({
     customer_name: "", email: "", phone_prefix: "+255", phone: "",
@@ -240,7 +268,10 @@ export default function PublicCheckoutPage() {
     if (stage === "payment") {
       fetch(`${API_URL}/api/public/payment-info`)
         .then(r => r.json())
-        .then(d => setBankDetails(d))
+        .then(d => {
+          setBankDetails(d);
+          if (d.vat_percent) setVatPercent(d.vat_percent);
+        })
         .catch(() => {});
     }
   }, [stage]);
@@ -281,7 +312,14 @@ export default function PublicCheckoutPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Checkout failed");
 
-      setOrderSnapshot({ items: [...items], total, itemCount });
+      setOrderSnapshot({
+        items: [...items],
+        total: data.total,
+        itemCount,
+        subtotal: data.subtotal,
+        vat_percent: data.vat_percent,
+        vat_amount: data.vat_amount,
+      });
       setOrderResult(data);
       setProofForm(p => ({ ...p, payer_name: form.customer_name, amount_paid: String(data.total || total) }));
       setStage("payment");
@@ -373,6 +411,13 @@ export default function PublicCheckoutPage() {
   const sideTotal = orderSnapshot?.total || total;
   const sideCount = orderSnapshot?.itemCount || itemCount;
 
+  // Compute VAT for display
+  const cartSubtotal = items.reduce((s, i) => s + (i.quantity * i.unit_price), 0);
+  const displayVatPercent = orderSnapshot?.vat_percent ?? vatPercent;
+  const displayVatAmount = orderSnapshot?.vat_amount ?? Math.floor(cartSubtotal * (vatPercent / 100));
+  const displaySubtotal = orderSnapshot?.subtotal ?? cartSubtotal;
+  const displayTotal = orderSnapshot?.total ?? (cartSubtotal + displayVatAmount);
+
   // ─── Empty cart + no order in progress ─────────────────
   if (stage === "details" && items.length === 0) {
     return (
@@ -423,7 +468,8 @@ export default function PublicCheckoutPage() {
           {/* Order snapshot */}
           {orderSnapshot && (
             <div className="mb-6">
-              <OrderSummary orderItems={orderSnapshot.items} orderTotal={orderSnapshot.total} orderCount={orderSnapshot.itemCount} orderNumber={orderResult?.order_number} compact />
+              <OrderSummary orderItems={orderSnapshot.items} orderTotal={orderSnapshot.total} orderCount={orderSnapshot.itemCount} orderNumber={orderResult?.order_number} compact
+                vatPercent={orderSnapshot.vat_percent} vatAmount={orderSnapshot.vat_amount} subtotal={orderSnapshot.subtotal} />
             </div>
           )}
 
@@ -651,9 +697,12 @@ export default function PublicCheckoutPage() {
           <div className="lg:col-span-2">
             <OrderSummary
               orderItems={sideItems}
-              orderTotal={sideTotal}
+              orderTotal={displayTotal}
               orderCount={sideCount}
               orderNumber={orderResult?.order_number}
+              vatPercent={displayVatPercent}
+              vatAmount={displayVatAmount}
+              subtotal={displaySubtotal}
             />
           </div>
         </div>
@@ -736,7 +785,7 @@ export default function PublicCheckoutPage() {
           <button type="submit" disabled={submitting}
             className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-semibold hover:bg-[#c49a3d] transition flex items-center justify-center gap-2 disabled:opacity-50"
             data-testid="place-order-btn">
-            {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Placing Order...</> : <>Place Order — {money(total)}</>}
+            {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> Placing Order...</> : <>Place Order — {money(displayTotal)}</>}
           </button>
 
           <p className="text-xs text-center text-slate-400">
@@ -746,7 +795,8 @@ export default function PublicCheckoutPage() {
 
         {/* Order Summary Sidebar */}
         <div className="lg:col-span-2">
-          <OrderSummary orderItems={items} orderTotal={total} orderCount={itemCount} />
+          <OrderSummary orderItems={items} orderTotal={displayTotal} orderCount={itemCount}
+            vatPercent={vatPercent} vatAmount={displayVatAmount} subtotal={cartSubtotal} />
         </div>
       </div>
     </div>
