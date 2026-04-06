@@ -127,26 +127,38 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/account/marketplace/{id}` and was only visible to logged-in users. `MarketplaceListingDetailContent.jsx` had dead "Add to Cart" and "Request a Quote" buttons with no onClick handlers.
 
 **Fix — Split ordering flows:**
-- Public marketplace: "Order" → `/order-request` (public form, no auth required)
-- Public product detail: "Order Now" → `/order-request` with product context
-- Account marketplace: "Add" → cart, "Detail" → `/account/marketplace/{id}` (auth required)
+- Public marketplace: "Add to Cart" → localStorage cart → `/cart` → `/checkout` → `/payment-proof`
+- Account marketplace: "Add to Cart" → server cart → `/account/checkout`
 
-**Public Order Request Pipeline:**
-- New page `PublicOrderRequestPage.jsx` at `/order-request`
-- Captures: name, company, email, phone, product details, quantity, variant, notes
-- Posts to `POST /api/public-requests` with `request_type: marketplace_order`
-- Request enters existing operational pipeline → visible in admin requests inbox
-- Guest user auto-receives account invite
+### Phase 28 — Guest Commerce Flow (06 Apr 2026)
+**Full guest cart + checkout + payment proof + account detection & linking.**
 
-**Backend:**
-- Added `marketplace_order` to `VALID_PUBLIC_REQUEST_TYPES` in `public_request_intake_service.py`
-- Added `marketplace_order` to `valid_types` in `requests_module_routes.py`
-- Updated `/api/public-marketplace/listing/{slug}` to fallback to `products` collection (by ID)
-- Admin requests inbox shows marketplace_order type badge
+**Backend (routes/public_commerce_routes.py):**
+- `POST /api/public/checkout` — creates real order in `orders` collection:
+  - `is_guest_order: true`, `payment_status: pending_submission`, `order_status: awaiting_payment_proof`
+  - Detects existing account by email/phone → auto-links via `linked_user_id`
+  - Returns `order_number`, `bank_details`, and `account_info` (login vs create_account CTA)
+  - Invites new users via `guest_checkout_activation_service`
+- `POST /api/public/payment-proof` — creates `payment_proof_submissions` record:
+  - `is_guest_submission: true`, validates `order_number + email` match
+  - Updates order to `pending_review` / `awaiting_payment_verification`
+  - Appears in same admin payment queue as account proofs
+- `GET /api/public/order-status/{order_number}` — public order tracking
 
-**Route Guards Verified:**
-- `/account/*` protected by `CustomerRoute` → `ProtectedRouteWithValidation` → validates token against `/api/auth/me`
-- Unauthenticated access to any `/account/*` route hard-redirects to `/login`
+**Frontend:**
+- Wrapped `PublicSiteLayout` with `CartProvider` (localStorage-based)
+- Public marketplace CTAs: "Add to Cart" (all products, no login needed)
+- Cart icon with badge in public navbar
+- `/cart` — multi-item cart with quantity controls, remove, totals
+- `/checkout` — contact form (name, company, email, phone, address) + order summary
+- `/payment-proof` — payment proof form with order/email verification
+- Success pages with account creation CTA at peak motivation moment
+
+**Pipeline:**
+- Guest orders enter same `orders` collection with same `order_number` format
+- Payment proofs land in admin payment verification queue
+- Sales queries filter `payment_status: verified` — no premature leakage
+- After admin verifies payment → order enters sales → vendor assignment
 
 ---
 
@@ -184,3 +196,4 @@ Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/accoun
 - Iteration 176: Phase 26 Cleanup & Canonicalization — 100% (15/15 backend + frontend 100%)
 - Iteration 177: Full E2E Order Flow Test (Customer → Sales → Vendor) — 100% (13/13 backend + 6/6 frontend)
 - Iteration 178: Public Marketplace Routing Bug Fix — 100% (12/12 backend + 8/8 frontend)
+- Iteration 179: Guest Commerce Flow (Cart + Checkout + Payment Proof + Account Linking) — 100% (17/17 backend + 8/8 frontend)
