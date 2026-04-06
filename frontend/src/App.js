@@ -106,6 +106,7 @@ import LeadDetailPage from "@/pages/admin/LeadDetailPage";
 import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage";
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 import PaymentSettingsPage from "@/pages/admin/PaymentSettingsPage";
+import NotificationSettingsPage from "@/pages/admin/NotificationSettingsPage";
 
 // Partner Ecosystem Pages
 import PartnersPage from "@/pages/admin/PartnersPage";
@@ -688,6 +689,8 @@ function App() {
           <Route path="branding-settings" element={<BrandingSettingsPage />} />
           {/* Sales Rating Leaderboard */}
           <Route path="sales-quality" element={<SalesDashboardQualityV3 />} />
+          {/* Notification Settings */}
+          <Route path="notification-settings" element={<NotificationSettingsPage />} />
         </Route>
         
         {/* Partner Portal Routes — /partner-login redirects to unified /login */}

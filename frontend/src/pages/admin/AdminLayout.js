@@ -94,6 +94,8 @@ const navItems = [
   { path: '/admin/performance-governance', label: 'Performance Settings', icon: Settings, moduleKey: 'settings' },
   { path: '/admin/client-reassignment', label: 'Client Ownership', icon: Users, moduleKey: 'settings' },
   { path: '/admin/business-settings', label: 'Business Settings', icon: Building2, moduleKey: 'settings' },
+  { path: '/admin/payment-settings', label: 'Payment Settings', icon: CreditCard, moduleKey: 'settings' },
+  { path: '/admin/notification-settings', label: 'Notification Settings', icon: Bell, moduleKey: 'settings' },
   { path: '/admin/documents', label: 'Documents', icon: FileText, moduleKey: 'settings' },
   { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
   { path: '/admin/help', label: 'Help', icon: HelpCircle, moduleKey: 'settings' },

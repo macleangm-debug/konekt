@@ -4,7 +4,7 @@ import {
   Bell, Mail, ToggleLeft, ToggleRight, RefreshCw, Send, FileText,
   CheckCircle2, XCircle, Clock, AlertCircle, ChevronDown, ChevronRight
 } from "lucide-react";
-import api from "../../utils/api";
+import api from "../../lib/api";
 
 const STATUS_BADGE = {
   sent: { cls: "bg-green-100 text-green-700", icon: CheckCircle2, label: "Sent" },

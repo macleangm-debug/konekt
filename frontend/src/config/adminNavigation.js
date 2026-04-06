@@ -89,6 +89,7 @@ export const adminNavigation = [
     children: [
       { label: "Business Settings", href: "/admin/business-settings", moduleKey: "settings" },
       { label: "Payment Settings", href: "/admin/payment-settings", moduleKey: "settings" },
+      { label: "Notification Settings", href: "/admin/notification-settings", moduleKey: "settings" },
       { label: "Auto-Numbering", href: "/admin/auto-numbering", moduleKey: "settings" },
       { label: "Numbering Rules", href: "/admin/numbering-rules", moduleKey: "settings" },
       { label: "Markup Rules", href: "/admin/group-markups", moduleKey: "settings" },
