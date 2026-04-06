@@ -1,0 +1,90 @@
+{
+  "summary": "Iteration 180: Unified Checkout Flow Testing - 15/15 backend tests passed (100%), 35/35 frontend tests passed (100%). Full 3-stage checkout flow verified: Stage 1 (Details & Order) → Stage 2 (Payment & Proof on SAME page) → Stage 3 (Confirmation). CRITICAL: Cart persists until payment proof submission, NOT at order placement.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_unified_checkout_flow_v180.py",
+    "/app/test_reports/pytest/pytest_results_unified_checkout_v180.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_unified_checkout_flow_v180.py"
+  ],
+  "success_rate": {
+    "backend": "100% (15/15 tests passed)",
+    "frontend": "100% (35/35 tests passed)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!",
+  "seed_data_creation": "Created test guest orders and payment proofs during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Unified checkout flow fully verified. Key findings: (1) /checkout page is a SINGLE PAGE with 3 stages managed by React state (stage = 'details' | 'payment' | 'done'), (2) Stage 1 shows contact form, delivery form, order summary sidebar, and 'Place Order' button with step bar showing 'Details & Order' active, (3) After clicking 'Place Order', page transitions to Stage 2 ON THE SAME URL (/checkout) - NO redirect to /payment-proof, (4) Stage 2 shows green 'Order Placed' banner with order number, bank details with copy buttons, and inline payment proof form, (5) Stage 2 step bar shows 'Payment & Proof' active, (6) Order summary sidebar persists in Stage 2 (cart items still visible), (7) CRITICAL: Cart badge in navbar STILL shows items AFTER order placement (cart NOT cleared yet), (8) After submitting payment proof in Stage 2, transitions to Stage 3 confirmation, (9) Stage 3 shows 'Order Complete', account creation CTA, and 'Continue Browsing' button, (10) Cart is cleared ONLY after payment proof submission (Stage 2 → Stage 3), NOT at order placement, (11) Standalone /payment-proof page still works for returning users (enter order number + email), (12) Unauthenticated access to /account/* redirects to /login, (13) /marketplace 'Add to Cart' buttons work correctly, (14) /cart page shows all items with quantity controls.",
+  "features_tested": {
+    "backend_tests": {
+      "checkout_creates_order_with_guest_flags": "PASS - Order created with is_guest_order=true, payment_status=pending_submission",
+      "checkout_returns_bank_details": "PASS - Bank details returned in response",
+      "checkout_returns_account_info_cta": "PASS - account_info with type (create_account/login) returned",
+      "checkout_validates_required_fields": "PASS - Validates name, email, phone, items",
+      "payment_proof_creates_submission": "PASS - Creates payment_proof_submissions record",
+      "payment_proof_updates_order_status": "PASS - Updates to pending_review",
+      "payment_proof_validates_email_match": "PASS - Returns 403 for mismatched email",
+      "payment_proof_validates_order_exists": "PASS - Returns 404 for non-existent order",
+      "payment_proof_returns_account_cta": "PASS - Returns account_info CTA",
+      "admin_payment_queue": "PASS - Guest proofs appear in admin queue",
+      "admin_orders_visibility": "PASS - Guest orders appear in admin orders",
+      "marketplace_products_public": "PASS - Public can search products",
+      "marketplace_listing_detail_public": "PASS - Public can view product details",
+      "standalone_payment_proof_works": "PASS - Standalone /payment-proof endpoint works",
+      "health_endpoint": "PASS - Health endpoint working"
+    },
+    "frontend_tests": {
+      "marketplace_add_to_cart_buttons": "PASS - 17 'Add to Cart' buttons found on product cards",
+      "cart_badge_after_add": "PASS - Cart badge shows '1' after adding item",
+      "cart_page_loads": "PASS - Cart page loads with items",
+      "cart_quantity_controls": "PASS - Quantity +/- buttons present",
+      "proceed_to_checkout_btn": "PASS - 'Proceed to Checkout' button present",
+      "checkout_stage1_loads": "PASS - Stage 1 (Details & Order) loads",
+      "step_details_active": "PASS - Step bar shows 'Details & Order' active",
+      "checkout_form_exists": "PASS - Contact and delivery form present",
+      "order_summary_sidebar": "PASS - Order summary sidebar visible",
+      "cart_persists_before_order": "PASS - Cart badge shows '1' before placing order",
+      "place_order_btn_exists": "PASS - 'Place Order' button present",
+      "same_page_after_order": "PASS - URL stays /checkout after order (no redirect)",
+      "stage2_payment_loads": "PASS - Stage 2 (Payment & Proof) loads on same page",
+      "step_payment_active": "PASS - Step bar shows 'Payment & Proof' active",
+      "order_placed_banner": "PASS - Green 'Order Placed' banner visible",
+      "bank_details_visible": "PASS - Bank details with copy buttons visible",
+      "inline_proof_form": "PASS - Inline payment proof form visible",
+      "order_summary_persists_stage2": "PASS - Order summary sidebar persists in Stage 2",
+      "cart_persists_stage2": "PASS - Cart badge STILL shows '1' in Stage 2 (cart NOT cleared)",
+      "submit_proof_btn_exists": "PASS - 'Submit Payment Proof' button present",
+      "stage3_confirmation_loads": "PASS - Stage 3 (Confirmation) loads",
+      "step_done_active": "PASS - Step bar shows 'Confirmation' active",
+      "order_complete_text": "PASS - 'Order Complete' text visible",
+      "account_cta_visible": "PASS - Account creation CTA visible",
+      "continue_browsing_btn": "PASS - 'Continue Browsing' button visible",
+      "cart_cleared_stage3": "PASS - Cart badge GONE in Stage 3 (cart cleared after proof)",
+      "standalone_page_loads": "PASS - Standalone /payment-proof page loads",
+      "order_number_field": "PASS - Order number field present",
+      "email_field": "PASS - Email field present",
+      "payer_name_field": "PASS - Payer name field present",
+      "amount_field": "PASS - Amount field present",
+      "reference_field": "PASS - Bank reference field present",
+      "submit_btn": "PASS - Submit button present",
+      "payment_instruction": "PASS - Payment instruction banner visible",
+      "account_redirect_to_login": "PASS - /account/* redirects to /login for unauthenticated users"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
