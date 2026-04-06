@@ -34,14 +34,48 @@ def serialize_public_doc(doc):
 
 @router.get("/listing/{slug}")
 async def get_public_listing(slug: str):
-    """Get a public listing by slug with related items"""
+    """Get a public listing by slug, with fallback to products collection by ID."""
     listing = await db.marketplace_listings.find_one({
         "slug": slug,
         "approval_status": {"$in": ["approved", "published"]},
         "is_active": True,
     })
 
+    # Fallback: try products collection by ID (browse page uses product IDs)
     if not listing:
+        product = None
+        try:
+            product = await db.products.find_one({"_id": ObjectId(slug)})
+        except Exception:
+            pass
+        if not product:
+            product = await db.products.find_one({"id": slug})
+        if not product:
+            product = await db.products.find_one({"slug": slug})
+        if product:
+            product["id"] = str(product["_id"])
+            del product["_id"]
+            # Strip vendor internals for public view
+            product.pop("vendor_id", None)
+            product.pop("vendor_name", None)
+            product.pop("vendor_product_code", None)
+            product.pop("source_submission_id", None)
+            product.pop("partner_id", None)
+            product.pop("partner_name", None)
+            product.pop("base_partner_price", None)
+            product.pop("admin_notes", None)
+            category = product.get("category_name") or product.get("category") or product.get("group_name", "")
+            # Get related products from same category
+            related_q = {"category_name": category} if category else {}
+            related_products = []
+            async for rp in db.products.find({**related_q, "id": {"$ne": product.get("id")}}).sort("created_at", -1).limit(8):
+                related_products.append(serialize_public_doc(rp))
+            return {
+                "listing": product,
+                "related": related_products,
+                "suggestions": [],
+                "similar_type": [],
+            }
         raise HTTPException(status_code=404, detail="Listing not found")
 
     category = listing.get("category")

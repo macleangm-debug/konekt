@@ -17,6 +17,7 @@ const TYPE_BADGES = {
   product_bulk: { label: "Product Bulk", cls: "bg-amber-100 text-amber-700" },
   promo_custom: { label: "Promo Custom", cls: "bg-pink-100 text-pink-700" },
   promo_sample: { label: "Promo Sample", cls: "bg-rose-100 text-rose-700" },
+  marketplace_order: { label: "Marketplace Order", cls: "bg-emerald-100 text-emerald-700" },
 };
 
 const STATUS_OPTIONS = ["All", "submitted", "in_review", "converted_to_lead", "quoted", "closed"];

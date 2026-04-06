@@ -22,6 +22,7 @@ VALID_PUBLIC_REQUEST_TYPES = {
     "product_bulk",
     "promo_custom",
     "promo_sample",
+    "marketplace_order",
 }
 
 

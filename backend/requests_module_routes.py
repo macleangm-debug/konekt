@@ -68,7 +68,7 @@ async def create_request(payload: dict, request: Request, user: dict = Depends(_
     """
     db = request.app.mongodb
     request_type = payload.get("request_type")
-    valid_types = {"product_bulk", "promo_custom", "promo_sample", "service_quote", "contact_general", "business_pricing"}
+    valid_types = {"product_bulk", "promo_custom", "promo_sample", "service_quote", "contact_general", "business_pricing", "marketplace_order"}
     if request_type not in valid_types:
         raise HTTPException(400, f"request_type must be one of: {valid_types}")
 

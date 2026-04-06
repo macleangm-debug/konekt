@@ -1,0 +1,65 @@
+{
+  "summary": "Iteration 178: Public Marketplace Routing Bug Fix - All tests passed. 12/12 backend tests passed (100%). 8/8 frontend tests passed (100%). The fix correctly splits the ordering flow: public marketplace uses /order-request form, while account marketplace retains cart/checkout behind auth.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Public product detail page",
+        "issues": ["Price shows TZS 0 for some products (data issue, not routing bug)"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_public_marketplace_routing_v178.py",
+    "/app/test_reports/pytest/pytest_results_v178.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_public_marketplace_routing_v178.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (8/8 tests passed)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!",
+  "seed_data_creation": "Created test marketplace_order requests for testing (REQ-260406-E1A92F, REQ-260406-E1D11C, etc.)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Public marketplace routing fix verified. Key findings: (1) Public marketplace browse page (/marketplace) shows Order and Quote buttons for ALL users without login, (2) Order button links to /order-request NOT /account/*, (3) No /account/marketplace links exist on public marketplace, (4) Public product detail page shows 'Order Now' button NOT 'Add to Cart', (5) Clicking 'Order Now' navigates to /order-request with product context, (6) Public order request form renders with product summary, Your Details, Order Details sections, (7) POST /api/public-requests with request_type=marketplace_order succeeds, (8) Submitted marketplace_order requests appear in admin requests inbox, (9) Unauthenticated access to /account/marketplace and /account/orders redirects to /login, (10) Authenticated customer can access /account/marketplace with 'Add' and 'Detail' buttons, (11) Account product detail page has 'Add to Cart' button for authenticated users.",
+  "features_tested": {
+    "backend_tests": {
+      "public_requests_marketplace_order": "PASS - POST /api/public-requests with request_type=marketplace_order succeeds",
+      "admin_requests_inbox_marketplace_order": "PASS - marketplace_order requests appear in admin inbox",
+      "sales_visibility": "PASS - Sales/admin can see marketplace_order requests",
+      "marketplace_products_search_public": "PASS - Public can search marketplace products without auth",
+      "marketplace_listing_detail_public": "PASS - Public can view product details without auth",
+      "invalid_request_type_rejected": "PASS - Invalid request types are rejected",
+      "marketplace_order_valid_type": "PASS - marketplace_order is a valid request type",
+      "customer_login": "PASS - Customer can login",
+      "authenticated_marketplace_access": "PASS - Authenticated customer can access marketplace",
+      "authenticated_cart_access": "PASS - Authenticated customer can access cart",
+      "health_endpoint": "PASS - Health endpoint working",
+      "marketplace_taxonomy_public": "PASS - Taxonomy endpoint working"
+    },
+    "frontend_tests": {
+      "public_marketplace_loads": "PASS - Public marketplace page loads with 17 products",
+      "order_button_links_to_order_request": "PASS - Order button href is /order-request NOT /account/*",
+      "no_account_marketplace_links": "PASS - No /account/marketplace links on public marketplace",
+      "public_detail_order_now_button": "PASS - Public detail page shows 'Order Now' button",
+      "public_detail_no_add_to_cart": "PASS - Public detail page does NOT show 'Add to Cart'",
+      "order_request_form_submission": "PASS - Order request form submits successfully",
+      "unauthenticated_account_redirect": "PASS - /account/* redirects to /login for unauthenticated users",
+      "authenticated_account_marketplace": "PASS - Authenticated customer sees 'Add' and 'Detail' buttons"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

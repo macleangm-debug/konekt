@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
@@ -27,11 +27,6 @@ export default function MarketplaceBrowsePageContent() {
     subcategory_id: searchParams.get("subcategory_id") || "",
     sort: searchParams.get("sort") || "relevance",
   });
-
-  const isLoggedIn = useMemo(
-    () => Boolean(localStorage.getItem("konekt_token") || localStorage.getItem("token")),
-    []
-  );
 
   // Load taxonomy once
   useEffect(() => {
@@ -111,7 +106,6 @@ export default function MarketplaceBrowsePageContent() {
               <MarketplaceProductCard
                 key={item.id}
                 product={item}
-                isLoggedIn={isLoggedIn}
                 onRequestQuote={requestProductQuote}
               />
             ))}
@@ -131,13 +125,15 @@ export default function MarketplaceBrowsePageContent() {
   );
 }
 
-function MarketplaceProductCard({ product, isLoggedIn, onRequestQuote }) {
+function MarketplaceProductCard({ product, onRequestQuote }) {
   const price =
     product?.customer_price ??
     product?.price ??
     product?.base_price ??
     product?.unit_price ??
     0;
+
+  const orderUrl = `/order-request?product_id=${encodeURIComponent(product.id || "")}&name=${encodeURIComponent(product.name || "")}&price=${encodeURIComponent(price)}&category=${encodeURIComponent(product.category || product.group_name || "")}`;
 
   return (
     <div
@@ -187,15 +183,13 @@ function MarketplaceProductCard({ product, isLoggedIn, onRequestQuote }) {
               <FileText className="w-3 h-3" /> Quote
             </button>
 
-            {isLoggedIn && (
-              <Link
-                to={`/account/marketplace/${product.id || product.slug}`}
-                className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center gap-1"
-                data-testid={`view-product-${product.id}`}
-              >
-                <ShoppingCart className="w-3 h-3" /> Order
-              </Link>
-            )}
+            <Link
+              to={orderUrl}
+              className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center gap-1"
+              data-testid={`order-product-${product.id}`}
+            >
+              <ShoppingCart className="w-3 h-3" /> Order
+            </Link>
           </div>
         </div>
       </div>

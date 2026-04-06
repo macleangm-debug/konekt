@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
-  ChevronLeft, ShoppingCart, Heart, Share2, Check, 
-  Package, Truck, Clock, ChevronRight, FileText
+  ChevronLeft, Heart, Share2, Check, 
+  Package, Truck, Clock, ChevronRight, FileText, Send
 } from "lucide-react";
 import axios from "axios";
 import PageHeader from "../../components/ui/PageHeader";
@@ -15,6 +15,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function MarketplaceListingDetailContent() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [listing, setListing] = useState(null);
   const [related, setRelated] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -182,13 +183,27 @@ export default function MarketplaceListingDetailContent() {
                 </button>
               </div>
               
-              <BrandButton variant="primary" className="flex-1" data-testid="add-to-cart-btn">
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Add to Cart
+              <BrandButton
+                variant="primary"
+                className="flex-1"
+                data-testid="order-now-btn"
+                onClick={() => navigate(
+                  `/order-request?product_id=${encodeURIComponent(listing.id || slug)}&name=${encodeURIComponent(listing.name || "")}&price=${encodeURIComponent(listing.customer_price || 0)}&category=${encodeURIComponent(listing.category || "")}`
+                )}
+              >
+                <Send className="w-5 h-5 mr-2" />
+                Order Now
               </BrandButton>
             </div>
           ) : (
-            <BrandButton variant="gold" className="w-full" data-testid="request-quote-btn">
+            <BrandButton
+              variant="gold"
+              className="w-full"
+              data-testid="request-quote-btn"
+              onClick={() => navigate(
+                `/request-quote?type=service_quote&service=${encodeURIComponent(listing.name || "")}&category=${encodeURIComponent(listing.category || "")}`
+              )}
+            >
               Request a Quote
             </BrandButton>
           )}
