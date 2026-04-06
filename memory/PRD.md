@@ -121,9 +121,35 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 **New API Endpoint:**
 - `GET /api/marketplace/products/{product_id}` — Public product detail (vendor identity hidden)
 
+### Phase 27 — Public Marketplace Routing Fix (06 Apr 2026)
+**Bug Fix: Public marketplace CTAs were routing into /account/* flow.**
+
+Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/account/marketplace/{id}` and was only visible to logged-in users. `MarketplaceListingDetailContent.jsx` had dead "Add to Cart" and "Request a Quote" buttons with no onClick handlers.
+
+**Fix — Split ordering flows:**
+- Public marketplace: "Order" → `/order-request` (public form, no auth required)
+- Public product detail: "Order Now" → `/order-request` with product context
+- Account marketplace: "Add" → cart, "Detail" → `/account/marketplace/{id}` (auth required)
+
+**Public Order Request Pipeline:**
+- New page `PublicOrderRequestPage.jsx` at `/order-request`
+- Captures: name, company, email, phone, product details, quantity, variant, notes
+- Posts to `POST /api/public-requests` with `request_type: marketplace_order`
+- Request enters existing operational pipeline → visible in admin requests inbox
+- Guest user auto-receives account invite
+
+**Backend:**
+- Added `marketplace_order` to `VALID_PUBLIC_REQUEST_TYPES` in `public_request_intake_service.py`
+- Added `marketplace_order` to `valid_types` in `requests_module_routes.py`
+- Updated `/api/public-marketplace/listing/{slug}` to fallback to `products` collection (by ID)
+- Admin requests inbox shows marketplace_order type badge
+
+**Route Guards Verified:**
+- `/account/*` protected by `CustomerRoute` → `ProtectedRouteWithValidation` → validates token against `/api/auth/me`
+- Unauthenticated access to any `/account/*` route hard-redirects to `/login`
+
 ---
 
-## Key Technical Concepts
 - **Canonical Products:** Approved vendor submissions materialize into the `products` collection — the single source of truth for marketplace, cart, and order flows.
 - **Vendor Role Policy**: product/promo vendors → marketplace access. Service vendors → task-only.
 - **Country-Aware Defaults**: Phone prefix, currency, tax labels adapt to selected market.
@@ -157,3 +183,4 @@ Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs
 - Iteration 175: Marketplace Publish + Admin Config + Sidebar Alignment — 100% (19/19 backend + frontend 100%)
 - Iteration 176: Phase 26 Cleanup & Canonicalization — 100% (15/15 backend + frontend 100%)
 - Iteration 177: Full E2E Order Flow Test (Customer → Sales → Vendor) — 100% (13/13 backend + 6/6 frontend)
+- Iteration 178: Public Marketplace Routing Bug Fix — 100% (12/12 backend + 8/8 frontend)
