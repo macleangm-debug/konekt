@@ -171,16 +171,45 @@ Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/accoun
 - **Invite Token Flow**: MOCKED email → vendor creates password via activation URL.
 - **Business Settings Resolver**: Single source of truth for company identity across quotes, invoices, statements, footer/contact blocks.
 
+### Phase 29 — Unified Notification System (06 Apr 2026)
+**DB-backed notification engine with Resend email integration (dry-run until API key configured).**
+
+**Backend:**
+- `NotificationService` with dispatch pipeline: trigger check → template render → send/dry-run → log
+- 4 event triggers: `customer_order_received`, `customer_payment_proof_received`, `customer_payment_verified`, `admin_payment_proof_submitted`
+- DB collections: `notification_settings`, `notification_provider`, `notification_templates`, `notification_logs`
+- Admin CRUD routes: settings, trigger toggles, provider config, template management, test dispatch, logs
+- Hooks injected into: `public_commerce_routes.py` (checkout, payment proof), `payment_proof_routes.py` (approval)
+- All triggers default to OFF. Dry-run mode logs dispatch without sending.
+
+**Frontend:**
+- `NotificationSettingsPage` at `/admin/notification-settings`
+- Tabs: Triggers (toggle on/off), Email Provider (sender config), Test Dispatch (send test emails)
+- Expandable logs section showing recent dispatch attempts with status badges
+- Wired into admin sidebar under Configuration section
+
+**New API Endpoints:**
+- `GET /api/admin/notifications/settings`
+- `POST /api/admin/notifications/settings/seed`
+- `PUT /api/admin/notifications/settings/trigger`
+- `PUT /api/admin/notifications/settings/provider`
+- `GET/PUT /api/admin/notifications/templates`
+- `POST /api/admin/notifications/test`
+- `GET /api/admin/notifications/logs`
+
 ## Backlog
 
 ### P1 — Upcoming
+- Payment Flow UX Polish (bank details UI, proof upload polish, guest→account transition)
+- Landing Page Upgrade (hero, "How it works", trust signals)
+- Footer + Content Pages (About, Help, Policies)
 - End-to-end Stripe test with real test cards
 
 ### P2 — Future
-- Resend email integration (blocked on API key)
-- Twilio WhatsApp notifications (blocked on keys)
+- Twilio WhatsApp/SMS notifications (blocked on keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
+- Advanced Analytics dashboard
 - Mobile-first optimization
 
 ---
@@ -198,3 +227,4 @@ Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/accoun
 - Iteration 178: Public Marketplace Routing Bug Fix — 100% (12/12 backend + 8/8 frontend)
 - Iteration 179: Guest Commerce Flow (Cart + Checkout + Payment Proof + Account Linking) — 100% (17/17 backend + 8/8 frontend)
 - Iteration 180: Unified 3-Stage Checkout Flow (Details → Payment & Proof → Confirmation) — 100% (15/15 backend + 35/35 frontend)
+- Iteration 181: Notification Settings E2E — 100% (11/11 backend + all frontend verified)
