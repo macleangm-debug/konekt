@@ -206,6 +206,28 @@ async def approve_payment_proof(proof_id: str, payload: dict):
         triggered_by_user_id=payload.get("approved_by"),
         triggered_by_role="admin",
     )
+
+    # ─── EMAIL NOTIFICATION: Payment Verified ─────────────
+    try:
+        from services.notification_service import NotificationService
+        ns = NotificationService(db)
+        customer_email = proof.get("customer_email") or ""
+        if not customer_email:
+            order_doc = await db.orders.find_one(
+                {"order_number": proof.get("order_number")},
+                {"_id": 0, "customer_email": 1, "customer_name": 1}
+            )
+            customer_email = (order_doc or {}).get("customer_email", "")
+        if customer_email:
+            base_url = os.environ.get("FRONTEND_URL", "")
+            await ns.fire("customer_payment_verified", customer_email, {
+                "customer_name": proof.get("customer_name") or "Valued Customer",
+                "order_number": proof.get("order_number") or "",
+                "amount": f"{float(proof.get('amount_paid', 0)):,.0f}",
+                "account_link": f"{base_url}/login",
+            })
+    except Exception as e:
+        print(f"Warning: Payment verified email hook error: {e}")
     
     # Trigger Payment Timeline event for payment confirmed
     try:

@@ -2842,6 +2842,9 @@ app.include_router(canonical_account_orders_router)
 from routes.public_commerce_routes import router as public_commerce_router
 app.include_router(public_commerce_router)
 
+from routes.notification_admin_routes import router as notification_admin_router
+app.include_router(notification_admin_router)
+
 
 
 # Market Settings API
@@ -2898,6 +2901,14 @@ async def startup_event():
         await seed_taxonomy(db)
     except Exception as e:
         logger.warning("Taxonomy seed: %s", e)
+
+    # Seed notification defaults
+    try:
+        from services.notification_service import NotificationService
+        await NotificationService(db).seed_defaults()
+        logger.info("Notification settings seeded")
+    except Exception as e:
+        logger.warning("Notification seed: %s", e)
 
     # Migrate old leads from 'leads' collection to 'crm_leads' (one-time compat)
     try:

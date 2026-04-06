@@ -19,6 +19,11 @@ db = client[DB_NAME]
 
 router = APIRouter(prefix="/api/public", tags=["Public Commerce"])
 
+# Lazy notification service
+def _notif():
+    from services.notification_service import NotificationService
+    return NotificationService(db)
+
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
@@ -190,6 +195,23 @@ async def public_checkout(payload: dict):
             "branch": "Dar es Salaam Main",
         }
 
+    # ─── NOTIFICATION HOOK: Order Confirmation ─────────────
+    items_summary = ", ".join(
+        f"{it['product_name']} x{it['quantity']}" for it in order_items
+    )
+    base_url = os.environ.get("FRONTEND_URL", "")
+    await _notif().fire("customer_order_received", customer_email, {
+        "customer_name": customer_name,
+        "order_number": order_number,
+        "total": f"{total:,.0f}",
+        "items_summary": items_summary,
+        "bank_name": bank.get("bank_name", ""),
+        "account_name": bank.get("account_name", ""),
+        "account_number": bank.get("account_number", ""),
+        "payment_proof_link": f"{base_url}/payment-proof?order={order_number}&email={customer_email}",
+        "account_link": f"{base_url}/login",
+    })
+
     return {
         "ok": True,
         "order_id": order_id,
@@ -276,6 +298,28 @@ async def public_payment_proof(payload: dict):
     )
 
     logger.info("Guest payment proof submitted for order %s by %s", order_number, email)
+
+    # ─── NOTIFICATION HOOKS: Payment Proof ─────────────────
+    base_url = os.environ.get("FRONTEND_URL", "")
+    # Customer notification
+    await _notif().fire("customer_payment_proof_received", email, {
+        "customer_name": order.get("customer_name", ""),
+        "order_number": order_number,
+        "account_link": f"{base_url}/login",
+    })
+    # Admin notification
+    admin_settings = await db.business_settings.find_one({}, {"_id": 0})
+    admin_email = (admin_settings or {}).get("admin_email", "admin@konekt.co.tz")
+    await _notif().fire("admin_payment_proof_submitted", admin_email, {
+        "order_number": order_number,
+        "customer_name": order.get("customer_name", ""),
+        "customer_email": email,
+        "amount": f"{proof_doc.get('amount_paid', 0):,.0f}",
+        "payer_name": proof_doc.get("payer_name", ""),
+        "bank_reference": proof_doc.get("bank_reference", ""),
+        "is_guest": "Yes" if order.get("is_guest_order") else "No",
+        "admin_link": f"{base_url}/admin/payments",
+    })
 
     # Re-detect account for CTA
     existing_account = await _detect_account(email)
