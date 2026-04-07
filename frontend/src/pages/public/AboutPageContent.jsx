@@ -10,7 +10,7 @@ export default function AboutPageContent() {
     <div className="max-w-7xl mx-auto px-6 py-10" data-testid="about-page">
       <PageHeader 
         title="About Konekt"
-        subtitle="Business products, services, and fulfillment support through one connected ecosystem."
+        subtitle="Business products, services, and delivery support through one connected platform."
       />
 
       {/* Mission Section */}
@@ -22,7 +22,7 @@ export default function AboutPageContent() {
           <p className="text-slate-200 mt-4 text-lg">
             Konekt is a business operating system designed to help companies across Africa source products, 
             request services, and manage operations through one trusted platform. We combine ordering, 
-            fulfillment, and service coordination to reduce friction and improve visibility.
+            delivery, and service coordination to reduce friction and improve visibility.
           </p>
         </div>
       </SurfaceCard>
@@ -82,7 +82,7 @@ export default function AboutPageContent() {
             </h2>
             <p className="text-slate-600 mt-4">
               Konekt is growing through partnerships with local distributors and service providers. 
-              If you're interested in becoming a fulfillment partner in your country, we'd love to hear from you.
+              If you're interested in expanding Konekt into your country, we'd love to hear from you.
             </p>
             <div className="mt-6">
               <BrandButton href="/launch-country" variant="primary">

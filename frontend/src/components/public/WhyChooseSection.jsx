@@ -7,7 +7,7 @@ export default function WhyChooseSection() {
     "Better visibility for business ordering",
     "Country-aware availability and expansion model",
     "Strong support for companies and individuals",
-    "Scalable ecosystem of internal and partner fulfillment",
+    "Scalable operations with internal sourcing and delivery",
     "Designed for modern African business operations",
   ];
 
@@ -16,7 +16,7 @@ export default function WhyChooseSection() {
       <div>
         <h2 className="text-3xl md:text-4xl font-bold text-[#20364D]">Why businesses choose Konekt</h2>
         <p className="text-slate-600 mt-3 text-lg">
-          We combine sourcing, support, fulfillment, and service coordination in one trusted experience.
+          We combine sourcing, support, delivery, and service coordination in one trusted experience.
         </p>
       </div>
 

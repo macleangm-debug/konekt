@@ -50,7 +50,7 @@ export default function LoginChooserPage() {
           />
           <LoginCard
             title="Partner"
-            desc="For product, service, delivery partners, and affiliates — manage fulfillment and earnings."
+            desc="For product, service, and delivery partners — manage operations and earnings."
             href={ROUTES.partnerLogin}
             icon={Building2}
           />

@@ -7,12 +7,12 @@ export default function PremiumHero({ countryCode, region, availability }) {
   const headline =
     status === "live"
       ? "Order business products and services from one trusted platform."
-      : "Business ordering, fulfillment, and service delivery built for Africa.";
+      : "Business ordering and service delivery built for Africa.";
 
   const subtext =
     status === "live"
       ? `Now serving ${availability?.country_name || countryCode}${region ? ` • ${region}` : ""}. Discover products, services, and business support in one place.`
-      : "Konekt helps businesses access products, services, and local fulfillment partners through one powerful ecosystem.";
+      : "Konekt helps businesses access products, services, and local delivery support through one powerful platform.";
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#20364D] text-white" data-testid="premium-hero">
@@ -66,7 +66,7 @@ export default function PremiumHero({ countryCode, region, availability }) {
           />
           <HeroCard
             title="Business Services"
-            description="Printing, design, maintenance, and fulfillment support."
+            description="Printing, design, maintenance, and delivery support."
           />
         </div>
       </div>

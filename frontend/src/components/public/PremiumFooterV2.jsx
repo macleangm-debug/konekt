@@ -12,7 +12,7 @@ export default function PremiumFooterV2() {
         <div className="xl:col-span-1">
           <BrandLogo size="lg" variant="light" className="mb-4" />
           <p className="text-white/60 mt-0 max-w-md leading-relaxed text-sm">
-            Business products, services, and fulfillment support through one connected ecosystem.
+            Business products, services, and delivery support through one connected platform.
           </p>
           <div className="flex gap-4 mt-6">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition cursor-pointer">

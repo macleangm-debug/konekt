@@ -456,7 +456,7 @@ export default function ExpansionPremiumPage() {
                 </div>
                 <div className="font-bold text-[#20364D] text-lg">Operational Strength</div>
                 <p className="text-slate-600 mt-2 text-sm">
-                  Capability to execute orders, coordinate fulfillment, and maintain quality.
+                  Capability to execute orders, coordinate delivery, and maintain quality.
                 </p>
               </div>
               <div className="rounded-3xl border p-6">

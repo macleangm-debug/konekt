@@ -248,7 +248,7 @@ export default function InvoicePaymentPageV2() {
       <SurfaceCard>
         <div className="text-lg font-bold text-[#20364D] mb-4">Payment Progress</div>
         <p className="text-slate-600 text-sm mb-6">
-          Track your payment status from invoice issuance to order fulfillment.
+          Track your payment status from invoice issuance to order completion.
         </p>
         <PaymentTimeline 
           events={timelineEvents} 

@@ -33,7 +33,7 @@ const cards = [
 
 const proofPoints = [
   "Structured quote and approval workflows",
-  "Country-aware routing and partner fulfillment",
+  "Country-aware routing and order processing",
   "Better visibility from request to delivery",
 ];
 
@@ -53,7 +53,7 @@ export default function LandingBusinessProofSection() {
 
             <p className="text-slate-600 mt-5 text-lg max-w-3xl leading-8">
               Konekt helps companies source products, request services, manage quotes,
-              and track fulfillment through one coordinated platform.
+              and track delivery through one coordinated platform.
             </p>
 
             <div className="space-y-4 mt-8" data-testid="proof-points">
@@ -80,9 +80,9 @@ export default function LandingBusinessProofSection() {
                 </div>
               </div>
 
-              <div className="rounded-[2rem] bg-white border p-6" data-testid="fulfillment-card">
+              <div className="rounded-[2rem] bg-white border p-6" data-testid="delivery-card">
                 <div className="text-sm text-slate-500">Operational strength</div>
-                <div className="text-3xl font-bold text-[#20364D] mt-2">Trackable Fulfillment</div>
+                <div className="text-3xl font-bold text-[#20364D] mt-2">Trackable Delivery</div>
                 <div className="text-slate-600 mt-3">
                   Better follow-up from quote to delivery and service completion.
                 </div>

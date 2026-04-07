@@ -135,7 +135,7 @@ export default function ServiceRequestsPageV2() {
           secondaryAction="/marketplace"
           benefits={[
             { title: "Expert Team", description: "Dedicated professionals handle your requests from start to finish." },
-            { title: "Progress Tracking", description: "Stay updated on every step of your service fulfillment." },
+            { title: "Progress Tracking", description: "Stay updated on every step of your service delivery." },
             { title: "Quality Guaranteed", description: "Satisfaction guaranteed with revision support included." },
           ]}
         />

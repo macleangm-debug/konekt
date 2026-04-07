@@ -77,7 +77,7 @@ export default function AffiliateLandingPage() {
             <div className="space-y-4 mt-8 text-slate-700">
               <div className="rounded-2xl bg-slate-50 px-5 py-4">Promote real business products and services</div>
               <div className="rounded-2xl bg-slate-50 px-5 py-4">See campaigns and earnings clearly</div>
-              <div className="rounded-2xl bg-slate-50 px-5 py-4">Use promo links without managing fulfillment</div>
+              <div className="rounded-2xl bg-slate-50 px-5 py-4">Use promo links without managing inventory</div>
               <div className="rounded-2xl bg-slate-50 px-5 py-4">Get paid only on valid, successful sales</div>
             </div>
 

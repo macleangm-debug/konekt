@@ -14,8 +14,8 @@ export default function HowItWorksSection() {
       icon: ShoppingBag,
     },
     {
-      title: "Track fulfillment in one place",
-      text: "Konekt manages the experience while the right fulfillment source is routed internally.",
+      title: "Track orders in one place",
+      text: "Konekt manages the experience while the right sourcing is handled internally.",
       icon: Truck,
     },
   ];

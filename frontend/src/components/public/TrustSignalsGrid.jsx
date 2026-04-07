@@ -10,7 +10,7 @@ export default function TrustSignalsGrid() {
       icon: Shield,
     },
     {
-      title: "Location-aware fulfillment",
+      title: "Location-aware delivery",
       text: "Country and region selection helps surface the most relevant availability.",
       icon: MapPin,
     },
@@ -21,7 +21,7 @@ export default function TrustSignalsGrid() {
     },
     {
       title: "Konekt-controlled experience",
-      text: "Customers interact with one trusted platform, even as fulfillment scales.",
+      text: "Customers interact with one trusted platform, even as operations scale.",
       icon: Award,
     },
   ];

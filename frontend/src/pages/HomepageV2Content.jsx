@@ -32,7 +32,7 @@ function HeroSection() {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed" data-testid="hero-subtext">
-            Konekt connects you to a verified supply network, verifies your payment, and ensures
+            Konekt sources, verifies your payment, and ensures
             your order is delivered — all in one seamless process.
           </p>
 
@@ -79,7 +79,7 @@ function HowItWorksSection() {
     {
       num: "3",
       title: "We Verify & Assign",
-      text: "Konekt verifies payment and coordinates fulfillment through our verified supply network.",
+      text: "Konekt verifies your payment and ensures the right products reach you on time.",
       Icon: ShieldCheck,
     },
     {
@@ -130,8 +130,8 @@ function HowItWorksSection() {
 function TrustSignalsSection() {
   const signals = [
     {
-      title: "Verified Supply Network",
-      text: "Every fulfillment partner in the Konekt network is vetted and approved before they handle a single order.",
+      title: "Quality Assurance",
+      text: "Every product and service on Konekt is sourced and verified to meet business standards before it reaches you.",
     },
     {
       title: "Payment Verification",
@@ -149,7 +149,7 @@ function TrustSignalsSection() {
         <div className="max-w-2xl mb-10">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">Why Businesses Trust Konekt</h2>
           <p className="text-slate-600 mt-3 text-base md:text-lg">
-            Trusted by growing businesses. A reliable fulfillment network you can count on.
+            Trusted by growing businesses. A reliable ordering and delivery experience you can count on.
           </p>
         </div>
 

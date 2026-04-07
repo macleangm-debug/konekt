@@ -286,7 +286,7 @@ export default function OrdersPageV2() {
 
   return (
     <div data-testid="orders-page" className="space-y-6">
-      <PageHeader title="My Orders" subtitle="Track fulfillment progress and contact your sales person." />
+      <PageHeader title="My Orders" subtitle="Track order progress and contact your sales person." />
       <FilterBar
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -309,7 +309,7 @@ export default function OrdersPageV2() {
                 <th className="px-6 py-4 text-left">Source</th>
                 <th className="px-6 py-4 text-left">Amount</th>
                 <th className="px-6 py-4 text-left">Payment</th>
-                <th className="px-6 py-4 text-left">Fulfillment</th>
+                <th className="px-6 py-4 text-left">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

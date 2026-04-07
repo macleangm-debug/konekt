@@ -276,7 +276,7 @@ export default function BusinessPricingRequestPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="text-sm text-white/90">Priority fulfillment</span>
+                  <span className="text-sm text-white/90">Priority delivery</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
