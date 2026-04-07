@@ -14,6 +14,8 @@ export default function LoginPageV2() {
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
 
+  const [redirecting, setRedirecting] = useState(false);
+
   useEffect(() => {
     // Validate token on mount — only redirect if token is genuinely valid
     const validateSession = async () => {
@@ -27,15 +29,17 @@ export default function LoginPageV2() {
         const tokenVal = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");
         const res = await api.get("/api/auth/me", { headers: { Authorization: `Bearer ${tokenVal}` } });
         if (res.data && res.data.role) {
-          // Token valid — redirect to dashboard
-          navigate(getDashboardPath(res.data.role));
+          // Token valid — show redirect message then go to dashboard
+          setRedirecting(true);
+          setValidating(false);
+          setTimeout(() => navigate(getDashboardPath(res.data.role)), 1500);
         } else {
           clearAllAuth();
+          setValidating(false);
         }
       } catch {
         // Token invalid/expired — clear and show login
         clearAllAuth();
-      } finally {
         setValidating(false);
       }
     };
@@ -46,6 +50,23 @@ export default function LoginPageV2() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-8 h-8 border-4 border-[#0f172a] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (redirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50" data-testid="session-redirect-notice">
+        <div className="mx-auto max-w-md rounded-2xl border bg-white p-8 text-center shadow-sm">
+          <div className="w-12 h-12 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
+            <Check className="w-6 h-6 text-green-600" />
+          </div>
+          <h2 className="text-xl font-bold text-[#0f172a]">You're already signed in</h2>
+          <p className="mt-2 text-sm text-slate-600">Taking you to your dashboard...</p>
+          <div className="mt-4">
+            <div className="w-6 h-6 mx-auto border-3 border-[#0f172a] border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }

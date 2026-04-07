@@ -284,6 +284,59 @@ async def public_payment_proof(payload: dict):
 
     await db.payment_proof_submissions.insert_one(proof_doc)
 
+    # ─── Canonical payment queue record (admin visibility) ──────
+    # Upsert into db.payments so admin payment verification queue can see guest proofs
+    order_oid = order.get("_id")
+    canonical_payment = {
+        "target_type": "order",
+        "target_id": str(order_oid) if order_oid else order.get("id", ""),
+        "order_id": order.get("id", ""),
+        "order_number": order_number,
+        "payer_name": proof_doc["payer_name"],
+        "payer_email": email,
+        "payer_phone": payload.get("phone", ""),
+        "customer_name": order.get("customer_name", ""),
+        "amount": float(proof_doc.get("amount_paid", 0) or 0),
+        "currency": proof_doc.get("currency", "TZS"),
+        "provider": "bank_transfer",
+        "payment_method": "bank_transfer",
+        "bank_reference": proof_doc.get("bank_reference", ""),
+        "proof_file_url": proof_doc.get("proof_file_url", ""),
+        "proof_file_name": proof_doc.get("proof_file_name", ""),
+        "proof_submission_id": proof_doc["id"],
+        "status": "pending",
+        "review_status": "under_review",
+        "source": "guest_payment_proof",
+        "is_guest_submission": True,
+        "notes": proof_doc.get("notes", ""),
+        "created_at": now,
+        "updated_at": now,
+    }
+    existing_payment = await db.payments.find_one({
+        "target_type": "order",
+        "order_number": order_number,
+    })
+    if existing_payment:
+        await db.payments.update_one(
+            {"_id": existing_payment["_id"]},
+            {"$set": {
+                "payer_name": canonical_payment["payer_name"],
+                "payer_email": canonical_payment["payer_email"],
+                "amount": canonical_payment["amount"],
+                "bank_reference": canonical_payment["bank_reference"],
+                "proof_file_url": canonical_payment["proof_file_url"],
+                "proof_file_name": canonical_payment["proof_file_name"],
+                "proof_submission_id": canonical_payment["proof_submission_id"],
+                "status": "pending",
+                "review_status": "under_review",
+                "updated_at": now,
+            }},
+        )
+        logger.info("Updated existing payment record for order %s", order_number)
+    else:
+        await db.payments.insert_one(canonical_payment)
+        logger.info("Created canonical payment record for guest order %s", order_number)
+
     # Update order status
     await db.orders.update_one(
         {"id": order.get("id")},

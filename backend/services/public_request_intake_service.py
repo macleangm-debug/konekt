@@ -199,5 +199,5 @@ async def _ensure_invited_account(db, request_id: str, guest_email: str, guest_n
     frontend = os.environ.get("FRONTEND_URL", os.environ.get("REACT_APP_BACKEND_URL", ""))
     return {
         "invite_token": token,
-        "invite_url": f"{frontend.rstrip('/')}/activate-account?token={token}",
+        "invite_url": f"{frontend.rstrip('/')}/register?token={token}&source=guest_checkout",
     }

@@ -97,13 +97,13 @@ export default function PublicOrderRequestPage() {
           </p>
           {submitted.account_invite && (
             <div className="mt-5 rounded-xl bg-blue-50 border border-blue-200 p-4 text-left" data-testid="order-activation-banner">
-              <p className="font-bold text-blue-900 text-sm">Your Konekt account has been created</p>
-              <p className="text-blue-800 text-xs mt-1">Activate it to track orders, invoices, and more.</p>
+              <p className="font-bold text-blue-900 text-sm">Create your Konekt account</p>
+              <p className="text-blue-800 text-xs mt-1">Sign up to track your orders, manage invoices, and access your purchase history.</p>
               <a
                 href={submitted.account_invite.invite_url}
                 className="inline-block mt-2 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition"
               >
-                Activate Account
+                Create Account to Track Order
               </a>
             </div>
           )}

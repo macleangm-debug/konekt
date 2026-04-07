@@ -38,7 +38,7 @@ export default function PublicNavbarV2() {
     <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm" data-testid="public-navbar">
       <div className="max-w-7xl mx-auto px-6 h-18 min-h-[72px] flex items-center justify-between">
         <Link to="/" className="flex items-center" data-testid="navbar-logo">
-          <BrandLogo size="md" />
+          <BrandLogo size="lg" />
         </Link>
 
         <nav className="hidden lg:flex items-center gap-7">

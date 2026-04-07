@@ -24,7 +24,7 @@ export default function PublicRequestButtons({ product, onAddToCart, onBuyNow })
         details: { product_id: product?.id, product_name: product?.name },
       });
       if (res.data.ok) {
-        toast.success(`Request submitted! ${res.data.account_invite ? "Check your email to activate your account." : ""}`);
+        toast.success(`Request submitted! ${res.data.account_invite ? "Create your account to track this request." : ""}`);
         setShowForm(false);
       }
     } catch (err) {

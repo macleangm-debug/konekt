@@ -160,9 +160,9 @@ export default function QuoteRequestPage() {
             <p className="text-slate-500 mt-2">Our team will review your request and follow up with the right commercial flow.</p>
             {submitted.account_invite && (
               <div className="mt-6 rounded-xl bg-blue-50 border-2 border-blue-200 p-5 text-left" data-testid="quote-activation-banner">
-                <p className="font-bold text-blue-900">Your Konekt account has been created</p>
-                <p className="text-blue-800 text-sm mt-1">Activate it to track requests, quotes, invoices, and orders.</p>
-                <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-5 py-2.5 font-semibold hover:bg-blue-700 transition">Activate Account</a>
+                <p className="font-bold text-blue-900">Create your Konekt account</p>
+                <p className="text-blue-800 text-sm mt-1">Sign up to track requests, quotes, invoices, and orders.</p>
+                <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-5 py-2.5 font-semibold hover:bg-blue-700 transition">Create Account to Track Order</a>
               </div>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">

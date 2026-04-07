@@ -267,7 +267,7 @@ export default function ServiceDetailLeadAwarePage() {
                 <div className="mt-4 rounded-xl bg-blue-50 border border-blue-200 p-4 text-left" data-testid="service-activation-banner">
                   <p className="font-bold text-blue-900 text-sm">Your Konekt account has been created</p>
                   <p className="text-blue-800 text-xs mt-1">Activate it to track requests, quotes, invoices, and orders.</p>
-                  <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">Activate Account</a>
+                  <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 transition">Create Account to Track Order</a>
                 </div>
               )}
               <button onClick={() => setSubmitted(null)} className="mt-6 text-[#20364D] font-medium underline text-sm">Submit another request</button>

@@ -28,9 +28,13 @@ def build_guest_checkout_account_invite(checkout: dict, customer_user: dict) -> 
     }
 
 
-def build_guest_activation_url(base_url: str, invite_token: str) -> str:
-    """Build the frontend activation URL."""
-    return f"{base_url.rstrip('/')}/activate-account?token={invite_token}"
+def build_guest_activation_url(base_url: str, invite_token: str, email: str = "") -> str:
+    """Build the frontend registration URL for guest checkout users."""
+    url = f"{base_url.rstrip('/')}/register?token={invite_token}&source=guest_checkout"
+    if email:
+        from urllib.parse import quote
+        url += f"&email={quote(email, safe='@')}"
+    return url
 
 
 async def ensure_invited_user(db, email: str, full_name: str = "", phone: str = "") -> dict:
@@ -106,7 +110,7 @@ async def create_guest_account_link(db, guest_email: str, order_id: str = None, 
 
     import os
     base_url = os.environ.get("FRONTEND_URL", os.environ.get("REACT_APP_BACKEND_URL", ""))
-    invite_url = build_guest_activation_url(base_url, link["invite_token"])
+    invite_url = build_guest_activation_url(base_url, link["invite_token"], email=guest_email)
 
     logger.info("[guest_identity_link] account link created for %s, token=%s", guest_email, link["invite_token"])
 

@@ -4,6 +4,7 @@ import {
   ChevronRight, Check, Package, Truck, Clock,
   ShoppingCart, ShieldCheck, CreditCard, ArrowRight,
   Minus, Plus, ChevronLeft, FileText, MessageSquare,
+  Share2, Heart,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -359,6 +360,35 @@ export default function MarketplaceListingDetailContent() {
           )}
 
           {/* Payment Info */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: listing.name, url: window.location.href });
+                  } else {
+                    await navigator.clipboard.writeText(window.location.href);
+                    toast.success("Product link copied to clipboard");
+                  }
+                } catch {}
+              }}
+              className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              data-testid="share-product-btn"
+            >
+              <Share2 className="w-4 h-4" /> Share
+            </button>
+            <button
+              onClick={() => {
+                toast.info("Log in to save items to your wishlist");
+                navigate("/login");
+              }}
+              className="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
+              data-testid="save-product-btn"
+            >
+              <Heart className="w-4 h-4" /> Save
+            </button>
+          </div>
+
           <div className="rounded-2xl bg-slate-50 border p-4" data-testid="pdp-payment-info">
             <div className="flex items-start gap-3">
               <CreditCard className="w-5 h-5 text-[#20364D] flex-shrink-0 mt-0.5" />
