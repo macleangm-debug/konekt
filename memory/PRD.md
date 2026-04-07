@@ -303,6 +303,14 @@ Sections (in order):
 - **Backend:** `POST /api/public/sales-assist` creates sales assist request in `db.sales_assist_requests`.
 - **Service Quote Margin:** `POST /api/admin/service-quote-margin/preview` returns internal breakdown (`base_tax_inclusive_cost`, `margin_percent`, `margin_value`, `final_quote_amount`) and customer-facing view (`quoted_amount` only). Customer NEVER sees margin.
 
+### Phase 38 — Register Page V2 + Auth Boundary Final (07 Apr 2026)
+**Unified /register with modern split-panel design matching /login. Final auth boundary verification.**
+
+- **Register Page V2:** New `RegisterPageV2.jsx` with same branded split-panel layout as LoginPageV2 (dark branding left + white form right). Supports `source=guest_checkout` for customized heading ("Track Your Order") and `email=` URL param for pre-fill.
+- **Form fields:** Full Name*, Email*, Phone, Company, Password* with eye toggle.
+- **Session handling:** Validates existing session on mount, shows "Already signed in" redirect notice.
+- **All prior fixes confirmed working:** Boundary enforcement (0 `/account/*` leaks), guest CTA ("Create Account to Track Order"), logo size `lg`, Sales Assist CTA.
+
 ## Backlog
 
 ### P1 — Upcoming
@@ -338,3 +346,4 @@ Sections (in order):
 - Iteration 186: Product Detail Page (PDP) Conversion Redesign — 100% backend, 100% frontend (18/18 features verified, mobile responsive)
 - Iteration 187: Guest Checkout Bugfixes (CTA URL + Payment Queue Wiring) + UX Improvements — 100% backend (5/6, 1 flaky collision), 100% frontend
 - Iteration 188: Marketplace Boundary Enforcement + Sales Assist CTA System + Service Quote Margin — 100% backend (13/13), 100% frontend
+- Iteration 189: Register Page V2 + Auth Boundary Final — 100% backend (11/11), 100% frontend (17/17)
