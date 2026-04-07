@@ -9,6 +9,8 @@ import {
 import { useCart } from "../../contexts/CartContext";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { toast } from "sonner";
+import SalesAssistCtaCard from "../../components/marketplace/SalesAssistCtaCard";
+import SalesAssistModal from "../../components/marketplace/SalesAssistModal";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -233,6 +235,7 @@ export default function PublicCheckoutPage() {
   const [proofResult, setProofResult] = useState(null);
   const [copiedField, setCopiedField] = useState("");
   const [orderSnapshot, setOrderSnapshot] = useState(null);
+  const [showSalesAssist, setShowSalesAssist] = useState(false);
 
   // File upload state
   const [proofFile, setProofFile] = useState(null);
@@ -797,8 +800,22 @@ export default function PublicCheckoutPage() {
         <div className="lg:col-span-2">
           <OrderSummary orderItems={items} orderTotal={displayTotal} orderCount={itemCount}
             vatPercent={vatPercent} vatAmount={displayVatAmount} subtotal={cartSubtotal} />
+          <div className="mt-4">
+            <SalesAssistCtaCard
+              title="Need a custom quote?"
+              body="Let our sales team handle pricing, specs, and delivery arrangements for you."
+              onClick={() => setShowSalesAssist(true)}
+              compact
+            />
+          </div>
         </div>
       </div>
+      <SalesAssistModal
+        isOpen={showSalesAssist}
+        onClose={() => setShowSalesAssist(false)}
+        productName={items.map(i => i.product_name || i.name).filter(Boolean).join(", ")}
+        source="checkout_sales_assist"
+      />
     </div>
   );
 }

@@ -1,14 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { ShoppingCart, Trash2, Plus, Minus, ArrowRight, Package, ArrowLeft } from "lucide-react";
 import { useCart } from "../../contexts/CartContext";
 import { toast } from "sonner";
+import SalesAssistCtaCard from "../../components/marketplace/SalesAssistCtaCard";
+import SalesAssistModal from "../../components/marketplace/SalesAssistModal";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
 export default function PublicCartPage() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, total, itemCount } = useCart();
+  const [showSalesAssist, setShowSalesAssist] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -139,8 +142,22 @@ export default function PublicCartPage() {
             </button>
             <p className="text-xs text-center text-slate-400 mt-3">No account required to checkout</p>
           </div>
+          <div className="mt-4">
+            <SalesAssistCtaCard
+              title="Need help finalizing this order?"
+              body="Our sales team can help with quantities, custom pricing, and service requests."
+              onClick={() => setShowSalesAssist(true)}
+              compact
+            />
+          </div>
         </div>
       </div>
+      <SalesAssistModal
+        isOpen={showSalesAssist}
+        onClose={() => setShowSalesAssist(false)}
+        productName={items.map(i => i.product_name || i.name).filter(Boolean).join(", ")}
+        source="cart_sales_assist"
+      />
     </div>
   );
 }

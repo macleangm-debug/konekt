@@ -31,7 +31,7 @@ export default function FinalCtaSection() {
               <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              to="/account/referrals"
+              to="/earn"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#D4A843]/30 bg-[#D4A843]/10 px-6 py-4 font-semibold hover:bg-[#D4A843]/20 transition text-[#D4A843]"
               data-testid="final-cta-referral"
             >

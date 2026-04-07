@@ -2845,6 +2845,13 @@ app.include_router(public_commerce_router)
 from routes.notification_admin_routes import router as notification_admin_router
 app.include_router(notification_admin_router)
 
+from routes.sales_assist_routes import router as sales_assist_router
+app.include_router(sales_assist_router)
+
+from routes.service_quote_margin_routes import router as service_quote_margin_router
+app.include_router(service_quote_margin_router)
+
+
 
 
 # Market Settings API

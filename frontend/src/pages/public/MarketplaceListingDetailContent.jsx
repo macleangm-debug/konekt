@@ -3,12 +3,15 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ChevronRight, Check, Package, Truck, Clock,
   ShoppingCart, ShieldCheck, CreditCard, ArrowRight,
-  Minus, Plus, ChevronLeft, FileText, MessageSquare,
+  Minus, Plus, ChevronLeft, FileText,
   Share2, Heart,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
 import { useCart } from "../../contexts/CartContext";
+import SalesAssistCtaCard from "../../components/marketplace/SalesAssistCtaCard";
+import SalesAssistModal from "../../components/marketplace/SalesAssistModal";
+import StickyMobileSalesAssistBar from "../../components/marketplace/StickyMobileSalesAssistBar";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -28,6 +31,7 @@ export default function MarketplaceListingDetailContent() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedPrintMethod, setSelectedPrintMethod] = useState(null);
+  const [showSalesAssist, setShowSalesAssist] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -433,17 +437,38 @@ export default function MarketplaceListingDetailContent() {
               >
                 <FileText className="w-3.5 h-3.5" /> Request Pricing
               </Link>
-              <Link
-                to="/contact"
+              <button
+                type="button"
+                onClick={() => setShowSalesAssist(true)}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold hover:bg-white/10 transition"
                 data-testid="talk-to-sales-btn"
               >
-                <MessageSquare className="w-3.5 h-3.5" /> Talk to Sales
-              </Link>
+                Talk to Sales
+              </button>
             </div>
           </div>
+
+          {/* Sales Assist CTA */}
+          <SalesAssistCtaCard
+            title="Prefer a human to help?"
+            body="Our sales team can prepare the right quote — including custom quantities, branding, and service support."
+            onClick={() => setShowSalesAssist(true)}
+            compact
+          />
         </div>
       </div>
+
+      {/* Sales Assist Modal */}
+      <SalesAssistModal
+        isOpen={showSalesAssist}
+        onClose={() => setShowSalesAssist(false)}
+        productName={listing.name || ""}
+        productId={listing.id || slug}
+        source="pdp_sales_assist"
+      />
+
+      {/* Sticky Mobile Sales Assist */}
+      <StickyMobileSalesAssistBar onClick={() => setShowSalesAssist(true)} />
 
       {/* Documents */}
       {listing.documents?.length > 0 && (

@@ -103,7 +103,7 @@ export default function ServicesLandingPageV2() {
               </a>
               <RequireLoginActionButton
                 isLoggedIn={isLoggedIn}
-                nextPath="/account/services"
+                nextPath="/request-quote"
                 className="rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/10 transition"
               >
                 Request Quote

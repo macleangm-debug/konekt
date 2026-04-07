@@ -121,11 +121,11 @@ export default function ServicesDiscoveryPage() {
                     Request Quote
                   </Link>
                   <Link 
-                    to="/account/service-requests" 
+                    to="/login" 
                     data-testid="browse-account-btn"
                     className="rounded-xl border px-5 py-3 font-semibold text-[#20364D] text-center hover:bg-slate-50 transition"
                   >
-                    Browse Inside Account
+                    Sign In to Manage Requests
                   </Link>
                 </div>
               </div>

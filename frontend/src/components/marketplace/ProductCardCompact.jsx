@@ -26,7 +26,7 @@ export default function ProductCardCompact({ product, onDetail, isPromo = false 
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <span className="text-sm font-semibold text-[#0f172a]">{money(price)}</span>
           <div className="flex items-center gap-1.5">
-            <Link to={`/account/marketplace/${product?.id}`}
+            <Link to={`/marketplace/${product?.slug || product?.id}`}
               className="rounded-lg border border-slate-200 text-slate-500 px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors"
               data-testid={`view-detail-${product?.id}`}>
               Detail
