@@ -291,6 +291,18 @@ Sections (in order):
 - **Logo Size:** Navbar logo increased from `md` to `lg` (56px).
 - **Login UX:** Session redirect notice shows "You're already signed in" instead of raw spinner when user has valid token.
 
+### Phase 37 — Marketplace Boundary, Sales Assist & Service Quote Margin (07 Apr 2026)
+**Implemented marketplace boundary enforcement, Sales Assist CTA system, and service quote margin engine.**
+
+- **Boundary Enforcement:** Fixed 5 leaky public CTAs that routed directly to `/account/*`. Now all public links go through `/login`, `/register`, or canonical public routes.
+  - `ProductCardCompact` → `/marketplace/{id}` (was `/account/marketplace/{id}`)
+  - `PremiumFooterV2` + `FinalCtaSection` → `/earn` (was `/account/referrals`)
+  - `ServicesLandingPageV2` → `/request-quote` (was `/account/services`)
+  - `ServicesDiscoveryPage` → `/login` (was `/account/service-requests`)
+- **Sales Assist CTA System:** `SalesAssistCtaCard` (amber card with badge), `SalesAssistModal` (form with product pre-fill), `StickyMobileSalesAssistBar` (mobile sticky). Placed on PDP, Cart, and Checkout.
+- **Backend:** `POST /api/public/sales-assist` creates sales assist request in `db.sales_assist_requests`.
+- **Service Quote Margin:** `POST /api/admin/service-quote-margin/preview` returns internal breakdown (`base_tax_inclusive_cost`, `margin_percent`, `margin_value`, `final_quote_amount`) and customer-facing view (`quoted_amount` only). Customer NEVER sees margin.
+
 ## Backlog
 
 ### P1 — Upcoming
@@ -325,3 +337,4 @@ Sections (in order):
 - Iteration 185: Public Pages Redesign (Services, Expansion, Earn) + Track Order Verification — 100% backend (6/6), 100% frontend (all sections present, mobile responsive)
 - Iteration 186: Product Detail Page (PDP) Conversion Redesign — 100% backend, 100% frontend (18/18 features verified, mobile responsive)
 - Iteration 187: Guest Checkout Bugfixes (CTA URL + Payment Queue Wiring) + UX Improvements — 100% backend (5/6, 1 flaky collision), 100% frontend
+- Iteration 188: Marketplace Boundary Enforcement + Sales Assist CTA System + Service Quote Margin — 100% backend (13/13), 100% frontend
