@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { 
-  ChevronLeft, Heart, Share2, Check, 
-  Package, Truck, Clock, ChevronRight, FileText, ShoppingCart
+import {
+  ChevronRight, Check, Package, Truck, Clock,
+  ShoppingCart, ShieldCheck, CreditCard, ArrowRight,
+  Minus, Plus, ChevronLeft, FileText, MessageSquare,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
-import PageHeader from "../../components/ui/PageHeader";
-import SurfaceCard from "../../components/ui/SurfaceCard";
-import BrandButton from "../../components/ui/BrandButton";
-import BrandBadge from "../../components/ui/BrandBadge";
-import BusinessPricingCtaBox from "../../components/public/BusinessPricingCtaBox";
 import { useCart } from "../../contexts/CartContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+function money(v) {
+  return `TZS ${Number(v || 0).toLocaleString()}`;
+}
 
 export default function MarketplaceListingDetailContent() {
   const { slug } = useParams();
@@ -21,25 +21,31 @@ export default function MarketplaceListingDetailContent() {
   const { addItem } = useCart();
   const [listing, setListing] = useState(null);
   const [related, setRelated] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedPrintMethod, setSelectedPrintMethod] = useState(null);
 
   useEffect(() => {
     if (!slug) return;
-    
     setLoading(true);
-    axios.get(`${API_URL}/api/public-marketplace/listing/${slug}`)
-      .then(res => {
-        setListing(res.data.listing);
-        setRelated(res.data.related_items || []);
-        setSuggestions(res.data.you_might_also_like || []);
+    axios
+      .get(`${API_URL}/api/public-marketplace/listing/${slug}`)
+      .then((res) => {
+        const data = res.data;
+        setListing(data.listing);
+        setRelated(data.related || data.related_items || []);
         setActiveImage(0);
+        // Set defaults
+        const l = data.listing;
+        if (l?.sizes?.length) setSelectedSize(l.sizes[0]);
+        if (l?.colors?.length) setSelectedColor(l.colors[0]?.name || l.colors[0]);
+        if (l?.print_methods?.length) setSelectedPrintMethod(l.print_methods[0]);
+        if (l?.min_quantity > 1) setQuantity(l.min_quantity);
       })
-      .catch(err => {
-        console.error("Failed to fetch listing:", err);
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -55,61 +61,92 @@ export default function MarketplaceListingDetailContent() {
     return (
       <div className="max-w-7xl mx-auto px-6 py-20 text-center" data-testid="listing-not-found">
         <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-        <h1 className="text-2xl font-bold text-slate-700 mb-2">Listing Not Found</h1>
-        <p className="text-slate-500 mb-6">This product or service may no longer be available.</p>
-        <BrandButton href="/marketplace" variant="primary">
-          <ChevronLeft className="w-5 h-5 mr-2" />
-          Back to Marketplace
-        </BrandButton>
+        <h1 className="text-2xl font-bold text-slate-700 mb-2">Product Not Found</h1>
+        <p className="text-slate-500 mb-6">This product may no longer be available.</p>
+        <Link
+          to="/marketplace"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-6 py-3 font-semibold hover:bg-[#2a4a66] transition"
+        >
+          <ChevronLeft className="w-4 h-4" /> Back to Products
+        </Link>
       </div>
     );
   }
 
-  const images = listing.images?.length > 0 ? listing.images : [listing.hero_image || null];
+  // Resolve images — support both image_url (single) and images (array)
+  const allImages = [];
+  if (listing.images?.length > 0) allImages.push(...listing.images.filter(Boolean));
+  else if (listing.hero_image) allImages.push(listing.hero_image);
+  else if (listing.image_url) allImages.push(listing.image_url);
+  else if (listing.primary_image) allImages.push(listing.primary_image);
+  const hasImage = allImages.length > 0;
+
+  // Resolve price — support customer_price, base_price, price
+  const price = Number(listing.customer_price || listing.base_price || listing.price || 0);
   const isService = listing.listing_type === "service";
+  const inStock = listing.stock_quantity > 0 || listing.partner_available_qty > 0;
+  const minQty = listing.min_quantity || 1;
+
+  const handleAddToCart = () => {
+    addItem({
+      product_id: listing.id || slug,
+      product_name: listing.name || "",
+      quantity,
+      unit_price: price,
+      subtotal: quantity * price,
+      size: selectedSize,
+      color: selectedColor,
+      print_method: selectedPrintMethod,
+      listing_type: listing.listing_type || "product",
+      image_url: allImages[0] || "",
+      category: listing.category || "",
+    });
+    toast.success(`${listing.name} added to cart`);
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8" data-testid="marketplace-listing-detail">
+    <div className="max-w-7xl mx-auto px-6 py-6" data-testid="marketplace-listing-detail">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm mb-8">
-        <Link to="/" className="text-slate-500 hover:text-[#20364D]">Home</Link>
-        <ChevronRight className="w-4 h-4 text-slate-400" />
-        <Link to="/marketplace" className="text-slate-500 hover:text-[#20364D]">Marketplace</Link>
+      <nav className="flex items-center gap-1.5 text-sm mb-6 flex-wrap" data-testid="pdp-breadcrumb">
+        <Link to="/" className="text-slate-500 hover:text-[#20364D] transition">Home</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+        <Link to="/marketplace" className="text-slate-500 hover:text-[#20364D] transition">Products</Link>
         {listing.category && (
           <>
-            <ChevronRight className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500 capitalize">{listing.category}</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-slate-500">{listing.category}</span>
           </>
         )}
-        <ChevronRight className="w-4 h-4 text-slate-400" />
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
         <span className="text-[#20364D] font-medium truncate max-w-[200px]">{listing.name}</span>
       </nav>
 
-      <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Images */}
-        <div className="space-y-4">
-          <SurfaceCard noPadding className="overflow-hidden aspect-square">
-            {images[activeImage] ? (
+      {/* Main Grid */}
+      <div className="grid lg:grid-cols-[1fr_420px] gap-8 lg:gap-12">
+        {/* Left: Image */}
+        <div className="space-y-3">
+          <div className="rounded-2xl border bg-white overflow-hidden aspect-square flex items-center justify-center" data-testid="pdp-main-image">
+            {hasImage ? (
               <img
-                src={images[activeImage]}
-                alt={listing.name || "Marketplace listing"}
+                src={allImages[activeImage] || allImages[0]}
+                alt={listing.name}
                 className="w-full h-full object-contain"
                 data-testid="main-product-image"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                <Package className="w-16 h-16 text-slate-300" />
+              <div className="flex flex-col items-center gap-3 text-slate-300">
+                <Package className="w-20 h-20" />
+                <span className="text-sm">No image available</span>
               </div>
             )}
-          </SurfaceCard>
-          
-          {images.length > 1 && images[0] && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {images.filter(Boolean).map((img, idx) => (
+          </div>
+          {allImages.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {allImages.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImage(idx)}
-                  className={`w-16 h-16 rounded-lg border-2 overflow-hidden flex-shrink-0 transition ${
+                  className={`w-16 h-16 rounded-xl border-2 overflow-hidden flex-shrink-0 transition ${
                     activeImage === idx ? "border-[#20364D]" : "border-transparent hover:border-slate-300"
                   }`}
                   data-testid={`thumbnail-${idx}`}
@@ -119,167 +156,269 @@ export default function MarketplaceListingDetailContent() {
               ))}
             </div>
           )}
+
+          {/* Description (below image on desktop) */}
+          {listing.description && (
+            <div className="rounded-2xl border bg-white p-6 mt-4" data-testid="pdp-description">
+              <h2 className="text-lg font-bold text-[#20364D] mb-3">Product Description</h2>
+              <div className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                {listing.description}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Details */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <BrandBadge tone={isService ? "gold" : "dark"}>
+        {/* Right: Product Info */}
+        <div className="space-y-5">
+          {/* Badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="px-3 py-1 rounded-full bg-[#20364D]/8 text-[#20364D] text-xs font-semibold">
               {isService ? "Service" : "Product"}
-            </BrandBadge>
+            </span>
             {listing.category && (
-              <BrandBadge>{listing.category}</BrandBadge>
+              <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                {listing.category}
+              </span>
+            )}
+            {listing.branch && listing.branch !== listing.category && (
+              <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                {listing.branch}
+              </span>
             )}
           </div>
 
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-[#20364D]" data-testid="listing-title">
-              {listing.name}
-            </h1>
-            {listing.sku && (
-              <p className="text-slate-500 mt-1">SKU: {listing.sku}</p>
-            )}
-          </div>
+          {/* Title */}
+          <h1 className="text-2xl md:text-3xl font-bold text-[#20364D] leading-tight" data-testid="listing-title">
+            {listing.name}
+          </h1>
 
           {listing.short_description && (
-            <p className="text-lg text-slate-600">{listing.short_description}</p>
+            <p className="text-slate-600 leading-relaxed">{listing.short_description}</p>
           )}
 
-          <SurfaceCard className="bg-slate-50">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold text-[#20364D]">
-                {listing.currency || "TZS"} {Number(listing.customer_price || 0).toLocaleString()}
+          {/* Price Block */}
+          <div className="rounded-2xl border bg-white p-5" data-testid="pdp-price-block">
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-bold text-[#20364D]" data-testid="pdp-price">
+                {money(price)}
               </span>
-              {!isService && listing.partner_available_qty > 0 && (
-                <span className="text-green-600 text-sm font-medium flex items-center gap-1">
+              {price > 0 && (
+                <span className="text-sm text-slate-500">per unit</span>
+              )}
+            </div>
+            <div className="flex items-center gap-4 mt-2 text-sm">
+              {!isService && inStock && (
+                <span className="text-green-600 font-medium flex items-center gap-1">
                   <Check className="w-4 h-4" /> In Stock
                 </span>
               )}
-            </div>
-            {listing.lead_time_days && (
-              <p className="text-sm text-slate-500 mt-2 flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Delivery in {listing.lead_time_days} {listing.lead_time_days === 1 ? "day" : "days"}
-              </p>
-            )}
-          </SurfaceCard>
-
-          {!isService ? (
-            <div className="flex gap-4">
-              <div className="flex items-center border rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                  className="px-4 py-3 hover:bg-slate-100 transition"
-                  data-testid="qty-decrease"
-                >
-                  -
-                </button>
-                <span className="px-4 py-3 font-medium min-w-[50px] text-center" data-testid="qty-display">
-                  {quantity}
+              {listing.lead_time_days && (
+                <span className="text-slate-500 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Delivery in {listing.lead_time_days} day{listing.lead_time_days !== 1 ? "s" : ""}
                 </span>
-                <button
-                  onClick={() => setQuantity(q => q + 1)}
-                  className="px-4 py-3 hover:bg-slate-100 transition"
-                  data-testid="qty-increase"
-                >
-                  +
-                </button>
-              </div>
-              
-              <BrandButton
-                variant="primary"
-                className="flex-1"
-                data-testid="add-to-cart-btn"
-                onClick={() => {
-                  addItem({
-                    product_id: listing.id || slug,
-                    product_name: listing.name || "",
-                    quantity: quantity,
-                    unit_price: Number(listing.customer_price || listing.price || listing.base_price || 0),
-                    subtotal: quantity * Number(listing.customer_price || listing.price || listing.base_price || 0),
-                    size: null,
-                    color: null,
-                    print_method: null,
-                    listing_type: listing.listing_type || "product",
-                    image_url: images[0] || "",
-                    category: listing.category || "",
-                  });
-                  toast.success(`${listing.name} added to cart`);
-                }}
-              >
-                <ShoppingCart className="w-5 h-5 mr-2" />
-                Add to Cart
-              </BrandButton>
-            </div>
-          ) : (
-            <BrandButton
-              variant="gold"
-              className="w-full"
-              data-testid="request-quote-btn"
-              onClick={() => navigate(
-                `/request-quote?type=service_quote&service=${encodeURIComponent(listing.name || "")}&category=${encodeURIComponent(listing.category || "")}`
               )}
-            >
-              Request a Quote
-            </BrandButton>
-          )}
-
-          <div className="flex gap-4 pt-2">
-            <button className="flex items-center gap-2 text-slate-600 hover:text-[#20364D] transition">
-              <Heart className="w-5 h-5" />
-              <span className="text-sm">Save</span>
-            </button>
-            <button className="flex items-center gap-2 text-slate-600 hover:text-[#20364D] transition">
-              <Share2 className="w-5 h-5" />
-              <span className="text-sm">Share</span>
-            </button>
+              {minQty > 1 && (
+                <span className="text-slate-500">Min. order: {minQty} units</span>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center">
-                <Truck className="w-5 h-5 text-green-600" />
+          {/* Customization Options */}
+          {!isService && (
+            <div className="space-y-4">
+              {/* Sizes */}
+              {listing.sizes?.length > 0 && (
+                <div data-testid="pdp-sizes">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Size</label>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.sizes.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                          selectedSize === size
+                            ? "bg-[#20364D] text-white border-[#20364D]"
+                            : "bg-white text-slate-700 hover:border-[#20364D]"
+                        }`}
+                        data-testid={`size-${size}`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Colors */}
+              {listing.colors?.length > 0 && (
+                <div data-testid="pdp-colors">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Color{selectedColor ? `: ${selectedColor}` : ""}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.colors.map((color) => {
+                      const colorName = color?.name || color;
+                      const colorHex = color?.hex || "#ccc";
+                      return (
+                        <button
+                          key={colorName}
+                          onClick={() => setSelectedColor(colorName)}
+                          className={`w-10 h-10 rounded-xl border-2 transition flex items-center justify-center ${
+                            selectedColor === colorName ? "border-[#20364D] ring-2 ring-[#20364D]/20" : "border-slate-200 hover:border-slate-400"
+                          }`}
+                          style={{ backgroundColor: colorHex }}
+                          title={colorName}
+                          data-testid={`color-${colorName}`}
+                        >
+                          {selectedColor === colorName && (
+                            <Check className={`w-4 h-4 ${colorHex === '#FFFFFF' || colorHex === '#ffffff' ? 'text-slate-800' : 'text-white'}`} />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Print Methods */}
+              {listing.print_methods?.length > 0 && listing.is_customizable && (
+                <div data-testid="pdp-print-methods">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Branding Method</label>
+                  <div className="flex flex-wrap gap-2">
+                    {listing.print_methods.map((method) => (
+                      <button
+                        key={method}
+                        onClick={() => setSelectedPrintMethod(method)}
+                        className={`px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                          selectedPrintMethod === method
+                            ? "bg-[#20364D] text-white border-[#20364D]"
+                            : "bg-white text-slate-700 hover:border-[#20364D]"
+                        }`}
+                        data-testid={`print-method-${method}`}
+                      >
+                        {method}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Quantity + Add to Cart */}
+          {!isService ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setQuantity((q) => Math.max(minQty, q - 1))}
+                    className="px-3 py-3 hover:bg-slate-100 transition"
+                    data-testid="qty-decrease"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="px-4 py-3 font-semibold min-w-[56px] text-center border-x" data-testid="qty-display">
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="px-3 py-3 hover:bg-slate-100 transition"
+                    data-testid="qty-increase"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {price > 0 && (
+                  <span className="text-sm text-slate-500" data-testid="pdp-line-total">
+                    Subtotal: <span className="font-semibold text-[#20364D]">{money(quantity * price)}</span>
+                  </span>
+                )}
               </div>
-              <div>
-                <p className="font-medium text-sm">Fast Delivery</p>
-                <p className="text-xs text-slate-500">Nationwide shipping</p>
+              <button
+                onClick={handleAddToCart}
+                className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:bg-[#c49a3d] transition flex items-center justify-center gap-2"
+                data-testid="add-to-cart-btn"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Add to Cart
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() =>
+                navigate(
+                  `/request-quote?type=service_quote&service=${encodeURIComponent(listing.name || "")}&category=${encodeURIComponent(listing.category || "")}`
+                )
+              }
+              className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:bg-[#c49a3d] transition flex items-center justify-center gap-2"
+              data-testid="request-quote-btn"
+            >
+              Request a Quote <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Payment Info */}
+          <div className="rounded-2xl bg-slate-50 border p-4" data-testid="pdp-payment-info">
+            <div className="flex items-start gap-3">
+              <CreditCard className="w-5 h-5 text-[#20364D] flex-shrink-0 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-semibold text-[#20364D]">Bank Transfer Payment</p>
+                <p className="text-slate-600 mt-0.5">Place your order and pay via bank transfer. Payment is verified by our team before your order is processed.</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-                <Package className="w-5 h-5 text-blue-600" />
+          </div>
+
+          {/* Trust Signals */}
+          <div className="grid grid-cols-2 gap-3" data-testid="pdp-trust-signals">
+            <div className="flex items-center gap-3 rounded-xl border bg-white p-3">
+              <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+                <Truck className="w-4 h-4 text-green-600" />
               </div>
               <div>
-                <p className="font-medium text-sm">Quality Assured</p>
-                <p className="text-xs text-slate-500">Verified sourcing</p>
+                <p className="font-semibold text-sm text-[#20364D]">Managed Delivery</p>
+                <p className="text-xs text-slate-500">Nationwide coverage</p>
               </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border bg-white p-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm text-[#20364D]">Quality Assured</p>
+                <p className="text-xs text-slate-500">Inspected before dispatch</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk / Business CTA */}
+          <div className="rounded-2xl bg-[#20364D] text-white p-5" data-testid="pdp-bulk-cta">
+            <h3 className="font-bold">Buying in bulk or for a company?</h3>
+            <p className="text-slate-300 text-sm mt-1">Get better pricing on large orders, recurring supply, or contract terms.</p>
+            <div className="flex gap-2 mt-3">
+              <Link
+                to="/request-quote"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#D4A843] text-[#17283C] px-4 py-2 text-sm font-semibold hover:bg-[#c49a3d] transition"
+                data-testid="request-business-pricing-btn"
+              >
+                <FileText className="w-3.5 h-3.5" /> Request Pricing
+              </Link>
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/25 px-4 py-2 text-sm font-semibold hover:bg-white/10 transition"
+                data-testid="talk-to-sales-btn"
+              >
+                <MessageSquare className="w-3.5 h-3.5" /> Talk to Sales
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {listing.description && (
-        <SurfaceCard className="mt-12">
-          <h2 className="text-xl font-bold mb-4">Description</h2>
-          <div className="prose max-w-none text-slate-600 whitespace-pre-wrap">
-            {listing.description}
-          </div>
-        </SurfaceCard>
-      )}
-
-      {/* Business Pricing CTA */}
-      <div className="mt-8">
-        <BusinessPricingCtaBox
-          compact
-          title="Buying for a company or in bulk?"
-          description="Talk to Konekt for better prices on bulk orders, recurring supply, contract supply, furniture, uniforms, and branded materials."
-          variant="light"
-        />
-      </div>
-
+      {/* Documents */}
       {listing.documents?.length > 0 && (
-        <SurfaceCard className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Documents & Specifications</h2>
+        <div className="mt-10 rounded-2xl border bg-white p-6" data-testid="pdp-documents">
+          <h2 className="text-lg font-bold text-[#20364D] mb-4">Documents & Specifications</h2>
           <div className="grid md:grid-cols-2 gap-3">
             {listing.documents.map((doc, idx) => (
               <a
@@ -292,28 +431,29 @@ export default function MarketplaceListingDetailContent() {
                 <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
                   <FileText className="w-5 h-5 text-slate-500" />
                 </div>
-                <span className="text-sm font-medium truncate">{doc.split('/').pop()}</span>
+                <span className="text-sm font-medium truncate">{doc.split("/").pop()}</span>
               </a>
             ))}
           </div>
-        </SurfaceCard>
+        </div>
       )}
 
+      {/* Related Products */}
       {related.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Related {isService ? "Services" : "Products"}</h2>
+        <div className="mt-12" data-testid="pdp-related">
+          <h2 className="text-2xl font-bold text-[#20364D] mb-6">Related {isService ? "Services" : "Products"}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {related.slice(0, 4).map((item) => (
               <Link
                 key={item.id}
-                to={`/marketplace/${item.slug}`}
-                className="bg-white rounded-xl border hover:shadow-md transition overflow-hidden group"
+                to={`/marketplace/${item.slug || item.id}`}
+                className="rounded-2xl border bg-white overflow-hidden group hover:shadow-lg hover:-translate-y-0.5 transition-all"
                 data-testid={`related-item-${item.id}`}
               >
                 <div className="aspect-square bg-slate-100 overflow-hidden">
-                  {(item.hero_image || item.images?.[0]) ? (
+                  {(item.hero_image || item.images?.[0] || item.image_url) ? (
                     <img
-                      src={item.hero_image || item.images[0]}
+                      src={item.hero_image || item.images?.[0] || item.image_url}
                       alt={item.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition"
                     />
@@ -324,9 +464,9 @@ export default function MarketplaceListingDetailContent() {
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="font-medium text-sm truncate">{item.name}</p>
+                  <p className="font-medium text-sm text-[#20364D] truncate">{item.name}</p>
                   <p className="text-[#20364D] font-bold text-sm mt-1">
-                    {item.currency || "TZS"} {Number(item.customer_price || 0).toLocaleString()}
+                    {money(item.customer_price || item.base_price || item.price)}
                   </p>
                 </div>
               </Link>

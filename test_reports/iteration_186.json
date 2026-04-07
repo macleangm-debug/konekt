@@ -1,0 +1,110 @@
+{
+  "summary": "Iteration 186: Tested redesigned Product Detail Page (PDP) at /marketplace/{product_id}. All features working correctly - product image displays from image_url, price shows as TZS 8,000 per unit using base_price, sizes/colors/branding methods render with active states, quantity controls work with min_quantity enforcement, subtotal calculates correctly, gold Add to Cart button works, Bank Transfer Payment info visible (no Stripe), trust signals show 'Managed Delivery' and 'Quality Assured' (not 'Verified sourcing'), bulk CTA with Request Pricing and Talk to Sales buttons present. No vendor/marketplace/fulfillment partner language found. Mobile responsive.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_186.json"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (API returns correct product data with base_price, image_url, sizes, colors, print_methods)",
+    "frontend": "100% (all PDP features working, mobile responsive)"
+  },
+  "test_credentials": "No login required - PDP is public",
+  "seed_data_creation": "None - used existing product ID 6d927ec9-a7b8-43f5-8ade-15f211d2112a",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "PDP redesign complete and working. Key data mapping: price uses base_price field (not customer_price), image uses image_url field. Product has sizes, colors (with hex codes), print_methods arrays. min_quantity=10 enforced in UI. Currency is TZS (Tanzanian Shillings).",
+  "features_tested": {
+    "pdp_route": {
+      "url": "/marketplace/6d927ec9-a7b8-43f5-8ade-15f211d2112a",
+      "status": "PASS - Page loads correctly"
+    },
+    "product_image": {
+      "status": "PASS",
+      "details": "Image displays from image_url field (https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800)"
+    },
+    "price_display": {
+      "status": "PASS",
+      "details": "Shows 'TZS 8,000 per unit' using base_price field"
+    },
+    "stock_indicator": {
+      "status": "PASS",
+      "details": "Green checkmark with 'In Stock' text visible"
+    },
+    "min_order_quantity": {
+      "status": "PASS",
+      "details": "Shows 'Min. order: 10 units'"
+    },
+    "size_selector": {
+      "status": "PASS",
+      "details": "Pills rendered for S, M, L, XL, XXL with active state on selection"
+    },
+    "color_swatches": {
+      "status": "PASS",
+      "details": "White, Black, Navy swatches with hex colors and selection indicator (checkmark)"
+    },
+    "branding_methods": {
+      "status": "PASS",
+      "details": "Pills for Screen Print, DTG, Embroidery with active state"
+    },
+    "quantity_controls": {
+      "status": "PASS",
+      "details": "Starts at min_quantity (10), increment/decrement work, min enforced (cannot go below 10)"
+    },
+    "subtotal_calculation": {
+      "status": "PASS",
+      "details": "Updates correctly (10 * 8,000 = TZS 80,000, 11 * 8,000 = TZS 88,000)"
+    },
+    "add_to_cart_button": {
+      "status": "PASS",
+      "details": "Gold button (#D4A843) with data-testid='add-to-cart-btn', shows toast on click"
+    },
+    "bank_transfer_payment": {
+      "status": "PASS",
+      "details": "Bank Transfer Payment section visible, no Stripe references"
+    },
+    "trust_signals": {
+      "status": "PASS",
+      "details": "'Managed Delivery' and 'Quality Assured' present, NO 'Verified sourcing'"
+    },
+    "bulk_cta": {
+      "status": "PASS",
+      "details": "'Request Pricing' and 'Talk to Sales' buttons present"
+    },
+    "breadcrumb": {
+      "status": "PASS",
+      "details": "Home > Products > Apparel > Classic Cotton T-Shirt"
+    },
+    "vendor_language_check": {
+      "status": "PASS",
+      "details": "No vendor/marketplace partner/fulfillment partner/third-party seller language found"
+    },
+    "product_description": {
+      "status": "PASS",
+      "details": "Product Description section renders below image"
+    },
+    "mobile_responsive": {
+      "status": "PASS",
+      "details": "All sections visible and functional on mobile (390x844 viewport)"
+    }
+  },
+  "api_tested": {
+    "endpoint": "GET /api/public-marketplace/listing/6d927ec9-a7b8-43f5-8ade-15f211d2112a",
+    "status": 200,
+    "response_fields_verified": ["id", "name", "base_price", "image_url", "sizes", "colors", "print_methods", "min_quantity", "stock_quantity", "is_customizable", "category", "branch", "description"]
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
