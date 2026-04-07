@@ -271,11 +271,21 @@ Sections (in order):
 - All pages use consistent dark navy hero (#0E1A2B), gold accent (#D4A843), and matching section layout.
 - Zero vendor/marketplace/fulfillment language across all pages.
 
+### Phase 35 — Product Detail Page (PDP) Conversion Redesign (07 Apr 2026)
+**Completely redesigned the PDP for conversion optimization with bank transfer focus.**
+
+- **Data Mapping Fixed:** Price now uses `base_price` (was showing TZS 0), image loads from `image_url` (was broken placeholder).
+- **Customization Options:** Size selector pills (S/M/L/XL/XXL), color swatches with hex display + selection checkmark, branding method pills (Screen Print/DTG/Embroidery).
+- **Conversion Elements:** Min order quantity display, dynamic subtotal calculation, gold "Add to Cart" CTA, "Bank Transfer Payment" info block.
+- **Trust Signals:** "Managed Delivery" + "Quality Assured" (replaced "Verified sourcing" — vendor language removed).
+- **Business CTA:** Dark navy section with "Request Pricing" and "Talk to Sales" for bulk/B2B buyers.
+- **Unified Component:** `MarketplaceListingDetailPage.jsx` now re-exports `MarketplaceListingDetailContent` — both routes render same component.
+- Mobile responsive verified.
+
 ## Backlog
 
 ### P1 — Upcoming
-- End-to-end Stripe test with real test cards
-- Conversion-focused product detail page (PDP) redesign
+- End-to-end bank transfer payment E2E test
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
@@ -304,3 +314,4 @@ Sections (in order):
 - Iteration 183: Landing Page + Footer + Content Pages — 100% (16/16 frontend verified)
 - Iteration 184: Vendor Language Removal + Mobile Filters + VAT Parity — 100% backend, 90% frontend (VAT display fixed post-test)
 - Iteration 185: Public Pages Redesign (Services, Expansion, Earn) + Track Order Verification — 100% backend (6/6), 100% frontend (all sections present, mobile responsive)
+- Iteration 186: Product Detail Page (PDP) Conversion Redesign — 100% backend, 100% frontend (18/18 features verified, mobile responsive)
