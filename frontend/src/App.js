@@ -300,6 +300,7 @@ import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
 // New Design Pack - V2 Pages
 import LoginPageV2 from "@/pages/auth/LoginPageV2";
+import RegisterPageV2 from "@/pages/auth/RegisterPageV2";
 import HelpPageV3 from "@/pages/help/HelpPageV3";
 import DashboardCommandCenter from "@/pages/dashboard/DashboardCommandCenter";
 import CustomerDashboardV3 from "@/pages/dashboard/CustomerDashboardV3";
@@ -511,11 +512,11 @@ function App() {
             <LoginPageV2 />
           </AuthProvider>
         } />
-        {/* Register route - redirects to Auth page with register tab */}
+        {/* Register route - modern UI matching login */}
         <Route path="/register" element={
           <AuthProvider>
             <CartProvider>
-              <Auth defaultTab="register" />
+              <RegisterPageV2 />
             </CartProvider>
           </AuthProvider>
         } />
