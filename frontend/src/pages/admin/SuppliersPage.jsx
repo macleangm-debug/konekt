@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Building2, Plus, Check, Phone, Mail, Edit2, Trash2 } from "lucide-react";
 import api from "../../lib/api";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 export default function SuppliersPage() {
   const [items, setItems] = useState([]);
@@ -158,11 +159,13 @@ export default function SuppliersPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-              <input
-                className="w-full border rounded-xl px-4 py-3"
-                placeholder="+255 XXX XXX XXX"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              <PhoneNumberField
+                label=""
+                prefix={form.phone_prefix || "+255"}
+                number={form.phone}
+                onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                onNumberChange={(v) => setForm({ ...form, phone: v })}
+                testIdPrefix="supplier-phone"
               />
             </div>
 

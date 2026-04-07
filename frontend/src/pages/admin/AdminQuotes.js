@@ -23,6 +23,7 @@ import {
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import axios from 'axios';
 import { toast } from 'sonner';
+import PhoneNumberField from '../../components/forms/PhoneNumberField';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -393,10 +394,13 @@ export default function AdminQuotes() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Phone</label>
-                  <Input
-                    value={formData.customer_phone}
-                    onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
-                    placeholder="+255 7XX XXX XXX"
+                  <PhoneNumberField
+                    label=""
+                    prefix={formData.customer_phone_prefix || "+255"}
+                    number={formData.customer_phone}
+                    onPrefixChange={(v) => setFormData({ ...formData, customer_phone_prefix: v })}
+                    onNumberChange={(v) => setFormData({ ...formData, customer_phone: v })}
+                    testIdPrefix="quote-phone"
                   />
                 </div>
                 <div>

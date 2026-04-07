@@ -311,6 +311,17 @@ Sections (in order):
 - **Session handling:** Validates existing session on mount, shows "Already signed in" redirect notice.
 - **All prior fixes confirmed working:** Boundary enforcement (0 `/account/*` leaks), guest CTA ("Create Account to Track Order"), logo size `lg`, Sales Assist CTA.
 
+### Phase 39 — UI Standardization Pack (07 Apr 2026)
+**Global phone input standardization + logo sizing + auth page parity enforcement.**
+
+- **PhoneNumberField canonical usage:** Replaced ALL raw phone inputs (`type="tel"` and text inputs with phone placeholders) across 30+ files with the canonical `PhoneNumberField` component (country prefix dropdown + number input).
+- **Phone utility functions:** `splitPhone()` parses combined phone into prefix+number, `combinePhone()` joins them for submission. Located at `/app/frontend/src/utils/phoneUtils.js`.
+- **Canonical phone payload rule:** All forms store `phone_prefix` + `phone` (number only) separately in state. On submit, `combinePhone(prefix, number)` produces one canonical string for the backend.
+- **Auth page parity:** Login and Register pages use identical split-panel layout, same logo sizing, same typography hierarchy, same mobile behavior.
+- **BrandLogo sizing:** Updated size mappings (xs→h-7, sm→h-9, md→h-11, lg→h-14/h-16, xl→h-16/h-20).
+- **Files updated:** PhoneNumberField.jsx, BrandLogo.jsx, LoginPageV2.jsx, RegisterPageV2.jsx, CheckoutPanel.jsx, AccountCheckoutPage.jsx, SoftLeadCaptureModal.jsx, SalesAssistModal.jsx, AffiliateApplyPage.jsx, CreativeServiceDetailPage.jsx, CreativeServiceBriefPage.jsx, ServiceQuoteRequestFormV2.jsx, AdminAffiliateManagerSimple.jsx, PartnerSmartForm.jsx, MyAccountProfilePage.jsx, MyAccountPageV2.jsx, CartDrawerCompleteFlow.jsx, CheckoutPageV2.jsx, CheckoutPage.jsx, ExpansionPremiumPage.jsx, ExpansionLandingPageV2.jsx, CountryLaunchPage.jsx, PaymentSelectionPage.jsx, AddressesPage.jsx, ServiceRequestPage.jsx, InvoicesPage.jsx, BusinessSettingsPage.jsx, CustomersPage.jsx, CustomersPageV2.jsx, CRMPage.js, CRMPageV2.jsx, QuotesPage.jsx, QuotesPageNew.jsx, AdminQuotes.js, AdminLeads.js, AdminUsers.js, VendorListPage.jsx, PartnerEcosystemSmart.jsx, SuppliersPage.jsx, PartnersPage.jsx, CompanySettingsPage.jsx, WarehousesPage.jsx, EquipmentMaintenance.js, DesignBriefForm.js, AffiliateRegisterPage.jsx, InvoiceBrandingSettings.jsx, Auth.js, Cart.js.
+- **Only intentional exclusion:** `RawMaterialsPage.jsx` "Phone or email" hybrid field (not purely phone).
+
 ## Backlog
 
 ### P1 — Upcoming
@@ -347,3 +358,4 @@ Sections (in order):
 - Iteration 187: Guest Checkout Bugfixes (CTA URL + Payment Queue Wiring) + UX Improvements — 100% backend (5/6, 1 flaky collision), 100% frontend
 - Iteration 188: Marketplace Boundary Enforcement + Sales Assist CTA System + Service Quote Margin — 100% backend (13/13), 100% frontend
 - Iteration 189: Register Page V2 + Auth Boundary Final — 100% backend (11/11), 100% frontend (17/17)
+- Iteration 190: UI Standardization Pack (Global Phone Input + Logo + Auth Parity) — 100% frontend (13/13)

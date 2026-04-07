@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from '../../components/ui/switch';
 import { toast } from 'sonner';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
+import PhoneNumberField from '../../components/forms/PhoneNumberField';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -389,12 +390,16 @@ export default function AdminUsers() {
             
             <div>
               <Label>Phone</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="+255 XXX XXX XXX"
-                className="mt-1"
-              />
+              <div className="mt-1">
+                <PhoneNumberField
+                  label=""
+                  prefix={formData.phone_prefix || "+255"}
+                  number={formData.phone}
+                  onPrefixChange={(v) => setFormData({...formData, phone_prefix: v})}
+                  onNumberChange={(v) => setFormData({...formData, phone: v})}
+                  testIdPrefix="user-phone"
+                />
+              </div>
             </div>
             
             <div>

@@ -10,6 +10,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import PhoneNumberField from '../components/forms/PhoneNumberField';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ export default function Cart() {
   
   const [step, setStep] = useState('cart'); // cart, delivery, payment
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [deliveryPhonePrefix, setDeliveryPhonePrefix] = useState('+255');
   const [deliveryPhone, setDeliveryPhone] = useState('');
   const [notes, setNotes] = useState('');
   const [depositPercentage, setDepositPercentage] = useState('30');
@@ -64,7 +66,7 @@ export default function Cart() {
       const response = await axios.post(`${API_URL}/api/orders`, {
         items: orderItems,
         delivery_address: deliveryAddress,
-        delivery_phone: deliveryPhone,
+        delivery_phone: deliveryPhone ? `${deliveryPhonePrefix}${deliveryPhone}` : "",
         notes: notes || null,
         deposit_percentage: parseInt(depositPercentage)
       });
@@ -243,13 +245,13 @@ export default function Cart() {
                 
                 <div>
                   <Label>Phone Number *</Label>
-                  <Input 
-                    type="tel"
-                    value={deliveryPhone}
-                    onChange={(e) => setDeliveryPhone(e.target.value)}
-                    placeholder="+255 7XX XXX XXX"
-                    className="mt-1"
-                    data-testid="delivery-phone"
+                  <PhoneNumberField
+                    label=""
+                    prefix={deliveryPhonePrefix}
+                    number={deliveryPhone}
+                    onPrefixChange={setDeliveryPhonePrefix}
+                    onNumberChange={setDeliveryPhone}
+                    testIdPrefix="delivery-phone"
                   />
                 </div>
                 

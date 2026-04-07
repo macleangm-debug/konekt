@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Plus, Search, Filter, Building2, Wrench, Package, RefreshCcw, ChevronRight, Users, MapPin, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import PartnerViewToggle from "../../components/partners/PartnerViewToggle";
 import PartnerSpecificServicesField from "../../components/partners/PartnerSpecificServicesField";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -247,11 +248,13 @@ export default function PartnerEcosystemSmart() {
             </label>
             <label className="block">
               <div className="text-sm text-slate-500 mb-2">Contact Phone</div>
-              <input
-                className="w-full border rounded-xl px-4 py-3"
-                placeholder="+255 xxx xxx xxx"
-                value={form.contact_phone}
-                onChange={(e) => setForm({ ...form, contact_phone: e.target.value })}
+              <PhoneNumberField
+                label=""
+                prefix={form.contact_phone_prefix || "+255"}
+                number={form.contact_phone}
+                onPrefixChange={(v) => setForm({ ...form, contact_phone_prefix: v })}
+                onNumberChange={(v) => setForm({ ...form, contact_phone: v })}
+                testIdPrefix="ecosystem-phone"
               />
             </label>
             <label className="block">

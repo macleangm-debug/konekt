@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -9,6 +10,7 @@ export default function AffiliateRegisterPage() {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     country: "Tanzania",
     password: "",
@@ -80,12 +82,13 @@ export default function AffiliateRegisterPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Phone</label>
-              <input
-                className="w-full border rounded-xl px-4 py-3"
-                placeholder="+255 7XX XXX XXX"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                data-testid="input-phone"
+              <PhoneNumberField
+                label=""
+                prefix={form.phone_prefix}
+                number={form.phone}
+                onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                onNumberChange={(v) => setForm({ ...form, phone: v })}
+                testIdPrefix="affiliate-reg-phone"
               />
             </div>
             <div>

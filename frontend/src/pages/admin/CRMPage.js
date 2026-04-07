@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Users, Plus, Search, Phone, Mail, Building2, DollarSign } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const leadStatuses = ["new", "contacted", "qualified", "proposal_sent", "won", "lost"];
 const statusColors = {
@@ -167,11 +168,13 @@ export default function CRMPage() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 required
               />
-              <input
-                className="border border-slate-300 rounded-xl px-4 py-3"
-                placeholder="Phone"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              <PhoneNumberField
+                label=""
+                prefix={form.phone_prefix || "+255"}
+                number={form.phone}
+                onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                onNumberChange={(v) => setForm({ ...form, phone: v })}
+                testIdPrefix="crm-phone"
               />
               <input
                 className="border border-slate-300 rounded-xl px-4 py-3"

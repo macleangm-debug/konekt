@@ -3,6 +3,7 @@ import adminApi from "../../../lib/adminApi";
 import { Save, CheckCircle, RefreshCw, Upload, Trash2 } from "lucide-react";
 import SignaturePad from "./SignaturePad";
 import GeneratedStampBuilder from "./GeneratedStampBuilder";
+import PhoneNumberField from "../../forms/PhoneNumberField";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -157,7 +158,14 @@ export default function InvoiceBrandingSettings() {
       {/* Document Contact Details */}
       <div className="grid md:grid-cols-3 gap-4">
         <Field label="Contact Email" value={form.contact_email} onChange={v => up("contact_email", v)} placeholder="accounts@konekt.co.tz" />
-        <Field label="Contact Phone" value={form.contact_phone} onChange={v => up("contact_phone", v)} placeholder="+255 XXX XXX XXX" />
+        <PhoneNumberField
+          label="Contact Phone"
+          prefix={form.contact_phone_prefix || "+255"}
+          number={form.contact_phone}
+          onPrefixChange={v => up("contact_phone_prefix", v)}
+          onNumberChange={v => up("contact_phone", v)}
+          testIdPrefix="invoice-contact-phone"
+        />
         <Field label="Contact Address" value={form.contact_address} onChange={v => up("contact_address", v)} placeholder="Dar es Salaam, Tanzania" />
       </div>
 

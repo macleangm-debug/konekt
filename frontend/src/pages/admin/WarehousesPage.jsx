@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const warehouseTypes = [
   { value: "general", label: "General" },
@@ -423,11 +424,13 @@ export default function WarehousesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Phone</Label>
-                  <Input
-                    placeholder="+255..."
-                    value={form.contact_phone}
-                    onChange={(e) => update("contact_phone", e.target.value)}
-                    data-testid="input-contact-phone"
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.contact_phone_prefix || "+255"}
+                    number={form.contact_phone}
+                    onPrefixChange={(v) => update("contact_phone_prefix", v)}
+                    onNumberChange={(v) => update("contact_phone", v)}
+                    testIdPrefix="warehouse-phone"
                   />
                 </div>
                 <div className="space-y-2">

@@ -13,6 +13,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import PhoneNumberField from '../components/forms/PhoneNumberField';
 import { Badge } from '../components/ui/badge';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -754,13 +755,16 @@ export default function EquipmentMaintenance() {
                   </div>
                   <div>
                     <Label>Phone *</Label>
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      placeholder="+255 123 456 789"
-                      className="mt-1"
-                      data-testid="phone-input"
-                    />
+                    <div className="mt-1">
+                      <PhoneNumberField
+                        label=""
+                        prefix={formData.phone_prefix || "+255"}
+                        number={formData.phone}
+                        onPrefixChange={(v) => setFormData({...formData, phone_prefix: v})}
+                        onNumberChange={(v) => setFormData({...formData, phone: v})}
+                        testIdPrefix="equip-phone"
+                      />
+                    </div>
                   </div>
                 </div>
                 
@@ -966,12 +970,16 @@ export default function EquipmentMaintenance() {
               </div>
               <div>
                 <Label>Phone *</Label>
-                <Input
-                  value={consultationData.phone}
-                  onChange={(e) => setConsultationData({...consultationData, phone: e.target.value})}
-                  placeholder="+255 123 456 789"
-                  className="mt-1"
-                />
+                <div className="mt-1">
+                  <PhoneNumberField
+                    label=""
+                    prefix={consultationData.phone_prefix || "+255"}
+                    number={consultationData.phone}
+                    onPrefixChange={(v) => setConsultationData({...consultationData, phone_prefix: v})}
+                    onNumberChange={(v) => setConsultationData({...consultationData, phone: v})}
+                    testIdPrefix="consult-phone"
+                  />
+                </div>
               </div>
             </div>
             

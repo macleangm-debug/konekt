@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Phone, Building, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Building, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { getStoredAffiliateCode } from '../lib/attribution';
+import PhoneNumberField from '../components/forms/PhoneNumberField';
 
 export default function Auth({ defaultTab = 'login' }) {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function Auth({ defaultTab = 'login' }) {
     email: '',
     password: '',
     full_name: '',
+    phone_prefix: '+255',
     phone: '',
     company: ''
   });
@@ -71,6 +73,8 @@ export default function Auth({ defaultTab = 'login' }) {
       const affiliateCode = getStoredAffiliateCode();
       await register({
         ...registerData,
+        phone: registerData.phone ? `${registerData.phone_prefix}${registerData.phone}` : "",
+        phone_prefix: undefined,
         affiliate_code: affiliateCode || null
       });
       toast.success('Welcome to Konekt! You earned 100 bonus points!');
@@ -206,19 +210,14 @@ export default function Auth({ defaultTab = 'login' }) {
                 </div>
                 
                 <div>
-                  <Label htmlFor="reg-phone">Phone (optional)</Label>
-                  <div className="relative mt-1">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      id="reg-phone"
-                      type="tel"
-                      value={registerData.phone}
-                      onChange={(e) => setRegisterData({...registerData, phone: e.target.value})}
-                      placeholder="+255 7XX XXX XXX"
-                      className="pl-10"
-                      data-testid="register-phone"
-                    />
-                  </div>
+                  <PhoneNumberField
+                    label="Phone (optional)"
+                    prefix={registerData.phone_prefix || "+255"}
+                    number={registerData.phone}
+                    onPrefixChange={(v) => setRegisterData({...registerData, phone_prefix: v})}
+                    onNumberChange={(v) => setRegisterData({...registerData, phone: v})}
+                    testIdPrefix="register-phone"
+                  />
                 </div>
                 
                 <div>

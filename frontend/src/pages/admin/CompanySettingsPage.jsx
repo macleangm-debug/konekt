@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Settings, Building2, CreditCard, FileText, Save } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const initialForm = {
   company_name: "Konekt Limited",
@@ -121,11 +122,13 @@ export default function CompanySettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
-                <input
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="+255 xxx xxx xxx"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
+                <PhoneNumberField
+                  label=""
+                  prefix={form.phone_prefix || "+255"}
+                  number={form.phone}
+                  onPrefixChange={(v) => update("phone_prefix", v)}
+                  onNumberChange={(v) => update("phone", v)}
+                  testIdPrefix="company-phone"
                 />
               </div>
               <div>

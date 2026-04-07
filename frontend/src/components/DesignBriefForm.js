@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { CheckCircle2, Upload, Sparkles, Loader2 } from "lucide-react";
+import PhoneNumberField from "./forms/PhoneNumberField";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -8,6 +9,7 @@ export default function DesignBriefForm({ service, selectedPackage }) {
     business_name: "",
     contact_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     industry: "",
     project_goal: "",
@@ -247,12 +249,13 @@ export default function DesignBriefForm({ service, selectedPackage }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
-            <input
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none transition-all"
-              placeholder="+255 xxx xxx xxx"
-              value={form.phone}
-              onChange={(e) => updateField("phone", e.target.value)}
+            <PhoneNumberField
+              label="Phone Number"
+              prefix={form.phone_prefix}
+              number={form.phone}
+              onPrefixChange={(v) => updateField("phone_prefix", v)}
+              onNumberChange={(v) => updateField("phone", v)}
+              testIdPrefix="brief-phone"
             />
           </div>
         </div>

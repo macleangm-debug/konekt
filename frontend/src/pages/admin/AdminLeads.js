@@ -24,6 +24,7 @@ import {
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import axios from 'axios';
 import { toast } from 'sonner';
+import PhoneNumberField from '../../components/forms/PhoneNumberField';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -401,10 +402,13 @@ export default function AdminLeads() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Phone</label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+255 7XX XXX XXX"
+                <PhoneNumberField
+                  label=""
+                  prefix={formData.phone_prefix || "+255"}
+                  number={formData.phone}
+                  onPrefixChange={(v) => setFormData({ ...formData, phone_prefix: v })}
+                  onNumberChange={(v) => setFormData({ ...formData, phone: v })}
+                  testIdPrefix="lead-phone"
                 />
               </div>
               <div>
