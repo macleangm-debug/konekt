@@ -442,6 +442,7 @@ import DashboardAffiliatePage from "@/pages/dashboard/AffiliateDashboardPage";
 // Affiliate pages
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
 import AffiliateDashboardV2 from "@/pages/affiliate/AffiliateDashboardV2";
+import LogoPreviewPage from "@/pages/LogoPreviewPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -960,6 +961,7 @@ function App() {
                     <Route path="/creative-services/:slug/brief" element={<Navigate to=".." replace />} />
                     <Route path="/services/:id" element={<ServiceDetail />} />
                     <Route path="/marketplace/:slug" element={<MarketplaceListingDetailPage />} />
+                    <Route path="/logo-preview" element={<LogoPreviewPage />} />
                   </Routes>
                 </main>
                 <Footer />
