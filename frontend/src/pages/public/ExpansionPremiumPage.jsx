@@ -1,69 +1,49 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Globe, Building2, ArrowRight, CheckCircle2, Users, BarChart3, MapPin, Briefcase } from "lucide-react";
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
-import PublicFooter from "../../components/PublicFooter";
-import ExpansionCountryCard from "../../components/public/ExpansionCountryCard";
+import PremiumFooterV2 from "../../components/public/PremiumFooterV2";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const defaultCountries = [
   {
-    code: "KE",
-    name: "Kenya",
-    status_label: "High-priority expansion",
-    badge: "East Africa",
-    description:
-      "Strong business activity, regional connectivity, and demand for coordinated products and services.",
+    code: "KE", name: "Kenya",
+    status_label: "High-priority expansion", badge: "East Africa",
+    description: "Strong business activity, regional connectivity, and demand for coordinated products and services.",
   },
   {
-    code: "UG",
-    name: "Uganda",
-    status_label: "Expansion target",
-    badge: "East Africa",
-    description:
-      "Growing cross-sector demand where Konekt can combine procurement, services, and account support.",
+    code: "UG", name: "Uganda",
+    status_label: "Expansion target", badge: "East Africa",
+    description: "Growing cross-sector demand where Konekt can combine procurement, services, and account support.",
   },
   {
-    code: "RW",
-    name: "Rwanda",
-    status_label: "Expansion target",
-    badge: "East Africa",
-    description:
-      "High execution discipline and strong fit for a structured local operating partner model.",
+    code: "RW", name: "Rwanda",
+    status_label: "Expansion target", badge: "East Africa",
+    description: "High execution discipline and strong fit for a structured local operating partner model.",
   },
   {
-    code: "GH",
-    name: "Ghana",
-    status_label: "Strategic growth market",
-    badge: "West Africa",
-    description:
-      "A strong market for managed products, services, and country-level operating partnerships.",
+    code: "GH", name: "Ghana",
+    status_label: "Strategic growth market", badge: "West Africa",
+    description: "A strong market for managed products, services, and country-level operating partnerships.",
   },
 ];
 
 export default function ExpansionPremiumPage() {
-  // Read country from query param if provided
   const queryCountry = new URLSearchParams(window.location.search).get("country");
   const [selectedCountry, setSelectedCountry] = useState(queryCountry || "KE");
+  const [activeTab, setActiveTab] = useState("interest");
   const [submitting, setSubmitting] = useState(false);
+
   const [interestForm, setInterestForm] = useState({
-    full_name: "",
-    email: "",
-    phone: "",
-    company_name: "",
-    country_code: "KE",
-    region: "",
-    interest_summary: "",
+    full_name: "", email: "", phone: "", company_name: "",
+    country_code: "KE", region: "", interest_summary: "",
   });
   const [partnerForm, setPartnerForm] = useState({
-    company_name: "",
-    contact_name: "",
-    email: "",
-    phone: "",
-    country_code: "KE",
-    local_presence_summary: "",
-    commercial_capacity: "",
-    operations_capacity: "",
+    company_name: "", contact_name: "", email: "", phone: "",
+    country_code: "KE", local_presence_summary: "",
+    commercial_capacity: "", operations_capacity: "",
   });
 
   useEffect(() => {
@@ -82,44 +62,27 @@ export default function ExpansionPremiumPage() {
       toast.error("Please fill in all required fields");
       return;
     }
-    
     setSubmitting(true);
     try {
       const res = await fetch(`${API_URL}/api/guest-leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          full_name: interestForm.full_name,
-          email: interestForm.email,
-          phone: interestForm.phone,
-          company: interestForm.company_name,
+          full_name: interestForm.full_name, email: interestForm.email,
+          phone: interestForm.phone, company: interestForm.company_name,
           country_code: interestForm.country_code,
           intent_type: "expansion_business_interest",
           intent_payload: {
-            region: interestForm.region,
-            interest_summary: interestForm.interest_summary,
+            region: interestForm.region, interest_summary: interestForm.interest_summary,
             country_name: selected.name,
           },
         }),
       });
-      
-      if (!res.ok) throw new Error("Failed to submit");
-      
+      if (!res.ok) throw new Error("Failed");
       toast.success("Business interest captured! We'll be in touch soon.");
-      setInterestForm({
-        full_name: "",
-        email: "",
-        phone: "",
-        company_name: "",
-        country_code: selectedCountry,
-        region: "",
-        interest_summary: "",
-      });
-    } catch (err) {
-      toast.error("Failed to submit. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+      setInterestForm({ full_name: "", email: "", phone: "", company_name: "", country_code: selectedCountry, region: "", interest_summary: "" });
+    } catch { toast.error("Failed to submit. Please try again."); }
+    finally { setSubmitting(false); }
   };
 
   const submitPartner = async (e) => {
@@ -128,17 +91,14 @@ export default function ExpansionPremiumPage() {
       toast.error("Please fill in all required fields");
       return;
     }
-    
     setSubmitting(true);
     try {
       const res = await fetch(`${API_URL}/api/guest-leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          full_name: partnerForm.contact_name,
-          email: partnerForm.email,
-          phone: partnerForm.phone,
-          company: partnerForm.company_name,
+          full_name: partnerForm.contact_name, email: partnerForm.email,
+          phone: partnerForm.phone, company: partnerForm.company_name,
           country_code: partnerForm.country_code,
           intent_type: "expansion_partner_application",
           intent_payload: {
@@ -149,331 +109,253 @@ export default function ExpansionPremiumPage() {
           },
         }),
       });
-      
-      if (!res.ok) throw new Error("Failed to submit");
-      
+      if (!res.ok) throw new Error("Failed");
       toast.success("Partner application received! Our expansion team will review and contact you.");
-      setPartnerForm({
-        company_name: "",
-        contact_name: "",
-        email: "",
-        phone: "",
-        country_code: selectedCountry,
-        local_presence_summary: "",
-        commercial_capacity: "",
-        operations_capacity: "",
-      });
-    } catch (err) {
-      toast.error("Failed to submit. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+      setPartnerForm({ company_name: "", contact_name: "", email: "", phone: "", country_code: selectedCountry, local_presence_summary: "", commercial_capacity: "", operations_capacity: "" });
+    } catch { toast.error("Failed to submit. Please try again."); }
+    finally { setSubmitting(false); }
   };
 
+  const inputCls = "w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20 text-sm";
+
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="expansion-premium-page">
+    <div className="min-h-screen bg-white" data-testid="expansion-premium-page">
       <PublicNavbarV2 />
 
-      <main>
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-[#0E1A2B] to-[#20364D] text-white">
-          <div className="max-w-7xl mx-auto px-6 py-20 grid lg:grid-cols-[1.1fr_0.9fr] gap-10 items-center">
-            <div>
-              <div className="text-xs tracking-[0.22em] uppercase text-slate-300 font-semibold">
-                Africa Expansion
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#0E1A2B] text-white" data-testid="expansion-hero">
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)",
+          backgroundSize: "40px 40px"
+        }} />
+        <div className="relative max-w-7xl mx-auto px-6 py-20 md:py-28">
+          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-12 items-center">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#D4A843]/15 border border-[#D4A843]/30 px-4 py-1.5">
+                <Globe className="w-4 h-4 text-[#D4A843]" />
+                <span className="text-[#D4A843] text-sm font-semibold">Africa Expansion Program</span>
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mt-4 leading-tight">
-                Bring Konekt to your market as a local operating partner
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.4rem] font-bold leading-[1.15] tracking-tight" data-testid="expansion-headline">
+                Launch Konekt in Your Market
+                <span className="text-[#D4A843]"> as a Local Operating Partner</span>
               </h1>
-              <p className="text-slate-200 mt-6 text-lg max-w-3xl">
-                Konekt is a digital procurement and service orchestration platform that combines
-                products, services, structured quotes, invoices, orders, and regional execution into
-                one coordinated system. We are looking for strong local representative partners to
-                help launch and operate Konekt country by country.
+              <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
+                Konekt is a digital procurement and service platform combining products, services, orders, and account management into one system. We're looking for strong local partners to launch and operate Konekt country by country.
               </p>
-
-              <div className="grid sm:grid-cols-2 gap-4 mt-8">
-                <div className="rounded-3xl bg-white/10 border border-white/10 p-5">
-                  <div className="font-bold text-xl">What you get</div>
-                  <p className="text-slate-200 mt-3 text-sm leading-6">
-                    A structured commercial platform, centralized systems, demand capture, and a scalable
-                    model for products, services, and account management.
-                  </p>
-                </div>
-                <div className="rounded-3xl bg-white/10 border border-white/10 p-5">
-                  <div className="font-bold text-xl">What we need</div>
-                  <p className="text-slate-200 mt-3 text-sm leading-6">
-                    Local market knowledge, commercial discipline, operational capacity, and the ability
-                    to represent Konekt with quality and consistency.
-                  </p>
-                </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <a href="#get-started" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-bold hover:bg-[#c49a3d] transition">
+                  Get Started <ArrowRight className="w-4 h-4" />
+                </a>
+                <a href="#how-it-works" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-7 py-3.5 font-semibold hover:bg-white/10 transition">
+                  Learn More
+                </a>
               </div>
             </div>
 
-            <div className="rounded-[2rem] bg-white text-slate-900 p-8 shadow-xl">
-              <div className="text-2xl font-bold text-[#20364D]">Why this model works</div>
-              <div className="space-y-4 mt-6 text-slate-700">
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Unified products + services marketplace</span>
+            {/* Stats / Highlights */}
+            <div className="hidden lg:grid grid-cols-2 gap-4">
+              {[
+                { label: "Active in", value: "Tanzania", sub: "First market" },
+                { label: "Expanding to", value: "4+ Markets", sub: "East & West Africa" },
+                { label: "Model", value: "Partner-Led", sub: "Local operations" },
+                { label: "Platform", value: "Ready", sub: "Products + Services" },
+              ].map((item, i) => (
+                <div key={i} className="rounded-2xl bg-white/8 border border-white/10 p-5 backdrop-blur-sm">
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">{item.label}</p>
+                  <p className="text-xl font-bold text-white mt-1">{item.value}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{item.sub}</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Structured quote, invoice, and order workflows</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Real-time operational visibility</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Country and region-based routing</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Controlled partner ecosystem with quality oversight</span>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-[#D4A843]">•</span>
-                  <span>Business pricing and account support</span>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Country Selection & Forms */}
-        <section className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10">
-            <div>
-              <div className="text-3xl font-bold text-[#20364D]">Choose a target country</div>
-              <p className="text-slate-600 mt-3">
-                Select the country you are interested in and see how Konekt plans to enter that market.
+      {/* How It Works */}
+      <section id="how-it-works" className="bg-slate-50 py-16 md:py-20" data-testid="expansion-how-it-works">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-10">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">Two Ways to Participate</h2>
+            <p className="text-slate-600 mt-3 text-base md:text-lg">
+              Whether you want Konekt in your country or want to operate Konekt locally — there's a path for you.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-2xl border bg-white p-8" data-testid="path-business">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+                <Briefcase className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-[#20364D] mb-2">I want Konekt in my market</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Tell us about the products and services your business needs. Your interest helps us validate demand and prioritize market entry.
               </p>
+              <a href="#get-started" onClick={() => setActiveTab("interest")} className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-[#20364D] hover:gap-2 transition-all">
+                Express Interest <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+            <div className="rounded-2xl border bg-white p-8" data-testid="path-partner">
+              <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center mb-4">
+                <Building2 className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-[#20364D] mb-2">I want to operate Konekt locally</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Apply to become the local operating partner. You bring market knowledge and execution capacity — we bring the platform, systems, and brand.
+              </p>
+              <a href="#get-started" onClick={() => setActiveTab("partner")} className="inline-flex items-center gap-1 mt-4 text-sm font-semibold text-[#D4A843] hover:gap-2 transition-all">
+                Apply as Partner <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              <div className="grid gap-4 mt-8">
+      {/* Country Selection + Form */}
+      <section id="get-started" className="py-16 md:py-20" data-testid="expansion-form-section">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-[340px_1fr] gap-10">
+            {/* Country Cards */}
+            <div>
+              <h2 className="text-2xl font-bold text-[#20364D] mb-2">Target Markets</h2>
+              <p className="text-slate-600 text-sm mb-6">Select the country you're interested in.</p>
+              <div className="space-y-3">
                 {defaultCountries.map((country) => (
-                  <ExpansionCountryCard
+                  <button
                     key={country.code}
-                    country={country}
-                    selected={country.code === selectedCountry}
-                    onSelect={setSelectedCountry}
-                  />
+                    onClick={() => setSelectedCountry(country.code)}
+                    className={`w-full rounded-2xl border p-5 text-left transition-all ${
+                      country.code === selectedCountry
+                        ? "bg-[#20364D] text-white border-[#20364D] shadow-lg"
+                        : "bg-white hover:shadow-md"
+                    }`}
+                    data-testid={`country-card-${country.code}`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-bold text-lg">{country.name}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        country.code === selectedCountry ? "bg-white/15 text-white" : "bg-slate-100 text-slate-600"
+                      }`}>{country.badge}</span>
+                    </div>
+                    <p className={`text-sm leading-relaxed mt-1 ${
+                      country.code === selectedCountry ? "text-slate-300" : "text-slate-500"
+                    }`}>{country.status_label}</p>
+                  </button>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="rounded-[2rem] border bg-white p-8">
-                <div className="text-3xl font-bold text-[#20364D]">
-                  {selected.name}: who we want to meet
-                </div>
-                <div className="grid md:grid-cols-2 gap-4 mt-6">
-                  <div className="rounded-2xl bg-slate-50 p-5">
-                    <div className="font-bold text-[#20364D]">Business / market interest</div>
-                    <p className="text-slate-600 mt-2 text-sm">
-                      Companies, institutions, and decision-makers who want Konekt available in their country.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-slate-50 p-5">
-                    <div className="font-bold text-[#20364D]">Local representative partners</div>
-                    <p className="text-slate-600 mt-2 text-sm">
-                      Strong country-side operators with commercial and operational capacity.
-                    </p>
-                  </div>
-                </div>
+            {/* Form Area */}
+            <div>
+              {/* Tab Switcher */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => setActiveTab("interest")}
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    activeTab === "interest" ? "bg-[#20364D] text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                  data-testid="tab-interest"
+                >
+                  Business Interest
+                </button>
+                <button
+                  onClick={() => setActiveTab("partner")}
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    activeTab === "partner" ? "bg-[#D4A843] text-[#17283C]" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  }`}
+                  data-testid="tab-partner"
+                >
+                  Partner Application
+                </button>
               </div>
 
-              <div className="grid xl:grid-cols-2 gap-6">
-                {/* Business Interest Form */}
-                <form onSubmit={submitInterest} className="rounded-[2rem] border bg-white p-8" data-testid="business-interest-form">
-                  <div className="text-2xl font-bold text-[#20364D]">Business interest form</div>
-                  <p className="text-slate-600 mt-3 text-sm">
-                    Tell us about the products and services you would want in this market.
-                  </p>
-
-                  <div className="grid gap-4 mt-6">
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Full name *" 
-                      value={interestForm.full_name} 
-                      onChange={(e) => setInterestForm({ ...interestForm, full_name: e.target.value })}
-                      data-testid="interest-name"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Email *" 
-                      type="email"
-                      value={interestForm.email} 
-                      onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })}
-                      data-testid="interest-email"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Phone *" 
-                      value={interestForm.phone} 
-                      onChange={(e) => setInterestForm({ ...interestForm, phone: e.target.value })}
-                      data-testid="interest-phone"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Company name (optional)" 
-                      value={interestForm.company_name} 
-                      onChange={(e) => setInterestForm({ ...interestForm, company_name: e.target.value })}
-                      data-testid="interest-company"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Region / city" 
-                      value={interestForm.region} 
-                      onChange={(e) => setInterestForm({ ...interestForm, region: e.target.value })}
-                      data-testid="interest-region"
-                    />
-                    <textarea 
-                      className="border rounded-xl px-4 py-3 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="What do you need Konekt to provide in this market?" 
-                      value={interestForm.interest_summary} 
-                      onChange={(e) => setInterestForm({ ...interestForm, interest_summary: e.target.value })}
-                      data-testid="interest-summary"
-                    />
+              {activeTab === "interest" ? (
+                <form onSubmit={submitInterest} className="rounded-2xl border bg-white p-8" data-testid="business-interest-form">
+                  <h3 className="text-2xl font-bold text-[#20364D]">Tell us what you need in {selected.name}</h3>
+                  <p className="text-slate-600 mt-2 mb-6">Share your business requirements to help us validate demand in this market.</p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <input className={inputCls} placeholder="Full name *" value={interestForm.full_name} onChange={(e) => setInterestForm({ ...interestForm, full_name: e.target.value })} data-testid="interest-name" />
+                    <input className={inputCls} placeholder="Company name" value={interestForm.company_name} onChange={(e) => setInterestForm({ ...interestForm, company_name: e.target.value })} data-testid="interest-company" />
+                    <input className={inputCls} placeholder="Email *" type="email" value={interestForm.email} onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })} data-testid="interest-email" />
+                    <input className={inputCls} placeholder="Phone *" value={interestForm.phone} onChange={(e) => setInterestForm({ ...interestForm, phone: e.target.value })} data-testid="interest-phone" />
+                    <input className={`${inputCls} sm:col-span-2`} placeholder="City / Region" value={interestForm.region} onChange={(e) => setInterestForm({ ...interestForm, region: e.target.value })} data-testid="interest-region" />
+                    <textarea className={`${inputCls} sm:col-span-2 min-h-[120px]`} placeholder="What products or services would you want Konekt to provide in this market?" value={interestForm.interest_summary} onChange={(e) => setInterestForm({ ...interestForm, interest_summary: e.target.value })} data-testid="interest-summary" />
                   </div>
-
-                  <button 
-                    type="submit" 
-                    disabled={submitting}
-                    data-testid="submit-interest-btn"
-                    className="mt-6 rounded-xl bg-[#20364D] text-white px-5 py-3 font-semibold hover:bg-[#17283c] transition disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={submitting} className="mt-6 rounded-xl bg-[#20364D] text-white px-7 py-3.5 font-semibold hover:bg-[#17283c] transition disabled:opacity-50" data-testid="submit-interest-btn">
                     {submitting ? "Submitting..." : "Submit Interest"}
                   </button>
                 </form>
-
-                {/* Partner Application Form */}
-                <form onSubmit={submitPartner} className="rounded-[2rem] border bg-white p-8" data-testid="partner-application-form">
-                  <div className="text-2xl font-bold text-[#20364D]">Local representative partner</div>
-                  <p className="text-slate-600 mt-3 text-sm">
-                    Apply to become the local operating partner for Konekt in {selected.name}.
-                  </p>
-
-                  <div className="grid gap-4 mt-6">
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Company name *" 
-                      value={partnerForm.company_name} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, company_name: e.target.value })}
-                      data-testid="partner-company"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Contact name *" 
-                      value={partnerForm.contact_name} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, contact_name: e.target.value })}
-                      data-testid="partner-contact"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Email *" 
-                      type="email"
-                      value={partnerForm.email} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })}
-                      data-testid="partner-email"
-                    />
-                    <input 
-                      className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Phone *" 
-                      value={partnerForm.phone} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })}
-                      data-testid="partner-phone"
-                    />
-                    <textarea 
-                      className="border rounded-xl px-4 py-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Describe your local presence and market reach" 
-                      value={partnerForm.local_presence_summary} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, local_presence_summary: e.target.value })}
-                      data-testid="partner-presence"
-                    />
-                    <textarea 
-                      className="border rounded-xl px-4 py-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Commercial capacity and ability to grow the market" 
-                      value={partnerForm.commercial_capacity} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, commercial_capacity: e.target.value })}
-                      data-testid="partner-commercial"
-                    />
-                    <textarea 
-                      className="border rounded-xl px-4 py-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                      placeholder="Operational capacity and execution capability" 
-                      value={partnerForm.operations_capacity} 
-                      onChange={(e) => setPartnerForm({ ...partnerForm, operations_capacity: e.target.value })}
-                      data-testid="partner-operations"
-                    />
+              ) : (
+                <form onSubmit={submitPartner} className="rounded-2xl border bg-white p-8" data-testid="partner-application-form">
+                  <h3 className="text-2xl font-bold text-[#20364D]">Apply as Local Partner in {selected.name}</h3>
+                  <p className="text-slate-600 mt-2 mb-6">Tell us about your company and capacity to operate Konekt in this market.</p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <input className={inputCls} placeholder="Company name *" value={partnerForm.company_name} onChange={(e) => setPartnerForm({ ...partnerForm, company_name: e.target.value })} data-testid="partner-company" />
+                    <input className={inputCls} placeholder="Contact name *" value={partnerForm.contact_name} onChange={(e) => setPartnerForm({ ...partnerForm, contact_name: e.target.value })} data-testid="partner-contact" />
+                    <input className={inputCls} placeholder="Email *" type="email" value={partnerForm.email} onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })} data-testid="partner-email" />
+                    <input className={inputCls} placeholder="Phone *" value={partnerForm.phone} onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })} data-testid="partner-phone" />
+                    <textarea className={`${inputCls} sm:col-span-2 min-h-[100px]`} placeholder="Describe your local presence and market reach" value={partnerForm.local_presence_summary} onChange={(e) => setPartnerForm({ ...partnerForm, local_presence_summary: e.target.value })} data-testid="partner-presence" />
+                    <textarea className={`${inputCls} min-h-[100px]`} placeholder="Commercial capacity and ability to grow the market" value={partnerForm.commercial_capacity} onChange={(e) => setPartnerForm({ ...partnerForm, commercial_capacity: e.target.value })} data-testid="partner-commercial" />
+                    <textarea className={`${inputCls} min-h-[100px]`} placeholder="Operational capacity and execution capability" value={partnerForm.operations_capacity} onChange={(e) => setPartnerForm({ ...partnerForm, operations_capacity: e.target.value })} data-testid="partner-operations" />
                   </div>
-
-                  <button 
-                    type="submit" 
-                    disabled={submitting}
-                    data-testid="submit-partner-btn"
-                    className="mt-6 rounded-xl bg-[#D4A843] text-[#17283C] px-5 py-3 font-semibold hover:bg-[#c49a3d] transition disabled:opacity-50"
-                  >
+                  <button type="submit" disabled={submitting} className="mt-6 rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-semibold hover:bg-[#c49a3d] transition disabled:opacity-50" data-testid="submit-partner-btn">
                     {submitting ? "Submitting..." : "Apply as Local Partner"}
                   </button>
                 </form>
-              </div>
+              )}
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Qualifications Section */}
-        <section className="bg-white border-t border-b">
-          <div className="max-w-7xl mx-auto px-6 py-16">
-            <div className="text-center mb-12">
-              <div className="text-3xl font-bold text-[#20364D]">Partner Qualification Criteria</div>
-              <p className="text-slate-600 mt-3 max-w-2xl mx-auto">
-                We look for partners who can represent Konekt with quality, discipline, and a long-term mindset.
+      {/* Partner Qualifications */}
+      <section className="bg-slate-50 py-16 md:py-20" data-testid="partner-qualifications">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">Partner Qualification Criteria</h2>
+            <p className="text-slate-600 mt-3 max-w-2xl mx-auto text-base md:text-lg">
+              We look for partners who can represent Konekt with quality, discipline, and a long-term mindset.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { num: "1", Icon: MapPin, title: "Local Presence", text: "Established operations and visibility in the target country." },
+              { num: "2", Icon: BarChart3, title: "Commercial Capacity", text: "Ability to drive sales, manage accounts, and grow the customer base." },
+              { num: "3", Icon: Users, title: "Operational Strength", text: "Capability to execute orders, coordinate delivery, and maintain quality." },
+              { num: "4", Icon: CheckCircle2, title: "Long-term Alignment", text: "Commitment to building a sustainable local operation with Konekt." },
+            ].map((item) => (
+              <div key={item.num} className="rounded-2xl bg-white border p-6 hover:shadow-lg transition-shadow group" data-testid={`qualification-${item.num}`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="w-9 h-9 rounded-full bg-[#20364D] text-white flex items-center justify-center text-sm font-bold">{item.num}</span>
+                  <item.Icon className="w-5 h-5 text-[#D4A843] group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-[#20364D] mb-2">{item.title}</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 md:py-20" data-testid="expansion-cta">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="rounded-2xl bg-[#0E1A2B] text-white p-8 md:p-12 flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-[#D4A843]/20 flex items-center justify-center flex-shrink-0">
+              <Globe className="w-8 h-8 md:w-10 md:h-10 text-[#D4A843]" />
+            </div>
+            <div className="text-center md:text-left flex-1">
+              <h2 className="text-xl md:text-2xl font-bold mb-2">Ready to Bring Konekt to Your Country?</h2>
+              <p className="text-slate-300 leading-relaxed max-w-2xl">
+                Whether you're a business that wants our services or a company ready to operate as our local partner — we want to hear from you.
               </p>
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="rounded-3xl border p-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4E7BF] flex items-center justify-center text-xl mb-4">
-                  1
-                </div>
-                <div className="font-bold text-[#20364D] text-lg">Local Presence</div>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Established operations and visibility in the target country.
-                </p>
-              </div>
-              <div className="rounded-3xl border p-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4E7BF] flex items-center justify-center text-xl mb-4">
-                  2
-                </div>
-                <div className="font-bold text-[#20364D] text-lg">Commercial Capacity</div>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Ability to drive sales, manage accounts, and grow the customer base.
-                </p>
-              </div>
-              <div className="rounded-3xl border p-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4E7BF] flex items-center justify-center text-xl mb-4">
-                  3
-                </div>
-                <div className="font-bold text-[#20364D] text-lg">Operational Strength</div>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Capability to execute orders, coordinate delivery, and maintain quality.
-                </p>
-              </div>
-              <div className="rounded-3xl border p-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F4E7BF] flex items-center justify-center text-xl mb-4">
-                  4
-                </div>
-                <div className="font-bold text-[#20364D] text-lg">Long-term Alignment</div>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Commitment to building a sustainable local operation with Konekt.
-                </p>
-              </div>
-            </div>
+            <a href="#get-started" className="rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-bold hover:bg-[#c49a3d] transition whitespace-nowrap">
+              Get Started
+            </a>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <PublicFooter />
+      <PremiumFooterV2 />
     </div>
   );
 }
