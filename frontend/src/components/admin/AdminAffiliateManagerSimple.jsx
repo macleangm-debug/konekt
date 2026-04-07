@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
 import { Users, Plus, Search, Settings, Megaphone } from "lucide-react";
 import AffiliatePromoBenefitEditor from "../affiliate/AffiliatePromoBenefitEditor";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
@@ -66,7 +68,7 @@ export default function AdminAffiliateManagerSimple() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", phone: "", promo_code: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone_prefix: "+255", phone: "", promo_code: "" });
   const [creating, setCreating] = useState(false);
   const [activeTab, setActiveTab] = useState("affiliates");
   const [selectedAffiliateId, setSelectedAffiliateId] = useState(null);
@@ -85,8 +87,12 @@ export default function AdminAffiliateManagerSimple() {
     if (!form.promo_code.trim()) return alert("Promo code is required");
     setCreating(true);
     try {
-      await api.post("/api/referral-commission/affiliate/create", form);
-      setForm({ name: "", email: "", phone: "", promo_code: "" });
+      await api.post("/api/referral-commission/affiliate/create", {
+        ...form,
+        phone: combinePhone(form.phone_prefix, form.phone),
+        phone_prefix: undefined,
+      });
+      setForm({ name: "", email: "", phone_prefix: "+255", phone: "", promo_code: "" });
       setShowCreate(false);
       load();
     } catch (err) {
@@ -174,7 +180,14 @@ export default function AdminAffiliateManagerSimple() {
             <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="affiliate-name-input" />
             <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" placeholder="Promo Code (e.g., BRAND10)" value={form.promo_code} onChange={(e) => setForm({ ...form, promo_code: e.target.value.toUpperCase() })} data-testid="affiliate-code-input" />
             <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="affiliate-email-input" />
-            <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#20364D]/20 outline-none" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} data-testid="affiliate-phone-input" />
+            <PhoneNumberField
+              label=""
+              prefix={form.phone_prefix}
+              number={form.phone}
+              onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, phone: v })}
+              testIdPrefix="affiliate-phone"
+            />
           </div>
           <div className="flex gap-3">
             <button onClick={handleCreate} disabled={creating} data-testid="save-affiliate-btn"

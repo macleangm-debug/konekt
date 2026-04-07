@@ -5,6 +5,7 @@ import api from "@/lib/api";
 import DynamicBriefForm from "@/components/creative/DynamicBriefForm";
 import { toast } from "sonner";
 import { COUNTRIES } from "@/constants/countries";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 export default function CreativeServiceDetailPage() {
   const { slug } = useParams();
@@ -266,20 +267,14 @@ export default function CreativeServiceDetailPage() {
             </div>
 
             {/* Phone with prefix */}
-            <div className="grid grid-cols-[100px_1fr] gap-4 mt-4">
-              <input
-                className="border border-slate-300 rounded-xl px-4 py-3 bg-slate-50 text-slate-600"
-                value={customer.phone_prefix}
-                readOnly
-                data-testid="input-phone-prefix"
-              />
-              <input
-                type="tel"
-                className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                placeholder="Phone number"
-                value={customer.customer_phone}
-                onChange={(e) => setCustomer({ ...customer, customer_phone: e.target.value })}
-                data-testid="input-customer-phone"
+            <div className="mt-4">
+              <PhoneNumberField
+                label="Phone"
+                prefix={customer.phone_prefix}
+                number={customer.customer_phone}
+                onPrefixChange={(v) => setCustomer({ ...customer, phone_prefix: v })}
+                onNumberChange={(v) => setCustomer({ ...customer, customer_phone: v })}
+                testIdPrefix="input-customer-phone"
               />
             </div>
 

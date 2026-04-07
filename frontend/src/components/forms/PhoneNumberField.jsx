@@ -12,10 +12,12 @@ export default function PhoneNumberField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">
-        {label}
-        {required ? " *" : ""}
-      </label>
+      {label && (
+        <label className="block text-sm font-medium text-slate-700 mb-1">
+          {label}
+          {required ? " *" : ""}
+        </label>
+      )}
       <div className="flex gap-2">
         <select
           value={prefix}

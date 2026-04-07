@@ -6,6 +6,8 @@ import SurfaceCard from "../../components/ui/SurfaceCard";
 import PaymentMethodOption from "../../components/payments/PaymentMethodOption";
 import { useCart } from "../../contexts/CartContext";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -24,6 +26,7 @@ export default function CheckoutPageV2() {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     company_name: "",
     delivery_address: "",
@@ -145,8 +148,10 @@ export default function CheckoutPageV2() {
     setSubmitting(true);
     try {
       // Create order
+      const { phone_prefix, ...orderForm } = form;
       const orderRes = await api.post("/api/orders", {
-        ...form,
+        ...orderForm,
+        phone: combinePhone(phone_prefix, form.phone),
         items: cartItems.map(item => ({
           product_id: item.product_id || item.id,
           sku: item.sku,
@@ -249,13 +254,14 @@ export default function CheckoutPageV2() {
                   required
                   data-testid="checkout-email"
                 />
-                <input
-                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                  placeholder="Phone *"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                <PhoneNumberField
+                  label=""
+                  prefix={form.phone_prefix}
+                  number={form.phone}
+                  onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                  onNumberChange={(v) => setForm({ ...form, phone: v })}
                   required
-                  data-testid="checkout-phone"
+                  testIdPrefix="checkout-phone"
                 />
                 <input
                   className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"

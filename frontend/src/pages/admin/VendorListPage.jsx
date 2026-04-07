@@ -9,6 +9,7 @@ import {
   Users, UserCheck, UserX, Package, Star, Building2,
   Search, Plus, X, Truck, Clock,
 } from "lucide-react";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const fmtDate = (d) => {
   if (!d) return "-";
@@ -158,7 +159,14 @@ export default function VendorListPage() {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             <input placeholder="Vendor Name *" value={newVendor.name} onChange={e => setNewVendor(p => ({ ...p, name: e.target.value }))} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400" data-testid="vendor-name-input" />
             <input placeholder="Email" value={newVendor.email} onChange={e => setNewVendor(p => ({ ...p, email: e.target.value }))} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400" />
-            <input placeholder="Phone" value={newVendor.phone} onChange={e => setNewVendor(p => ({ ...p, phone: e.target.value }))} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400" />
+            <PhoneNumberField
+              label=""
+              prefix={newVendor.phone_prefix || "+255"}
+              number={newVendor.phone}
+              onPrefixChange={v => setNewVendor(p => ({ ...p, phone_prefix: v }))}
+              onNumberChange={v => setNewVendor(p => ({ ...p, phone: v }))}
+              testIdPrefix="vendor-phone"
+            />
             <input placeholder="Company" value={newVendor.company} onChange={e => setNewVendor(p => ({ ...p, company: e.target.value }))} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400" />
             <select value={newVendor.capability_type} onChange={e => setNewVendor(p => ({ ...p, capability_type: e.target.value }))} className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none">
               <option value="products">Products</option>

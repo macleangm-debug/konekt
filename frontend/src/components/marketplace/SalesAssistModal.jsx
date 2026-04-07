@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { X, Send, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -8,7 +10,8 @@ export default function SalesAssistModal({ isOpen, onClose, productName = "", pr
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    customer_name: "", company_name: "", email: "", phone: "",
+    customer_name: "", company_name: "", email: "",
+    phone_prefix: "+255", phone: "",
     product_name: productName, quantity: "", notes: "",
   });
 
@@ -22,16 +25,19 @@ export default function SalesAssistModal({ isOpen, onClose, productName = "", pr
     }
     setSubmitting(true);
     try {
+      const { phone_prefix, ...rest } = form;
+      const payload = {
+        ...rest,
+        phone: combinePhone(phone_prefix, form.phone),
+        quantity: form.quantity ? parseInt(form.quantity, 10) : null,
+        product_id: productId,
+        page_url: window.location.href,
+        source,
+      };
       const res = await fetch(`${API_URL}/api/public/sales-assist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          quantity: form.quantity ? parseInt(form.quantity, 10) : null,
-          product_id: productId,
-          page_url: window.location.href,
-          source,
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed");
       setSubmitted(true);
@@ -68,7 +74,16 @@ export default function SalesAssistModal({ isOpen, onClose, productName = "", pr
               <input className={inputCls} placeholder="Your name *" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} data-testid="sa-name" />
               <input className={inputCls} placeholder="Company name" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} data-testid="sa-company" />
               <input className={inputCls} placeholder="Email *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} data-testid="sa-email" />
-              <input className={inputCls} placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} data-testid="sa-phone" />
+            </div>
+            <PhoneNumberField
+              label=""
+              prefix={form.phone_prefix}
+              number={form.phone}
+              onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, phone: v })}
+              testIdPrefix="sa-phone"
+            />
+            <div className="grid sm:grid-cols-2 gap-3">
               <input className={inputCls} placeholder="Product or Service" value={form.product_name} onChange={(e) => setForm({ ...form, product_name: e.target.value })} data-testid="sa-product" />
               <input className={inputCls} placeholder="Quantity" type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} data-testid="sa-quantity" />
             </div>

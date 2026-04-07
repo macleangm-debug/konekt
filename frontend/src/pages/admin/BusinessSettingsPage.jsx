@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 export default function BusinessSettingsPage() {
   const [form, setForm] = useState(null);
@@ -107,12 +108,13 @@ export default function BusinessSettingsPage() {
             onChange={(e) => setForm({ ...form, email: e.target.value })} 
             data-testid="input-email"
           />
-          <input 
-            className="w-full border rounded-xl px-4 py-3" 
-            placeholder="Phone" 
-            value={form.phone || ""} 
-            onChange={(e) => setForm({ ...form, phone: e.target.value })} 
-            data-testid="input-phone"
+          <PhoneNumberField
+            label=""
+            prefix={form.phone_prefix || "+255"}
+            number={form.phone || ""}
+            onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+            onNumberChange={(v) => setForm({ ...form, phone: v })}
+            testIdPrefix="settings-phone"
           />
           <input 
             className="w-full border rounded-xl px-4 py-3" 

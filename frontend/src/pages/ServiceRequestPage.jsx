@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../lib/api";
 import DynamicServiceForm from "../components/services/DynamicServiceForm";
 import { COUNTRIES } from "../constants/countries";
+import PhoneNumberField from "../components/forms/PhoneNumberField";
 
 export default function ServiceRequestPage() {
   const { slug } = useParams();
@@ -207,19 +208,14 @@ export default function ServiceRequestPage() {
               />
             </div>
 
-            <div className="grid grid-cols-[120px_1fr] gap-4 mt-4">
-              <input 
-                className="border rounded-xl px-4 py-3 bg-slate-50 text-slate-600" 
-                value={customerForm.phone_prefix} 
-                readOnly 
-                data-testid="phone-prefix-input"
-              />
-              <input 
-                className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#2D3E50]/20 focus:border-[#2D3E50]" 
-                placeholder="Phone number" 
-                value={customerForm.phone_number} 
-                onChange={(e) => setCustomerForm({ ...customerForm, phone_number: e.target.value })} 
-                data-testid="phone-number-input"
+            <div className="mt-4">
+              <PhoneNumberField
+                label=""
+                prefix={customerForm.phone_prefix}
+                number={customerForm.phone_number}
+                onPrefixChange={(v) => setCustomerForm({ ...customerForm, phone_prefix: v })}
+                onNumberChange={(v) => setCustomerForm({ ...customerForm, phone_number: v })}
+                testIdPrefix="service-phone"
               />
             </div>
           </div>

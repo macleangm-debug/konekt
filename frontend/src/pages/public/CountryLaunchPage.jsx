@@ -3,6 +3,8 @@ import { MapPin, Building2, Users } from "lucide-react";
 import api from "../../lib/api";
 import { getStoredCountryCode } from "../../lib/countryPreference";
 import BrandLogo from "../../components/branding/BrandLogo";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 export default function CountryLaunchPage() {
   const [config, setConfig] = useState(null);
@@ -14,6 +16,7 @@ export default function CountryLaunchPage() {
     customer_type: "individual",
     name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     company_name: "",
     region: "",
@@ -24,6 +27,7 @@ export default function CountryLaunchPage() {
     company_name: "",
     contact_person: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     city: "",
     regions_served: "",
@@ -62,6 +66,8 @@ export default function CountryLaunchPage() {
       await api.post("/api/expansion/waitlist", {
         country_code: countryCode,
         ...waitlistForm,
+        phone: combinePhone(waitlistForm.phone_prefix, waitlistForm.phone),
+        phone_prefix: undefined,
         requested_products_services: waitlistForm.note ? [waitlistForm.note] : [],
       });
       setSuccess({ ...success, waitlist: true });
@@ -79,6 +85,8 @@ export default function CountryLaunchPage() {
       await api.post("/api/expansion/partner-application", {
         country_code: countryCode,
         ...partnerForm,
+        phone: combinePhone(partnerForm.phone_prefix, partnerForm.phone),
+        phone_prefix: undefined,
         regions_served: partnerForm.regions_served.split(",").map((x) => x.trim()).filter(Boolean),
         categories_supported: partnerForm.categories_supported.split(",").map((x) => x.trim()).filter(Boolean),
       });
@@ -173,12 +181,13 @@ export default function CountryLaunchPage() {
                       data-testid="waitlist-email-input"
                     />
 
-                    <input
-                      className="w-full border rounded-xl px-4 py-3"
-                      placeholder="Phone number"
-                      value={waitlistForm.phone}
-                      onChange={(e) => setWaitlistForm({ ...waitlistForm, phone: e.target.value })}
-                      data-testid="waitlist-phone-input"
+                    <PhoneNumberField
+                      label=""
+                      prefix={waitlistForm.phone_prefix}
+                      number={waitlistForm.phone}
+                      onPrefixChange={(v) => setWaitlistForm({ ...waitlistForm, phone_prefix: v })}
+                      onNumberChange={(v) => setWaitlistForm({ ...waitlistForm, phone: v })}
+                      testIdPrefix="waitlist-phone"
                     />
 
                     {waitlistForm.customer_type === "company" && (
@@ -276,12 +285,13 @@ export default function CountryLaunchPage() {
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <input
-                        className="w-full border rounded-xl px-4 py-3"
-                        placeholder="Phone"
-                        value={partnerForm.phone}
-                        onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })}
-                        data-testid="partner-phone-input"
+                      <PhoneNumberField
+                        label=""
+                        prefix={partnerForm.phone_prefix}
+                        number={partnerForm.phone}
+                        onPrefixChange={(v) => setPartnerForm({ ...partnerForm, phone_prefix: v })}
+                        onNumberChange={(v) => setPartnerForm({ ...partnerForm, phone: v })}
+                        testIdPrefix="partner-phone"
                       />
                       <input
                         className="w-full border rounded-xl px-4 py-3"

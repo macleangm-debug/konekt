@@ -9,6 +9,7 @@ import LineItemsEditor from "@/components/admin/LineItemsEditor";
 import BrandLogo from "@/components/branding/BrandLogo";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const invoiceStatuses = ["draft", "sent", "partially_paid", "paid", "overdue", "cancelled"];
 const statusColors = {
@@ -211,7 +212,14 @@ export default function InvoicesPage() {
                 <input className="border rounded-xl px-4 py-3" placeholder="Contact Name *" value={form.customer_name} onChange={(e) => setForm({ ...form, customer_name: e.target.value })} required />
                 <input className="border rounded-xl px-4 py-3" placeholder="Email *" type="email" value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} required />
                 <input className="border rounded-xl px-4 py-3" placeholder="Company" value={form.customer_company} onChange={(e) => setForm({ ...form, customer_company: e.target.value })} />
-                <input className="border rounded-xl px-4 py-3" placeholder="Phone" value={form.customer_phone} onChange={(e) => setForm({ ...form, customer_phone: e.target.value })} />
+                <PhoneNumberField
+                  label=""
+                  prefix={form.customer_phone_prefix || "+255"}
+                  number={form.customer_phone}
+                  onPrefixChange={(v) => setForm({ ...form, customer_phone_prefix: v })}
+                  onNumberChange={(v) => setForm({ ...form, customer_phone: v })}
+                  testIdPrefix="invoice-customer-phone"
+                />
                 <input className="border rounded-xl px-4 py-3 md:col-span-2" placeholder="Address" value={form.customer_address} onChange={(e) => setForm({ ...form, customer_address: e.target.value })} />
                 <input className="border rounded-xl px-4 py-3" placeholder="Client TIN" value={form.customer_tin} onChange={(e) => setForm({ ...form, customer_tin: e.target.value })} />
                 <input className="border rounded-xl px-4 py-3" placeholder="Client BRN" value={form.customer_registration_number} onChange={(e) => setForm({ ...form, customer_registration_number: e.target.value })} />

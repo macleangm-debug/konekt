@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import PartnerSectionCard from "./PartnerSectionCard";
+import PhoneNumberField from "../forms/PhoneNumberField";
 
 export default function PartnerSmartForm({ form, setForm }) {
   const parsedServices = useMemo(
@@ -53,9 +54,16 @@ export default function PartnerSmartForm({ form, setForm }) {
             <input className="w-full border rounded-xl px-4 py-3" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           </label>
 
-          <label className="block">
+          <label className="block md:col-span-2">
             <div className="text-sm text-slate-500 mb-2">Phone</div>
-            <input className="w-full border rounded-xl px-4 py-3" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <PhoneNumberField
+              label=""
+              prefix={form.phone_prefix || "+255"}
+              number={form.phone || ""}
+              onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, phone: v })}
+              testIdPrefix="partner-phone"
+            />
           </label>
 
           <label className="block">

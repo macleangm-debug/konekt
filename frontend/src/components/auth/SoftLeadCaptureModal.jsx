@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import { X, User, Phone, Mail, Building, MapPin } from "lucide-react";
+import { X, User, Mail, Building, MapPin } from "lucide-react";
 import api from "../../lib/api";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 /**
  * SoftLeadCaptureModal - Capture lead info from guests
  * Used when guest wants to request service/quote without creating account
- * 
- * Props:
- * - open: boolean
- * - intentType: string (e.g., "service_request", "quote_request", "business_pricing")
- * - intentPayload: object (additional data about the request)
- * - onClose: function
- * - onSubmitted: function(result) - called after successful submission
  */
 export default function SoftLeadCaptureModal({ 
   open, 
@@ -22,6 +17,7 @@ export default function SoftLeadCaptureModal({
 }) {
   const [form, setForm] = useState({
     full_name: "",
+    phone_prefix: "+255",
     phone: "",
     email: "",
     company_name: "",
@@ -53,13 +49,16 @@ export default function SoftLeadCaptureModal({
 
     setLoading(true);
     try {
-      const res = await api.post("/api/guest-leads", {
-        ...form,
+      const { phone_prefix, ...rest } = form;
+      const payload = {
+        ...rest,
+        phone: combinePhone(phone_prefix, form.phone),
         source: "website",
         guest_session_id: localStorage.getItem("guest_session_id") || "",
         intent_type: intentType,
         intent_payload: intentPayload,
-      });
+      };
+      const res = await api.post("/api/guest-leads", payload);
       onSubmitted?.(res.data);
       onClose?.();
     } catch (err) {
@@ -113,16 +112,14 @@ export default function SoftLeadCaptureModal({
                 data-testid="soft-lead-name"
               />
             </div>
-            <div className="relative">
-              <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input 
-                className="w-full border rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]" 
-                placeholder="Phone *" 
-                value={form.phone} 
-                onChange={(e) => handleChange("phone", e.target.value)}
-                data-testid="soft-lead-phone"
-              />
-            </div>
+            <PhoneNumberField
+              label=""
+              prefix={form.phone_prefix}
+              number={form.phone}
+              onPrefixChange={(v) => handleChange("phone_prefix", v)}
+              onNumberChange={(v) => handleChange("phone", v)}
+              testIdPrefix="soft-lead-phone"
+            />
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input 

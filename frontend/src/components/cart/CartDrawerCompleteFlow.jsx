@@ -5,6 +5,7 @@ import api from "../../lib/api";
 import { Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy, Camera, Image } from "lucide-react";
 import LockedSavedDetailsSection from "./LockedSavedDetailsSection";
 import ConfirmActionModal from "../common/ConfirmActionModal";
+import PhoneNumberField from "../forms/PhoneNumberField";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
@@ -21,7 +22,6 @@ export default function CartDrawerCompleteFlow() {
   const customerId = user?.id || "guest";
   const { open, items, closeCart, setOpen, setItems } = useCartDrawer();
   const [step, setStep] = useState("cart");
-  const [prefixes, setPrefixes] = useState(["+255"]);
   const [sameAsContact, setSameAsContact] = useState(false);
   const [invoiceResult, setInvoiceResult] = useState(null);
   const [paymentIntent, setPaymentIntent] = useState(null);
@@ -46,7 +46,6 @@ export default function CartDrawerCompleteFlow() {
     try {
       const res = await api.get(`/api/customer-account/prefill?customer_id=${customerId}`);
       const p = res.data || {};
-      setPrefixes(p.phone_prefix_options || ["+255"]);
       const defaultAddr = (p.delivery_addresses || []).find((a) => a.is_default) || (p.delivery_addresses || [])[0] || {};
       setForm({
         client_name: p.contact_name || "", client_phone_prefix: p.phone_prefix || "+255",
@@ -185,13 +184,6 @@ export default function CartDrawerCompleteFlow() {
 
   const finishAndClose = () => { setItems([]); closeCart(); };
 
-  const PrefixSelect = ({ value, onChange }) => (
-    <select value={value} onChange={(e) => onChange(e.target.value)}
-      className="border border-slate-200 rounded-xl px-2 py-3 bg-white text-[#20364D] font-medium w-[85px] shrink-0 text-sm">
-      {prefixes.map((p) => <option key={p} value={p}>{p}</option>)}
-    </select>
-  );
-
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <button className="absolute inset-0 bg-black/40" onClick={closeCart} aria-label="Close cart overlay" />
@@ -262,10 +254,14 @@ export default function CartDrawerCompleteFlow() {
                 values={[form.client_name, `${form.client_phone_prefix} ${form.client_phone}`, form.client_email].filter(Boolean)}>
                 <div className="space-y-3">
                   <input data-testid="checkout-client-name" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Contact Name" value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-                  <div className="flex gap-2">
-                    <PrefixSelect value={form.client_phone_prefix} onChange={(v) => setForm({ ...form, client_phone_prefix: v })} />
-                    <input data-testid="checkout-client-phone" className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.client_phone} onChange={(e) => setForm({ ...form, client_phone: e.target.value })} />
-                  </div>
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.client_phone_prefix}
+                    number={form.client_phone}
+                    onPrefixChange={(v) => setForm({ ...form, client_phone_prefix: v })}
+                    onNumberChange={(v) => setForm({ ...form, client_phone: v })}
+                    testIdPrefix="checkout-client-phone"
+                  />
                   <input data-testid="checkout-client-email" className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.client_email} onChange={(e) => setForm({ ...form, client_email: e.target.value })} />
                 </div>
               </LockedSavedDetailsSection>
@@ -280,11 +276,14 @@ export default function CartDrawerCompleteFlow() {
                   </label>
                   <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Recipient Name" value={form.recipient_name}
                     onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_name: e.target.value }); }} />
-                  <div className="flex gap-2">
-                    <PrefixSelect value={form.recipient_phone_prefix} onChange={(v) => { setSameAsContact(false); setForm({ ...form, recipient_phone_prefix: v }); }} />
-                    <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.recipient_phone}
-                      onChange={(e) => { setSameAsContact(false); setForm({ ...form, recipient_phone: e.target.value }); }} />
-                  </div>
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.recipient_phone_prefix}
+                    number={form.recipient_phone}
+                    onPrefixChange={(v) => { setSameAsContact(false); setForm({ ...form, recipient_phone_prefix: v }); }}
+                    onNumberChange={(v) => { setSameAsContact(false); setForm({ ...form, recipient_phone: v }); }}
+                    testIdPrefix="checkout-recipient-phone"
+                  />
                   <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Address Line" value={form.address_line} onChange={(e) => setForm({ ...form, address_line: e.target.value })} />
                   <div className="grid grid-cols-2 gap-2">
                     <input className="border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="City" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
@@ -297,10 +296,14 @@ export default function CartDrawerCompleteFlow() {
                 values={[form.invoice_client_name, `${form.invoice_client_phone_prefix} ${form.invoice_client_phone}`, form.invoice_client_email, form.invoice_client_tin ? `TIN: ${form.invoice_client_tin}` : ""].filter(v => v && v.trim())}>
                 <div className="space-y-3">
                   <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Client Name" value={form.invoice_client_name} onChange={(e) => setForm({ ...form, invoice_client_name: e.target.value })} />
-                  <div className="flex gap-2">
-                    <PrefixSelect value={form.invoice_client_phone_prefix} onChange={(v) => setForm({ ...form, invoice_client_phone_prefix: v })} />
-                    <input className="flex-1 border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Phone" value={form.invoice_client_phone} onChange={(e) => setForm({ ...form, invoice_client_phone: e.target.value })} />
-                  </div>
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.invoice_client_phone_prefix}
+                    number={form.invoice_client_phone}
+                    onPrefixChange={(v) => setForm({ ...form, invoice_client_phone_prefix: v })}
+                    onNumberChange={(v) => setForm({ ...form, invoice_client_phone: v })}
+                    testIdPrefix="checkout-invoice-phone"
+                  />
                   <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="Email" value={form.invoice_client_email} onChange={(e) => setForm({ ...form, invoice_client_email: e.target.value })} />
                   <input className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm" placeholder="TIN" value={form.invoice_client_tin} onChange={(e) => setForm({ ...form, invoice_client_tin: e.target.value })} />
                 </div>

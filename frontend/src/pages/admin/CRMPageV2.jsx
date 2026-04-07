@@ -5,6 +5,8 @@ import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { combinePhone } from "@/utils/phoneUtils";
 
 const CRM_TABS = [
   { key: "all", label: "All Leads" },
@@ -278,12 +280,14 @@ export default function CRMPageV2() {
   const createLead = async (e) => {
     e.preventDefault();
     try {
+      const { phone_prefix, ...rest } = form;
       await adminApi.createLead({
-        ...form,
+        ...rest,
+        phone: combinePhone(phone_prefix, form.phone),
         estimated_value: Number(form.estimated_value || 0),
       });
       setForm({
-        company_name: "", contact_name: "", email: "", phone: "", source: "",
+        company_name: "", contact_name: "", email: "", phone_prefix: "+255", phone: "", source: "",
         industry: "", notes: "", status: "new", assigned_to: "",
         estimated_value: "", city: "", country: "Tanzania",
       });
@@ -548,7 +552,14 @@ export default function CRMPageV2() {
                   <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Company name *" value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} required />
                   <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Contact name *" value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} required />
                   <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Email *" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-                  <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.phone_prefix || "+255"}
+                    number={form.phone}
+                    onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                    onNumberChange={(v) => setForm({ ...form, phone: v })}
+                    testIdPrefix="crm-phone"
+                  />
                   <select className="border border-slate-300 rounded-xl px-4 py-3 bg-white" value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })}>
                     <option value="">Select Industry</option>
                     {(crmSettings?.industries || []).map((item) => (<option key={item} value={item}>{item}</option>))}

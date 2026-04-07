@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Palette, ArrowLeft, Check, Upload, Info } from "lucide-react";
 import api from "@/lib/api";
 import { formatMoney } from "@/utils/finance";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { combinePhone } from "@/utils/phoneUtils";
 
 export default function CreativeServiceBriefPage() {
   const { slug } = useParams();
@@ -15,6 +17,7 @@ export default function CreativeServiceBriefPage() {
   const [form, setForm] = useState({
     customer_name: "",
     customer_email: "",
+    phone_prefix: "+255",
     customer_phone: "",
     company_name: "",
     notes: "",
@@ -88,7 +91,7 @@ export default function CreativeServiceBriefPage() {
         service_slug: slug,
         customer_name: form.customer_name,
         customer_email: form.customer_email,
-        customer_phone: form.customer_phone || null,
+        customer_phone: combinePhone(form.phone_prefix, form.customer_phone) || null,
         company_name: form.company_name || null,
         brief_answers: briefAnswers,
         selected_addons: selectedAddons,
@@ -331,12 +334,13 @@ export default function CreativeServiceBriefPage() {
                     onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
                     required
                   />
-                  <input
-                    type="tel"
-                    className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                    placeholder="Phone Number"
-                    value={form.customer_phone}
-                    onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.phone_prefix}
+                    number={form.customer_phone}
+                    onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                    onNumberChange={(v) => setForm({ ...form, customer_phone: v })}
+                    testIdPrefix="brief-phone"
                   />
                   <input
                     type="text"

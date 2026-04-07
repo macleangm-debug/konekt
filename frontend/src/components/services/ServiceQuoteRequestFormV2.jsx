@@ -2,11 +2,13 @@ import React, { useState, useEffect } from "react";
 import { User, FileText, MapPin, ShieldCheck, Loader2, CheckCircle } from "lucide-react";
 import api from "../../lib/api";
 import { toast } from "sonner";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 export default function ServiceQuoteRequestFormV2({ service }) {
   const [form, setForm] = useState({
-    client_name: "", client_phone: "", client_email: "",
-    invoice_client_name: "", invoice_client_phone: "", invoice_client_email: "", invoice_client_tin: "",
+    client_name: "", client_phone_prefix: "+255", client_phone: "", client_email: "",
+    invoice_client_name: "", invoice_client_phone_prefix: "+255", invoice_client_phone: "", invoice_client_email: "", invoice_client_tin: "",
     brief: "", delivery_or_site_address: "",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -31,10 +33,13 @@ export default function ServiceQuoteRequestFormV2({ service }) {
     }
     setSubmitting(true);
     try {
+      const { client_phone_prefix, invoice_client_phone_prefix, ...rest } = form;
       await api.post("/api/service-requests-quick", {
         service_key: service?.service_key,
         service_name: service?.service_name,
-        ...form,
+        ...rest,
+        client_phone: combinePhone(client_phone_prefix, form.client_phone),
+        invoice_client_phone: combinePhone(invoice_client_phone_prefix, form.invoice_client_phone),
       });
       setSubmitted(true);
       toast.success("Service quote request submitted!");
@@ -72,7 +77,14 @@ export default function ServiceQuoteRequestFormV2({ service }) {
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           <input className={inputClass} placeholder="Contact Name" value={form.client_name} onChange={(e) => update("client_name", e.target.value)} data-testid="service-client-name" />
-          <input className={inputClass} placeholder="Phone Number" value={form.client_phone} onChange={(e) => update("client_phone", e.target.value)} data-testid="service-client-phone" />
+          <PhoneNumberField
+            label=""
+            prefix={form.client_phone_prefix}
+            number={form.client_phone}
+            onPrefixChange={(v) => update("client_phone_prefix", v)}
+            onNumberChange={(v) => update("client_phone", v)}
+            testIdPrefix="service-client-phone"
+          />
           <input className={`${inputClass} md:col-span-2`} placeholder="Email Address" value={form.client_email} onChange={(e) => update("client_email", e.target.value)} data-testid="service-client-email" />
         </div>
       </section>
@@ -86,7 +98,14 @@ export default function ServiceQuoteRequestFormV2({ service }) {
         <p className="text-xs text-[#94a3b8] mb-4">These details will appear on the quotation and invoice.</p>
         <div className="grid md:grid-cols-2 gap-3">
           <input className={inputClass} placeholder="Invoice Client Name" value={form.invoice_client_name} onChange={(e) => update("invoice_client_name", e.target.value)} />
-          <input className={inputClass} placeholder="Invoice Client Phone" value={form.invoice_client_phone} onChange={(e) => update("invoice_client_phone", e.target.value)} />
+          <PhoneNumberField
+            label=""
+            prefix={form.invoice_client_phone_prefix}
+            number={form.invoice_client_phone}
+            onPrefixChange={(v) => update("invoice_client_phone_prefix", v)}
+            onNumberChange={(v) => update("invoice_client_phone", v)}
+            testIdPrefix="invoice-client-phone"
+          />
           <input className={inputClass} placeholder="Invoice Client Email" value={form.invoice_client_email} onChange={(e) => update("invoice_client_email", e.target.value)} />
           <input className={inputClass} placeholder="TIN Number" value={form.invoice_client_tin} onChange={(e) => update("invoice_client_tin", e.target.value)} />
         </div>

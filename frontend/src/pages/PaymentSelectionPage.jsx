@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Smartphone, Building2, CreditCard, Shield } from "lucide-react";
 import { paymentApi } from "../lib/paymentApi";
 import GuestCheckoutActivationBanner from "../components/requests/GuestCheckoutActivationBanner";
+import PhoneNumberField from "../components/forms/PhoneNumberField";
 
 export default function PaymentSelectionPage() {
   const [params] = useSearchParams();
@@ -16,6 +17,7 @@ export default function PaymentSelectionPage() {
   const customerName = location.state?.customerName || "";
   const accountInvite = location.state?.accountInvite || null;
   
+  const [phonePrefix, setPhonePrefix] = useState("+255");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -147,13 +149,13 @@ export default function PaymentSelectionPage() {
               Pay using M-Pesa, Tigo Pesa, Airtel Money, or Halotel through KwikPay.
             </p>
 
-            <input
-              className="w-full border rounded-xl px-4 py-3 mt-5 bg-slate-50"
-              placeholder="Phone number (e.g., +255712345678)"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              disabled
-              data-testid="phone-input"
+            <PhoneNumberField
+              label=""
+              prefix={phonePrefix}
+              number={phoneNumber}
+              onPrefixChange={setPhonePrefix}
+              onNumberChange={setPhoneNumber}
+              testIdPrefix="mobile-phone"
             />
 
             <button

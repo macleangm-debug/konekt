@@ -6,6 +6,7 @@ import CustomerSummaryCard from "@/components/admin/CustomerSummaryCard";
 import PaymentTermsCard from "@/components/admin/PaymentTermsCard";
 import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const quoteStatuses = ["draft", "sent", "approved", "rejected", "expired", "converted"];
 const statusColors = {
@@ -276,11 +277,13 @@ export default function QuotesPage() {
                     value={form.customer_company}
                     onChange={(e) => setForm({ ...form, customer_company: e.target.value })}
                   />
-                  <input
-                    className="border border-slate-300 rounded-xl px-4 py-3"
-                    placeholder="Phone"
-                    value={form.customer_phone}
-                    onChange={(e) => setForm({ ...form, customer_phone: e.target.value })}
+                  <PhoneNumberField
+                    label=""
+                    prefix={form.customer_phone_prefix || "+255"}
+                    number={form.customer_phone}
+                    onPrefixChange={(v) => setForm({ ...form, customer_phone_prefix: v })}
+                    onNumberChange={(v) => setForm({ ...form, customer_phone: v })}
+                    testIdPrefix="quote-customer-phone"
                   />
                   <input
                     className="border border-slate-300 rounded-xl px-4 py-3 md:col-span-2"

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import useCustomerProfile from "../../hooks/useCustomerProfile";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { splitPhone, combinePhone } from "../../utils/phoneUtils";
 
 export default function MyAccountProfilePage() {
   const { user } = useAuth();
@@ -8,11 +10,35 @@ export default function MyAccountProfilePage() {
   const { data, loading, save } = useCustomerProfile(customerId);
   const [form, setForm] = useState(null);
 
-  useEffect(() => { if (data) setForm(data); }, [data]);
+  useEffect(() => {
+    if (data) {
+      const p = splitPhone(data.phone);
+      const dp = splitPhone(data.delivery_phone);
+      const ip = splitPhone(data.invoice_client_phone);
+      setForm({
+        ...data,
+        phone_prefix: p.prefix,
+        phone: p.number,
+        delivery_phone_prefix: dp.prefix,
+        delivery_phone: dp.number,
+        invoice_client_phone_prefix: ip.prefix,
+        invoice_client_phone: ip.number,
+      });
+    }
+  }, [data]);
+
   if (loading || !form) return <div className="text-slate-500">Loading account...</div>;
 
   const submit = async () => {
-    await save({ ...form, customer_id: customerId });
+    const { phone_prefix, delivery_phone_prefix, invoice_client_phone_prefix, ...rest } = form;
+    const payload = {
+      ...rest,
+      phone: combinePhone(phone_prefix, form.phone),
+      delivery_phone: combinePhone(delivery_phone_prefix, form.delivery_phone),
+      invoice_client_phone: combinePhone(invoice_client_phone_prefix, form.invoice_client_phone),
+      customer_id: customerId,
+    };
+    await save(payload);
     alert("Account details saved.");
   };
 
@@ -34,7 +60,14 @@ export default function MyAccountProfilePage() {
 
         <div className="grid md:grid-cols-2 gap-4">
           <input className="border rounded-xl px-4 py-3" placeholder="Contact Name" value={form.contact_name || ""} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} />
-          <input className="border rounded-xl px-4 py-3" placeholder="Phone" value={form.phone || ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <PhoneNumberField
+            label=""
+            prefix={form.phone_prefix}
+            number={form.phone}
+            onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+            onNumberChange={(v) => setForm({ ...form, phone: v })}
+            testIdPrefix="profile-phone"
+          />
           <input className="border rounded-xl px-4 py-3 md:col-span-2" placeholder="Email" value={form.email || ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         </div>
 
@@ -50,7 +83,14 @@ export default function MyAccountProfilePage() {
           <div className="text-lg font-bold text-[#20364D]">Default Delivery Details</div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
             <input className="border rounded-xl px-4 py-3" placeholder="Recipient Name" value={form.delivery_recipient_name || ""} onChange={(e) => setForm({ ...form, delivery_recipient_name: e.target.value })} />
-            <input className="border rounded-xl px-4 py-3" placeholder="Recipient Phone" value={form.delivery_phone || ""} onChange={(e) => setForm({ ...form, delivery_phone: e.target.value })} />
+            <PhoneNumberField
+              label=""
+              prefix={form.delivery_phone_prefix}
+              number={form.delivery_phone}
+              onPrefixChange={(v) => setForm({ ...form, delivery_phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, delivery_phone: v })}
+              testIdPrefix="delivery-phone"
+            />
             <input className="border rounded-xl px-4 py-3 md:col-span-2" placeholder="Address Line" value={form.delivery_address_line || ""} onChange={(e) => setForm({ ...form, delivery_address_line: e.target.value })} />
             <input className="border rounded-xl px-4 py-3" placeholder="City" value={form.delivery_city || ""} onChange={(e) => setForm({ ...form, delivery_city: e.target.value })} />
             <input className="border rounded-xl px-4 py-3" placeholder="Region" value={form.delivery_region || ""} onChange={(e) => setForm({ ...form, delivery_region: e.target.value })} />
@@ -61,7 +101,14 @@ export default function MyAccountProfilePage() {
           <div className="text-lg font-bold text-[#20364D]">Default Invoice Details</div>
           <div className="grid md:grid-cols-2 gap-4 mt-4">
             <input className="border rounded-xl px-4 py-3" placeholder="Invoice Client Name" value={form.invoice_client_name || ""} onChange={(e) => setForm({ ...form, invoice_client_name: e.target.value })} />
-            <input className="border rounded-xl px-4 py-3" placeholder="Invoice Client Phone" value={form.invoice_client_phone || ""} onChange={(e) => setForm({ ...form, invoice_client_phone: e.target.value })} />
+            <PhoneNumberField
+              label=""
+              prefix={form.invoice_client_phone_prefix}
+              number={form.invoice_client_phone}
+              onPrefixChange={(v) => setForm({ ...form, invoice_client_phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, invoice_client_phone: v })}
+              testIdPrefix="invoice-phone"
+            />
             <input className="border rounded-xl px-4 py-3" placeholder="Invoice Client Email" value={form.invoice_client_email || ""} onChange={(e) => setForm({ ...form, invoice_client_email: e.target.value })} />
             <input className="border rounded-xl px-4 py-3" placeholder="Invoice Client TIN" value={form.invoice_client_tin || ""} onChange={(e) => setForm({ ...form, invoice_client_tin: e.target.value })} />
           </div>

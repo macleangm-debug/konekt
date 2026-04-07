@@ -5,6 +5,7 @@ import { COUNTRIES } from "../../constants/countries";
 import EmptyStateCard from "../../components/customer/EmptyStateCard";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 const initialForm = {
   label: "",
@@ -205,21 +206,14 @@ export default function AddressesPage() {
             data-testid="address-postal"
           />
 
-          <div className="grid grid-cols-[100px_1fr] gap-4">
-            <input
-              className="border border-slate-300 rounded-xl px-4 py-3 bg-slate-50 text-slate-600"
-              value={form.phone_prefix}
-              readOnly
-              data-testid="address-phone-prefix"
-            />
-            <input
-              className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-              placeholder="Phone number"
-              value={form.phone_number}
-              onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
-              data-testid="address-phone"
-            />
-          </div>
+          <PhoneNumberField
+            label=""
+            prefix={form.phone_prefix}
+            number={form.phone_number}
+            onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+            onNumberChange={(v) => setForm({ ...form, phone_number: v })}
+            testIdPrefix="address-phone"
+          />
 
           <label className="flex items-center gap-3 cursor-pointer">
             <input

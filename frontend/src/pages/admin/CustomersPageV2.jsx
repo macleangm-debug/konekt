@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Users, Plus, Search, Edit2, Trash2, Building2, Phone, Mail, CreditCard, ChevronDown, ChevronUp, X, Filter } from "lucide-react";
+import { Users, Plus, Search, Edit2, Trash2, Building2, Mail, CreditCard, ChevronDown, ChevronUp, X, Filter } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import { formatMoney } from "@/utils/finance";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { splitPhone, combinePhone } from "@/utils/phoneUtils";
 
 const paymentTerms = [
   { value: "due_on_receipt", label: "Due on Receipt" },
@@ -19,6 +21,7 @@ const initialForm = {
   contact_name: "",
   email: "",
   phone: "",
+  phone_prefix: "+255",
   address_line_1: "",
   address_line_2: "",
   city: "",
@@ -73,9 +76,11 @@ export default function CustomersPageV2() {
     e.preventDefault();
     try {
       if (editingId) {
-        await adminApi.updateCustomer(editingId, form);
+        const { phone_prefix, ...rest } = form;
+        await adminApi.updateCustomer(editingId, { ...rest, phone: combinePhone(phone_prefix, form.phone) });
       } else {
-        await adminApi.createCustomer(form);
+        const { phone_prefix, ...rest } = form;
+        await adminApi.createCustomer({ ...rest, phone: combinePhone(phone_prefix, form.phone) });
       }
       setForm(initialForm);
       setShowForm(false);
@@ -88,11 +93,13 @@ export default function CustomersPageV2() {
   };
 
   const editCustomer = (customer) => {
+    const parsed = splitPhone(customer.phone);
     setForm({
       company_name: customer.company_name || "",
       contact_name: customer.contact_name || "",
       email: customer.email || "",
-      phone: customer.phone || "",
+      phone_prefix: parsed.prefix,
+      phone: parsed.number,
       address_line_1: customer.address_line_1 || "",
       address_line_2: customer.address_line_2 || "",
       city: customer.city || "",
@@ -361,11 +368,13 @@ export default function CustomersPageV2() {
                 onChange={(e) => update("email", e.target.value)}
                 required
               />
-              <input
-                className="border border-slate-300 rounded-xl px-4 py-3"
-                placeholder="Phone"
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
+              <PhoneNumberField
+                label=""
+                prefix={form.phone_prefix}
+                number={form.phone}
+                onPrefixChange={(v) => update("phone_prefix", v)}
+                onNumberChange={(v) => update("phone", v)}
+                testIdPrefix="customer-phone"
               />
               <input
                 className="border border-slate-300 rounded-xl px-4 py-3"

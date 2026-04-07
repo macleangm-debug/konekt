@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 const TANZANIA_REGIONS = [
   "Dar es Salaam", "Arusha", "Mwanza", "Dodoma", "Mbeya", "Morogoro", "Tanga", 
@@ -26,6 +28,7 @@ export default function AccountCheckoutPage() {
     country: "Tanzania",
     landmark: "",
   });
+  const [contactPhonePrefix, setContactPhonePrefix] = useState("+255");
   const [contactPhone, setContactPhone] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [saveAddress, setSaveAddress] = useState(true);
@@ -130,7 +133,7 @@ export default function AccountCheckoutPage() {
         total: total,
         delivery_address: {
           ...address,
-          contact_phone: contactPhone,
+          contact_phone: combinePhone(contactPhonePrefix, contactPhone),
         },
         delivery_notes: deliveryNotes,
         source: "in_account_checkout",
@@ -240,15 +243,16 @@ export default function AccountCheckoutPage() {
               />
             </label>
             
-            <label className="block">
+            <label className="block md:col-span-2">
               <div className="text-sm text-slate-500 mb-2">Contact Phone *</div>
-              <input
-                type="tel"
-                className="w-full border rounded-xl px-4 py-3"
-                placeholder="+255 7XX XXX XXX"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                data-testid="phone-input"
+              <PhoneNumberField
+                label=""
+                prefix={contactPhonePrefix}
+                number={contactPhone}
+                onPrefixChange={setContactPhonePrefix}
+                onNumberChange={setContactPhone}
+                required
+                testIdPrefix="phone"
               />
             </label>
             

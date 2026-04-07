@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Users, CheckCircle2, ArrowRight, Sparkles, DollarSign, Target, TrendingUp } from "lucide-react";
 import api from "@/lib/api";
+import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { combinePhone } from "@/utils/phoneUtils";
 
 const industries = [
   "Retail", "Healthcare", "Education", "NGO", "Technology", "Construction",
@@ -16,6 +18,7 @@ export default function AffiliateApplyPage() {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     company_name: "",
     website: "",
@@ -43,6 +46,8 @@ export default function AffiliateApplyPage() {
       setSubmitting(true);
       await api.post("/api/affiliate-applications", {
         ...form,
+        phone: combinePhone(form.phone_prefix, form.phone),
+        phone_prefix: undefined,
         social_links: form.social_links.filter(Boolean),
       });
       setSubmitted(true);
@@ -178,12 +183,13 @@ export default function AffiliateApplyPage() {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
                 />
-                <input
-                  type="tel"
-                  className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="Phone Number"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                <PhoneNumberField
+                  label=""
+                  prefix={form.phone_prefix}
+                  number={form.phone}
+                  onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
+                  onNumberChange={(v) => setForm({ ...form, phone: v })}
+                  testIdPrefix="affiliate-phone"
                 />
                 <input
                   type="text"

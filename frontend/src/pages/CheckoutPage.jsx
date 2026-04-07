@@ -5,6 +5,8 @@ import { ShieldCheck, Truck, CreditCard, Tag, Gift, Sparkles } from "lucide-reac
 import api from "../lib/api";
 import AffiliatePerkPreviewBox from "../components/checkout/AffiliatePerkPreviewBox";
 import { bootstrapAffiliateAttribution, getStoredAffiliateCode } from "../lib/attribution";
+import PhoneNumberField from "../components/forms/PhoneNumberField";
+import { combinePhone } from "../utils/phoneUtils";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function CheckoutPage() {
   const [form, setForm] = useState({
     full_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     company_name: "",
     delivery_address: "",
@@ -143,7 +146,7 @@ export default function CheckoutPage() {
       const payload = {
         customer_name: form.full_name,
         customer_email: form.email,
-        customer_phone: form.phone,
+        customer_phone: combinePhone(form.phone_prefix, form.phone),
         customer_company: form.company_name,
         delivery_address: form.delivery_address,
         city: form.city,
@@ -273,13 +276,14 @@ export default function CheckoutPage() {
                   required
                   data-testid="checkout-email"
                 />
-                <input
-                  className="border rounded-xl px-4 py-3"
-                  placeholder="Phone number *"
-                  value={form.phone}
-                  onChange={(e) => updateField("phone", e.target.value)}
+                <PhoneNumberField
+                  label=""
+                  prefix={form.phone_prefix}
+                  number={form.phone}
+                  onPrefixChange={(v) => updateField("phone_prefix", v)}
+                  onNumberChange={(v) => updateField("phone", v)}
                   required
-                  data-testid="checkout-phone"
+                  testIdPrefix="checkout-phone"
                 />
                 <input
                   className="border rounded-xl px-4 py-3"

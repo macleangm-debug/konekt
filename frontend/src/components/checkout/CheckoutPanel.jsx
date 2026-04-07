@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { X, ArrowLeft, MapPin, Phone, User, FileText, ShieldCheck, Loader2, CheckCircle } from "lucide-react";
+import { X, ArrowLeft, MapPin, User, FileText, ShieldCheck, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../lib/api";
+import PhoneNumberField from "../forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 export default function CheckoutPanel({ items = [], onClose, onComplete, total = 0 }) {
   const [step, setStep] = useState("form"); // form | submitting | success
   const [form, setForm] = useState({
     name: "",
+    phone_prefix: "+255",
     phone: "",
     street: "",
     city: "",
@@ -71,7 +74,7 @@ export default function CheckoutPanel({ items = [], onClose, onComplete, total =
           city: form.city,
           region: form.region || form.city,
           country: "Tanzania",
-          contact_phone: form.phone,
+          contact_phone: combinePhone(form.phone_prefix, form.phone),
         },
         delivery_notes: form.notes || null,
         source: "checkout_panel",
@@ -155,13 +158,13 @@ export default function CheckoutPanel({ items = [], onClose, onComplete, total =
                   className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition"
                   data-testid="checkout-name"
                 />
-                <input
-                  type="tel"
-                  placeholder="Phone Number (e.g. +255...)"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-[#1f3a5f] focus:border-transparent outline-none transition"
-                  data-testid="checkout-phone"
+                <PhoneNumberField
+                  label=""
+                  prefix={form.phone_prefix}
+                  number={form.phone}
+                  onPrefixChange={(v) => update("phone_prefix", v)}
+                  onNumberChange={(v) => update("phone", v)}
+                  testIdPrefix="checkout-phone"
                 />
               </div>
             </section>

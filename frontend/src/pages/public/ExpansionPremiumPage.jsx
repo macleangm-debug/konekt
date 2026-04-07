@@ -4,6 +4,8 @@ import { Globe, Building2, ArrowRight, CheckCircle2, Users, BarChart3, MapPin, B
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
 import PremiumFooterV2 from "../../components/public/PremiumFooterV2";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -69,7 +71,7 @@ export default function ExpansionPremiumPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: interestForm.full_name, email: interestForm.email,
-          phone: interestForm.phone, company: interestForm.company_name,
+          phone: combinePhone(interestForm.phone_prefix, interestForm.phone), company: interestForm.company_name,
           country_code: interestForm.country_code,
           intent_type: "expansion_business_interest",
           intent_payload: {
@@ -80,7 +82,7 @@ export default function ExpansionPremiumPage() {
       });
       if (!res.ok) throw new Error("Failed");
       toast.success("Business interest captured! We'll be in touch soon.");
-      setInterestForm({ full_name: "", email: "", phone: "", company_name: "", country_code: selectedCountry, region: "", interest_summary: "" });
+      setInterestForm({ full_name: "", email: "", phone_prefix: "+255", phone: "", company_name: "", country_code: selectedCountry, region: "", interest_summary: "" });
     } catch { toast.error("Failed to submit. Please try again."); }
     finally { setSubmitting(false); }
   };
@@ -98,7 +100,7 @@ export default function ExpansionPremiumPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           full_name: partnerForm.contact_name, email: partnerForm.email,
-          phone: partnerForm.phone, company: partnerForm.company_name,
+          phone: combinePhone(partnerForm.phone_prefix, partnerForm.phone), company: partnerForm.company_name,
           country_code: partnerForm.country_code,
           intent_type: "expansion_partner_application",
           intent_payload: {
@@ -271,13 +273,22 @@ export default function ExpansionPremiumPage() {
                 <form onSubmit={submitInterest} className="rounded-2xl border bg-white p-8" data-testid="business-interest-form">
                   <h3 className="text-2xl font-bold text-[#20364D]">Tell us what you need in {selected.name}</h3>
                   <p className="text-slate-600 mt-2 mb-6">Share your business requirements to help us validate demand in this market.</p>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <input className={inputCls} placeholder="Full name *" value={interestForm.full_name} onChange={(e) => setInterestForm({ ...interestForm, full_name: e.target.value })} data-testid="interest-name" />
-                    <input className={inputCls} placeholder="Company name" value={interestForm.company_name} onChange={(e) => setInterestForm({ ...interestForm, company_name: e.target.value })} data-testid="interest-company" />
-                    <input className={inputCls} placeholder="Email *" type="email" value={interestForm.email} onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })} data-testid="interest-email" />
-                    <input className={inputCls} placeholder="Phone *" value={interestForm.phone} onChange={(e) => setInterestForm({ ...interestForm, phone: e.target.value })} data-testid="interest-phone" />
-                    <input className={`${inputCls} sm:col-span-2`} placeholder="City / Region" value={interestForm.region} onChange={(e) => setInterestForm({ ...interestForm, region: e.target.value })} data-testid="interest-region" />
-                    <textarea className={`${inputCls} sm:col-span-2 min-h-[120px]`} placeholder="What products or services would you want Konekt to provide in this market?" value={interestForm.interest_summary} onChange={(e) => setInterestForm({ ...interestForm, interest_summary: e.target.value })} data-testid="interest-summary" />
+                  <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <input className={inputCls} placeholder="Full name *" value={interestForm.full_name} onChange={(e) => setInterestForm({ ...interestForm, full_name: e.target.value })} data-testid="interest-name" />
+                      <input className={inputCls} placeholder="Company name" value={interestForm.company_name} onChange={(e) => setInterestForm({ ...interestForm, company_name: e.target.value })} data-testid="interest-company" />
+                      <input className={inputCls} placeholder="Email *" type="email" value={interestForm.email} onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })} data-testid="interest-email" />
+                    </div>
+                    <PhoneNumberField
+                      label=""
+                      prefix={interestForm.phone_prefix || "+255"}
+                      number={interestForm.phone}
+                      onPrefixChange={(v) => setInterestForm({ ...interestForm, phone_prefix: v })}
+                      onNumberChange={(v) => setInterestForm({ ...interestForm, phone: v })}
+                      testIdPrefix="interest-phone"
+                    />
+                    <input className={inputCls} placeholder="City / Region" value={interestForm.region} onChange={(e) => setInterestForm({ ...interestForm, region: e.target.value })} data-testid="interest-region" />
+                    <textarea className={`${inputCls} min-h-[120px]`} placeholder="What products or services would you want Konekt to provide in this market?" value={interestForm.interest_summary} onChange={(e) => setInterestForm({ ...interestForm, interest_summary: e.target.value })} data-testid="interest-summary" />
                   </div>
                   <button type="submit" disabled={submitting} className="mt-6 rounded-xl bg-[#20364D] text-white px-7 py-3.5 font-semibold hover:bg-[#17283c] transition disabled:opacity-50" data-testid="submit-interest-btn">
                     {submitting ? "Submitting..." : "Submit Interest"}
@@ -287,12 +298,21 @@ export default function ExpansionPremiumPage() {
                 <form onSubmit={submitPartner} className="rounded-2xl border bg-white p-8" data-testid="partner-application-form">
                   <h3 className="text-2xl font-bold text-[#20364D]">Apply as Local Partner in {selected.name}</h3>
                   <p className="text-slate-600 mt-2 mb-6">Tell us about your company and capacity to operate Konekt in this market.</p>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <input className={inputCls} placeholder="Company name *" value={partnerForm.company_name} onChange={(e) => setPartnerForm({ ...partnerForm, company_name: e.target.value })} data-testid="partner-company" />
-                    <input className={inputCls} placeholder="Contact name *" value={partnerForm.contact_name} onChange={(e) => setPartnerForm({ ...partnerForm, contact_name: e.target.value })} data-testid="partner-contact" />
-                    <input className={inputCls} placeholder="Email *" type="email" value={partnerForm.email} onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })} data-testid="partner-email" />
-                    <input className={inputCls} placeholder="Phone *" value={partnerForm.phone} onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })} data-testid="partner-phone" />
-                    <textarea className={`${inputCls} sm:col-span-2 min-h-[100px]`} placeholder="Describe your local presence and market reach" value={partnerForm.local_presence_summary} onChange={(e) => setPartnerForm({ ...partnerForm, local_presence_summary: e.target.value })} data-testid="partner-presence" />
+                  <div className="space-y-4">
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <input className={inputCls} placeholder="Company name *" value={partnerForm.company_name} onChange={(e) => setPartnerForm({ ...partnerForm, company_name: e.target.value })} data-testid="partner-company" />
+                      <input className={inputCls} placeholder="Contact name *" value={partnerForm.contact_name} onChange={(e) => setPartnerForm({ ...partnerForm, contact_name: e.target.value })} data-testid="partner-contact" />
+                      <input className={inputCls} placeholder="Email *" type="email" value={partnerForm.email} onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })} data-testid="partner-email" />
+                    </div>
+                    <PhoneNumberField
+                      label=""
+                      prefix={partnerForm.phone_prefix || "+255"}
+                      number={partnerForm.phone}
+                      onPrefixChange={(v) => setPartnerForm({ ...partnerForm, phone_prefix: v })}
+                      onNumberChange={(v) => setPartnerForm({ ...partnerForm, phone: v })}
+                      testIdPrefix="partner-phone"
+                    />
+                    <textarea className={`${inputCls} min-h-[100px]`} placeholder="Describe your local presence and market reach" value={partnerForm.local_presence_summary} onChange={(e) => setPartnerForm({ ...partnerForm, local_presence_summary: e.target.value })} data-testid="partner-presence" />
                     <textarea className={`${inputCls} min-h-[100px]`} placeholder="Commercial capacity and ability to grow the market" value={partnerForm.commercial_capacity} onChange={(e) => setPartnerForm({ ...partnerForm, commercial_capacity: e.target.value })} data-testid="partner-commercial" />
                     <textarea className={`${inputCls} min-h-[100px]`} placeholder="Operational capacity and execution capability" value={partnerForm.operations_capacity} onChange={(e) => setPartnerForm({ ...partnerForm, operations_capacity: e.target.value })} data-testid="partner-operations" />
                   </div>

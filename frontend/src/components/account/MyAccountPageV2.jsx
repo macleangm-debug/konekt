@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../lib/api";
 import { ChevronDown, Plus, Trash2, Check } from "lucide-react";
+import PhoneNumberField from "../forms/PhoneNumberField";
 
 const EMPTY_ADDRESS = {
   label: "Address",
@@ -14,26 +15,10 @@ const EMPTY_ADDRESS = {
   is_default: false,
 };
 
-function PhonePrefixSelect({ value, onChange, options, testId }) {
-  return (
-    <select
-      data-testid={testId}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="border border-slate-200 rounded-xl px-3 py-3 bg-white text-[#20364D] font-medium w-[90px] shrink-0"
-    >
-      {(options || ["+255"]).map((p) => (
-        <option key={p} value={p}>{p}</option>
-      ))}
-    </select>
-  );
-}
-
 export default function MyAccountPageV2() {
   const { user } = useAuth();
   const customerId = user?.id || "guest";
   const [form, setForm] = useState(null);
-  const [prefixes, setPrefixes] = useState(["+255"]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -44,7 +29,6 @@ export default function MyAccountPageV2() {
         const res = await api.get(`/api/customer-account/profile?customer_id=${customerId}`);
         const d = res.data || {};
         setForm(d);
-        setPrefixes(d.phone_prefix_options || ["+255"]);
       } catch {
         setForm({});
       }
@@ -137,10 +121,14 @@ export default function MyAccountPageV2() {
           <h3 className="text-base font-semibold text-[#20364D] mb-3">Contact Details</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <input data-testid="contact-name" className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Contact Name" value={form.contact_name || ""} onChange={(e) => set("contact_name", e.target.value)} />
-            <div className="flex gap-2">
-              <PhonePrefixSelect testId="phone-prefix" value={form.phone_prefix || "+255"} onChange={(v) => set("phone_prefix", v)} options={prefixes} />
-              <input data-testid="contact-phone" className="border border-slate-200 rounded-xl px-4 py-3 flex-1 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Phone Number" value={form.phone || ""} onChange={(e) => set("phone", e.target.value)} />
-            </div>
+            <PhoneNumberField
+              label=""
+              prefix={form.phone_prefix || "+255"}
+              number={form.phone || ""}
+              onPrefixChange={(v) => set("phone_prefix", v)}
+              onNumberChange={(v) => set("phone", v)}
+              testIdPrefix="contact-phone"
+            />
             <input data-testid="contact-email" className="border border-slate-200 rounded-xl px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Email Address" value={form.email || ""} onChange={(e) => set("email", e.target.value)} />
           </div>
         </div>
@@ -163,10 +151,14 @@ export default function MyAccountPageV2() {
           <p className="text-sm text-slate-500 mb-3">Used when requesting quotes or generating invoices.</p>
           <div className="grid md:grid-cols-2 gap-4">
             <input data-testid="quote-client-name" className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Client Name (for invoices)" value={form.quote_client_name || ""} onChange={(e) => set("quote_client_name", e.target.value)} />
-            <div className="flex gap-2">
-              <PhonePrefixSelect testId="quote-phone-prefix" value={form.quote_client_phone_prefix || "+255"} onChange={(v) => set("quote_client_phone_prefix", v)} options={prefixes} />
-              <input data-testid="quote-client-phone" className="border border-slate-200 rounded-xl px-4 py-3 flex-1 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Client Phone" value={form.quote_client_phone || ""} onChange={(e) => set("quote_client_phone", e.target.value)} />
-            </div>
+            <PhoneNumberField
+              label=""
+              prefix={form.quote_client_phone_prefix || "+255"}
+              number={form.quote_client_phone || ""}
+              onPrefixChange={(v) => set("quote_client_phone_prefix", v)}
+              onNumberChange={(v) => set("quote_client_phone", v)}
+              testIdPrefix="quote-client-phone"
+            />
             <input data-testid="quote-client-email" className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Client Email" value={form.quote_client_email || ""} onChange={(e) => set("quote_client_email", e.target.value)} />
             <input data-testid="quote-client-tin" className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Client TIN" value={form.quote_client_tin || ""} onChange={(e) => set("quote_client_tin", e.target.value)} />
           </div>
@@ -220,10 +212,14 @@ export default function MyAccountPageV2() {
             </div>
             <div className="grid md:grid-cols-2 gap-3">
               <input className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Recipient Name" value={addr.recipient_name || ""} onChange={(e) => updateAddress(idx, "recipient_name", e.target.value)} />
-              <div className="flex gap-2">
-                <PhonePrefixSelect value={addr.phone_prefix || "+255"} onChange={(v) => updateAddress(idx, "phone_prefix", v)} options={prefixes} />
-                <input className="border border-slate-200 rounded-xl px-4 py-3 flex-1 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Phone" value={addr.phone || ""} onChange={(e) => updateAddress(idx, "phone", e.target.value)} />
-              </div>
+              <PhoneNumberField
+                label=""
+                prefix={addr.phone_prefix || "+255"}
+                number={addr.phone || ""}
+                onPrefixChange={(v) => updateAddress(idx, "phone_prefix", v)}
+                onNumberChange={(v) => updateAddress(idx, "phone", v)}
+                testIdPrefix={`address-${idx}-phone`}
+              />
               <input className="border border-slate-200 rounded-xl px-4 py-3 md:col-span-2 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Address Line" value={addr.address_line || ""} onChange={(e) => updateAddress(idx, "address_line", e.target.value)} />
               <input className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="City" value={addr.city || ""} onChange={(e) => updateAddress(idx, "city", e.target.value)} />
               <input className="border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none" placeholder="Region" value={addr.region || ""} onChange={(e) => updateAddress(idx, "region", e.target.value)} />

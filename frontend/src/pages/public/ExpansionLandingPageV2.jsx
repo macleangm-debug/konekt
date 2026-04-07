@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Globe, Building2, Truck, Package, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { combinePhone } from "../../utils/phoneUtils";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -14,6 +16,7 @@ export default function ExpansionLandingPageV2() {
     name: "",
     company_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     interest_type: "business",
     categories_csv: "",
@@ -26,6 +29,7 @@ export default function ExpansionLandingPageV2() {
     company_name: "",
     contact_name: "",
     email: "",
+    phone_prefix: "+255",
     phone: "",
     business_registration: "",
     years_operating: "",
@@ -55,11 +59,13 @@ export default function ExpansionLandingPageV2() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...demandForm,
+          phone: combinePhone(demandForm.phone_prefix, demandForm.phone),
+          phone_prefix: undefined,
           categories_of_interest: demandForm.categories_csv.split(",").map((x) => x.trim()).filter(Boolean),
         }),
       });
       toast.success("Interest submitted successfully!");
-      setDemandForm({ ...demandForm, name: "", email: "", company_name: "", phone: "", notes: "", categories_csv: "", region: "" });
+      setDemandForm({ ...demandForm, name: "", email: "", company_name: "", phone: "", phone_prefix: "+255", notes: "", categories_csv: "", region: "" });
     } catch (error) {
       toast.error("Failed to submit. Please try again.");
     }
@@ -72,6 +78,8 @@ export default function ExpansionLandingPageV2() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...partnerForm,
+          phone: combinePhone(partnerForm.phone_prefix, partnerForm.phone),
+          phone_prefix: undefined,
           regions_supported: partnerForm.regions_supported_csv.split(",").map((x) => x.trim()).filter(Boolean),
           categories_supported: partnerForm.categories_supported_csv.split(",").map((x) => x.trim()).filter(Boolean),
         }),
@@ -144,8 +152,15 @@ export default function ExpansionLandingPageV2() {
               <input className="border rounded-xl px-4 py-3" placeholder="Company Name" value={demandForm.company_name} onChange={(e) => setDemandForm({ ...demandForm, company_name: e.target.value })} />
               <div className="grid md:grid-cols-2 gap-4">
                 <input className="border rounded-xl px-4 py-3" placeholder="Email *" value={demandForm.email} onChange={(e) => setDemandForm({ ...demandForm, email: e.target.value })} />
-                <input className="border rounded-xl px-4 py-3" placeholder="Phone" value={demandForm.phone} onChange={(e) => setDemandForm({ ...demandForm, phone: e.target.value })} />
               </div>
+              <PhoneNumberField
+                label=""
+                prefix={demandForm.phone_prefix}
+                number={demandForm.phone}
+                onPrefixChange={(v) => setDemandForm({ ...demandForm, phone_prefix: v })}
+                onNumberChange={(v) => setDemandForm({ ...demandForm, phone: v })}
+                testIdPrefix="demand-phone"
+              />
               <input className="border rounded-xl px-4 py-3" placeholder="City / Region" value={demandForm.region} onChange={(e) => setDemandForm({ ...demandForm, region: e.target.value })} />
               <input className="border rounded-xl px-4 py-3" placeholder="Products / services of interest (comma separated)" value={demandForm.categories_csv} onChange={(e) => setDemandForm({ ...demandForm, categories_csv: e.target.value })} />
               <textarea className="border rounded-xl px-4 py-3 min-h-[100px]" placeholder="Tell us more about what you need..." value={demandForm.notes} onChange={(e) => setDemandForm({ ...demandForm, notes: e.target.value })} />
@@ -184,8 +199,15 @@ export default function ExpansionLandingPageV2() {
               <input className="border rounded-xl px-4 py-3" placeholder="Contact Name *" value={partnerForm.contact_name} onChange={(e) => setPartnerForm({ ...partnerForm, contact_name: e.target.value })} />
               <div className="grid md:grid-cols-2 gap-4">
                 <input className="border rounded-xl px-4 py-3" placeholder="Email *" value={partnerForm.email} onChange={(e) => setPartnerForm({ ...partnerForm, email: e.target.value })} />
-                <input className="border rounded-xl px-4 py-3" placeholder="Phone *" value={partnerForm.phone} onChange={(e) => setPartnerForm({ ...partnerForm, phone: e.target.value })} />
               </div>
+              <PhoneNumberField
+                label=""
+                prefix={partnerForm.phone_prefix}
+                number={partnerForm.phone}
+                onPrefixChange={(v) => setPartnerForm({ ...partnerForm, phone_prefix: v })}
+                onNumberChange={(v) => setPartnerForm({ ...partnerForm, phone: v })}
+                testIdPrefix="partner-phone"
+              />
               <div className="grid md:grid-cols-2 gap-4">
                 <input className="border rounded-xl px-4 py-3" placeholder="Business Registration" value={partnerForm.business_registration} onChange={(e) => setPartnerForm({ ...partnerForm, business_registration: e.target.value })} />
                 <input className="border rounded-xl px-4 py-3" placeholder="Years in Operation" value={partnerForm.years_operating} onChange={(e) => setPartnerForm({ ...partnerForm, years_operating: e.target.value })} />
