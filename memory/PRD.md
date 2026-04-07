@@ -355,6 +355,41 @@ Sections (in order):
 - Advanced Analytics dashboard
 - Mobile-first optimization
 
+### Phase 41 — Track Order + Distribution Margin + Affiliate System (07 Apr 2026)
+**Track Order redesign, order code visibility, mobile bottom sheets, and distribution margin engine.**
+
+**Track Order:**
+- Redesigned `TrackOrderPageContent.jsx` with 2-column layout (search + help)
+- Added `PhoneNumberField` for alternative verification (phone or email)
+- Created `OrderCodeCard` component: prominent order code display with copy-to-clipboard
+- `OrderConfirmationPage.jsx` enhanced: OrderCodeCard + "Track Your Order" CTA + "Create Account" link for guests
+
+**Mobile Bottom Sheet System:**
+- Created `BottomSheetSelect` component (`/components/mobile/BottomSheetSelect.jsx`)
+- Slides from bottom on mobile (`md:hidden`), rounded top corners, backdrop blur, scrollable options
+- Integrated into `PhoneNumberField`: desktop shows native `<select>`, mobile shows bottom sheet trigger
+- CSS animation: `@keyframes slide-up` for smooth entrance
+
+**Distribution Margin Engine (Locked Business Model):**
+- Backend service: `distribution_margin_service.py` — `calculate_final_price()`, `validate_distribution_split()`, `build_order_margin_record()`
+- Pricing formula: `Vendor Price + Konekt Margin (fixed) + Distribution Layer (flexible) = Final Price`
+- Distribution split: `affiliate_pct + sales_pct + discount_pct <= distribution_margin_pct`
+- API routes: `GET/PUT /api/admin/distribution-margin/settings`, `POST /api/admin/distribution-margin/preview`
+- Admin page: `DistributionMarginPage.jsx` with pricing layers, distribution split validation bar, preview with real TZS calculations
+- DB: `distribution_settings` collection with global config
+- Sidebar link: Added "Margin & Distribution" under Growth section in `adminNavigation.js`
+
+**Affiliate System (Scaffolding):**
+- `AffiliateCard` component: dark gradient card with promo code, referral link, copy buttons, performance stats
+- Complements existing extensive affiliate routes already in the backend
+
+**Rules enforced:**
+- Konekt margin is NEVER reduced
+- Distribution layer sits ON TOP of Konekt margin
+- Customer sees only final price (no breakdown)
+- All incentives come from distribution layer
+- Split validation: total <= distribution_margin_pct
+
 ---
 
 ## Test History
@@ -381,3 +416,4 @@ Sections (in order):
 - Iteration 189: Register Page V2 + Auth Boundary Final — 100% backend (11/11), 100% frontend (17/17)
 - Iteration 190: UI Standardization Pack (Global Phone Input + Logo + Auth Parity) — 100% frontend (13/13)
 - Iteration 191: Brand Logo System + UI Polish (SVG Triad logo, navbar blur, PDP hover, micro-interactions) — 100% backend + frontend (15/15 features verified)
+- Iteration 192: Phase 41 (Track Order + Distribution Margin + Bottom Sheets + Affiliate Card) — 100% backend (7/7), 95% frontend (sidebar link fixed post-test)

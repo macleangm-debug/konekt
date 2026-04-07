@@ -57,6 +57,7 @@ export const adminNavigation = [
       { label: "Affiliate Partners", href: "/admin/affiliate-partners", moduleKey: "affiliates" },
       { label: "Affiliate Governance", href: "/admin/affiliate-performance-governance", moduleKey: "affiliates" },
       { label: "Affiliates & Campaigns", href: "/admin/affiliate-campaigns", moduleKey: "affiliates" },
+      { label: "Margin & Distribution", href: "/admin/distribution-margin", moduleKey: "affiliates" },
       { label: "Product Insights", href: "/admin/product-insights", moduleKey: "reports" },
       { label: "Service Insights", href: "/admin/service-insights", moduleKey: "reports" },
     ],
