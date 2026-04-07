@@ -322,10 +322,31 @@ Sections (in order):
 - **Files updated:** PhoneNumberField.jsx, BrandLogo.jsx, LoginPageV2.jsx, RegisterPageV2.jsx, CheckoutPanel.jsx, AccountCheckoutPage.jsx, SoftLeadCaptureModal.jsx, SalesAssistModal.jsx, AffiliateApplyPage.jsx, CreativeServiceDetailPage.jsx, CreativeServiceBriefPage.jsx, ServiceQuoteRequestFormV2.jsx, AdminAffiliateManagerSimple.jsx, PartnerSmartForm.jsx, MyAccountProfilePage.jsx, MyAccountPageV2.jsx, CartDrawerCompleteFlow.jsx, CheckoutPageV2.jsx, CheckoutPage.jsx, ExpansionPremiumPage.jsx, ExpansionLandingPageV2.jsx, CountryLaunchPage.jsx, PaymentSelectionPage.jsx, AddressesPage.jsx, ServiceRequestPage.jsx, InvoicesPage.jsx, BusinessSettingsPage.jsx, CustomersPage.jsx, CustomersPageV2.jsx, CRMPage.js, CRMPageV2.jsx, QuotesPage.jsx, QuotesPageNew.jsx, AdminQuotes.js, AdminLeads.js, AdminUsers.js, VendorListPage.jsx, PartnerEcosystemSmart.jsx, SuppliersPage.jsx, PartnersPage.jsx, CompanySettingsPage.jsx, WarehousesPage.jsx, EquipmentMaintenance.js, DesignBriefForm.js, AffiliateRegisterPage.jsx, InvoiceBrandingSettings.jsx, Auth.js, Cart.js.
 - **Only intentional exclusion:** `RawMaterialsPage.jsx` "Phone or email" hybrid field (not purely phone).
 
+### Phase 40 — Brand Logo System + UI Polish (07 Apr 2026)
+**Replaced PNG-based logo with inline SVG "Connected Triad" brand identity system. Applied global UI polish.**
+
+**Logo System:**
+- **Connected Triad SVG:** 1 gold accent node (#D4A843) + 2 dark blue nodes (#20364D), asymmetric triangle, thick connectors (sw ≥ 2px), subtle curve on right connector
+- **BrandLogo component rewrite:** Fully inline SVG rendering (no PNG dependencies). Supports `variant` (dark/light), `size` (xs→24px, sm→32px, md→40px, lg→52px, xl→64px), `type` (full/secondary/icon)
+- **Usage rules enforced in code:**
+  - Navbar → `type="secondary"` (icon + Konekt, no tagline), `size="lg"`
+  - Auth pages → `type="full"` (icon + Konekt + "Business Procurement Simplified"), `size="xl"`
+  - Footer → `type="secondary"`, `variant="light"`
+  - Favicon → SVG icon only (`/public/favicon.svg`)
+- **33 consumer files automatically updated** via the shared BrandLogo component (no per-file changes needed)
+- **Auth page branding panels:** LoginPageV2, RegisterPageV2, StaffLoginPage all use `type="full"`
+
+**UI Polish:**
+- **Navbar:** `bg-white/80 backdrop-blur-md border-slate-200` (both Navbar.js and PublicNavbarV2.jsx)
+- **PDP CTAs:** `hover:brightness-110` on gold Add to Cart and Request Quote buttons
+- **Global CSS micro-interactions:** Focus rings (`box-shadow: 0 0 0 2px rgba(32,54,77,0.15)`), `.btn-gold-cta` hover brightness, `.animate-fade-up` entrance animation
+- **Bug fix:** Products.js `toLocaleString` crash when `base_price` is undefined — added `(product.base_price || 0)` guard
+
 ## Backlog
 
 ### P1 — Upcoming
 - End-to-end bank transfer payment E2E test
+- Deep screen-by-screen UI audit (user requested after logo integration)
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
@@ -359,3 +380,4 @@ Sections (in order):
 - Iteration 188: Marketplace Boundary Enforcement + Sales Assist CTA System + Service Quote Margin — 100% backend (13/13), 100% frontend
 - Iteration 189: Register Page V2 + Auth Boundary Final — 100% backend (11/11), 100% frontend (17/17)
 - Iteration 190: UI Standardization Pack (Global Phone Input + Logo + Auth Parity) — 100% frontend (13/13)
+- Iteration 191: Brand Logo System + UI Polish (SVG Triad logo, navbar blur, PDP hover, micro-interactions) — 100% backend + frontend (15/15 features verified)
