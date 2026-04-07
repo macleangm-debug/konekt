@@ -12,6 +12,7 @@ export const adminSidebarLinks = [
   { label: "Affiliates", href: "/admin/partnerships/affiliates" },
   { label: "Referrals", href: "/admin/partnerships/referrals" },
   { label: "Commissions", href: "/admin/partnerships/commissions" },
+  { label: "Margin & Distribution", href: "/admin/distribution-margin" },
   { label: "Business Settings", href: "/admin/business-settings" },
   { label: "Users", href: "/admin/users" },
   { label: "Help", href: "/admin/help" },

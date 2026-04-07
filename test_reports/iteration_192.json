@@ -1,0 +1,115 @@
+{
+  "summary": "Phase 41 testing complete. All backend APIs pass (7/7). Frontend features working: Track Order page with phone verification, Order Confirmation with OrderCodeCard + copy + track CTA, Admin Distribution Margin page with pricing layers and split validation, Mobile bottom sheet for PhoneNumberField, Products page loads, Login page shows full logo with tagline, Footer shows BrandLogo with SVG triad. Minor issue: 'Margin & Distribution' sidebar link defined in admin-sidebar-links.js but not in adminNavigation.js (page accessible via direct URL).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Admin Sidebar",
+        "issues": ["'Margin & Distribution' link defined in admin-sidebar-links.js but not added to adminNavigation.js - page accessible via direct URL /admin/distribution-margin but not visible in sidebar navigation"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_distribution_margin_api.py",
+    "/app/test_reports/pytest/pytest_results_distribution_margin_v192.xml"
+  ],
+  "action_items": [
+    "Add 'Margin & Distribution' link to adminNavigation.js under Configuration or Growth section to make it visible in admin sidebar"
+  ],
+  "critical_code_review_comments": [
+    "admin-sidebar-links.js has the link but adminNavigation.js (used by AdminSidebar.jsx) doesn't - need to sync these configs"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_distribution_margin_api.py"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7 tests passed)",
+    "frontend": "95% (all features work, minor sidebar link missing)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Phase 41 Distribution Margin Engine fully functional. Backend APIs: GET/PUT settings, POST preview all working with correct pricing math (vendor=10000 → final=13000). Frontend: Track Order page has phone verification with mobile bottom sheet, Order Confirmation has OrderCodeCard with copy, Admin Distribution Margin page has all inputs and preview. Only issue: sidebar link not visible (needs to be added to adminNavigation.js).",
+  "features_tested": {
+    "track_order_page": {
+      "description": "Track Order page with search form, phone verification, help section",
+      "status": "PASS",
+      "evidence": "data-testid='track-order-page', 'track-search-form', 'order-number-input', 'order-email-input', 'track-phone-prefix', 'track-phone-number', 'track-submit-btn' all found"
+    },
+    "order_confirmation_page": {
+      "description": "Order Confirmation with OrderCodeCard, copy action, track CTA",
+      "status": "PASS",
+      "evidence": "data-testid='order-confirmation', 'order-code-card', 'order-code-value', 'copy-order-code-btn', 'go-to-track-order', 'continue-shopping' all found"
+    },
+    "distribution_margin_api_get_settings": {
+      "description": "GET /api/admin/distribution-margin/settings returns defaults",
+      "status": "PASS",
+      "evidence": "Returns konekt_margin_pct=20, distribution_margin_pct=10, affiliate_pct=4, sales_pct=3, discount_pct=3"
+    },
+    "distribution_margin_api_preview": {
+      "description": "POST /api/admin/distribution-margin/preview returns correct pricing",
+      "status": "PASS",
+      "evidence": "vendor=10000, konekt=20%, dist=10% => final=13000, affiliate_commission=400, sales_commission=300"
+    },
+    "distribution_margin_api_put_settings": {
+      "description": "PUT /api/admin/distribution-margin/settings saves and validates",
+      "status": "PASS",
+      "evidence": "Saves valid settings, rejects over-allocated split (13% > 10%)"
+    },
+    "admin_distribution_margin_page": {
+      "description": "Admin page with pricing layers, distribution split, save/preview buttons",
+      "status": "PASS",
+      "evidence": "data-testid='distribution-margin-page', 'konekt-margin-input', 'distribution-margin-input', 'affiliate-pct-input', 'sales-pct-input', 'discount-pct-input', 'split-validation', 'save-settings-btn', 'preview-btn', 'preview-result' all found"
+    },
+    "admin_sidebar_margin_link": {
+      "description": "Admin sidebar has 'Margin & Distribution' link",
+      "status": "PARTIAL",
+      "evidence": "Link defined in admin-sidebar-links.js but not in adminNavigation.js - page accessible via direct URL"
+    },
+    "phone_number_field_desktop": {
+      "description": "PhoneNumberField shows native select on desktop",
+      "status": "PASS",
+      "evidence": "data-testid='track-phone-prefix' visible on desktop viewport"
+    },
+    "phone_number_field_mobile_bottom_sheet": {
+      "description": "PhoneNumberField shows bottom sheet trigger on mobile",
+      "status": "PASS",
+      "evidence": "data-testid='track-phone-prefix-mobile' visible, 'bottom-sheet-overlay' opens with country options"
+    },
+    "bottom_sheet_select_component": {
+      "description": "BottomSheetSelect renders with backdrop and options",
+      "status": "PASS",
+      "evidence": "data-testid='bottom-sheet-overlay', 'bs-option-+255' found when opened"
+    },
+    "affiliate_card_component": {
+      "description": "AffiliateCard with promo code and referral link copy buttons",
+      "status": "PASS",
+      "evidence": "Code review: data-testid='affiliate-card', 'affiliate-promo-code', 'copy-promo-code-btn', 'affiliate-referral-link', 'copy-referral-link-btn' all present"
+    },
+    "products_page": {
+      "description": "Marketplace /products loads without crashing",
+      "status": "PASS",
+      "evidence": "data-testid='products-page' found, products displayed with TZS prices"
+    },
+    "login_page_logo": {
+      "description": "Login page shows full logo with tagline",
+      "status": "PASS",
+      "evidence": "data-testid='brand-logo' found, 'Business Procurement Simplified' tagline present"
+    },
+    "footer_brand_logo": {
+      "description": "Footer shows BrandLogo with SVG triad",
+      "status": "PASS",
+      "evidence": "data-testid='brand-logo' and SVG found in footer"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

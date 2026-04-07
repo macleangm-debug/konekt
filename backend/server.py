@@ -2851,6 +2851,10 @@ app.include_router(sales_assist_router)
 from routes.service_quote_margin_routes import router as service_quote_margin_router
 app.include_router(service_quote_margin_router)
 
+# Distribution Margin Engine (Phase 41)
+from routes.distribution_margin_routes import router as distribution_margin_router
+app.include_router(distribution_margin_router)
+
 
 
 

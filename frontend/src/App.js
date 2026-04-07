@@ -129,6 +129,7 @@ import AdminRequestsInboxPage from "@/pages/admin/AdminRequestsInboxPage";
 
 // Referral + Commission Governance Components
 import AdminAffiliateManagerSimple from "@/components/admin/AdminAffiliateManagerSimple";
+import DistributionMarginPage from "@/pages/admin/DistributionMarginPage";
 
 // Service Taxonomy Admin
 import ServiceTaxonomyAdminSetup from "@/components/admin/ServiceTaxonomyAdminSetup";
@@ -649,6 +650,8 @@ function App() {
           <Route path="requests-inbox" element={<AdminRequestsInboxPage />} />
           {/* Affiliate Manager */}
           <Route path="affiliate-manager" element={<AdminAffiliateManagerSimple />} />
+          {/* Distribution & Margin Management */}
+          <Route path="distribution-margin" element={<DistributionMarginPage />} />
           {/* Service Taxonomy */}
           <Route path="service-taxonomy" element={<ServiceTaxonomyAdminSetup />} />
           {/* Staff Performance & Commission */}
