@@ -5,11 +5,11 @@ export default function BrandLogo({
   className = "",
 }) {
   const sizeMap = {
-    xs: "h-6",
-    sm: "h-8",
-    md: "h-10",
-    lg: "h-14",
-    xl: "h-20",
+    xs: "h-7",
+    sm: "h-9",
+    md: "h-11",
+    lg: "h-14 md:h-16",
+    xl: "h-16 md:h-20",
   };
 
   const logoSrc =
