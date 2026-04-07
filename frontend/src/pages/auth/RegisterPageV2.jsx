@@ -99,7 +99,7 @@ export default function RegisterPageV2() {
           backgroundSize: "48px 48px"
         }} />
         <div className="relative z-10">
-          <BrandLogo size="xl" variant="light" />
+          <BrandLogo size="xl" variant="light" type="full" />
         </div>
         <div className="relative z-10 max-w-md">
           <h1 className="text-4xl xl:text-5xl font-bold leading-tight tracking-tight">

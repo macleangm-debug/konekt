@@ -378,7 +378,7 @@ export default function Products() {
                         )}
                       </div>
                       <div className="absolute top-3 right-3 bg-white px-2 py-1 text-xs font-bold rounded-full shadow-md text-primary">
-                        {isKonektSeries ? '' : 'From '}TZS {product.base_price.toLocaleString()}
+                        {isKonektSeries ? '' : 'From '}TZS {(product.base_price || 0).toLocaleString()}
                       </div>
                     </div>
                     

@@ -73,12 +73,12 @@ export default function Navbar() {
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-100" data-testid="navbar">
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200" data-testid="navbar">
         <div className="container mx-auto px-6 md:px-12 lg:px-24">
           <div className="flex items-center justify-between h-20">
             {/* Logo - DARK on white navbar background */}
             <Link to="/" className="flex items-center gap-3" data-testid="logo">
-              <BrandLogo size="md" />
+              <BrandLogo size="lg" />
             </Link>
 
             {/* Desktop Links */}
@@ -224,7 +224,7 @@ export default function Navbar() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-slate-100 bg-white overflow-hidden"
+              className="md:hidden border-t border-slate-200 bg-white overflow-hidden"
             >
               <div className="container mx-auto px-6 py-4 space-y-2">
                 <Link

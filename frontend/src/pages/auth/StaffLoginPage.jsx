@@ -43,7 +43,7 @@ export default function StaffLoginPage() {
       <div className="hidden lg:flex flex-col justify-between w-1/2 bg-gradient-to-br from-[#20364D] to-[#0f1a24] p-12">
         <div>
           <Link to="/" className="inline-block">
-            <BrandLogo size="lg" variant="light" />
+            <BrandLogo size="lg" variant="light" type="full" />
           </Link>
           <p className="text-slate-400 mt-2">Staff Portal</p>
         </div>

@@ -35,7 +35,7 @@ export default function PublicNavbarV2() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur-sm" data-testid="public-navbar">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/80 backdrop-blur-md" data-testid="public-navbar">
       <div className="max-w-7xl mx-auto px-6 h-18 min-h-[72px] flex items-center justify-between">
         <Link to="/" className="flex items-center" data-testid="navbar-logo">
           <BrandLogo size="lg" />

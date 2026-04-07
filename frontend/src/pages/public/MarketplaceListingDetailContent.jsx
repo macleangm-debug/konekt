@@ -342,7 +342,7 @@ export default function MarketplaceListingDetailContent() {
               </div>
               <button
                 onClick={handleAddToCart}
-                className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:bg-[#c49a3d] transition flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:brightness-110 transition flex items-center justify-center gap-2"
                 data-testid="add-to-cart-btn"
               >
                 <ShoppingCart className="w-5 h-5" />
@@ -356,7 +356,7 @@ export default function MarketplaceListingDetailContent() {
                   `/request-quote?type=service_quote&service=${encodeURIComponent(listing.name || "")}&category=${encodeURIComponent(listing.category || "")}`
                 )
               }
-              className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:bg-[#c49a3d] transition flex items-center justify-center gap-2"
+              className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-6 py-3.5 font-bold hover:brightness-110 transition flex items-center justify-center gap-2"
               data-testid="request-quote-btn"
             >
               Request a Quote <ArrowRight className="w-4 h-4" />
