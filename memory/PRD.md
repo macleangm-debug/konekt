@@ -261,11 +261,21 @@ Sections (in order):
 - Account checkout reads VAT from same canonical source (`/api/public/payment-info`)
 - OrderSummary displays: Subtotal, VAT (18%), Total on all stages
 
+### Phase 34 — Public Pages Redesign + Track Order Verification (07 Apr 2026)
+**Redesigned 3 public-facing pages to match landing page aesthetic. Verified Track Order endpoint wiring.**
+
+- **Services Page** (`/services`): Dark navy hero with "Professional Business Services — Managed by Konekt", 6 category highlight cards, browse services with tabs, trust signals section, 4-step "How Service Requests Work", bottom CTA.
+- **Expansion Page** (`/launch-country`): "Africa Expansion Program" badge hero with stats cards, "Two Ways to Participate" section, tabbed forms (Business Interest / Partner Application), 4 Partner Qualification criteria cards, bottom CTA.
+- **Earn/Affiliate Page** (`/earn`): "Affiliate Program" badge hero, 3-step "How It Works", 4 benefit cards, "Who Is This For?" checklist, program guidelines, bottom CTA. Added PublicNavbarV2 + PremiumFooterV2.
+- **Track Order Page** (`/track-order`): Verified wiring to `/api/orders/track/{order_id}` backend endpoint. Order Number + Email verification form working.
+- All pages use consistent dark navy hero (#0E1A2B), gold accent (#D4A843), and matching section layout.
+- Zero vendor/marketplace/fulfillment language across all pages.
+
 ## Backlog
 
 ### P1 — Upcoming
 - End-to-end Stripe test with real test cards
-- Conversion-focused product detail page
+- Conversion-focused product detail page (PDP) redesign
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
@@ -293,3 +303,4 @@ Sections (in order):
 - Iteration 182: Checkout Flow Pack 1 Polish — 100% (19/19 backend + all frontend verified)
 - Iteration 183: Landing Page + Footer + Content Pages — 100% (16/16 frontend verified)
 - Iteration 184: Vendor Language Removal + Mobile Filters + VAT Parity — 100% backend, 90% frontend (VAT display fixed post-test)
+- Iteration 185: Public Pages Redesign (Services, Expansion, Earn) + Track Order Verification — 100% backend (6/6), 100% frontend (all sections present, mobile responsive)
