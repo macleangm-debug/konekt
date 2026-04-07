@@ -282,6 +282,15 @@ Sections (in order):
 - **Unified Component:** `MarketplaceListingDetailPage.jsx` now re-exports `MarketplaceListingDetailContent` — both routes render same component.
 - Mobile responsive verified.
 
+### Phase 36 — Guest Checkout Bugfixes + UX Improvements (07 Apr 2026)
+**Fixed two critical guest checkout bugs and added UX improvements.**
+
+- **Bug Fix 1 (CTA URL):** Guest "Create Account" CTA now goes to `/register?token=...&source=guest_checkout&email=...` instead of `/activate-account?token=...`. Updated backend URL builder and ALL frontend CTA text from "Activate Account" to "Create Account to Track Order" (5 files).
+- **Bug Fix 2 (Payment Queue Wiring):** Guest payment proof submission (`POST /api/public/payment-proof`) now writes a canonical record to `db.payments` with `source=guest_payment_proof`, `status=pending`, `review_status=under_review`. Admin payment queue now naturally sees guest proofs.
+- **PDP Share/Save:** Added Share button (clipboard/native share) and Save button (login redirect with toast) to product detail page.
+- **Logo Size:** Navbar logo increased from `md` to `lg` (56px).
+- **Login UX:** Session redirect notice shows "You're already signed in" instead of raw spinner when user has valid token.
+
 ## Backlog
 
 ### P1 — Upcoming
@@ -315,3 +324,4 @@ Sections (in order):
 - Iteration 184: Vendor Language Removal + Mobile Filters + VAT Parity — 100% backend, 90% frontend (VAT display fixed post-test)
 - Iteration 185: Public Pages Redesign (Services, Expansion, Earn) + Track Order Verification — 100% backend (6/6), 100% frontend (all sections present, mobile responsive)
 - Iteration 186: Product Detail Page (PDP) Conversion Redesign — 100% backend, 100% frontend (18/18 features verified, mobile responsive)
+- Iteration 187: Guest Checkout Bugfixes (CTA URL + Payment Queue Wiring) + UX Improvements — 100% backend (5/6, 1 flaky collision), 100% frontend
