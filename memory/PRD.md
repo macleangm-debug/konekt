@@ -34,46 +34,40 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 
 ### Phase C.5: Quick Reorder (April 8, 2026)
 - Reorder button on My Orders, validates products, re-runs pricing/promo engine
-- CartDrawerContext with localStorage persistence
 - Iteration 206: 100% pass (11/11)
 
 ### Auth Security Pack (April 8, 2026)
-- Forgot/Reset Password: one-time tokens (30-min expiry), neutral responses
-- Rate limiting: login, register, forgot-password, reset-password
-- Honeypot anti-bot on register
-- Resend email service in dry-run mode
-- Audit logging in auth_audit_log collection
+- Forgot/Reset Password, rate limiting, honeypot anti-bot, Resend dry-run, audit logging
 - Iteration 207: 100% pass (18/18)
 
 ### Phase F: Canonical Drawer UI (April 8, 2026)
-- **StandardDrawerShell**: One canonical drawer component used across all portals
-  - Consistent header (title + subtitle + badge + close button)
-  - Scrollable body with flex layout
-  - Sticky footer for action buttons
-  - Backdrop with blur, ESC key close, body scroll lock
-- **Migrated drawers**: AdminDiscountRequests, CustomerOrders, CustomerInvoices, SalesOrderDrawerV2, AssignmentDecisionDrawer, DetailDrawer (wrapper)
-- Iteration 208: 100% pass (all drawers + regression)
+- StandardDrawerShell: One canonical drawer component across all portals
+- Migrated 6+ major drawers initially (AdminDiscountRequests, CustomerOrders, etc.)
+- Iteration 208: 100% pass
 
 ### Phase F: Document Branding Unification (April 8, 2026)
-- **Canonical branding source**: All 4 document types (Invoice, Quote, Delivery Note, Statement) read from `business_settings.invoice_branding`
-- **Delivery Note PDF**: New HTML-based template matching canonical design (same header, footer, stamp, signature as Invoice/Quote/Order)
-- **Statement PDF**: Migrated from ReportLab to HTML-based canonical design with summary cards, entries table, and auth column
-- **Unified footer**: All documents use `_footer_html(branding)` pulling contact details from settings
-- **Company Logo**: Upload and display in all document headers via branding settings
-- **Settings Hub**: "Document Branding" tab with logo upload, signatory, signature pad, SVG stamp generator, and live preview
-- **PDF download buttons**: Added to admin Delivery Notes and Statement pages
-- **Single source helper**: `_get_branding(db)` centralizes all branding reads
-- Iteration 209: 100% pass (12/12 backend + full frontend UI)
+- All 4 doc types (Invoice, Quote, Delivery Note, Statement) read from `business_settings.invoice_branding`
+- Delivery Note PDF: New HTML-based template matching canonical design
+- Statement PDF: Migrated from ReportLab to HTML-based canonical design
+- Company Logo upload, unified footer, single branding source via `_get_branding(db)`
+- Iteration 209: 100% pass (12/12)
+
+### Phase F: Drawer Migrations + Document Preview Panel (April 8, 2026)
+- **4 remaining drawer migrations**: OrdersPageOps, CustomersPageMerged, VendorListPage, AdminContentCenterPage — all now use StandardDrawerShell
+- **Document Preview Panel**: Live Invoice + Quote preview inside Settings Hub > Document Branding tab
+  - Shows company logo, header, items table, subtotal/VAT/total, signatory name, signature, stamp, footer
+  - All branding fields update the preview in real-time
+  - Tab switching between Invoice and Quote previews
+- Iteration 210: 100% pass (all drawers + preview panel verified)
 
 ## Current Status
 - Backend: Healthy, all APIs operational
-- Frontend: All views functional with canonical drawer UI
-- Testing: Iterations 205-209 — 100% pass rate consistently
+- Frontend: All views fully migrated to canonical drawer UI, document preview live
+- Testing: Iterations 205-210 — 100% pass rate consistently
 
 ## Prioritized Backlog
 
 ### P1 - Next
-- Migrate remaining inline drawers to StandardDrawerShell
 - Deep UI audit for production readiness
 
 ### P2 - Future
@@ -89,8 +83,8 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 2. **Vendor Privacy**: Only vendor_order_no, base_price, work details, Konekt Sales Contact.
 3. **Staff != Admin**: Completely isolated portals.
 4. **Canonical Pricing**: Promotions Engine is backend source of truth.
-5. **Quick Reorder**: Same cart API, pricing resolver, promotion logic. No old prices.
-6. **Discount Requests**: Sales cannot apply directly. Request -> Admin approve -> stamp.
-7. **Auth Security**: Never reveal email existence. Token one-time with expiry. Rate limit all.
-8. **Drawer Standard**: ALL drawers must use StandardDrawerShell. No inline drawer implementations.
-9. **Document Branding**: Single source of truth: `business_settings.invoice_branding`. All 4 doc types (Invoice, Quote, Delivery Note, Statement) use `_get_branding()` helper.
+5. **Discount Requests**: Sales cannot apply directly. Request -> Admin approve -> stamp.
+6. **Auth Security**: Never reveal email existence. Token one-time with expiry. Rate limit all.
+7. **Drawer Standard**: ALL drawers must use StandardDrawerShell. No inline drawer implementations.
+8. **Document Branding**: Single source: `business_settings.invoice_branding`. All 4 doc types use `_get_branding()`.
+9. **Document Preview**: Live preview in Settings Hub, no separate routes. Invoice + Quote previews with live branding.
