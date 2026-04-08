@@ -223,3 +223,64 @@ async def get_monthly_breakdown(request: Request):
         r["paid"] = _money(r["paid"])
 
     return {"ok": True, "months": result}
+
+
+@router.get("/promotions")
+async def get_sales_promotions(request: Request):
+    """
+    Returns product promotions for sales team — same structure as affiliate,
+    but shows sales_amount instead of affiliate_amount.
+    Uses canonical pricing engine.
+    """
+    db = request.app.mongodb
+    from services.margin_engine import resolve_margin_rule_for_price, resolve_pricing
+
+    products = await db.products.find(
+        {"status": {"$in": ["active", "approved", None]}},
+        {"_id": 0}
+    ).to_list(200)
+
+    split = await get_split_settings(db)
+    result = []
+
+    for p in products:
+        vendor_price = float(p.get("vendor_price") or p.get("base_cost") or p.get("base_price") or 0)
+        if vendor_price <= 0:
+            continue
+
+        product_id = p.get("id") or p.get("product_id")
+        group_id = p.get("group_id") or p.get("category_id")
+        product_name = p.get("name") or p.get("title") or "Unnamed Product"
+
+        rule = await resolve_margin_rule_for_price(db, vendor_price, product_id=product_id, group_id=group_id)
+        pricing = resolve_pricing(vendor_price, rule, split)
+
+        price_str = f"TZS {int(pricing['final_price']):,}"
+        discount_str = f"TZS {int(pricing['discount_amount']):,}" if pricing['discount_amount'] > 0 else ""
+
+        captions = []
+        c1 = f"Offering {product_name} at {price_str} for your business."
+        if discount_str:
+            c1 += f" Your client saves {discount_str}."
+        captions.append({"type": "professional", "text": c1})
+
+        c2 = f"{product_name} | {price_str}"
+        if discount_str:
+            c2 += f" | Client saves {discount_str}"
+        captions.append({"type": "short", "text": c2})
+
+        result.append({
+            "id": product_id,
+            "product_name": product_name,
+            "category_name": p.get("group_name") or p.get("category_name") or "",
+            "image_url": p.get("image_url") or p.get("primary_image") or "",
+            "final_price": pricing["final_price"],
+            "sales_amount": pricing["sales_amount"],
+            "sales_pct": pricing["sales_share_pct"],
+            "discount_amount": pricing["discount_amount"],
+            "discount_pct": pricing["discount_share_pct"],
+            "short_link": f"konekt.co/p/{(product_id or '')[:8]}",
+            "captions": captions,
+        })
+
+    return {"ok": True, "products": result}

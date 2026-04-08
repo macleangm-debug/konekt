@@ -14,6 +14,32 @@ def _money(v):
     return round(float(v or 0), 2)
 
 
+def _generate_captions(product_name, final_price, discount_amount, promo_code):
+    """Generate 3 ready-to-use caption variants for a product promotion."""
+    price_str = f"TZS {int(final_price):,}"
+    discount_str = f"TZS {int(discount_amount):,}" if discount_amount > 0 else ""
+
+    promotional = f"Get {product_name} at {price_str}!"
+    if discount_str:
+        promotional += f" Save {discount_str} with code {promo_code}."
+    promotional += " Order now on Konekt."
+
+    professional = f"Upgrade your business with {product_name} from Konekt."
+    if discount_str:
+        professional += f" Use code {promo_code} to save {discount_str} on your order."
+
+    social = f"{product_name} | {price_str}"
+    if discount_str:
+        social += f" | Save {discount_str}"
+    social += f" | Code: {promo_code}"
+
+    return [
+        {"type": "promotional", "text": promotional},
+        {"type": "professional", "text": professional},
+        {"type": "social", "text": social},
+    ]
+
+
 @router.get("/product-promotions")
 async def get_affiliate_product_promotions(request: Request):
     """
@@ -60,9 +86,15 @@ async def get_affiliate_product_promotions(request: Request):
         rule = await resolve_margin_rule_for_price(db, vendor_price, product_id=product_id, group_id=group_id)
         pricing = resolve_pricing(vendor_price, rule, split)
 
+        product_name = p.get("name") or p.get("title") or "Unnamed Product"
+        short_link = f"konekt.co/p/{(product_id or '')[:8]}?ref={affiliate_code}"
+
+        # Generate 3 caption templates
+        captions = _generate_captions(product_name, pricing["final_price"], pricing["discount_amount"], affiliate_code)
+
         result.append({
             "id": product_id,
-            "product_name": p.get("name") or p.get("title") or "Unnamed Product",
+            "product_name": product_name,
             "category_name": p.get("group_name") or p.get("category_name") or p.get("category") or "",
             "image_url": p.get("image_url") or p.get("primary_image") or "",
             "final_price": pricing["final_price"],
@@ -71,8 +103,11 @@ async def get_affiliate_product_promotions(request: Request):
             "discount_amount": pricing["discount_amount"],
             "discount_pct": pricing["discount_share_pct"],
             "sales_amount": pricing["sales_amount"],
+            "sales_pct": pricing["sales_share_pct"],
             "promo_code": affiliate_code,
             "share_link": f"/marketplace/{product_id}?ref={affiliate_code}",
+            "short_link": short_link,
+            "captions": captions,
             "rule_scope": pricing["rule_scope"],
         })
 

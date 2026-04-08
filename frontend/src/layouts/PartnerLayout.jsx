@@ -69,15 +69,18 @@ export default function PartnerLayout() {
     { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
   ];
 
-  // Combine items: always show affiliate section (canonical), vendor section for vendor/default
-  let navItems = [...productPartnerItems];
-  
-  // Affiliate section is always shown — all partners can share and earn
-  navItems = [...navItems, { divider: true, label: "Affiliate" }, ...affiliateItems];
-  
-  // Add vendor section if applicable
-  if (isVendor || !isAffiliate) {
-    navItems = [...navItems, { divider: true, label: "Vendor" }, ...vendorItems];
+  // Strict role-based navigation — no cross-role leakage
+  let navItems = [];
+
+  if (isAffiliate) {
+    // Affiliate sees ONLY affiliate nav
+    navItems = [...affiliateItems];
+  } else if (isVendor) {
+    // Vendor sees ONLY vendor nav
+    navItems = [...vendorItems];
+  } else {
+    // Default product partner (distributor, etc.) — vendor workflow
+    navItems = [...productPartnerItems];
   }
 
   return (

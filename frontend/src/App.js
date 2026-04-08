@@ -206,6 +206,7 @@ import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
 
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
+import SalesPromotionCenterPage from "@/pages/staff/SalesPromotionCenterPage";
 import PortfolioDashboardPage from "@/pages/staff/PortfolioDashboardPage";
 
 // Sales Orders
@@ -372,6 +373,7 @@ import QuotesPageV2 from "@/pages/customer/QuotesPageV2";
 import InvoicesPageV2 from "@/pages/customer/InvoicesPageV2";
 import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
+import ReferralsPage from "@/pages/customer/ReferralsPage";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
 import BusinessPricingRequestPage from "@/pages/customer/BusinessPricingRequestPage";
 import ClientProfilePage from "@/pages/customer/ClientProfilePage";
@@ -436,7 +438,7 @@ import CreativeProjectDetailPage from "@/pages/dashboard/CreativeProjectDetailPa
 import MyStatementPage from "@/pages/dashboard/MyStatementPage";
 import AddressesPage from "@/pages/dashboard/AddressesPage";
 import MaintenanceDashboardPage from "@/pages/dashboard/MaintenanceDashboardPage";
-import ReferralsPage from "@/pages/dashboard/ReferralsPage";
+import DashboardReferralsPage from "@/pages/dashboard/ReferralsPage";
 import PointsPage from "@/pages/dashboard/PointsPage";
 import DashboardAffiliatePage from "@/pages/dashboard/AffiliateDashboardPage";
 
@@ -821,7 +823,7 @@ function App() {
           <Route path="invoices/:invoiceId/pay" element={<InvoicePaymentPageV2 />} />
           <Route path="service-requests" element={<ServiceRequestsPageV2 />} />
           <Route path="points" element={<PointsPageV2 />} />
-          <Route path="referrals" element={<PointsPageV2 />} />
+          <Route path="referrals" element={<ReferralsPage />} />
           <Route path="statement" element={<MyStatementPageV2 />} />
           <Route path="recurring-plans" element={<RecurringPlansPage />} />
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
@@ -871,6 +873,13 @@ function App() {
           <AdminAuthProvider>
             <AdminRoute>
               <SalesCommissionDashboardPage />
+            </AdminRoute>
+          </AdminAuthProvider>
+        } />
+        <Route path="/staff/promotions" element={
+          <AdminAuthProvider>
+            <AdminRoute>
+              <SalesPromotionCenterPage />
             </AdminRoute>
           </AdminAuthProvider>
         } />

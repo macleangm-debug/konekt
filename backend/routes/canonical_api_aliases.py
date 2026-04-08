@@ -12,7 +12,7 @@ Endpoints:
 """
 import os
 import logging
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Header
 from typing import Optional
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -29,6 +29,7 @@ db = client[DB_NAME]
 # ─── Auth helpers ─────────────────────────────────────────
 
 async def _get_customer(authorization: str = None):
+    """Parse JWT from Authorization header value."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Authorization required")
     token = authorization.replace("Bearer ", "").strip()
@@ -37,6 +38,14 @@ async def _get_customer(authorization: str = None):
         return payload
     except Exception:
         raise HTTPException(401, "Invalid token")
+
+
+def _auth_header():
+    """FastAPI dependency for Authorization header."""
+    from fastapi import Header as H
+    async def _dep(authorization: Optional[str] = H(None)):
+        return authorization
+    return _dep
 
 
 # ─── Public Marketplace ──────────────────────────────────
@@ -111,7 +120,7 @@ async def account_list_products(
     q: Optional[str] = None,
     category: Optional[str] = None,
     limit: int = Query(50, le=200),
-    authorization: Optional[str] = None,
+    authorization: Optional[str] = Header(None),
 ):
     """List products for authenticated customers (same as public for now)."""
     return await public_list_products(q=q, category=category, limit=limit)
@@ -149,7 +158,7 @@ def _sanitize_order(order: dict) -> dict:
 
 @account_orders_router.get("/orders")
 async def account_list_orders(
-    authorization: Optional[str] = None,
+    authorization: Optional[str] = Header(None),
 ):
     """List customer's own orders."""
     from fastapi import Header
@@ -173,7 +182,7 @@ async def account_list_orders(
 
 
 @account_orders_router.get("/orders/{order_id}")
-async def account_get_order(order_id: str, authorization: Optional[str] = None):
+async def account_get_order(order_id: str, authorization: Optional[str] = Header(None)):
     """Get a specific order for the customer."""
     if not authorization:
         raise HTTPException(401, "Authorization required")
@@ -199,3 +208,54 @@ async def account_get_order(order_id: str, authorization: Optional[str] = None):
     if not order:
         raise HTTPException(404, "Order not found")
     return _sanitize_order(order)
+
+
+
+# ─── Account Referrals ──────────────────────────────────────
+
+@account_orders_router.get("/referrals")
+async def account_referrals(authorization: Optional[str] = Header(None)):
+    """Get customer referral code, link, stats, and history."""
+    if not authorization:
+        raise HTTPException(401, "Authorization required")
+    user = await _get_customer(authorization)
+    user_email = user.get("email", "")
+    user_id = user.get("user_id", "")
+    user_name = user.get("full_name") or user.get("name") or user_email.split("@")[0]
+
+    # Generate referral code from user name
+    import hashlib
+    code_base = user_name.upper().replace(" ", "")[:8]
+    code_hash = hashlib.md5(user_email.encode()).hexdigest()[:4].upper()
+    referral_code = f"{code_base}{code_hash}"
+
+    referral_link = f"https://konekt.co.tz/?ref={referral_code}"
+
+    # Get referral history
+    referrals = await db.referrals.find(
+        {"referrer_email": user_email}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    total = len(referrals)
+    successful = sum(1 for r in referrals if r.get("status") == "completed")
+    reward_earned = sum(float(r.get("reward", 0)) for r in referrals if r.get("status") == "completed")
+
+    history = []
+    for r in referrals:
+        history.append({
+            "business_name": r.get("referred_name", r.get("referred_email", "—")),
+            "status": r.get("status", "invited"),
+            "reward": r.get("reward", 0),
+            "date": str(r.get("created_at", ""))[:10] if r.get("created_at") else "",
+        })
+
+    return {
+        "referral_code": referral_code,
+        "referral_link": referral_link,
+        "stats": {
+            "total_referrals": total,
+            "successful": successful,
+            "reward_earned": round(reward_earned, 2),
+        },
+        "history": history,
+    }
