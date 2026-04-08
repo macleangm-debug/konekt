@@ -7,7 +7,11 @@ Build a comprehensive B2B e-commerce platform for business procurement in Tanzan
 - **Frontend**: React 18 + Tailwind CSS + Shadcn UI
 - **Backend**: FastAPI (Python) + MongoDB
 - **Payments**: Stripe sandbox integration
-- **Auth**: JWT-based (Admin, Customer, Partner, Staff portals)
+- **Auth**: JWT-based with strict role separation:
+  - Admin → `konekt_admin_token` → `/admin/*` (AdminAuthProvider + AdminRoute + AdminLayout)
+  - Staff/Sales → `konekt_staff_token` → `/staff/*` (StaffAuthProvider + StaffRoute + StaffLayout)
+  - Customer → `konekt_token` → `/account/*` (AuthProvider + CustomerRoute + CustomerPortalLayoutV2)
+  - Partner → `partner_token` → `/partner/*` (PartnerLayout with role-based nav)
 
 ## Key Business Rules
 1. **Pricing Engine Lock**: Vendor Price + Konekt Margin = Base Price. Base Price + Distribution Layer = Final Price.
@@ -42,13 +46,23 @@ Build a comprehensive B2B e-commerce platform for business procurement in Tanzan
 - Tiered price bands seeded (4 bands), Distribution split locked at 40/30/30
 - Simplified navigation for sales and affiliate
 
-### Phase 44A: Affiliate Payout Foundation (Current — DONE)
+### Phase 44A: Affiliate Payout Foundation (DONE)
 - **Wallet System** (`/api/affiliate/wallet`): Pending, Available, Paid Out, Pending Withdrawal — all from real commission data
 - **Payout Account Management** (`/api/affiliate/payout-accounts`): Mobile Money + Bank Transfer CRUD
 - **Withdrawal Request** (`/api/affiliate/me/payout-request`): Minimum payout enforcement from admin settings, available balance validation
 - **Payout History** (`/api/affiliate/payout-history`): Full audit trail with status badges
 - **Admin Payout Settings** (Settings Hub → Payout tab): Affiliate/Sales min payout, payout cycle, review mode
 - **Single-page design** (`/partner/affiliate-payouts`): Wallet Summary + Withdraw + Payout Accounts + History
+
+### Phase 44B: Promotion Center (DONE)
+- **Affiliate Promotion Center** (`/partner/affiliate-promotions`): Product cards with promo codes, share links, suggested captions, You Earn / Customer Saves breakdown
+- **Sales Promotion Center** (`/staff/promotions`): Product cards with copy link, commission and client savings breakdown, suggested captions
+- **Customer Referrals** (`/account/referrals`): Referral code, link, stats, history
+
+### Structural Fixes (DONE — Apr 2026)
+- **PartnerLayout Role Separation**: Affiliates see affiliate nav only, Vendors see vendor nav only, Distributors see product partner nav only — no cross-role sidebar leakage
+- **AdminLayout Sidebar Cleanup**: Single canonical Settings hub at `/admin/settings-hub`, no duplicate settings entries
+- **Staff Auth Separation**: Dedicated `StaffAuthProvider` + `StaffRoute` + `StaffLayout`. Staff uses `konekt_staff_token`, admin uses `konekt_admin_token`. Admin accounts rejected on staff login with clear error. Cross-role isolation verified both directions.
 
 ## Active API Endpoints
 - `POST /api/admin/payments/{id}/approve` — Payment approval
@@ -63,6 +77,9 @@ Build a comprehensive B2B e-commerce platform for business procurement in Tanzan
 - `GET /api/affiliate/payout-history` — Payout history
 - `GET/PUT /api/admin/settings-hub` — Canonical settings (incl. payout settings)
 - `GET/PUT /api/admin/distribution-margin/settings` — Distribution split CRUD
+- `GET /api/account/referrals` — Customer referrals
+- `GET /api/affiliate/products` — Affiliate products with pricing
+- `GET /api/sales-commission/promotions` — Sales promotions data
 
 ## Database Collections
 - `orders`: Core transactions with pricing breakdown
@@ -77,17 +94,23 @@ Build a comprehensive B2B e-commerce platform for business procurement in Tanzan
 - `payout_accounts`: Saved payout methods (mobile_money, bank_transfer)
 - `admin_settings`: Settings Hub state (key: settings_hub)
 
+## Auth Architecture (Apr 2026)
+| Portal | Token Key | Auth Context | Route Guard | Layout | Login Page |
+|--------|-----------|--------------|-------------|--------|------------|
+| Admin | konekt_admin_token | AdminAuthProvider | AdminRoute | AdminLayout | /login (unified) |
+| Staff | konekt_staff_token | StaffAuthProvider | StaffRoute | StaffLayout | /staff-login |
+| Customer | konekt_token | AuthProvider | CustomerRoute | CustomerPortalLayoutV2 | /login |
+| Partner | partner_token | PartnerLayout internal | PartnerLayout internal | PartnerLayout | /login |
+
 ## Upcoming Tasks (P1)
-- Phase 44B: Promotion Center (captions, short links, ready-to-post layouts)
+- Phase 45: Platform Promotions engine (admin campaign tool, safe margin protection, stacking rules)
 - Affiliate attribution persistence E2E test
 - End-to-end Stripe bank transfer E2E test
 - Deep screen-by-screen UI audit for launch readiness
 
 ## Future Tasks (P2)
-- Phase 45: Platform Promotions engine (admin campaign tool, safe margin protection, stacking rules)
 - Affiliate Manager role/dashboard
 - Sales leaderboard (gamification)
 - Twilio WhatsApp/SMS notifications (blocked on API key)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
-- Affiliate payout wallet + withdrawal flow (complete system)
