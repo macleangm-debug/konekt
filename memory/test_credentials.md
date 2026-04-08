@@ -14,6 +14,7 @@
 - Email: `neema.sales@konekt.demo`
 - Password: `password123`
 - Portal: `/staff-login`
+- Note: Password was re-hashed in this session (April 8, 2026)
 
 ## Partner / Affiliate
 - Email: `demo.partner@konekt.com`
