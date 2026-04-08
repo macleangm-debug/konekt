@@ -129,12 +129,14 @@ export default function MarketplaceBrowsePageContent() {
 
 function MarketplaceProductCard({ product, onRequestQuote }) {
   const { addItem } = useCart();
-  const price =
+  const originalPrice =
     product?.customer_price ??
     product?.price ??
     product?.base_price ??
     product?.unit_price ??
     0;
+  const promo = product?.promotion;
+  const price = promo ? promo.promo_price : Number(originalPrice);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -143,14 +145,19 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
       product_id: product.id,
       product_name: product.name,
       quantity: 1,
-      unit_price: Number(price),
-      subtotal: Number(price),
+      unit_price: price,
+      original_price: Number(originalPrice),
+      subtotal: price,
       size: null,
       color: null,
       print_method: null,
       listing_type: product.listing_type || "product",
       image_url: product.image_url || product.images?.[0] || product.hero_image || "",
       category: product.category || product.group_name || "",
+      promo_applied: !!promo,
+      promo_id: promo?.promo_id || null,
+      promo_label: promo?.discount_label || null,
+      promo_discount: promo?.discount_amount || 0,
     });
     toast.success(`${product.name} added to cart`);
   };
@@ -160,7 +167,7 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
       className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
       data-testid={`marketplace-card-${product.id}`}
     >
-      <Link to={`/marketplace/${product.slug || product.id}`} className="block">
+      <Link to={`/marketplace/${product.slug || product.id}`} className="block relative">
         <div className="h-44 bg-[#f8fafc] overflow-hidden flex items-center justify-center">
           {product.image_url || product.images?.[0] || product.hero_image ? (
             <img
@@ -172,6 +179,11 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
             <Package className="w-10 h-10 text-gray-300" />
           )}
         </div>
+        {promo && (
+          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm" data-testid={`promo-badge-${product.id}`}>
+            {promo.discount_label}
+          </span>
+        )}
       </Link>
 
       <div className="p-4">
@@ -192,7 +204,12 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
         </p>
 
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <span className="font-semibold text-[#0f172a] text-sm">{money(price)}</span>
+          <div>
+            <span className="font-semibold text-[#0f172a] text-sm">{money(price)}</span>
+            {promo && (
+              <span className="text-xs text-slate-400 line-through ml-1.5">{money(originalPrice)}</span>
+            )}
+          </div>
 
           <div className="flex items-center gap-2">
             <button

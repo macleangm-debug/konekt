@@ -18,6 +18,7 @@ from attribution_capture_service import (
     build_attribution_block,
     inherit_attribution_from_document
 )
+from services.product_promotion_enrichment import resolve_checkout_item_price
 from notification_events import notify_quote_ready, notify_invoice_ready
 from notification_trigger_service import (
     notify_customer_quote_ready,
@@ -66,6 +67,30 @@ async def create_quote(payload: QuoteCreate):
     doc["quote_number"] = quote_number
     doc["created_at"] = now.isoformat()
     doc["updated_at"] = now.isoformat()
+
+    # Enrich items with active promotions (same resolver for ALL flows)
+    enriched_items = []
+    total_promo_discount = 0
+    for item in (doc.get("items") or []):
+        promo_info = await resolve_checkout_item_price({
+            "product_id": item.get("product_id", ""),
+            "unit_price": float(item.get("unit_price") or item.get("price") or 0),
+            "category_name": item.get("category_name", ""),
+            "category": item.get("category", ""),
+        }, db=db)
+        if promo_info["promo_applied"]:
+            item["original_price"] = promo_info["original_price"]
+            item["unit_price"] = promo_info["unit_price"]
+            item["promo_applied"] = True
+            item["promo_id"] = promo_info["promo_id"]
+            item["promo_label"] = promo_info["promo_label"]
+            item["promo_discount_per_unit"] = promo_info["promo_discount"]
+            qty = int(item.get("quantity", 1))
+            item["subtotal"] = promo_info["unit_price"] * qty
+            total_promo_discount += promo_info["promo_discount"] * qty
+        enriched_items.append(item)
+    doc["items"] = enriched_items
+    doc["promo_discount_total"] = total_promo_discount
     
     # Add attribution block
     doc.update(build_attribution_block(attribution))

@@ -56,6 +56,12 @@ function StepBar({ current }) {
 function OrderSummary({ orderItems, orderTotal, orderCount, orderNumber, compact, vatPercent, vatAmount, subtotal }) {
   if (!orderItems || orderItems.length === 0) return null;
   const hasVat = vatPercent > 0 && vatAmount > 0;
+  const totalPromoSavings = orderItems.reduce((sum, item) => {
+    if (item.promo_applied && item.original_price) {
+      return sum + ((item.original_price - item.unit_price) * (item.quantity || 1));
+    }
+    return sum;
+  }, 0);
   return (
     <div className={`rounded-2xl border bg-white p-5 ${compact ? "" : "sticky top-24"}`} data-testid="checkout-summary">
       <h2 className="text-base font-bold text-[#20364D] mb-1">Order Summary</h2>
@@ -77,13 +83,24 @@ function OrderSummary({ orderItems, orderTotal, orderCount, orderNumber, compact
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-slate-800 truncate">{item.product_name}</p>
-              <p className="text-xs text-slate-500">Qty: {item.quantity} x {money(item.unit_price)}</p>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span>Qty: {item.quantity} x {money(item.unit_price)}</span>
+                {item.promo_applied && item.promo_label && (
+                  <span className="text-red-600 font-medium">{item.promo_label}</span>
+                )}
+              </div>
             </div>
             <span className="text-sm font-semibold flex-shrink-0">{money(item.subtotal || (item.quantity * item.unit_price))}</span>
           </div>
         ))}
       </div>
       <div className="border-t mt-3 pt-3 space-y-1.5">
+        {totalPromoSavings > 0 && (
+          <div className="flex justify-between text-sm text-emerald-600 font-medium" data-testid="promo-savings-line">
+            <span>Promotion Savings</span>
+            <span>-{money(totalPromoSavings)}</span>
+          </div>
+        )}
         {hasVat && (
           <>
             <div className="flex justify-between text-sm text-slate-600">

@@ -87,7 +87,9 @@ export default function MarketplaceListingDetailContent() {
   const hasImage = allImages.length > 0;
 
   // Resolve price — support customer_price, base_price, price
-  const price = Number(listing.customer_price || listing.base_price || listing.price || 0);
+  const originalPrice = Number(listing.customer_price || listing.base_price || listing.price || 0);
+  const promo = listing.promotion;
+  const price = promo ? promo.promo_price : originalPrice;
   const isService = listing.listing_type === "service";
   const inStock = listing.stock_quantity > 0 || listing.partner_available_qty > 0;
   const minQty = listing.min_quantity || 1;
@@ -98,6 +100,7 @@ export default function MarketplaceListingDetailContent() {
       product_name: listing.name || "",
       quantity,
       unit_price: price,
+      original_price: originalPrice,
       subtotal: quantity * price,
       size: selectedSize,
       color: selectedColor,
@@ -105,6 +108,10 @@ export default function MarketplaceListingDetailContent() {
       listing_type: listing.listing_type || "product",
       image_url: allImages[0] || "",
       category: listing.category || "",
+      promo_applied: !!promo,
+      promo_id: promo?.promo_id || null,
+      promo_label: promo?.discount_label || null,
+      promo_discount: promo?.discount_amount || 0,
     });
     toast.success(`${listing.name} added to cart`);
   };
@@ -203,14 +210,31 @@ export default function MarketplaceListingDetailContent() {
 
           {/* Price Block */}
           <div className="rounded-2xl border bg-white p-5" data-testid="pdp-price-block">
+            {promo && (
+              <div className="mb-2">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold" data-testid="pdp-promo-badge">
+                  {promo.discount_label}
+                </span>
+              </div>
+            )}
             <div className="flex items-baseline gap-3">
               <span className="text-3xl font-bold text-[#20364D]" data-testid="pdp-price">
                 {money(price)}
               </span>
+              {promo && (
+                <span className="text-lg text-slate-400 line-through" data-testid="pdp-original-price">
+                  {money(originalPrice)}
+                </span>
+              )}
               {price > 0 && (
                 <span className="text-sm text-slate-500">per unit</span>
               )}
             </div>
+            {promo && (
+              <p className="text-sm text-emerald-600 font-medium mt-1" data-testid="pdp-savings">
+                You save {money(promo.discount_amount)} per unit
+              </p>
+            )}
             <div className="flex items-center gap-4 mt-2 text-sm">
               {!isService && inStock && (
                 <span className="text-green-600 font-medium flex items-center gap-1">

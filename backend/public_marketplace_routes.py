@@ -7,6 +7,7 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from typing import Optional, List
+from services.product_promotion_enrichment import enrich_product_with_promotion, enrich_products_batch
 
 router = APIRouter(prefix="/api/public-marketplace", tags=["Public Marketplace"])
 
@@ -70,6 +71,9 @@ async def get_public_listing(slug: str):
             related_products = []
             async for rp in db.products.find({**related_q, "id": {"$ne": product.get("id")}}).sort("created_at", -1).limit(8):
                 related_products.append(serialize_public_doc(rp))
+            # Enrich with active promotions
+            product = await enrich_product_with_promotion(product, db=db)
+            related_products = await enrich_products_batch(related_products, db=db)
             return {
                 "listing": product,
                 "related": related_products,
@@ -113,10 +117,16 @@ async def get_public_listing(slug: str):
     }).sort("created_at", -1).limit(4)
     similar_type = await similar_type_cursor.to_list(length=4)
 
+    # Enrich listing + related with promotions
+    main_listing = serialize_public_doc(listing)
+    main_listing = await enrich_product_with_promotion(main_listing, db=db)
+    enriched_related = await enrich_products_batch([serialize_public_doc(x) for x in related], db=db)
+    enriched_suggestions = await enrich_products_batch([serialize_public_doc(x) for x in suggestions], db=db)
+
     return {
-        "listing": serialize_public_doc(listing),
-        "related_items": [serialize_public_doc(x) for x in related],
-        "you_might_also_like": [serialize_public_doc(x) for x in suggestions],
+        "listing": main_listing,
+        "related_items": enriched_related,
+        "you_might_also_like": enriched_suggestions,
         "similar_type": [serialize_public_doc(x) for x in similar_type],
     }
 
@@ -157,10 +167,11 @@ async def get_public_country_listings(
 
     total = await db.marketplace_listings.count_documents(query)
     docs = await db.marketplace_listings.find(query).sort("created_at", -1).skip(offset).limit(limit).to_list(length=limit)
+    enriched = await enrich_products_batch([serialize_public_doc(doc) for doc in docs], db=db)
 
     return {
         "total": total,
-        "items": [serialize_public_doc(doc) for doc in docs],
+        "items": enriched,
         "limit": limit,
         "offset": offset,
     }

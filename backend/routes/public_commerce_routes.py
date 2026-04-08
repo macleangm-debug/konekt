@@ -10,6 +10,7 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, File, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
 from services.checkout_totals_service import get_vat_percent, calculate_totals
+from services.product_promotion_enrichment import resolve_checkout_item_price
 
 logger = logging.getLogger("public_commerce")
 
@@ -78,20 +79,39 @@ async def public_checkout(payload: dict):
     # Calculate totals using canonical service (same logic as account checkout)
     vat_percent = await get_vat_percent(db)
     order_items = []
+    total_promo_discount = 0
     for item in items:
         qty = int(item.get("quantity", 1))
-        price = float(item.get("unit_price") or item.get("price") or 0)
+        raw_price = float(item.get("unit_price") or item.get("price") or 0)
+
+        # Resolve promotion pricing (same resolver for ALL flows)
+        promo_info = await resolve_checkout_item_price({
+            "product_id": item.get("product_id", ""),
+            "unit_price": raw_price,
+            "category_name": item.get("category_name", ""),
+            "category": item.get("category", ""),
+        }, db=db)
+
+        price = promo_info["unit_price"]
         subtotal = qty * price
+        item_promo_discount = promo_info["promo_discount"] * qty
+        total_promo_discount += item_promo_discount
+
         order_items.append({
             "product_id": item.get("product_id", ""),
             "product_name": item.get("product_name") or item.get("name", ""),
             "quantity": qty,
             "unit_price": price,
+            "original_price": promo_info["original_price"],
             "subtotal": subtotal,
             "size": item.get("size"),
             "color": item.get("color"),
             "variant": item.get("variant"),
             "listing_type": item.get("listing_type", "product"),
+            "promo_applied": promo_info["promo_applied"],
+            "promo_id": promo_info["promo_id"],
+            "promo_label": promo_info["promo_label"],
+            "promo_discount_per_unit": promo_info["promo_discount"],
         })
 
     totals = calculate_totals(order_items, vat_percent)
@@ -124,7 +144,8 @@ async def public_checkout(payload: dict):
         "vat_percent": totals["vat_percent"],
         "vat_amount": totals["vat_amount"],
         "tax": totals["vat_amount"],
-        "discount": 0,
+        "discount": total_promo_discount,
+        "promo_discount_total": total_promo_discount,
         "delivery_address": payload.get("delivery_address", ""),
         "city": payload.get("city", ""),
         "country": payload.get("country", "Tanzania"),

@@ -127,6 +127,8 @@ async def marketplace_filters():
         "subgroups": [{"id": str(x["_id"]), "name": x["name"], "slug": x["slug"], "group_slug": x.get("group_slug", "")} for x in subgroups],
     }
 
+from services.product_promotion_enrichment import enrich_product_with_promotion, enrich_products_batch
+
 @marketplace_router.get("/products/search")
 async def search_products(
     q: Optional[str] = None,
@@ -184,6 +186,8 @@ async def search_products(
         row["id"] = str(row["_id"])
         del row["_id"]
         out.append(row)
+    # Enrich with active promotions
+    out = await enrich_products_batch(out, db=db)
     return out
 
 
@@ -209,6 +213,8 @@ async def get_product_detail(product_id: str):
     product.pop("vendor_name", None)
     product.pop("source_submission_id", None)
     product.pop("vendor_product_code", None)
+    # Enrich with active promotion
+    product = await enrich_product_with_promotion(product, db=db)
     return product
 
 

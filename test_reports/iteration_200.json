@@ -1,0 +1,84 @@
+{
+  "summary": "Phase 45 Checkout Promotion Integration - All tests passed. Backend: 14/14 tests passed covering product search enrichment, single product detail, public listing, guest checkout with promo pricing, promotion engine endpoints, and safety validation. Frontend: Marketplace shows promo badges (5.0% OFF), strikethrough pricing, PDP displays promo price with savings text. Admin Promotions page shows active 5% global promotion with toggle/delete controls.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_checkout_promotion_integration_v200.py",
+    "/app/test_reports/pytest/pytest_results_checkout_promo_v200.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_checkout_promotion_integration_v200.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (login via POST /api/admin/auth/login, portal at /admin)",
+  "seed_data_creation": "None - used existing active 5% global promotion (id: promo_20260408100928_2968)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 45 Checkout Promotion Integration is complete and verified. Key points: 1) Active global 5% promotion 'Launch Special 5% Off' exists and is applied to all products with selling_price > 0. 2) /api/marketplace/products/search returns products with 'promotion' field enriched (promo_price, discount_label, discount_amount). 3) /api/marketplace/products/{id} returns single product with promotion enrichment. 4) /api/public-marketplace/listing/{slug} returns listing with promotion on main listing and related products. 5) /api/public/checkout resolves promo pricing per item - order items have promo_applied, promo_id, original_price, promo_discount_per_unit fields. 6) /api/promotion-engine/active returns active promotions. 7) /api/promotion-engine/preview-with-defaults validates safety - 5% is safe, 50% is blocked. 8) Frontend marketplace shows '5.0% OFF' badges on promo-eligible products with strikethrough original prices. 9) PDP shows promo badge, promo price (TZS 1,187,500), strikethrough original (TZS 1,250,000), and 'You save TZS 62,500 per unit' text. 10) Admin Promotions page at /admin/promotion-engine shows active promotion with toggle/delete controls. 11) Admin sidebar uses adminNavigation.js as single source of truth - one Settings section with Settings Hub and Users.",
+  "features_tested": {
+    "backend_product_search_enrichment": {
+      "GET /api/marketplace/products/search": "PASS - Returns products with promotion field",
+      "Products with price > 0 have promo data": "PASS - promo_price, discount_label, discount_amount present",
+      "Products with price = 0 have promotion=null": "PASS - No promo applied to zero-price products"
+    },
+    "backend_single_product_enrichment": {
+      "GET /api/marketplace/products/{id}": "PASS - Returns product with promotion field"
+    },
+    "backend_public_listing_enrichment": {
+      "GET /api/public-marketplace/listing/{slug}": "PASS - Returns listing with promotion field",
+      "Related products have promotion": "PASS - Related items enriched with promotion data"
+    },
+    "backend_checkout_promo_resolution": {
+      "POST /api/public/checkout": "PASS - Creates order with promo pricing applied",
+      "Order items have promo fields": "PASS - promo_applied, promo_id, original_price, promo_discount_per_unit"
+    },
+    "backend_promotion_engine_endpoints": {
+      "GET /api/promotion-engine/active": "PASS - Returns active 5% global promotion",
+      "POST /api/promotion-engine/preview-with-defaults (5%)": "PASS - Returns safe=true",
+      "POST /api/promotion-engine/preview-with-defaults (50%)": "PASS - Returns safe=false with blocked_reason",
+      "GET /api/promotion-engine/promotions": "PASS - Returns list of promotions"
+    },
+    "backend_price_calculation": {
+      "5% discount calculation": "PASS - HP Printer: 1,250,000 -> 1,187,500 (5% off)"
+    },
+    "frontend_marketplace_promo_display": {
+      "Promo badges on product cards": "PASS - Found 7 promo badges showing '5.0% OFF'",
+      "Strikethrough original prices": "PASS - Found 7 strikethrough prices",
+      "Promo price displayed": "PASS - Shows discounted price"
+    },
+    "frontend_pdp_promo_display": {
+      "PDP promo badge": "PASS - Shows '5.0% OFF'",
+      "PDP promo price": "PASS - Shows 'TZS 1,187,500'",
+      "PDP original price strikethrough": "PASS - Shows 'TZS 1,250,000' with line-through",
+      "PDP savings text": "PASS - Shows 'You save TZS 62,500 per unit'"
+    },
+    "frontend_admin_promotions_page": {
+      "Page loads": "PASS - data-testid='promotion-engine-page' found",
+      "Create Promotion button": "PASS - data-testid='create-promotion-btn' found",
+      "Promotions list": "PASS - data-testid='promotions-list' found",
+      "Active promotion displayed": "PASS - 'Launch Special 5% Off' with Active status",
+      "Toggle/Delete controls": "PASS - Found toggle, delete, edit buttons"
+    },
+    "frontend_admin_sidebar_navigation": {
+      "adminNavigation.js structure": "PASS - Single source of truth",
+      "Settings section": "PASS - One Settings section with Settings Hub and Users",
+      "Growth & Affiliates section": "PASS - Contains Affiliates, Affiliate Payouts, Margin & Distribution, Promotions"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

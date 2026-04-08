@@ -82,6 +82,12 @@ export default function AccountCheckoutPage() {
 
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
+  const promoSavings = cart.reduce((sum, item) => {
+    if (item.promo_applied && item.original_price) {
+      return sum + ((item.original_price - item.price) * (item.quantity || 1));
+    }
+    return sum;
+  }, 0);
   const vatAmount = Math.round(subtotal * (vatPercent / 100));
   const total = subtotal + vatAmount;
 
@@ -313,6 +319,12 @@ export default function AccountCheckoutPage() {
           
           {/* Totals */}
           <div className="space-y-2 text-sm">
+            {promoSavings > 0 && (
+              <div className="flex justify-between text-emerald-600 font-medium" data-testid="account-promo-savings">
+                <span>Promotion Savings</span>
+                <span>-TZS {promoSavings.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between text-slate-600">
               <span>Subtotal</span>
               <span>TZS {subtotal.toLocaleString()}</span>
