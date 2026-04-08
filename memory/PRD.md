@@ -6,7 +6,7 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 ## Core Architecture
 - **Frontend**: React 18 + Tailwind CSS + Shadcn UI
 - **Backend**: FastAPI + MongoDB (via Motor async driver)
-- **Auth**: JWT-based with strict role separation (Admin ≠ Staff), full_name included in JWT
+- **Auth**: JWT-based with strict role separation (Admin != Staff), full_name included in JWT
 - **Payments**: Stripe sandbox + Bank Transfer with admin approval queue
 
 ## Implemented Features (Completed)
@@ -16,7 +16,7 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 - Product catalog with group/category/subcategory taxonomy
 - Invoice generation and management
 - Stripe sandbox payment integration
-- Order pipeline (quote → invoice → payment → fulfillment)
+- Order pipeline (quote -> invoice -> payment -> fulfillment)
 - Vendor order assignment and tracking
 - Affiliate/referral commission system
 
@@ -35,7 +35,6 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 ### Phase A: Bank Transfer E2E + Marketplace Cards
 - Bank Transfer E2E Fix (guest order safe handling)
 - Marketplace Card Redesign (unified ProductCardCompact, fixed-height blocks)
-- Admin Dashboard Fix & Finance Queue Enrichment
 
 ### Phase C: Sales Dashboard Overhaul
 - Sales Dashboard V2 with KPIs, Pipeline, Actions, CRM, Commission Table
@@ -45,57 +44,59 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 - Dynamic promotional content generation from canonical pricing/promos
 - Admin Content Center Page
 - Sales Dashboard Content Block
-- Affiliate Content Feed
 
 ### Phase E: Sales Discount Request Workflow (April 8, 2026)
-- Backend: `discount_request_service.py` with create, list, approve, reject, margin floor validation
-- Routes: `discount_request_routes.py` (staff + admin endpoints)
-- Margin Floor Protection via canonical `margin_engine.py`
+- Backend: discount_request_service.py with create, list, approve, reject, margin floor validation
 - Admin Queue: table + drawer with margin impact, KPIs, filters, approve/reject
 - Staff Interface: list + modal for creating/tracking requests
-- Approval stamps `approved_discount` on source quote/order
-- Testing: Iteration 205 — 100% pass (19/19 backend, all frontend)
+- Approval stamps approved_discount on source quote/order
+- Testing: Iteration 205 - 100% pass (19/19 backend)
 
 ### Phase C.5: Quick Reorder (April 8, 2026)
-- Backend: `POST /api/customer/orders/{order_id}/reorder` in existing customer_orders_routes.py
-- Validates product existence, re-runs `resolve_checkout_item_price` for current pricing/promotions
-- Returns cart-ready items with promo_applied, promo_label, warnings for unavailable products
-- Frontend: "Reorder" button on every order row in My Orders table
-- Rebuilt AccountCartPage from hardcoded stub to read from CartDrawerContext
-- CartDrawerContext upgraded with localStorage persistence
-- UX: notification banners for success/warnings, auto-redirect to /account/cart
-- Testing: Iteration 206 — 100% pass (11/11 backend, all frontend)
+- Backend: POST /api/customer/orders/{order_id}/reorder
+- Validates product availability, re-runs pricing + promotion engine
+- Frontend: "Reorder" button on every order row in My Orders
+- AccountCartPage rebuilt from stub to use CartDrawerContext with localStorage persistence
+- Testing: Iteration 206 - 100% pass (11/11 backend)
+
+### Auth Security Pack (April 8, 2026)
+- **Forgot Password**: POST /api/auth/forgot-password with neutral response, 30-min token expiry
+- **Reset Password**: POST /api/auth/reset-password with one-time token, password validation
+- **Rate Limiting**: login (10/5min), register (5/10min), forgot-password (3/5min), reset-password (5/5min)
+- **Honeypot**: Hidden 'website' field on register - bots silently rejected
+- **Email Service**: Resend wired in dry-run mode (logs to console until API key added)
+- **Audit Logging**: auth_audit_log collection tracks password reset events
+- **Frontend**: /forgot-password, /reset-password pages matching Konekt brand
+- **Login page**: "Forgot password?" link added
+- **Register page**: Hidden honeypot field added
+- Testing: Iteration 207 - 100% pass (18/18 backend, all frontend verified)
 
 ## Current Status
 - Backend: Healthy, all APIs operational
 - Frontend: All views functional
-- Testing: Iterations 205-206 — 100% pass rate
+- Testing: Iterations 205-207 - 100% pass rate consistently
+- Email: Resend in dry-run mode (awaiting API key)
 
 ## Prioritized Backlog
 
-### P0 - Upcoming (Auth Security Pack)
-- Forgot Password / Reset Password (email-based, one-time token, 15-30min expiry)
-- Signup anti-bot protection (honeypot, rate limiting, email verification)
-- Resend email service wired in dry-run mode
-
-### P1 - Next
+### P1 - Upcoming
 - Phase F: Canonical Drawer UI standardization
 - Phase F: Document Branding Unification (invoices, quotes, delivery notes, statements)
+- Deep UI audit for production readiness
 
 ### P2 - Future
 - Phase G: Discount Analytics Dashboard
-- Deep UI audit for production readiness
 - Twilio WhatsApp/SMS notifications (blocked on API key)
-- Resend email integration (blocked on API key)
+- Resend email integration - switch from dry-run to live (blocked on API key)
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
 
 ## Key Technical Rules
-1. **Strict Payer/Customer Separation**: `customer_name` from account/business. `payer_name` from payment proof. Never fallback.
+1. **Strict Payer/Customer Separation**: customer_name from account/business. payer_name from payment proof.
 2. **Vendor Privacy**: Vendors see only their vendor_order_no, base_price, work details, and Konekt Sales Contact.
-3. **Staff ≠ Admin**: Sales/Staff use StaffLayout + StaffAuthContext. Completely isolated from admin portal.
-4. **Canonical Pricing**: Promotions Engine is backend-only source of truth. Frontend reads enriched data.
-5. **Quick Reorder Rules**: Must use same cart API, pricing resolver, and promotion logic. No shortcuts. No old prices.
-6. **Discount Requests**: Sales cannot apply discounts directly. Must request → admin approves → stamp on quote. Margin floor always enforced.
-7. **Guest Orders**: No invoice pre-approval. `_handle_guest_approval()` updates existing order on payment approval.
+3. **Staff != Admin**: Sales/Staff use StaffLayout + StaffAuthContext. Completely isolated from admin portal.
+4. **Canonical Pricing**: Promotions Engine is backend-only source of truth.
+5. **Quick Reorder**: Must use same cart API, pricing resolver, and promotion logic. No old prices.
+6. **Discount Requests**: Sales cannot apply discounts directly. Must request -> admin approves -> stamp on quote.
+7. **Auth Security**: Never reveal email existence. Token is one-time use with expiry. Rate limit all auth endpoints.
