@@ -2,8 +2,9 @@ import React, { useEffect, useState, useCallback } from "react";
 import api from "../../lib/api";
 import {
   Clock, CheckCircle, XCircle, AlertTriangle, ChevronRight,
-  Loader2, Filter, X, Shield, TrendingDown
+  Loader2, Filter, Shield, TrendingDown
 } from "lucide-react";
+import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const STATUS_STYLES = {
   pending: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "Pending", icon: Clock },
@@ -221,181 +222,170 @@ export default function AdminDiscountRequestsPage() {
       </div>
 
       {/* Detail Drawer */}
-      {drawerOpen && selected && (
-        <div className="fixed inset-0 z-50 flex" data-testid="discount-detail-drawer">
-          <div className="fixed inset-0 bg-black/40" onClick={() => setDrawerOpen(false)} />
-          <div className="ml-auto relative w-full max-w-lg bg-white shadow-2xl h-full overflow-y-auto animate-in slide-in-from-right">
-            {/* Drawer Header */}
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
-              <div>
-                <h2 className="text-lg font-bold text-[#0f172a]">Discount Request</h2>
-                <p className="text-xs font-mono text-slate-400 mt-0.5">{selected.request_id}</p>
-              </div>
-              <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg" data-testid="close-drawer-btn">
-                <X className="w-5 h-5 text-slate-500" />
+      <StandardDrawerShell
+        open={drawerOpen && !!selected}
+        onClose={() => setDrawerOpen(false)}
+        title="Discount Request"
+        subtitle={selected?.request_id || ""}
+        testId="discount-detail-drawer"
+        badge={selected && (() => {
+          const st = STATUS_STYLES[selected.status] || STATUS_STYLES.pending;
+          const Icon = st.icon;
+          return (
+            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${st.bg} ${st.text}`}>
+              <Icon className="w-3 h-3" />{st.label}
+            </span>
+          );
+        })()}
+        footer={selected?.status === "pending" ? (
+          <div className="space-y-3">
+            <textarea
+              value={adminNote}
+              onChange={(e) => setAdminNote(e.target.value)}
+              placeholder="Admin note (optional)..."
+              className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:ring-[#D4A843]/40 focus:border-[#D4A843] outline-none resize-none"
+              rows={2}
+              data-testid="admin-note-input"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleAction("approve")}
+                disabled={actionLoading || !selected?.margin_safe}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                data-testid="approve-discount-btn"
+              >
+                {actionLoading ? "Processing..." : "Approve Discount"}
+              </button>
+              <button
+                onClick={() => handleAction("reject")}
+                disabled={actionLoading}
+                className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition"
+                data-testid="reject-discount-btn"
+              >
+                {actionLoading ? "Processing..." : "Reject"}
               </button>
             </div>
-
-            <div className="px-6 py-5 space-y-6">
-              {/* Status Badge */}
-              <div className="flex items-center gap-3">
-                {(() => {
-                  const st = STATUS_STYLES[selected.status] || STATUS_STYLES.pending;
-                  const Icon = st.icon;
-                  return (
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${st.bg} ${st.text} ${st.border} border`}>
-                      <Icon className="w-4 h-4" />
-                      {st.label}
-                    </span>
-                  );
-                })()}
-                {selected.urgency && (
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${URGENCY_STYLES[selected.urgency] || URGENCY_STYLES.normal}`}>
-                    {selected.urgency.charAt(0).toUpperCase() + selected.urgency.slice(1)}
-                  </span>
-                )}
-              </div>
-
-              {/* Summary Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <InfoBlock label="Sales Rep" value={selected.sales_rep_name} />
-                <InfoBlock label="Customer" value={selected.customer_name} />
-                <InfoBlock label="Quote Ref" value={selected.quote_ref || "-"} />
-                <InfoBlock label="Order Ref" value={selected.order_ref || "-"} />
-                <InfoBlock label="Standard Price" value={money(selected.standard_price)} />
-                <InfoBlock label="Proposed Final" value={money(selected.proposed_final_price)} highlight />
-              </div>
-
-              {/* Discount Details */}
-              <div className="rounded-xl border border-slate-200 p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                  <TrendingDown className="w-4 h-4 text-red-500" />
-                  Discount Details
-                </h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-slate-500">Type:</span>{" "}
-                    <span className="font-medium capitalize">{selected.discount_type}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500">Value:</span>{" "}
-                    <span className="font-medium">
-                      {selected.discount_type === "percentage"
-                        ? `${selected.discount_value}%`
-                        : money(selected.discount_value)}
-                    </span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-slate-500">Amount:</span>{" "}
-                    <span className="font-bold text-red-600">-{money(selected.discount_amount)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Margin Impact */}
-              {selected.margin_impact && (
-                <div className={`rounded-xl border p-4 space-y-3 ${selected.margin_safe ? "border-emerald-200 bg-emerald-50/30" : "border-red-200 bg-red-50/30"}`}
-                  data-testid="margin-impact-block"
-                >
-                  <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                    <Shield className={`w-4 h-4 ${selected.margin_safe ? "text-emerald-600" : "text-red-600"}`} />
-                    Margin Impact
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div><span className="text-slate-500">Base Cost:</span> <span className="font-medium">{money(selected.margin_impact.total_base_cost)}</span></div>
-                    <div><span className="text-slate-500">Op. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_operational_margin)}</span></div>
-                    <div><span className="text-slate-500">Dist. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_distributable_margin)}</span></div>
-                    <div><span className="text-slate-500">Max Safe Discount:</span> <span className="font-medium">{money(selected.margin_impact.max_safe_discount)}</span></div>
-                  </div>
-                  {selected.margin_warning && (
-                    <p className="text-xs text-red-600 mt-2 flex items-start gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                      {selected.margin_warning}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Reason & Notes */}
-              <div className="space-y-3">
-                {selected.reason && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Reason / Justification</p>
-                    <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.reason}</p>
-                  </div>
-                )}
-                {selected.notes && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes</p>
-                    <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.notes}</p>
-                  </div>
-                )}
-                {selected.item_notes && (
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Item-Specific Notes</p>
-                    <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.item_notes}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Admin Review */}
-              {selected.reviewed_by && (
-                <div className="rounded-xl border border-slate-200 p-4 space-y-2">
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Admin Review</p>
-                  <p className="text-sm"><span className="text-slate-500">By:</span> <span className="font-medium">{selected.reviewed_by}</span></p>
-                  <p className="text-sm"><span className="text-slate-500">At:</span> {shortDate(selected.reviewed_at)}</p>
-                  {selected.admin_note && <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 mt-2">{selected.admin_note}</p>}
-                </div>
-              )}
-
-              {/* Action Area (only for pending) */}
-              {selected.status === "pending" && (
-                <div className="space-y-3 pt-2 border-t border-slate-200">
-                  <textarea
-                    value={adminNote}
-                    onChange={(e) => setAdminNote(e.target.value)}
-                    placeholder="Admin note (optional)..."
-                    className="w-full rounded-lg border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:ring-[#D4A843]/40 focus:border-[#D4A843] outline-none resize-none"
-                    rows={3}
-                    data-testid="admin-note-input"
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => handleAction("approve")}
-                      disabled={actionLoading || !selected.margin_safe}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                      data-testid="approve-discount-btn"
-                    >
-                      {actionLoading ? "Processing..." : "Approve Discount"}
-                    </button>
-                    <button
-                      onClick={() => handleAction("reject")}
-                      disabled={actionLoading}
-                      className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition"
-                      data-testid="reject-discount-btn"
-                    >
-                      {actionLoading ? "Processing..." : "Reject"}
-                    </button>
-                  </div>
-                  {!selected.margin_safe && (
-                    <p className="text-xs text-red-500 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      Cannot approve — discount breaches margin floor
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Expiry */}
-              {selected.expires_at && (
-                <p className="text-xs text-slate-400">
-                  Expires: {shortDate(selected.expires_at)}
-                </p>
+            {!selected?.margin_safe && (
+              <p className="text-xs text-red-500 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Cannot approve — discount breaches margin floor
+              </p>
+            )}
+          </div>
+        ) : null}
+      >
+        {selected && (
+          <div className="space-y-6">
+            {/* Status + Urgency */}
+            <div className="flex items-center gap-3">
+              {selected.urgency && (
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${URGENCY_STYLES[selected.urgency] || URGENCY_STYLES.normal}`}>
+                  {selected.urgency.charAt(0).toUpperCase() + selected.urgency.slice(1)}
+                </span>
               )}
             </div>
+
+            {/* Summary Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <InfoBlock label="Sales Rep" value={selected.sales_rep_name} />
+              <InfoBlock label="Customer" value={selected.customer_name} />
+              <InfoBlock label="Quote Ref" value={selected.quote_ref || "-"} />
+              <InfoBlock label="Order Ref" value={selected.order_ref || "-"} />
+              <InfoBlock label="Standard Price" value={money(selected.standard_price)} />
+              <InfoBlock label="Proposed Final" value={money(selected.proposed_final_price)} highlight />
+            </div>
+
+            {/* Discount Details */}
+            <div className="rounded-xl border border-slate-200 p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-red-500" />
+                Discount Details
+              </h3>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-slate-500">Type:</span>{" "}
+                  <span className="font-medium capitalize">{selected.discount_type}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500">Value:</span>{" "}
+                  <span className="font-medium">
+                    {selected.discount_type === "percentage"
+                      ? `${selected.discount_value}%`
+                      : money(selected.discount_value)}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-slate-500">Amount:</span>{" "}
+                  <span className="font-bold text-red-600">-{money(selected.discount_amount)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Margin Impact */}
+            {selected.margin_impact && (
+              <div className={`rounded-xl border p-4 space-y-3 ${selected.margin_safe ? "border-emerald-200 bg-emerald-50/30" : "border-red-200 bg-red-50/30"}`}
+                data-testid="margin-impact-block"
+              >
+                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                  <Shield className={`w-4 h-4 ${selected.margin_safe ? "text-emerald-600" : "text-red-600"}`} />
+                  Margin Impact
+                </h3>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><span className="text-slate-500">Base Cost:</span> <span className="font-medium">{money(selected.margin_impact.total_base_cost)}</span></div>
+                  <div><span className="text-slate-500">Op. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_operational_margin)}</span></div>
+                  <div><span className="text-slate-500">Dist. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_distributable_margin)}</span></div>
+                  <div><span className="text-slate-500">Max Safe Discount:</span> <span className="font-medium">{money(selected.margin_impact.max_safe_discount)}</span></div>
+                </div>
+                {selected.margin_warning && (
+                  <p className="text-xs text-red-600 mt-2 flex items-start gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    {selected.margin_warning}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Reason & Notes */}
+            <div className="space-y-3">
+              {selected.reason && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Reason / Justification</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.reason}</p>
+                </div>
+              )}
+              {selected.notes && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.notes}</p>
+                </div>
+              )}
+              {selected.item_notes && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Item-Specific Notes</p>
+                  <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.item_notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Admin Review */}
+            {selected.reviewed_by && (
+              <div className="rounded-xl border border-slate-200 p-4 space-y-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase">Admin Review</p>
+                <p className="text-sm"><span className="text-slate-500">By:</span> <span className="font-medium">{selected.reviewed_by}</span></p>
+                <p className="text-sm"><span className="text-slate-500">At:</span> {shortDate(selected.reviewed_at)}</p>
+                {selected.admin_note && <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 mt-2">{selected.admin_note}</p>}
+              </div>
+            )}
+
+            {/* Expiry */}
+            {selected.expires_at && (
+              <p className="text-xs text-slate-400">
+                Expires: {shortDate(selected.expires_at)}
+              </p>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </StandardDrawerShell>
     </div>
   );
 }

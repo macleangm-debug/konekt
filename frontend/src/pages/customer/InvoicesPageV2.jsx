@@ -4,6 +4,7 @@ import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
 import BrandLogo from "../../components/branding/BrandLogo";
+import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -164,153 +165,138 @@ function InvoiceDrawer({ invoice, onClose, bankInfo, branding, onPaymentSuccess 
   const billingTin = billing.invoice_client_tin || "";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid="invoice-drawer">
-      <button className="absolute inset-0 bg-black/35" onClick={onClose} aria-label="Close drawer" />
-      <div className="relative w-full max-w-[520px] h-full bg-white shadow-2xl border-l border-slate-200 overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f]">
-          <div className="px-6 py-5 text-white">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <BrandLogo size="md" variant="light" className="mb-3" />
-                <div className="text-lg font-semibold">Invoice Preview</div>
-                <div className="text-xs text-white/70 mt-1">{invoice.invoice_number || invoice.id}</div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-3 py-1 rounded-full font-semibold ${status.cls}`}>{status.label}</span>
-                <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20" data-testid="close-drawer">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 space-y-5">
-          <div className="flex items-center justify-between text-sm">
-            <div>
-              <div className="text-xs text-slate-400 uppercase tracking-wide">Date</div>
-              <div className="font-semibold text-[#20364D]">{fmtDate(invoice.created_at)}</div>
-            </div>
-            <div className="text-right">
-              <div className="text-xs text-slate-400 uppercase tracking-wide">Type</div>
-              <div className="font-semibold text-[#20364D] capitalize">{invoice.type || invoice.source_type || "product"}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Bill To</div>
-              <div className="font-semibold text-[#20364D] text-sm">{billingName}</div>
-              {billingEmail && <div className="text-xs text-slate-500 mt-1">{billingEmail}</div>}
-              {billingPhone && <div className="text-xs text-slate-500">{billingPhone}</div>}
-              {billingTin && <div className="text-xs text-slate-500">TIN: {billingTin}</div>}
-            </div>
-            <PaymentStatusBlock invoice={invoice} bankInfo={bankInfo} />
-          </div>
-
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-              <span className="font-semibold text-[#20364D] text-sm">Line Items</span>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {items.length ? items.map((item, idx) => (
-                <div key={idx} className="px-4 py-3 flex items-center justify-between gap-4 text-sm">
-                  <div>
-                    <div className="font-medium text-[#20364D]">{item.name || item.title || `Item ${idx + 1}`}</div>
-                    <div className="text-xs text-slate-400">Qty {item.quantity || 1} &times; {money(item.unit_price || item.price || 0)}</div>
-                  </div>
-                  <div className="font-semibold text-[#20364D]">{money(item.line_total || ((item.unit_price || item.price || 0) * (item.quantity || 1)))}</div>
-                </div>
-              )) : <div className="px-4 py-6 text-sm text-slate-400 text-center">No line items on this invoice.</div>}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-2">
-            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-medium text-[#20364D]">{money(subtotal)}</span></div>
-            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">VAT</span><span className="font-medium text-[#20364D]">{money(vat)}</span></div>
-            {amountPaid > 0 && <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Paid</span><span className="font-medium text-green-700">-{money(amountPaid)}</span></div>}
-            <div className="flex items-center justify-between text-base pt-2 border-t border-slate-200">
-              <span className="font-semibold text-[#20364D]">{amountPaid > 0 ? "Balance Due" : "Total"}</span>
-              <span className="font-bold text-[#20364D]">{money(amountPaid > 0 ? balanceDue : total)}</span>
-            </div>
-          </div>
-
-          {(invoice.rejection_reason || ["proof_rejected", "rejected", "payment_rejected"].includes(invoice.payment_status)) && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
-              <div>
-                <div className="font-semibold text-red-700 text-sm">Payment Rejected</div>
-                <div className="text-sm text-red-600 mt-1">{invoice.rejection_reason || "Please submit a corrected payment proof."}</div>
-              </div>
-            </div>
-          )}
-
-          {/* Light branding preview for finalized invoices */}
-          {isPaid(invoice) && branding && (branding.show_signature || branding.show_stamp) && (
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/30 flex gap-6" data-testid="branding-preview">
-              {branding.show_signature && (
-                <div className="flex-1">
-                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Authorized by</div>
-                  {branding.cfo_signature_url ? (
-                    <img src={`${API_URL}${branding.cfo_signature_url}`} alt="Signature" className="h-8 object-contain mb-1 opacity-60" />
-                  ) : (
-                    <div className="h-8 border-b border-slate-300 mb-1" />
-                  )}
-                  <div className="text-xs font-semibold text-[#20364D]">{branding.cfo_name || "CFO"}</div>
-                  <div className="text-[10px] text-slate-400">{branding.cfo_title || "Chief Finance Officer"}</div>
-                </div>
-              )}
-              {branding.show_stamp && (
-                <div className="flex-1 flex flex-col items-center">
-                  <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Company Stamp</div>
-                  {branding.stamp_uploaded_url ? (
-                    <img src={`${API_URL}${branding.stamp_uploaded_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
-                  ) : branding.stamp_preview_url ? (
-                    <img src={`${API_URL}${branding.stamp_preview_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
-                  ) : (
-                    <div className="w-14 h-14 border border-dashed border-slate-200 rounded-full" />
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 pt-2">
+    <StandardDrawerShell
+      open={!!invoice}
+      onClose={onClose}
+      title="Invoice Preview"
+      subtitle={invoice.invoice_number || invoice.id || ""}
+      width="xl"
+      testId="invoice-drawer"
+      badge={<span className={`text-xs px-3 py-1 rounded-full font-semibold ${status.cls}`}>{status.label}</span>}
+      footer={
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 text-sm font-semibold hover:bg-[#2a4a66] transition-colors"
+            data-testid="download-invoice-btn"
+          >
+            <Download className="w-4 h-4" /> Download Invoice
+          </button>
+          {action && action.type === "pay" && (
             <button
               type="button"
-              onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-5 py-3 text-sm font-semibold hover:bg-[#2a4a66] transition-colors"
-              data-testid="download-invoice-btn"
+              onClick={handleStripePayment}
+              disabled={paymentLoading}
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls} disabled:opacity-50`}
+              data-testid="pay-invoice-btn"
             >
-              <Download className="w-4 h-4" /> Download Invoice
+              {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+              {paymentLoading ? "Redirecting..." : action.label}
             </button>
-
-            {action && action.type === "pay" && (
-              <button
-                type="button"
-                onClick={handleStripePayment}
-                disabled={paymentLoading}
-                className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls} disabled:opacity-50`}
-                data-testid="pay-invoice-btn"
-              >
-                {paymentLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                {paymentLoading ? "Redirecting..." : action.label}
-              </button>
-            )}
-
-            {action && action.type === "resubmit" && (
-              <button
-                type="button"
-                className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls}`}
-                data-testid="resubmit-proof-btn"
-              >
-                <RefreshCw className="w-4 h-4" /> {action.label}
-              </button>
-            )}
+          )}
+          {action && action.type === "resubmit" && (
+            <button
+              type="button"
+              className={`inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition-colors ${action.cls}`}
+              data-testid="resubmit-proof-btn"
+            >
+              <RefreshCw className="w-4 h-4" /> {action.label}
+            </button>
+          )}
+        </div>
+      }
+    >
+      <div className="space-y-5">
+        <div className="flex items-center justify-between text-sm">
+          <div>
+            <div className="text-xs text-slate-400 uppercase tracking-wide">Date</div>
+            <div className="font-semibold text-[#20364D]">{fmtDate(invoice.created_at)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-xs text-slate-400 uppercase tracking-wide">Type</div>
+            <div className="font-semibold text-[#20364D] capitalize">{invoice.type || invoice.source_type || "product"}</div>
           </div>
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Bill To</div>
+            <div className="font-semibold text-[#20364D] text-sm">{billingName}</div>
+            {billingEmail && <div className="text-xs text-slate-500 mt-1">{billingEmail}</div>}
+            {billingPhone && <div className="text-xs text-slate-500">{billingPhone}</div>}
+            {billingTin && <div className="text-xs text-slate-500">TIN: {billingTin}</div>}
+          </div>
+          <PaymentStatusBlock invoice={invoice} bankInfo={bankInfo} />
+        </div>
+
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+            <span className="font-semibold text-[#20364D] text-sm">Line Items</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {items.length ? items.map((item, idx) => (
+              <div key={idx} className="px-4 py-3 flex items-center justify-between gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-[#20364D]">{item.name || item.title || `Item ${idx + 1}`}</div>
+                  <div className="text-xs text-slate-400">Qty {item.quantity || 1} &times; {money(item.unit_price || item.price || 0)}</div>
+                </div>
+                <div className="font-semibold text-[#20364D]">{money(item.line_total || ((item.unit_price || item.price || 0) * (item.quantity || 1)))}</div>
+              </div>
+            )) : <div className="px-4 py-6 text-sm text-slate-400 text-center">No line items on this invoice.</div>}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-2">
+          <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-medium text-[#20364D]">{money(subtotal)}</span></div>
+          <div className="flex items-center justify-between text-sm"><span className="text-slate-500">VAT</span><span className="font-medium text-[#20364D]">{money(vat)}</span></div>
+          {amountPaid > 0 && <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Paid</span><span className="font-medium text-green-700">-{money(amountPaid)}</span></div>}
+          <div className="flex items-center justify-between text-base pt-2 border-t border-slate-200">
+            <span className="font-semibold text-[#20364D]">{amountPaid > 0 ? "Balance Due" : "Total"}</span>
+            <span className="font-bold text-[#20364D]">{money(amountPaid > 0 ? balanceDue : total)}</span>
+          </div>
+        </div>
+
+        {(invoice.rejection_reason || ["proof_rejected", "rejected", "payment_rejected"].includes(invoice.payment_status)) && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
+            <div>
+              <div className="font-semibold text-red-700 text-sm">Payment Rejected</div>
+              <div className="text-sm text-red-600 mt-1">{invoice.rejection_reason || "Please submit a corrected payment proof."}</div>
+            </div>
+          </div>
+        )}
+
+        {isPaid(invoice) && branding && (branding.show_signature || branding.show_stamp) && (
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/30 flex gap-6" data-testid="branding-preview">
+            {branding.show_signature && (
+              <div className="flex-1">
+                <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Authorized by</div>
+                {branding.cfo_signature_url ? (
+                  <img src={`${API_URL}${branding.cfo_signature_url}`} alt="Signature" className="h-8 object-contain mb-1 opacity-60" />
+                ) : (
+                  <div className="h-8 border-b border-slate-300 mb-1" />
+                )}
+                <div className="text-xs font-semibold text-[#20364D]">{branding.cfo_name || "CFO"}</div>
+                <div className="text-[10px] text-slate-400">{branding.cfo_title || "Chief Finance Officer"}</div>
+              </div>
+            )}
+            {branding.show_stamp && (
+              <div className="flex-1 flex flex-col items-center">
+                <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-2 font-semibold">Company Stamp</div>
+                {branding.stamp_uploaded_url ? (
+                  <img src={`${API_URL}${branding.stamp_uploaded_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
+                ) : branding.stamp_preview_url ? (
+                  <img src={`${API_URL}${branding.stamp_preview_url}`} alt="Stamp" className="w-14 h-14 object-contain opacity-50" />
+                ) : (
+                  <div className="w-14 h-14 border border-dashed border-slate-200 rounded-full" />
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>
+    </StandardDrawerShell>
   );
 }
 

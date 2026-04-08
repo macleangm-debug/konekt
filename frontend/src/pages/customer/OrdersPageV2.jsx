@@ -6,6 +6,7 @@ import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
 import BrandLogo from "../../components/branding/BrandLogo";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
+import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -94,168 +95,154 @@ function OrderDrawer({ order, onClose }) {
   const salesEmail = order.sales?.email || order.sales_email || "";
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid="order-drawer">
-      <button className="absolute inset-0 bg-black/35" onClick={onClose} aria-label="Close drawer" />
-      <div className="relative w-full max-w-[560px] h-full bg-white shadow-2xl border-l border-slate-200 overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f]">
-          <div className="px-6 py-5 text-white">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <BrandLogo size="md" variant="light" className="mb-3" />
-                <div className="text-lg font-semibold">Order Details</div>
-                <div className="text-xs text-white/70 mt-1">{order.order_number || order.id}</div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs px-3 py-1 rounded-full font-semibold ${fStatus.cls}`}>{fStatus.label}</span>
-                <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20" data-testid="close-order-drawer">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+    <StandardDrawerShell
+      open={!!order}
+      onClose={onClose}
+      title="Order Details"
+      subtitle={order?.order_number || order?.id || ""}
+      width="xl"
+      testId="order-drawer"
+      badge={<span className={`text-xs px-3 py-1 rounded-full font-semibold ${fStatus.cls}`}>{fStatus.label}</span>}
+    >
+      <div className="space-y-5">
+        {/* 1. Order Summary */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Order Summary</div>
+            <div className="space-y-1.5 text-xs text-slate-600">
+              <div><strong className="text-slate-500">Order:</strong> {order.order_number || order.id}</div>
+              <div><strong className="text-slate-500">Date:</strong> {fmtDate(order.created_at)}</div>
+              <div><strong className="text-slate-500">Source:</strong> <span className="capitalize">{src}</span></div>
+              {order.invoice_id && <div><strong className="text-slate-500">Invoice:</strong> {order.invoice_number || order.invoice_id}</div>}
+              {order.quote_id && <div><strong className="text-slate-500">Quote:</strong> {order.quote_number || order.quote_id}</div>}
             </div>
+          </div>
+
+          {/* 2. Customer Details */}
+          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Customer</div>
+            <div className="font-semibold text-[#20364D] text-sm">{customerName}</div>
+            {customerPhone && <div className="text-xs text-slate-500 mt-1">{customerPhone}</div>}
+            {customerAddress && <div className="text-xs text-slate-500 flex items-start gap-1 mt-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" />{customerAddress}</div>}
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
-          {/* 1. Order Summary */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Order Summary</div>
-              <div className="space-y-1.5 text-xs text-slate-600">
-                <div><strong className="text-slate-500">Order:</strong> {order.order_number || order.id}</div>
-                <div><strong className="text-slate-500">Date:</strong> {fmtDate(order.created_at)}</div>
-                <div><strong className="text-slate-500">Source:</strong> <span className="capitalize">{src}</span></div>
-                {order.invoice_id && <div><strong className="text-slate-500">Invoice:</strong> {order.invoice_number || order.invoice_id}</div>}
-                {order.quote_id && <div><strong className="text-slate-500">Quote:</strong> {order.quote_number || order.quote_id}</div>}
-              </div>
-            </div>
-
-            {/* 2. Customer Details */}
-            <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Customer</div>
-              <div className="font-semibold text-[#20364D] text-sm">{customerName}</div>
-              {customerPhone && <div className="text-xs text-slate-500 mt-1">{customerPhone}</div>}
-              {customerAddress && <div className="text-xs text-slate-500 flex items-start gap-1 mt-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" />{customerAddress}</div>}
-            </div>
-          </div>
-
-          {/* 3. Assigned Sales Person — only show when real data exists */}
-          {salesName ? (
-          <div className="rounded-xl border-2 border-[#20364D]/20 p-4 bg-[#20364D]/[0.02]" data-testid="sales-person-section">
-            <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Your Konekt Sales Contact</div>
-            <div className="font-semibold text-[#20364D] text-base">{salesName}</div>
-            <div className="mt-3 space-y-2">
-              {salesPhone && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Phone className="w-3.5 h-3.5 text-slate-400" /> {salesPhone}
-              </div>
-              )}
-              {salesEmail && (
-              <div className="flex items-center gap-2 text-sm text-slate-600">
-                <Mail className="w-3.5 h-3.5 text-slate-400" /> {salesEmail}
-              </div>
-              )}
-            </div>
-            <div className="mt-4 flex items-center gap-2">
-              {salesPhone && (
-              <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors" data-testid="call-sales-btn">
-                <Phone className="w-3 h-3" /> Call
-              </a>
-              )}
-              {salesEmail && (
-              <a href={`mailto:${salesEmail}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 text-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors" data-testid="email-sales-btn">
-                <Mail className="w-3 h-3" /> Email
-              </a>
-              )}
-            </div>
-          </div>
-          ) : (
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50" data-testid="sales-person-section">
-            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Sales Contact</div>
-            <div className="text-sm text-slate-500">A sales representative will be assigned to your order shortly.</div>
-          </div>
-          )}
-
-          {/* 4. Order Status */}
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Order Status</div>
-            <div className="space-y-1.5 text-xs text-slate-600">
-              <div className="flex items-center gap-2"><strong className="text-slate-500">Payment:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pStatus.cls}`}>{pStatus.label}</span></div>
-              <div className="flex items-center gap-2"><strong className="text-slate-500">Status:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${fStatus.cls}`}>{fStatus.label}</span></div>
-              {order.status_description && <div className="mt-2 text-slate-500 text-xs">{order.status_description}</div>}
-            </div>
-          </div>
-
-          {/* 5. Items / Work Details */}
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
-              <span className="font-semibold text-[#20364D] text-sm">{src === "Service" ? "Work Details" : "Order Items"}</span>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {items.length ? items.map((item, idx) => (
-                <div key={idx} className="px-4 py-3 flex items-center justify-between gap-4 text-sm">
-                  <div>
-                    <div className="font-medium text-[#20364D]">{item.name || item.title || `Item ${idx + 1}`}</div>
-                    <div className="text-xs text-slate-400">
-                      Qty {item.quantity || 1}
-                      {item.variant && ` · ${item.variant}`}
-                      {item.description && ` · ${item.description}`}
-                    </div>
-                  </div>
-                  <div className="font-semibold text-[#20364D]">{money(item.line_total || (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)))}</div>
-                </div>
-              )) : <div className="px-4 py-6 text-sm text-slate-400 text-center">No items</div>}
-            </div>
-          </div>
-
-          {/* Totals */}
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-2">
-            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-medium text-[#20364D]">{money(order.subtotal_amount || order.subtotal)}</span></div>
-            <div className="flex items-center justify-between text-sm"><span className="text-slate-500">VAT</span><span className="font-medium text-[#20364D]">{money(order.vat_amount)}</span></div>
-            <div className="flex items-center justify-between text-base pt-2 border-t border-slate-200">
-              <span className="font-semibold text-[#20364D]">Total</span>
-              <span className="font-bold text-[#20364D]">{money(total)}</span>
-            </div>
-          </div>
-
-          {/* 6. Timeline */}
-          <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50" data-testid="order-timeline">
-            <div className="text-xs uppercase tracking-wide text-slate-400 mb-3 font-semibold">Timeline</div>
-            <div className="space-y-0">
-              {timeline.map((evt, idx) => (
-                <div key={idx} className="flex items-start gap-3 pb-3 last:pb-0">
-                  <div className="flex flex-col items-center">
-                    {evt.done ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <Circle className="w-5 h-5 text-slate-300" />
-                    )}
-                    {idx < timeline.length - 1 && <div className={`w-0.5 h-5 mt-0.5 ${evt.done ? "bg-green-300" : "bg-slate-200"}`} />}
-                  </div>
-                  <div className="flex-1 flex items-center justify-between min-h-[20px]">
-                    <span className={`text-sm ${evt.done ? "text-[#20364D] font-medium" : "text-slate-400"}`}>{evt.label}</span>
-                    {evt.date && <span className="text-xs text-slate-400">{evt.date}</span>}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Need help? */}
-          <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center bg-slate-50/30" data-testid="need-help-section">
-            <div className="text-sm font-semibold text-[#20364D] mb-1">Need help with this order?</div>
-            <div className="text-xs text-slate-500 mb-3">{salesName ? "Contact your assigned sales person for updates" : "A sales representative will be assigned shortly"}</div>
+        {/* 3. Assigned Sales Person */}
+        {salesName ? (
+        <div className="rounded-xl border-2 border-[#20364D]/20 p-4 bg-[#20364D]/[0.02]" data-testid="sales-person-section">
+          <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Your Konekt Sales Contact</div>
+          <div className="font-semibold text-[#20364D] text-base">{salesName}</div>
+          <div className="mt-3 space-y-2">
             {salesPhone && (
-            <div className="flex items-center justify-center gap-2">
-              <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-4 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors">
-                <Phone className="w-3 h-3" /> Call Sales
-              </a>
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Phone className="w-3.5 h-3.5 text-slate-400" /> {salesPhone}
+            </div>
+            )}
+            {salesEmail && (
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Mail className="w-3.5 h-3.5 text-slate-400" /> {salesEmail}
             </div>
             )}
           </div>
+          <div className="mt-4 flex items-center gap-2">
+            {salesPhone && (
+            <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors" data-testid="call-sales-btn">
+              <Phone className="w-3 h-3" /> Call
+            </a>
+            )}
+            {salesEmail && (
+            <a href={`mailto:${salesEmail}`} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 text-slate-700 px-3 py-2 text-xs font-semibold hover:bg-slate-50 transition-colors" data-testid="email-sales-btn">
+              <Mail className="w-3 h-3" /> Email
+            </a>
+            )}
+          </div>
+        </div>
+        ) : (
+        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50" data-testid="sales-person-section">
+          <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Sales Contact</div>
+          <div className="text-sm text-slate-500">A sales representative will be assigned to your order shortly.</div>
+        </div>
+        )}
+
+        {/* 4. Order Status */}
+        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
+          <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Order Status</div>
+          <div className="space-y-1.5 text-xs text-slate-600">
+            <div className="flex items-center gap-2"><strong className="text-slate-500">Payment:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pStatus.cls}`}>{pStatus.label}</span></div>
+            <div className="flex items-center gap-2"><strong className="text-slate-500">Status:</strong> <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${fStatus.cls}`}>{fStatus.label}</span></div>
+            {order.status_description && <div className="mt-2 text-slate-500 text-xs">{order.status_description}</div>}
+          </div>
+        </div>
+
+        {/* 5. Items / Work Details */}
+        <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200">
+            <span className="font-semibold text-[#20364D] text-sm">{src === "Service" ? "Work Details" : "Order Items"}</span>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {items.length ? items.map((item, idx) => (
+              <div key={idx} className="px-4 py-3 flex items-center justify-between gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-[#20364D]">{item.name || item.title || `Item ${idx + 1}`}</div>
+                  <div className="text-xs text-slate-400">
+                    Qty {item.quantity || 1}
+                    {item.variant && ` · ${item.variant}`}
+                    {item.description && ` · ${item.description}`}
+                  </div>
+                </div>
+                <div className="font-semibold text-[#20364D]">{money(item.line_total || (Number(item.price || item.unit_price || 0) * Number(item.quantity || 1)))}</div>
+              </div>
+            )) : <div className="px-4 py-6 text-sm text-slate-400 text-center">No items</div>}
+          </div>
+        </div>
+
+        {/* Totals */}
+        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50 space-y-2">
+          <div className="flex items-center justify-between text-sm"><span className="text-slate-500">Subtotal</span><span className="font-medium text-[#20364D]">{money(order.subtotal_amount || order.subtotal)}</span></div>
+          <div className="flex items-center justify-between text-sm"><span className="text-slate-500">VAT</span><span className="font-medium text-[#20364D]">{money(order.vat_amount)}</span></div>
+          <div className="flex items-center justify-between text-base pt-2 border-t border-slate-200">
+            <span className="font-semibold text-[#20364D]">Total</span>
+            <span className="font-bold text-[#20364D]">{money(total)}</span>
+          </div>
+        </div>
+
+        {/* 6. Timeline */}
+        <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50" data-testid="order-timeline">
+          <div className="text-xs uppercase tracking-wide text-slate-400 mb-3 font-semibold">Timeline</div>
+          <div className="space-y-0">
+            {timeline.map((evt, idx) => (
+              <div key={idx} className="flex items-start gap-3 pb-3 last:pb-0">
+                <div className="flex flex-col items-center">
+                  {evt.done ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-slate-300" />
+                  )}
+                  {idx < timeline.length - 1 && <div className={`w-0.5 h-5 mt-0.5 ${evt.done ? "bg-green-300" : "bg-slate-200"}`} />}
+                </div>
+                <div className="flex-1 flex items-center justify-between min-h-[20px]">
+                  <span className={`text-sm ${evt.done ? "text-[#20364D] font-medium" : "text-slate-400"}`}>{evt.label}</span>
+                  {evt.date && <span className="text-xs text-slate-400">{evt.date}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Need help? */}
+        <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center bg-slate-50/30" data-testid="need-help-section">
+          <div className="text-sm font-semibold text-[#20364D] mb-1">Need help with this order?</div>
+          <div className="text-xs text-slate-500 mb-3">{salesName ? "Contact your assigned sales person for updates" : "A sales representative will be assigned shortly"}</div>
+          {salesPhone && (
+          <div className="flex items-center justify-center gap-2">
+            <a href={`tel:${salesPhone}`} className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-4 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors">
+              <Phone className="w-3 h-3" /> Call Sales
+            </a>
+          </div>
+          )}
         </div>
       </div>
-    </div>
+    </StandardDrawerShell>
   );
 }
 

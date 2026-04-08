@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { X, Package, User, Truck, Phone, Mail, MapPin, FileText, Calendar, DollarSign, Briefcase, Loader2 } from "lucide-react";
+import { Package, User, Truck, Phone, Mail, MapPin, FileText, Calendar, DollarSign, Briefcase, Loader2 } from "lucide-react";
 import api from "../../lib/api";
+import StandardDrawerShell from "../ui/StandardDrawerShell";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function shortDate(v) { return v ? String(v).slice(0, 10) : "-"; }
@@ -66,30 +67,18 @@ export default function SalesOrderDrawerV2({ order, onClose }) {
   const items = order.items || order.line_items || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid="sales-order-drawer">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-
-      {/* Drawer Panel */}
-      <div className="relative w-full max-w-2xl bg-white shadow-2xl overflow-y-auto" data-testid="drawer-panel">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-[#20364D]" data-testid="drawer-order-number">{order.order_number || "Order"}</h2>
-            <div className="flex items-center gap-2 mt-1">
-              <StatusBadge status={order.current_status || order.status} />
-              <span className="text-xs text-slate-400">{shortDate(order.created_at)}</span>
-            </div>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-slate-100" data-testid="close-drawer-btn">
-            <X className="w-5 h-5 text-slate-400" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-5">
-          {/* Customer */}
-          <Section icon={User} title="Customer">
+    <StandardDrawerShell
+      open={!!order}
+      onClose={onClose}
+      title={order.order_number || "Order"}
+      subtitle="Order Details"
+      width="2xl"
+      testId="sales-order-drawer"
+      badge={<StatusBadge status={order.current_status || order.status} />}
+    >
+      <div className="space-y-5">
+        {/* Customer */}
+        <Section icon={User} title="Customer">
             <div className="text-base font-bold text-[#20364D]">{order.customer_name || order.customer?.full_name || "-"}</div>
             {(order.customer_email || order.customer?.email) && (
               <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
@@ -224,7 +213,6 @@ export default function SalesOrderDrawerV2({ order, onClose }) {
             )}
           </Section>
         </div>
-      </div>
-    </div>
+    </StandardDrawerShell>
   );
 }
