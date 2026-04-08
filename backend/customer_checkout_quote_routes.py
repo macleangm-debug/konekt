@@ -5,6 +5,11 @@ from typing import Dict, Any, Optional, List
 import uuid
 import os
 import jwt
+from attribution_capture_service import (
+    extract_attribution_from_payload,
+    hydrate_affiliate_from_code,
+    build_attribution_block,
+)
 
 router = APIRouter(prefix="/api/customer/checkout-quote", tags=["Customer Checkout Quote"])
 
@@ -33,6 +38,10 @@ class CheckoutQuoteCreate(BaseModel):
     delivery_address: DeliveryAddress
     delivery_notes: Optional[str] = None
     source: str = "in_account_checkout"
+    affiliate_code: Optional[str] = None
+    campaign_id: Optional[str] = None
+    campaign_name: Optional[str] = None
+    campaign_discount: Optional[float] = None
 
 async def get_current_user(request: Request):
     """Extract user from token"""
@@ -68,6 +77,11 @@ async def create_checkout_quote(data: CheckoutQuoteCreate, request: Request):
     quote_number = generate_quote_number()
     
     # Build quote document
+    # Extract and hydrate affiliate attribution
+    attribution = extract_attribution_from_payload(data.model_dump())
+    attribution = await hydrate_affiliate_from_code(db, attribution)
+    attribution_block = build_attribution_block(attribution)
+
     quote_doc = {
         "id": quote_id,
         "quote_number": quote_number,
@@ -87,6 +101,7 @@ async def create_checkout_quote(data: CheckoutQuoteCreate, request: Request):
         "status": "pending",  # pending -> approved -> paid (converts to invoice)
         "source": data.source,
         "valid_until": (datetime.now(timezone.utc) + __import__("datetime").timedelta(days=30)).isoformat(),
+        **attribution_block,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }

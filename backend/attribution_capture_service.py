@@ -24,14 +24,21 @@ async def hydrate_affiliate_from_code(db, attribution: dict):
     if not affiliate_code:
         return attribution
 
+    # Check both promo_code and affiliate_code fields
     affiliate = await db.affiliates.find_one(
-        {"promo_code": affiliate_code, "status": "active"}
+        {"$or": [
+            {"promo_code": affiliate_code, "status": "active"},
+            {"affiliate_code": affiliate_code, "status": "active"},
+            {"promo_code": affiliate_code, "is_active": True},
+            {"affiliate_code": affiliate_code, "is_active": True},
+        ]}
     )
     if not affiliate:
         return attribution
 
     attribution["affiliate_email"] = affiliate.get("email")
-    attribution["affiliate_name"] = affiliate.get("name")
+    attribution["affiliate_name"] = affiliate.get("name") or affiliate.get("full_name")
+    attribution["affiliate_id"] = affiliate.get("id") or str(affiliate.get("_id", ""))
     return attribution
 
 
@@ -41,6 +48,7 @@ def build_attribution_block(attribution: dict):
         "affiliate_code": attribution.get("affiliate_code"),
         "affiliate_email": attribution.get("affiliate_email"),
         "affiliate_name": attribution.get("affiliate_name"),
+        "affiliate_id": attribution.get("affiliate_id"),
         "campaign_id": attribution.get("campaign_id"),
         "campaign_name": attribution.get("campaign_name"),
         "campaign_discount": float(attribution.get("campaign_discount", 0) or 0),

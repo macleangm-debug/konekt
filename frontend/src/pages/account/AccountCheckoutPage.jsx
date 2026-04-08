@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import { toast } from "sonner";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { combinePhone } from "../../utils/phoneUtils";
+import { getStoredAffiliateCode, getStoredCampaign } from "../../lib/attribution";
 
 const TANZANIA_REGIONS = [
   "Dar es Salaam", "Arusha", "Mwanza", "Dodoma", "Mbeya", "Morogoro", "Tanga", 
@@ -124,14 +125,20 @@ export default function AccountCheckoutPage() {
         }
       }
 
-      // Create Quote (not Invoice) with VAT
+      // Create Quote (not Invoice) with VAT + attribution
+      const affiliateCode = getStoredAffiliateCode();
+      const campaign = getStoredCampaign();
+
       const quotePayload = {
         items: cart.map((item) => ({
           name: item.name,
           sku: item.sku || item.id,
+          product_id: item.id || item.product_id || "",
           quantity: item.quantity || 1,
           unit_price: item.price || 0,
+          original_price: item.original_price || item.price || 0,
           subtotal: (item.price || 0) * (item.quantity || 1),
+          category_name: item.category || "",
         })),
         subtotal: subtotal,
         vat_percent: vatPercent,
@@ -143,6 +150,10 @@ export default function AccountCheckoutPage() {
         },
         delivery_notes: deliveryNotes,
         source: "in_account_checkout",
+        affiliate_code: affiliateCode || undefined,
+        campaign_id: campaign?.id || undefined,
+        campaign_name: campaign?.name || undefined,
+        campaign_discount: campaign?.discount || undefined,
       };
 
       const res = await api.post("/api/customer/checkout-quote", quotePayload);

@@ -11,6 +11,7 @@ import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { toast } from "sonner";
 import SalesAssistCtaCard from "../../components/marketplace/SalesAssistCtaCard";
 import SalesAssistModal from "../../components/marketplace/SalesAssistModal";
+import { getStoredAffiliateCode, getStoredCampaign } from "../../lib/attribution";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -315,13 +316,27 @@ export default function PublicCheckoutPage() {
 
     setSubmitting(true);
     try {
+      // Attach affiliate attribution from localStorage
+      const affiliateCode = getStoredAffiliateCode();
+      const campaign = getStoredCampaign();
+
       const payload = {
         ...form,
+        affiliate_code: affiliateCode || undefined,
+        campaign_id: campaign?.id || undefined,
+        campaign_name: campaign?.name || undefined,
+        campaign_discount: campaign?.discount || undefined,
         items: items.map(item => ({
           product_id: item.product_id, product_name: item.product_name,
           quantity: item.quantity, unit_price: item.unit_price,
+          original_price: item.original_price || item.unit_price,
           subtotal: item.subtotal, size: item.size, color: item.color,
           variant: item.variant, listing_type: item.listing_type || "product",
+          category_name: item.category || "",
+          promo_applied: item.promo_applied || false,
+          promo_id: item.promo_id || null,
+          promo_label: item.promo_label || null,
+          promo_discount: item.promo_discount || 0,
         })),
       };
       const res = await fetch(`${API_URL}/api/public/checkout`, {

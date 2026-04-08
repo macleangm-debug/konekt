@@ -11,6 +11,11 @@ from fastapi import APIRouter, HTTPException, File, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
 from services.checkout_totals_service import get_vat_percent, calculate_totals
 from services.product_promotion_enrichment import resolve_checkout_item_price
+from attribution_capture_service import (
+    extract_attribution_from_payload,
+    hydrate_affiliate_from_code,
+    build_attribution_block,
+)
 
 logger = logging.getLogger("public_commerce")
 
@@ -128,6 +133,11 @@ async def public_checkout(payload: dict):
         linked_user_id = existing_account.get("id")
         account_link_status = "linked"
 
+    # Extract and hydrate affiliate attribution
+    attribution = extract_attribution_from_payload(payload)
+    attribution = await hydrate_affiliate_from_code(db, attribution)
+    attribution_block = build_attribution_block(attribution)
+
     order_doc = {
         "id": order_id,
         "order_number": order_number,
@@ -163,6 +173,7 @@ async def public_checkout(payload: dict):
         "assigned_sales_id": None,
         "assigned_vendor_id": None,
         "approved_by": None,
+        **attribution_block,
         "status_history": [{
             "status": "awaiting_payment_proof",
             "note": "Guest order submitted via public checkout",

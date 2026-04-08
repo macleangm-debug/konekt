@@ -1,0 +1,85 @@
+{
+  "summary": "Affiliate Attribution E2E Testing - All tests passed. Backend: 14/14 tests passed covering guest checkout with valid/invalid/no affiliate code, account checkout quote with affiliate, DB verification of attribution fields. Frontend: localStorage persistence of affiliate_code through navigation, checkout page shows affiliate code persists, admin promotion engine shows active 5% promo, staff portal loads with StaffLayout after login.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_affiliate_attribution_e2e_v201.py",
+    "/app/test_reports/pytest/pytest_results_affiliate_v201.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_affiliate_attribution_e2e_v201.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (portal: /admin)",
+    "customer": "demo.customer@konekt.com / Demo123! (portal: /account)",
+    "staff": "neema.sales@konekt.demo / Sales123! (portal: /staff)"
+  },
+  "seed_data_creation": "None - used existing TESTAFFI affiliate (email: test.affiliate@example.com, name: Test Affiliate)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Affiliate Attribution E2E is complete and verified. Key points: 1) TESTAFFI affiliate exists in DB with promo_code=TESTAFFI, affiliate_code=TESTAFFI, email=test.affiliate@example.com, name=Test Affiliate, status=active. 2) POST /api/public/checkout with affiliate_code=TESTAFFI creates order with affiliate_code, affiliate_email, affiliate_name, affiliate_id, attribution_captured_at fields populated. 3) POST /api/public/checkout WITHOUT affiliate_code creates order with affiliate_code=None. 4) POST /api/public/checkout with invalid affiliate_code stores code but affiliate_email=None (not hydrated). 5) POST /api/customer/checkout-quote with affiliate_code stores attribution on quote in quotes_v2 collection. 6) Frontend: visiting /marketplace?ref=TESTAFFI stores 'TESTAFFI' in localStorage as 'affiliate_code'. 7) affiliate_code persists through navigation to PDP and checkout. 8) Admin promotion engine at /admin/promotion-engine shows active 'Launch Special 5% Off' promotion. 9) Staff portal at /staff loads StaffLayout with Sales Command Center after login.",
+  "features_tested": {
+    "backend_guest_checkout_with_valid_affiliate": {
+      "POST /api/public/checkout with affiliate_code=TESTAFFI": "PASS",
+      "Order has affiliate_code=TESTAFFI": "PASS",
+      "Order has affiliate_email=test.affiliate@example.com": "PASS",
+      "Order has affiliate_name=Test Affiliate": "PASS",
+      "Order has affiliate_id (not None)": "PASS",
+      "Order has attribution_captured_at (not None)": "PASS"
+    },
+    "backend_guest_checkout_without_affiliate": {
+      "POST /api/public/checkout without affiliate_code": "PASS",
+      "Order has affiliate_code=None": "PASS"
+    },
+    "backend_guest_checkout_with_invalid_affiliate": {
+      "POST /api/public/checkout with invalid affiliate_code": "PASS",
+      "Order has affiliate_code stored": "PASS",
+      "Order has affiliate_email=None (not hydrated)": "PASS"
+    },
+    "backend_account_checkout_quote_with_affiliate": {
+      "POST /api/customer/checkout-quote with affiliate_code=TESTAFFI": "PASS",
+      "Quote has affiliate_code=TESTAFFI": "PASS",
+      "Quote has affiliate_email=test.affiliate@example.com": "PASS",
+      "Quote has affiliate_name=Test Affiliate": "PASS",
+      "Quote has affiliate_id (not None)": "PASS",
+      "Quote has attribution_captured_at (not None)": "PASS"
+    },
+    "backend_promotion_enrichment": {
+      "Products with selling_price>0 have promotion field": "PASS",
+      "Promotion engine active endpoint returns promotions": "PASS"
+    },
+    "frontend_affiliate_localStorage_persistence": {
+      "Visit /marketplace?ref=TESTAFFI stores affiliate_code": "PASS",
+      "affiliate_code persists after PDP navigation": "PASS",
+      "affiliate_code persists at checkout page": "PASS"
+    },
+    "frontend_admin_promotion_engine": {
+      "Page loads at /admin/promotion-engine": "PASS",
+      "Active 5% promotion displayed": "PASS",
+      "Create Promotion button visible": "PASS"
+    },
+    "frontend_staff_portal": {
+      "Staff login at /staff-login": "PASS",
+      "Redirects to /staff after login": "PASS",
+      "StaffLayout with Sales Command Center": "PASS",
+      "Sidebar with Dashboard, Orders, Customers, Promotions, Earnings": "PASS"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
