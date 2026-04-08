@@ -1,37 +1,32 @@
 # Test Credentials
 
-## Customer
-- Email: `demo.customer@konekt.com`
-- Password: `Demo123!`
-- Portal: `/account`
-
-## Admin
+## Admin Portal
 - Email: `admin@konekt.co.tz`
 - Password: `KnktcKk_L-hw1wSyquvd!`
+- Login: `/staff-login` or `POST /api/admin/auth/login`
 - Portal: `/admin`
 
-## Vendor/Partner
+## Customer Portal
+- Email: `demo.customer@konekt.com`
+- Password: `Demo123!`
+- Login: `/login` or `POST /api/auth/login`
+- Portal: `/account`
+
+## Partner Portal
 - Email: `demo.partner@konekt.com`
 - Password: `Partner123!`
+- Login: `/login` or `POST /api/partner-auth/login`
 - Portal: `/partner`
-- Auth endpoint: `POST /api/partner-auth/login`
+- Type: Distributor (Demo Supplier Co)
 
-## Sales
+## Staff/Sales
 - Email: `neema.sales@konekt.demo`
 - Password: `Sales123!`
-- Portal: `/sales`
-- Team: Promotions
+- Login: `/staff-login`
+- Portal: `/staff`
 
-- Email: `brian.sales@konekt.demo`
-- Password: `Sales123!`
-- Team: Services
-
-- Email: `janeth.sales@konekt.demo`
-- Password: `Sales123!`
-- Team: Products
-
-## Test Activated Customer (created via invite)
-- Email: `testcust@example.com`
-- Password: `TestPass123!`
+## Test Customer Account
+- Email: `amani.wholesale@example.com`
+- Password: `Test123!`
 - Portal: `/account`
 - Created by: neema.sales@konekt.demo

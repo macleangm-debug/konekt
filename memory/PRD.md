@@ -1,442 +1,96 @@
 # Konekt B2B E-Commerce Platform — PRD
 
-## Product Vision
-B2B e-commerce platform for Konekt (Tanzania) with role-based portals (Admin, Customer, Vendor, Sales), CRM pipeline, marketplace, quoting, ordering, and fulfillment workflows.
+## Original Problem Statement
+Build a comprehensive B2B e-commerce platform for business procurement in Tanzania. The platform connects customers with vendors/partners through a managed marketplace, with features including product catalog management, order processing, payment verification, fulfillment tracking, and a dynamic margin engine.
 
 ## Core Architecture
-- **Frontend**: React (CRA), Tailwind CSS, Shadcn/UI
-- **Backend**: FastAPI (Python), MongoDB (Motor async driver)
-- **Auth**: JWT-based with role-based access
+- **Frontend**: React 18 + Tailwind CSS + Shadcn UI
+- **Backend**: FastAPI (Python) + MongoDB
 - **Payments**: Stripe sandbox integration
-
----
-
-## Completed Work
-
-### Phases 1-21 — Core through Portfolio + Reactivation
-Full platform: CRM, Orders, Quotes, Invoices, Vendor Margin, Notifications, KPIs, Stripe, Business Settings, Sales/Vendor Performance, Governance, Client Ownership, Portfolio + Reactivation.
-
-### Phase 22 — Stock-First Vendor Assignment Engine (02 Apr 2026)
-- Type-aware dispatcher: Product (stock-first), Promo (capability), Service (capability + performance)
-- Atomic stock reservation via MongoDB findOneAndUpdate (prevents double-booking)
-- Assignment decision audit trail with stored reasoning (not reconstructed)
-- Admin endpoints: candidates preview, explain, decisions history
-
-### Phase 23 — Dormant Client Alerts + Assignment Transparency UI (02 Apr 2026)
-- Company-level dormancy rollup (activity across ALL contacts)
-- Admin + staff (role-scoped) endpoints with summary, alerts, reactivation
-- Actionable page: Open Client, Quote, Follow-up, Reactivate, Reassign
-- Assignment reasoning in admin Orders drawer + full history page
-
-### Phase 24 — Unified Vendor Onboarding + Catalog Workspace (03 Apr 2026)
-**Country-Aware Vendor Onboarding:**
-- Market context service: 6 markets (TZ/KE/UG/RW/NG/ZA) with phone prefix, currency, support info
-- 5-step onboarding form: Market → Details → Role → Capabilities → Review & Invite
-- Vendor role classification: product_vendor, promo_vendor, service_vendor, hybrid_vendor
-- Marketplace permission enforcement: only product/promo/hybrid vendors can publish items
-- Invite token flow: generate → validate → activate (email MOCKED until Resend configured)
-
-**Unified Catalog Workspace:**
-- Tabbed overview: Products, Services, Taxonomy, Vendor Supply, Imports
-- Catalog stats endpoint with aggregated counts
-
-**New API Endpoints:**
-- `GET /api/admin/vendor-onboarding/markets`
-- `GET /api/admin/vendor-onboarding/market-context/{country_code}`
-- `GET /api/admin/vendor-onboarding/role-preview?capability_type=X`
-- `POST /api/admin/vendor-onboarding`
-- `GET /api/admin/vendor-onboarding/invites`
-- `GET /api/vendor-invite/validate/{token}`
-- `POST /api/vendor-invite/activate`
-- `GET /api/admin/catalog-workspace/stats`
-
-**New Frontend Routes:**
-- `/admin/vendor-onboarding` — Multi-step vendor onboarding
-- `/admin/catalog` — Unified catalog workspace
-
-### Phase 25 — Product Upload, Variants & Bulk Import (03 Apr 2026)
-**Taxonomy-driven Product Upload:**
-- Single product upload with structural separation: product definition + vendor supply + variants
-- All submissions land as `pending_review` — no live catalog items until admin approval
-- Backend capability enforcement: service-only vendors blocked from product uploads
-- Taxonomy filtering by vendor capabilities (group_ids/category_ids from vendor_capabilities)
-- Image URL validation (max 10, primary image rule, valid URL format)
-
-**Variant System:**
-- Size/Color/Model dimensions per variant
-- Per-variant SKU, quantity, optional price override, optional image URL
-
-**2-Step Bulk Import (CSV/XLS/XLSX):**
-- Step 1 (validate): Parse file → validate taxonomy → store validation session server-side
-- Step 2 (confirm): Reference stored session → persist only valid rows as pending_review
-- Prevents mismatch between preview and actual import
-- Error highlighting per row with taxonomy mismatch detection
-
-**Admin Vendor Supply Review:**
-- View all vendor product submissions (pending/approved/rejected filter)
-- Expand to see product details + variants + supply data
-- Approve/Reject/Request Changes with notes
-- View vendor import jobs with status tracking
-
-**New API Endpoints:**
-- `POST /api/vendor/products/upload` — Single product submission
-- `GET /api/vendor/products/taxonomy` — Capability-filtered taxonomy
-- `GET /api/vendor/products/my-submissions` — Vendor's own submissions
-- `GET /api/vendor/products/my-submissions/{id}` — Specific submission
-- `POST /api/vendor/products/import/validate` — Bulk import step 1
-- `POST /api/vendor/products/import/{job_id}/confirm` — Bulk import step 2
-- `GET /api/vendor/products/import/jobs` — Import job history
-- `GET /api/vendor/products/import/jobs/{id}` — Import job detail
-- `GET /api/admin/vendor-supply/submissions` — Admin list submissions
-- `GET /api/admin/vendor-supply/submissions/{id}` — Admin get submission
-- `POST /api/admin/vendor-supply/submissions/{id}/review` — Admin approve/reject
-- `GET /api/admin/vendor-supply/import-jobs` — Admin list import jobs
-- `GET /api/admin/vendor-supply/import-jobs/{id}` — Admin import job detail
-
-**New Frontend Routes:**
-- `/partner/product-upload` — Vendor Product Upload Page (5 sections)
-- `/partner/bulk-import` — Vendor Bulk Import Page (3-step flow)
-- `/admin/vendor-supply-review` — Admin Vendor Supply Review Page
-
-### Phase 26 — Marketplace Publish + Admin Config Wiring + Sidebar Alignment (03 Apr 2026)
-**Approved Product → Marketplace Publishing:**
-- When admin approves a vendor submission, a canonical product record is created/updated in `products` collection
-- Idempotent: re-approval updates existing product, no duplicate marketplace entries
-- Canonical product visible in: marketplace search, account marketplace, product detail pages
-- Product detail API hides vendor identity (vendor_id, vendor_name, vendor_product_code stripped)
-- Product detail page with breadcrumb navigation (Marketplace > Category > Product)
-- ProductCardCompact updated with "Detail" link to standalone product detail page
-- Support for `primary_image` field alongside existing `image_url`
-
-**Business Settings Wiring:**
-- `business_settings_resolver_service.py` — provides identity/bank/currency/contact/footer blocks
-- Statement of Account print header reads company name, TIN, BRN, address from business settings
-- Business settings already consumed by: Quote Preview, Invoice Preview, Statement Print
-
-**Sidebar Alignment:**
-- Admin sidebar: "Supply Review" added under Catalog section
-- Customer sidebar: "Services" link added between Marketplace and My Orders
-- Customer sidebar: "My Statement" icon changed from Dashboard to ClipboardList
-
-**New API Endpoint:**
-- `GET /api/marketplace/products/{product_id}` — Public product detail (vendor identity hidden)
-
-### Phase 27 — Public Marketplace Routing Fix (06 Apr 2026)
-**Bug Fix: Public marketplace CTAs were routing into /account/* flow.**
-
-Root Cause: `MarketplaceBrowsePageContent.jsx` "Order" button linked to `/account/marketplace/{id}` and was only visible to logged-in users. `MarketplaceListingDetailContent.jsx` had dead "Add to Cart" and "Request a Quote" buttons with no onClick handlers.
-
-**Fix — Split ordering flows:**
-- Public marketplace: "Add to Cart" → localStorage cart → `/cart` → `/checkout` → `/payment-proof`
-- Account marketplace: "Add to Cart" → server cart → `/account/checkout`
-
-### Phase 28 — Guest Commerce Flow (06 Apr 2026)
-**Full guest cart + checkout + payment proof + account detection & linking.**
-
-**Backend (routes/public_commerce_routes.py):**
-- `POST /api/public/checkout` — creates real order in `orders` collection:
-  - `is_guest_order: true`, `payment_status: pending_submission`, `order_status: awaiting_payment_proof`
-  - Detects existing account by email/phone → auto-links via `linked_user_id`
-  - Returns `order_number`, `bank_details`, and `account_info` (login vs create_account CTA)
-  - Invites new users via `guest_checkout_activation_service`
-- `POST /api/public/payment-proof` — creates `payment_proof_submissions` record:
-  - `is_guest_submission: true`, validates `order_number + email` match
-  - Updates order to `pending_review` / `awaiting_payment_verification`
-  - Appears in same admin payment queue as account proofs
-- `GET /api/public/order-status/{order_number}` — public order tracking
-
-**Frontend:**
-- Wrapped `PublicSiteLayout` with `CartProvider` (localStorage-based)
-- Public marketplace CTAs: "Add to Cart" (all products, no login needed)
-- Cart icon with badge in public navbar
-- `/cart` — multi-item cart with quantity controls, remove, totals
-- `/checkout` — contact form (name, company, email, phone, address) + order summary
-- `/payment-proof` — payment proof form with order/email verification
-- Success pages with account creation CTA at peak motivation moment
-
-**Pipeline:**
-- Guest orders enter same `orders` collection with same `order_number` format
-- Payment proofs land in admin payment verification queue
-- Sales queries filter `payment_status: verified` — no premature leakage
-- After admin verifies payment → order enters sales → vendor assignment
-
----
-
-- **Canonical Products:** Approved vendor submissions materialize into the `products` collection — the single source of truth for marketplace, cart, and order flows.
-- **Vendor Role Policy**: product/promo vendors → marketplace access. Service vendors → task-only.
-- **Country-Aware Defaults**: Phone prefix, currency, tax labels adapt to selected market.
-- **Stock-First Assignment**: Product orders prioritize vendors with pre-allocated stock.
-- **Stored Reasoning**: Assignment decisions persist engine/candidates/reason.
-- **Company-Level Dormancy**: Corporate dormancy evaluated by rolling up all contacts' activity.
-- **Invite Token Flow**: MOCKED email → vendor creates password via activation URL.
-- **Business Settings Resolver**: Single source of truth for company identity across quotes, invoices, statements, footer/contact blocks.
-
-### Phase 29 — Unified Notification System (06 Apr 2026)
-**DB-backed notification engine with Resend email integration (dry-run until API key configured).**
-
-**Backend:**
-- `NotificationService` with dispatch pipeline: trigger check → template render → send/dry-run → log
-- 4 event triggers: `customer_order_received`, `customer_payment_proof_received`, `customer_payment_verified`, `admin_payment_proof_submitted`
-- DB collections: `notification_settings`, `notification_provider`, `notification_templates`, `notification_logs`
-- Admin CRUD routes: settings, trigger toggles, provider config, template management, test dispatch, logs
-- Hooks injected into: `public_commerce_routes.py` (checkout, payment proof), `payment_proof_routes.py` (approval)
-- All triggers default to OFF. Dry-run mode logs dispatch without sending.
-
-**Frontend:**
-- `NotificationSettingsPage` at `/admin/notification-settings`
-- Tabs: Triggers (toggle on/off), Email Provider (sender config), Test Dispatch (send test emails)
-- Expandable logs section showing recent dispatch attempts with status badges
-- Wired into admin sidebar under Configuration section
-
-**New API Endpoints:**
-- `GET /api/admin/notifications/settings`
-- `POST /api/admin/notifications/settings/seed`
-- `PUT /api/admin/notifications/settings/trigger`
-- `PUT /api/admin/notifications/settings/provider`
-- `GET/PUT /api/admin/notifications/templates`
-- `POST /api/admin/notifications/test`
-- `GET /api/admin/notifications/logs`
-
-### Phase 30 — Payment Flow UX Polish (06 Apr 2026)
-**Polished the unified 3-stage /checkout page (Pack 1):**
-
-- Bank Details UI: Rich visual block with bank name, account name, account number, branch, SWIFT, currency from canonical `/api/public/payment-info`
-- Copy buttons on all bank detail fields + payment reference
-- Highlighted payment reference block with order number
-- Payment instructions + "what happens next" messaging
-- Admin verification note ("payment verified before processing")
-- Drag-and-drop file upload for payment proof (images: JPG/PNG/WebP, PDF, max 10MB)
-- File preview (image thumbnails, PDF icon), upload progress bar, error/retry states
-- New backend endpoint: `POST /api/public/upload-proof-file` for file uploads
-- Post-proof account CTA: "Log in" (if account exists) or "Create account" (if not) — shown ONLY after successful proof submission
-- Step bar labels: Cart → Details → Payment & Proof
-- Order summary stays visible at all stages
-- Mobile-first stacked layout
-
-### Phase 31 — Landing Page Upgrade (06 Apr 2026)
-**High-converting landing page (Pack 2):**
-
-Sections (in order):
-1. Hero: "Order Business Supplies, Printing & Services — Fast, Verified, and Fully Managed" + Browse Products / Request a Quote CTAs
-2. How It Works: 4 steps (Browse or Request → Place Order & Pay → We Verify & Assign → Delivery & Tracking)
-3. Trust Signals: Verified Vendors, Payment Verification, Dedicated Support
-4. Featured Categories: Office Equipment, Office Stationery, Promotional Materials, Business Services (linked to marketplace)
-5. Testimonials: 3 business quotes
-6. Payment Trust Block: "Your payment is verified before any order is processed"
-7. CTA Section: "Ready to Place Your Order?" with dual CTAs
-
-### Phase 32 — Footer + Content Pages (06 Apr 2026)
-**Full footer structure and legal/help content (Pack 3):**
-
-- Footer enhanced to 5 columns: Brand, Marketplace, Company, Business, Contact
-- Company column: About Konekt, Help Center, Privacy Policy, Terms of Service, Contact Us
-- Bottom bar: Privacy + Terms quick links
-- `/privacy` — Privacy Policy page
-- `/terms` — Terms of Service page
-- `/help` — Public Help Center with FAQ accordion (Ordering, Payment, Delivery, Account sections)
-- `/about` — Already existed, validated
-
-### Phase 33 — Marketplace UX Pack (06 Apr 2026)
-**Vendor language removal + Mobile filters + VAT parity:**
-
-**A. Vendor Language Removal (Global Sweep)**
-- Replaced ALL customer-facing vendor/supplier terminology with safe alternatives
-- Pages cleaned: Landing page, Privacy Policy, Terms of Service, Help Center, Product Detail, Testimonials, Expansion Landing
-- Safe replacements: "supply network", "fulfillment network", "fulfillment partners", "verified sourcing"
-- Zero vendor language remaining in any public page/component
-
-**B. Mobile Filter Drawer**
-- Desktop (lg+): Keeps existing inline 5-column filter rail (search, group, category, subcategory, sort)
-- Mobile (<lg): Horizontal bar with [Filter] + [Sort] buttons + result count
-- Bottom sheet drawer opens on Filter tap with Group/Category/Subcategory selects
-- Sort dropdown on Sort tap
-- Selected filter chips visible on both viewports with "Clear all" button
-- No route changes
-
-**C. VAT Parity (Canonical Pricing)**
-- Created `checkout_totals_service.py` — single source of truth for subtotal + VAT + total
-- Guest checkout now applies 18% VAT (same as account checkout)
-- `GET /api/public/payment-info` now returns `vat_percent`
-- `POST /api/public/checkout` response now includes `subtotal`, `vat_percent`, `vat_amount`, `total`
-- Account checkout reads VAT from same canonical source (`/api/public/payment-info`)
-- OrderSummary displays: Subtotal, VAT (18%), Total on all stages
-
-### Phase 34 — Public Pages Redesign + Track Order Verification (07 Apr 2026)
-**Redesigned 3 public-facing pages to match landing page aesthetic. Verified Track Order endpoint wiring.**
-
-- **Services Page** (`/services`): Dark navy hero with "Professional Business Services — Managed by Konekt", 6 category highlight cards, browse services with tabs, trust signals section, 4-step "How Service Requests Work", bottom CTA.
-- **Expansion Page** (`/launch-country`): "Africa Expansion Program" badge hero with stats cards, "Two Ways to Participate" section, tabbed forms (Business Interest / Partner Application), 4 Partner Qualification criteria cards, bottom CTA.
-- **Earn/Affiliate Page** (`/earn`): "Affiliate Program" badge hero, 3-step "How It Works", 4 benefit cards, "Who Is This For?" checklist, program guidelines, bottom CTA. Added PublicNavbarV2 + PremiumFooterV2.
-- **Track Order Page** (`/track-order`): Verified wiring to `/api/orders/track/{order_id}` backend endpoint. Order Number + Email verification form working.
-- All pages use consistent dark navy hero (#0E1A2B), gold accent (#D4A843), and matching section layout.
-- Zero vendor/marketplace/fulfillment language across all pages.
-
-### Phase 35 — Product Detail Page (PDP) Conversion Redesign (07 Apr 2026)
-**Completely redesigned the PDP for conversion optimization with bank transfer focus.**
-
-- **Data Mapping Fixed:** Price now uses `base_price` (was showing TZS 0), image loads from `image_url` (was broken placeholder).
-- **Customization Options:** Size selector pills (S/M/L/XL/XXL), color swatches with hex display + selection checkmark, branding method pills (Screen Print/DTG/Embroidery).
-- **Conversion Elements:** Min order quantity display, dynamic subtotal calculation, gold "Add to Cart" CTA, "Bank Transfer Payment" info block.
-- **Trust Signals:** "Managed Delivery" + "Quality Assured" (replaced "Verified sourcing" — vendor language removed).
-- **Business CTA:** Dark navy section with "Request Pricing" and "Talk to Sales" for bulk/B2B buyers.
-- **Unified Component:** `MarketplaceListingDetailPage.jsx` now re-exports `MarketplaceListingDetailContent` — both routes render same component.
-- Mobile responsive verified.
-
-### Phase 36 — Guest Checkout Bugfixes + UX Improvements (07 Apr 2026)
-**Fixed two critical guest checkout bugs and added UX improvements.**
-
-- **Bug Fix 1 (CTA URL):** Guest "Create Account" CTA now goes to `/register?token=...&source=guest_checkout&email=...` instead of `/activate-account?token=...`. Updated backend URL builder and ALL frontend CTA text from "Activate Account" to "Create Account to Track Order" (5 files).
-- **Bug Fix 2 (Payment Queue Wiring):** Guest payment proof submission (`POST /api/public/payment-proof`) now writes a canonical record to `db.payments` with `source=guest_payment_proof`, `status=pending`, `review_status=under_review`. Admin payment queue now naturally sees guest proofs.
-- **PDP Share/Save:** Added Share button (clipboard/native share) and Save button (login redirect with toast) to product detail page.
-- **Logo Size:** Navbar logo increased from `md` to `lg` (56px).
-- **Login UX:** Session redirect notice shows "You're already signed in" instead of raw spinner when user has valid token.
-
-### Phase 37 — Marketplace Boundary, Sales Assist & Service Quote Margin (07 Apr 2026)
-**Implemented marketplace boundary enforcement, Sales Assist CTA system, and service quote margin engine.**
-
-- **Boundary Enforcement:** Fixed 5 leaky public CTAs that routed directly to `/account/*`. Now all public links go through `/login`, `/register`, or canonical public routes.
-  - `ProductCardCompact` → `/marketplace/{id}` (was `/account/marketplace/{id}`)
-  - `PremiumFooterV2` + `FinalCtaSection` → `/earn` (was `/account/referrals`)
-  - `ServicesLandingPageV2` → `/request-quote` (was `/account/services`)
-  - `ServicesDiscoveryPage` → `/login` (was `/account/service-requests`)
-- **Sales Assist CTA System:** `SalesAssistCtaCard` (amber card with badge), `SalesAssistModal` (form with product pre-fill), `StickyMobileSalesAssistBar` (mobile sticky). Placed on PDP, Cart, and Checkout.
-- **Backend:** `POST /api/public/sales-assist` creates sales assist request in `db.sales_assist_requests`.
-- **Service Quote Margin:** `POST /api/admin/service-quote-margin/preview` returns internal breakdown (`base_tax_inclusive_cost`, `margin_percent`, `margin_value`, `final_quote_amount`) and customer-facing view (`quoted_amount` only). Customer NEVER sees margin.
-
-### Phase 38 — Register Page V2 + Auth Boundary Final (07 Apr 2026)
-**Unified /register with modern split-panel design matching /login. Final auth boundary verification.**
-
-- **Register Page V2:** New `RegisterPageV2.jsx` with same branded split-panel layout as LoginPageV2 (dark branding left + white form right). Supports `source=guest_checkout` for customized heading ("Track Your Order") and `email=` URL param for pre-fill.
-- **Form fields:** Full Name*, Email*, Phone, Company, Password* with eye toggle.
-- **Session handling:** Validates existing session on mount, shows "Already signed in" redirect notice.
-- **All prior fixes confirmed working:** Boundary enforcement (0 `/account/*` leaks), guest CTA ("Create Account to Track Order"), logo size `lg`, Sales Assist CTA.
-
-### Phase 39 — UI Standardization Pack (07 Apr 2026)
-**Global phone input standardization + logo sizing + auth page parity enforcement.**
-
-- **PhoneNumberField canonical usage:** Replaced ALL raw phone inputs (`type="tel"` and text inputs with phone placeholders) across 30+ files with the canonical `PhoneNumberField` component (country prefix dropdown + number input).
-- **Phone utility functions:** `splitPhone()` parses combined phone into prefix+number, `combinePhone()` joins them for submission. Located at `/app/frontend/src/utils/phoneUtils.js`.
-- **Canonical phone payload rule:** All forms store `phone_prefix` + `phone` (number only) separately in state. On submit, `combinePhone(prefix, number)` produces one canonical string for the backend.
-- **Auth page parity:** Login and Register pages use identical split-panel layout, same logo sizing, same typography hierarchy, same mobile behavior.
-- **BrandLogo sizing:** Updated size mappings (xs→h-7, sm→h-9, md→h-11, lg→h-14/h-16, xl→h-16/h-20).
-- **Files updated:** PhoneNumberField.jsx, BrandLogo.jsx, LoginPageV2.jsx, RegisterPageV2.jsx, CheckoutPanel.jsx, AccountCheckoutPage.jsx, SoftLeadCaptureModal.jsx, SalesAssistModal.jsx, AffiliateApplyPage.jsx, CreativeServiceDetailPage.jsx, CreativeServiceBriefPage.jsx, ServiceQuoteRequestFormV2.jsx, AdminAffiliateManagerSimple.jsx, PartnerSmartForm.jsx, MyAccountProfilePage.jsx, MyAccountPageV2.jsx, CartDrawerCompleteFlow.jsx, CheckoutPageV2.jsx, CheckoutPage.jsx, ExpansionPremiumPage.jsx, ExpansionLandingPageV2.jsx, CountryLaunchPage.jsx, PaymentSelectionPage.jsx, AddressesPage.jsx, ServiceRequestPage.jsx, InvoicesPage.jsx, BusinessSettingsPage.jsx, CustomersPage.jsx, CustomersPageV2.jsx, CRMPage.js, CRMPageV2.jsx, QuotesPage.jsx, QuotesPageNew.jsx, AdminQuotes.js, AdminLeads.js, AdminUsers.js, VendorListPage.jsx, PartnerEcosystemSmart.jsx, SuppliersPage.jsx, PartnersPage.jsx, CompanySettingsPage.jsx, WarehousesPage.jsx, EquipmentMaintenance.js, DesignBriefForm.js, AffiliateRegisterPage.jsx, InvoiceBrandingSettings.jsx, Auth.js, Cart.js.
-- **Only intentional exclusion:** `RawMaterialsPage.jsx` "Phone or email" hybrid field (not purely phone).
-
-### Phase 40 — Brand Logo System + UI Polish (07 Apr 2026)
-**Replaced PNG-based logo with inline SVG "Connected Triad" brand identity system. Applied global UI polish.**
-
-**Logo System:**
-- **Connected Triad SVG:** 1 gold accent node (#D4A843) + 2 dark blue nodes (#20364D), asymmetric triangle, thick connectors (sw ≥ 2px), subtle curve on right connector
-- **BrandLogo component rewrite:** Fully inline SVG rendering (no PNG dependencies). Supports `variant` (dark/light), `size` (xs→24px, sm→32px, md→40px, lg→52px, xl→64px), `type` (full/secondary/icon)
-- **Usage rules enforced in code:**
-  - Navbar → `type="secondary"` (icon + Konekt, no tagline), `size="lg"`
-  - Auth pages → `type="full"` (icon + Konekt + "Business Procurement Simplified"), `size="xl"`
-  - Footer → `type="secondary"`, `variant="light"`
-  - Favicon → SVG icon only (`/public/favicon.svg`)
-- **33 consumer files automatically updated** via the shared BrandLogo component (no per-file changes needed)
-- **Auth page branding panels:** LoginPageV2, RegisterPageV2, StaffLoginPage all use `type="full"`
-
-**UI Polish:**
-- **Navbar:** `bg-white/80 backdrop-blur-md border-slate-200` (both Navbar.js and PublicNavbarV2.jsx)
-- **PDP CTAs:** `hover:brightness-110` on gold Add to Cart and Request Quote buttons
-- **Global CSS micro-interactions:** Focus rings (`box-shadow: 0 0 0 2px rgba(32,54,77,0.15)`), `.btn-gold-cta` hover brightness, `.animate-fade-up` entrance animation
-- **Bug fix:** Products.js `toLocaleString` crash when `base_price` is undefined — added `(product.base_price || 0)` guard
-
-### Phase 42 — Dynamic Margin Engine + Admin Nav Cleanup (07 Apr 2026)
-**Hierarchical margin resolution, admin nav consolidation, Phase 41 UX polish.**
-
-**Phase 41 Polish:**
-- Track Order: stronger order code label (text-base font-semibold, border-2), "Use the order code shown after checkout" helper, "Verify with your email or phone number" grouped guidance
-- Order Confirmation: "You'll need this order code to track your order as a guest" amber reminder
-- Admin Distribution: blue info banner explaining Fixed vs Flexible margins, red "Over-allocated" warning with detailed message when split exceeds cap
-
-**Admin Navigation Cleanup:**
-- Consolidated `adminNavigation.js` from 120+ items to ~30 canonical items
-- Removed duplicates: Commission Engine vs Commission Rules, Markup Rules vs Margin & Distribution
-- Growth section consolidated from 10 items to 3: Affiliates, Margin & Distribution, Promotions
-- Added "Margin & Distribution" link to both `adminNavigation.js` and `AdminLayout.js` navItems
-
-**Dynamic Margin Engine:**
-- `services/margin_engine.py`: `resolve_margin_rule()` with hierarchy (product > group > global), `resolve_pricing()` returns canonical pricing object
-- Extended `margin_engine_routes.py`: `distributable_margin_pct` field added to margin rules schema, `POST /resolve-distribution` endpoint
-- Canonical pricing object: `base_price`, `effective_margin_pct/value`, `effective_distributable_margin_pct/value`, `sales/affiliate/discount_share_pct`, `sales/affiliate/discount_amount`, `final_price`, `rule_scope`, `rule_label`
-- Admin UI: Margin Override Rules table with CRUD (add/delete rules with scope, label, margin %, distributable %)
-- Verified: group override (15%/5%) correctly beats global (20%/10%) in resolution
-
-## Backlog
-
-### P1 — Upcoming
-- Sales commission visibility: dashboard with TZS per order, pending vs paid, monthly earnings
-- End-to-end bank transfer payment E2E test
-- Deep screen-by-screen UI audit
-
-### P2 — Future
-- Twilio WhatsApp/SMS notifications (blocked on keys)
-- Affiliate attribution persistence E2E
+- **Auth**: JWT-based (Admin, Customer, Partner, Staff portals)
+
+## Key Business Rules
+1. **Pricing Engine Lock**: Vendor Price + Konekt Margin = Base Price. Base Price + Distribution Layer = Final Price.
+2. **Distribution Split**: Distributable margin is split: Affiliate (40%), Sales (30%), Discount (30%) — of the distributable pool.
+3. **Tiered Price Bands**: Margin rates vary by vendor price range (0-50k=30%, 50k-200k=25%, 200k-1M=20%, 1M+=15%).
+4. **Override Hierarchy**: Product > Group > Tier > Global
+5. **Data Encapsulation**: Customers never see margin breakdown. Vendors never see customer identity or Konekt margins.
+6. **Commission Independence**: Commission status (expected, pending_payout, paid) is separate from order status.
+7. **TZS-First**: All sales-facing amounts display TZS amount first, percentage as secondary context.
+
+## Implemented Features
+
+### Phase 40: UI Polish & Brand
+- Global SVG Brand Logo (Connected Triad)
+- Premium Navbar, PDP, Auth page micro-interactions
+- Standard PhoneNumberField across all forms
+
+### Phase 41: Mobile UX + Track Order
+- Global Mobile BottomSheetSelect (replaces native dropdowns on mobile)
+- Track Order guest-friendly redesign with OrderCodeCard
+- Order Confirmation enhancement
+
+### Phase 42: Admin Navigation + Dynamic Margin Engine
+- Admin Navigation Audit — removed duplicate domain pages
+- Dynamic Margin Engine:
+  - Fixed Konekt Margin + Flexible Distributable Pool
+  - Product > Group > Global override hierarchy
+  - Distribution split CRUD (affiliate/sales/discount percentages)
+
+### Phase 43: Sales Commission Dashboard + Affiliate Dashboard (Current)
+- **Sales Commission Dashboard** (`/staff/commission-dashboard`):
+  - 4 KPI cards: Total Earned, Expected, Pending Payout, Paid Out (TZS-first)
+  - Per-order commission table with independent commission/order status
+  - Monthly earnings breakdown (earned, pending, paid, deal count)
+  - "How Commission Works" section with 3 rules
+- **Affiliate Dashboard** (`/partner/affiliate-dashboard`):
+  - 4 KPI cards: Total Earned, Pending Payout, Paid Out, Referrals
+  - Promo Code + Referral Link with Copy buttons
+  - Products & Promotions table (Sell Price, You Earn, Customer Saves)
+  - Recent Earnings table with status badges
+- **Margin Strategy Source of Truth**:
+  - 4 tiered price bands seeded (0-50k, 50k-200k, 200k-1M, 1M+)
+  - Distribution split: affiliate=40%, sales=30%, discount=30% of distributable pool
+  - Validation: total split must be <= 100% of pool
+- **Navigation Simplification**:
+  - Sales sidebar: Dashboard, Orders, Customers, Earnings
+  - Affiliate sidebar: Dashboard, Products & Promotions, Earnings, Payouts, Profile
+
+## Active API Endpoints
+- `POST /api/admin/payments/{id}/approve` — Payment approval (LiveCommerceService)
+- `GET /api/admin/orders-ops` — Canonical admin orders
+- `GET /api/vendor/orders` — Vendor-filtered orders
+- `GET /api/staff/commissions/summary` — Sales commission KPIs
+- `GET /api/staff/commissions/orders` — Per-order commission breakdown
+- `GET /api/staff/commissions/monthly` — Monthly commission aggregation
+- `GET /api/affiliate/product-promotions` — Products with resolved affiliate earnings
+- `GET /api/affiliate/earnings-summary` — Affiliate earnings with status
+- `GET /api/affiliate/me` — Affiliate profile (graceful for non-affiliates)
+- `GET/PUT /api/admin/distribution-margin/settings` — Distribution split CRUD
+- `POST /api/admin/distribution-margin/preview` — Pricing preview calculator
+- `POST /api/admin/margin-rules/resolve-distribution` — Full pricing resolution
+
+## Database Collections
+- `orders`: Core transactions with pricing breakdown
+- `vendor_orders`: Partner fulfillment orders
+- `users`: All roles (admin, customer, partner, sales)
+- `products`: Product catalog with vendor pricing
+- `margin_rules`: Pricing rules (scope: global, tier, group, product)
+- `distribution_settings`: Global split percentages
+- `commissions`: Sales commission records
+- `affiliate_commissions`: Affiliate commission records
+- `payment_proofs`: Payment verification data
+
+## Upcoming Tasks (P1)
+- Affiliate attribution persistence E2E test
+- End-to-end Stripe bank transfer E2E test
+- Deep screen-by-screen UI audit for launch readiness
+
+## Future Tasks (P2)
+- Twilio WhatsApp/SMS notifications (blocked on API key)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
-
-### Phase 41 — Track Order + Distribution Margin + Affiliate System (07 Apr 2026)
-**Track Order redesign, order code visibility, mobile bottom sheets, and distribution margin engine.**
-
-**Track Order:**
-- Redesigned `TrackOrderPageContent.jsx` with 2-column layout (search + help)
-- Added `PhoneNumberField` for alternative verification (phone or email)
-- Created `OrderCodeCard` component: prominent order code display with copy-to-clipboard
-- `OrderConfirmationPage.jsx` enhanced: OrderCodeCard + "Track Your Order" CTA + "Create Account" link for guests
-
-**Mobile Bottom Sheet System:**
-- Created `BottomSheetSelect` component (`/components/mobile/BottomSheetSelect.jsx`)
-- Slides from bottom on mobile (`md:hidden`), rounded top corners, backdrop blur, scrollable options
-- Integrated into `PhoneNumberField`: desktop shows native `<select>`, mobile shows bottom sheet trigger
-- CSS animation: `@keyframes slide-up` for smooth entrance
-
-**Distribution Margin Engine (Locked Business Model):**
-- Backend service: `distribution_margin_service.py` — `calculate_final_price()`, `validate_distribution_split()`, `build_order_margin_record()`
-- Pricing formula: `Vendor Price + Konekt Margin (fixed) + Distribution Layer (flexible) = Final Price`
-- Distribution split: `affiliate_pct + sales_pct + discount_pct <= distribution_margin_pct`
-- API routes: `GET/PUT /api/admin/distribution-margin/settings`, `POST /api/admin/distribution-margin/preview`
-- Admin page: `DistributionMarginPage.jsx` with pricing layers, distribution split validation bar, preview with real TZS calculations
-- DB: `distribution_settings` collection with global config
-- Sidebar link: Added "Margin & Distribution" under Growth section in `adminNavigation.js`
-
-**Affiliate System (Scaffolding):**
-- `AffiliateCard` component: dark gradient card with promo code, referral link, copy buttons, performance stats
-- Complements existing extensive affiliate routes already in the backend
-
-**Rules enforced:**
-- Konekt margin is NEVER reduced
-- Distribution layer sits ON TOP of Konekt margin
-- Customer sees only final price (no breakdown)
-- All incentives come from distribution layer
-- Split validation: total <= distribution_margin_pct
-
----
-
-## Test History
-- Iterations 165-170: Phases 17-21 — 100%
-- Iteration 171: Stock-First Vendor Assignment Engine — 100% (22/22)
-- Iteration 172: Dormant Client Alerts + Assignment Transparency — 100% (16/16)
-- Iteration 173: Vendor Onboarding + Catalog Workspace — 100% (20/20 + UI)
-- Iteration 174: Product Upload, Variants & Bulk Import — 92% (23/25 + frontend 100%)
-- Iteration 174b: Added Download CSV Template + Download Error Rows to Bulk Import (vendor + admin)
-- Iteration 175: Marketplace Publish + Admin Config + Sidebar Alignment — 100% (19/19 backend + frontend 100%)
-- Iteration 176: Phase 26 Cleanup & Canonicalization — 100% (15/15 backend + frontend 100%)
-- Iteration 177: Full E2E Order Flow Test (Customer → Sales → Vendor) — 100% (13/13 backend + 6/6 frontend)
-- Iteration 178: Public Marketplace Routing Bug Fix — 100% (12/12 backend + 8/8 frontend)
-- Iteration 179: Guest Commerce Flow (Cart + Checkout + Payment Proof + Account Linking) — 100% (17/17 backend + 8/8 frontend)
-- Iteration 180: Unified 3-Stage Checkout Flow (Details → Payment & Proof → Confirmation) — 100% (15/15 backend + 35/35 frontend)
-- Iteration 181: Notification Settings E2E — 100% (11/11 backend + all frontend verified)
-- Iteration 182: Checkout Flow Pack 1 Polish — 100% (19/19 backend + all frontend verified)
-- Iteration 183: Landing Page + Footer + Content Pages — 100% (16/16 frontend verified)
-- Iteration 184: Vendor Language Removal + Mobile Filters + VAT Parity — 100% backend, 90% frontend (VAT display fixed post-test)
-- Iteration 185: Public Pages Redesign (Services, Expansion, Earn) + Track Order Verification — 100% backend (6/6), 100% frontend (all sections present, mobile responsive)
-- Iteration 186: Product Detail Page (PDP) Conversion Redesign — 100% backend, 100% frontend (18/18 features verified, mobile responsive)
-- Iteration 187: Guest Checkout Bugfixes (CTA URL + Payment Queue Wiring) + UX Improvements — 100% backend (5/6, 1 flaky collision), 100% frontend
-- Iteration 188: Marketplace Boundary Enforcement + Sales Assist CTA System + Service Quote Margin — 100% backend (13/13), 100% frontend
-- Iteration 189: Register Page V2 + Auth Boundary Final — 100% backend (11/11), 100% frontend (17/17)
-- Iteration 190: UI Standardization Pack (Global Phone Input + Logo + Auth Parity) — 100% frontend (13/13)
-- Iteration 191: Brand Logo System + UI Polish (SVG Triad logo, navbar blur, PDP hover, micro-interactions) — 100% backend + frontend (15/15 features verified)
-- Iteration 192: Phase 41 (Track Order + Distribution Margin + Bottom Sheets + Affiliate Card) — 100% backend (7/7), 95% frontend (sidebar link fixed post-test)
-- Iteration 193: Phase 42 (Dynamic Margin Engine + Admin Nav Cleanup + Phase 41 Polish) — 100% backend (8/8), 95% frontend (sidebar link fixed post-test)
+- Mobile-first optimization
+- Affiliate payout system (wallet + withdrawal flow)
+- Sales leaderboard (gamification layer)
