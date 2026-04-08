@@ -2649,7 +2649,9 @@ app.include_router(affiliate_partner_manager_router)
 from vendor_partner_portal_routes import router as vendor_partner_portal_router
 app.include_router(vendor_partner_portal_router)
 
-# Legacy admin_settings_hub deregistered — superseded by business_settings_router
+# Admin Settings Hub - for payout settings and other admin configurations
+from admin_settings_hub_routes import router as admin_settings_hub_router
+app.include_router(admin_settings_hub_router)
 
 # Smart Partner Ecosystem
 from smart_partner_ecosystem_routes import router as smart_partner_ecosystem_router

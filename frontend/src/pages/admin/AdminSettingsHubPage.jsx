@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -16,6 +16,7 @@ const TABS = [
   { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
   { key: "sales", label: "Sales & Commissions", icon: Users },
   { key: "affiliate", label: "Affiliate & Referrals", icon: Globe },
+  { key: "payout", label: "Payout Settings", icon: Wallet },
   { key: "workflows", label: "Workflows & Vendors", icon: Shield },
   { key: "notifications", label: "Notifications", icon: Bell },
   { key: "launch", label: "Launch Controls", icon: Rocket },
@@ -25,7 +26,8 @@ const defaultState = {
   commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18 },
   margin_rules: { allow_product_group_margin_override: true, allow_product_margin_override: true, allow_service_group_margin_override: true, allow_service_margin_override: true, pricing_below_minimum_margin_requires_admin_override: true },
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
-  affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, minimum_payout_threshold: 50000, payout_cycle: "monthly", manual_payout_approval: true, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
+  affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
+  payouts: { affiliate_minimum_payout: 50000, sales_minimum_payout: 100000, payout_cycle: "monthly", payout_methods_enabled: ["mobile_money", "bank_transfer"], manual_payout_approval: true, payout_review_mode: "admin_required" },
   sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true },
   payments: { bank_only_payments: true, card_payments_enabled: false, mobile_money_enabled: false, kwikpay_enabled: false, payment_proof_required: true, payment_proof_auto_link_to_invoice: true, payment_verification_mode: "manual", commission_creation_on_payment_approval: true },
   payment_accounts: { default_country: "TZ", account_name: "KONEKT LIMITED", account_number: "015C8841347002", bank_name: "CRDB BANK", swift_code: "CORUTZTZ", branch_name: "", currency: "TZS", show_on_invoice: true, show_on_checkout: true },
@@ -113,6 +115,7 @@ export default function AdminSettingsHubPage() {
         {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
         {tab === "sales" && <SalesTab state={state} setState={setState} />}
         {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}
+        {tab === "payout" && <PayoutTab state={state} setState={setState} />}
         {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
         {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
         {tab === "launch" && <LaunchTab state={state} setState={setState} />}
@@ -250,7 +253,7 @@ function SalesTab({ state, setState }) {
 function AffiliateTab({ state, setState }) {
   const a = state.affiliate || {};
   return (
-    <SettingsSectionCard title="Affiliate Program" description="Default affiliate economics, approval, payout, and governance.">
+    <SettingsSectionCard title="Affiliate Program" description="Default affiliate economics, approval, and governance.">
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         <SettingsNumberField label="Default Commission %" value={a.default_affiliate_commission_percent} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_commission_percent", v))} />
         <SettingsSelectField label="Default Status" value={a.default_affiliate_status} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_status", v))} options={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }]} />
@@ -258,12 +261,27 @@ function AffiliateTab({ state, setState }) {
         <SettingsSelectField label="Commission Duration" value={a.commission_duration} onChange={(v) => setState(U(state, "affiliate", "commission_duration", v))} options={[{ value: "per_successful_sale", label: "Per Sale" }, { value: "first_order_only", label: "First Order Only" }]} />
         <SettingsSelectField label="Attribution Sources" value={a.attribution_sources} onChange={(v) => setState(U(state, "affiliate", "attribution_sources", v))} options={[{ value: "link_and_code", label: "Link + Code" }, { value: "link_only", label: "Link Only" }, { value: "code_only", label: "Code Only" }]} />
         <SettingsNumberField label="Attribution Window (days)" value={a.attribution_window_days} onChange={(v) => setState(U(state, "affiliate", "attribution_window_days", v))} />
-        <SettingsNumberField label="Min Payout Threshold (TZS)" value={a.minimum_payout_threshold} onChange={(v) => setState(U(state, "affiliate", "minimum_payout_threshold", v))} />
-        <SettingsSelectField label="Payout Cycle" value={a.payout_cycle} onChange={(v) => setState(U(state, "affiliate", "payout_cycle", v))} options={[{ value: "monthly", label: "Monthly" }, { value: "weekly", label: "Weekly" }]} />
         <SettingsToggleField label="Requires approval" checked={a.affiliate_registration_requires_approval} onChange={(v) => setState(U(state, "affiliate", "affiliate_registration_requires_approval", v))} />
         <SettingsToggleField label="Personal promo code" checked={a.personal_promo_code_enabled} onChange={(v) => setState(U(state, "affiliate", "personal_promo_code_enabled", v))} />
-        <SettingsToggleField label="Manual payout approval" checked={a.manual_payout_approval} onChange={(v) => setState(U(state, "affiliate", "manual_payout_approval", v))} />
         <SettingsToggleField label="Watchlist logic" checked={a.watchlist_logic_enabled} onChange={(v) => setState(U(state, "affiliate", "watchlist_logic_enabled", v))} />
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+function PayoutTab({ state, setState }) {
+  const p = state.payouts || {};
+  return (
+    <SettingsSectionCard title="Payout Settings" description="Minimum payout amounts, supported methods, cycle, and approval rules.">
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <SettingsNumberField label="Affiliate Min Payout (TZS)" value={p.affiliate_minimum_payout} onChange={(v) => setState(U(state, "payouts", "affiliate_minimum_payout", v))} />
+        <SettingsNumberField label="Sales Min Payout (TZS)" value={p.sales_minimum_payout} onChange={(v) => setState(U(state, "payouts", "sales_minimum_payout", v))} />
+        <SettingsSelectField label="Payout Cycle" value={p.payout_cycle} onChange={(v) => setState(U(state, "payouts", "payout_cycle", v))} options={[{ value: "monthly", label: "Monthly" }, { value: "bi_weekly", label: "Bi-Weekly" }, { value: "weekly", label: "Weekly" }]} />
+        <SettingsSelectField label="Review Mode" value={p.payout_review_mode} onChange={(v) => setState(U(state, "payouts", "payout_review_mode", v))} options={[{ value: "admin_required", label: "Admin Approval Required" }, { value: "auto_approve", label: "Auto-Approve" }]} />
+        <SettingsToggleField label="Manual payout approval" checked={p.manual_payout_approval} onChange={(v) => setState(U(state, "payouts", "manual_payout_approval", v))} />
+      </div>
+      <div className="mt-4 p-4 rounded-xl bg-slate-50 text-sm text-slate-600">
+        <strong>Supported payout methods:</strong> Mobile Money, Bank Transfer. These methods are available to affiliates and sales team when requesting withdrawals.
       </div>
     </SettingsSectionCard>
   );
