@@ -22,9 +22,11 @@ export default function PartnerLayout() {
     
     partnerApi.get("/api/partner-portal/dashboard")
       .then(res => setPartner(res.data?.partner))
-      .catch(() => {
-        clearAllAuth();
-        navigate("/login");
+      .catch((err) => {
+        if (err?.response?.status === 401) {
+          clearAllAuth();
+          navigate("/login");
+        }
       });
   }, [navigate]);
 
@@ -67,13 +69,11 @@ export default function PartnerLayout() {
     { path: "/partner/vendor-help", label: "Help", icon: HelpCircle },
   ];
 
-  // Combine items based on partner type, defaulting to product partner view
+  // Combine items: always show affiliate section (canonical), vendor section for vendor/default
   let navItems = [...productPartnerItems];
   
-  // Add affiliate section only for affiliate partners
-  if (isAffiliate) {
-    navItems = [...navItems, { divider: true, label: "Affiliate" }, ...affiliateItems];
-  }
+  // Affiliate section is always shown — all partners can share and earn
+  navItems = [...navItems, { divider: true, label: "Affiliate" }, ...affiliateItems];
   
   // Add vendor section if applicable
   if (isVendor || !isAffiliate) {

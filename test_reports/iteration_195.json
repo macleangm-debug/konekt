@@ -1,0 +1,103 @@
+{
+  "summary": "Iteration 195: Sales Commission Dashboard + Affiliate Dashboard + Margin Engine testing. Backend: 12/12 tests pass. Frontend: Sales Commission Dashboard works correctly. Affiliate Dashboard works after login. Staff sidebar config exists but staff pages use admin layout sidebar.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Staff Pages",
+        "issues": ["Staff pages (/staff/*) use AdminLayout sidebar, not a dedicated staff sidebar. The staff-sidebar-links.js config file exists with 4 items (Dashboard, Orders, Customers, Earnings) but is only used in NavigationAuditPage, not in actual staff pages."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sales_affiliate_commission_v194.py",
+    "/app/test_reports/pytest/pytest_results_sales_affiliate_v195.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Staff sidebar config (staff-sidebar-links.js) is defined but not used in staff pages - staff pages use AdminLayout sidebar instead"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sales_affiliate_commission_v194.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% - All features working as expected"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All backend APIs pass. Sales Commission Dashboard at /staff/commission-dashboard works with 4 KPI cards (TZS prefix), Commission Per Order table, Monthly Earnings section, and How Commission Works section. Affiliate Dashboard at /partner/affiliate-dashboard works with 4 KPI cards, Products & Promotions table with Sell Price/You Earn/Customer Saves columns, Promo Code and Referral Link with Copy buttons. Partner sidebar shows simplified affiliate nav: Dashboard, Products & Promotions, Earnings, Payouts, Profile. The /api/affiliate/me endpoint now returns 200 (not 401) with empty data for non-affiliate users.",
+  "features_tested": {
+    "backend_commission_summary": {
+      "endpoint": "GET /api/staff/commissions/summary",
+      "status": "PASS",
+      "evidence": "Returns ok=true, summary with total_earned, pending_payout, paid_out, expected"
+    },
+    "backend_commission_orders": {
+      "endpoint": "GET /api/staff/commissions/orders",
+      "status": "PASS",
+      "evidence": "Returns ok=true, orders array"
+    },
+    "backend_commission_monthly": {
+      "endpoint": "GET /api/staff/commissions/monthly",
+      "status": "PASS",
+      "evidence": "Returns ok=true, months array"
+    },
+    "backend_affiliate_me": {
+      "endpoint": "GET /api/affiliate/me",
+      "status": "PASS",
+      "evidence": "Returns 200 with profile and summary (not 401)"
+    },
+    "backend_affiliate_product_promotions": {
+      "endpoint": "GET /api/affiliate/product-promotions",
+      "status": "PASS",
+      "evidence": "Returns ok=true, 10 products with rule_scope=tier"
+    },
+    "backend_affiliate_earnings_summary": {
+      "endpoint": "GET /api/affiliate/earnings-summary",
+      "status": "PASS",
+      "evidence": "Returns ok=true, summary and earnings"
+    },
+    "backend_distribution_settings": {
+      "endpoint": "GET /api/admin/distribution-margin/settings",
+      "status": "PASS",
+      "evidence": "Returns affiliate_pct=40, sales_pct=30, discount_pct=30"
+    },
+    "backend_distribution_preview": {
+      "endpoint": "POST /api/admin/distribution-margin/preview",
+      "status": "PASS",
+      "evidence": "With vendor_price=10000 and 40/30/30 split returns affiliate=400, sales=300, discount=300"
+    },
+    "frontend_sales_commission_dashboard": {
+      "url": "/staff/commission-dashboard",
+      "status": "PASS",
+      "evidence": "4 KPI cards with TZS prefix, Commission Per Order section, Monthly Earnings section, How Commission Works section with 3 rules"
+    },
+    "frontend_affiliate_dashboard": {
+      "url": "/partner/affiliate-dashboard",
+      "status": "PASS",
+      "evidence": "4 KPI cards with TZS prefix, Products & Promotions table with Sell Price/You Earn/Customer Saves columns, Promo Code and Referral Link with Copy buttons"
+    },
+    "frontend_affiliate_sidebar": {
+      "url": "/partner/*",
+      "status": "PASS",
+      "evidence": "Simplified nav: Dashboard, Products & Promotions, Earnings, Payouts, Profile (5 items)"
+    },
+    "frontend_staff_sidebar": {
+      "url": "/staff/*",
+      "status": "NOTE",
+      "evidence": "Staff pages use AdminLayout sidebar. staff-sidebar-links.js config exists with 4 items but is not used in actual staff pages."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

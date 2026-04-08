@@ -21,7 +21,13 @@ async def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)
         return None
     try:
         payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
-        user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
+        user_id = payload.get("user_id") or payload.get("sub")
+        if not user_id:
+            return None
+        user = await db.users.find_one({"id": user_id}, {"_id": 0})
+        if not user:
+            # Try by email
+            user = await db.users.find_one({"email": payload.get("email")}, {"_id": 0})
         return user
     except Exception:
         return None
@@ -30,12 +36,22 @@ async def get_user(credentials: HTTPAuthorizationCredentials = Depends(security)
 @router.get("/me")
 async def get_affiliate_dashboard(user: dict = Depends(get_user)):
     if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        return {
+            "profile": {},
+            "summary": {"total_earned": 0, "total_approved": 0, "total_paid": 0, "payable_balance": 0},
+            "recent_commissions": [],
+            "recent_payouts": [],
+        }
     user_email = user.get("email")
 
     affiliate = await db.affiliates.find_one({"email": user_email})
     if not affiliate:
-        raise HTTPException(status_code=404, detail="Affiliate profile not found")
+        return {
+            "profile": {"name": user.get("full_name", ""), "email": user_email},
+            "summary": {"total_earned": 0, "total_approved": 0, "total_paid": 0, "payable_balance": 0},
+            "recent_commissions": [],
+            "recent_payouts": [],
+        }
 
     commissions = await db.affiliate_commissions.find({"affiliate_email": user_email}).to_list(length=500)
     payouts = await db.affiliate_payout_requests.find({"affiliate_email": user_email}).sort("created_at", -1).to_list(length=200)

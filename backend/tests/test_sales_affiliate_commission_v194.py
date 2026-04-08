@@ -137,6 +137,27 @@ class TestSalesCommissionAPIs:
 class TestAffiliateAPIs:
     """Test Affiliate Dashboard endpoints"""
 
+    def test_affiliate_me_returns_200_not_401(self, admin_token):
+        """GET /api/affiliate/me returns 200 with profile and summary (not 401)"""
+        response = requests.get(
+            f"{BASE_URL}/api/affiliate/me",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        # This was returning 401 in iteration 194, now should return 200
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+        
+        data = response.json()
+        assert "profile" in data, "Response should have profile object"
+        assert "summary" in data, "Response should have summary object"
+        
+        # Summary should have required fields
+        summary = data["summary"]
+        required_fields = ["total_earned", "total_approved", "total_paid", "payable_balance"]
+        for field in required_fields:
+            assert field in summary, f"Summary should have {field}"
+        
+        print(f"Affiliate /me response: profile={data['profile']}, summary={summary}")
+
     def test_product_promotions_returns_ok(self, admin_token):
         """GET /api/affiliate/product-promotions returns ok with products array"""
         response = requests.get(
@@ -165,8 +186,33 @@ class TestAffiliateAPIs:
             
             print(f"Found {len(data['products'])} products with affiliate pricing")
             print(f"Sample product: {product['product_name']} - Final: {product['final_price']}, Affiliate: {product['affiliate_amount']}, Discount: {product['discount_amount']}")
+            
+            # Verify rule_scope is tier
+            assert "rule_scope" in product, "Product should have rule_scope"
+            assert product["rule_scope"] == "tier", f"Expected rule_scope=tier, got {product['rule_scope']}"
+            print(f"Product rule_scope: {product['rule_scope']}")
         else:
             print("No products found")
+
+    def test_product_promotions_returns_10_products(self, admin_token):
+        """GET /api/affiliate/product-promotions returns 10 products with rule_scope=tier"""
+        response = requests.get(
+            f"{BASE_URL}/api/affiliate/product-promotions",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        
+        data = response.json()
+        products = data.get("products", [])
+        
+        # Should have 10 products
+        assert len(products) == 10, f"Expected 10 products, got {len(products)}"
+        
+        # All products should have rule_scope=tier
+        for p in products:
+            assert p.get("rule_scope") == "tier", f"Product {p.get('product_name')} has rule_scope={p.get('rule_scope')}, expected tier"
+        
+        print(f"All {len(products)} products have rule_scope=tier")
 
     def test_product_promotions_with_partner_token(self, partner_token):
         """GET /api/affiliate/product-promotions works with partner token"""
