@@ -1,152 +1,123 @@
-import React, { useState, useEffect } from "react";
-import AffiliateTopSummary from "../../components/affiliate/AffiliateTopSummary";
-import AffiliateReferralToolsCard from "../../components/affiliate/AffiliateReferralToolsCard";
-import AffiliateCampaignCard from "../../components/affiliate/AffiliateCampaignCard";
-import AffiliateSalesTable from "../../components/affiliate/AffiliateSalesTable";
-import PayoutProgressCard from "../../components/affiliate/PayoutProgressCard";
-import EarnedNotificationBanner from "../../components/affiliate/EarnedNotificationBanner";
+import React, { useEffect, useState } from "react";
+import partnerApi from "../../lib/partnerApi";
+import KpiCard from "../../components/dashboard/KpiCard";
+import SectionCard from "../../components/dashboard/SectionCard";
+import AffiliateCard from "../../components/affiliate/AffiliateCard";
+import AffiliateProductPromoTable from "../../components/affiliate/AffiliateProductPromoTable";
+import AffiliateEarningsTable from "../../components/affiliate/AffiliateEarningsTable";
+import { Loader2 } from "lucide-react";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL;
-
-// Static fallback campaigns
-const fallbackCampaigns = [
-  {
-    title: "Office Branding Campaign",
-    category: "Printing & Branding",
-    description: "Push office branding and workspace improvement support to business clients.",
-    customer_offer: "Structured commercial support",
-    affiliate_earning: "TZS 12,000 per successful sale",
-    valid_until: "30 Sept 2026",
-  },
-  {
-    title: "Printing & Promotional Materials",
-    category: "Printing",
-    description: "Suitable for corporate gifts, lanyards, name tags, and branded materials.",
-    customer_offer: "Better quote support",
-    affiliate_earning: "10% of distributable layer",
-    valid_until: "15 Oct 2026",
-  },
-];
+function money(v) {
+  return `TZS ${Number(v || 0).toLocaleString()}`;
+}
 
 export default function AffiliateDashboardHomePage() {
-  const [metrics, setMetrics] = useState({
-    clicks: 0,
-    leads: 0,
-    sales: 0,
-    earned: "TZS 0",
-    pending: "TZS 0",
-    paid: "TZS 0",
-  });
-  const [payoutProgress, setPayoutProgress] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [earnings, setEarnings] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [promoCode, setPromoCode] = useState("KONEKT");
+  const [affiliateName, setAffiliateName] = useState("");
   const [referralLink, setReferralLink] = useState("");
-  const [promoCode, setPromoCode] = useState("");
-  const [sales, setSales] = useState([]);
-  const [campaigns, setCampaigns] = useState(fallbackCampaigns);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    loadData();
+  }, []);
 
-      try {
-        // Fetch affiliate dashboard data
-        const dashRes = await fetch(`${API_URL}/api/affiliate/me`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (dashRes.ok) {
-          const data = await dashRes.json();
-          
-          // Update metrics
-          setMetrics({
-            clicks: data.summary?.total_clicks || 0,
-            leads: data.summary?.total_leads || 0,
-            sales: data.commissions?.length || 0,
-            earned: `TZS ${(data.summary?.total_earned || 0).toLocaleString()}`,
-            pending: `TZS ${(data.summary?.payable_balance || 0).toLocaleString()}`,
-            paid: `TZS ${(data.summary?.total_paid || 0).toLocaleString()}`,
-          });
+  const loadData = async () => {
+    try {
+      const [promoRes, earningsRes, profileRes] = await Promise.all([
+        partnerApi.get("/api/affiliate/product-promotions").catch(() => ({ data: { products: [], promo_code: "KONEKT" } })),
+        partnerApi.get("/api/affiliate/earnings-summary").catch(() => ({ data: { summary: {}, earnings: [] } })),
+        partnerApi.get("/api/affiliate/me").catch(() => ({ data: { profile: {} } })),
+      ]);
 
-          // Set referral info
-          setReferralLink(data.profile?.referral_link || `https://konekt.co.tz/?ref=${data.profile?.promo_code || ''}`);
-          setPromoCode(data.profile?.promo_code || '');
+      setProducts(promoRes.data?.products || []);
+      setPromoCode(promoRes.data?.promo_code || "KONEKT");
+      setSummary(earningsRes.data?.summary || {});
+      setEarnings(earningsRes.data?.earnings || []);
 
-          // Transform commissions to sales table format
-          if (data.commissions && data.commissions.length > 0) {
-            setSales(data.commissions.map((c, idx) => ({
-              id: c.id || String(idx),
-              date: c.created_at?.split('T')[0] || '',
-              customer_masked: "Cust***",
-              item_name: c.source_document || "Order",
-              order_value: `TZS ${(c.sale_amount || 0).toLocaleString()}`,
-              commission: `TZS ${(c.commission_amount || 0).toLocaleString()}`,
-              status: c.status || "pending",
-            })));
-          }
-        }
+      const profile = profileRes.data?.profile || {};
+      setAffiliateName(profile.name || "");
+      setReferralLink(profile.referral_link || `https://konekt.co.tz/?ref=${promoRes.data?.promo_code || "KONEKT"}`);
+    } catch (err) {
+      console.error("Failed to load affiliate dashboard", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Fetch payout progress
-        const progressRes = await fetch(`${API_URL}/api/affiliate/payout-progress`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (progressRes.ok) {
-          const progressData = await progressRes.json();
-          setPayoutProgress(progressData);
-        }
-
-      } catch (err) {
-        console.error("Failed to fetch affiliate data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, [token]);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20" data-testid="affiliate-loading">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8" data-testid="affiliate-dashboard">
-      <div>
-        <div className="text-4xl font-bold text-[#20364D]">Affiliate Dashboard</div>
-        <div className="text-slate-600 mt-2">
-          Track clicks, leads, successful sales, earnings, and campaigns from one place.
-        </div>
+    <div className="space-y-6" data-testid="affiliate-dashboard">
+      {/* KPI Cards - TZS first */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Total Earned"
+          value={money(summary.total_earned)}
+          helper="Affiliate earnings all time"
+          accent="emerald"
+        />
+        <KpiCard
+          label="Pending Payout"
+          value={money(summary.pending_payout)}
+          helper="Awaiting payout cycle"
+          accent="amber"
+        />
+        <KpiCard
+          label="Paid Out"
+          value={money(summary.paid_out)}
+          helper="Already paid"
+          accent="blue"
+        />
+        <KpiCard
+          label="Referrals"
+          value={summary.referral_count || 0}
+          helper="Tracked referral orders"
+        />
       </div>
 
-      {/* "You Just Earned" Notifications */}
-      <EarnedNotificationBanner token={token} />
-
-      {/* Key Metrics */}
-      <AffiliateTopSummary metrics={metrics} />
-
-      <div className="grid xl:grid-cols-[0.95fr_1.05fr] gap-6">
-        {/* Left Column - Tools + Payout Progress */}
-        <div className="space-y-6">
-          <AffiliateReferralToolsCard
-            referralLink={referralLink || "https://konekt.co.tz/?ref=AFF123"}
-            promoCode={promoCode || "AFF123"}
-          />
-          
-          {/* Payout Progress Card */}
-          <PayoutProgressCard progress={payoutProgress} />
-        </div>
-
-        {/* Right Column - Campaigns */}
-        <div className="space-y-6">
-          {campaigns.map((campaign) => (
-            <AffiliateCampaignCard key={campaign.title} campaign={campaign} />
-          ))}
-        </div>
+      {/* Affiliate Card + How to Earn */}
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <AffiliateCard
+          affiliateName={affiliateName}
+          promoCode={promoCode}
+          referralLink={referralLink}
+        />
+        <SectionCard
+          title="How to Earn"
+          subtitle="Share your promo code or referral link. Earnings and customer discount are calculated automatically from the distributable margin."
+        >
+          <div className="grid gap-3 text-sm text-slate-700">
+            <div className="rounded-xl border bg-slate-50 p-4">Your code and links are ready to share at all times.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">Each eligible order tracks your commission automatically.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">Customers receive discounts from the distributable margin pool, not from Konekt fixed margin.</div>
+          </div>
+        </SectionCard>
       </div>
 
-      {/* Sales Table */}
-      <AffiliateSalesTable rows={sales} />
+      {/* Products & Promotions Table */}
+      <SectionCard
+        title="Products & Promotions"
+        subtitle="These are the current products you can share. Earnings and customer discount are pre-calculated."
+      >
+        <AffiliateProductPromoTable rows={products} baseUrl={window.location.origin} />
+      </SectionCard>
+
+      {/* Recent Earnings Table */}
+      <SectionCard
+        title="Recent Earnings"
+        subtitle="Your latest affiliate commissions and payout status."
+      >
+        <AffiliateEarningsTable rows={earnings} />
+      </SectionCard>
     </div>
   );
 }

@@ -71,6 +71,54 @@ async def resolve_margin_rule(db, product_id=None, group_id=None, service_id=Non
     }
 
 
+async def resolve_margin_rule_for_price(db, vendor_price, product_id=None, group_id=None):
+    """
+    Resolve margin rule, considering tiered price bands.
+    Priority: product > group > tier (by vendor price) > global
+    """
+    # 1. Product override
+    if product_id:
+        rule = await db.margin_rules.find_one(
+            {"scope": "product", "target_id": product_id, "active": True}, {"_id": 0}
+        )
+        if rule:
+            return _normalize_rule(rule, "product")
+
+    # 2. Group override
+    if group_id:
+        rule = await db.margin_rules.find_one(
+            {"scope": "group", "target_id": group_id, "active": True}, {"_id": 0}
+        )
+        if rule:
+            return _normalize_rule(rule, "group")
+
+    # 3. Tiered price band
+    vp = float(vendor_price or 0)
+    tiers = await db.margin_rules.find({"scope": "tier", "active": True}, {"_id": 0}).to_list(20)
+    for t in sorted(tiers, key=lambda x: x.get("vendor_price_min", 0)):
+        t_min = float(t.get("vendor_price_min", 0))
+        t_max = t.get("vendor_price_max")
+        if t_max is None:
+            if vp >= t_min:
+                return {
+                    "scope_type": "tier",
+                    "scope_label": t.get("tier_label", f"Tier {t_min}+"),
+                    "operational_margin_pct": t.get("margin_pct", 20),
+                    "distributable_margin_pct": t.get("distributable_margin_pct", 10),
+                }
+        else:
+            if t_min <= vp < float(t_max):
+                return {
+                    "scope_type": "tier",
+                    "scope_label": t.get("tier_label", f"Tier {t_min}-{t_max}"),
+                    "operational_margin_pct": t.get("margin_pct", 20),
+                    "distributable_margin_pct": t.get("distributable_margin_pct", 10),
+                }
+
+    # 4. Global
+    return await resolve_margin_rule(db, product_id=product_id, group_id=group_id)
+
+
 def _normalize_rule(rule, scope_type):
     """Convert margin_rules collection doc to normalized format."""
     return {
@@ -87,9 +135,9 @@ async def get_split_settings(db):
     if not settings:
         settings = {}
     return {
-        "sales_share_pct": settings.get("sales_pct", 3),
-        "affiliate_share_pct": settings.get("affiliate_pct", 4),
-        "discount_share_pct": settings.get("discount_pct", 3),
+        "sales_share_pct": settings.get("sales_pct", 30),
+        "affiliate_share_pct": settings.get("affiliate_pct", 40),
+        "discount_share_pct": settings.get("discount_pct", 30),
     }
 
 

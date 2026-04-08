@@ -48,16 +48,13 @@ export default function PartnerLayout() {
     { path: "/partner/settlements", label: "Settlements", icon: Receipt },
   ];
 
-  // Affiliate-specific nav items
+  // Affiliate-specific nav items — minimal canonical set
   const affiliateItems = [
-    { path: "/partner/affiliate-dashboard", label: "Affiliate Dashboard", icon: LayoutDashboard },
-    { path: "/partner/affiliate-promotions", label: "Promotions", icon: TrendingUp },
-    { path: "/partner/affiliate-sales", label: "Sales", icon: Award },
+    { path: "/partner/affiliate-dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/partner/affiliate-promotions", label: "Products & Promotions", icon: TrendingUp },
     { path: "/partner/affiliate-earnings", label: "Earnings", icon: DollarSign },
     { path: "/partner/affiliate-payouts", label: "Payouts", icon: Wallet },
-    { path: "/partner/affiliate-performance", label: "Performance", icon: BarChart3 },
     { path: "/partner/affiliate-profile", label: "Profile", icon: User },
-    { path: "/partner/affiliate-help", label: "Help", icon: HelpCircle },
   ];
 
   // Vendor-specific nav items

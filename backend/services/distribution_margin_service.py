@@ -46,14 +46,18 @@ def validate_distribution_split(
     discount_pct: float,
     distribution_margin_pct: float,
 ):
+    """
+    Split percentages are OF the distributable pool (not of vendor price).
+    Total must be <= 100%.
+    """
     total = Decimal(str(affiliate_pct)) + Decimal(str(sales_pct)) + Decimal(str(discount_pct))
-    cap = Decimal(str(distribution_margin_pct))
+    cap = Decimal("100")
     return {
         "affiliate_pct": float(affiliate_pct),
         "sales_pct": float(sales_pct),
         "discount_pct": float(discount_pct),
         "total_split_pct": float(total),
-        "distribution_margin_pct": float(cap),
+        "distribution_margin_pct": float(distribution_margin_pct),
         "is_valid": total <= cap,
         "remaining_pct": float(cap - total) if total <= cap else 0,
     }
@@ -64,15 +68,22 @@ def calculate_distribution_components(
     affiliate_pct: float,
     sales_pct: float,
     discount_pct: float,
+    distribution_margin_pct: float = 10,
 ):
+    """
+    Calculate TZS amounts for each split component.
+    affiliate_pct, sales_pct, discount_pct are % OF the distributable pool.
+    """
     vendor = _money(vendor_price_tax_inclusive)
-    aff = _money(vendor * Decimal(str(affiliate_pct)) / Decimal("100"))
-    sal = _money(vendor * Decimal(str(sales_pct)) / Decimal("100"))
-    disc = _money(vendor * Decimal(str(discount_pct)) / Decimal("100"))
+    dist_value = _money(vendor * Decimal(str(distribution_margin_pct)) / Decimal("100"))
+    aff = _money(dist_value * Decimal(str(affiliate_pct)) / Decimal("100"))
+    sal = _money(dist_value * Decimal(str(sales_pct)) / Decimal("100"))
+    disc = _money(dist_value * Decimal(str(discount_pct)) / Decimal("100"))
     return {
         "affiliate_commission": float(aff),
         "sales_commission": float(sal),
         "customer_discount": float(disc),
+        "distributable_pool": float(dist_value),
     }
 
 
@@ -87,7 +98,7 @@ def build_order_margin_record(
     sales_user_id: str = None,
 ):
     pricing = calculate_final_price(vendor_price, konekt_margin_pct, distribution_margin_pct)
-    components = calculate_distribution_components(vendor_price, affiliate_pct, sales_pct, discount_pct)
+    components = calculate_distribution_components(vendor_price, affiliate_pct, sales_pct, discount_pct, distribution_margin_pct)
     return {
         "vendor_price": pricing["vendor_price_tax_inclusive"],
         "konekt_margin_pct": pricing["konekt_margin_pct"],

@@ -1,11 +1,11 @@
 """
 Sales Commission Dashboard API
 Aggregates commission data for the logged-in sales user.
-Uses the resolved pricing model (margin engine) and commissions collection.
+Uses the resolved pricing model (margin engine) — single source of truth.
+Commission status is INDEPENDENT from order status.
 """
-from fastapi import APIRouter, Request, HTTPException
-from datetime import datetime, timezone
-from services.margin_engine import resolve_margin_rule, get_split_settings, resolve_pricing
+from fastapi import APIRouter, Request
+from services.margin_engine import get_split_settings
 
 router = APIRouter(prefix="/api/staff/commissions", tags=["sales-commissions"])
 
@@ -14,37 +14,36 @@ def _money(v):
     return round(float(v or 0), 2)
 
 
-@router.get("/summary")
-async def get_commission_summary(request: Request):
-    """
-    Returns commission summary for the logged-in sales user.
-    - total_earned (all time)
-    - pending_payout
-    - paid_out
-    - expected (from open quotes/orders)
-    - closed_deals
-    - assigned_orders
-    """
-    db = request.app.mongodb
-
-    # Get user from auth header
-    user_id = None
+def _extract_user_id(request: Request):
     auth = request.headers.get("authorization", "")
     if auth.startswith("Bearer "):
         import jwt
         try:
             token = auth.split(" ")[1]
             payload = jwt.decode(token, options={"verify_signature": False})
-            user_id = payload.get("user_id") or payload.get("sub")
+            return payload.get("user_id") or payload.get("sub")
         except Exception:
             pass
+    return None
+
+
+@router.get("/summary")
+async def get_commission_summary(request: Request):
+    """
+    Returns commission summary for the logged-in sales user.
+    - total_earned (all time, TZS)
+    - pending_payout (TZS)
+    - paid_out (TZS)
+    - expected (from open quotes/orders, TZS)
+    """
+    db = request.app.mongodb
+    user_id = _extract_user_id(request)
 
     # Aggregate from commissions collection
     pipeline_match = {"beneficiary_type": "sales"}
     if user_id:
         pipeline_match["beneficiary_user_id"] = user_id
 
-    # Get all sales commissions
     commissions = await db.commissions.find(pipeline_match, {"_id": 0}).to_list(500)
 
     total_earned = sum(c.get("amount", 0) for c in commissions if c.get("status") in ("approved", "paid"))
@@ -69,7 +68,6 @@ async def get_commission_summary(request: Request):
             "expected": _money(expected),
             "assigned_orders": assigned_count,
             "closed_deals": closed_count,
-            "conversion_rate": round((closed_count / max(assigned_count, 1)) * 100, 1),
         },
     }
 
@@ -78,22 +76,12 @@ async def get_commission_summary(request: Request):
 async def get_commission_orders(request: Request):
     """
     Returns per-order commission breakdown for the sales user.
-    Each row: order_number, customer_name, order_total, commission_amount, commission_status, date
+    Commission status is INDEPENDENT from order status.
+    TZS amounts first, percentage as secondary context.
     """
     db = request.app.mongodb
+    user_id = _extract_user_id(request)
 
-    user_id = None
-    auth = request.headers.get("authorization", "")
-    if auth.startswith("Bearer "):
-        import jwt
-        try:
-            token = auth.split(" ")[1]
-            payload = jwt.decode(token, options={"verify_signature": False})
-            user_id = payload.get("user_id") or payload.get("sub")
-        except Exception:
-            pass
-
-    # Get orders assigned to this sales user
     query = {}
     if user_id:
         query["assigned_sales_id"] = user_id
@@ -113,7 +101,7 @@ async def get_commission_orders(request: Request):
 
     # Get split settings for expected commission calc
     split = await get_split_settings(db)
-    sales_pct = split.get("sales_share_pct", 3)
+    sales_pct = split.get("sales_share_pct", 30)
 
     result = []
     for order in orders:
@@ -122,12 +110,27 @@ async def get_commission_orders(request: Request):
 
         total = order.get("total") or order.get("total_amount") or 0
 
+        # Read from stored pricing snapshot if available
+        pricing_snapshot = order.get("pricing_breakdown") or order.get("margin_record") or {}
+        stored_sales_amount = pricing_snapshot.get("sales_amount")
+
         if comm:
             commission_amount = comm.get("amount", 0)
             commission_status = comm.get("status", "pending")
+            if commission_status == "approved":
+                commission_status = "pending_payout"
+        elif stored_sales_amount is not None:
+            commission_amount = stored_sales_amount
+            commission_status = "expected"
         else:
             # Estimate from distribution settings
-            commission_amount = _money(total * sales_pct / 100)
+            distributable_pct = 10  # default
+            dist_settings = await db.distribution_settings.find_one({"type": "global"}, {"_id": 0})
+            if dist_settings:
+                distributable_pct = dist_settings.get("distribution_margin_pct", 10)
+            # Distributable amount of the total
+            distributable_value = total * distributable_pct / (100 + distributable_pct + 20)  # approximate
+            commission_amount = _money(distributable_value * sales_pct / 100)
             commission_status = "expected"
 
         result.append({
@@ -138,7 +141,7 @@ async def get_commission_orders(request: Request):
             "commission_amount": _money(commission_amount),
             "commission_pct": sales_pct,
             "commission_status": commission_status,
-            "order_status": order.get("status", "pending"),
+            "order_status": order.get("status") or order.get("order_status", "pending"),
             "payment_status": order.get("payment_status", "pending"),
             "created_at": order.get("created_at"),
         })
@@ -149,20 +152,11 @@ async def get_commission_orders(request: Request):
 @router.get("/monthly")
 async def get_monthly_breakdown(request: Request):
     """
-    Returns monthly commission breakdown for the current year.
+    Returns monthly commission breakdown.
+    TZS amounts: earned, pending, paid per month.
     """
     db = request.app.mongodb
-
-    user_id = None
-    auth = request.headers.get("authorization", "")
-    if auth.startswith("Bearer "):
-        import jwt
-        try:
-            token = auth.split(" ")[1]
-            payload = jwt.decode(token, options={"verify_signature": False})
-            user_id = payload.get("user_id") or payload.get("sub")
-        except Exception:
-            pass
+    user_id = _extract_user_id(request)
 
     query = {"beneficiary_type": "sales"}
     if user_id:
@@ -177,6 +171,7 @@ async def get_monthly_breakdown(request: Request):
             continue
         if isinstance(created, str):
             try:
+                from datetime import datetime
                 created = datetime.fromisoformat(created.replace("Z", "+00:00"))
             except Exception:
                 continue
@@ -187,11 +182,40 @@ async def get_monthly_breakdown(request: Request):
         amt = c.get("amount", 0)
         if c.get("status") == "paid":
             months[key]["paid"] += amt
-        elif c.get("status") == "approved":
+        elif c.get("status") in ("approved", "pending_payout"):
             months[key]["pending"] += amt
         months[key]["earned"] += amt
 
-    # Sort by month descending
+    # Also generate from orders if no commissions exist yet
+    if not months:
+        order_query = {}
+        if user_id:
+            order_query["assigned_sales_id"] = user_id
+        orders = await db.orders.find(order_query, {"_id": 0}).to_list(200)
+        split = await get_split_settings(db)
+        sales_pct = split.get("sales_share_pct", 30)
+
+        for order in orders:
+            created = order.get("created_at")
+            if not created:
+                continue
+            if isinstance(created, str):
+                try:
+                    from datetime import datetime
+                    created = datetime.fromisoformat(created.replace("Z", "+00:00"))
+                except Exception:
+                    continue
+            key = created.strftime("%Y-%m")
+            if key not in months:
+                months[key] = {"month": key, "earned": 0, "pending": 0, "paid": 0, "count": 0}
+            months[key]["count"] += 1
+            total = order.get("total") or order.get("total_amount") or 0
+            est_commission = _money(total * 0.1 * sales_pct / 100)  # rough estimate
+            payment_status = order.get("payment_status", "pending")
+            if payment_status in ("verified", "approved", "paid"):
+                months[key]["pending"] += est_commission
+            months[key]["earned"] += est_commission
+
     result = sorted(months.values(), key=lambda x: x["month"], reverse=True)
     for r in result:
         r["earned"] = _money(r["earned"])

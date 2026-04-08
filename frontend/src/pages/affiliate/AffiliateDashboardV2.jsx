@@ -1,56 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import api from "../../lib/api";
-import { toast } from "sonner";
-import { 
-  DollarSign, MousePointerClick, ShoppingCart, Share2, 
-  TrendingUp, Copy, ExternalLink, Gift, ArrowRight,
-  BarChart3, Calendar, MessageCircle
-} from "lucide-react";
-import { ReferralShareCard, WhatsAppShareButton } from "../../components/growth/WhatsAppShare";
+import KpiCard from "../../components/dashboard/KpiCard";
+import SectionCard from "../../components/dashboard/SectionCard";
+import AffiliateCard from "../../components/affiliate/AffiliateCard";
+import AffiliateProductPromoTable from "../../components/affiliate/AffiliateProductPromoTable";
+import AffiliateEarningsTable from "../../components/affiliate/AffiliateEarningsTable";
+import { Loader2 } from "lucide-react";
+
+function money(v) {
+  return `TZS ${Number(v || 0).toLocaleString()}`;
+}
 
 export default function AffiliateDashboardV2() {
-  const [stats, setStats] = useState({
-    totalEarnings: 0,
-    pendingEarnings: 0,
-    clicks: 0,
-    conversions: 0,
-    conversionRate: 0
-  });
+  const [products, setProducts] = useState([]);
+  const [earnings, setEarnings] = useState([]);
+  const [summary, setSummary] = useState({});
+  const [promoCode, setPromoCode] = useState("KONEKT");
+  const [affiliateName, setAffiliateName] = useState("");
   const [referralLink, setReferralLink] = useState("");
-  const [recentReferrals, setRecentReferrals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
+    loadData();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadData = async () => {
     try {
-      const [statsRes, profileRes, referralsRes] = await Promise.all([
-        api.get("/api/affiliate/stats").catch(() => ({ data: {} })),
-        api.get("/api/affiliate/profile").catch(() => ({ data: {} })),
-        api.get("/api/affiliate/referrals").catch(() => ({ data: [] }))
+      const [promoRes, earningsRes, profileRes] = await Promise.all([
+        api.get("/api/affiliate/product-promotions").catch(() => ({ data: { products: [], promo_code: "KONEKT" } })),
+        api.get("/api/affiliate/earnings-summary").catch(() => ({ data: { summary: {}, earnings: [] } })),
+        api.get("/api/affiliate/me").catch(() => ({ data: { profile: {} } })),
       ]);
 
-      const affiliateData = statsRes.data || {};
-      const profile = profileRes.data || {};
-      
-      setStats({
-        totalEarnings: affiliateData.total_earnings || 0,
-        pendingEarnings: affiliateData.pending_earnings || 0,
-        clicks: affiliateData.total_clicks || 0,
-        conversions: affiliateData.total_conversions || 0,
-        conversionRate: affiliateData.clicks > 0 
-          ? ((affiliateData.conversions / affiliateData.clicks) * 100).toFixed(1) 
-          : 0
-      });
+      setProducts(promoRes.data?.products || []);
+      setPromoCode(promoRes.data?.promo_code || "KONEKT");
+      setSummary(earningsRes.data?.summary || {});
+      setEarnings(earningsRes.data?.earnings || []);
 
-      // Generate referral link
-      const affiliateCode = profile.affiliate_code || profile.id?.slice(0, 8) || "AFFILIATE";
-      setReferralLink(`https://konekt.co.tz/ref/${affiliateCode}`);
-      
-      setRecentReferrals((referralsRes.data || []).slice(0, 5));
+      const profile = profileRes.data?.profile || {};
+      setAffiliateName(profile.name || "");
+      setReferralLink(profile.referral_link || `https://konekt.co.tz/?ref=${promoRes.data?.promo_code || "KONEKT"}`);
     } catch (err) {
       console.error("Failed to load affiliate dashboard", err);
     } finally {
@@ -58,210 +47,42 @@ export default function AffiliateDashboardV2() {
     }
   };
 
-  const copyReferralLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast.success("Referral link copied to clipboard!");
-  };
-
-  const shareReferralLink = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join Konekt",
-          text: "Get promotional materials and design services at great prices!",
-          url: referralLink
-        });
-      } catch (err) {
-        copyReferralLink();
-      }
-    } else {
-      copyReferralLink();
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20" data-testid="affiliate-loading">
+        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8" data-testid="affiliate-dashboard-v2">
-      {/* Hero Header */}
-      <div className="bg-[#20364D] text-white rounded-[2rem] p-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Affiliate Dashboard</h1>
-            <p className="text-slate-200 mt-2">
-              Share, earn, and track your performance.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={shareReferralLink}
-              className="flex items-center gap-2 bg-[#F4E7BF] text-[#8B6A10] px-5 py-3 rounded-xl font-semibold hover:bg-[#e8dbb3] transition"
-            >
-              <Share2 className="w-5 h-5" />
-              Share Link
-            </button>
-          </div>
-        </div>
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8" data-testid="affiliate-dashboard-v2">
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <KpiCard label="Total Earned" value={money(summary.total_earned)} helper="All time" accent="emerald" />
+        <KpiCard label="Pending Payout" value={money(summary.pending_payout)} helper="Awaiting payout" accent="amber" />
+        <KpiCard label="Paid Out" value={money(summary.paid_out)} helper="Already paid" accent="blue" />
+        <KpiCard label="Referrals" value={summary.referral_count || 0} helper="Tracked orders" />
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid md:grid-cols-4 gap-6">
-        <div className="bg-white border rounded-2xl p-6 hover:shadow-lg transition">
-          <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-            <TrendingUp className="w-5 h-5 text-green-500" />
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <AffiliateCard affiliateName={affiliateName} promoCode={promoCode} referralLink={referralLink} />
+        <SectionCard title="How to Earn" subtitle="Share your promo code or referral link.">
+          <div className="grid gap-3 text-sm text-slate-700">
+            <div className="rounded-xl border bg-slate-50 p-4">Your code and links are ready to share at all times.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">Each eligible order tracks your commission automatically.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">Customers receive discounts from the distributable margin pool.</div>
           </div>
-          <p className="text-sm text-slate-500 mt-4">Total Earnings</p>
-          <h2 className="text-2xl font-bold text-[#20364D] mt-1">
-            TZS {stats.totalEarnings.toLocaleString()}
-          </h2>
-        </div>
-
-        <div className="bg-white border rounded-2xl p-6 hover:shadow-lg transition">
-          <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center">
-            <Gift className="w-6 h-6 text-yellow-600" />
-          </div>
-          <p className="text-sm text-slate-500 mt-4">Pending Payout</p>
-          <h2 className="text-2xl font-bold text-[#20364D] mt-1">
-            TZS {stats.pendingEarnings.toLocaleString()}
-          </h2>
-        </div>
-
-        <div className="bg-white border rounded-2xl p-6 hover:shadow-lg transition">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-            <MousePointerClick className="w-6 h-6 text-blue-600" />
-          </div>
-          <p className="text-sm text-slate-500 mt-4">Total Clicks</p>
-          <h2 className="text-2xl font-bold text-[#20364D] mt-1">
-            {stats.clicks.toLocaleString()}
-          </h2>
-        </div>
-
-        <div className="bg-white border rounded-2xl p-6 hover:shadow-lg transition">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
-            <ShoppingCart className="w-6 h-6 text-purple-600" />
-          </div>
-          <p className="text-sm text-slate-500 mt-4">Conversions</p>
-          <h2 className="text-2xl font-bold text-[#20364D] mt-1">{stats.conversions}</h2>
-          <p className="text-xs text-slate-400 mt-1">{stats.conversionRate}% rate</p>
-        </div>
+        </SectionCard>
       </div>
 
-      {/* Referral Share Card - Using Growth Component */}
-      <ReferralShareCard 
-        referralCode={referralLink.split('/').pop() || "KONEKT"}
-        referralUrl={referralLink}
-        commission="10%"
-      />
+      <SectionCard title="Products & Promotions" subtitle="Pre-calculated earnings and customer discount per product.">
+        <AffiliateProductPromoTable rows={products} baseUrl={window.location.origin} />
+      </SectionCard>
 
-      {/* Performance & Recent Referrals */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Performance Chart Placeholder */}
-        <div className="bg-white border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-[#20364D]">Performance</h3>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Calendar className="w-4 h-4" />
-              Last 30 days
-            </div>
-          </div>
-          
-          <div className="h-48 flex items-center justify-center bg-slate-50 rounded-xl">
-            <div className="text-center">
-              <BarChart3 className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-              <p className="text-slate-500">Performance chart coming soon</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 mt-6">
-            <div className="p-3 bg-slate-50 rounded-xl text-center">
-              <div className="text-2xl font-bold text-[#20364D]">{stats.clicks}</div>
-              <div className="text-xs text-slate-500">Clicks this month</div>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl text-center">
-              <div className="text-2xl font-bold text-[#20364D]">{stats.conversions}</div>
-              <div className="text-xs text-slate-500">Sales this month</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Referrals */}
-        <div className="bg-white border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-[#20364D]">Recent Referrals</h3>
-            <Link to="/affiliate/referrals" className="text-sm text-[#20364D] hover:underline">
-              View All
-            </Link>
-          </div>
-          
-          {loading ? (
-            <div className="text-center py-8 text-slate-500">Loading...</div>
-          ) : recentReferrals.length === 0 ? (
-            <div className="text-center py-8">
-              <Share2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-600 font-medium">No referrals yet</p>
-              <p className="text-sm text-slate-500 mt-1">Start sharing your link to earn commissions!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentReferrals.map((referral) => (
-                <div 
-                  key={referral.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-xl"
-                >
-                  <div>
-                    <div className="font-medium text-slate-800">{referral.customer_name || "New Customer"}</div>
-                    <div className="text-xs text-slate-500">
-                      {new Date(referral.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-green-600">
-                      +TZS {(referral.commission || 0).toLocaleString()}
-                    </div>
-                    <div className={`text-xs ${
-                      referral.status === "paid" ? "text-green-500" : "text-yellow-500"
-                    }`}>
-                      {referral.status || "pending"}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="bg-white border rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-[#20364D] mb-4">Quick Links</h3>
-        <div className="flex flex-wrap gap-4">
-          <Link 
-            to="/affiliate/payouts"
-            className="flex items-center gap-2 px-4 py-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
-          >
-            <DollarSign className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Payout History</span>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-          </Link>
-          <Link 
-            to="/affiliate/resources"
-            className="flex items-center gap-2 px-4 py-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
-          >
-            <Share2 className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Marketing Resources</span>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-          </Link>
-          <Link 
-            to="/affiliate/settings"
-            className="flex items-center gap-2 px-4 py-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
-          >
-            <Gift className="w-5 h-5 text-[#20364D]" />
-            <span className="font-medium text-slate-700">Payout Settings</span>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-          </Link>
-        </div>
-      </div>
+      <SectionCard title="Recent Earnings" subtitle="Your latest affiliate commissions and payout status.">
+        <AffiliateEarningsTable rows={earnings} />
+      </SectionCard>
     </div>
   );
 }

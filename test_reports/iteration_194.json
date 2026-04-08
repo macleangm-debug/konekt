@@ -1,0 +1,104 @@
+{
+  "summary": "Iteration 194: Sales Commission Dashboard + Affiliate Dashboard + Margin Engine testing. Backend: 10/10 tests pass. Frontend: Sales Commission Dashboard works correctly with 4 KPI cards, Commission Per Order section, Monthly Earnings section, and 'How Commission Works' section. Partner Affiliate Dashboard has navigation issue - direct URL access to /partner/affiliate-dashboard causes redirect to login page (session lost during navigation).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Partner Affiliate Dashboard Navigation",
+        "issue": "Direct URL navigation to /partner/affiliate-dashboard causes redirect to login page. Session is lost when navigating away from /partner base route. The PartnerLayout's auth check fails on route change.",
+        "affected_selectors": ["[data-testid='affiliate-dashboard']"],
+        "priority": "MEDIUM"
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Partner Sidebar",
+        "issues": ["Affiliate dashboard link only shows for affiliate-type partners. Demo partner is 'distributor' type so affiliate nav items don't appear. This is by design but may need documentation."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sales_affiliate_commission_v194.py",
+    "/app/test_reports/pytest/pytest_results_sales_affiliate_v194.xml"
+  ],
+  "action_items": [
+    "Fix Partner Affiliate Dashboard navigation - investigate why session is lost when navigating to /partner/affiliate-dashboard via direct URL or pushState. The PartnerLayout's useEffect calls /api/partner-portal/dashboard and clears auth on failure.",
+    "Consider adding affiliate-dashboard link to sidebar for all partner types (not just affiliate-type partners) since the page is accessible and useful for all partners"
+  ],
+  "critical_code_review_comments": [
+    "PartnerLayout.jsx line 25-28: The catch block clears all auth and redirects to login on ANY API failure, including network errors. Consider more graceful error handling.",
+    "The affiliate dashboard route exists at /partner/affiliate-dashboard but is only shown in sidebar for affiliate-type partners. Non-affiliate partners can't easily access it."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sales_affiliate_commission_v194.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "85% - Sales Commission Dashboard works, Partner Affiliate Dashboard has navigation issue"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend APIs for sales commission and affiliate dashboards are fully functional. Sales Commission Dashboard at /staff/commission-dashboard works correctly. Partner Affiliate Dashboard at /partner/affiliate-dashboard has navigation issue - session is lost when navigating directly to this URL. The demo partner is 'distributor' type, not 'affiliate', so affiliate nav items don't show in sidebar. The affiliate APIs work with both admin and partner tokens.",
+  "features_tested": {
+    "backend_commission_summary": {
+      "endpoint": "GET /api/staff/commissions/summary",
+      "status": "PASS",
+      "evidence": "Returns ok=true, summary with total_earned, pending_payout, paid_out, expected"
+    },
+    "backend_commission_orders": {
+      "endpoint": "GET /api/staff/commissions/orders",
+      "status": "PASS",
+      "evidence": "Returns ok=true, orders array with order_number, customer_name, order_total, commission_amount, commission_status, order_status"
+    },
+    "backend_commission_monthly": {
+      "endpoint": "GET /api/staff/commissions/monthly",
+      "status": "PASS",
+      "evidence": "Returns ok=true, months array with month, earned, pending, paid, count"
+    },
+    "backend_affiliate_product_promotions": {
+      "endpoint": "GET /api/affiliate/product-promotions",
+      "status": "PASS",
+      "evidence": "Returns ok=true, products array with product_name, final_price, affiliate_amount, discount_amount, promo_code, share_link"
+    },
+    "backend_affiliate_earnings_summary": {
+      "endpoint": "GET /api/affiliate/earnings-summary",
+      "status": "PASS",
+      "evidence": "Returns ok=true, summary with total_earned, pending_payout, paid_out, referral_count, earnings array"
+    },
+    "backend_margin_rules_tier": {
+      "endpoint": "GET /api/admin/margin-rules?scope=tier",
+      "status": "PASS",
+      "evidence": "Returns 4 tiered price bands: 0-50k=30%, 50k-200k=25%, 200k-1M=20%, 1M+=15%"
+    },
+    "backend_distribution_settings": {
+      "endpoint": "GET /api/admin/distribution-margin/settings",
+      "status": "PASS",
+      "evidence": "Returns affiliate_pct=40, sales_pct=30, discount_pct=30"
+    },
+    "backend_distribution_preview": {
+      "endpoint": "POST /api/admin/distribution-margin/preview",
+      "status": "PASS",
+      "evidence": "With vendor_price_tax_inclusive=10000, returns final_price=13000, affiliate=400, sales=300, discount=300"
+    },
+    "frontend_sales_commission_dashboard": {
+      "url": "/staff/commission-dashboard",
+      "status": "PASS",
+      "evidence": "Renders 4 KPI cards (Total Earned, Expected, Pending Payout, Paid Out), Commission Per Order section, Monthly Earnings section, 'How Commission Works' section with 3 rules"
+    },
+    "frontend_partner_affiliate_dashboard": {
+      "url": "/partner/affiliate-dashboard",
+      "status": "FAIL",
+      "evidence": "Direct URL navigation causes redirect to login page. Session is lost during navigation. PartnerLayout auth check fails."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

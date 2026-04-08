@@ -2855,6 +2855,14 @@ app.include_router(service_quote_margin_router)
 from routes.distribution_margin_routes import router as distribution_margin_router
 app.include_router(distribution_margin_router)
 
+# Sales Commission Dashboard
+from routes.sales_commission_routes import router as sales_commission_router
+app.include_router(sales_commission_router)
+
+# Affiliate Products + Promotions API
+from routes.affiliate_products_routes import router as affiliate_products_router
+app.include_router(affiliate_products_router)
+
 
 
 
@@ -2896,7 +2904,7 @@ async def startup_event():
     automation = init_automation_engine(db, EmailService)
     logger.info("Sales automation engine initialized (manual mode)")
 
-    # Seed default 20% product margin if none exists
+    # Seed default global margin rule if none exists
     existing_global = await db.margin_rules.find_one({"scope": "global", "active": True})
     if not existing_global:
         from services.default_margin_seed import DEFAULT_PRODUCT_MARGIN_RULE
@@ -2904,7 +2912,26 @@ async def startup_event():
         _seed_now = datetime.now(timezone.utc).isoformat()
         rule = {**DEFAULT_PRODUCT_MARGIN_RULE, "id": _seed_id, "created_at": _seed_now, "updated_at": _seed_now}
         await db.margin_rules.insert_one(rule)
-        logger.info("Seeded default 20%% product margin rule")
+        logger.info("Seeded default global margin rule")
+
+    # Seed tiered price bands if none exist
+    existing_tiers = await db.margin_rules.find_one({"scope": "tier", "active": True})
+    if not existing_tiers:
+        from services.default_margin_seed import DEFAULT_TIERED_BANDS
+        _seed_now = datetime.now(timezone.utc).isoformat()
+        for band in DEFAULT_TIERED_BANDS:
+            band_doc = {**band, "id": str(uuid.uuid4()), "created_at": _seed_now, "updated_at": _seed_now}
+            await db.margin_rules.insert_one(band_doc)
+        logger.info("Seeded %d tiered margin bands", len(DEFAULT_TIERED_BANDS))
+
+    # Seed default distribution split if none exists
+    existing_dist = await db.distribution_settings.find_one({"type": "global"})
+    if not existing_dist:
+        from services.default_margin_seed import DEFAULT_DISTRIBUTION_SPLIT
+        _seed_now = datetime.now(timezone.utc).isoformat()
+        dist_doc = {**DEFAULT_DISTRIBUTION_SPLIT, "created_at": _seed_now, "updated_at": _seed_now}
+        await db.distribution_settings.insert_one(dist_doc)
+        logger.info("Seeded default distribution split (affiliate 40%%, sales 30%%, discount 30%%)")
 
     # Seed catalog taxonomy if empty
     try:

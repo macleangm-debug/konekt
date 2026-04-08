@@ -49,6 +49,7 @@ def preview_distribution(payload: DistributionPreviewIn):
         payload.affiliate_pct,
         payload.sales_pct,
         payload.discount_pct,
+        payload.distribution_margin_pct,
     )
     return {
         "ok": True,
