@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { CartDrawerProvider } from "@/contexts/CartDrawerContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
+import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
 import { bootstrapAffiliateAttribution } from "@/lib/attribution";
 import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithValidation";
 
@@ -182,6 +183,7 @@ import RecurringPlansPage from "@/pages/dashboard/RecurringPlansPage";
 
 // Partner Portal Pages
 import PartnerLayout from "@/layouts/PartnerLayout";
+import StaffLayout from "@/layouts/StaffLayout";
 import PartnerLoginPage from "@/pages/partner/PartnerLoginPage";
 import PartnerDashboardPage from "@/pages/partner/PartnerDashboardPage";
 import PartnerDashboardV2 from "@/pages/partner/PartnerDashboardV2";
@@ -495,6 +497,25 @@ function CustomerRoute({ children }) {
   return <ProtectedRouteWithValidation tokenKey="konekt_token">{children}</ProtectedRouteWithValidation>;
 }
 
+// Staff Route Guard - Redirects to staff-login if not authenticated as staff
+function StaffRoute({ children }) {
+  const { staff, loading } = useStaffAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!staff) {
+    return <Navigate to="/staff-login" replace />;
+  }
+  
+  return children;
+}
+
 function App() {
   // Bootstrap affiliate attribution from URL/localStorage on app load
   useEffect(() => {
@@ -527,9 +548,9 @@ function App() {
         
         {/* Staff Login (separate from admin) */}
         <Route path="/staff-login" element={
-          <AdminAuthProvider>
+          <StaffAuthProvider>
             <StaffLoginPage />
-          </AdminAuthProvider>
+          </StaffAuthProvider>
         } />
 
         {/* Account Activation (public, no auth) */}
@@ -833,98 +854,28 @@ function App() {
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
         </Route>
         
-        {/* Staff Workspace Route */}
+        {/* Staff Workspace Routes — uses StaffAuthProvider + StaffLayout */}
         <Route path="/staff" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesDashboardV2 />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/home" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <StaffWorkspaceHomePage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/queue" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesQueuePage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/queue-intelligence" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesQueueIntelligencePage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/performance" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <StaffPerformanceDashboardPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/commission-dashboard" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesCommissionDashboardPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/promotions" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesPromotionCenterPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/portfolio" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <PortfolioDashboardPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/orders" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesOrdersPageV2 />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/production-jobs" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <ProductionJobsPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/command-center" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <SalesCommandCenterV4 />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/opportunities/:id" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <OpportunityDetailPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
-        <Route path="/staff/help" element={
-          <AdminAuthProvider>
-            <AdminRoute>
-              <HelpSalesPage />
-            </AdminRoute>
-          </AdminAuthProvider>
-        } />
+          <StaffAuthProvider>
+            <StaffRoute>
+              <StaffLayout />
+            </StaffRoute>
+          </StaffAuthProvider>
+        }>
+          <Route index element={<SalesDashboardV2 />} />
+          <Route path="home" element={<StaffWorkspaceHomePage />} />
+          <Route path="queue" element={<SalesQueuePage />} />
+          <Route path="queue-intelligence" element={<SalesQueueIntelligencePage />} />
+          <Route path="performance" element={<StaffPerformanceDashboardPage />} />
+          <Route path="commission-dashboard" element={<SalesCommissionDashboardPage />} />
+          <Route path="promotions" element={<SalesPromotionCenterPage />} />
+          <Route path="portfolio" element={<PortfolioDashboardPage />} />
+          <Route path="orders" element={<SalesOrdersPageV2 />} />
+          <Route path="production-jobs" element={<ProductionJobsPage />} />
+          <Route path="command-center" element={<SalesCommandCenterV4 />} />
+          <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
+          <Route path="help" element={<HelpSalesPage />} />
+        </Route>
         
         {/* System Pages - Navigation Audit */}
         <Route path="/system/navigation-audit" element={

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Shield, Users, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
-import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
 import BrandLogo from "@/components/branding/BrandLogo";
 
 export default function StaffLoginPage() {
   const navigate = useNavigate();
-  const { login } = useAdminAuth();
+  const { login } = useStaffAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
@@ -18,19 +18,13 @@ export default function StaffLoginPage() {
     try {
       const user = await login(form.email, form.password);
       toast.success("Welcome back!");
-
-      // Route based on role
-      const role = user?.role;
-      if (role === "super_admin" || role === "admin") {
-        navigate("/admin");
-      } else if (role === "supervisor") {
-        navigate("/staff");
-      } else {
-        navigate("/staff");
-      }
+      navigate("/staff");
     } catch (error) {
       console.error(error);
-      const errorMsg = error?.response?.data?.detail || "Login failed. Please check your credentials.";
+      const errorMsg =
+        error?.response?.data?.detail ||
+        error?.message ||
+        "Login failed. Please check your credentials.";
       toast.error(errorMsg);
     } finally {
       setLoading(false);

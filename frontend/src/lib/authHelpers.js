@@ -6,6 +6,7 @@ export function clearAllAuth() {
   const keys = [
     "konekt_token",
     "konekt_admin_token",
+    "konekt_staff_token",
     "partner_token",
     "token",
     "customer",
@@ -21,7 +22,8 @@ export function clearAllAuth() {
  * Returns the redirect path based on stored user role.
  */
 export function getDashboardPath(role) {
-  if (["admin", "sales", "marketing", "production"].includes(role)) return "/admin";
+  if (role === "admin") return "/admin";
+  if (["sales", "marketing", "production", "supervisor"].includes(role)) return "/staff";
   if (["partner", "vendor", "affiliate"].includes(role)) return "/partner";
   return "/account";
 }

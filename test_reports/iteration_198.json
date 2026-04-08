@@ -1,0 +1,121 @@
+{
+  "summary": "Staff Auth Separation Testing Complete - All 21 tests passed. Staff authentication is now fully separated from admin authentication. Staff uses konekt_staff_token, admin uses konekt_admin_token. Cross-role isolation verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Admin Dashboard",
+        "issues": ["Settings button appears in header AND sidebar may show 2 settings-related links - minor, not a duplicate in sidebar itself"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_staff_auth_separation_v198.py",
+    "/app/test_reports/pytest/pytest_results_staff_auth_separation_v198.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_staff_auth_separation_v198.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (11/11 tests passed)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Staff/Sales: neema.sales@konekt.demo / Sales123!, Customer: demo.customer@konekt.com / Demo123!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Staff Auth Separation is complete and verified. Key points: 1) Staff login at /staff-login uses StaffAuthContext which stores konekt_staff_token. 2) Admin login at /login uses AdminAuthContext which stores konekt_admin_token. 3) StaffLoginPage rejects admin role accounts with clear error toast. 4) StaffLayout has dedicated sidebar (Dashboard, Orders, Customers, Promotions, Earnings) and breadcrumb shows 'Sales > ...' not 'Admin > ...'. 5) Cross-role isolation works: /staff without staff token redirects to /staff-login, staff token cannot access /admin routes.",
+  "features_tested": {
+    "staff_login_api": {
+      "endpoint": "POST /api/admin/auth/login (sales credentials)",
+      "status": "PASS",
+      "evidence": "Returns token + role:sales"
+    },
+    "staff_login_rejection": {
+      "test": "Admin account trying to login via StaffLoginPage",
+      "status": "PASS",
+      "evidence": "Shows error toast 'This login is for staff accounts only. Admin accounts should use the admin portal.' and stays on /staff-login"
+    },
+    "staff_layout_sidebar": {
+      "test": "StaffLayout sidebar contains Dashboard, Orders, Customers, Promotions, Earnings",
+      "status": "PASS",
+      "evidence": "All 5 nav items found with correct data-testid attributes"
+    },
+    "staff_layout_breadcrumb": {
+      "test": "Breadcrumb shows 'Sales > Dashboard' not 'Admin > Dashboard'",
+      "status": "PASS",
+      "evidence": "Breadcrumb text contains 'Sales'"
+    },
+    "staff_layout_user_info": {
+      "test": "User info shows staff name + Sales role badge",
+      "status": "PASS",
+      "evidence": "Shows 'Neema Mallya' with 'sales' role badge"
+    },
+    "staff_routes_dashboard": {
+      "url": "/staff",
+      "status": "PASS",
+      "evidence": "Loads SalesDashboardV2 inside StaffLayout"
+    },
+    "staff_routes_orders": {
+      "url": "/staff/orders",
+      "status": "PASS",
+      "evidence": "Loads SalesOrdersPageV2 inside StaffLayout"
+    },
+    "staff_routes_promotions": {
+      "url": "/staff/promotions",
+      "status": "PASS",
+      "evidence": "Loads SalesPromotionCenterPage inside StaffLayout"
+    },
+    "staff_routes_commission": {
+      "url": "/staff/commission-dashboard",
+      "status": "PASS",
+      "evidence": "Loads SalesCommissionDashboardPage inside StaffLayout"
+    },
+    "staff_routes_portfolio": {
+      "url": "/staff/portfolio",
+      "status": "PASS",
+      "evidence": "Loads PortfolioDashboardPage inside StaffLayout"
+    },
+    "admin_auth_isolation": {
+      "test": "Admin login at /login shows AdminLayout (NOT StaffLayout)",
+      "status": "PASS",
+      "evidence": "No StaffLayout detected, Admin Control Center displayed"
+    },
+    "admin_sidebar_settings": {
+      "test": "Admin sidebar has Settings entry at /admin/settings-hub",
+      "status": "PASS",
+      "evidence": "Settings-hub page loads correctly"
+    },
+    "partner_separation": {
+      "test": "Distributor partner sees product partner nav only, NOT affiliate nav",
+      "status": "PASS",
+      "evidence": "Found Dashboard, My Catalog, Stock Table, Bulk Upload, My Orders, Settlements - no affiliate items"
+    },
+    "customer_referrals": {
+      "url": "/account/referrals",
+      "status": "PASS",
+      "evidence": "ReferralsPage loads with referral code DEMO.CUSE6CF, referral link, stats"
+    },
+    "cross_role_isolation_no_token": {
+      "test": "Navigating to /staff without staff token redirects to /staff-login",
+      "status": "PASS",
+      "evidence": "Correctly redirected to /staff-login"
+    },
+    "cross_role_isolation_staff_admin": {
+      "test": "Staff token should NOT work for /admin routes",
+      "status": "PASS",
+      "evidence": "Staff token cannot access /admin - redirected to /login"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
