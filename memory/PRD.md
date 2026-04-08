@@ -1,7 +1,7 @@
 # Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
-Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: multi-role auth (Customer, Admin, Vendor/Partner, Sales/Staff), product catalog with taxonomy, invoicing, payment processing (Stripe + Bank Transfer), order fulfillment pipeline, affiliate/referral system, and promotional engine.
+Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: multi-role auth (Customer, Admin, Vendor/Partner, Sales/Staff), product catalog with taxonomy, invoicing, payment processing (Stripe + Bank Transfer), order fulfillment pipeline, affiliate/referral system, promotional engine, sales enablement tools, and content engine.
 
 ## Core Architecture
 - **Frontend**: React 18 + Tailwind CSS + Shadcn UI
@@ -32,32 +32,40 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 - PDP, Cart, Guest/Account Checkout integration
 - Affiliate Attribution Persistence E2E
 
-### Phase A: Bank Transfer E2E + Marketplace Cards (April 8, 2026)
-- **Bank Transfer E2E Fix**: Rewrote `approve_payment_proof()` in `live_commerce_service.py` to handle guest orders where `invoice=None`. Added `_handle_guest_approval()` method. Fixed `reject_payment_proof()` for guest orders.
-- **Marketplace Card Redesign**: Unified `ProductCardCompact` component used by BOTH public and in-account marketplaces. Fixed-height price/promo block (h-[52px]) and action block (h-[72px]) ensure uniform card heights.
-- **Admin Dashboard Fix**: Pending payment count includes all proof statuses.
-- **Finance Queue Enrichment**: Guest proofs show order data in admin queue.
+### Phase A: Bank Transfer E2E + Marketplace Cards
+- Bank Transfer E2E Fix (guest order safe handling)
+- Marketplace Card Redesign (unified ProductCardCompact, fixed-height blocks)
+- Admin Dashboard Fix & Finance Queue Enrichment
 
-### Phase C: Sales Dashboard Overhaul (April 8, 2026)
-- **Backend API**: `GET /api/staff/sales-dashboard` aggregates KPIs, pipeline, today's actions, recent orders with commission, and assigned CRM.
-- **KPI Row**: Today's Revenue, This Month, Open Pipeline, Commission Earned (TZS-first).
-- **Sales Pipeline Funnel**: 6 stages — New → Contacted → Quoted → Approved → Paid → Fulfilled.
-- **Today's Actions**: Urgency-sorted actionable items (hot/high/medium) with click-to-call.
-- **My Customers (CRM)**: Assigned customer list with status badges.
-- **Commission per Order Table**: Per-order commission breakdown with TZS amounts and status.
-- **JWT Enhancement**: `create_token` now includes `full_name` for personalized greeting.
+### Phase C: Sales Dashboard Overhaul
+- Sales Dashboard V2 with KPIs, Pipeline, Actions, CRM, Commission Table
+- JWT Enhancement (full_name for staff)
+
+### Phase D: Content Engine
+- Dynamic promotional content generation from canonical pricing/promos
+- Admin Content Center Page
+- Sales Dashboard Content Block
+- Affiliate Content Feed
+
+### Phase E: Sales Discount Request Workflow (April 8, 2026)
+- **Backend Service**: `discount_request_service.py` with create, list, approve, reject, margin floor validation
+- **Backend Routes**: `discount_request_routes.py` with staff and admin endpoints
+- **Margin Floor Protection**: Uses canonical `margin_engine.py` to validate discounts don't breach vendor base price or Konekt operational margin. Discount budget limited to distributable margin × discount pool percentage.
+- **Admin Queue**: GET /api/admin/discount-requests with KPIs (total, pending, approved, rejected), status filters, detail drawer with margin impact analysis
+- **Staff Interface**: GET/POST /api/staff/discount-requests for creating and tracking requests
+- **Approval Stamp**: Approved discounts stamp `approved_discount` object on the source quote/order document
+- **Frontend**: Admin Discount Requests Page (table + drawer + approve/reject), Staff Discount Requests Page (table + modal), navigation items in both admin and staff sidebars
+- **Testing**: Iteration 205 — 100% pass rate (19/19 backend, all frontend verified)
 
 ## Current Status
 - Backend: Healthy, all APIs operational
-- Frontend: All marketplace views unified, sales dashboard operational
-- Testing: Iteration 203 — 100% pass rate (Backend 14/14, Frontend all verified)
+- Frontend: All views functional
+- Testing: Iteration 205 — 100% pass rate
 
 ## Prioritized Backlog
 
 ### P1 - Upcoming
 - Phase C.5: Quick Reorder (Add "Reorder" button on My Orders, push items to cart with re-evaluated pricing)
-- Phase D: Content Engine (Dynamic role-based content generation pulling from promotions/pricing source of truth)
-- Phase E: Sales Discount Request Workflow (Sales requests → Admin approves/rejects → unlocks in quote)
 
 ### P2 - Future
 - Phase F: Canonical Drawer UI (standardize all drawers)
@@ -76,3 +84,4 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 4. **Canonical Pricing**: Promotions Engine is backend-only source of truth. Frontend reads enriched data.
 5. **Guest Orders**: No invoice pre-approval. `_handle_guest_approval()` updates existing order on payment approval.
 6. **Quick Reorder**: Must use same cart API, pricing resolver, and promotion logic. No shortcuts.
+7. **Discount Requests**: Sales cannot apply discounts directly. Must request → admin approves → stamp on quote. Margin floor always enforced.
