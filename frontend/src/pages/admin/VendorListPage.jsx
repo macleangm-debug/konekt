@@ -5,6 +5,7 @@ import FilterBar from "@/components/admin/shared/FilterBar";
 import EmptyState from "@/components/admin/shared/EmptyState";
 import PerformanceCell from "@/components/performance/PerformanceCell";
 import PerformanceBreakdownDrawer from "@/components/performance/PerformanceBreakdownDrawer";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import {
   Users, UserCheck, UserX, Package, Star, Building2,
   Search, Plus, X, Truck, Clock,
@@ -243,73 +244,69 @@ export default function VendorListPage() {
         </div>
       </div>
 
-      {/* Detail Drawer */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex justify-end" data-testid="vendor-drawer-overlay">
-          <div className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px]" onClick={() => { setSelected(null); setDetail(null); }} />
-          <div className="relative flex w-full max-w-lg flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-            <button onClick={() => { setSelected(null); setDetail(null); }} className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100" data-testid="close-vendor-drawer"><X className="h-5 w-5" /></button>
+      {/* Vendor Detail Drawer */}
+      <StandardDrawerShell
+        open={!!selected}
+        onClose={() => { setSelected(null); setDetail(null); }}
+        title={detail?.name || selected?.name || "Vendor"}
+        subtitle="Vendor Profile"
+        badge={detail ? <StatusBadge status={detail.status} /> : null}
+        width="lg"
+        testId="vendor-drawer"
+      >
+        {loadingDetail ? (
+          <div className="flex flex-1 items-center justify-center py-16 text-sm text-slate-400">Loading...</div>
+        ) : detail ? (
+          <div className="space-y-5">
+            <div>
+              <p className="text-sm text-slate-500">{detail.email} {detail.company && `| ${detail.company}`}</p>
+            </div>
+            <section className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</h3>
+              <dl className="mt-3 space-y-2 text-sm">
+                {[
+                  ["Capability", CAP_LABELS[detail.capability_type] || detail.capability_type],
+                  ["Phone", detail.phone],
+                  ["Taxonomy", detail.taxonomy_names?.map(t => typeof t === "string" ? t : t.name).join(", ") || "-"],
+                  ["Created", fmtDate(detail.created_at)],
+                ].map(([l, v]) => (
+                  <div key={l} className="flex justify-between gap-3">
+                    <dt className="text-slate-400 text-xs">{l}</dt>
+                    <dd className="text-right font-medium text-[#20364D] text-xs truncate max-w-[200px]">{v || "-"}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
 
-            {loadingDetail ? (
-              <div className="flex flex-1 items-center justify-center text-sm text-slate-400">Loading...</div>
-            ) : detail ? (
-              <div className="flex flex-col h-full overflow-y-auto">
-                <div className="border-b border-slate-200 px-6 py-5">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Vendor Profile</p>
-                  <h2 className="mt-1 text-xl font-extrabold text-[#20364D]">{detail.name}</h2>
-                  <p className="mt-0.5 text-sm text-slate-500">{detail.email} {detail.company && `| ${detail.company}`}</p>
-                  <div className="mt-2"><StatusBadge status={detail.status} /></div>
+            <section className="rounded-xl border border-slate-200 p-4">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Supply Records ({detail.supply_records?.length || 0})</h3>
+              {detail.supply_records?.length > 0 ? (
+                <div className="mt-3 space-y-2">
+                  {detail.supply_records.map((s, i) => (
+                    <div key={i} className="flex justify-between text-xs p-2 rounded-lg bg-slate-50">
+                      <span className="font-medium text-[#20364D]">{s.product_id?.slice(0, 8) || "-"}</span>
+                      <span>TZS {Number(s.base_price_vat_inclusive || 0).toLocaleString()}</span>
+                      <span>Qty: {s.quantity}</span>
+                      <span>{s.lead_time_days}d</span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex-1 p-6 space-y-5">
-                  <section className="rounded-xl border border-slate-200 p-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Details</h3>
-                    <dl className="mt-3 space-y-2 text-sm">
-                      {[
-                        ["Capability", CAP_LABELS[detail.capability_type] || detail.capability_type],
-                        ["Phone", detail.phone],
-                        ["Taxonomy", detail.taxonomy_names?.map(t => typeof t === "string" ? t : t.name).join(", ") || "-"],
-                        ["Created", fmtDate(detail.created_at)],
-                      ].map(([l, v]) => (
-                        <div key={l} className="flex justify-between gap-3">
-                          <dt className="text-slate-400 text-xs">{l}</dt>
-                          <dd className="text-right font-medium text-[#20364D] text-xs truncate max-w-[200px]">{v || "-"}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </section>
+              ) : (
+                <p className="mt-3 text-xs text-slate-400">No supply records yet.</p>
+              )}
+            </section>
 
-                  <section className="rounded-xl border border-slate-200 p-4">
-                    <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Supply Records ({detail.supply_records?.length || 0})</h3>
-                    {detail.supply_records?.length > 0 ? (
-                      <div className="mt-3 space-y-2">
-                        {detail.supply_records.map((s, i) => (
-                          <div key={i} className="flex justify-between text-xs p-2 rounded-lg bg-slate-50">
-                            <span className="font-medium text-[#20364D]">{s.product_id?.slice(0, 8) || "-"}</span>
-                            <span>TZS {Number(s.base_price_vat_inclusive || 0).toLocaleString()}</span>
-                            <span>Qty: {s.quantity}</span>
-                            <span>{s.lead_time_days}d</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-xs text-slate-400">No supply records yet.</p>
-                    )}
-                  </section>
-
-                  {detail.notes && (
-                    <section className="rounded-xl border border-slate-200 p-4">
-                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Notes</h3>
-                      <p className="mt-2 text-sm text-slate-700">{detail.notes}</p>
-                    </section>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-1 items-center justify-center text-sm text-slate-400">Vendor not found.</div>
+            {detail.notes && (
+              <section className="rounded-xl border border-slate-200 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Notes</h3>
+                <p className="mt-2 text-sm text-slate-700">{detail.notes}</p>
+              </section>
             )}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-1 items-center justify-center py-16 text-sm text-slate-400">Vendor not found.</div>
+        )}
+      </StandardDrawerShell>
       {/* Performance Breakdown Drawer */}
       <PerformanceBreakdownDrawer
         open={!!perfDrawer}

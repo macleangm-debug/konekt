@@ -300,10 +300,223 @@ export default function InvoiceBrandingSettings() {
         </div>
       </div>
 
+      {/* ━━━ Document Preview Panel ━━━ */}
+      <DocumentPreviewPanel form={form} stampSvg={stampSvg} />
+
       <button onClick={save} disabled={saving} data-testid="save-branding-btn"
         className="rounded-xl bg-[#20364D] text-white px-6 py-3 font-semibold hover:bg-[#2d4a66] disabled:opacity-50 flex items-center gap-2">
         {saved ? <><CheckCircle size={16} /> Saved</> : <><Save size={16} /> {saving ? "Saving..." : "Save Branding Settings"}</>}
       </button>
+    </div>
+  );
+}
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * DOCUMENT PREVIEW PANEL
+ * Shows realistic Invoice + Quote previews with live branding.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function DocumentPreviewPanel({ form, stampSvg }) {
+  const [previewTab, setPreviewTab] = useState("invoice");
+  const tabs = [
+    { id: "invoice", label: "Invoice Preview" },
+    { id: "quote", label: "Quote Preview" },
+  ];
+
+  return (
+    <div className="mt-6 border border-slate-200 rounded-xl overflow-hidden" data-testid="document-preview-panel">
+      <div className="flex items-center justify-between bg-slate-50 border-b border-slate-200 px-4 py-3">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Document Preview</div>
+        <div className="flex gap-1">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setPreviewTab(t.id)}
+              data-testid={`preview-tab-${t.id}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${previewTab === t.id ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-200"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="bg-[#f1f5f9] p-4">
+        <div className="mx-auto bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden" style={{ maxWidth: 680 }}>
+          {previewTab === "invoice" ? (
+            <InvoiceMiniPreview form={form} stampSvg={stampSvg} />
+          ) : (
+            <QuoteMiniPreview form={form} stampSvg={stampSvg} />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const sampleItems = [
+  { name: "Branded T-Shirts (XL)", qty: 200, unit: "pcs", price: 15000 },
+  { name: "Embossed Business Cards", qty: 500, unit: "pcs", price: 800 },
+  { name: "Custom Tote Bags", qty: 100, unit: "pcs", price: 12000 },
+];
+const sampleDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+function PreviewHeader({ form, docType, docNumber }) {
+  const logoUrl = form.company_logo_url ? (form.company_logo_url.startsWith("http") ? form.company_logo_url : `${process.env.REACT_APP_BACKEND_URL || ""}${form.company_logo_url}`) : null;
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 24px", borderBottom: "2px solid #20364D" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt="Logo" style={{ height: 36, objectFit: "contain" }} />
+        ) : (
+          <div style={{ fontSize: 18, fontWeight: 800, color: "#20364D", letterSpacing: 2 }}>KONEKT</div>
+        )}
+      </div>
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: 18, fontWeight: 800, color: "#20364D", letterSpacing: 2 }}>{docType}</div>
+        <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{docNumber}</div>
+        <div style={{ fontSize: 10, color: "#64748b" }}>{sampleDate}</div>
+      </div>
+    </div>
+  );
+}
+
+function PreviewFooter({ form }) {
+  const email = form.contact_email || "accounts@konekt.co.tz";
+  const address = form.contact_address || "Dar es Salaam, Tanzania";
+  return (
+    <div style={{ borderTop: "1px solid #e2e8f0", padding: "10px 24px", fontSize: 9, color: "#94a3b8", textAlign: "center" }}>
+      Konekt Limited &bull; {email} &bull; {address}
+    </div>
+  );
+}
+
+function PreviewAuthColumn({ form, stampSvg }) {
+  const apiUrl = process.env.REACT_APP_BACKEND_URL || "";
+  const showSig = form.show_signature;
+  const showStamp = form.show_stamp;
+  if (!showSig && !showStamp) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 24px 16px", gap: 24 }}>
+      {showSig && (
+        <div>
+          <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.5px", color: "#94a3b8", marginBottom: 4, fontWeight: 700 }}>Authorized by</div>
+          {form.cfo_signature_url ? (
+            <img src={form.cfo_signature_url.startsWith("data:") ? form.cfo_signature_url : `${apiUrl}${form.cfo_signature_url}`} alt="sig" style={{ height: 28, objectFit: "contain", opacity: 0.6, marginBottom: 2 }} />
+          ) : (
+            <div style={{ height: 28, borderBottom: "2px solid #d1d5db", marginBottom: 2, width: 100 }} />
+          )}
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#20364D" }}>{form.cfo_name || "CFO Name"}</div>
+          <div style={{ fontSize: 9, color: "#64748b" }}>{form.cfo_title || "Chief Finance Officer"}</div>
+        </div>
+      )}
+      {showStamp && (
+        <div style={{ width: 64, height: 64 }}>
+          {stampSvg ? (
+            <div style={{ width: "100%", height: "100%" }} dangerouslySetInnerHTML={{ __html: stampSvg }} />
+          ) : form.stamp_uploaded_url ? (
+            <img src={`${apiUrl}${form.stamp_uploaded_url}`} alt="stamp" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", border: "2px dashed #e2e8f0", borderRadius: form.stamp_shape === "circle" ? "50%" : 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#cbd5e1" }}>Stamp</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewItemsTable({ items, showUnit }) {
+  const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const vat = Math.round(subtotal * 0.18);
+  const total = subtotal + vat;
+  const fmt = (v) => `TZS ${Number(v).toLocaleString()}`;
+  return (
+    <div style={{ padding: "0 24px 16px" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+        <thead>
+          <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
+            <th style={{ textAlign: "left", padding: "6px 0", color: "#64748b", fontWeight: 700, fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>#</th>
+            <th style={{ textAlign: "left", padding: "6px 0", color: "#64748b", fontWeight: 700, fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>Description</th>
+            <th style={{ textAlign: "right", padding: "6px 0", color: "#64748b", fontWeight: 700, fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>Qty</th>
+            <th style={{ textAlign: "right", padding: "6px 0", color: "#64748b", fontWeight: 700, fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>Price</th>
+            <th style={{ textAlign: "right", padding: "6px 0", color: "#64748b", fontWeight: 700, fontSize: 9, textTransform: "uppercase", letterSpacing: 1 }}>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item, i) => (
+            <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <td style={{ padding: "6px 0", color: "#334155" }}>{i + 1}</td>
+              <td style={{ padding: "6px 0", color: "#334155", fontWeight: 600 }}>{item.name}</td>
+              <td style={{ padding: "6px 0", color: "#334155", textAlign: "right" }}>{item.qty}{showUnit ? ` ${item.unit}` : ""}</td>
+              <td style={{ padding: "6px 0", color: "#334155", textAlign: "right" }}>{fmt(item.price)}</td>
+              <td style={{ padding: "6px 0", color: "#334155", textAlign: "right", fontWeight: 600 }}>{fmt(item.qty * item.price)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
+        <div style={{ width: 200 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#64748b", padding: "3px 0" }}><span>Subtotal</span><span>{fmt(subtotal)}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#64748b", padding: "3px 0" }}><span>VAT (18%)</span><span>{fmt(vat)}</span></div>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 800, color: "#20364D", padding: "6px 0", borderTop: "2px solid #20364D", marginTop: 4 }}><span>Total</span><span>{fmt(total)}</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceMiniPreview({ form, stampSvg }) {
+  return (
+    <div data-testid="invoice-mini-preview">
+      <PreviewHeader form={form} docType="INVOICE" docNumber="INV-2026-0042" />
+      <div style={{ padding: "16px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>Bill To</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#20364D" }}>Sample Corporation Ltd</div>
+            <div style={{ fontSize: 10, color: "#64748b" }}>orders@samplecorp.co.tz</div>
+            <div style={{ fontSize: 10, color: "#64748b" }}>Plot 42, Industrial Area, DSM</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>Payment</div>
+            <div style={{ display: "inline-block", padding: "2px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700, background: "#fef3c7", color: "#92400e" }}>PENDING</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 4 }}>Due: {sampleDate}</div>
+          </div>
+        </div>
+      </div>
+      <PreviewItemsTable items={sampleItems} showUnit />
+      <PreviewAuthColumn form={form} stampSvg={stampSvg} />
+      <PreviewFooter form={form} />
+    </div>
+  );
+}
+
+function QuoteMiniPreview({ form, stampSvg }) {
+  return (
+    <div data-testid="quote-mini-preview">
+      <PreviewHeader form={form} docType="QUOTATION" docNumber="QT-2026-0018" />
+      <div style={{ padding: "16px 24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+          <div>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>Prepared For</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#20364D" }}>ABC Enterprises</div>
+            <div style={{ fontSize: 10, color: "#64748b" }}>info@abc-ent.co.tz</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>Validity</div>
+            <div style={{ display: "inline-block", padding: "2px 8px", borderRadius: 999, fontSize: 9, fontWeight: 700, background: "#dbeafe", color: "#1e40af" }}>ACTIVE</div>
+            <div style={{ fontSize: 10, color: "#64748b", marginTop: 4 }}>Valid for 30 days</div>
+          </div>
+        </div>
+      </div>
+      <PreviewItemsTable items={sampleItems} showUnit />
+      <div style={{ padding: "0 24px 12px" }}>
+        <div style={{ background: "#f8fafc", borderRadius: 8, padding: "10px 14px", border: "1px solid #e2e8f0" }}>
+          <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, color: "#94a3b8", fontWeight: 700, marginBottom: 4 }}>Terms & Notes</div>
+          <div style={{ fontSize: 10, color: "#64748b" }}>Prices are valid for 30 days. 50% deposit required to confirm order. Balance due on delivery.</div>
+        </div>
+      </div>
+      <PreviewAuthColumn form={form} stampSvg={stampSvg} />
+      <PreviewFooter form={form} />
     </div>
   );
 }

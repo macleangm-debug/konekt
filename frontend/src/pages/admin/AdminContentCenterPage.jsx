@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
-import { Loader2, Plus, RefreshCw, Archive, Eye, Edit3, Megaphone, Users, ShoppingCart, ChevronRight, X } from "lucide-react";
+import { Loader2, Plus, RefreshCw, Archive, Eye, Edit3, Megaphone, Users, ShoppingCart, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -222,24 +223,22 @@ export default function AdminContentCenterPage() {
       </div>
 
       {/* Preview/Edit Drawer */}
-      {selected && (
-        <ContentDrawer
-          item={selected}
-          editMode={editMode}
-          editData={editData}
-          onClose={() => { setSelected(null); setEditMode(false); }}
-          onEdit={() => {
-            setEditMode(true);
-            setEditData({
-              headline: selected.headline,
-              captions: { ...selected.captions },
-              cta: selected.cta,
-            });
-          }}
-          onSave={handleSave}
-          setEditData={setEditData}
-        />
-      )}
+      <ContentDrawer
+        item={selected}
+        editMode={editMode}
+        editData={editData}
+        onClose={() => { setSelected(null); setEditMode(false); }}
+        onEdit={() => {
+          setEditMode(true);
+          setEditData({
+            headline: selected.headline,
+            captions: { ...selected.captions },
+            cta: selected.cta,
+          });
+        }}
+        onSave={handleSave}
+        setEditData={setEditData}
+      />
     </div>
   );
 }
@@ -250,33 +249,44 @@ function ContentDrawer({ item, editMode, editData, onClose, onEdit, onSave, setE
     toast.success("Copied to clipboard");
   };
 
+  const roleBadge = item ? (
+    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[item.role] || ROLE_BADGE.admin}`}>
+      {item.role}
+    </span>
+  ) : null;
+
+  const footer = editMode ? (
+    <div className="flex gap-2">
+      <button onClick={onSave} className="flex-1 bg-[#0f172a] text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-[#1e293b] transition" data-testid="save-content-btn">Save Changes</button>
+      <button onClick={() => { setEditData({}); }} className="px-4 py-2.5 border rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+    </div>
+  ) : null;
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid="content-drawer">
-      <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white shadow-2xl overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between z-10">
-          <h3 className="text-base font-bold text-[#0f172a]">Content Preview</h3>
-          <div className="flex items-center gap-2">
+    <StandardDrawerShell
+      open={!!item}
+      onClose={onClose}
+      title={item?.title || "Content Preview"}
+      subtitle="Content"
+      badge={roleBadge}
+      width="lg"
+      testId="content-drawer"
+      footer={footer}
+    >
+      {item && (
+        <div className="space-y-5">
+          {/* Actions */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_BADGE[item.status] || STATUS_BADGE.active}`}>
+                {item.status}
+              </span>
+            </div>
             {!editMode && (
               <button onClick={onEdit} className="p-2 hover:bg-slate-100 rounded-lg transition">
                 <Edit3 className="w-4 h-4 text-slate-500" />
               </button>
             )}
-            <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-lg transition">
-              <X className="w-4 h-4 text-slate-500" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-5 space-y-5">
-          {/* Header */}
-          <div className="flex items-center gap-3">
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[item.role] || ROLE_BADGE.admin}`}>
-              {item.role}
-            </span>
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_BADGE[item.status] || STATUS_BADGE.active}`}>
-              {item.status}
-            </span>
           </div>
 
           {/* Image */}
@@ -364,17 +374,9 @@ function ContentDrawer({ item, editMode, editData, onClose, onEdit, onSave, setE
               )}
             </div>
           )}
-
-          {/* Save/Cancel */}
-          {editMode && (
-            <div className="flex gap-2 pt-2">
-              <button onClick={onSave} className="flex-1 bg-[#0f172a] text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-[#1e293b] transition" data-testid="save-content-btn">Save Changes</button>
-              <button onClick={() => { setEditData({}); }} className="px-4 py-2.5 border rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition">Cancel</button>
-            </div>
-          )}
         </div>
-      </div>
-    </div>
+      )}
+    </StandardDrawerShell>
   );
 }
 

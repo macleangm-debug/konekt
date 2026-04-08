@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Search, Users, UserCheck, AlertTriangle, UserX, Receipt, ShoppingCart, X } from "lucide-react";
+import { Search, Users, UserCheck, AlertTriangle, UserX, Receipt, ShoppingCart } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import StatusBadge from "@/components/admin/shared/StatusBadge";
 import FilterBar from "@/components/admin/shared/FilterBar";
@@ -8,6 +8,7 @@ import CustomerDrawer360 from "@/components/admin/customers/CustomerDrawer360";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import SendStatementButton from "@/components/customers/SendStatementButton";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 
 const STATUS_OPTIONS = [
   { value: "", label: "All Statuses" },
@@ -181,31 +182,28 @@ export default function CustomersPageMerged() {
         </div>
       </div>
 
-      {/* Wide Profile Drawer */}
-      {selected && (
-        <div className="fixed inset-0 z-50 flex justify-end" data-testid="customer-profile-drawer-overlay">
-          <div className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px]" onClick={closeDrawer} />
-          <div className="relative flex w-full max-w-2xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
-            <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
-              {detail?.id && <SendStatementButton customerId={detail.id} customerName={detail.company || detail.name} compact />}
-              <button
-                onClick={closeDrawer}
-                data-testid="close-customer-drawer"
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            {loadingDetail ? (
-              <div className="flex flex-1 items-center justify-center">
-                <div className="text-sm text-slate-400">Loading customer profile...</div>
-              </div>
-            ) : (
-              <CustomerDrawer360 customer={detail} />
-            )}
+      {/* Customer 360 Drawer */}
+      <StandardDrawerShell
+        open={!!selected}
+        onClose={closeDrawer}
+        title={detail?.company || detail?.name || selected?.name || "Customer"}
+        subtitle="Customer 360"
+        width="2xl"
+        testId="customer-profile-drawer"
+        footer={detail?.id ? (
+          <div className="flex justify-end">
+            <SendStatementButton customerId={detail.id} customerName={detail.company || detail.name} compact />
           </div>
-        </div>
-      )}
+        ) : null}
+      >
+        {loadingDetail ? (
+          <div className="flex flex-1 items-center justify-center py-16">
+            <div className="text-sm text-slate-400">Loading customer profile...</div>
+          </div>
+        ) : (
+          <CustomerDrawer360 customer={detail} />
+        )}
+      </StandardDrawerShell>
     </div>
   );
 }

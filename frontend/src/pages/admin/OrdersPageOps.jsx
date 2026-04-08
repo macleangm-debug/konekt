@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, X } from "lucide-react";
+import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
-import BrandLogo from "@/components/branding/BrandLogo";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 
 const orderStatuses = ["pending","confirmed","awaiting_payment","in_review","approved","in_production","quality_check","ready_for_dispatch","in_transit","delivered","cancelled"];
 const statusColors = {
@@ -25,126 +25,119 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
   const status = order.status || order.current_status || "pending";
   const items = order.items || [];
 
+  const statusBadge = (
+    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold ${statusColors[status] || "bg-slate-100 text-slate-700"}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid="admin-order-drawer">
-      <button className="absolute inset-0 bg-black/35" onClick={onClose} />
-      <div className="relative w-full max-w-[520px] h-full bg-white shadow-2xl border-l border-slate-200 overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-[#20364D] to-[#2f526f] px-6 py-5 text-white">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <BrandLogo size="sm" variant="light" className="mb-3" />
-              <div className="text-lg font-semibold">Order Detail</div>
-              <div className="text-xs text-white/70 mt-1">{order.order_number || order.id}</div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusColors[status] || "bg-slate-100 text-slate-700"}`}>{status.replace(/_/g, " ")}</span>
-              <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center hover:bg-white/20"><X className="w-4 h-4" /></button>
-            </div>
+    <StandardDrawerShell
+      open={!!order}
+      onClose={onClose}
+      title={order.order_number || order.id}
+      subtitle="Order Detail"
+      badge={statusBadge}
+      width="xl"
+      testId="admin-order-drawer"
+    >
+      <div className="space-y-5">
+        {/* Order Info */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border p-4 bg-slate-50/50">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Customer</div>
+            <div className="font-semibold text-[#20364D] text-sm">{order.customer_name || "—"}</div>
+            <div className="text-xs text-slate-500">{order.customer_email || ""}</div>
+          </div>
+          <div className="rounded-xl border p-4 bg-slate-50/50">
+            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Amount</div>
+            <div className="font-semibold text-[#20364D] text-sm">{money(order.total)}</div>
+            <div className="text-xs text-slate-500">{fmtDate(order.created_at)}</div>
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
-          {/* Order Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Customer</div>
-              <div className="font-semibold text-[#20364D] text-sm">{order.customer_name || "—"}</div>
-              <div className="text-xs text-slate-500">{order.customer_email || ""}</div>
-            </div>
-            <div className="rounded-xl border p-4 bg-slate-50/50">
-              <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Amount</div>
-              <div className="font-semibold text-[#20364D] text-sm">{money(order.total)}</div>
-              <div className="text-xs text-slate-500">{fmtDate(order.created_at)}</div>
+        {/* Items */}
+        {items.length > 0 && (
+          <div className="rounded-xl border overflow-hidden">
+            <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Items</div>
+            <div className="divide-y divide-slate-100">
+              {items.map((item, idx) => (
+                <div key={idx} className="px-4 py-3 flex items-center justify-between text-sm">
+                  <div><div className="font-medium text-[#20364D]">{item.name || item.product_name || `Item ${idx+1}`}</div><div className="text-xs text-slate-400">Qty {item.quantity || 1}</div></div>
+                  <div className="font-semibold text-[#20364D]">{money(item.total || ((item.price || 0) * (item.quantity || 1)))}</div>
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {/* Items */}
-          {items.length > 0 && (
-            <div className="rounded-xl border overflow-hidden">
-              <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Items</div>
-              <div className="divide-y divide-slate-100">
-                {items.map((item, idx) => (
-                  <div key={idx} className="px-4 py-3 flex items-center justify-between text-sm">
-                    <div><div className="font-medium text-[#20364D]">{item.name || item.product_name || `Item ${idx+1}`}</div><div className="text-xs text-slate-400">Qty {item.quantity || 1}</div></div>
-                    <div className="font-semibold text-[#20364D]">{money(item.total || ((item.price || 0) * (item.quantity || 1)))}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action Tabs */}
-          <div className="flex border-b border-slate-200 gap-1">
-            {[{id: "info", label: "Status"}, {id: "inventory", label: "Inventory"}, {id: "tasks", label: "Tasks"}, {id: "production", label: "Production"}].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition ${activeTab === tab.id ? "bg-white border border-b-white border-slate-200 text-[#20364D] -mb-px" : "text-slate-500 hover:text-slate-700"}`}>{tab.label}</button>
-            ))}
-          </div>
-
-          {/* Tab: Status */}
-          {activeTab === "info" && (
-            <div className="space-y-3">
-              <textarea className="w-full border rounded-xl px-4 py-3 text-sm" placeholder="Status note (optional)" rows={2} value={statusNote} onChange={(e) => setStatusNote(e.target.value)} />
-              <select className="w-full border rounded-xl px-4 py-3" value={status} onChange={(e) => { onStatusChange(order.id, e.target.value, statusNote); setStatusNote(""); }} data-testid="order-status-select">
-                {orderStatuses.map((s) => (<option key={s} value={s}>{s.replace(/_/g, " ")}</option>))}
-              </select>
-              <button type="button" onClick={() => onConvertToInvoice(order.id)} className="w-full rounded-xl bg-[#D4A843] text-slate-900 py-3 font-semibold hover:bg-[#c49936] transition flex items-center justify-center gap-2" data-testid="convert-to-invoice-btn"><ArrowRight className="w-4 h-4" /> Convert to Invoice</button>
-            </div>
-          )}
-
-          {/* Tab: Inventory */}
-          {activeTab === "inventory" && (
-            <form onSubmit={(e) => { e.preventDefault(); onReserve(order.id, reserveForm); setReserveForm({ sku: "", quantity: 1 }); }} className="space-y-3">
-              <input className="w-full border rounded-xl px-4 py-3" placeholder="SKU" value={reserveForm.sku} onChange={(e) => setReserveForm({ ...reserveForm, sku: e.target.value })} data-testid="reserve-sku-input" />
-              <input className="w-full border rounded-xl px-4 py-3" type="number" min="1" placeholder="Quantity" value={reserveForm.quantity} onChange={(e) => setReserveForm({ ...reserveForm, quantity: e.target.value })} data-testid="reserve-qty-input" />
-              <button type="submit" className="w-full rounded-xl bg-[#20364D] text-white py-3 font-semibold hover:bg-[#2a4a66] transition" data-testid="reserve-btn">Reserve Stock</button>
-            </form>
-          )}
-
-          {/* Tab: Tasks */}
-          {activeTab === "tasks" && (
-            <form onSubmit={(e) => { e.preventDefault(); onAssignTask(order.id, taskForm); setTaskForm({ title: "", description: "", assigned_to: "", department: "", due_date: "", priority: "medium" }); }} className="space-y-3">
-              <input className="w-full border rounded-xl px-4 py-3" placeholder="Task title *" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required />
-              <textarea className="w-full border rounded-xl px-4 py-3" placeholder="Description" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} />
-              <div className="grid grid-cols-2 gap-3">
-                <input className="border rounded-xl px-4 py-3" placeholder="Assigned to" value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} />
-                <input className="border rounded-xl px-4 py-3" placeholder="Department" value={taskForm.department} onChange={(e) => setTaskForm({ ...taskForm, department: e.target.value })} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <input className="border rounded-xl px-4 py-3" type="datetime-local" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} />
-                <select className="border rounded-xl px-4 py-3" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-              </div>
-              <button type="submit" className="w-full rounded-xl bg-[#20364D] text-white py-3 font-semibold hover:bg-[#2a4a66] transition">Assign Task</button>
-            </form>
-          )}
-
-          {/* Tab: Production */}
-          {activeTab === "production" && (
-            <form onSubmit={(e) => { e.preventDefault(); onSendToProduction(order, productionForm); setProductionForm({ production_type: "printing", assigned_to: "", priority: "medium", due_date: "", notes: "" }); }} className="space-y-3">
-              <input className="w-full border rounded-xl px-4 py-3" placeholder="Production type" value={productionForm.production_type} onChange={(e) => setProductionForm({ ...productionForm, production_type: e.target.value })} />
-              <div className="grid grid-cols-2 gap-3">
-                <input className="border rounded-xl px-4 py-3" placeholder="Assigned to" value={productionForm.assigned_to} onChange={(e) => setProductionForm({ ...productionForm, assigned_to: e.target.value })} />
-                <select className="border rounded-xl px-4 py-3" value={productionForm.priority} onChange={(e) => setProductionForm({ ...productionForm, priority: e.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
-              </div>
-              <input className="w-full border rounded-xl px-4 py-3" type="datetime-local" value={productionForm.due_date} onChange={(e) => setProductionForm({ ...productionForm, due_date: e.target.value })} />
-              <textarea className="w-full border rounded-xl px-4 py-3" placeholder="Production notes" rows={2} value={productionForm.notes} onChange={(e) => setProductionForm({ ...productionForm, notes: e.target.value })} />
-              <button type="submit" className="w-full rounded-xl bg-[#D4A843] text-slate-900 py-3 font-semibold hover:bg-[#c49936] transition" data-testid="send-to-production-btn">Move to Production</button>
-            </form>
-          )}
-
-          {/* Status History */}
-          {order.status_history?.length > 0 && (
-            <div className="rounded-xl border overflow-hidden">
-              <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Status History</div>
-              <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                {[...order.status_history].reverse().map((item, idx) => (
-                  <div key={idx} className="px-4 py-3 text-sm"><div className="font-medium">{item.status?.replace(/_/g, " ")}</div>{item.note && <div className="text-xs text-slate-600 mt-1">{item.note}</div>}<div className="text-xs text-slate-400 mt-1">{item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}</div></div>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Action Tabs */}
+        <div className="flex border-b border-slate-200 gap-1">
+          {[{id: "info", label: "Status"}, {id: "inventory", label: "Inventory"}, {id: "tasks", label: "Tasks"}, {id: "production", label: "Production"}].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition ${activeTab === tab.id ? "bg-white border border-b-white border-slate-200 text-[#20364D] -mb-px" : "text-slate-500 hover:text-slate-700"}`}>{tab.label}</button>
+          ))}
         </div>
+
+        {activeTab === "info" && (
+          <div className="space-y-3">
+            <textarea className="w-full border rounded-xl px-4 py-3 text-sm" placeholder="Status note (optional)" rows={2} value={statusNote} onChange={(e) => setStatusNote(e.target.value)} />
+            <select className="w-full border rounded-xl px-4 py-3" value={status} onChange={(e) => { onStatusChange(order.id, e.target.value, statusNote); setStatusNote(""); }} data-testid="order-status-select">
+              {orderStatuses.map((s) => (<option key={s} value={s}>{s.replace(/_/g, " ")}</option>))}
+            </select>
+            <button type="button" onClick={() => onConvertToInvoice(order.id)} className="w-full rounded-xl bg-[#D4A843] text-slate-900 py-3 font-semibold hover:bg-[#c49936] transition flex items-center justify-center gap-2" data-testid="convert-to-invoice-btn"><ArrowRight className="w-4 h-4" /> Convert to Invoice</button>
+          </div>
+        )}
+
+        {activeTab === "inventory" && (
+          <form onSubmit={(e) => { e.preventDefault(); onReserve(order.id, reserveForm); setReserveForm({ sku: "", quantity: 1 }); }} className="space-y-3">
+            <input className="w-full border rounded-xl px-4 py-3" placeholder="SKU" value={reserveForm.sku} onChange={(e) => setReserveForm({ ...reserveForm, sku: e.target.value })} data-testid="reserve-sku-input" />
+            <input className="w-full border rounded-xl px-4 py-3" type="number" min="1" placeholder="Quantity" value={reserveForm.quantity} onChange={(e) => setReserveForm({ ...reserveForm, quantity: e.target.value })} data-testid="reserve-qty-input" />
+            <button type="submit" className="w-full rounded-xl bg-[#20364D] text-white py-3 font-semibold hover:bg-[#2a4a66] transition" data-testid="reserve-btn">Reserve Stock</button>
+          </form>
+        )}
+
+        {activeTab === "tasks" && (
+          <form onSubmit={(e) => { e.preventDefault(); onAssignTask(order.id, taskForm); setTaskForm({ title: "", description: "", assigned_to: "", department: "", due_date: "", priority: "medium" }); }} className="space-y-3">
+            <input className="w-full border rounded-xl px-4 py-3" placeholder="Task title *" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} required />
+            <textarea className="w-full border rounded-xl px-4 py-3" placeholder="Description" rows={2} value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <input className="border rounded-xl px-4 py-3" placeholder="Assigned to" value={taskForm.assigned_to} onChange={(e) => setTaskForm({ ...taskForm, assigned_to: e.target.value })} />
+              <input className="border rounded-xl px-4 py-3" placeholder="Department" value={taskForm.department} onChange={(e) => setTaskForm({ ...taskForm, department: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <input className="border rounded-xl px-4 py-3" type="datetime-local" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} />
+              <select className="border rounded-xl px-4 py-3" value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
+            </div>
+            <button type="submit" className="w-full rounded-xl bg-[#20364D] text-white py-3 font-semibold hover:bg-[#2a4a66] transition">Assign Task</button>
+          </form>
+        )}
+
+        {activeTab === "production" && (
+          <form onSubmit={(e) => { e.preventDefault(); onSendToProduction(order, productionForm); setProductionForm({ production_type: "printing", assigned_to: "", priority: "medium", due_date: "", notes: "" }); }} className="space-y-3">
+            <input className="w-full border rounded-xl px-4 py-3" placeholder="Production type" value={productionForm.production_type} onChange={(e) => setProductionForm({ ...productionForm, production_type: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <input className="border rounded-xl px-4 py-3" placeholder="Assigned to" value={productionForm.assigned_to} onChange={(e) => setProductionForm({ ...productionForm, assigned_to: e.target.value })} />
+              <select className="border rounded-xl px-4 py-3" value={productionForm.priority} onChange={(e) => setProductionForm({ ...productionForm, priority: e.target.value })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="urgent">Urgent</option></select>
+            </div>
+            <input className="w-full border rounded-xl px-4 py-3" type="datetime-local" value={productionForm.due_date} onChange={(e) => setProductionForm({ ...productionForm, due_date: e.target.value })} />
+            <textarea className="w-full border rounded-xl px-4 py-3" placeholder="Production notes" rows={2} value={productionForm.notes} onChange={(e) => setProductionForm({ ...productionForm, notes: e.target.value })} />
+            <button type="submit" className="w-full rounded-xl bg-[#D4A843] text-slate-900 py-3 font-semibold hover:bg-[#c49936] transition" data-testid="send-to-production-btn">Move to Production</button>
+          </form>
+        )}
+
+        {/* Status History */}
+        {order.status_history?.length > 0 && (
+          <div className="rounded-xl border overflow-hidden">
+            <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Status History</div>
+            <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+              {[...order.status_history].reverse().map((item, idx) => (
+                <div key={idx} className="px-4 py-3 text-sm"><div className="font-medium">{item.status?.replace(/_/g, " ")}</div>{item.note && <div className="text-xs text-slate-600 mt-1">{item.note}</div>}<div className="text-xs text-slate-400 mt-1">{item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}</div></div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </StandardDrawerShell>
   );
 }
 
