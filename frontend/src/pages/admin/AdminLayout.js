@@ -1,18 +1,16 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, ShoppingCart, Package, Users, Settings, 
-  LogOut, ChevronRight, Bell, Search, Menu, X, Boxes, Wrench, Gift, UserPlus,
-  TrendingUp, Target, FileText, Zap, Briefcase, Receipt, CheckSquare, Building2, Factory, ClipboardList, Columns3, Contact, CreditCard, Image, Coins, Percent, Warehouse, Layers, GitBranch, DollarSign, Megaphone, PanelTop, BarChart3, Globe, Network, Map, Route, Rocket, Award, Wallet, Shield, HelpCircle, Inbox, UserCheck, Truck, AlertTriangle
+import {
+  LogOut, ChevronRight, ChevronDown, Menu, X, Settings,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useAdminAuth } from '../../contexts/AdminAuthContext';
-import { ROLE_MODULE_ACCESS } from '../../config/roleModuleAccess';
 import NotificationBell from '../../components/admin/NotificationBell';
 import BrandLogo from '../../components/branding/BrandLogo';
+import { adminNavigation } from '../../config/adminNavigation';
 
+/* ───── Profile Dropdown ───── */
 function ProfileDropdown({ name, role, onLogout }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
@@ -57,59 +55,83 @@ function ProfileDropdown({ name, role, onLogout }) {
   );
 }
 
-// Navigation items with moduleKey for filtering
-const navItems = [
-  { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true, moduleKey: 'overview' },
-  { type: 'divider', label: 'Commerce', moduleKey: 'orders' },
-  { path: '/admin/orders', label: 'Orders', icon: ShoppingCart, moduleKey: 'orders', badgeKey: 'orders' },
-  { path: '/admin/quotes', label: 'Quotes', icon: FileText, moduleKey: 'quotes' },
-  { path: '/admin/payments', label: 'Payments', icon: CreditCard, moduleKey: 'finance', badgeKey: 'payments_queue' },
-  { path: '/admin/invoices', label: 'Invoices', icon: Receipt, moduleKey: 'invoices' },
-  { type: 'divider', label: 'Customers', moduleKey: 'crm' },
-  { path: '/admin/customers', label: 'Customers', icon: Contact, moduleKey: 'crm' },
-  { path: '/admin/crm', label: 'CRM', icon: Target, moduleKey: 'crm' },
-  { type: 'divider', label: 'Catalog', moduleKey: 'inventory' },
-  { path: '/admin/catalog', label: 'Catalog', icon: Columns3, moduleKey: 'inventory' },
-  { path: '/admin/vendors', label: 'Vendors', icon: Truck, moduleKey: 'inventory' },
-  { path: '/admin/vendor-supply-review', label: 'Supply Review', icon: CheckSquare, moduleKey: 'inventory' },
-  { type: 'divider', label: 'Partners', moduleKey: 'partners' },
-  { path: '/admin/partnerships/affiliates', label: 'Affiliates', icon: Megaphone, moduleKey: 'partners' },
-  { path: '/admin/affiliate-payouts', label: 'Affiliate Payouts', icon: Wallet, moduleKey: 'partners' },
-  { path: '/admin/distribution-margin', label: 'Margin & Distribution', icon: Percent, moduleKey: 'partners' },
-  { type: 'divider', label: 'Operations', moduleKey: 'orders' },
-  { path: '/admin/deliveries', label: 'Deliveries', icon: Route, moduleKey: 'orders', badgeKey: 'deliveries' },
-  { path: '/admin/requests-inbox', label: 'Requests', icon: Inbox, moduleKey: 'support', badgeKey: 'requests_inbox' },
-  { type: 'divider', label: 'Reports', moduleKey: 'reports' },
-  { path: '/admin/product-insights', label: 'Reports', icon: BarChart3, moduleKey: 'reports' },
-  { type: 'divider', label: 'Settings', moduleKey: 'settings' },
-  { path: '/admin/settings-hub', label: 'Settings', icon: Settings, moduleKey: 'settings' },
-  { path: '/admin/users', label: 'Users', icon: Users, moduleKey: 'settings' },
-];
+/* ───── Collapsible Nav Section ───── */
+function NavSection({ section, isActive, badgeCounts, onNavigate }) {
+  const [expanded, setExpanded] = React.useState(false);
 
-// Filter nav items based on user role
-function getFilteredNavItems(role) {
-  const normalizedRole = role === 'admin' ? 'super_admin' : (role || 'sales');
-  const allowedModules = ROLE_MODULE_ACCESS[normalizedRole] || ROLE_MODULE_ACCESS['sales'];
-  
-  const filtered = [];
-  let lastDivider = null;
-  
-  for (const item of navItems) {
-    if (item.type === 'divider') {
-      // Store divider, only add it if there are visible items in the section
-      lastDivider = item;
-    } else if (allowedModules.includes(item.moduleKey)) {
-      // Add pending divider if we're about to add an item
-      if (lastDivider && !filtered.find(f => f === lastDivider)) {
-        filtered.push(lastDivider);
-      }
-      filtered.push(item);
-    }
+  // Auto-expand if any child is active
+  const anyChildActive = section.children?.some((c) => isActive(c.href));
+  const showExpanded = expanded || anyChildActive;
+
+  // Top-level link (no children = direct link like Dashboard)
+  if (!section.children) {
+    const Icon = section.icon;
+    const active = isActive(section.href, section.exact);
+    return (
+      <Link
+        to={section.href}
+        onClick={onNavigate}
+        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+          active
+            ? 'bg-[#1f3a5f] text-white shadow-sm'
+            : 'text-slate-600 hover:bg-gray-100 hover:text-slate-900'
+        }`}
+        data-testid={`nav-${section.key}`}
+      >
+        {Icon && <Icon className="w-5 h-5" />}
+        {section.label}
+      </Link>
+    );
   }
-  
-  return filtered;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setExpanded(!showExpanded)}
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition ${
+          anyChildActive ? 'text-[#20364D]' : 'text-slate-400 hover:text-slate-600'
+        }`}
+        data-testid={`nav-section-${section.key}`}
+      >
+        {section.label}
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showExpanded ? 'rotate-180' : ''}`} />
+      </button>
+
+      {showExpanded && (
+        <div className="mt-0.5 space-y-0.5 mb-1">
+          {section.children.map((child) => {
+            const Icon = child.icon;
+            const active = isActive(child.href);
+            return (
+              <Link
+                key={child.href}
+                to={child.href}
+                onClick={onNavigate}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
+                  active
+                    ? 'bg-[#1f3a5f] text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-gray-100 hover:text-slate-900'
+                }`}
+                data-testid={`nav-${child.label.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {Icon && <Icon className="w-4 h-4" />}
+                {child.label}
+                {child.badgeKey && badgeCounts[child.badgeKey] > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-red-500 text-white" data-testid={`badge-${child.badgeKey}`}>
+                    {badgeCounts[child.badgeKey] > 99 ? "99+" : badgeCounts[child.badgeKey]}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
 }
 
+/* ───── Main Layout ───── */
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -134,11 +156,6 @@ export default function AdminLayout() {
     const interval = setInterval(fetchCounts, 30000);
     return () => clearInterval(interval);
   }, []);
-  
-  // Get filtered navigation based on user role
-  const filteredNavItems = React.useMemo(() => {
-    return getFilteredNavItems(admin?.role);
-  }, [admin?.role]);
 
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path;
@@ -162,7 +179,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="admin-layout">
-      {/* Sidebar — matches customer/vendor shell */}
+      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-200 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -170,43 +187,20 @@ export default function AdminLayout() {
             <BrandLogo size="md" />
             <p className="text-slate-400 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
-          
-          {/* Navigation */}
-          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {filteredNavItems.map((item, index) => (
-              item.type === 'divider' ? (
-                <div key={index} className="pt-4 pb-2">
-                  <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">{item.label}</p>
-                </div>
-              ) : (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                    isActive(item.path, item.exact) 
-                      ? 'bg-[#1f3a5f] text-white shadow-sm' 
-                      : item.highlight
-                      ? 'text-[#D4A843] hover:bg-amber-50'
-                      : 'text-slate-600 hover:bg-gray-100 hover:text-slate-900'
-                  }`}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  {item.label}
-                  {item.badgeKey && badgeCounts[item.badgeKey] > 0 && (
-                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold bg-red-500 text-white" data-testid={`badge-${item.badgeKey}`}>
-                      {badgeCounts[item.badgeKey] > 99 ? "99+" : badgeCounts[item.badgeKey]}
-                    </span>
-                  )}
-                  {item.highlight && !isActive(item.path, item.exact) && !item.badgeKey && (
-                    <span className="ml-auto text-[10px] bg-[#D4A843] text-white px-2 py-0.5 rounded-full">NEW</span>
-                  )}
-                </Link>
-              )
+
+          {/* Navigation — single source of truth from adminNavigation.js */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" data-testid="admin-nav">
+            {adminNavigation.map((section) => (
+              <NavSection
+                key={section.key}
+                section={section}
+                isActive={isActive}
+                badgeCounts={badgeCounts}
+                onNavigate={() => setSidebarOpen(false)}
+              />
             ))}
           </nav>
-          
+
           {/* User Info */}
           <div className="p-4 border-t border-gray-100">
             <div className="flex items-center gap-3">
@@ -223,55 +217,46 @@ export default function AdminLayout() {
           </div>
         </div>
       </aside>
-      
+
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      
+
       {/* Main Content */}
       <div className="flex-1 lg:ml-64">
         {/* Top Header */}
         <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="lg:hidden"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
                 {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
-              
+
               {/* Breadcrumb */}
               <div className="hidden sm:flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Admin</span>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium capitalize">
-                  {location.pathname === '/admin' ? 'Dashboard' : location.pathname.split('/').pop()}
+                  {location.pathname === '/admin' ? 'Dashboard' : location.pathname.split('/').pop()?.replace(/-/g, ' ')}
                 </span>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="hidden md:block relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search..." 
-                  className="pl-9 w-64 h-9 bg-slate-50 border-slate-200"
-                />
-              </div>
-              
               {/* Notifications */}
               <NotificationBell />
 
               {/* Profile Dropdown */}
-              <ProfileDropdown 
+              <ProfileDropdown
                 name={admin?.full_name || "Admin"}
                 role={admin?.role}
                 onLogout={handleLogout}
@@ -279,7 +264,7 @@ export default function AdminLayout() {
             </div>
           </div>
         </header>
-        
+
         {/* Page Content */}
         <main className="p-6">
           <Outlet />

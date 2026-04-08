@@ -1,78 +1,91 @@
+import {
+  LayoutDashboard, ShoppingCart, FileText, CreditCard, Receipt,
+  Columns3, Truck, CheckSquare, Contact, Target,
+  Network, Megaphone, Wallet, Percent,
+  Route, Inbox, BarChart3,
+  Settings, Users, TrendingUp,
+} from "lucide-react";
+
+/**
+ * Canonical Admin Sidebar Navigation — single source of truth.
+ * AdminLayout.js renders directly from this config.
+ *
+ * Structure: grouped sections with children.
+ * Each child: { label, href, icon, badgeKey? }
+ */
 export const adminNavigation = [
   {
     key: "dashboard",
     label: "Dashboard",
-    moduleKey: "dashboard",
-    children: [
-      { label: "Ecosystem Dashboard", href: "/admin/ecosystem-dashboard", moduleKey: "dashboard" },
-    ],
+    icon: LayoutDashboard,
+    href: "/admin",
+    exact: true,
   },
   {
     key: "commerce",
-    label: "Orders",
-    moduleKey: "sales",
+    label: "Commerce",
     children: [
-      { label: "Orders", href: "/admin/orders", moduleKey: "sales" },
-      { label: "Quotes", href: "/admin/quotes", moduleKey: "sales" },
-      { label: "Invoices", href: "/admin/invoices", moduleKey: "finance" },
-      { label: "Payments", href: "/admin/payments", moduleKey: "finance" },
+      { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badgeKey: "orders" },
+      { label: "Quotes", href: "/admin/quotes", icon: FileText },
+      { label: "Payments", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
+      { label: "Invoices", href: "/admin/invoices", icon: Receipt },
     ],
   },
   {
     key: "catalog",
     label: "Catalog",
-    moduleKey: "inventory",
     children: [
-      { label: "Products", href: "/admin/products", moduleKey: "inventory" },
-      { label: "Service Catalog", href: "/admin/service-builder", moduleKey: "services" },
-      { label: "Blank Products", href: "/admin/blank-products", moduleKey: "services" },
+      { label: "Catalog", href: "/admin/catalog", icon: Columns3 },
+      { label: "Vendors", href: "/admin/vendors", icon: Truck },
+      { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare },
     ],
   },
   {
     key: "customers",
     label: "Customers",
-    moduleKey: "contracts",
     children: [
-      { label: "Contract Clients", href: "/admin/contract-clients", moduleKey: "contracts" },
-      { label: "Negotiated Pricing", href: "/admin/negotiated-pricing", moduleKey: "contracts" },
+      { label: "Customers", href: "/admin/customers", icon: Contact },
+      { label: "CRM", href: "/admin/crm", icon: Target },
     ],
   },
   {
     key: "partners",
-    label: "Vendors",
-    moduleKey: "partners",
+    label: "Partners",
     children: [
-      { label: "Partners", href: "/admin/partners", moduleKey: "partners" },
-      { label: "Partner Applications", href: "/admin/country-partner-applications", moduleKey: "partners" },
-      { label: "Partner Settlements", href: "/admin/partner-settlements", moduleKey: "finance" },
+      { label: "Partner Ecosystem", href: "/admin/partner-ecosystem", icon: Network },
     ],
   },
   {
     key: "growth",
-    label: "Affiliates",
-    moduleKey: "affiliates",
+    label: "Growth & Affiliates",
     children: [
-      { label: "Affiliates", href: "/admin/affiliate-partners", moduleKey: "affiliates" },
-      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", moduleKey: "affiliates" },
-      { label: "Margin & Distribution", href: "/admin/distribution-margin", moduleKey: "affiliates" },
+      { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
+      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
+      { label: "Margin & Distribution", href: "/admin/distribution-margin", icon: Percent },
+      { label: "Promotions", href: "/admin/promotion-engine", icon: TrendingUp },
+    ],
+  },
+  {
+    key: "operations",
+    label: "Operations",
+    children: [
+      { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
+      { label: "Requests", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
     ],
   },
   {
     key: "reports",
     label: "Reports",
-    moduleKey: "reports",
     children: [
-      { label: "Product Insights", href: "/admin/product-insights", moduleKey: "reports" },
-      { label: "Service Insights", href: "/admin/service-insights", moduleKey: "reports" },
+      { label: "Reports", href: "/admin/product-insights", icon: BarChart3 },
     ],
   },
   {
     key: "settings",
     label: "Settings",
-    moduleKey: "settings",
     children: [
-      { label: "Settings Hub", href: "/admin/settings-hub", moduleKey: "settings" },
-      { label: "Countries & Regions", href: "/admin/countries-regions", moduleKey: "geography" },
+      { label: "Settings Hub", href: "/admin/settings-hub", icon: Settings },
+      { label: "Users", href: "/admin/users", icon: Users },
     ],
   },
 ];
