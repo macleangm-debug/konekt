@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, Download } from "lucide-react";
+import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, Download, Clock, ChevronDown, ChevronUp, User, MessageSquare } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
@@ -24,13 +24,42 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
   const [productionForm, setProductionForm] = useState({ production_type: "printing", assigned_to: "", priority: "medium", due_date: "", notes: "" });
   const [activeTab, setActiveTab] = useState("info");
   const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [auditEntries, setAuditEntries] = useState([]);
 
   useEffect(() => {
     if (!order) return;
     const oid = order.id || order.order_number;
     if (oid) {
       api.get(`/api/admin/orders-ops/${oid}/purchase-orders`).then(r => {
-        setPurchaseOrders(r.data?.purchase_orders || []);
+        const pos = r.data?.purchase_orders || [];
+        setPurchaseOrders(pos);
+        // Fetch audit trails from all vendor orders
+        Promise.all(
+          pos.map(po =>
+            api.get(`/api/sales/orders/${po.id || po.vendor_order_no}/audit-trail`)
+              .then(res => (res.data?.audit_trail || []).map(e => ({ ...e, vendor_order_no: po.vendor_order_no || po.id?.slice(0, 8) })))
+              .catch(() => [])
+          )
+        ).then(trails => {
+          const all = trails.flat();
+          // Also add order.status_history entries
+          if (order.status_history?.length) {
+            order.status_history.forEach(h => {
+              all.push({
+                previous_status: "",
+                new_status: h.status,
+                updated_by: h.changed_by || h.updated_by || "System",
+                role: h.role || "admin",
+                note: h.note || "",
+                source: h.source || "system_auto",
+                timestamp: h.timestamp,
+                vendor_order_no: null,
+              });
+            });
+          }
+          all.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+          setAuditEntries(all);
+        });
       }).catch(() => {});
     }
   }, [order]);
