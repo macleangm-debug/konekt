@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingCart, Users, Megaphone, DollarSign,
-  Menu, X, ChevronRight, LogOut, Settings,
+  Menu, X, ChevronRight, LogOut, Settings, BadgePercent,
 } from "lucide-react";
 import { useStaffAuth } from "../contexts/StaffAuthContext";
 import NotificationBell from "../components/shared/NotificationBell";
@@ -12,6 +12,7 @@ const staffNavItems = [
   { path: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { path: "/staff/orders", label: "Orders", icon: ShoppingCart },
   { path: "/staff/portfolio", label: "Customers", icon: Users },
+  { path: "/staff/discount-requests", label: "Discounts", icon: BadgePercent },
   { path: "/staff/promotions", label: "Promotions", icon: Megaphone },
   { path: "/staff/commission-dashboard", label: "Earnings", icon: DollarSign },
 ];

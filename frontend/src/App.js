@@ -108,6 +108,7 @@ import SuperAdminControlPanelPage from "@/pages/admin/SuperAdminControlPanelPage
 import StaffPerformancePage from "@/pages/admin/StaffPerformancePage";
 import PaymentSettingsPage from "@/pages/admin/PaymentSettingsPage";
 import NotificationSettingsPage from "@/pages/admin/NotificationSettingsPage";
+import AdminDiscountRequestsPage from "@/pages/admin/AdminDiscountRequestsPage";
 
 // Partner Ecosystem Pages
 import PartnersPage from "@/pages/admin/PartnersPage";
@@ -428,6 +429,7 @@ import StaffWorkspaceHomePage from "@/pages/staff/StaffWorkspaceHomePage";
 import SalesDashboardV2 from "@/pages/staff/SalesDashboardV2";
 import ProductionJobsPage from "@/pages/staff/ProductionJobsPage";
 import OpportunityDetailPage from "@/pages/staff/OpportunityDetailPage";
+import SalesDiscountRequestsPage from "@/pages/staff/SalesDiscountRequestsPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -591,6 +593,7 @@ function App() {
           <Route path="customers" element={<CustomersPageMerged />} />
           <Route path="customers/:id" element={<CustomerProfilePage />} />
           <Route path="payments" element={<PaymentsQueuePage />} />
+          <Route path="discount-requests" element={<AdminDiscountRequestsPage />} />
           <Route path="statements" element={<StatementPage />} />
           <Route path="hero-banners" element={<HeroBannersPage />} />
           <Route path="referral-settings" element={<ReferralSettingsPage />} />
@@ -873,6 +876,7 @@ function App() {
           <Route path="promotions" element={<SalesPromotionCenterPage />} />
           <Route path="portfolio" element={<PortfolioDashboardPage />} />
           <Route path="orders" element={<SalesOrdersPageV2 />} />
+          <Route path="discount-requests" element={<SalesDiscountRequestsPage />} />
           <Route path="production-jobs" element={<ProductionJobsPage />} />
           <Route path="command-center" element={<SalesCommandCenterV4 />} />
           <Route path="opportunities/:id" element={<OpportunityDetailPage />} />

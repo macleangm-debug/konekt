@@ -3,7 +3,7 @@ import {
   Columns3, Truck, CheckSquare, Contact, Target,
   Network, Megaphone, Wallet, Percent,
   Route, Inbox, BarChart3,
-  Settings, Users, TrendingUp, MessageSquare,
+  Settings, Users, TrendingUp, MessageSquare, BadgePercent,
 } from "lucide-react";
 
 /**
@@ -29,6 +29,7 @@ export const adminNavigation = [
       { label: "Quotes", href: "/admin/quotes", icon: FileText },
       { label: "Payments", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
       { label: "Invoices", href: "/admin/invoices", icon: Receipt },
+      { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
     ],
   },
   {
