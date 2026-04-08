@@ -1,0 +1,94 @@
+{
+  "summary": "Status Propagation & Role-Based View Testing Complete. All 4 role views (Admin, Sales, Customer, Vendor) verified for correct status labels and data privacy. Backend: 10/10 tests passed. Frontend: All UI components verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_status_propagation_v214.py",
+    "/app/test_reports/pytest/pytest_results_status_propagation_v214.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_status_propagation_v214.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all UI components verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (portal: /admin)",
+    "customer": "demo.customer@konekt.com / Demo123! (portal: /login)",
+    "sales": "neema.sales@konekt.demo / password123 (portal: /staff-login)",
+    "vendor": "demo.partner@konekt.com / Partner123! (portal: /partner)"
+  },
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Status propagation fully implemented and tested. CUSTOMER_STATUS_MAP maps all internal statuses to customer-safe labels. Vendor orders API does NOT expose customer identity. Admin login uses /api/admin/auth/login endpoint.",
+  "features_tested": {
+    "admin_orders": {
+      "login": "PASS - /api/admin/auth/login returns token",
+      "orders_page": "PASS - data-testid='orders-page' found",
+      "orders_table": "PASS - data-testid='orders-table' with columns Date, Order#, Customer, Payer, Total, Payment, Fulfillment",
+      "order_drawer": "PASS - DetailDrawer opens on row click",
+      "status_timeline": "PASS - data-testid='drawer-timeline' found with timeline entries"
+    },
+    "customer_orders": {
+      "login": "PASS - /api/auth/login returns token",
+      "orders_page": "PASS - data-testid='orders-page' found",
+      "orders_table": "PASS - data-testid='orders-table' found",
+      "status_column": "PASS - Shows customer-safe labels: Processing, Confirmed, In Fulfillment, Completed",
+      "no_raw_statuses": "PASS - No raw internal statuses (pending, created, paid, in_progress) visible",
+      "filter_dropdown": "PASS - Has customer-safe options: Processing, Confirmed, In Fulfillment, Dispatched, Delivered, Completed",
+      "order_drawer": "PASS - Status badge shows customer-safe label"
+    },
+    "vendor_orders": {
+      "login": "PASS - /api/partner/login returns token",
+      "orders_page": "PASS - data-testid='vendor-my-orders-page' found",
+      "orders_table": "PASS - data-testid='orders-table' found",
+      "no_customer_identity": "PASS - Table headers: Date, Vendor Order No, Source Type, Base Price, Status, Priority - NO Customer column",
+      "vendor_order_format": "PASS - Vendor order numbers in VO-KON-ORD-xxx format",
+      "po_download": "PASS - data-testid='download-po-pdf' found",
+      "sales_contact": "PASS - Konekt Sales Contact section with name, phone, email",
+      "base_price": "PASS - Order summary shows Base Price"
+    },
+    "sales_orders": {
+      "login": "PASS - /api/admin/auth/login returns token for sales user",
+      "orders_page": "PASS - data-testid='sales-orders-page' found",
+      "orders_table": "PASS - data-testid='orders-table' found",
+      "customer_column": "PASS - Table shows Customer column with name and phone",
+      "status_column": "PASS - Shows sales-appropriate labels: Paid, Pending, Created",
+      "order_drawer": "PASS - Shows customer info, line items, financial summary"
+    },
+    "customer_referrals": {
+      "page_load": "PASS - data-testid='referrals-page' found",
+      "referral_code": "PASS - Referral code displayed",
+      "copy_code_button": "PASS - data-testid='copy-referral-code' found",
+      "copy_link_button": "PASS - data-testid='copy-referral-link' found",
+      "referral_history": "PASS - Referral history section found"
+    },
+    "backend_api_tests": {
+      "admin_login": "PASS - Returns token",
+      "customer_orders_customer_status": "PASS - Returns customer_status field with safe labels",
+      "customer_orders_no_raw_statuses": "PASS - No raw internal statuses in customer_status",
+      "vendor_orders_no_customer_name": "PASS - No customer_name field in vendor orders",
+      "vendor_orders_has_sales_contact": "PASS - Has sales_name, sales_phone, sales_email",
+      "sales_orders_full_status": "PASS - Returns orders with customer info and status",
+      "admin_orders_list": "PASS - Returns orders with full details",
+      "admin_order_detail_timeline": "PASS - Returns order detail",
+      "customer_status_map_coverage": "PASS - All internal statuses mapped to safe labels",
+      "map_status_for_role": "PASS - Returns correct mappings for all roles"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Resend email service - dry-run mode, logs to console instead of sending emails"]
+  }
+}

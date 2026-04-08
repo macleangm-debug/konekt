@@ -17,33 +17,29 @@ function fulfillMeta(s, order) {
   // Use customer-safe label from API if available
   if (order && order.customer_status) {
     const label = order.customer_status;
+    const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
     const map = {
-      "Ordered": { cls: "bg-slate-100 text-slate-600" },
-      "Confirmed": { cls: "bg-blue-100 text-blue-700" },
-      "In Progress": { cls: "bg-amber-100 text-amber-700" },
-      "Quality Check": { cls: "bg-purple-100 text-purple-700" },
-      "Ready": { cls: "bg-teal-100 text-teal-700" },
-      "In Transit": { cls: "bg-indigo-100 text-indigo-700" },
-      "Delivered": { cls: "bg-green-100 text-green-700" },
-      "Completed": { cls: "bg-emerald-100 text-emerald-700" },
-      "Requested": { cls: "bg-slate-100 text-slate-600" },
-      "Scheduled": { cls: "bg-blue-100 text-blue-700" },
-      "Review": { cls: "bg-purple-100 text-purple-700" },
-      "Submitted": { cls: "bg-slate-100 text-slate-600" },
-      "Processing": { cls: "bg-blue-100 text-blue-700" },
-      "Active": { cls: "bg-teal-100 text-teal-700" },
+      "processing": { cls: "bg-blue-100 text-blue-700" },
+      "confirmed": { cls: "bg-blue-100 text-blue-700" },
+      "in fulfillment": { cls: "bg-amber-100 text-amber-700" },
+      "ready for pickup": { cls: "bg-teal-100 text-teal-700" },
+      "dispatched": { cls: "bg-indigo-100 text-indigo-700" },
+      "delivered": { cls: "bg-green-100 text-green-700" },
+      "completed": { cls: "bg-emerald-100 text-emerald-700" },
+      "delayed": { cls: "bg-red-100 text-red-700" },
+      "cancelled": { cls: "bg-red-100 text-red-700" },
     };
-    return { label, cls: (map[label] || { cls: "bg-blue-100 text-blue-700" }).cls };
+    return { label: labelCap, cls: (map[label] || { cls: "bg-blue-100 text-blue-700" }).cls };
   }
   const st = (s || "processing").toLowerCase();
   if (st === "completed") return { label: "Completed", cls: "bg-emerald-100 text-emerald-700" };
   if (st === "delivered") return { label: "Delivered", cls: "bg-green-100 text-green-700" };
-  if (st === "in_transit") return { label: "In Transit", cls: "bg-indigo-100 text-indigo-700" };
+  if (st === "in_transit" || st === "dispatched") return { label: "Dispatched", cls: "bg-indigo-100 text-indigo-700" };
   if (st === "picked_up" || st === "ready_for_pickup" || st === "ready_to_fulfill" || st === "ready" || st === "shipped") return { label: "Ready", cls: "bg-teal-100 text-teal-700" };
-  if (st === "in_progress") return { label: "In Progress", cls: "bg-amber-100 text-amber-700" };
+  if (st === "in_progress" || st === "in_production" || st === "quality_check") return { label: "In Fulfillment", cls: "bg-amber-100 text-amber-700" };
   if (st === "cancelled") return { label: "Cancelled", cls: "bg-red-100 text-red-700" };
-  if (st === "paid") return { label: "Confirmed", cls: "bg-blue-100 text-blue-700" };
-  return { label: "Ordered", cls: "bg-blue-100 text-blue-700" };
+  if (st === "paid" || st === "confirmed" || st === "approved") return { label: "Confirmed", cls: "bg-blue-100 text-blue-700" };
+  return { label: "Processing", cls: "bg-blue-100 text-blue-700" };
 }
 
 function paymentMeta(s) {
@@ -300,9 +296,9 @@ export default function OrdersPageV2() {
 
   const filteredOrders = useMemo(() => orders.filter((order) => {
     const q = searchValue.toLowerCase();
-    const matchesSearch = !q || [order.order_number, order.id, order.status, order.payment_status]
+    const matchesSearch = !q || [order.order_number, order.id, order.customer_status, order.status]
       .filter(Boolean).join(" ").toLowerCase().includes(q);
-    const matchesStatus = !statusFilter || (order.status === statusFilter || order.fulfillment_state === statusFilter);
+    const matchesStatus = !statusFilter || order.customer_status === statusFilter;
     return matchesSearch && matchesStatus;
   }), [orders, searchValue, statusFilter]);
 
@@ -330,8 +326,10 @@ export default function OrdersPageV2() {
         searchPlaceholder="Search orders..."
         filters={[{ name: "status", value: statusFilter, onChange: setStatusFilter, placeholder: "All Statuses", options: [
           { value: "processing", label: "Processing" },
-          { value: "in_progress", label: "In Progress" },
-          { value: "ready_to_fulfill", label: "Ready" },
+          { value: "confirmed", label: "Confirmed" },
+          { value: "in fulfillment", label: "In Fulfillment" },
+          { value: "dispatched", label: "Dispatched" },
+          { value: "delivered", label: "Delivered" },
           { value: "completed", label: "Completed" },
         ] }]}
       />

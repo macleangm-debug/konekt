@@ -9,51 +9,119 @@ Provides sales override capability with mandatory notes and audit trail.
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 INTERNAL_STATUSES = [
+    "created",
+    "pending",
+    "confirmed",
+    "paid",
+    "processing",
     "assigned",
     "acknowledged",
+    "accepted",
     "in_production",
+    "in_progress",
+    "quality_check",
     "ready",
+    "ready_for_dispatch",
+    "ready_for_pickup",
+    "picked_up",
     "dispatched",
+    "in_transit",
     "delivered",
+    "completed",
     "delayed",
     "cancelled",
 ]
 
 # Customer sees simplified, safe statuses
 CUSTOMER_STATUS_MAP = {
+    # Order-level statuses
+    "created": "processing",
+    "pending": "processing",
+    "confirmed": "confirmed",
+    "paid": "confirmed",
+    "processing": "processing",
+    "payment_under_review": "processing",
+    "pending_payment_confirmation": "processing",
+    "awaiting_payment": "processing",
+    "in_review": "processing",
+    "approved": "confirmed",
+    # Vendor fulfillment statuses
     "assigned": "processing",
     "acknowledged": "processing",
+    "accepted": "processing",
+    "ready_to_fulfill": "in fulfillment",
     "in_production": "in fulfillment",
-    "ready": "in fulfillment",
+    "in_progress": "in fulfillment",
+    "work_scheduled": "in fulfillment",
+    "quality_check": "in fulfillment",
+    "ready": "ready for pickup",
+    "ready_for_dispatch": "ready for pickup",
+    "ready_for_pickup": "ready for pickup",
+    "picked_up": "dispatched",
     "dispatched": "dispatched",
+    "in_transit": "dispatched",
     "delivered": "delivered",
+    "completed": "completed",
+    "fulfilled": "completed",
     "delayed": "delayed",
     "cancelled": "cancelled",
 }
 
 # Sales sees full internal + can act
 SALES_STATUS_MAP = {
+    "created": "created",
+    "pending": "pending",
+    "confirmed": "confirmed",
+    "paid": "paid",
+    "processing": "processing",
+    "payment_under_review": "payment under review",
+    "pending_payment_confirmation": "pending payment",
+    "awaiting_payment": "awaiting payment",
+    "in_review": "in review",
+    "approved": "approved",
     "assigned": "assigned",
     "acknowledged": "acknowledged",
+    "accepted": "accepted",
+    "ready_to_fulfill": "ready to fulfill",
     "in_production": "in production",
+    "in_progress": "in progress",
+    "work_scheduled": "work scheduled",
+    "quality_check": "quality check",
     "ready": "ready for dispatch",
+    "ready_for_dispatch": "ready for dispatch",
+    "ready_for_pickup": "ready for pickup",
+    "picked_up": "picked up",
     "dispatched": "dispatched",
+    "in_transit": "in transit",
     "delivered": "delivered",
+    "completed": "completed",
+    "fulfilled": "fulfilled",
     "delayed": "delayed",
     "cancelled": "cancelled",
 }
 
-# Admin sees everything with raw internal values
-ADMIN_STATUS_MAP = {k: k for k in INTERNAL_STATUSES}
+# Admin sees everything with raw internal values (human-readable display)
+ADMIN_STATUS_MAP = {k: k.replace("_", " ") for k in INTERNAL_STATUSES}
 
 # Vendor sees assigned fulfillment statuses
 VENDOR_STATUS_MAP = {
     "assigned": "assigned",
     "acknowledged": "acknowledged",
+    "accepted": "accepted",
+    "ready_to_fulfill": "ready to fulfill",
     "in_production": "in production",
+    "in_progress": "in progress",
+    "work_scheduled": "work scheduled",
+    "quality_check": "quality check",
     "ready": "ready",
+    "ready_for_dispatch": "ready for dispatch",
+    "ready_for_pickup": "ready for pickup",
+    "picked_up": "picked up",
     "dispatched": "dispatched",
+    "in_transit": "in transit",
     "delivered": "delivered",
+    "completed": "completed",
+    "fulfilled": "fulfilled",
     "delayed": "delayed",
     "cancelled": "cancelled",
 }
