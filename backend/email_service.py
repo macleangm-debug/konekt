@@ -115,6 +115,81 @@ class EmailService:
         return await EmailService.send_email(to_email, "Welcome to Konekt! 🎉", html_content)
 
     @staticmethod
+    async def send_password_reset_email(to_email: str, reset_url: str):
+        """Send password reset email. Dry-run logs if no Resend API key."""
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                <tr>
+                    <td style="background: #2D3E50; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="margin: 0; font-size: 24px;">Password Reset</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                        <p>You requested a password reset for your Konekt account.</p>
+                        <p>Click the button below to set a new password. This link expires in 30 minutes.</p>
+                        <p style="text-align: center; margin: 25px 0;">
+                            <a href="{reset_url}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Reset Password</a>
+                        </p>
+                        <p style="font-size: 13px; color: #666;">If you didn't request this, you can safely ignore this email.</p>
+                        <p>Best regards,<br><strong>The Konekt Team</strong></p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+
+        if not RESEND_API_KEY:
+            logger.info(f"[DRY-RUN] Password reset email for {to_email}")
+            logger.info(f"[DRY-RUN] Reset URL: {reset_url}")
+            return True
+
+        return await EmailService.send_email(to_email, "Reset your Konekt password", html_content)
+
+    @staticmethod
+    async def send_email_verification(to_email: str, verify_url: str, name: str = ""):
+        """Send email verification link. Dry-run logs if no Resend API key."""
+        greeting = f"Hi {name}," if name else "Hi,"
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><meta charset="utf-8"></head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                <tr>
+                    <td style="background: #2D3E50; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                        <h1 style="margin: 0; font-size: 24px;">Verify Your Email</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+                        <p>{greeting}</p>
+                        <p>Please verify your email address to complete your Konekt account setup.</p>
+                        <p style="text-align: center; margin: 25px 0;">
+                            <a href="{verify_url}" style="display: inline-block; background: #D4A843; color: #2D3E50; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Verify Email</a>
+                        </p>
+                        <p style="font-size: 13px; color: #666;">This link expires in 24 hours.</p>
+                        <p>Best regards,<br><strong>The Konekt Team</strong></p>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>
+        """
+
+        if not RESEND_API_KEY:
+            logger.info(f"[DRY-RUN] Email verification for {to_email}")
+            logger.info(f"[DRY-RUN] Verify URL: {verify_url}")
+            return True
+
+        return await EmailService.send_email(to_email, "Verify your Konekt email", html_content)
+
+    @staticmethod
     async def send_order_confirmation(to_email: str, order_id: str, order_number: str, order_items: list, total: float, deposit: float, customer_name: str = "Customer"):
         """Send order confirmation to customer"""
         items_html = "".join([

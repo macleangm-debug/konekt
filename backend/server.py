@@ -313,6 +313,8 @@ class UserCreate(BaseModel):
     # Attribution fields
     affiliate_code: Optional[str] = None
     campaign_id: Optional[str] = None
+    # Honeypot field — must be empty, bots fill this
+    website: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -830,12 +832,25 @@ def require_permission(permission: str):
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/register")
-async def register(data: UserCreate):
+async def register(request: Request, data: UserCreate):
     from attribution_capture_service import (
         extract_attribution_from_payload,
         hydrate_affiliate_from_code,
         build_attribution_block
     )
+    from services.auth_security_service import check_rate_limit, check_honeypot
+
+    # Rate limit
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    if not check_rate_limit("register", client_ip):
+        raise HTTPException(status_code=429, detail="Too many registration attempts. Please try again later.")
+
+    # Honeypot check (silent rejection for bots)
+    body_raw = data.model_dump()
+    if not check_honeypot(body_raw):
+        # Silently reject — return success-like response to fool bots
+        await asyncio.sleep(1)
+        return {"token": "", "user": {"id": "", "email": data.email, "role": "customer"}}
     
     existing = await db.users.find_one({"email": data.email})
     if existing:
@@ -889,7 +904,13 @@ async def register(data: UserCreate):
     }
 
 @api_router.post("/auth/login")
-async def login(data: UserLogin):
+async def login(request: Request, data: UserLogin):
+    from services.auth_security_service import check_rate_limit
+    
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    if not check_rate_limit("login", f"{client_ip}:{data.email}"):
+        raise HTTPException(status_code=429, detail="Too many login attempts. Please try again later.")
+    
     # 1. Check main users collection (customers + admin staff)
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
     # Check both password_hash and password fields (demo sales users use 'password')
@@ -2873,6 +2894,10 @@ app.include_router(content_engine_router)
 from routes.discount_request_routes import router as discount_request_router
 app.include_router(discount_request_router)
 
+# Auth Security — Password Reset, Email Verification
+from routes.auth_security_routes import router as auth_security_router
+app.include_router(auth_security_router)
+
 # Affiliate Products + Promotions API
 from routes.affiliate_products_routes import router as affiliate_products_router
 app.include_router(affiliate_products_router)
@@ -2961,6 +2986,13 @@ async def startup_event():
         logger.info("Notification settings seeded")
     except Exception as e:
         logger.warning("Notification seed: %s", e)
+
+    # Ensure auth security indexes
+    try:
+        from services.auth_security_service import ensure_auth_indexes
+        await ensure_auth_indexes(db)
+    except Exception as e:
+        logger.warning("Auth security indexes: %s", e)
 
     # Migrate old leads from 'leads' collection to 'crm_leads' (one-time compat)
     try:

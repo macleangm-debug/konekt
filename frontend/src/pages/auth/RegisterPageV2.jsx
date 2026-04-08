@@ -20,6 +20,7 @@ export default function RegisterPageV2() {
   const [loading, setLoading] = useState(false);
   const [validating, setValidating] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
 
   const source = searchParams.get("source") || "";
   const affiliateCode = searchParams.get("ref") || searchParams.get("affiliate_code") || "";
@@ -69,6 +70,7 @@ export default function RegisterPageV2() {
         full_name: fullName, email, password,
         phone, company: company || undefined,
         affiliate_code: affiliateCode || undefined,
+        website: honeypot || undefined,
       };
       const res = await api.post("/api/auth/register", payload);
       const { token, user } = res.data;
@@ -144,6 +146,12 @@ export default function RegisterPageV2() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Honeypot - hidden from real users, bots fill this */}
+              <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                <label htmlFor="reg-website">Website</label>
+                <input id="reg-website" type="text" name="website" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-[#0E1A2B] mb-1.5">Full Name *</label>
                 <input

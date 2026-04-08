@@ -307,6 +307,8 @@ import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 // New Design Pack - V2 Pages
 import LoginPageV2 from "@/pages/auth/LoginPageV2";
 import RegisterPageV2 from "@/pages/auth/RegisterPageV2";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
 import HelpPageV3 from "@/pages/help/HelpPageV3";
 import DashboardCommandCenter from "@/pages/dashboard/DashboardCommandCenter";
 import CustomerDashboardV3 from "@/pages/dashboard/CustomerDashboardV3";
@@ -548,6 +550,10 @@ function App() {
             </CartProvider>
           </AuthProvider>
         } />
+
+        {/* Password Reset */}
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         
         {/* Staff Login (separate from admin) */}
         <Route path="/staff-login" element={
