@@ -121,19 +121,22 @@ async def enrich_order(order):
     vendor_orders = await db.vendor_orders.find({"order_id": order_id}).to_list(10)
     if vendor_orders:
         vo_statuses = [vo.get("status", "processing") for vo in vendor_orders]
-        # Use the most advanced vendor status
-        status_priority = ["completed", "ready", "quality_check", "in_progress", "work_scheduled", "assigned", "accepted", "ready_to_fulfill", "processing"]
+        status_priority = ["completed", "delivered", "dispatched", "ready", "quality_check", "in_production", "in_progress", "work_scheduled", "acknowledged", "assigned", "accepted", "ready_to_fulfill", "processing"]
         for sp in status_priority:
             if sp in vo_statuses:
                 internal_status = sp
                 break
+
+    # Apply customer-safe status mapping from propagation service
+    from services.status_propagation_service import map_status_for_role
+    customer_display_status = map_status_for_role(internal_status, "customer")
 
     # Customer-safe timeline
     source_type = order.get("type") or order.get("source_type") or "product"
     timeline_data = get_customer_timeline(source_type, internal_status)
     order["timeline_steps"] = timeline_data["steps"]
     order["timeline_index"] = timeline_data["current_index"]
-    order["customer_status"] = timeline_data["current_label"]
+    order["customer_status"] = customer_display_status or timeline_data["current_label"]
     order["status_description"] = timeline_data["description"]
 
     # DO NOT expose vendor identity to customer

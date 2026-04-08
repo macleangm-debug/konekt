@@ -736,3 +736,24 @@ async def release_to_vendor(order_id: str, payload: dict = {}):
         {"$set": {"status": "ready_to_fulfill", "released_at": now}}
     )
     return {"ok": True}
+
+
+@router.get("/{order_id}/purchase-orders")
+async def get_purchase_orders_for_order(order_id: str):
+    """List all purchase orders (vendor orders) for a given parent order."""
+    vos = await db.vendor_orders.find(
+        {"$or": [{"order_id": order_id}, {"order_number": order_id}]},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(length=50)
+    # Enrich with vendor name
+    for vo in vos:
+        vendor_id = vo.get("vendor_id")
+        if vendor_id:
+            partner = await db.partner_users.find_one({"partner_id": vendor_id}, {"_id": 0, "full_name": 1, "company_name": 1})
+            if partner:
+                vo["vendor_name"] = partner.get("full_name") or partner.get("company_name") or ""
+            else:
+                user = await db.users.find_one({"id": vendor_id}, {"_id": 0, "full_name": 1})
+                if user:
+                    vo["vendor_name"] = user.get("full_name", "")
+    return {"purchase_orders": vos, "count": len(vos)}

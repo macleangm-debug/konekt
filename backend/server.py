@@ -2904,6 +2904,10 @@ app.include_router(auth_security_router)
 from routes.affiliate_products_routes import router as affiliate_products_router
 app.include_router(affiliate_products_router)
 
+from routes.sales_status_routes import router as sales_status_router
+app.include_router(sales_status_router)
+
+
 
 
 

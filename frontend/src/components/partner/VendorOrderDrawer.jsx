@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, MessageSquare, Calendar } from "lucide-react";
+import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, MessageSquare, Calendar, Download } from "lucide-react";
 import partnerApi from "../../lib/partnerApi";
 import VendorEtaInput from "../vendor/VendorEtaInput";
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 const STATUS_FLOW = {
   ready_to_fulfill: { next: "assigned", label: "Accept Order", icon: CheckCircle, color: "bg-indigo-600 hover:bg-indigo-700" },
@@ -107,6 +109,17 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
         </div>
         <StatusBadgeDrawer status={currentStatus} />
       </div>
+
+      {/* PO Download */}
+      <a
+        href={`${API_URL}/api/pdf/purchase-orders/${order?.id || order?.vendor_order_no}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] transition-colors w-full justify-center"
+        data-testid="download-po-pdf"
+      >
+        <Download className="w-4 h-4" /> Download Purchase Order (PDF)
+      </a>
 
       {/* Order Summary */}
       <section className="rounded-xl border p-4" data-testid="drawer-order-summary">

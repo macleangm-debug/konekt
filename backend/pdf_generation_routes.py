@@ -703,8 +703,113 @@ def render_statement_html(statement: dict, branding: dict = None):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# PDF CONVERSION
+# PURCHASE ORDER TEMPLATE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _po_items_table_html(items):
+    if not items:
+        return '<p style="color:#94a3b8; text-align:center; padding:20px;">No line items.</p>'
+    rows = ""
+    subtotal = 0
+    for i, item in enumerate(items):
+        name = item.get("name") or item.get("product_name") or f"Item {i+1}"
+        desc = item.get("description") or item.get("specifications") or ""
+        qty = int(item.get("quantity", 1))
+        unit_cost = float(item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or item.get("price") or 0)
+        line_total = unit_cost * qty
+        subtotal += line_total
+        rows += f'''<tr>
+          <td>{i+1}</td>
+          <td>{name}{"<br/><span style=&quot;font-size:10px;color:" + SLATE + "&quot;>" + desc[:60] + "</span>" if desc else ""}</td>
+          <td style="text-align:right">{qty}</td>
+          <td style="text-align:right">{_money(unit_cost)}</td>
+          <td style="text-align:right; font-weight:600">{_money(line_total)}</td>
+        </tr>'''
+    vat = round(subtotal * 0.18, 2)
+    total = round(subtotal + vat, 2)
+    return f'''<table class="items-table">
+      <thead><tr>
+        <th style="width:40px">#</th>
+        <th>Description</th>
+        <th style="text-align:right; width:60px">Qty</th>
+        <th style="text-align:right; width:110px">Unit Cost</th>
+        <th style="text-align:right; width:110px">Total</th>
+      </tr></thead>
+      <tbody>{rows}</tbody>
+    </table>
+    <div class="totals">
+      <div class="total-row"><span>Subtotal</span><span>{_money(subtotal)}</span></div>
+      <div class="total-row"><span>VAT (18%)</span><span>{_money(vat)}</span></div>
+      <div class="total-row grand"><span>Total</span><span>{_money(total)}</span></div>
+    </div>'''
+
+
+def render_purchase_order_html(vo: dict, vendor: dict = None, parent_order: dict = None, branding: dict = None):
+    branding = branding or {}
+    vendor = vendor or {}
+    parent_order = parent_order or {}
+
+    po_number = vo.get("vendor_order_no") or vo.get("id", "")[:8]
+    created = vo.get("created_at", "")
+    items = vo.get("items", [])
+    status = (vo.get("status") or "assigned").lower()
+
+    status_map = {
+        "assigned": ("Assigned", "status-review"),
+        "acknowledged": ("Acknowledged", "status-review"),
+        "in_production": ("In Production", "status-pending"),
+        "ready": ("Ready", "status-paid"),
+        "dispatched": ("Dispatched", "status-paid"),
+        "delivered": ("Delivered", "status-paid"),
+        "delayed": ("Delayed", "status-rejected"),
+    }
+    sl, sc = status_map.get(status, ("Assigned", "status-review"))
+
+    vendor_name = vendor.get("full_name") or vendor.get("name") or vo.get("vendor_name") or "Vendor"
+    vendor_company = vendor.get("company") or vendor.get("company_name") or ""
+    vendor_email = vendor.get("email") or ""
+    vendor_phone = vendor.get("phone") or ""
+
+    # Customer delivery info
+    delivery = parent_order.get("delivery") or {}
+    cust_name = parent_order.get("customer_name") or ""
+    cust_address = delivery.get("address") or delivery.get("city") or ""
+    order_number = parent_order.get("order_number") or vo.get("order_number") or ""
+
+    delivery_info = f'''<div class="section-label">Deliver To</div>
+      <div class="client-name">{cust_name or "Konekt Warehouse"}</div>
+      <div class="client-detail">{cust_address}</div>'''
+    if not cust_name and not cust_address:
+        delivery_info = f'''<div class="section-label">Deliver To</div>
+          <div class="client-name">Konekt Warehouse</div>
+          <div class="client-detail">{branding.get("contact_address", "Dar es Salaam, Tanzania")}</div>'''
+
+    notes_box = f'''<div class="payment-box">
+      <div class="section-label">Order Notes</div>
+      <div class="payment-line"><strong>Parent Order:</strong> {order_number}</div>
+      <div class="payment-line"><strong>Priority:</strong> {(vo.get("priority") or "normal").capitalize()}</div>
+      {"<div class=&quot;payment-line&quot;><strong>Instructions:</strong> " + vo.get("notes", "") + "</div>" if vo.get("notes") else ""}
+    </div>'''
+
+    body = f'''
+    <div class="page">
+      {_header_block("PURCHASE ORDER", po_number, created, sl, sc, branding)}
+      <div class="body">
+        <div class="two-col">
+          <div class="col">
+            <div class="section-label">Supplier</div>
+            <div class="client-name">{vendor_name}</div>
+            {"<div class=&quot;client-detail&quot;>" + vendor_company + "</div>" if vendor_company else ""}
+            <div class="client-detail">{vendor_email}{"<br/>" + vendor_phone if vendor_phone else ""}</div>
+          </div>
+          <div class="col">{delivery_info}</div>
+        </div>
+        {_po_items_table_html(items)}
+        {_payment_auth_html(notes_box, branding)}
+      </div>
+      {_footer_html(branding)}
+    </div>'''
+    return _wrap(_css(), body)
 
 def html_to_pdf_bytes(html: str):
     try:
@@ -935,3 +1040,59 @@ async def statement_preview(customer_email: str, request: Request):
 
     branding = await _get_branding(db)
     return HTMLResponse(render_statement_html(statement, branding))
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PURCHASE ORDER ROUTES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async def _find_vendor_order(db, vo_id):
+    try:
+        from bson import ObjectId as OID
+        doc = await db.vendor_orders.find_one({"_id": OID(vo_id)})
+        if doc: return doc
+    except Exception:
+        pass
+    doc = await db.vendor_orders.find_one({"id": vo_id})
+    if doc: return doc
+    return await db.vendor_orders.find_one({"vendor_order_no": vo_id})
+
+
+async def _enrich_po(db, vo):
+    """Enrich vendor order with vendor info and parent order for PO generation."""
+    vendor = None
+    vendor_id = vo.get("vendor_id")
+    if vendor_id:
+        vendor = await db.partner_users.find_one({"partner_id": vendor_id}, {"_id": 0})
+        if not vendor:
+            vendor = await db.users.find_one({"id": vendor_id}, {"_id": 0})
+    parent_order = None
+    order_id = vo.get("order_id")
+    if order_id:
+        parent_order = await db.orders.find_one(
+            {"$or": [{"id": order_id}, {"order_number": order_id}]},
+            {"_id": 0}
+        )
+    return vendor or {}, parent_order or {}
+
+
+@router.get("/purchase-orders/{vo_id}")
+async def download_purchase_order_pdf(vo_id: str, request: Request):
+    db = request.app.mongodb
+    vo = await _find_vendor_order(db, vo_id)
+    if not vo: raise HTTPException(404, "Vendor order not found")
+    vendor, parent_order = await _enrich_po(db, vo)
+    branding = await _get_branding(db)
+    pdf_io = html_to_pdf_bytes(render_purchase_order_html(vo, vendor, parent_order, branding))
+    fn = f'PO-{vo.get("vendor_order_no", str(vo.get("_id",""))[:8])}.pdf'
+    return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+
+
+@router.get("/purchase-orders/{vo_id}/preview", response_class=HTMLResponse)
+async def purchase_order_preview(vo_id: str, request: Request):
+    db = request.app.mongodb
+    vo = await _find_vendor_order(db, vo_id)
+    if not vo: raise HTTPException(404, "Vendor order not found")
+    vendor, parent_order = await _enrich_po(db, vo)
+    branding = await _get_branding(db)
+    return HTMLResponse(render_purchase_order_html(vo, vendor, parent_order, branding))

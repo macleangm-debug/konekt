@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye } from "lucide-react";
+import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, Download } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import api from "@/lib/api";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 const orderStatuses = ["pending","confirmed","awaiting_payment","in_review","approved","in_production","quality_check","ready_for_dispatch","in_transit","delivered","cancelled"];
 const statusColors = {
@@ -20,6 +23,17 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", department: "", due_date: "", priority: "medium" });
   const [productionForm, setProductionForm] = useState({ production_type: "printing", assigned_to: "", priority: "medium", due_date: "", notes: "" });
   const [activeTab, setActiveTab] = useState("info");
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+
+  useEffect(() => {
+    if (!order) return;
+    const oid = order.id || order.order_number;
+    if (oid) {
+      api.get(`/api/admin/orders-ops/${oid}/purchase-orders`).then(r => {
+        setPurchaseOrders(r.data?.purchase_orders || []);
+      }).catch(() => {});
+    }
+  }, [order]);
 
   if (!order) return null;
   const status = order.status || order.current_status || "pending";
@@ -65,6 +79,37 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
                 <div key={idx} className="px-4 py-3 flex items-center justify-between text-sm">
                   <div><div className="font-medium text-[#20364D]">{item.name || item.product_name || `Item ${idx+1}`}</div><div className="text-xs text-slate-400">Qty {item.quantity || 1}</div></div>
                   <div className="font-semibold text-[#20364D]">{money(item.total || ((item.price || 0) * (item.quantity || 1)))}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Purchase Orders */}
+        {purchaseOrders.length > 0 && (
+          <div className="rounded-xl border overflow-hidden" data-testid="purchase-orders-section">
+            <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Vendor Purchase Orders</div>
+            <div className="divide-y divide-slate-100">
+              {purchaseOrders.map((po, idx) => (
+                <div key={idx} className="px-4 py-3 flex items-center justify-between text-sm">
+                  <div>
+                    <div className="font-medium text-[#20364D]">{po.vendor_name || `Vendor ${idx+1}`}</div>
+                    <div className="text-xs text-slate-400">{po.vendor_order_no || po.id?.slice(0,8)}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[po.status] || "bg-slate-100 text-slate-700"}`}>
+                      {(po.status || "assigned").replace(/_/g, " ")}
+                    </span>
+                    <a
+                      href={`${API_URL}/api/pdf/purchase-orders/${po.id || po.vendor_order_no}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#20364D] text-white px-2.5 py-1.5 text-[10px] font-semibold hover:bg-[#2a4a66] transition-colors"
+                      data-testid={`download-po-pdf-${idx}`}
+                    >
+                      <Download className="w-3 h-3" /> PO
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
