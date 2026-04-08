@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Settings2, Users, DollarSign, AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Settings2, Users, DollarSign, AlertTriangle, CheckCircle2, RefreshCw, Plus, Trash2, Layers } from "lucide-react";
 import api from "../../lib/api";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+const SCOPE_LABELS = {
+  global: "Global Default",
+  product_group: "Product Group",
+  product: "Individual Product",
+  service_group: "Service Group",
+  service: "Individual Service",
+};
 
 export default function DistributionMarginPage() {
   const [settings, setSettings] = useState({
@@ -18,9 +26,18 @@ export default function DistributionMarginPage() {
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [marginRules, setMarginRules] = useState([]);
+  const [newRule, setNewRule] = useState({
+    scope_type: "group",
+    scope_id: "",
+    scope_label: "",
+    operational_margin_pct: 20,
+    distributable_margin_pct: 10,
+  });
 
   useEffect(() => {
     loadSettings();
+    loadMarginRules();
   }, []);
 
   const loadSettings = async () => {
@@ -33,6 +50,56 @@ export default function DistributionMarginPage() {
       // Use defaults
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMarginRules = async () => {
+    try {
+      const res = await api.get("/api/admin/margin-rules");
+      if (Array.isArray(res.data)) setMarginRules(res.data);
+      else if (res.data?.rules) setMarginRules(res.data.rules);
+    } catch {}
+  };
+
+  const handleAddRule = async () => {
+    if (!newRule.scope_label.trim()) {
+      toast.error("Please provide a label for this rule");
+      return;
+    }
+    if (newRule.distributable_margin_pct > newRule.operational_margin_pct) {
+      toast.error("Distributable cannot exceed operational margin");
+      return;
+    }
+    try {
+      const scopeMap = { product_group: "group", service_group: "group" };
+      const payload = {
+        scope: scopeMap[newRule.scope_type] || newRule.scope_type,
+        target_id: newRule.scope_id.trim() || newRule.scope_label.trim().toLowerCase().replace(/\s+/g, "-"),
+        target_name: newRule.scope_label,
+        method: "percentage",
+        value: newRule.operational_margin_pct,
+        distributable_margin_pct: newRule.distributable_margin_pct,
+      };
+      const res = await api.post("/api/admin/margin-rules", payload);
+      if (res.data?.id) {
+        toast.success("Margin rule saved");
+        loadMarginRules();
+        setNewRule({ scope_type: "group", scope_id: "", scope_label: "", operational_margin_pct: 20, distributable_margin_pct: 10 });
+      } else {
+        toast.error(res.data?.detail || "Failed to save rule");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to save rule");
+    }
+  };
+
+  const handleDeleteRule = async (rule) => {
+    try {
+      await api.delete(`/api/admin/margin-rules/${rule.id}`);
+      toast.success("Rule removed");
+      loadMarginRules();
+    } catch {
+      toast.error("Failed to delete rule");
     }
   };
 
@@ -98,6 +165,12 @@ export default function DistributionMarginPage() {
         <p className="mt-1 text-sm text-slate-600">
           Configure the distribution layer and affiliate settings. Konekt margin is fixed and untouchable.
         </p>
+      </div>
+
+      <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800">
+        <strong>Fixed Margin</strong> = applied directly on vendor price and never exposed to customers.
+        <strong className="ml-1">Flexible Distribution</strong> = sits on top, funds affiliates, sales, and discounts.
+        Customer-facing pricing never shows internal margin breakdown.
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -185,9 +258,14 @@ export default function DistributionMarginPage() {
                   <AlertTriangle className="w-4 h-4 text-red-600" />
                 )}
                 <span className={`text-sm font-semibold ${isValid ? "text-emerald-700" : "text-red-700"}`}>
-                  {isValid ? "Valid Split" : "Over-allocated"}
+                  {isValid ? "Valid Split" : "Over-allocated — reduce percentages to save"}
                 </span>
               </div>
+              {!isValid && (
+                <p className="text-xs text-red-600 mb-2">
+                  Total split ({totalSplit.toFixed(1)}%) exceeds the distribution cap ({settings.distribution_margin_pct}%). Reduce affiliate, sales, or discount percentages.
+                </p>
+              )}
               <div className="text-xs text-slate-600 space-y-1">
                 <div className="flex justify-between">
                   <span>Affiliate + Sales + Discount</span>
@@ -289,6 +367,107 @@ export default function DistributionMarginPage() {
           </div>
         </div>
       )}
+
+      {/* Margin Override Rules */}
+      <div className="rounded-2xl border bg-white p-6" data-testid="margin-rules-section">
+        <div className="flex items-center gap-2 mb-1">
+          <Layers className="w-5 h-5 text-[#20364D]" />
+          <h2 className="text-lg font-semibold text-[#20364D]">Margin Override Rules</h2>
+        </div>
+        <p className="text-xs text-slate-500 mb-5">
+          Override the global margin for specific product groups, products, or services. The most specific rule wins: Product &gt; Group &gt; Global.
+        </p>
+
+        {/* Existing rules */}
+        {marginRules.length > 0 && (
+          <div className="border rounded-xl overflow-hidden mb-5">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 text-left">
+                <tr>
+                  <th className="px-4 py-2.5 font-medium text-slate-600">Scope</th>
+                  <th className="px-4 py-2.5 font-medium text-slate-600">Label</th>
+                  <th className="px-4 py-2.5 font-medium text-slate-600 text-right">Margin %</th>
+                  <th className="px-4 py-2.5 font-medium text-slate-600 text-right">Distributable %</th>
+                  <th className="px-4 py-2.5 w-10"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {marginRules.map((rule, i) => (
+                  <tr key={rule.id || i} className="border-t" data-testid={`margin-rule-row-${i}`}>
+                    <td className="px-4 py-2.5">
+                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
+                        {rule.scope === "group" ? "Group" : rule.scope === "product" ? "Product" : "Global"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 font-medium">{rule.target_name || rule.scope_label || "—"}</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{rule.value || rule.operational_margin_pct}%</td>
+                    <td className="px-4 py-2.5 text-right font-mono">{rule.distributable_margin_pct || "—"}%</td>
+                    <td className="px-4 py-2.5">
+                      {rule.scope !== "global" && (
+                        <button
+                          onClick={() => handleDeleteRule(rule)}
+                          className="text-red-400 hover:text-red-600 transition"
+                          data-testid={`delete-rule-${i}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Add new rule form */}
+        <div className="rounded-xl border border-dashed border-slate-300 p-4">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Add Override Rule</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <select
+              value={newRule.scope_type}
+              onChange={(e) => setNewRule((p) => ({ ...p, scope_type: e.target.value }))}
+              className="border rounded-xl px-3 py-2.5 text-sm"
+              data-testid="new-rule-scope-type"
+            >
+              <option value="group">Product / Service Group</option>
+              <option value="product">Individual Product</option>
+            </select>
+            <input
+              placeholder="Label (e.g. Office Equipment)"
+              value={newRule.scope_label}
+              onChange={(e) => setNewRule((p) => ({ ...p, scope_label: e.target.value }))}
+              className="border rounded-xl px-3 py-2.5 text-sm"
+              data-testid="new-rule-label"
+            />
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Margin %"
+              value={newRule.operational_margin_pct}
+              onChange={(e) => setNewRule((p) => ({ ...p, operational_margin_pct: parseFloat(e.target.value) || 0 }))}
+              className="border rounded-xl px-3 py-2.5 text-sm"
+              data-testid="new-rule-margin"
+            />
+            <input
+              type="number"
+              step="0.1"
+              placeholder="Distributable %"
+              value={newRule.distributable_margin_pct}
+              onChange={(e) => setNewRule((p) => ({ ...p, distributable_margin_pct: parseFloat(e.target.value) || 0 }))}
+              className="border rounded-xl px-3 py-2.5 text-sm"
+              data-testid="new-rule-distributable"
+            />
+            <button
+              onClick={handleAddRule}
+              className="rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] transition flex items-center justify-center gap-1"
+              data-testid="add-rule-btn"
+            >
+              <Plus className="w-4 h-4" /> Add Rule
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

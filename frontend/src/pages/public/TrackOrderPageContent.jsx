@@ -72,7 +72,7 @@ export default function TrackOrderPageContent() {
 
       <h1 className="text-3xl font-bold text-[#20364D]">Track Your Order</h1>
       <p className="text-slate-600 mt-2 mb-8">
-        Enter your order number and verify with email or phone to check your delivery progress.
+        Enter your order number and either your email or phone number to check your delivery progress.
       </p>
 
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -82,7 +82,7 @@ export default function TrackOrderPageContent() {
           <div className="rounded-2xl border bg-white p-6" data-testid="track-search-form">
             <form onSubmit={handleSearch} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number *</label>
+                <label className="block text-base font-semibold text-[#20364D] mb-1.5">Order Number *</label>
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
@@ -90,15 +90,19 @@ export default function TrackOrderPageContent() {
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(e.target.value)}
                     placeholder="e.g. ORD-20260406-XXXXX"
-                    className="w-full border rounded-xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+                    className="w-full border-2 border-[#20364D]/20 rounded-xl pl-11 pr-4 py-3.5 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D]"
                     required
                     data-testid="order-number-input"
                   />
                 </div>
+                <p className="text-xs text-slate-500 mt-1.5">Use the order code shown after checkout or payment proof submission.</p>
               </div>
+
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                <p className="text-xs font-medium text-slate-600 mb-3">Verify with your email or phone number:</p>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  <Mail className="w-3.5 h-3.5 inline mr-1" />Email (for verification)
+                  <Mail className="w-3.5 h-3.5 inline mr-1" />Email
                 </label>
                 <input
                   type="email"
@@ -110,13 +114,14 @@ export default function TrackOrderPageContent() {
                 />
               </div>
               <PhoneNumberField
-                label="Phone (alternative verification)"
+                label="Phone"
                 prefix={phonePrefix}
                 number={phoneNumber}
                 onPrefixChange={setPhonePrefix}
                 onNumberChange={setPhoneNumber}
                 testIdPrefix="track-phone"
               />
+              </div>
               <button
                 type="submit"
                 disabled={loading}

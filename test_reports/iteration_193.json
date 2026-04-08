@@ -1,0 +1,121 @@
+{
+  "summary": "Phase 41 polish + Phase 42 margin engine testing complete. All backend APIs pass (8/8). Frontend features working: Track Order page with email/phone guidance and helper text, Order Confirmation with guest tracking reminder, Admin Distribution Margin page with blue info banner (fixed vs flexible), red warning when split exceeds cap, margin rules table with 4 rules, Add Override Rule form. Products page loads, Login page shows full logo, Customer login works. Admin sidebar does NOT show 'Margin & Distribution' link - the link is defined in adminNavigation.js but AdminLayout.js uses a different navItems array that doesn't include it.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Admin Sidebar",
+        "issues": ["'Margin & Distribution' link is defined in adminNavigation.js (line 60) but AdminLayout.js uses a different navItems array (lines 61-101) that doesn't include it. The page is accessible via direct URL /admin/distribution-margin but not visible in sidebar navigation. Need to add { path: '/admin/distribution-margin', label: 'Margin & Distribution', icon: Percent, moduleKey: 'partners' } to navItems in AdminLayout.js"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_margin_engine_v193.py",
+    "/app/test_reports/pytest/pytest_results_margin_engine_v193.xml"
+  ],
+  "action_items": [
+    "Add 'Margin & Distribution' link to navItems array in AdminLayout.js (around line 91 in Partnerships section): { path: '/admin/distribution-margin', label: 'Margin & Distribution', icon: Percent, moduleKey: 'partners' }"
+  ],
+  "critical_code_review_comments": [
+    "Two navigation configs exist: adminNavigation.js and navItems in AdminLayout.js - they should be consolidated or synced",
+    "AdminSidebar.jsx uses adminNavigation.js but AdminLayout.js uses its own navItems array - this causes inconsistency"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_margin_engine_v193.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "95% (all features work, sidebar link missing)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Customer: demo.customer@konekt.com / Demo123!",
+  "seed_data_creation": "",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Phase 41-42 testing complete. Backend margin engine APIs fully functional: GET/POST margin-rules, resolve-distribution with hierarchy (product > group > global). Frontend: Track Order has email/phone guidance, Order Confirmation has guest tracking reminder, Admin Distribution Margin page has blue info banner, red warning on invalid split, margin rules table with CRUD. Only issue: sidebar link not visible in AdminLayout.js navItems.",
+  "features_tested": {
+    "track_order_page_helper_text": {
+      "description": "Track Order page has helper text 'Use the order code shown after checkout...'",
+      "status": "PASS",
+      "evidence": "Text found under order number input"
+    },
+    "track_order_page_email_phone_guidance": {
+      "description": "Track Order page has 'Verify with your email or phone number' guidance",
+      "status": "PASS",
+      "evidence": "Guidance text found in form"
+    },
+    "order_confirmation_guest_reminder": {
+      "description": "Order Confirmation shows guest tracking reminder",
+      "status": "PASS",
+      "evidence": "Text 'You'll need this order code to track your order as a guest' found"
+    },
+    "admin_distribution_blue_info_banner": {
+      "description": "Admin Distribution Margin page has blue info banner explaining fixed vs flexible margins",
+      "status": "PASS",
+      "evidence": "'Fixed Margin' and 'Flexible Distribution' text found in blue banner"
+    },
+    "admin_distribution_red_warning": {
+      "description": "Admin Distribution Margin page shows red warning when split exceeds cap",
+      "status": "PASS",
+      "evidence": "Set affiliate=8%, sales=5%, discount=5% (18% total) and 'Over-allocated' warning appeared"
+    },
+    "margin_rules_api_create": {
+      "description": "POST /api/admin/margin-rules creates rule with distributable_margin_pct",
+      "status": "PASS",
+      "evidence": "Created test-group-v193 with value=18, distributable_margin_pct=8"
+    },
+    "margin_rules_api_list": {
+      "description": "GET /api/admin/margin-rules returns list including distributable_margin_pct",
+      "status": "PASS",
+      "evidence": "Returns array of rules with all fields"
+    },
+    "margin_rules_api_resolve_distribution": {
+      "description": "POST /api/admin/margin-rules/resolve-distribution resolves by hierarchy",
+      "status": "PASS",
+      "evidence": "Group rule (18%/8%) beats global, product rule (25%/12%) beats group"
+    },
+    "margin_rules_api_canonical_pricing": {
+      "description": "resolve-distribution returns canonical pricing object with all fields",
+      "status": "PASS",
+      "evidence": "Returns base_price, effective_margin_pct/value, effective_distributable_margin_pct/value, sales/affiliate/discount amounts, final_price, rule_scope/label"
+    },
+    "admin_margin_rules_table": {
+      "description": "Admin Distribution Margin page shows margin rules table",
+      "status": "PASS",
+      "evidence": "Found 4 margin rule rows (Office Equipment, Electronics, Test Product, Global)"
+    },
+    "admin_margin_rules_add_form": {
+      "description": "Admin Distribution Margin page has Add Override Rule form",
+      "status": "PASS",
+      "evidence": "Scope select, label input, margin %, distributable %, Add Rule button all found"
+    },
+    "admin_sidebar_margin_link": {
+      "description": "Admin sidebar shows 'Margin & Distribution' link in Growth section",
+      "status": "FAIL",
+      "evidence": "Link defined in adminNavigation.js but AdminLayout.js uses different navItems array without this link"
+    },
+    "products_page": {
+      "description": "Products page (/products) loads without crashing",
+      "status": "PASS",
+      "evidence": "data-testid='products-page' found, products displayed"
+    },
+    "login_page_logo": {
+      "description": "Login page renders properly with full logo",
+      "status": "PASS",
+      "evidence": "data-testid='brand-logo' found on login page"
+    },
+    "customer_login": {
+      "description": "Customer login with demo.customer@konekt.com / Demo123! works",
+      "status": "PASS",
+      "evidence": "Redirected to /account after login"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

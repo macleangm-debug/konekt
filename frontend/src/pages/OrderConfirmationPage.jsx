@@ -25,6 +25,12 @@ export default function OrderConfirmationPage() {
           <OrderCodeCard orderNumber={orderId} />
         </div>
 
+        <div className="rounded-xl bg-amber-50/60 border border-amber-200 px-5 py-3 mt-4 text-center">
+          <p className="text-sm font-medium text-amber-900">
+            You'll need this order code to track your order as a guest.
+          </p>
+        </div>
+
         <div className="rounded-2xl bg-blue-50 border border-blue-200 p-5 mt-6 text-left">
           <h3 className="font-semibold text-blue-900">What happens next?</h3>
           <ul className="mt-3 space-y-2 text-sm text-blue-800">

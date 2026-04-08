@@ -78,6 +78,7 @@ async def create_margin_rule(payload: dict, request: Request):
         "method": method,
         "value": payload.get("value", 0),
         "tiers": payload.get("tiers", []),
+        "distributable_margin_pct": payload.get("distributable_margin_pct"),
         "active": True,
         "created_at": _now(),
         "updated_at": _now(),
@@ -95,7 +96,7 @@ async def update_margin_rule(rule_id: str, payload: dict, request: Request):
         raise HTTPException(404, "Margin rule not found")
 
     updates = {"updated_at": _now()}
-    for key in ("method", "value", "tiers", "target_name", "active"):
+    for key in ("method", "value", "tiers", "target_name", "active", "distributable_margin_pct"):
         if key in payload:
             updates[key] = payload[key]
 
@@ -166,3 +167,29 @@ async def calculate_price(payload: dict, request: Request):
             "method": rule.get("method") if rule else None,
         } if rule else None,
     }
+
+
+@router.post("/resolve-distribution")
+async def resolve_distribution(payload: dict, request: Request):
+    """
+    Resolve full pricing with distribution layer for a product/service.
+    Combines margin engine (rule hierarchy) + distribution settings (splits).
+    Input: { "product_id": "...", "group_id": "...", "vendor_price": 10000 }
+    """
+    from services.margin_engine import resolve_margin_rule, get_split_settings, resolve_pricing
+
+    db = request.app.mongodb
+    product_id = payload.get("product_id")
+    group_id = payload.get("group_id")
+    service_id = payload.get("service_id")
+    service_group_id = payload.get("service_group_id")
+    vendor_price = float(payload.get("vendor_price", 0))
+
+    if vendor_price <= 0:
+        raise HTTPException(400, "vendor_price must be greater than 0")
+
+    rule = await resolve_margin_rule(db, product_id=product_id, group_id=group_id,
+                                      service_id=service_id, service_group_id=service_group_id)
+    split = await get_split_settings(db)
+    pricing = resolve_pricing(vendor_price, rule, split)
+    return {"ok": True, "pricing": pricing}
