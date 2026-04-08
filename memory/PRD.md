@@ -48,28 +48,42 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 - Affiliate Content Feed
 
 ### Phase E: Sales Discount Request Workflow (April 8, 2026)
-- **Backend Service**: `discount_request_service.py` with create, list, approve, reject, margin floor validation
-- **Backend Routes**: `discount_request_routes.py` with staff and admin endpoints
-- **Margin Floor Protection**: Uses canonical `margin_engine.py` to validate discounts don't breach vendor base price or Konekt operational margin. Discount budget limited to distributable margin × discount pool percentage.
-- **Admin Queue**: GET /api/admin/discount-requests with KPIs (total, pending, approved, rejected), status filters, detail drawer with margin impact analysis
-- **Staff Interface**: GET/POST /api/staff/discount-requests for creating and tracking requests
-- **Approval Stamp**: Approved discounts stamp `approved_discount` object on the source quote/order document
-- **Frontend**: Admin Discount Requests Page (table + drawer + approve/reject), Staff Discount Requests Page (table + modal), navigation items in both admin and staff sidebars
-- **Testing**: Iteration 205 — 100% pass rate (19/19 backend, all frontend verified)
+- Backend: `discount_request_service.py` with create, list, approve, reject, margin floor validation
+- Routes: `discount_request_routes.py` (staff + admin endpoints)
+- Margin Floor Protection via canonical `margin_engine.py`
+- Admin Queue: table + drawer with margin impact, KPIs, filters, approve/reject
+- Staff Interface: list + modal for creating/tracking requests
+- Approval stamps `approved_discount` on source quote/order
+- Testing: Iteration 205 — 100% pass (19/19 backend, all frontend)
+
+### Phase C.5: Quick Reorder (April 8, 2026)
+- Backend: `POST /api/customer/orders/{order_id}/reorder` in existing customer_orders_routes.py
+- Validates product existence, re-runs `resolve_checkout_item_price` for current pricing/promotions
+- Returns cart-ready items with promo_applied, promo_label, warnings for unavailable products
+- Frontend: "Reorder" button on every order row in My Orders table
+- Rebuilt AccountCartPage from hardcoded stub to read from CartDrawerContext
+- CartDrawerContext upgraded with localStorage persistence
+- UX: notification banners for success/warnings, auto-redirect to /account/cart
+- Testing: Iteration 206 — 100% pass (11/11 backend, all frontend)
 
 ## Current Status
 - Backend: Healthy, all APIs operational
 - Frontend: All views functional
-- Testing: Iteration 205 — 100% pass rate
+- Testing: Iterations 205-206 — 100% pass rate
 
 ## Prioritized Backlog
 
-### P1 - Upcoming
-- Phase C.5: Quick Reorder (Add "Reorder" button on My Orders, push items to cart with re-evaluated pricing)
+### P0 - Upcoming (Auth Security Pack)
+- Forgot Password / Reset Password (email-based, one-time token, 15-30min expiry)
+- Signup anti-bot protection (honeypot, rate limiting, email verification)
+- Resend email service wired in dry-run mode
+
+### P1 - Next
+- Phase F: Canonical Drawer UI standardization
+- Phase F: Document Branding Unification (invoices, quotes, delivery notes, statements)
 
 ### P2 - Future
-- Phase F: Canonical Drawer UI (standardize all drawers)
-- Phase F: Document Branding Unification (invoices, quotes pulling canonical logo/settings)
+- Phase G: Discount Analytics Dashboard
 - Deep UI audit for production readiness
 - Twilio WhatsApp/SMS notifications (blocked on API key)
 - Resend email integration (blocked on API key)
@@ -82,6 +96,6 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 2. **Vendor Privacy**: Vendors see only their vendor_order_no, base_price, work details, and Konekt Sales Contact.
 3. **Staff ≠ Admin**: Sales/Staff use StaffLayout + StaffAuthContext. Completely isolated from admin portal.
 4. **Canonical Pricing**: Promotions Engine is backend-only source of truth. Frontend reads enriched data.
-5. **Guest Orders**: No invoice pre-approval. `_handle_guest_approval()` updates existing order on payment approval.
-6. **Quick Reorder**: Must use same cart API, pricing resolver, and promotion logic. No shortcuts.
-7. **Discount Requests**: Sales cannot apply discounts directly. Must request → admin approves → stamp on quote. Margin floor always enforced.
+5. **Quick Reorder Rules**: Must use same cart API, pricing resolver, and promotion logic. No shortcuts. No old prices.
+6. **Discount Requests**: Sales cannot apply discounts directly. Must request → admin approves → stamp on quote. Margin floor always enforced.
+7. **Guest Orders**: No invoice pre-approval. `_handle_guest_approval()` updates existing order on payment approval.

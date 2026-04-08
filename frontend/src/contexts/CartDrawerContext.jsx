@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
 
 const CartDrawerContext = createContext(null);
 
@@ -13,7 +13,16 @@ function sameCartItem(a, b) {
 
 export function CartDrawerProvider({ children }) {
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(() => {
+    try {
+      const saved = localStorage.getItem("konekt_drawer_cart");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("konekt_drawer_cart", JSON.stringify(items));
+  }, [items]);
 
   const addItem = (item) => {
     setItems((prev) => {
