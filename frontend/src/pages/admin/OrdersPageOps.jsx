@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, Download, Clock, ChevronDown, ChevronUp, User, MessageSquare } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, Eye, Download, Clock, ChevronDown, ChevronUp, User, MessageSquare, Activity, ArrowRightCircle } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
@@ -16,13 +16,144 @@ const statusColors = {
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(v) { try { return new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "-"; } }
+function fmtDateTime(v) { try { const d = new Date(v); return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); } catch { return "-"; } }
+
+const sourceStyles = {
+  vendor_update: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", label: "Vendor Update" },
+  vendor_confirmed: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", label: "Vendor Confirmed" },
+  sales_follow_up: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Sales Follow-up" },
+  admin_adjustment: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "Admin Adjustment" },
+  system_auto: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200", label: "System" },
+};
+
+const roleStyles = {
+  admin: "bg-red-50 text-red-700 border-red-200",
+  sales: "bg-blue-50 text-blue-700 border-blue-200",
+  vendor: "bg-purple-50 text-purple-700 border-purple-200",
+  customer: "bg-green-50 text-green-700 border-green-200",
+  system: "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+function StatusTimeline({ entries }) {
+  const [expandedIdx, setExpandedIdx] = useState(null);
+
+  if (!entries || entries.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center" data-testid="timeline-empty">
+        <Clock className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+        <p className="text-sm text-slate-400 font-medium">No status changes recorded yet</p>
+        <p className="text-xs text-slate-300 mt-1">Changes will appear here as the order progresses</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-0" data-testid="status-timeline">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">{entries.length} event{entries.length !== 1 ? "s" : ""}</div>
+        <div className="text-xs text-slate-400">Newest first</div>
+      </div>
+      <div className="relative">
+        {/* Vertical line */}
+        <div className="absolute left-[15px] top-3 bottom-3 w-px bg-slate-200" />
+        {entries.map((entry, idx) => {
+          const src = sourceStyles[entry.source] || sourceStyles.system_auto;
+          const roleCls = roleStyles[entry.role] || roleStyles.system;
+          const isExpanded = expandedIdx === idx;
+          const hasLongNote = entry.note && entry.note.length > 80;
+
+          return (
+            <div
+              key={idx}
+              className="relative pl-10 pb-5 last:pb-0 group"
+              data-testid={`timeline-entry-${idx}`}
+            >
+              {/* Dot */}
+              <div className={`absolute left-[9px] top-1.5 w-[13px] h-[13px] rounded-full border-2 border-white ring-2 ${
+                entry.new_status === "cancelled" ? "bg-red-400 ring-red-200" :
+                entry.new_status === "delivered" ? "bg-emerald-400 ring-emerald-200" :
+                entry.new_status === "delayed" ? "bg-amber-400 ring-amber-200" :
+                "bg-[#20364D] ring-slate-200"
+              }`} />
+
+              <div className="rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors p-3 shadow-sm">
+                {/* Top row: timestamp + source */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] text-slate-400 font-medium" data-testid={`timeline-timestamp-${idx}`}>
+                    {fmtDateTime(entry.timestamp)}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${src.bg} ${src.text} ${src.border}`} data-testid={`timeline-source-${idx}`}>
+                    {src.label}
+                  </span>
+                </div>
+
+                {/* Status transition */}
+                <div className="flex items-center gap-2 mb-2" data-testid={`timeline-status-change-${idx}`}>
+                  {entry.previous_status ? (
+                    <>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[entry.previous_status] || "bg-slate-100 text-slate-600"}`}>
+                        {entry.previous_status.replace(/_/g, " ")}
+                      </span>
+                      <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                    </>
+                  ) : null}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[entry.new_status] || "bg-slate-100 text-slate-600"}`}>
+                    {(entry.new_status || "").replace(/_/g, " ")}
+                  </span>
+                </div>
+
+                {/* Who + Role */}
+                <div className="flex items-center gap-2 text-xs">
+                  <User className="w-3 h-3 text-slate-400" />
+                  <span className="text-slate-600 font-medium" data-testid={`timeline-user-${idx}`}>{entry.updated_by || "System"}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${roleCls}`} data-testid={`timeline-role-${idx}`}>
+                    {(entry.role || "system")}
+                  </span>
+                  {entry.vendor_order_no && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-500 font-mono">
+                      {entry.vendor_order_no}
+                    </span>
+                  )}
+                </div>
+
+                {/* Note */}
+                {entry.note && (
+                  <div className="mt-2 pt-2 border-t border-slate-50">
+                    <div className="flex items-start gap-1.5">
+                      <MessageSquare className="w-3 h-3 text-slate-300 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs text-slate-500 ${!isExpanded && hasLongNote ? "line-clamp-2" : ""}`} data-testid={`timeline-note-${idx}`}>
+                          {entry.note}
+                        </p>
+                        {hasLongNote && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setExpandedIdx(isExpanded ? null : idx); }}
+                            className="text-[10px] text-[#D4A843] font-semibold mt-1 hover:underline"
+                            data-testid={`timeline-expand-${idx}`}
+                          >
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, onSendToProduction, onConvertToInvoice }) {
   const [statusNote, setStatusNote] = useState("");
   const [reserveForm, setReserveForm] = useState({ sku: "", quantity: 1 });
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assigned_to: "", department: "", due_date: "", priority: "medium" });
   const [productionForm, setProductionForm] = useState({ production_type: "printing", assigned_to: "", priority: "medium", due_date: "", notes: "" });
-  const [activeTab, setActiveTab] = useState("info");
+  const [activeTab, setActiveTab] = useState("timeline");
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
 
@@ -42,19 +173,29 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
           )
         ).then(trails => {
           const all = trails.flat();
-          // Also add order.status_history entries
+          // Include order-level audit trail if present
+          if (order.status_audit_trail?.length) {
+            order.status_audit_trail.forEach(e => {
+              all.push({ ...e, vendor_order_no: null });
+            });
+          }
+          // Also add order.status_history entries (legacy format)
           if (order.status_history?.length) {
             order.status_history.forEach(h => {
-              all.push({
-                previous_status: "",
-                new_status: h.status,
-                updated_by: h.changed_by || h.updated_by || "System",
-                role: h.role || "admin",
-                note: h.note || "",
-                source: h.source || "system_auto",
-                timestamp: h.timestamp,
-                vendor_order_no: null,
-              });
+              // Skip if already covered by status_audit_trail
+              const isDupe = all.some(a => a.timestamp === h.timestamp && a.new_status === h.status);
+              if (!isDupe) {
+                all.push({
+                  previous_status: "",
+                  new_status: h.status,
+                  updated_by: h.changed_by || h.updated_by || "System",
+                  role: h.role || "admin",
+                  note: h.note || "",
+                  source: h.source || "system_auto",
+                  timestamp: h.timestamp,
+                  vendor_order_no: null,
+                });
+              }
             });
           }
           all.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
@@ -147,10 +288,17 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
 
         {/* Action Tabs */}
         <div className="flex border-b border-slate-200 gap-1">
-          {[{id: "info", label: "Status"}, {id: "inventory", label: "Inventory"}, {id: "tasks", label: "Tasks"}, {id: "production", label: "Production"}].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition ${activeTab === tab.id ? "bg-white border border-b-white border-slate-200 text-[#20364D] -mb-px" : "text-slate-500 hover:text-slate-700"}`}>{tab.label}</button>
+          {[{id: "timeline", label: "Timeline", icon: Activity}, {id: "info", label: "Status"}, {id: "inventory", label: "Inventory"}, {id: "tasks", label: "Tasks"}, {id: "production", label: "Production"}].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition flex items-center gap-1.5 ${activeTab === tab.id ? "bg-white border border-b-white border-slate-200 text-[#20364D] -mb-px" : "text-slate-500 hover:text-slate-700"}`}>
+              {tab.icon && <tab.icon className="w-3.5 h-3.5" />}
+              {tab.label}
+            </button>
           ))}
         </div>
+
+        {activeTab === "timeline" && (
+          <StatusTimeline entries={auditEntries} />
+        )}
 
         {activeTab === "info" && (
           <div className="space-y-3">
@@ -199,17 +347,6 @@ function OrderDrawer({ order, onClose, onStatusChange, onReserve, onAssignTask, 
           </form>
         )}
 
-        {/* Status History */}
-        {order.status_history?.length > 0 && (
-          <div className="rounded-xl border overflow-hidden">
-            <div className="px-4 py-3 bg-slate-50 border-b font-semibold text-[#20364D] text-sm">Status History</div>
-            <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto">
-              {[...order.status_history].reverse().map((item, idx) => (
-                <div key={idx} className="px-4 py-3 text-sm"><div className="font-medium">{item.status?.replace(/_/g, " ")}</div>{item.note && <div className="text-xs text-slate-600 mt-1">{item.note}</div>}<div className="text-xs text-slate-400 mt-1">{item.timestamp ? new Date(item.timestamp).toLocaleString() : ""}</div></div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </StandardDrawerShell>
   );

@@ -9,10 +9,119 @@ import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import AssignmentReasonBadge from "../../components/assignment/AssignmentReasonBadge";
 import AssignmentDecisionDrawer from "../../components/assignment/AssignmentDecisionDrawer";
-import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList, Eye } from "lucide-react";
+import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList, Eye, Download, Activity, ArrowRight, User, MessageSquare } from "lucide-react";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
+function fmtDateTime(v) { try { const d = new Date(v); return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); } catch { return "-"; } }
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+const statusColors = {
+  pending: "bg-slate-100 text-slate-700", confirmed: "bg-blue-100 text-blue-700", awaiting_payment: "bg-yellow-100 text-yellow-700",
+  in_review: "bg-orange-100 text-orange-700", approved: "bg-green-100 text-green-700", in_production: "bg-purple-100 text-purple-700",
+  quality_check: "bg-indigo-100 text-indigo-700", ready_for_dispatch: "bg-teal-100 text-teal-700", in_transit: "bg-cyan-100 text-cyan-700",
+  delivered: "bg-emerald-100 text-emerald-700", cancelled: "bg-red-100 text-red-700", assigned: "bg-blue-100 text-blue-700",
+  acknowledged: "bg-blue-50 text-blue-600", ready: "bg-teal-100 text-teal-700", delayed: "bg-amber-100 text-amber-700",
+  dispatched: "bg-cyan-100 text-cyan-700", processing: "bg-slate-100 text-slate-600", completed: "bg-emerald-100 text-emerald-700",
+};
+
+const sourceStyles = {
+  vendor_update: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", label: "Vendor Update" },
+  vendor_confirmed: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200", label: "Vendor Confirmed" },
+  sales_follow_up: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200", label: "Sales Follow-up" },
+  admin_adjustment: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "Admin Adjustment" },
+  system_auto: { bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200", label: "System" },
+};
+
+const roleStyles = {
+  admin: "bg-red-50 text-red-700 border-red-200",
+  sales: "bg-blue-50 text-blue-700 border-blue-200",
+  vendor: "bg-purple-50 text-purple-700 border-purple-200",
+  customer: "bg-green-50 text-green-700 border-green-200",
+  system: "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+function StatusTimeline({ entries }) {
+  const [expandedIdx, setExpandedIdx] = useState(null);
+
+  if (!entries || entries.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center" data-testid="timeline-empty">
+        <Clock className="w-7 h-7 text-slate-300 mx-auto mb-2" />
+        <p className="text-sm text-slate-400 font-medium">No status changes recorded yet</p>
+        <p className="text-xs text-slate-300 mt-1">Changes will appear here as the order progresses</p>
+      </div>
+    );
+  }
+
+  return (
+    <div data-testid="status-timeline">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs text-slate-400 font-medium uppercase tracking-wide">{entries.length} event{entries.length !== 1 ? "s" : ""}</div>
+        <div className="text-xs text-slate-400">Newest first</div>
+      </div>
+      <div className="relative">
+        <div className="absolute left-[15px] top-3 bottom-3 w-px bg-slate-200" />
+        {entries.map((entry, idx) => {
+          const src = sourceStyles[entry.source] || sourceStyles.system_auto;
+          const roleCls = roleStyles[entry.role] || roleStyles.system;
+          const isExpanded = expandedIdx === idx;
+          const hasLongNote = entry.note && entry.note.length > 80;
+
+          return (
+            <div key={idx} className="relative pl-10 pb-4 last:pb-0" data-testid={`timeline-entry-${idx}`}>
+              <div className={`absolute left-[9px] top-1.5 w-[13px] h-[13px] rounded-full border-2 border-white ring-2 ${
+                entry.new_status === "cancelled" ? "bg-red-400 ring-red-200" :
+                entry.new_status === "delivered" || entry.new_status === "completed" ? "bg-emerald-400 ring-emerald-200" :
+                entry.new_status === "delayed" ? "bg-amber-400 ring-amber-200" :
+                "bg-[#20364D] ring-slate-200"
+              }`} />
+              <div className="rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors p-3 shadow-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] text-slate-400 font-medium" data-testid={`timeline-timestamp-${idx}`}>{fmtDateTime(entry.timestamp)}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${src.bg} ${src.text} ${src.border}`} data-testid={`timeline-source-${idx}`}>{src.label}</span>
+                </div>
+                <div className="flex items-center gap-2 mb-1.5" data-testid={`timeline-status-change-${idx}`}>
+                  {entry.previous_status ? (
+                    <>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[entry.previous_status] || "bg-slate-100 text-slate-600"}`}>{entry.previous_status.replace(/_/g, " ")}</span>
+                      <ArrowRight className="w-3 h-3 text-slate-400 flex-shrink-0" />
+                    </>
+                  ) : null}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColors[entry.new_status] || "bg-slate-100 text-slate-600"}`}>{(entry.new_status || "").replace(/_/g, " ")}</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <User className="w-3 h-3 text-slate-400" />
+                  <span className="text-slate-600 font-medium" data-testid={`timeline-user-${idx}`}>{entry.updated_by || "System"}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${roleCls}`} data-testid={`timeline-role-${idx}`}>{entry.role || "system"}</span>
+                  {entry.vendor_order_no && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-500 font-mono">{entry.vendor_order_no}</span>
+                  )}
+                </div>
+                {entry.note && (
+                  <div className="mt-2 pt-2 border-t border-slate-50">
+                    <div className="flex items-start gap-1.5">
+                      <MessageSquare className="w-3 h-3 text-slate-300 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs text-slate-500 ${!isExpanded && hasLongNote ? "line-clamp-2" : ""}`} data-testid={`timeline-note-${idx}`}>{entry.note}</p>
+                        {hasLongNote && (
+                          <button type="button" onClick={() => setExpandedIdx(isExpanded ? null : idx)} className="text-[10px] text-[#D4A843] font-semibold mt-1 hover:underline" data-testid={`timeline-expand-${idx}`}>
+                            {isExpanded ? "Show less" : "Show more"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 const TABS = [
   { key: "", label: "All Orders", icon: ShoppingCart },
@@ -34,6 +143,8 @@ export default function OrdersPage() {
   const [stats, setStats] = useState(null);
   const [showAssignmentDrawer, setShowAssignmentDrawer] = useState(false);
   const [assignmentExplain, setAssignmentExplain] = useState(null);
+  const [auditEntries, setAuditEntries] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
 
   const load = () => {
     setLoading(true);
@@ -51,13 +162,49 @@ export default function OrdersPage() {
     setSelected(row);
     setLoadingDetail(true);
     setAssignmentExplain(null);
+    setAuditEntries([]);
+    setPurchaseOrders([]);
     try {
       const res = await adminApi.getOrder(row.id);
       setDetail(res.data);
-      // Fetch assignment explanation in parallel
+      const order = res.data?.order || res.data;
+
+      // Fetch assignment explanation in parallel with audit trail
       try {
         const explainRes = await api.get(`/api/admin/assignment/explain/${row.id}`);
         setAssignmentExplain(explainRes.data);
+      } catch {}
+
+      // Fetch purchase orders and audit trails
+      try {
+        const poRes = await api.get(`/api/admin/orders-ops/${row.id}/purchase-orders`);
+        const pos = poRes.data?.purchase_orders || [];
+        setPurchaseOrders(pos);
+
+        const trails = await Promise.all(
+          pos.map(po =>
+            api.get(`/api/sales/orders/${po.id || po.vendor_order_no}/audit-trail`)
+              .then(r => (r.data?.audit_trail || []).map(e => ({ ...e, vendor_order_no: po.vendor_order_no || po.id?.slice(0, 8) })))
+              .catch(() => [])
+          )
+        );
+        const all = trails.flat();
+
+        // Include order-level audit trail
+        if (order?.status_audit_trail?.length) {
+          order.status_audit_trail.forEach(e => all.push({ ...e, vendor_order_no: null }));
+        }
+        // Include legacy status_history
+        if (order?.status_history?.length) {
+          order.status_history.forEach(h => {
+            const isDupe = all.some(a => a.timestamp === h.timestamp && a.new_status === h.status);
+            if (!isDupe) {
+              all.push({ previous_status: "", new_status: h.status, updated_by: h.changed_by || h.updated_by || "System", role: h.role || "admin", note: h.note || "", source: h.source || "system_auto", timestamp: h.timestamp, vendor_order_no: null });
+            }
+          });
+        }
+        all.sort((a, b) => (b.timestamp || "").localeCompare(a.timestamp || ""));
+        setAuditEntries(all);
       } catch {}
     } catch { setDetail(null); }
     setLoadingDetail(false);
@@ -255,21 +402,39 @@ export default function OrdersPage() {
               </section>
             )}
 
-            {/* F. Timeline / Progress */}
-            {detail.events && detail.events.length > 0 && (
-              <section className="rounded-2xl border p-4" data-testid="drawer-timeline">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Timeline</p>
-                <div className="space-y-2 max-h-[250px] overflow-y-auto">
-                  {detail.events.map((ev, idx) => (
-                    <div key={idx} className="flex gap-3 items-center text-xs py-1.5 border-b border-slate-100 last:border-0">
-                      <div className="w-2 h-2 rounded-full bg-[#20364D] shrink-0" />
-                      <span className="text-slate-700 capitalize">{(ev.event || "").replace(/_/g, " ")}</span>
-                      <span className="text-slate-400 ml-auto whitespace-nowrap">{fmtDate(ev.created_at)}</span>
+            {/* E.5. Vendor Purchase Orders */}
+            {purchaseOrders.length > 0 && (
+              <section className="rounded-2xl border p-4" data-testid="drawer-purchase-orders">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Vendor Purchase Orders</p>
+                <div className="space-y-2">
+                  {purchaseOrders.map((po, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
+                      <div>
+                        <div className="font-medium text-[#20364D]">{po.vendor_name || `Vendor ${idx+1}`}</div>
+                        <div className="text-xs text-slate-400">{po.vendor_order_no || po.id?.slice(0,8)}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={po.status || "assigned"} />
+                        <a href={`${API_URL}/api/pdf/purchase-orders/${po.id || po.vendor_order_no}`} target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#20364D] text-white px-2.5 py-1.5 text-[10px] font-semibold hover:bg-[#2a4a66] transition-colors"
+                          data-testid={`download-po-pdf-${idx}`}>
+                          <Download className="w-3 h-3" /> PO
+                        </a>
+                      </div>
                     </div>
                   ))}
                 </div>
               </section>
             )}
+
+            {/* F. Status Timeline — Full Audit Trail */}
+            <section className="rounded-2xl border p-4" data-testid="drawer-timeline">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="w-4 h-4 text-[#D4A843]" />
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Timeline</p>
+              </div>
+              <StatusTimeline entries={auditEntries} />
+            </section>
 
             {/* G. Admin Actions */}
             <section className="pt-4 border-t border-slate-200 space-y-3" data-testid="drawer-admin-actions">
