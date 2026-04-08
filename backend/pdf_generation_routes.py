@@ -90,8 +90,9 @@ def _css():
     .sig-line {{ height: 42px; border-bottom: 2px solid #d7e3ee; margin-bottom: 8px; }}
     .sig-name {{ font-size: 12px; font-weight: 700; color: {NAVY}; margin-top: 6px; }}
     .sig-title {{ font-size: 11px; color: {SLATE}; }}
-    .stamp-img {{ width: 88px; height: 88px; object-fit: contain; display: block; margin: 6px auto 0 auto; }}
-    .stamp-decor, .stamp-bg, .large-stamp {{ max-width: 88px !important; max-height: 88px !important; width: 88px !important; height: 88px !important; position: static !important; opacity: 1 !important; }}
+    .stamp-img {{ width: 100px; height: 100px; object-fit: contain; display: block; margin: 6px auto 0 auto; }}
+    .stamp-decor, .stamp-bg, .large-stamp {{ max-width: 100px !important; max-height: 100px !important; width: 100px !important; height: 100px !important; position: static !important; opacity: 1 !important; }}
+    .stamp-img svg {{ width: 100%; height: 100%; }}
     .footer {{ border-top: 1px solid #dfe8f2; margin-top: 18px; padding: 12px 48px; text-align: center; color: {SLATE}; font-size: 11px; line-height: 1.6; }}
     @media print {{
       .page {{ width: 100%; max-width: none; margin: 0; padding: 20mm 14mm 12mm 14mm; }}
@@ -100,13 +101,46 @@ def _css():
     '''
 
 
+def _connected_triad_logo_svg():
+    """Generate the Connected Triad logo as inline SVG for PDF document headers.
+    White variant for dark navy header background."""
+    node_color = "#FFFFFF"
+    accent_color = "#D4A843"
+    conn_color = "rgba(229,231,235,0.85)"
+    s = 38
+    topX, topY = round(s*0.58,1), round(s*0.13,1)
+    leftX, leftY = round(s*0.12,1), round(s*0.82,1)
+    rightX, rightY = round(s*0.90,1), round(s*0.72,1)
+    accentR = round(max(2.8, s*0.14),1)
+    nodeR = round(max(2.2, s*0.108),1)
+    sw = round(max(2.0, s*0.062),1)
+    rmX = round((topX+rightX)/2 + s*0.06,1)
+    rmY = round((topY+rightY)/2 - s*0.04,1)
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{s}" height="{s}" viewBox="0 0 {s} {s}" fill="none" style="vertical-align:middle;">
+      <line x1="{topX}" y1="{topY}" x2="{leftX}" y2="{leftY}" stroke="{conn_color}" stroke-width="{sw}" stroke-linecap="round"/>
+      <path d="M{topX},{topY} Q{rmX},{rmY} {rightX},{rightY}" stroke="{conn_color}" stroke-width="{sw}" stroke-linecap="round" fill="none"/>
+      <line x1="{leftX}" y1="{leftY}" x2="{rightX}" y2="{rightY}" stroke="{conn_color}" stroke-width="{sw}" stroke-linecap="round"/>
+      <circle cx="{topX}" cy="{topY}" r="{accentR}" fill="{accent_color}"/>
+      <circle cx="{leftX}" cy="{leftY}" r="{nodeR}" fill="{node_color}"/>
+      <circle cx="{rightX}" cy="{rightY}" r="{nodeR}" fill="{node_color}"/>
+    </svg>'''
+
+
 def _header_block(doc_type, doc_number, doc_date, status_label, status_class, branding=None):
     branding = branding or {}
     email = branding.get("contact_email", "accounts@konekt.co.tz")
     phone = branding.get("contact_phone", "+255 XXX XXX XXX")
     address = branding.get("contact_address", "Dar es Salaam, Tanzania")
     logo_url = branding.get("company_logo_url", "")
-    logo_html = f'<img src="file:///app/backend{logo_url}" style="height:44px; object-fit:contain;" />' if logo_url else '<div class="logo">KONEKT</div>'
+    # Use uploaded logo if available, otherwise render Connected Triad SVG + wordmark
+    if logo_url:
+        logo_html = f'<img src="file:///app/backend{logo_url}" style="height:44px; object-fit:contain;" />'
+    else:
+        triad_svg = _connected_triad_logo_svg()
+        logo_html = f'''<div style="display:flex; align-items:center; gap:10px;">
+          {triad_svg}
+          <span style="font-size:26px; font-weight:700; color:#fff; letter-spacing:0.02em; font-family:\'Helvetica Neue\',Arial,sans-serif;">Konekt</span>
+        </div>'''
     return f'''
     <div class="header">
       <div class="header-inner">
@@ -198,11 +232,12 @@ def _auth_column_html(branding):
             svg_path = f"/app/backend{branding['stamp_preview_url']}"
             try:
                 with open(svg_path, "r") as f:
-                    stamp_content = f'<div class="stamp-img" style="display:flex; align-items:center; justify-content:center;">{f.read()}</div>'
+                    svg_raw = f.read()
+                    stamp_content = f'<div class="stamp-img" style="display:flex; align-items:center; justify-content:center; overflow:visible;">{svg_raw}</div>'
             except Exception:
-                stamp_content = '<div style="width:88px; height:88px; border:2px dashed #d7e3ee; border-radius:50%; margin:6px auto 0 auto;"></div>'
+                stamp_content = '<div style="width:100px; height:100px; border:2px dashed #d7e3ee; border-radius:50%; margin:6px auto 0 auto;"></div>'
         else:
-            stamp_content = '<div style="width:88px; height:88px; border:2px dashed #d7e3ee; border-radius:50%; margin:6px auto 0 auto;"></div>'
+            stamp_content = '<div style="width:100px; height:100px; border:2px dashed #d7e3ee; border-radius:50%; margin:6px auto 0 auto;"></div>'
         stamp_block = f'''<div class="stamp-block">
           <div class="block-title">Company Stamp</div>
           {stamp_content}

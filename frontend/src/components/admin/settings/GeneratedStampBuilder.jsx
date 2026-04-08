@@ -1,11 +1,11 @@
 import React from "react";
 
-export default function GeneratedStampBuilder({ value, onChange }) {
+export default function GeneratedStampBuilder({ value, onChange, svgPreview }) {
   const v = value || {};
   const update = (key, val) => onChange?.({ ...v, [key]: val });
 
-  const colorMap = { blue: "#1a4b8c", red: "#b91c1c", black: "#1e293b" };
-  const strokeColor = colorMap[v.stamp_color || "blue"] || "#1a4b8c";
+  const colorMap = { blue: "#1a365d", navy: "#1a365d", red: "#7f1d1d", black: "#0f172a" };
+  const strokeColor = colorMap[v.stamp_color || "blue"] || "#1a365d";
 
   return (
     <div className="space-y-4" data-testid="generated-stamp-builder">
@@ -30,9 +30,9 @@ export default function GeneratedStampBuilder({ value, onChange }) {
             onChange={(e) => update("stamp_color", e.target.value)}
             data-testid="stamp-color-select"
           >
-            <option value="blue">Blue</option>
-            <option value="red">Red</option>
+            <option value="blue">Navy (Default)</option>
             <option value="black">Black</option>
+            <option value="red">Dark Red</option>
           </select>
         </div>
         <div>
@@ -85,32 +85,19 @@ export default function GeneratedStampBuilder({ value, onChange }) {
         </div>
       </div>
 
-      {/* CSS Preview */}
+      {/* SVG Preview */}
       <div>
-        <div className="text-xs text-slate-500 mb-2 font-medium">Quick Preview</div>
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50/50 p-6">
-          {(v.stamp_shape || "circle") === "square" ? (
-            <div
-              className="flex h-36 w-36 flex-col items-center justify-center border-[3px] p-3 text-center"
-              style={{ borderColor: strokeColor, color: strokeColor }}
-              data-testid="stamp-preview-square"
-            >
-              <div className="text-[11px] font-bold leading-tight">{v.stamp_text_primary || "Konekt Limited"}</div>
-              <div className="mt-1.5 text-[9px]">{v.stamp_registration_number || "REG-123456"}</div>
-              <div className="text-[9px]">{v.stamp_tax_number || "TIN 123-456-789"}</div>
-              <div className="mt-1.5 text-[9px]">{v.stamp_text_secondary || "Dar es Salaam, Tanzania"}</div>
-              <div className="mt-1.5 text-[8px] font-semibold">{v.stamp_phrase || "Official Company Stamp"}</div>
-            </div>
+        <div className="text-xs text-slate-500 mb-2 font-medium">Stamp Preview</div>
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-6" data-testid="stamp-svg-preview-area">
+          {svgPreview ? (
+            <div className="w-44 h-44 [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: svgPreview }} />
           ) : (
-            <div
-              className="flex h-40 w-40 flex-col items-center justify-center rounded-full border-[3px] p-4 text-center"
+            <div className="w-44 h-44 rounded-full border-[3px] flex flex-col items-center justify-center p-3 text-center"
               style={{ borderColor: strokeColor, color: strokeColor }}
               data-testid="stamp-preview-circle"
             >
-              <div className="text-[9px] leading-tight">{v.stamp_text_primary || "Konekt Limited"} &bull; {v.stamp_text_secondary || "Dar es Salaam, Tanzania"}</div>
-              <div className="mt-2 text-[9px] font-semibold">{v.stamp_phrase || "Official Company Stamp"}</div>
-              <div className="mt-2 text-[8px]">{v.stamp_registration_number || "REG-123456"}</div>
-              <div className="text-[8px]">{v.stamp_tax_number || "TIN 123-456-789"}</div>
+              <div className="text-[9px] leading-tight">{v.stamp_text_primary || "Konekt Limited"}</div>
+              <div className="mt-1 text-[8px]">{v.stamp_text_secondary || "Dar es Salaam, Tanzania"}</div>
             </div>
           )}
         </div>

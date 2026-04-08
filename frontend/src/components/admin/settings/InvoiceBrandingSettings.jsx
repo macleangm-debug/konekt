@@ -250,17 +250,20 @@ export default function InvoiceBrandingSettings() {
                   stamp_phrase: form.stamp_phrase,
                 }}
                 onChange={(stampValues) => setForm((p) => ({ ...p, ...stampValues }))}
+                svgPreview={stampSvg}
               />
               <div className="flex items-center gap-6 mt-2">
                 <button onClick={generateStamp} disabled={generating} data-testid="generate-stamp-btn"
                   className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition-colors">
                   <RefreshCw className={`w-4 h-4 ${generating ? "animate-spin" : ""}`} /> {generating ? "Generating..." : "Generate SVG Preview"}
                 </button>
-                <div className="w-28 h-28">
+                <div className="w-32 h-32 flex-shrink-0">
                   {stampSvg ? (
-                    <div dangerouslySetInnerHTML={{ __html: stampSvg }} />
+                    <div dangerouslySetInnerHTML={{ __html: stampSvg }} style={{ width: "128px", height: "128px" }} className="[&>svg]:w-full [&>svg]:h-full" />
                   ) : (
-                    <div className={`w-full h-full border-2 border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-300 ${form.stamp_shape === "circle" ? "rounded-full" : "rounded-xl"}`}>Click Generate</div>
+                    <div className="w-full h-full rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-300">
+                      Click Generate
+                    </div>
                   )}
                 </div>
               </div>
@@ -274,7 +277,7 @@ export default function InvoiceBrandingSettings() {
       {/* Live Preview */}
       <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 mt-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Document Footer Preview</div>
-        <div className="flex gap-8 items-start">
+        <div className="flex gap-8 items-end">
           <div className="flex-1">
             <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1 font-semibold">Authorized by</div>
             {form.show_signature && form.cfo_signature_url ? (
@@ -285,16 +288,16 @@ export default function InvoiceBrandingSettings() {
             <div className="text-xs font-semibold text-[#20364D]">{form.cfo_name || "CFO Name"}</div>
             <div className="text-[10px] text-slate-500">{form.cfo_title || "Chief Finance Officer"}</div>
           </div>
-          <div className="flex-1 flex flex-col items-center">
+          <div className="flex flex-col items-center flex-shrink-0">
             <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1 font-semibold">Company Stamp</div>
             {form.show_stamp ? (
-              <div className="w-20 h-20">
-                {stampSvg ? <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: stampSvg }} />
+              <div className="w-24 h-24 [&>svg]:w-full [&>svg]:h-full">
+                {stampSvg ? <div className="w-full h-full [&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: stampSvg }} />
                 : form.stamp_uploaded_url ? <img src={`${API_URL}${form.stamp_uploaded_url}`} alt="stamp" className="w-full h-full object-contain" />
                 : <div className={`w-full h-full border-2 border-dashed border-slate-200 flex items-center justify-center text-[9px] text-slate-300 ${form.stamp_shape === "circle" ? "rounded-full" : "rounded-lg"}`}>Click Preview</div>}
               </div>
             ) : (
-              <div className="w-20 h-20 border border-dashed border-slate-200 rounded-full flex items-center justify-center text-[9px] text-slate-300">Off</div>
+              <div className="w-24 h-24 border border-dashed border-slate-200 rounded-full flex items-center justify-center text-[9px] text-slate-300">Off</div>
             )}
           </div>
         </div>
@@ -360,21 +363,79 @@ const sampleItems = [
 ];
 const sampleDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
+function ConnectedTriadSvg({ size = 30, variant = "dark" }) {
+  const s = size;
+  const isLight = variant === "light";
+  const nodeColor = isLight ? "#FFFFFF" : "#20364D";
+  const accentColor = "#D4A843";
+  const connColor = isLight ? "rgba(229,231,235,0.85)" : "rgba(32,54,77,0.45)";
+  const topX = s * 0.58, topY = s * 0.13;
+  const leftX = s * 0.12, leftY = s * 0.82;
+  const rightX = s * 0.90, rightY = s * 0.72;
+  const accentR = Math.max(2.8, s * 0.14);
+  const nodeR = Math.max(2.2, s * 0.108);
+  const sw = Math.max(2.0, s * 0.062);
+  const rmX = (topX + rightX) / 2 + s * 0.06;
+  const rmY = (topY + rightY) / 2 - s * 0.04;
+  return (
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} fill="none" style={{ verticalAlign: "middle", flexShrink: 0 }}>
+      <line x1={topX} y1={topY} x2={leftX} y2={leftY} stroke={connColor} strokeWidth={sw} strokeLinecap="round"/>
+      <path d={`M${topX},${topY} Q${rmX},${rmY} ${rightX},${rightY}`} stroke={connColor} strokeWidth={sw} strokeLinecap="round" fill="none"/>
+      <line x1={leftX} y1={leftY} x2={rightX} y2={rightY} stroke={connColor} strokeWidth={sw} strokeLinecap="round"/>
+      <circle cx={topX} cy={topY} r={accentR} fill={accentColor}/>
+      <circle cx={leftX} cy={leftY} r={nodeR} fill={nodeColor}/>
+      <circle cx={rightX} cy={rightY} r={nodeR} fill={nodeColor}/>
+    </svg>
+  );
+}
+
+function ConnectedTriadStampSvg({ size = 64, color = "#1a365d" }) {
+  const s = size * 0.42;
+  const topX = s * 0.58, topY = s * 0.13;
+  const leftX = s * 0.12, leftY = s * 0.82;
+  const rightX = s * 0.90, rightY = s * 0.72;
+  const accentR = Math.max(2.8, s * 0.14);
+  const nodeR = Math.max(2.2, s * 0.108);
+  const sw = Math.max(2.0, s * 0.062);
+  const rmX = (topX + rightX) / 2 + s * 0.06;
+  const rmY = (topY + rightY) / 2 - s * 0.04;
+  const oR = size / 2 - 2;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none" style={{ display: "block" }}>
+      <circle cx={size/2} cy={size/2} r={oR} fill="none" stroke={color} strokeWidth={2.5}/>
+      <circle cx={size/2} cy={size/2} r={oR - 3} fill="none" stroke={color} strokeWidth={0.8}/>
+      <circle cx={size/2} cy={size/2} r={size * 0.32} fill="none" stroke={color} strokeWidth={0.5} strokeDasharray="1.5,2" opacity={0.4}/>
+      <g transform={`translate(${size/2 - s/2},${size * 0.35})`}>
+        <line x1={topX} y1={topY} x2={leftX} y2={leftY} stroke={color} strokeWidth={sw} strokeLinecap="round" opacity={0.45}/>
+        <path d={`M${topX},${topY} Q${rmX},${rmY} ${rightX},${rightY}`} stroke={color} strokeWidth={sw} strokeLinecap="round" fill="none" opacity={0.45}/>
+        <line x1={leftX} y1={leftY} x2={rightX} y2={rightY} stroke={color} strokeWidth={sw} strokeLinecap="round" opacity={0.45}/>
+        <circle cx={topX} cy={topY} r={accentR} fill={color}/>
+        <circle cx={leftX} cy={leftY} r={nodeR} fill={color}/>
+        <circle cx={rightX} cy={rightY} r={nodeR} fill={color}/>
+      </g>
+    </svg>
+  );
+}
+
 function PreviewHeader({ form, docType, docNumber }) {
   const logoUrl = form.company_logo_url ? (form.company_logo_url.startsWith("http") ? form.company_logo_url : `${process.env.REACT_APP_BACKEND_URL || ""}${form.company_logo_url}`) : null;
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 24px", borderBottom: "2px solid #20364D" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "20px 24px", background: "#20364D", color: "#fff" }}>
+      <div>
         {logoUrl ? (
-          <img src={logoUrl} alt="Logo" style={{ height: 36, objectFit: "contain" }} />
+          <img src={logoUrl} alt="Logo" style={{ height: 32, objectFit: "contain" }} />
         ) : (
-          <div style={{ fontSize: 18, fontWeight: 800, color: "#20364D", letterSpacing: 2 }}>KONEKT</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ConnectedTriadSvg size={28} variant="light" />
+            <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.02em" }}>Konekt</span>
+          </div>
         )}
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.5)", marginTop: 3 }}>B2B Commerce Platform</div>
       </div>
       <div style={{ textAlign: "right" }}>
-        <div style={{ fontSize: 18, fontWeight: 800, color: "#20364D", letterSpacing: 2 }}>{docType}</div>
-        <div style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{docNumber}</div>
-        <div style={{ fontSize: 10, color: "#64748b" }}>{sampleDate}</div>
+        <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: 2 }}>{docType}</div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.65)", marginTop: 2 }}>{docNumber}</div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.65)" }}>{sampleDate}</div>
       </div>
     </div>
   );
@@ -384,8 +445,15 @@ function PreviewFooter({ form }) {
   const email = form.contact_email || "accounts@konekt.co.tz";
   const address = form.contact_address || "Dar es Salaam, Tanzania";
   return (
-    <div style={{ borderTop: "1px solid #e2e8f0", padding: "10px 24px", fontSize: 9, color: "#94a3b8", textAlign: "center" }}>
-      Konekt Limited &bull; {email} &bull; {address}
+    <div>
+      <div style={{ background: "#D4A843", padding: "6px 24px", display: "flex", gap: 20, fontSize: 8, color: "#20364D", fontWeight: 600 }}>
+        <span>{email}</span>
+        <span>{form.contact_phone || "+255 XXX XXX XXX"}</span>
+        <span>{address}</span>
+      </div>
+      <div style={{ padding: "8px 24px", fontSize: 8, color: "#94a3b8", textAlign: "center" }}>
+        Konekt Limited &bull; {address}
+      </div>
     </div>
   );
 }
@@ -396,27 +464,27 @@ function PreviewAuthColumn({ form, stampSvg }) {
   const showStamp = form.show_stamp;
   if (!showSig && !showStamp) return null;
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 24px 16px", gap: 24 }}>
+    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", padding: "12px 24px 20px", gap: 24 }}>
       {showSig && (
-        <div>
-          <div style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.5px", color: "#94a3b8", marginBottom: 4, fontWeight: 700 }}>Authorized by</div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 8, textTransform: "uppercase", letterSpacing: "0.5px", color: "#94a3b8", marginBottom: 4, fontWeight: 700 }}>Authorized by</div>
           {form.cfo_signature_url ? (
-            <img src={form.cfo_signature_url.startsWith("data:") ? form.cfo_signature_url : `${apiUrl}${form.cfo_signature_url}`} alt="sig" style={{ height: 28, objectFit: "contain", opacity: 0.6, marginBottom: 2 }} />
+            <img src={form.cfo_signature_url.startsWith("data:") ? form.cfo_signature_url : `${apiUrl}${form.cfo_signature_url}`} alt="sig" style={{ height: 24, objectFit: "contain", opacity: 0.6, marginBottom: 2, display: "block", margin: "0 auto 2px" }} />
           ) : (
-            <div style={{ height: 28, borderBottom: "2px solid #d1d5db", marginBottom: 2, width: 100 }} />
+            <div style={{ height: 24, borderBottom: "2px solid #d1d5db", marginBottom: 2, width: 80 }} />
           )}
-          <div style={{ fontSize: 10, fontWeight: 700, color: "#20364D" }}>{form.cfo_name || "CFO Name"}</div>
-          <div style={{ fontSize: 9, color: "#64748b" }}>{form.cfo_title || "Chief Finance Officer"}</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: "#20364D" }}>{form.cfo_name || "CFO Name"}</div>
+          <div style={{ fontSize: 8, color: "#64748b" }}>{form.cfo_title || "Chief Finance Officer"}</div>
         </div>
       )}
       {showStamp && (
-        <div style={{ width: 64, height: 64 }}>
+        <div style={{ width: 72, height: 72, flexShrink: 0 }}>
           {stampSvg ? (
-            <div style={{ width: "100%", height: "100%" }} dangerouslySetInnerHTML={{ __html: stampSvg }} />
+            <div style={{ width: 72, height: 72 }} className="[&>svg]:w-full [&>svg]:h-full" dangerouslySetInnerHTML={{ __html: stampSvg }} />
           ) : form.stamp_uploaded_url ? (
             <img src={`${apiUrl}${form.stamp_uploaded_url}`} alt="stamp" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           ) : (
-            <div style={{ width: "100%", height: "100%", border: "2px dashed #e2e8f0", borderRadius: form.stamp_shape === "circle" ? "50%" : 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#cbd5e1" }}>Stamp</div>
+            <ConnectedTriadStampSvg size={72} color="#1a365d" />
           )}
         </div>
       )}

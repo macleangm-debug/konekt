@@ -115,86 +115,97 @@ async def upload_stamp(file: UploadFile = File(...)):
     return {"url": url}
 
 
-def _load_icon_b64():
-    """Load the Konekt icon as base64 for embedding in SVG"""
-    icon_path = Path("/app/backend/uploads/branding/ybvjms74_IMG_8680.jpeg")
-    if icon_path.exists():
-        import base64
-        return "data:image/jpeg;base64," + base64.b64encode(icon_path.read_bytes()).decode()
-    return None
+def _connected_triad_svg(size=52, color="#1a365d"):
+    """Generate the Connected Triad icon as inline SVG elements for stamp center.
+    Matches the canonical BrandLogo.jsx KonektTriadIcon exactly."""
+    s = size
+    topX = round(s * 0.58, 1)
+    topY = round(s * 0.13, 1)
+    leftX = round(s * 0.12, 1)
+    leftY = round(s * 0.82, 1)
+    rightX = round(s * 0.90, 1)
+    rightY = round(s * 0.72, 1)
+    accentR = round(max(2.8, s * 0.14), 1)
+    nodeR = round(max(2.2, s * 0.108), 1)
+    sw = round(max(2.0, s * 0.062), 1)
+    rmX = round((topX + rightX) / 2 + s * 0.06, 1)
+    rmY = round((topY + rightY) / 2 - s * 0.04, 1)
+    return (
+        f'<line x1="{topX}" y1="{topY}" x2="{leftX}" y2="{leftY}" stroke="{color}" stroke-width="{sw}" stroke-linecap="round" opacity="0.45"/>'
+        f'<path d="M{topX},{topY} Q{rmX},{rmY} {rightX},{rightY}" stroke="{color}" stroke-width="{sw}" stroke-linecap="round" fill="none" opacity="0.45"/>'
+        f'<line x1="{leftX}" y1="{leftY}" x2="{rightX}" y2="{rightY}" stroke="{color}" stroke-width="{sw}" stroke-linecap="round" opacity="0.45"/>'
+        f'<circle cx="{topX}" cy="{topY}" r="{accentR}" fill="{color}"/>'
+        f'<circle cx="{leftX}" cy="{leftY}" r="{nodeR}" fill="{color}"/>'
+        f'<circle cx="{rightX}" cy="{rightY}" r="{nodeR}" fill="{color}"/>'
+    )
 
 
 def _generate_circle_stamp_svg(settings: dict) -> str:
-    color_map = {"blue": "#1a4b8c", "red": "#b91c1c", "black": "#1e293b"}
-    c = color_map.get(settings.get("stamp_color", "blue"), "#1a4b8c")
-    primary = settings.get("stamp_text_primary", "Company Name")
-    secondary = settings.get("stamp_text_secondary", "")
+    color_map = {"blue": "#1a365d", "navy": "#1a365d", "red": "#7f1d1d", "black": "#0f172a"}
+    c = color_map.get(settings.get("stamp_color", "blue"), "#1a365d")
+    primary = settings.get("stamp_text_primary", "Konekt Limited").upper()
+    secondary = settings.get("stamp_text_secondary", "").upper()
     reg = settings.get("stamp_registration_number", "")
     tin = settings.get("stamp_tax_number", "")
 
-    primary_upper = primary.upper()
-    secondary_upper = secondary.upper() if secondary else ""
+    triad = _connected_triad_svg(size=50, color=c)
 
-    icon_b64 = _load_icon_b64()
-    if icon_b64:
-        center = f'''<clipPath id="iconClip"><circle cx="120" cy="118" r="32"/></clipPath>
-  <image href="{icon_b64}" x="88" y="86" width="64" height="64" clip-path="url(#iconClip)" preserveAspectRatio="xMidYMid slice"/>'''
-    else:
-        center = f'<text x="120" y="130" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="46" font-weight="700" font-style="italic">K</text>'
+    reg_tin = ""
+    if reg and tin:
+        reg_tin = f"{reg} \u2022 {tin}"
+    elif reg:
+        reg_tin = reg
+    elif tin:
+        reg_tin = tin
+    reg_el = f'<text x="120" y="168" text-anchor="middle" fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="7" letter-spacing="0.3" opacity="0.65">{reg_tin}</text>' if reg_tin else ""
 
-    reg_tin = reg
-    if tin:
-        reg_tin = f"{reg} | {tin}" if reg else tin
-
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240">
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
   <defs>
-    <path id="topArc" d="M 30,120 a 90,90 0 1,1 180,0" fill="none"/>
-    <path id="bottomArc" d="M 210,120 a 90,90 0 1,1 -180,0" fill="none"/>
-    {center.split("</clipPath>")[0] + "</clipPath>" if icon_b64 else ""}
+    <path id="topArc" d="M 38,120 a 82,82 0 1,1 164,0" fill="none"/>
+    <path id="bottomArc" d="M 202,120 a 82,82 0 1,1 -164,0" fill="none"/>
   </defs>
-  <circle cx="120" cy="120" r="112" fill="none" stroke="{c}" stroke-width="3"/>
-  <circle cx="120" cy="120" r="100" fill="none" stroke="{c}" stroke-width="1.5"/>
-  <circle cx="120" cy="118" r="36" fill="none" stroke="{c}" stroke-width="0.8" stroke-dasharray="3,3"/>
-  <text fill="{c}" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="2">
-    <textPath href="#topArc" startOffset="50%" text-anchor="middle">{primary_upper}</textPath>
+  <circle cx="120" cy="120" r="115" fill="none" stroke="{c}" stroke-width="4.5"/>
+  <circle cx="120" cy="120" r="109" fill="none" stroke="{c}" stroke-width="1.5"/>
+  <circle cx="120" cy="120" r="78" fill="none" stroke="{c}" stroke-width="0.7" stroke-dasharray="2,3" opacity="0.4"/>
+  <text fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="11.5" font-weight="700" letter-spacing="3.5">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">{primary}</textPath>
   </text>
-  <text fill="{c}" font-family="Arial,sans-serif" font-size="11" letter-spacing="1.5">
-    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">{secondary_upper}</textPath>
+  <text fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="9.5" font-weight="400" letter-spacing="2.5">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">{secondary}</textPath>
   </text>
-  {"<image href='" + icon_b64 + "' x='88' y='86' width='64' height='64' clip-path='url(#iconClip)' preserveAspectRatio='xMidYMid slice'/>" if icon_b64 else center}
-  <text x="120" y="164" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="7" letter-spacing="0.5">{reg_tin}</text>
+  <g transform="translate(95,88)">{triad}</g>
+  <text x="120" y="154" text-anchor="middle" fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="8.5" font-weight="700" letter-spacing="3.5">KONEKT</text>
+  {reg_el}
 </svg>'''
     return svg
 
 
 def _generate_square_stamp_svg(settings: dict) -> str:
-    color_map = {"blue": "#1a4b8c", "red": "#b91c1c", "black": "#1e293b"}
-    c = color_map.get(settings.get("stamp_color", "blue"), "#1a4b8c")
-    primary = settings.get("stamp_text_primary", "Company Name")
-    secondary = settings.get("stamp_text_secondary", "")
+    color_map = {"blue": "#1a365d", "navy": "#1a365d", "red": "#7f1d1d", "black": "#0f172a"}
+    c = color_map.get(settings.get("stamp_color", "blue"), "#1a365d")
+    primary = settings.get("stamp_text_primary", "Konekt Limited").upper()
+    secondary = settings.get("stamp_text_secondary", "").upper()
     reg = settings.get("stamp_registration_number", "")
     tin = settings.get("stamp_tax_number", "")
 
-    icon_b64 = _load_icon_b64()
-    if icon_b64:
-        center = f'''<clipPath id="sqClip"><rect x="85" y="70" width="70" height="70" rx="8"/></clipPath>
-  <image href="{icon_b64}" x="85" y="70" width="70" height="70" clip-path="url(#sqClip)" preserveAspectRatio="xMidYMid slice"/>'''
-    else:
-        center = f'<text x="120" y="120" text-anchor="middle" fill="{c}" font-family="Georgia,serif" font-size="52" font-weight="700" font-style="italic">K</text>'
+    triad = _connected_triad_svg(size=54, color=c)
 
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 240 240" width="240" height="240">
-  <defs>
-    {center.split("</clipPath>")[0] + "</clipPath>" if icon_b64 else ""}
-  </defs>
-  <rect x="10" y="10" width="220" height="220" rx="8" fill="none" stroke="{c}" stroke-width="3"/>
-  <rect x="18" y="18" width="204" height="204" rx="4" fill="none" stroke="{c}" stroke-width="1"/>
-  <text x="120" y="50" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1">{primary.upper()}</text>
-  <line x1="40" y1="60" x2="200" y2="60" stroke="{c}" stroke-width="0.8"/>
-  {"<image href='" + icon_b64 + "' x='85' y='70' width='70' height='70' clip-path='url(#sqClip)' preserveAspectRatio='xMidYMid slice'/>" if icon_b64 else center}
-  <line x1="40" y1="155" x2="200" y2="155" stroke="{c}" stroke-width="0.8"/>
-  <text x="120" y="175" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{reg}</text>
-  <text x="120" y="192" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{tin}</text>
-  <text x="120" y="210" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="9">{secondary}</text>
+    reg_lines = ""
+    if reg:
+        reg_lines += f'<text x="120" y="180" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="7.5" opacity="0.65">{reg}</text>'
+    if tin:
+        reg_lines += f'<text x="120" y="193" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="7.5" opacity="0.65">{tin}</text>'
+
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect x="6" y="6" width="228" height="228" rx="5" fill="none" stroke="{c}" stroke-width="4.5"/>
+  <rect x="13" y="13" width="214" height="214" rx="3" fill="none" stroke="{c}" stroke-width="1.5"/>
+  <text x="120" y="46" text-anchor="middle" fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" letter-spacing="3.5">{primary}</text>
+  <line x1="32" y1="56" x2="208" y2="56" stroke="{c}" stroke-width="0.7" opacity="0.35"/>
+  <g transform="translate(93,66)">{triad}</g>
+  <text x="120" y="140" text-anchor="middle" fill="{c}" font-family="Arial,Helvetica,sans-serif" font-size="8.5" font-weight="700" letter-spacing="3.5">KONEKT</text>
+  <line x1="32" y1="150" x2="208" y2="150" stroke="{c}" stroke-width="0.7" opacity="0.35"/>
+  {reg_lines}
+  <text x="120" y="214" text-anchor="middle" fill="{c}" font-family="Arial,sans-serif" font-size="8.5" letter-spacing="2">{secondary}</text>
 </svg>'''
     return svg
 
