@@ -205,6 +205,7 @@ import AffiliateProfilePage from "@/pages/partner/AffiliateProfilePage";
 import CommissionEngineAdminPage from "@/pages/admin/CommissionEngineAdminPage";
 import PromotionEngineAdminPage from "@/pages/admin/PromotionEngineAdminPage";
 import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
+import AdminContentCenterPage from "@/pages/admin/AdminContentCenterPage";
 
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
@@ -698,6 +699,7 @@ function App() {
           <Route path="commission-engine" element={<CommissionEngineAdminPage />} />
           <Route path="promotion-engine" element={<PromotionEngineAdminPage />} />
           <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
+          <Route path="content-center" element={<AdminContentCenterPage />} />
           {/* Affiliate Performance Governance */}
           <Route path="affiliate-performance-governance" element={<AffiliatePerformanceGovernancePage />} />
           {/* GTM + Partner Management */}

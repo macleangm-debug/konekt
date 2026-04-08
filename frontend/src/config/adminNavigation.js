@@ -3,7 +3,7 @@ import {
   Columns3, Truck, CheckSquare, Contact, Target,
   Network, Megaphone, Wallet, Percent,
   Route, Inbox, BarChart3,
-  Settings, Users, TrendingUp,
+  Settings, Users, TrendingUp, MessageSquare,
 } from "lucide-react";
 
 /**
@@ -63,6 +63,7 @@ export const adminNavigation = [
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Margin & Distribution", href: "/admin/distribution-margin", icon: Percent },
       { label: "Promotions", href: "/admin/promotion-engine", icon: TrendingUp },
+      { label: "Content Center", href: "/admin/content-center", icon: MessageSquare },
     ],
   },
   {

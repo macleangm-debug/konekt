@@ -1,0 +1,97 @@
+{
+  "summary": "Phase D Content Engine Testing - Iteration 204. Backend: 22/22 tests passed covering content generation (single/bulk), admin content center (list/filter/update/archive), sales/affiliate feeds, and dynamic pricing validation. Frontend: Admin Content Center page verified with KPI row (220 total, 80 sales, 123 affiliate), filters, table with TZS pricing, preview drawer with edit capability. Sales Dashboard 'Content to Share Today' block verified with product cards, caption panel (Quick Caption, Professional, Closing Script), and Copy buttons. Content Center correctly appears in admin sidebar under 'Growth & Affiliates'. KEY VALIDATION PASSED: Captions contain real TZS amounts from promotion engine (e.g., 'TZS 95,000', 'save TZS 5,000') - NOT hardcoded templates.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_content_engine_phase_d_v204.py",
+    "/app/test_reports/pytest/pytest_results_content_engine_v204.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_content_engine_phase_d_v204.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (portal: /admin → /admin/content-center)",
+    "staff": "neema.sales@konekt.demo / password123 (portal: /staff-login → /staff)",
+    "partner": "demo.partner@konekt.com / Partner123! (portal: /login)"
+  },
+  "seed_data_creation": "Content items auto-generated via bulk generate buttons during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase D Content Engine is complete and verified. Key points: 1) POST /api/content-engine/generate creates single content item with dynamic pricing from product_promotion_enrichment service. 2) POST /api/content-engine/generate-bulk creates multiple items for products with active promotions. 3) GET /api/admin/content-center returns items with KPIs (total_content, sales_content, affiliate_content, active_campaigns). 4) PUT /api/admin/content-center/{id} updates headline/captions. 5) POST /api/admin/content-center/{id}/archive archives content. 6) GET /api/staff/content-feed returns sales role content. 7) GET /api/partner/affiliate-content-feed returns affiliate role content. 8) Frontend AdminContentCenterPage.jsx has data-testid attributes for all key elements. 9) SalesContentBlock.jsx shows 'Content to Share Today' with card selection and caption copy buttons. 10) Content Center is in sidebar under 'Growth & Affiliates' section.",
+  "features_tested": {
+    "backend_content_generation": {
+      "POST /api/content-engine/generate (sales)": "PASS - Returns content with TZS pricing",
+      "POST /api/content-engine/generate (affiliate)": "PASS - Returns content with earning_amount",
+      "POST /api/content-engine/generate-bulk (sales)": "PASS - Generates multiple items",
+      "POST /api/content-engine/generate-bulk (affiliate)": "PASS - Generates multiple items",
+      "POST /api/content-engine/generate-bulk with target_ids": "PASS - Generates for specific products",
+      "Generate non-existent product": "PASS - Returns ok: false"
+    },
+    "backend_admin_content_center": {
+      "GET /api/admin/content-center": "PASS - Returns items with KPIs",
+      "GET /api/admin/content-center?role=sales": "PASS - Filters by role",
+      "GET /api/admin/content-center?status=active": "PASS - Filters by status",
+      "PUT /api/admin/content-center/{id} (headline)": "PASS - Updates headline",
+      "PUT /api/admin/content-center/{id} (captions)": "PASS - Updates captions",
+      "POST /api/admin/content-center/{id}/archive": "PASS - Archives content",
+      "PUT non-existent content": "PASS - Returns ok: false"
+    },
+    "backend_content_feeds": {
+      "GET /api/staff/content-feed": "PASS - Returns sales content with TZS in captions",
+      "GET /api/partner/affiliate-content-feed": "PASS - Returns affiliate content with earning_amount"
+    },
+    "backend_dynamic_pricing_validation": {
+      "Content has real TZS amounts": "PASS - e.g., TZS 95,000",
+      "Captions include discount amounts": "PASS - e.g., save TZS 5,000",
+      "Earning amount calculated from margin": "PASS - e.g., TZS 3,800"
+    },
+    "frontend_admin_content_center": {
+      "Content Center container loads": "PASS",
+      "KPI row with 4 cards": "PASS - Active Campaigns, Total Content, Sales Content, Affiliate Content",
+      "Filters section (role, status)": "PASS",
+      "Content table with TZS pricing": "PASS",
+      "Generate Sales Content button": "PASS",
+      "Generate Affiliate Content button": "PASS",
+      "Preview drawer opens": "PASS",
+      "Preview shows Final Price, Discount, Earning": "PASS",
+      "Content Center in sidebar under Growth & Affiliates": "PASS"
+    },
+    "frontend_sales_content_block": {
+      "Content to Share Today block loads": "PASS",
+      "Content cards with TZS pricing": "PASS - 8 cards displayed",
+      "Commission shown on cards": "PASS",
+      "Caption panel with Quick Caption": "PASS",
+      "Caption panel with Professional": "PASS",
+      "Caption panel with Closing Script": "PASS",
+      "Copy Short Caption button": "PASS",
+      "Copy Professional button": "PASS",
+      "Copy Closing Script button": "PASS",
+      "Copy Link button": "PASS",
+      "Card selection updates detail panel": "PASS"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  },
+  "dynamic_pricing_validation": {
+    "sample_caption": "TEST_MarketplaceSearch_c531ab29 at TZS 95,000. Currently on offer — save TZS 5,000.",
+    "final_price": 95000,
+    "discount_amount": 5000,
+    "earning_amount": 3800,
+    "validation": "PASSED - Captions contain real TZS amounts from promotion engine, not hardcoded templates"
+  }
+}

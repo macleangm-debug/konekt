@@ -48,7 +48,7 @@ async def enrich_product_with_promotion(product: dict, db=None) -> dict:
         db = _db
     product_id = product.get("id") or product.get("product_id", "")
     category = product.get("category_name") or product.get("category") or product.get("group_name", "")
-    selling_price = float(product.get("selling_price") or product.get("price") or 0)
+    selling_price = float(product.get("selling_price") or product.get("customer_price") or product.get("price") or product.get("base_price") or 0)
 
     if selling_price <= 0:
         product["promotion"] = None

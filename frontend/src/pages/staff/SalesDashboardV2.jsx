@@ -6,6 +6,7 @@ import {
   ShoppingCart, Users, Clock, Flame, AlertTriangle,
   FileText, ChevronRight, Loader2
 } from "lucide-react";
+import SalesContentBlock from "../../components/sales/SalesContentBlock";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -258,6 +259,9 @@ export default function SalesDashboardV2() {
           )}
         </div>
       </div>
+
+      {/* ═══ CONTENT TO SHARE TODAY ═══ */}
+      <SalesContentBlock />
 
       {/* ═══ COMMISSION PER ORDER TABLE ═══ */}
       <div className="bg-white border rounded-xl p-5" data-testid="commission-table-section">

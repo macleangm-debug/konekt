@@ -2866,6 +2866,9 @@ app.include_router(sales_commission_router)
 from routes.sales_dashboard_routes import router as sales_dashboard_v2_router
 app.include_router(sales_dashboard_v2_router)
 
+from routes.content_engine_routes import router as content_engine_router
+app.include_router(content_engine_router)
+
 # Affiliate Products + Promotions API
 from routes.affiliate_products_routes import router as affiliate_products_router
 app.include_router(affiliate_products_router)
