@@ -1,52 +1,69 @@
 # Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
-Build a comprehensive B2B e-commerce platform for business procurement in Tanzania. The platform connects customers with vendors/partners through a managed marketplace, with features including product catalog management, order processing, payment verification, fulfillment tracking, and a dynamic margin engine.
+Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: multi-role auth (Customer, Admin, Vendor/Partner, Sales/Staff), product catalog with taxonomy, invoicing, payment processing (Stripe + Bank Transfer), order fulfillment pipeline, affiliate/referral system, and promotional engine.
 
 ## Core Architecture
 - **Frontend**: React 18 + Tailwind CSS + Shadcn UI
-- **Backend**: FastAPI (Python) + MongoDB
-- **Payments**: Stripe sandbox integration
-- **Auth**: JWT-based with strict role separation (Admin/Staff/Customer/Partner)
+- **Backend**: FastAPI + MongoDB (via Motor async driver)
+- **Auth**: JWT-based with strict role separation (Admin ≠ Staff)
+- **Payments**: Stripe sandbox + Bank Transfer with admin approval queue
 
-## Key Business Rules
-1. **Pricing**: Vendor Price + Operational Margin + Distributable Pool = Final Price
-2. **Distribution Split**: Affiliate (40%), Sales (30%), Discount (30%) of distributable pool
-3. **Promotion Safety**: Promos draw ONLY from distributable pool. Unsafe promos are BLOCKED.
-4. **Stacking**: Platform promo + affiliate discount don't freely stack. Admin-controlled policy.
-5. **Unified Pricing**: ALL flows use same promotion resolver. No per-page math.
-6. **Attribution**: Affiliate codes persist URL→localStorage→checkout→DB on orders+quotes.
+## Implemented Features (Completed)
 
-## Admin Navigation (Canonical — adminNavigation.js)
-Dashboard | Commerce | Catalog | Customers | Partners | Growth & Affiliates (incl. Promotions) | Operations | Reports | Settings
+### Phase 1-40: Foundation
+- Multi-role authentication (Customer, Admin, Vendor, Sales)
+- Product catalog with group/category/subcategory taxonomy
+- Invoice generation and management
+- Stripe sandbox payment integration
+- Order pipeline (quote → invoice → payment → fulfillment)
+- Vendor order assignment and tracking
+- Affiliate/referral commission system
 
-## Implemented Features (Apr 2026)
+### Phase 41-44: Architecture Fixes
+- Staff Auth Separation (StaffAuthProvider, StaffRoute, StaffLayout)
+- Admin Navigation Unification (adminNavigation.js)
+- Canonical routing per role
+- Strict payer_name vs customer_name separation
 
-### Foundation (Phases 40-43): Complete
-### Partner Enablement (Phase 44A-B): Complete
-### Structural Fixes: Complete
-- PartnerLayout role separation, Admin sidebar unified, Staff auth separation
+### Phase 45: Platform Promotions Engine
+- Backend CRUD for promotions with margin safety validation
+- Admin UI for promotion management
+- PDP, Cart, Guest/Account Checkout integration
+- Affiliate Attribution Persistence E2E
 
-### Phase 45: Promotions Engine + Checkout Integration: Complete
-- CRUD, margin safety, stacking policies, live preview
-- Product enrichment across ALL listing APIs
-- Guest checkout + Account checkout promo resolution + promo data on order items
-- Marketplace cards + PDP promo badges + strikethrough pricing
+### Phase A: Bank Transfer E2E + Marketplace Cards (Current Session - April 8, 2026)
+- **Bank Transfer E2E Fix**: Rewrote `approve_payment_proof()` in `live_commerce_service.py` to handle guest orders where `invoice=None`. Added `_handle_guest_approval()` method for clean separation. Fixed `reject_payment_proof()` for guest orders.
+- **Marketplace Card Redesign**: Unified `ProductCardCompact` component used by BOTH public and in-account marketplaces. Fixed-height price/promo block (h-[52px]) and action block (h-[72px]) ensure uniform card heights regardless of promo status.
+- **Admin Dashboard Fix**: Pending payment count now includes "uploaded", "submitted", and "pending" statuses.
+- **Finance Queue Enrichment**: Guest proofs now show order data (items, totals, order_number) in admin queue.
 
-### Affiliate Attribution Persistence E2E: Complete
-- Frontend: URL `?ref=CODE` → localStorage → checkout payload
-- Backend: `extract_attribution_from_payload()` → `hydrate_affiliate_from_code()` → `build_attribution_block()` → stored on order/quote
-- Both `promo_code` and `affiliate_code` lookup supported
-- Guest and in-account flows both verified
-- Invalid codes stored but not hydrated (no error, no ghost data)
+## Current Status
+- Backend: Healthy, all APIs operational
+- Frontend: All marketplace views unified
+- Testing: Iteration 202 — 100% pass rate (Backend 10/10, Frontend all verified)
 
-## Upcoming Tasks (P1)
-- Bank transfer E2E test (checkout → payment proof → admin verify → order progression)
-- Sales discount request workflow
-- Canonical drawer UI
-- Document branding unification
+## Prioritized Backlog
 
-## Future Tasks (P2)
+### P1 - Upcoming
+- Phase C: Sales Dashboard Overhaul (KPI row, Today's Sales Actions, Pipeline Guidance, Commission per Order table, TZS-first)
+- Phase D: Content Engine (Dynamic role-based content generation pulling from promotions/pricing source of truth)
+- Phase E: Sales Discount Request Workflow (Sales requests → Admin approves/rejects → unlocks in quote)
+
+### P2 - Future
+- Phase F: Canonical Drawer UI (standardize all drawers)
+- Phase F: Document Branding Unification (invoices, quotes pulling canonical logo/settings)
 - Deep UI audit for production readiness
-- Twilio WhatsApp/SMS (blocked on API key)
-- Sales leaderboard / gamification
+- Twilio WhatsApp/SMS notifications (blocked on API key)
+- Resend email integration (blocked on API key)
+- One-click reorder / Saved Carts
+- AI-assisted Auto Quote Suggestions
+- Advanced Analytics dashboard
+- Mobile-first optimization
+
+## Key Technical Rules
+1. **Strict Payer/Customer Separation**: `customer_name` from account/business. `payer_name` from payment proof. Never fallback.
+2. **Vendor Privacy**: Vendors see only their vendor_order_no, base_price, work details, and Konekt Sales Contact.
+3. **Staff ≠ Admin**: Sales/Staff use StaffLayout + StaffAuthContext. Completely isolated from admin portal.
+4. **Canonical Pricing**: Promotions Engine is backend-only source of truth. Frontend reads enriched data.
+5. **Guest Orders**: No invoice pre-approval. Order exists directly. `_handle_guest_approval()` updates existing order on payment approval.
