@@ -52,24 +52,29 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
   - Sticky footer for action buttons
   - Backdrop with blur, ESC key close, body scroll lock
 - **Migrated drawers**: AdminDiscountRequests, CustomerOrders, CustomerInvoices, SalesOrderDrawerV2, AssignmentDecisionDrawer, DetailDrawer (wrapper)
-- **Remaining inline drawers** (lower priority): AdminContentCenter, OrdersPageOps, CustomersPageMerged, VendorListPage, QuotesPageV2
 - Iteration 208: 100% pass (all drawers + regression)
+
+### Phase F: Document Branding Unification (April 8, 2026)
+- **Canonical branding source**: All 4 document types (Invoice, Quote, Delivery Note, Statement) read from `business_settings.invoice_branding`
+- **Delivery Note PDF**: New HTML-based template matching canonical design (same header, footer, stamp, signature as Invoice/Quote/Order)
+- **Statement PDF**: Migrated from ReportLab to HTML-based canonical design with summary cards, entries table, and auth column
+- **Unified footer**: All documents use `_footer_html(branding)` pulling contact details from settings
+- **Company Logo**: Upload and display in all document headers via branding settings
+- **Settings Hub**: "Document Branding" tab with logo upload, signatory, signature pad, SVG stamp generator, and live preview
+- **PDF download buttons**: Added to admin Delivery Notes and Statement pages
+- **Single source helper**: `_get_branding(db)` centralizes all branding reads
+- Iteration 209: 100% pass (12/12 backend + full frontend UI)
 
 ## Current Status
 - Backend: Healthy, all APIs operational
 - Frontend: All views functional with canonical drawer UI
-- Testing: Iterations 205-208 — 100% pass rate consistently
+- Testing: Iterations 205-209 — 100% pass rate consistently
 
 ## Prioritized Backlog
 
-### P0 - Upcoming
-- Phase F: Document Branding Unification (invoices, quotes, delivery notes, statements)
-  - One canonical settings source for logo, business identity, contact, banking, footer
-  - All documents pull from this source
-
 ### P1 - Next
-- Deep UI audit for production readiness
 - Migrate remaining inline drawers to StandardDrawerShell
+- Deep UI audit for production readiness
 
 ### P2 - Future
 - Phase G: Discount Analytics Dashboard
@@ -88,3 +93,4 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market. Features: mul
 6. **Discount Requests**: Sales cannot apply directly. Request -> Admin approve -> stamp.
 7. **Auth Security**: Never reveal email existence. Token one-time with expiry. Rate limit all.
 8. **Drawer Standard**: ALL drawers must use StandardDrawerShell. No inline drawer implementations.
+9. **Document Branding**: Single source of truth: `business_settings.invoice_branding`. All 4 doc types (Invoice, Quote, Delivery Note, Statement) use `_get_branding()` helper.
