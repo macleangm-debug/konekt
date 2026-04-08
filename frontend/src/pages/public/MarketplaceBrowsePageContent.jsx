@@ -203,29 +203,37 @@ function MarketplaceProductCard({ product, onRequestQuote }) {
           {product.short_description || product.description || ""}
         </p>
 
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <div>
-            <span className="font-semibold text-[#0f172a] text-sm">{money(price)}</span>
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+          {/* Price block — full width, never squeezed */}
+          <div data-testid={`price-block-${product.id}`}>
+            <div className="flex items-baseline gap-2">
+              <span className="font-bold text-[#0f172a] text-base">{money(price)}</span>
+              {promo && (
+                <span className="text-xs text-slate-400 line-through">{money(originalPrice)}</span>
+              )}
+            </div>
             {promo && (
-              <span className="text-xs text-slate-400 line-through ml-1.5">{money(originalPrice)}</span>
+              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                Save {money(promo.discount_amount)}
+              </p>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onRequestQuote(product)}
-              className="rounded-lg border border-slate-200 text-[#20364D] px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 transition-colors flex items-center gap-1"
-              data-testid={`request-quote-${product.id}`}
-            >
-              <FileText className="w-3 h-3" /> Quote
-            </button>
-
+          {/* Actions — stacked below price */}
+          <div className="flex flex-col gap-1.5">
             <button
               onClick={handleAddToCart}
-              className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center gap-1"
+              className="w-full rounded-lg bg-[#0f172a] text-white py-2 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center justify-center gap-1.5"
               data-testid={`add-to-cart-${product.id}`}
             >
-              <ShoppingCart className="w-3 h-3" /> Add to Cart
+              <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+            </button>
+            <button
+              onClick={() => onRequestQuote(product)}
+              className="w-full text-center text-xs text-slate-500 hover:text-[#20364D] font-medium py-1 transition-colors"
+              data-testid={`request-quote-${product.id}`}
+            >
+              Request Quote
             </button>
           </div>
         </div>

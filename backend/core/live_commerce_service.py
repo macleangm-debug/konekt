@@ -381,10 +381,38 @@ class LiveCommerceService:
         proof = await self.db.payment_proofs.find_one({"id": payment_proof_id})
         if not proof:
             raise HTTPException(status_code=404, detail="Payment proof not found")
-        payment = await self.db.payments.find_one({"id": proof.get("payment_id")})
-        invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
-        if not payment or not invoice:
-            raise HTTPException(status_code=404, detail="Related payment or invoice not found")
+
+        # Find related payment — check by id first, then by order linkage
+        payment = None
+        if proof.get("payment_id"):
+            payment = await self.db.payments.find_one({"id": proof["payment_id"]})
+        if not payment and proof.get("order_number"):
+            payment = await self.db.payments.find_one({"order_number": proof["order_number"]})
+        if not payment and proof.get("order_id"):
+            payment = await self.db.payments.find_one({"order_id": proof["order_id"]})
+
+        # Find related invoice — may not exist for guest orders
+        invoice = None
+        if proof.get("invoice_id"):
+            invoice = await self.db.invoices.find_one({"id": proof["invoice_id"]})
+
+        # For guest proofs: payment may be in 'payments' without an 'id' field
+        # Find the order directly if no payment found
+        order = None
+        is_guest_flow = proof.get("is_guest_submission", False) or proof.get("source") == "guest_payment_proof"
+
+        if is_guest_flow:
+            # Guest flow: find order by order_number or order_id
+            order_number = proof.get("order_number", "")
+            if order_number:
+                order = await self.db.orders.find_one({"order_number": order_number})
+            if not order and proof.get("order_id"):
+                order = await self.db.orders.find_one({"id": proof["order_id"]})
+            if not order:
+                raise HTTPException(status_code=404, detail="Related order not found")
+        else:
+            if not payment or not invoice:
+                raise HTTPException(status_code=404, detail="Related payment or invoice not found")
 
         now = self._now()
 
@@ -410,24 +438,43 @@ class LiveCommerceService:
             {"id": payment_proof_id},
             {"$set": {"status": "approved", "approved_by": approver_role, "approved_at": now, "updated_at": now}},
         )
-        await self.db.payments.update_one(
-            {"id": payment.get("id")},
-            {"$set": {"status": "approved", "review_status": "approved", "approved_at": now, "updated_at": now}},
-        )
+        # Update payment if it exists
+        if payment:
+            pay_query = {"id": payment.get("id")} if payment.get("id") else {"_id": payment.get("_id")}
+            await self.db.payments.update_one(
+                pay_query,
+                {"$set": {"status": "approved", "review_status": "approved", "approved_at": now, "updated_at": now}},
+            )
+        elif proof.get("order_number"):
+            # Update by order_number for guest proofs
+            await self.db.payments.update_many(
+                {"order_number": proof["order_number"]},
+                {"$set": {"status": "approved", "review_status": "approved", "approved_at": now, "updated_at": now}},
+            )
 
-        invoice_total = self._money(invoice.get("total_amount", invoice.get("total", 0)))
-        approved_paid = self._money(proof.get("amount_paid", 0))
-        fully_paid = approved_paid >= invoice_total
-        invoice_status = "paid" if fully_paid else "partially_paid"
-        await self.db.invoices.update_one(
-            {"id": invoice.get("id")},
-            {"$set": {
-                "status": invoice_status,
-                "payment_status": "approved",
-                "approved_by": approver_role,
-                "approved_at": now,
-                "updated_at": now,
-            }},
+        # Handle invoice or order based on flow type
+        if invoice:
+            invoice_total = self._money(invoice.get("total_amount", invoice.get("total", 0)))
+            approved_paid = self._money(proof.get("amount_paid", 0))
+            fully_paid = approved_paid >= invoice_total
+            invoice_status = "paid" if fully_paid else "partially_paid"
+            await self.db.invoices.update_one(
+                {"id": invoice.get("id")},
+                {"$set": {
+                    "status": invoice_status,
+                    "payment_status": "approved",
+                    "approved_by": approver_role,
+                    "approved_at": now,
+                    "updated_at": now,
+                }},
+            )
+        elif is_guest_flow and order:
+            # Guest flow: determine fully_paid from order total
+            order_total = self._money(order.get("total_amount", order.get("total", 0)))
+            approved_paid = self._money(proof.get("amount_paid", 0))
+            fully_paid = approved_paid >= order_total
+        else:
+            fully_paid = True
         )
 
         order_doc = None

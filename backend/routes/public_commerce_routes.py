@@ -316,6 +316,31 @@ async def public_payment_proof(payload: dict):
 
     await db.payment_proof_submissions.insert_one(proof_doc)
 
+    # ─── Mirror into payment_proofs for admin approval compatibility ──────
+    # LiveCommerceService.approve_payment_proof() looks in this collection
+    payment_proofs_doc = {
+        "id": proof_doc["id"],
+        "payment_id": None,  # Will be linked after canonical payment is created
+        "invoice_id": proof_doc.get("invoice_id"),
+        "order_id": proof_doc.get("order_id"),
+        "order_number": order_number,
+        "customer_id": proof_doc.get("customer_id"),
+        "amount_paid": proof_doc.get("amount_paid", 0),
+        "currency": proof_doc.get("currency", "TZS"),
+        "proof_file_url": proof_doc.get("proof_file_url", ""),
+        "proof_file_name": proof_doc.get("proof_file_name", ""),
+        "payer_name": proof_doc.get("payer_name", ""),
+        "payment_method": proof_doc.get("payment_method", "bank_transfer"),
+        "bank_reference": proof_doc.get("bank_reference", ""),
+        "notes": proof_doc.get("notes", ""),
+        "status": "pending",
+        "source": "guest_payment_proof",
+        "is_guest_submission": True,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.payment_proofs.insert_one(payment_proofs_doc)
+
     # ─── Canonical payment queue record (admin visibility) ──────
     # Upsert into db.payments so admin payment verification queue can see guest proofs
     order_oid = order.get("_id")
@@ -364,9 +389,23 @@ async def public_payment_proof(payload: dict):
                 "updated_at": now,
             }},
         )
+        # Link payment_proofs entry to this payment
+        pay_id = existing_payment.get("id")
+        if pay_id:
+            await db.payment_proofs.update_one(
+                {"id": proof_doc["id"]},
+                {"$set": {"payment_id": pay_id}},
+            )
         logger.info("Updated existing payment record for order %s", order_number)
     else:
-        await db.payments.insert_one(canonical_payment)
+        result = await db.payments.insert_one(canonical_payment)
+        # Link payment_proofs entry to the new payment
+        new_pay = await db.payments.find_one({"_id": result.inserted_id}, {"_id": 0, "id": 1})
+        if new_pay and new_pay.get("id"):
+            await db.payment_proofs.update_one(
+                {"id": proof_doc["id"]},
+                {"$set": {"payment_id": new_pay["id"]}},
+            )
         logger.info("Created canonical payment record for guest order %s", order_number)
 
     # Update order status

@@ -32,36 +32,38 @@ export default function ProductCardCompact({ product, onDetail, isPromo = false 
       <div className="p-3">
         <button onClick={() => onDetail?.(product)} className="text-sm font-semibold text-[#0f172a] leading-5 line-clamp-2 text-left hover:underline">{product?.name}</button>
         <div className="text-xs text-[#94a3b8] mt-1">{product?.category || product?.category_name || product?.branch || ""}</div>
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+        <div className="mt-3 pt-3 border-t border-gray-100 space-y-2.5">
+          {/* Price block — full width */}
           <div>
-            <span className="text-sm font-semibold text-[#0f172a]">{money(price)}</span>
+            <span className="text-sm font-bold text-[#0f172a]">{money(price)}</span>
             {promo && (
               <span className="text-xs text-slate-400 line-through ml-1.5">{money(originalPrice)}</span>
             )}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Link to={`/marketplace/${product?.slug || product?.id}`}
-              className="rounded-lg border border-slate-200 text-slate-500 px-2 py-1.5 text-xs hover:bg-slate-50 transition-colors"
-              data-testid={`view-detail-${product?.id}`}>
-              Detail
-            </Link>
+          {/* Actions — stacked below price */}
+          <div className="flex flex-col gap-1">
             {isPromo ? (
-            <button
-              onClick={() => onDetail?.(product)}
-              className="rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 transition-colors flex items-center gap-1"
-              data-testid={`request-quote-${product?.id}`}
-            >
-              <FileText size={10} /> Quote
-            </button>
-          ) : (
-            <button
-              onClick={() => addItem({ ...product, price: Number(price), quantity: 1 })}
-              className="rounded-lg bg-[#0f172a] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#1e293b] transition-colors"
-              data-testid={`add-to-cart-${product?.id}`}
-            >
-              Add
-            </button>
-          )}
+              <button
+                onClick={() => onDetail?.(product)}
+                className="w-full rounded-lg bg-amber-600 text-white py-2 text-xs font-semibold hover:bg-amber-700 transition-colors flex items-center justify-center gap-1"
+                data-testid={`request-quote-${product?.id}`}
+              >
+                <FileText size={12} /> Request Quote
+              </button>
+            ) : (
+              <button
+                onClick={() => addItem({ ...product, price: Number(price), quantity: 1 })}
+                className="w-full rounded-lg bg-[#0f172a] text-white py-2 text-xs font-semibold hover:bg-[#1e293b] transition-colors"
+                data-testid={`add-to-cart-${product?.id}`}
+              >
+                Add to Cart
+              </button>
+            )}
+            <Link to={`/marketplace/${product?.slug || product?.id}`}
+              className="w-full text-center text-xs text-slate-500 hover:text-[#20364D] font-medium py-1 transition-colors"
+              data-testid={`view-detail-${product?.id}`}>
+              View Details
+            </Link>
           </div>
         </div>
       </div>
