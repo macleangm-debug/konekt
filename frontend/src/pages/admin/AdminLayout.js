@@ -89,6 +89,7 @@ const navItems = [
   { path: '/admin/partnerships/affiliates', label: 'Affiliates', icon: Megaphone, moduleKey: 'partners' },
   { path: '/admin/partnerships/referrals', label: 'Referrals', icon: GitBranch, moduleKey: 'partners' },
   { path: '/admin/partnerships/commissions', label: 'Commissions', icon: Coins, moduleKey: 'partners' },
+  { path: '/admin/distribution-margin', label: 'Margin & Distribution', icon: Percent, moduleKey: 'partners' },
   { type: 'divider', label: 'Settings', moduleKey: 'settings' },
   { path: '/admin/sales-performance', label: 'Sales Performance', icon: TrendingUp, moduleKey: 'settings' },
   { path: '/admin/performance-governance', label: 'Performance Settings', icon: Settings, moduleKey: 'settings' },

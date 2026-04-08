@@ -342,18 +342,40 @@ Sections (in order):
 - **Global CSS micro-interactions:** Focus rings (`box-shadow: 0 0 0 2px rgba(32,54,77,0.15)`), `.btn-gold-cta` hover brightness, `.animate-fade-up` entrance animation
 - **Bug fix:** Products.js `toLocaleString` crash when `base_price` is undefined — added `(product.base_price || 0)` guard
 
+### Phase 42 — Dynamic Margin Engine + Admin Nav Cleanup (07 Apr 2026)
+**Hierarchical margin resolution, admin nav consolidation, Phase 41 UX polish.**
+
+**Phase 41 Polish:**
+- Track Order: stronger order code label (text-base font-semibold, border-2), "Use the order code shown after checkout" helper, "Verify with your email or phone number" grouped guidance
+- Order Confirmation: "You'll need this order code to track your order as a guest" amber reminder
+- Admin Distribution: blue info banner explaining Fixed vs Flexible margins, red "Over-allocated" warning with detailed message when split exceeds cap
+
+**Admin Navigation Cleanup:**
+- Consolidated `adminNavigation.js` from 120+ items to ~30 canonical items
+- Removed duplicates: Commission Engine vs Commission Rules, Markup Rules vs Margin & Distribution
+- Growth section consolidated from 10 items to 3: Affiliates, Margin & Distribution, Promotions
+- Added "Margin & Distribution" link to both `adminNavigation.js` and `AdminLayout.js` navItems
+
+**Dynamic Margin Engine:**
+- `services/margin_engine.py`: `resolve_margin_rule()` with hierarchy (product > group > global), `resolve_pricing()` returns canonical pricing object
+- Extended `margin_engine_routes.py`: `distributable_margin_pct` field added to margin rules schema, `POST /resolve-distribution` endpoint
+- Canonical pricing object: `base_price`, `effective_margin_pct/value`, `effective_distributable_margin_pct/value`, `sales/affiliate/discount_share_pct`, `sales/affiliate/discount_amount`, `final_price`, `rule_scope`, `rule_label`
+- Admin UI: Margin Override Rules table with CRUD (add/delete rules with scope, label, margin %, distributable %)
+- Verified: group override (15%/5%) correctly beats global (20%/10%) in resolution
+
 ## Backlog
 
 ### P1 — Upcoming
+- Sales commission visibility: dashboard with TZS per order, pending vs paid, monthly earnings
 - End-to-end bank transfer payment E2E test
-- Deep screen-by-screen UI audit (user requested after logo integration)
+- Deep screen-by-screen UI audit
 
 ### P2 — Future
 - Twilio WhatsApp/SMS notifications (blocked on keys)
+- Affiliate attribution persistence E2E
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
-- Mobile-first optimization
 
 ### Phase 41 — Track Order + Distribution Margin + Affiliate System (07 Apr 2026)
 **Track Order redesign, order code visibility, mobile bottom sheets, and distribution margin engine.**
@@ -417,3 +439,4 @@ Sections (in order):
 - Iteration 190: UI Standardization Pack (Global Phone Input + Logo + Auth Parity) — 100% frontend (13/13)
 - Iteration 191: Brand Logo System + UI Polish (SVG Triad logo, navbar blur, PDP hover, micro-interactions) — 100% backend + frontend (15/15 features verified)
 - Iteration 192: Phase 41 (Track Order + Distribution Margin + Bottom Sheets + Affiliate Card) — 100% backend (7/7), 95% frontend (sidebar link fixed post-test)
+- Iteration 193: Phase 42 (Dynamic Margin Engine + Admin Nav Cleanup + Phase 41 Polish) — 100% backend (8/8), 95% frontend (sidebar link fixed post-test)
