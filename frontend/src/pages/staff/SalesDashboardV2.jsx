@@ -1,64 +1,50 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
-import { toast } from "sonner";
-import { 
-  AlertTriangle, Clock, CheckCircle, Users, FileText, 
-  PlusCircle, UserPlus, TrendingUp, Phone, ArrowRight,
-  Target, DollarSign
+import {
+  TrendingUp, Phone, ArrowRight, Target, Wallet,
+  ShoppingCart, Users, Clock, Flame, AlertTriangle,
+  FileText, ChevronRight, Loader2
 } from "lucide-react";
 
+function money(v) {
+  return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+}
+
+function shortMoney(v) {
+  const n = Number(v || 0);
+  if (n >= 1_000_000) return `TZS ${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `TZS ${(n / 1_000).toFixed(0)}K`;
+  return money(v);
+}
+
+const URGENCY_CONFIG = {
+  hot: { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "bg-orange-500", icon: Flame },
+  high: { bg: "bg-red-50", border: "border-red-200", text: "text-red-700", badge: "bg-red-500", icon: AlertTriangle },
+  medium: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-700", badge: "bg-yellow-500", icon: Clock },
+  low: { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-600", badge: "bg-slate-400", icon: FileText },
+};
+
+const STATUS_COLORS = {
+  expected: "text-blue-600 bg-blue-50",
+  pending: "text-yellow-600 bg-yellow-50",
+  pending_payout: "text-orange-600 bg-orange-50",
+  approved: "text-green-600 bg-green-50",
+  paid: "text-emerald-700 bg-emerald-50",
+};
+
 export default function SalesDashboardV2() {
-  const [stats, setStats] = useState({
-    needsAction: 0,
-    pendingQuotes: 0,
-    readyToClose: 0,
-    totalLeads: 0,
-    totalQuotes: 0,
-    monthlyRevenue: 0
-  });
-  const [urgentLeads, setUrgentLeads] = useState([]);
-  const [pendingQuotes, setPendingQuotes] = useState([]);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadDashboardData();
+    loadDashboard();
   }, []);
 
-  const loadDashboardData = async () => {
+  const loadDashboard = async () => {
     try {
-      const [leadsRes, quotesRes, statsRes] = await Promise.all([
-        api.get("/api/crm/leads").catch(() => ({ data: [] })),
-        api.get("/api/quotes").catch(() => ({ data: [] })),
-        api.get("/api/admin/stats").catch(() => ({ data: {} }))
-      ]);
-
-      const leads = leadsRes.data || [];
-      const quotes = quotesRes.data || [];
-
-      // Calculate urgent leads (not contacted in 24h)
-      const urgent = leads.filter(l => 
-        l.status === "new" || 
-        (l.status === "contacted" && !l.last_contact_at)
-      );
-
-      // Pending quotes needing follow-up
-      const pending = quotes.filter(q => q.status === "pending" || q.status === "sent");
-
-      // Ready to close (approved quotes)
-      const readyToClose = quotes.filter(q => q.status === "approved");
-
-      setStats({
-        needsAction: urgent.length,
-        pendingQuotes: pending.length,
-        readyToClose: readyToClose.length,
-        totalLeads: leads.length,
-        totalQuotes: quotes.length,
-        monthlyRevenue: statsRes.data?.monthly_revenue || 0
-      });
-
-      setUrgentLeads(urgent.slice(0, 5));
-      setPendingQuotes(pending.slice(0, 5));
+      const res = await api.get("/api/staff/sales-dashboard");
+      setData(res.data);
     } catch (err) {
       console.error("Failed to load sales dashboard", err);
     } finally {
@@ -66,255 +52,279 @@ export default function SalesDashboardV2() {
     }
   };
 
-  const handleQuickCall = (lead) => {
-    if (lead.phone) {
-      window.open(`tel:${lead.phone}`, '_blank');
-      toast.success(`Calling ${lead.name || lead.company}...`);
-    } else {
-      toast.error("No phone number available");
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20" data-testid="sales-dashboard-loading">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D4A843]" />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="text-center py-20 text-slate-500" data-testid="sales-dashboard-error">
+        <p>Unable to load dashboard. Please refresh.</p>
+      </div>
+    );
+  }
+
+  const { kpis, today_actions, pipeline, recent_orders, assigned_customers, staff_name } = data;
 
   return (
-    <div className="space-y-8" data-testid="sales-dashboard-v2">
-      {/* Hero Header */}
-      <div className="bg-[#20364D] text-white rounded-[2rem] p-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Sales Command Center</h1>
-            <p className="text-slate-200 mt-2">
-              Focus on what needs action and close deals faster.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/staff/quotes/new" 
-              className="flex items-center gap-2 bg-white text-[#20364D] px-5 py-3 rounded-xl font-semibold hover:bg-slate-100 transition"
-              data-testid="create-quote-btn"
-            >
-              <PlusCircle className="w-5 h-5" />
-              Create Quote
-            </Link>
-          </div>
+    <div className="space-y-6" data-testid="sales-dashboard-v2">
+      {/* ═══ HEADER ═══ */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0f172a]">
+            Good {getGreeting()}, {staff_name || "Sales"}
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+          </p>
+        </div>
+        <Link
+          to="/staff/orders"
+          className="flex items-center gap-2 bg-[#0f172a] text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#1e293b] transition"
+          data-testid="view-all-orders-btn"
+        >
+          <ShoppingCart className="w-4 h-4" /> All Orders
+        </Link>
+      </div>
+
+      {/* ═══ KPI ROW ═══ */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="kpi-row">
+        <KpiCard
+          label="Today's Revenue"
+          value={shortMoney(kpis.today_revenue)}
+          sub={`${kpis.today_orders} order${kpis.today_orders !== 1 ? "s" : ""}`}
+          icon={<TrendingUp className="w-5 h-5" />}
+          accent="text-emerald-600"
+          testId="kpi-today-revenue"
+        />
+        <KpiCard
+          label="This Month"
+          value={shortMoney(kpis.month_revenue)}
+          sub={`${kpis.month_orders} orders`}
+          icon={<Target className="w-5 h-5" />}
+          accent="text-blue-600"
+          testId="kpi-month-revenue"
+        />
+        <KpiCard
+          label="Open Pipeline"
+          value={shortMoney(kpis.pipeline_value)}
+          sub={`${kpis.open_orders} open deals`}
+          icon={<ShoppingCart className="w-5 h-5" />}
+          accent="text-orange-600"
+          testId="kpi-pipeline"
+        />
+        <KpiCard
+          label="Commission"
+          value={shortMoney(kpis.total_earned)}
+          sub={kpis.pending_payout > 0 ? `${shortMoney(kpis.pending_payout)} pending` : "No pending"}
+          icon={<Wallet className="w-5 h-5" />}
+          accent="text-[#D4A843]"
+          testId="kpi-commission"
+        />
+      </div>
+
+      {/* ═══ PIPELINE FUNNEL ═══ */}
+      <div className="bg-white border rounded-xl p-5" data-testid="pipeline-section">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-bold text-[#0f172a]">Sales Pipeline</h2>
+          <Link to="/staff/portfolio" className="text-xs text-slate-500 hover:text-[#0f172a] transition flex items-center gap-1">
+            View CRM <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+        <div className="flex items-center gap-1" data-testid="pipeline-funnel">
+          {[
+            { label: "New", count: pipeline.new_leads, color: "bg-slate-200 text-slate-700" },
+            { label: "Contacted", count: pipeline.contacted, color: "bg-blue-100 text-blue-700" },
+            { label: "Quoted", count: pipeline.quoted, color: "bg-yellow-100 text-yellow-700" },
+            { label: "Approved", count: pipeline.approved, color: "bg-orange-100 text-orange-700" },
+            { label: "Paid", count: pipeline.paid, color: "bg-green-100 text-green-700" },
+            { label: "Fulfilled", count: pipeline.fulfilled, color: "bg-emerald-100 text-emerald-800" },
+          ].map((stage, i, arr) => (
+            <React.Fragment key={stage.label}>
+              <div
+                className={`flex-1 ${stage.color} rounded-lg py-2.5 px-2 text-center`}
+                data-testid={`pipeline-stage-${stage.label.toLowerCase()}`}
+              >
+                <div className="text-lg font-bold">{stage.count}</div>
+                <div className="text-[10px] font-medium uppercase tracking-wide">{stage.label}</div>
+              </div>
+              {i < arr.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
 
-      {/* Action Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Needs Immediate Action */}
-        <div className="bg-red-50 border border-red-200 p-6 rounded-2xl hover:shadow-lg transition group">
-          <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center group-hover:bg-red-200 transition">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-            </div>
-            {stats.needsAction > 0 && (
-              <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full animate-pulse">
-                URGENT
-              </span>
+      {/* ═══ TODAY'S ACTIONS + CRM ═══ */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        {/* Today's Actions — 3 cols */}
+        <div className="lg:col-span-3 bg-white border rounded-xl p-5" data-testid="today-actions-section">
+          <h2 className="text-base font-bold text-[#0f172a] mb-3">
+            Today's Actions
+            {today_actions.length > 0 && (
+              <span className="ml-2 text-xs font-normal text-slate-400">({today_actions.length})</span>
             )}
-          </div>
-          <p className="text-sm text-red-600 mt-4">Needs Immediate Action</p>
-          <h2 className="text-3xl font-bold text-red-700 mt-1">{stats.needsAction} Leads</h2>
-          <p className="text-xs text-red-500 mt-2">Not contacted yet</p>
-          <Link 
-            to="/admin/crm?filter=urgent"
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-red-700 transition"
-            data-testid="view-urgent-leads-btn"
-          >
-            View Leads
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Quotes Pending */}
-        <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-2xl hover:shadow-lg transition group">
-          <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center group-hover:bg-yellow-200 transition">
-              <Clock className="w-6 h-6 text-yellow-600" />
-            </div>
-          </div>
-          <p className="text-sm text-yellow-600 mt-4">Quotes Pending</p>
-          <h2 className="text-3xl font-bold text-yellow-700 mt-1">{stats.pendingQuotes} Quotes</h2>
-          <p className="text-xs text-yellow-500 mt-2">Awaiting customer response</p>
-          <Link 
-            to="/admin/quotes?filter=pending"
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-yellow-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-yellow-600 transition"
-            data-testid="follow-up-quotes-btn"
-          >
-            Follow Up
-            <Phone className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {/* Ready to Close */}
-        <div className="bg-green-50 border border-green-200 p-6 rounded-2xl hover:shadow-lg transition group">
-          <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center group-hover:bg-green-200 transition">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-            {stats.readyToClose > 0 && (
-              <span className="px-2 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
-                HOT
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-green-600 mt-4">Ready to Close</p>
-          <h2 className="text-3xl font-bold text-green-700 mt-1">{stats.readyToClose} Deals</h2>
-          <p className="text-xs text-green-500 mt-2">Approved, awaiting payment</p>
-          <Link 
-            to="/admin/quotes?filter=approved"
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
-            data-testid="close-deals-btn"
-          >
-            Close Deals
-            <DollarSign className="w-4 h-4" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="bg-white border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <Users className="w-5 h-5 text-slate-400" />
-            <span className="text-sm text-slate-500">Total Leads</span>
-          </div>
-          <div className="text-2xl font-bold text-[#20364D] mt-2">{stats.totalLeads}</div>
-        </div>
-        <div className="bg-white border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-slate-400" />
-            <span className="text-sm text-slate-500">Total Quotes</span>
-          </div>
-          <div className="text-2xl font-bold text-[#20364D] mt-2">{stats.totalQuotes}</div>
-        </div>
-        <div className="bg-white border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <Target className="w-5 h-5 text-slate-400" />
-            <span className="text-sm text-slate-500">Conversion Rate</span>
-          </div>
-          <div className="text-2xl font-bold text-[#20364D] mt-2">
-            {stats.totalLeads > 0 ? Math.round((stats.readyToClose / stats.totalLeads) * 100) : 0}%
-          </div>
-        </div>
-        <div className="bg-white border rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-5 h-5 text-slate-400" />
-            <span className="text-sm text-slate-500">Monthly Revenue</span>
-          </div>
-          <div className="text-2xl font-bold text-[#20364D] mt-2">
-            TZS {(stats.monthlyRevenue / 1000000).toFixed(1)}M
-          </div>
-        </div>
-      </div>
-
-      {/* Lists */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Urgent Leads */}
-        <div className="bg-white border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-[#20364D]">Urgent Leads</h3>
-            <Link to="/admin/crm" className="text-sm text-[#20364D] hover:underline">
-              View All
-            </Link>
-          </div>
-          {loading ? (
-            <div className="text-center py-8 text-slate-500">Loading...</div>
-          ) : urgentLeads.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
-              <p>All caught up! No urgent leads.</p>
+          </h2>
+          {today_actions.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Target className="w-8 h-8 mx-auto mb-2" />
+              <p className="text-sm">All caught up! No pending actions.</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {urgentLeads.map((lead) => (
-                <div key={lead.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                  <div>
-                    <div className="font-medium text-slate-800">{lead.name || lead.company}</div>
-                    <div className="text-xs text-slate-500">{lead.email}</div>
-                  </div>
-                  <button 
-                    onClick={() => handleQuickCall(lead)}
-                    className="p-2 bg-green-100 rounded-lg hover:bg-green-200 transition"
-                    title="Quick Call"
+            <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+              {today_actions.map((action, i) => {
+                const cfg = URGENCY_CONFIG[action.urgency] || URGENCY_CONFIG.low;
+                const Icon = cfg.icon;
+                return (
+                  <Link
+                    key={i}
+                    to={action.href || "#"}
+                    className={`flex items-center gap-3 p-3 rounded-lg border ${cfg.bg} ${cfg.border} hover:shadow-sm transition group`}
+                    data-testid={`action-item-${i}`}
                   >
-                    <Phone className="w-4 h-4 text-green-600" />
-                  </button>
+                    <div className={`w-8 h-8 rounded-lg ${cfg.badge} text-white flex items-center justify-center flex-shrink-0`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-sm font-medium ${cfg.text} truncate`}>{action.title}</div>
+                      <div className="text-xs text-slate-500 truncate">{action.description}</div>
+                    </div>
+                    {action.phone && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`tel:${action.phone}`); }}
+                        className="p-2 rounded-lg bg-green-100 hover:bg-green-200 transition flex-shrink-0"
+                        data-testid={`call-btn-${i}`}
+                      >
+                        <Phone className="w-3.5 h-3.5 text-green-600" />
+                      </button>
+                    )}
+                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition flex-shrink-0" />
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Assigned CRM — 2 cols */}
+        <div className="lg:col-span-2 bg-white border rounded-xl p-5" data-testid="crm-section">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-[#0f172a]">
+              My Customers
+              <span className="ml-1.5 text-xs font-normal text-slate-400">({assigned_customers.length})</span>
+            </h2>
+            <Link to="/staff/portfolio" className="text-xs text-slate-500 hover:text-[#0f172a] transition flex items-center gap-1">
+              All <ChevronRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {assigned_customers.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Users className="w-8 h-8 mx-auto mb-2" />
+              <p className="text-sm">No assigned customers yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-[340px] overflow-y-auto pr-1">
+              {assigned_customers.slice(0, 15).map((cust) => (
+                <div
+                  key={cust.id}
+                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 transition group"
+                  data-testid={`crm-customer-${cust.id}`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-[#20364D]/10 flex items-center justify-center text-xs font-bold text-[#20364D] flex-shrink-0">
+                      {(cust.name || "?")[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-800 truncate">{cust.name}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{cust.company || cust.email}</div>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    cust.status === "new" ? "bg-blue-100 text-blue-600" :
+                    cust.status === "contacted" ? "bg-yellow-100 text-yellow-600" :
+                    cust.status === "qualified" ? "bg-green-100 text-green-600" :
+                    "bg-slate-100 text-slate-500"
+                  }`}>
+                    {cust.status}
+                  </span>
                 </div>
               ))}
             </div>
           )}
         </div>
-
-        {/* Pending Quotes */}
-        <div className="bg-white border rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-[#20364D]">Pending Quotes</h3>
-            <Link to="/admin/quotes" className="text-sm text-[#20364D] hover:underline">
-              View All
-            </Link>
-          </div>
-          {loading ? (
-            <div className="text-center py-8 text-slate-500">Loading...</div>
-          ) : pendingQuotes.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <FileText className="w-8 h-8 mx-auto mb-2 text-slate-400" />
-              <p>No pending quotes</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {pendingQuotes.map((quote) => (
-                <Link 
-                  key={quote.id} 
-                  to={`/admin/quotes/${quote.id}`}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition"
-                >
-                  <div>
-                    <div className="font-medium text-slate-800">
-                      #{quote.quote_number || quote.id.slice(0, 8)}
-                    </div>
-                    <div className="text-xs text-slate-500">{quote.customer_name}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-slate-700">
-                      TZS {(quote.total || 0).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-yellow-600">{quote.status}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white border rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-[#20364D] mb-4">Quick Actions</h3>
-        <div className="flex flex-wrap gap-4">
-          <Link 
-            to="/staff/quotes/new"
-            className="flex items-center gap-2 bg-[#20364D] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#2a4563] transition"
-          >
-            <PlusCircle className="w-5 h-5" />
-            Create Quote
-          </Link>
-          <Link 
-            to="/admin/crm/new"
-            className="flex items-center gap-2 border border-[#20364D] text-[#20364D] px-5 py-3 rounded-xl font-semibold hover:bg-slate-50 transition"
-          >
-            <UserPlus className="w-5 h-5" />
-            Add Lead
-          </Link>
-          <Link 
-            to="/admin/crm"
-            className="flex items-center gap-2 border border-slate-300 text-slate-600 px-5 py-3 rounded-xl font-semibold hover:bg-slate-50 transition"
-          >
-            <Users className="w-5 h-5" />
-            CRM Pipeline
+      {/* ═══ COMMISSION PER ORDER TABLE ═══ */}
+      <div className="bg-white border rounded-xl p-5" data-testid="commission-table-section">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-[#0f172a]">Commission per Order</h2>
+          <Link to="/staff/commission-dashboard" className="text-xs text-slate-500 hover:text-[#0f172a] transition flex items-center gap-1">
+            Full Report <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
+        {recent_orders.length === 0 ? (
+          <div className="text-center py-8 text-slate-400">
+            <Wallet className="w-8 h-8 mx-auto mb-2" />
+            <p className="text-sm">No orders assigned yet.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm" data-testid="commission-table">
+              <thead>
+                <tr className="border-b text-left">
+                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Order</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Customer</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Order Total</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Your Commission</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent_orders.slice(0, 10).map((order) => (
+                  <tr key={order.order_id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition" data-testid={`commission-row-${order.order_number}`}>
+                    <td className="py-2.5">
+                      <span className="font-mono text-xs text-slate-600">{order.order_number}</span>
+                    </td>
+                    <td className="py-2.5 text-slate-700">{order.customer_name}</td>
+                    <td className="py-2.5 text-right font-medium text-slate-800">{money(order.total)}</td>
+                    <td className="py-2.5 text-right font-bold text-[#D4A843]">{money(order.commission_amount)}</td>
+                    <td className="py-2.5 text-center">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[order.commission_status] || STATUS_COLORS.expected}`}>
+                        {order.commission_status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function KpiCard({ label, value, sub, icon, accent, testId }) {
+  return (
+    <div className="bg-white border rounded-xl p-4" data-testid={testId}>
+      <div className="flex items-center gap-2 mb-2">
+        <div className={`${accent || "text-slate-400"}`}>{icon}</div>
+        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+      </div>
+      <div className="text-xl font-bold text-[#0f172a]">{value}</div>
+      {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
 }

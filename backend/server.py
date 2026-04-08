@@ -757,11 +757,12 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-def create_token(user_id: str, email: str, role: str = "customer") -> str:
+def create_token(user_id: str, email: str, role: str = "customer", full_name: str = "") -> str:
     payload = {
         "user_id": user_id,
         "email": email,
         "role": role,
+        "full_name": full_name,
         "exp": datetime.now(timezone.utc).timestamp() + 86400 * 7
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -898,7 +899,7 @@ async def login(data: UserLogin):
             raise HTTPException(status_code=403, detail="Account is deactivated")
         
         role = user.get("role", "customer")
-        token = create_token(user["id"], user["email"], role)
+        token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
         return {
             "token": token,
             "user": {
@@ -971,7 +972,7 @@ async def admin_login(data: UserLogin):
     if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Account is deactivated")
     
-    token = create_token(user["id"], user["email"], role)
+    token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
     return {
         "token": token,
         "user": {
@@ -2861,6 +2862,9 @@ app.include_router(distribution_margin_router)
 # Sales Commission Dashboard
 from routes.sales_commission_routes import router as sales_commission_router
 app.include_router(sales_commission_router)
+
+from routes.sales_dashboard_routes import router as sales_dashboard_v2_router
+app.include_router(sales_dashboard_v2_router)
 
 # Affiliate Products + Promotions API
 from routes.affiliate_products_routes import router as affiliate_products_router

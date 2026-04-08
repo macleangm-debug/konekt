@@ -863,7 +863,7 @@ function App() {
           </StaffAuthProvider>
         }>
           <Route index element={<SalesDashboardV2 />} />
-          <Route path="home" element={<StaffWorkspaceHomePage />} />
+          <Route path="home" element={<SalesDashboardV2 />} />
           <Route path="queue" element={<SalesQueuePage />} />
           <Route path="queue-intelligence" element={<SalesQueueIntelligencePage />} />
           <Route path="performance" element={<StaffPerformanceDashboardPage />} />
