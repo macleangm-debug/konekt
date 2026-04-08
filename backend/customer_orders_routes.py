@@ -1,6 +1,6 @@
 """
 Customer Orders Routes
-Get orders for the authenticated customer
+Get orders for the authenticated customer + Quick Reorder (Phase C.5)
 """
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -9,6 +9,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import jwt
 from customer_timeline_mapping_service import get_customer_timeline
+from services.product_promotion_enrichment import resolve_checkout_item_price
 
 router = APIRouter(prefix="/api/customer/orders", tags=["Customer Orders"])
 security = HTTPBearer(auto_error=False)
@@ -194,3 +195,121 @@ async def get_order_detail(order_id: str, user: dict = Depends(get_user)):
         raise HTTPException(status_code=404, detail="Order not found")
 
     return await enrich_order(order)
+
+
+@router.post("/{order_id}/reorder")
+async def reorder(order_id: str, user: dict = Depends(get_user)):
+    """
+    Quick Reorder (Phase C.5)
+    Fetches previous order items, validates each product exists/active,
+    re-runs pricing + promotion engine, returns cart-ready items.
+    Frontend pushes items into CartContext and redirects to /account/cart.
+    """
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    user_email = user.get("email")
+    user_id = user.get("id")
+    ownership_query = {
+        "$or": [
+            {"user_id": user_id},
+            {"customer_id": user_id},
+            {"customer_email": user_email},
+            {"customer.email": user_email},
+        ]
+    }
+
+    # Find the order
+    order = None
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id), **ownership_query})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id, **ownership_query})
+    if not order:
+        order = await db.orders.find_one({"id": order_id, **ownership_query})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order = serialize_doc(order)
+    source_items = order.get("items") or order.get("line_items") or []
+    if not source_items:
+        return {"ok": False, "error": "No items in this order", "cart_items": [], "warnings": []}
+
+    cart_items = []
+    warnings = []
+
+    for item in source_items:
+        product_id = item.get("product_id", "")
+        item_name = item.get("name") or item.get("title") or "Unknown Item"
+        qty = int(item.get("quantity", 1))
+
+        if not product_id:
+            warnings.append(f"{item_name}: missing product reference")
+            continue
+
+        # Validate product exists and is active
+        product = await db.products.find_one({"id": product_id}, {"_id": 0})
+        if not product:
+            try:
+                product = await db.products.find_one({"_id": ObjectId(product_id)})
+                if product:
+                    product = serialize_doc(product)
+            except Exception:
+                pass
+
+        if not product:
+            warnings.append(f"{item_name}: no longer available")
+            continue
+
+        if product.get("status") == "inactive" or product.get("is_deleted"):
+            warnings.append(f"{item_name}: no longer available")
+            continue
+
+        # Re-run pricing + promotion engine (canonical path)
+        current_price = float(
+            product.get("selling_price")
+            or product.get("customer_price")
+            or product.get("price")
+            or item.get("unit_price")
+            or 0
+        )
+
+        pricing = await resolve_checkout_item_price({
+            "product_id": product.get("id") or product_id,
+            "unit_price": current_price,
+            "category_name": product.get("category_name") or product.get("category") or "",
+        }, db=db)
+
+        final_price = pricing["unit_price"]
+        cart_item = {
+            "product_id": product.get("id") or product_id,
+            "name": product.get("name") or item_name,
+            "quantity": qty,
+            "unit_price": final_price,
+            "subtotal": round(final_price * qty, 2),
+            "image": product.get("image") or product.get("thumbnail") or "",
+            "size": item.get("size") or "",
+            "color": item.get("color") or "",
+            "print_method": item.get("print_method") or "",
+            "category_name": product.get("category_name") or "",
+        }
+
+        # Attach promo info if applied
+        if pricing.get("promo_applied"):
+            cart_item["promo_applied"] = True
+            cart_item["promo_label"] = pricing.get("promo_label", "")
+            cart_item["original_price"] = pricing["original_price"]
+        else:
+            cart_item["promo_applied"] = False
+
+        cart_items.append(cart_item)
+
+    return {
+        "ok": True,
+        "cart_items": cart_items,
+        "warnings": warnings,
+        "added_count": len(cart_items),
+        "skipped_count": len(warnings),
+        "source_order": order.get("order_number") or order.get("id"),
+    }
+

@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { X, Phone, Mail, MessageCircle, CheckCircle2, Circle, Clock, Package, Truck, MapPin } from "lucide-react";
+import { X, Phone, Mail, MessageCircle, CheckCircle2, Circle, Clock, Package, Truck, MapPin, RotateCcw, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
 import BrandLogo from "../../components/branding/BrandLogo";
+import { useCartDrawer } from "../../contexts/CartDrawerContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -263,6 +265,10 @@ export default function OrdersPageV2() {
   const [searchValue, setSearchValue] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [reorderingId, setReorderingId] = useState(null);
+  const [reorderMsg, setReorderMsg] = useState(null);
+  const { addItem } = useCartDrawer();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
@@ -276,6 +282,35 @@ export default function OrdersPageV2() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleReorder = async (e, orderId) => {
+    e.stopPropagation();
+    setReorderingId(orderId);
+    setReorderMsg(null);
+    try {
+      const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
+      const res = await axios.post(`${API_URL}/api/customer/orders/${orderId}/reorder`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data;
+      if (data.ok && data.cart_items?.length > 0) {
+        data.cart_items.forEach((item) => addItem(item));
+        const msgs = [];
+        if (data.added_count > 0) msgs.push(`${data.added_count} item${data.added_count > 1 ? "s" : ""} added to your cart with current pricing and promotions.`);
+        if (data.warnings?.length > 0) msgs.push(`${data.warnings.length} item${data.warnings.length > 1 ? "s" : ""} could not be re-added because they are unavailable.`);
+        setReorderMsg({ type: data.warnings?.length ? "warning" : "success", text: msgs.join(" ") });
+        setTimeout(() => navigate("/account/cart"), 2000);
+      } else if (data.warnings?.length > 0) {
+        setReorderMsg({ type: "error", text: "Some items could not be re-added because they are unavailable." });
+      } else {
+        setReorderMsg({ type: "error", text: data.error || "No items could be added." });
+      }
+    } catch (err) {
+      setReorderMsg({ type: "error", text: "Failed to process reorder. Please try again." });
+    } finally {
+      setReorderingId(null);
+    }
+  };
+
   const filteredOrders = useMemo(() => orders.filter((order) => {
     const q = searchValue.toLowerCase();
     const matchesSearch = !q || [order.order_number, order.id, order.status, order.payment_status]
@@ -287,6 +322,21 @@ export default function OrdersPageV2() {
   return (
     <div data-testid="orders-page" className="space-y-6">
       <PageHeader title="My Orders" subtitle="Track order progress and contact your sales person." />
+
+      {/* Reorder notification */}
+      {reorderMsg && (
+        <div className={`rounded-xl px-4 py-3 text-sm flex items-center justify-between ${
+          reorderMsg.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+          reorderMsg.type === "warning" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+          "bg-red-50 text-red-700 border border-red-200"
+        }`} data-testid="reorder-notification">
+          <span>{reorderMsg.text}</span>
+          <button onClick={() => setReorderMsg(null)} className="ml-3 p-1 hover:bg-white/50 rounded">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <FilterBar
         searchValue={searchValue}
         onSearchChange={setSearchValue}
@@ -310,24 +360,41 @@ export default function OrdersPageV2() {
                 <th className="px-6 py-4 text-left">Amount</th>
                 <th className="px-6 py-4 text-left">Payment</th>
                 <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-6 py-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">Loading orders...</td></tr>
+                <tr><td colSpan="7" className="px-6 py-10 text-center text-slate-400">Loading orders...</td></tr>
               ) : filteredOrders.length === 0 ? (
-                <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No orders found.</td></tr>
+                <tr><td colSpan="7" className="px-6 py-10 text-center text-slate-400">No orders found.</td></tr>
               ) : filteredOrders.map((order) => {
                 const fSt = fulfillMeta(order.status || order.fulfillment_state, order);
                 const pSt = paymentMeta(order.payment_status || order.payment_state);
+                const oid = order.id || order.order_number;
                 return (
-                  <tr key={order.id || order._id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedOrder(order)} data-testid={`order-row-${order.id}`}>
+                  <tr key={oid} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedOrder(order)} data-testid={`order-row-${order.id}`}>
                     <td className="px-6 py-4 text-[#20364D]">{fmtDate(order.created_at)}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{order.order_number || order.id}</td>
                     <td className="px-6 py-4 text-slate-600 capitalize">{sourceLabel(order)}</td>
                     <td className="px-6 py-4 font-semibold text-[#20364D]">{money(order.total_amount || order.total)}</td>
                     <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${pSt.cls}`}>{pSt.label}</span></td>
                     <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${fSt.cls}`}>{fSt.label}</span></td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={(e) => handleReorder(e, oid)}
+                        disabled={reorderingId === oid}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#20364D] text-white text-xs font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition"
+                        data-testid={`reorder-btn-${order.id}`}
+                      >
+                        {reorderingId === oid ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="w-3 h-3" />
+                        )}
+                        Reorder
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
