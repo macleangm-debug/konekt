@@ -1,0 +1,101 @@
+{
+  "summary": "Phase 44B: Promotion Center for Affiliates and Sales + Structural Fixes - All tests pass (10/10 backend, 5/5 frontend). Verified admin sidebar has exactly ONE Settings entry, partner portal shows correct role-based navigation, and all new pages load correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase44b_promotion_center.py",
+    "/app/test_reports/pytest/pytest_results_phase44b_promotion_center.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_phase44b_promotion_center.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (5/5 tests passed)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Sales: neema.sales@konekt.demo / Sales123!, Customer: demo.customer@konekt.com / Demo123!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase 44B complete. All structural fixes verified: 1) Admin sidebar has exactly ONE Settings entry (to /admin/settings-hub), no duplicates. 2) Partner portal for distributor type shows product partner nav (Dashboard, My Catalog, Create Listing, Stock Table, Bulk Upload, My Orders, Settlements), NOT affiliate nav. 3) /account/referrals route works and renders ReferralsPage with referral_code, referral_link, stats, history. 4) /staff/promotions loads SalesPromotionCenterPage with product cards showing commission and client savings. 5) /partner/affiliate-promotions loads AffiliatePromotionsPage with promo codes and share links.",
+  "features_tested": {
+    "backend_admin_login": {
+      "endpoint": "POST /api/admin/auth/login (admin credentials)",
+      "status": "PASS",
+      "evidence": "Returns token + role:admin"
+    },
+    "backend_sales_login": {
+      "endpoint": "POST /api/admin/auth/login (sales credentials)",
+      "status": "PASS",
+      "evidence": "Returns token + role:sales"
+    },
+    "backend_customer_login": {
+      "endpoint": "POST /api/auth/login (customer credentials)",
+      "status": "PASS",
+      "evidence": "Returns token"
+    },
+    "backend_partner_login": {
+      "endpoint": "POST /api/partner-auth/login (partner credentials)",
+      "status": "PASS",
+      "evidence": "Returns access_token"
+    },
+    "backend_account_referrals": {
+      "endpoint": "GET /api/account/referrals",
+      "status": "PASS",
+      "evidence": "Returns referral_code, referral_link, stats (total_referrals, successful, reward_earned), history"
+    },
+    "backend_affiliate_products": {
+      "endpoint": "GET /api/affiliate/products",
+      "status": "PASS",
+      "evidence": "Returns products with pricing (404 for non-affiliate partners is expected)"
+    },
+    "backend_sales_promotions": {
+      "endpoint": "GET /api/staff/commissions/promotions",
+      "status": "PASS",
+      "evidence": "Returns promotions data for sales staff"
+    },
+    "backend_partner_dashboard": {
+      "endpoint": "GET /api/partner-portal/dashboard",
+      "status": "PASS",
+      "evidence": "Returns partner with type field (distributor for demo.partner)"
+    },
+    "frontend_admin_sidebar": {
+      "url": "/admin",
+      "status": "PASS",
+      "evidence": "Exactly ONE Settings entry in sidebar (to /admin/settings-hub), no duplicates"
+    },
+    "frontend_partner_nav_distributor": {
+      "url": "/partner",
+      "status": "PASS",
+      "evidence": "Distributor partner sees product partner nav (Dashboard, My Catalog, Create Listing, Stock Table, Bulk Upload, My Orders, Settlements), NOT affiliate nav"
+    },
+    "frontend_account_referrals": {
+      "url": "/account/referrals",
+      "status": "PASS",
+      "evidence": "ReferralsPage component renders with referral code (DEMO.CUSE6CF), referral link, stats KPIs, copy buttons"
+    },
+    "frontend_staff_promotions": {
+      "url": "/staff/promotions",
+      "status": "PASS",
+      "evidence": "SalesPromotionCenterPage loads with product cards showing Your Commission, Client Saves, Copy Link, Suggested captions"
+    },
+    "frontend_affiliate_promotions": {
+      "url": "/partner/affiliate-promotions",
+      "status": "PASS",
+      "evidence": "AffiliatePromotionsPage loads with product cards showing You Earn, Customer Saves, promo code, share link, Ready-to-post captions"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

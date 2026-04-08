@@ -960,7 +960,8 @@ async def get_me(user: dict = Depends(get_current_user)):
 @admin_router.post("/auth/login")
 async def admin_login(data: UserLogin):
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    if not user or not verify_password(data.password, user["password_hash"]):
+    pw_hash = user.get("password_hash") or user.get("password", "") if user else ""
+    if not user or not verify_password(data.password, pw_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     role = user.get("role", "customer")
