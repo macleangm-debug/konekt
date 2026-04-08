@@ -3,6 +3,8 @@ import { FileText, Download, Search } from "lucide-react";
 import api from "@/lib/api";
 import { formatMoney } from "@/utils/finance";
 
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
 export default function StatementPage() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [statement, setStatement] = useState(null);
@@ -84,13 +86,31 @@ export default function StatementPage() {
 
         {statement && (
           <>
-            {/* Customer Info */}
-            {(statement.customer_name || statement.customer_company) && (
-              <div className="rounded-2xl border bg-white p-5">
-                <h2 className="text-lg font-bold">{statement.customer_company || statement.customer_name}</h2>
-                <p className="text-slate-600">{statement.customer_email}</p>
+            {/* Customer Info & PDF Download */}
+            <div className="rounded-2xl border bg-white p-5 flex items-start justify-between">
+              <div>
+                {(statement.customer_name || statement.customer_company) ? (
+                  <>
+                    <h2 className="text-lg font-bold">{statement.customer_company || statement.customer_name}</h2>
+                    <p className="text-slate-600">{statement.customer_email}</p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-lg font-bold">{statement.customer_email}</h2>
+                    <p className="text-slate-600">Customer Account</p>
+                  </>
+                )}
               </div>
-            )}
+              <a
+                href={`${API_URL}/api/pdf/statements/${encodeURIComponent(statement.customer_email)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] transition-colors shrink-0"
+                data-testid="download-statement-pdf"
+              >
+                <Download className="w-4 h-4" /> Download PDF
+              </a>
+            </div>
 
             {/* Summary Cards */}
             <div className="grid md:grid-cols-3 gap-4">

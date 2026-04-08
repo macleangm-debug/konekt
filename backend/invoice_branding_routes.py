@@ -35,6 +35,7 @@ DEFAULT_BRANDING = {
     "contact_email": "accounts@konekt.co.tz",
     "contact_phone": "+255 XXX XXX XXX",
     "contact_address": "Dar es Salaam, Tanzania",
+    "company_logo_url": "",
 }
 
 
@@ -81,6 +82,19 @@ async def upload_signature(file: UploadFile = File(...)):
         raise HTTPException(400, "Only image files accepted")
     ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
     fname = f"cfo-signature-{uuid.uuid4().hex[:8]}.{ext}"
+    fpath = UPLOAD_DIR / fname
+    content = await file.read()
+    fpath.write_bytes(content)
+    url = f"/uploads/branding/{fname}"
+    return {"url": url}
+
+
+@router.post("/logo-upload")
+async def upload_logo(file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(400, "Only image files accepted")
+    ext = file.filename.rsplit(".", 1)[-1] if "." in file.filename else "png"
+    fname = f"company-logo-{uuid.uuid4().hex[:8]}.{ext}"
     fpath = UPLOAD_DIR / fname
     content = await file.read()
     fpath.write_bytes(content)

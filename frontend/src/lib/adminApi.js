@@ -133,6 +133,7 @@ export const adminApi = {
   saveInvoiceBranding: (payload) => api.post("/api/admin/settings/invoice-branding", payload),
   uploadSignature: (formData) => api.post("/api/admin/settings/invoice-branding/signature-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
   uploadStamp: (formData) => api.post("/api/admin/settings/invoice-branding/stamp-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  uploadLogo: (formData) => api.post("/api/admin/settings/invoice-branding/logo-upload", formData, { headers: { "Content-Type": "multipart/form-data" } }),
   generateStamp: (payload) => api.post("/api/admin/settings/invoice-branding/generate-stamp", payload),
 
   // Payment Queue (canonical)

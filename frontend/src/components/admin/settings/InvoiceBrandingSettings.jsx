@@ -27,6 +27,7 @@ const DEFAULTS = {
   contact_email: "accounts@konekt.co.tz",
   contact_phone: "+255 XXX XXX XXX",
   contact_address: "Dar es Salaam, Tanzania",
+  company_logo_url: "",
 };
 
 function Toggle({ label, checked, onChange }) {
@@ -141,6 +142,9 @@ export default function InvoiceBrandingSettings() {
   const handleStampUpload = async (fd) => {
     try { const r = await adminApi.uploadStamp(fd); up("stamp_uploaded_url", r.data.url); } catch { alert("Upload failed"); }
   };
+  const handleLogoUpload = async (fd) => {
+    try { const r = await adminApi.uploadLogo(fd); up("company_logo_url", r.data.url); } catch { alert("Upload failed"); }
+  };
   const generateStamp = async () => {
     setGenerating(true);
     try {
@@ -155,6 +159,11 @@ export default function InvoiceBrandingSettings() {
 
   return (
     <div className="space-y-6" data-testid="invoice-branding-section">
+      {/* Company Logo */}
+      <div className="pb-4 border-b border-slate-100">
+        <ImageUpload label="Company Logo (used on all document headers)" url={form.company_logo_url} onUpload={handleLogoUpload} onClear={() => up("company_logo_url", "")} />
+      </div>
+
       {/* Document Contact Details */}
       <div className="grid md:grid-cols-3 gap-4">
         <Field label="Contact Email" value={form.contact_email} onChange={v => up("contact_email", v)} placeholder="accounts@konekt.co.tz" />
@@ -174,7 +183,7 @@ export default function InvoiceBrandingSettings() {
         <Field label="CFO Name" value={form.cfo_name} onChange={v => up("cfo_name", v)} placeholder="Jane M. Doe" required={form.show_signature} />
         <Field label="CFO Title" value={form.cfo_title} onChange={v => up("cfo_title", v)} placeholder="Chief Finance Officer" />
         <div className="flex items-end pb-1">
-          <Toggle label="Show Signature on Invoices" checked={form.show_signature} onChange={v => up("show_signature", v)} />
+          <Toggle label="Show Signature on Documents" checked={form.show_signature} onChange={v => up("show_signature", v)} />
         </div>
       </div>
 
@@ -220,7 +229,7 @@ export default function InvoiceBrandingSettings() {
 
       {/* Company Stamp */}
       <div className="pt-2 border-t border-slate-100">
-        <Toggle label="Show Company Stamp on Invoices" checked={form.show_stamp} onChange={v => up("show_stamp", v)} />
+        <Toggle label="Show Company Stamp on Documents" checked={form.show_stamp} onChange={v => up("show_stamp", v)} />
       </div>
 
       {form.show_stamp && (
@@ -264,7 +273,7 @@ export default function InvoiceBrandingSettings() {
 
       {/* Live Preview */}
       <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 mt-4">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Invoice Footer Preview</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Document Footer Preview</div>
         <div className="flex gap-8 items-start">
           <div className="flex-1">
             <div className="text-[10px] uppercase tracking-wide text-slate-400 mb-1 font-semibold">Authorized by</div>

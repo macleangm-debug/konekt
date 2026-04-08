@@ -245,10 +245,13 @@ def _bank_box_html(bank, reference):
     </div>'''
 
 
-def _footer_html():
+def _footer_html(branding=None):
+    branding = branding or {}
+    email = branding.get("contact_email", "accounts@konekt.co.tz")
+    address = branding.get("contact_address", "Dar es Salaam, Tanzania")
     return f'''<div class="footer">
       Thank you for choosing Konekt. Please include the document number as payment reference.<br/>
-      Konekt Limited &bull; accounts@konekt.co.tz &bull; Dar es Salaam, Tanzania
+      Konekt Limited &bull; {email} &bull; {address}
     </div>'''
 
 
@@ -320,7 +323,7 @@ def render_invoice_html(invoice: dict, branding: dict = None):
         {_totals_html(subtotal, vat, total, amount_paid)}
         {_payment_auth_html(bank_box, branding)}
       </div>
-      {_footer_html()}
+      {_footer_html(branding)}
     </div>'''
     return _wrap(_css(), body)
 
@@ -387,10 +390,7 @@ def render_quote_html(quote: dict, branding: dict = None):
         {_totals_html(subtotal, vat, total)}
         {_payment_auth_html(notes_box, branding)}
       </div>
-      <div class="footer">
-        This quote is valid until {_date(valid)}. For questions, contact us at accounts@konekt.co.tz<br/>
-        Konekt Limited &bull; Dar es Salaam, Tanzania
-      </div>
+      {_footer_html(branding)}
     </div>'''
     return _wrap(_css(), body)
 
@@ -462,7 +462,207 @@ def render_order_html(order: dict, branding: dict = None):
         {_totals_html(subtotal, vat, total)}
         {_payment_auth_html(sales_box, branding)}
       </div>
-      {_footer_html()}
+      {_footer_html(branding)}
+    </div>'''
+    return _wrap(_css(), body)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DELIVERY NOTE TEMPLATE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _delivery_items_table_html(items):
+    if not items:
+        return '<p style="color:#94a3b8; text-align:center; padding:20px;">No line items.</p>'
+    rows = ""
+    for i, item in enumerate(items):
+        name = item.get("name") or item.get("product_name") or item.get("title") or f"Item {i+1}"
+        sku = item.get("sku", "")
+        qty = item.get("quantity", 1)
+        unit = item.get("unit", "pcs")
+        rows += f'<tr><td>{i+1}</td><td>{name}{"<br/><span style=&quot;font-size:11px;color:" + SLATE + "&quot;>SKU: " + sku + "</span>" if sku else ""}</td><td style="text-align:right">{qty} {unit}</td></tr>'
+    return f'''<table class="items-table">
+      <thead><tr><th style="width:40px">#</th><th>Item Description</th><th style="text-align:right; width:120px">Qty Delivered</th></tr></thead>
+      <tbody>{rows}</tbody>
+    </table>'''
+
+
+def render_delivery_note_html(note: dict, branding: dict = None):
+    branding = branding or {}
+    dn_number = note.get("note_number") or str(note.get("_id", ""))[:8]
+    created = note.get("created_at", "")
+    items = note.get("line_items", [])
+
+    status = (note.get("status") or "issued").lower()
+    status_map = {
+        "issued": ("Issued", "status-review"),
+        "in_transit": ("In Transit", "status-pending"),
+        "delivered": ("Delivered", "status-paid"),
+        "cancelled": ("Cancelled", "status-rejected"),
+    }
+    sl, sc = status_map.get(status, ("Issued", "status-review"))
+
+    name = note.get("customer_name") or note.get("delivered_to") or "Customer"
+    company = note.get("customer_company", "")
+    address = note.get("delivery_address", "")
+    email = note.get("customer_email", "")
+
+    source_ref = ""
+    if note.get("source_type") and note.get("source_id"):
+        source_ref = f'<strong>Source:</strong> {note["source_type"].capitalize()} ({note["source_id"][:8]})<br/>'
+
+    delivery_info = f'''<div class="section-label">Delivery Details</div>
+      <div class="client-detail">
+        <strong>Note No:</strong> {dn_number}<br/>
+        <strong>Date:</strong> {_date(created)}<br/>
+        {source_ref}
+        <strong>Status:</strong> {sl}
+      </div>'''
+
+    vehicle = note.get("vehicle_info", "")
+    remarks = note.get("remarks", "")
+    delivered_by = note.get("delivered_by", "")
+
+    dispatch_box = f'''<div class="payment-box">
+      <div class="section-label">Dispatch Information</div>
+      {"<div class=&quot;payment-line&quot;><strong>Issued By:</strong> " + delivered_by + "</div>" if delivered_by else ""}
+      {"<div class=&quot;payment-line&quot;><strong>Vehicle:</strong> " + vehicle + "</div>" if vehicle else ""}
+      {"<div class=&quot;payment-line&quot;><strong>Remarks:</strong> " + remarks + "</div>" if remarks else ""}
+      <div class="payment-line" style="margin-top:16px; padding-top:12px; border-top:1px solid #e2e8f0;">
+        <strong>Received By:</strong><br/>
+        <div style="height:36px; border-bottom:2px solid #d7e3ee; margin:8px 0;"></div>
+        <div style="font-size:11px; color:{SLATE};">Name / Signature / Date</div>
+      </div>
+    </div>'''
+
+    body = f'''
+    <div class="page">
+      {_header_block("DELIVERY NOTE", dn_number, created, sl, sc, branding)}
+      <div class="body">
+        <div class="two-col">
+          <div class="col">
+            <div class="section-label">Deliver To</div>
+            <div class="client-name">{name}</div>
+            {"<div class=&quot;client-detail&quot;>" + company + "</div>" if company else ""}
+            <div class="client-detail">{email}{"<br/>" + address if address else ""}</div>
+          </div>
+          <div class="col">{delivery_info}</div>
+        </div>
+        {_delivery_items_table_html(items)}
+        {_payment_auth_html(dispatch_box, branding)}
+      </div>
+      {_footer_html(branding)}
+    </div>'''
+    return _wrap(_css(), body)
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# STATEMENT OF ACCOUNT TEMPLATE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+def _statement_entries_table_html(entries):
+    if not entries:
+        return '<p style="color:#94a3b8; text-align:center; padding:20px;">No transactions found.</p>'
+    rows = ""
+    for entry in entries:
+        date_str = _date(entry.get("date"))
+        etype = (entry.get("entry_type") or "").capitalize()
+        doc_num = entry.get("document_number", "")[:18]
+        desc = entry.get("description", "")[:40]
+        debit = entry.get("debit", 0)
+        credit = entry.get("credit", 0)
+        balance = entry.get("balance", 0)
+        rows += f'''<tr>
+          <td>{date_str}</td>
+          <td><span style="display:inline-block; padding:2px 10px; border-radius:999px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; {"background:#dbeafe; color:#1e40af;" if etype == "Invoice" else "background:#dff6e8; color:#16794d;"}">{etype}</span></td>
+          <td>{doc_num}</td>
+          <td>{desc}</td>
+          <td style="text-align:right">{_money(debit) if debit else "-"}</td>
+          <td style="text-align:right">{_money(credit) if credit else "-"}</td>
+          <td style="text-align:right; font-weight:600">{_money(balance)}</td>
+        </tr>'''
+    return f'''<table class="items-table" style="table-layout:auto">
+      <thead><tr>
+        <th style="width:80px">Date</th>
+        <th style="width:80px">Type</th>
+        <th style="width:100px">Document</th>
+        <th>Description</th>
+        <th style="text-align:right; width:100px">Debit</th>
+        <th style="text-align:right; width:100px">Credit</th>
+        <th style="text-align:right; width:100px">Balance</th>
+      </tr></thead>
+      <tbody>{rows}</tbody>
+    </table>'''
+
+
+def render_statement_html(statement: dict, branding: dict = None):
+    branding = branding or {}
+    customer_email = statement.get("customer_email", "")
+    customer_name = statement.get("customer_name") or customer_email
+    customer_company = statement.get("customer_company", "")
+    entries = statement.get("entries", [])
+    summary = statement.get("summary", {})
+    generated_at = statement.get("generated_at") or datetime.now(timezone.utc).isoformat()
+
+    total_invoiced = summary.get("total_invoiced", 0)
+    total_paid = summary.get("total_paid", 0)
+    balance_due = summary.get("balance_due", 0)
+
+    if balance_due <= 0:
+        sl, sc = "Settled", "status-paid"
+    elif total_paid > 0:
+        sl, sc = "Partially Paid", "status-pending"
+    else:
+        sl, sc = "Outstanding", "status-pending"
+
+    account_info = f'''<div class="section-label">Account Summary</div>
+      <div class="client-detail">
+        <strong>Generated:</strong> {_date(generated_at)}<br/>
+        <strong>Transactions:</strong> {len(entries)}<br/>
+        <strong>Status:</strong> {sl}
+      </div>'''
+
+    # Summary totals card
+    summary_html = f'''<div style="display:flex; gap:16px; margin-bottom:22px;">
+      <div style="flex:1; background:{LIGHT_BG}; border-radius:10px; padding:14px 18px; border:1px solid #e2e8f0;">
+        <div style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:{SLATE}; font-weight:700; margin-bottom:6px;">Total Invoiced</div>
+        <div style="font-size:18px; font-weight:700; color:{NAVY};">{_money(total_invoiced)}</div>
+      </div>
+      <div style="flex:1; background:#dff6e8; border-radius:10px; padding:14px 18px; border:1px solid #b7e6cd;">
+        <div style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#16794d; font-weight:700; margin-bottom:6px;">Total Paid</div>
+        <div style="font-size:18px; font-weight:700; color:#16794d;">{_money(total_paid)}</div>
+      </div>
+      <div style="flex:1; background:{"#dff6e8" if balance_due <= 0 else "#fef3c7"}; border-radius:10px; padding:14px 18px; border:1px solid {"#b7e6cd" if balance_due <= 0 else "#fde68a"};">
+        <div style="font-size:10px; text-transform:uppercase; letter-spacing:1px; color:{"#16794d" if balance_due <= 0 else "#92400e"}; font-weight:700; margin-bottom:6px;">Balance Due</div>
+        <div style="font-size:18px; font-weight:700; color:{"#16794d" if balance_due <= 0 else "#92400e"};">{_money(balance_due)}</div>
+      </div>
+    </div>'''
+
+    auth_col = _auth_column_html(branding)
+    auth_section = ""
+    if auth_col:
+        auth_section = f'''<div style="display:flex; justify-content:flex-end; margin-top:22px; page-break-inside:avoid;">
+          {auth_col}
+        </div>'''
+
+    body = f'''
+    <div class="page">
+      {_header_block("STATEMENT", "OF ACCOUNT", generated_at, sl, sc, branding)}
+      <div class="body">
+        <div class="two-col">
+          <div class="col">
+            <div class="section-label">Account Holder</div>
+            <div class="client-name">{customer_name}</div>
+            {"<div class=&quot;client-detail&quot;>" + customer_company + "</div>" if customer_company else ""}
+            <div class="client-detail">{customer_email}</div>
+          </div>
+          <div class="col">{account_info}</div>
+        </div>
+        {summary_html}
+        {_statement_entries_table_html(entries)}
+        {auth_section}
+      </div>
+      {_footer_html(branding)}
     </div>'''
     return _wrap(_css(), body)
 
@@ -483,8 +683,13 @@ def html_to_pdf_bytes(html: str):
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ROUTES
+# HELPERS
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async def _get_branding(db):
+    """Single source of truth for document branding - reads from business_settings.invoice_branding"""
+    return await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+
 
 async def _find_invoice(db, invoice_id):
     try:
@@ -505,8 +710,10 @@ async def _find_quote(db, quote_id):
         if doc: return doc
     try:
         from bson import ObjectId as OID
-        doc = await db.quotes.find_one({"_id": OID(quote_id)})
-        if doc: return doc
+        # Try ObjectId lookup in both collections
+        for coll in [db.quotes, db.quotes_v2]:
+            doc = await coll.find_one({"_id": OID(quote_id)})
+            if doc: return doc
     except Exception:
         pass
     return None
@@ -522,13 +729,28 @@ async def _find_order(db, order_id):
     if doc: return doc
     return await db.orders.find_one({"order_number": order_id})
 
+async def _find_delivery_note(db, note_id):
+    try:
+        from bson import ObjectId as OID
+        doc = await db.delivery_notes.find_one({"_id": OID(note_id)})
+        if doc: return doc
+    except Exception:
+        pass
+    doc = await db.delivery_notes.find_one({"id": note_id})
+    if doc: return doc
+    return await db.delivery_notes.find_one({"note_number": note_id})
+
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ROUTES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 @router.get("/invoices/{invoice_id}")
 async def download_invoice_pdf(invoice_id: str, request: Request):
     db = request.app.mongodb
     invoice = await _find_invoice(db, invoice_id)
     if not invoice: raise HTTPException(404, "Invoice not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     pdf_io = html_to_pdf_bytes(render_invoice_html(invoice, branding))
     fn = f'Invoice-{invoice.get("invoice_number", str(invoice.get("_id",""))[:8])}.pdf'
     return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
@@ -539,7 +761,7 @@ async def invoice_preview(invoice_id: str, request: Request):
     db = request.app.mongodb
     invoice = await _find_invoice(db, invoice_id)
     if not invoice: raise HTTPException(404, "Invoice not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     return HTMLResponse(render_invoice_html(invoice, branding))
 
 
@@ -548,7 +770,7 @@ async def download_quote_pdf(quote_id: str, request: Request):
     db = request.app.mongodb
     quote = await _find_quote(db, quote_id)
     if not quote: raise HTTPException(404, "Quote not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     pdf_io = html_to_pdf_bytes(render_quote_html(quote, branding))
     fn = f'Quote-{quote.get("quote_number", str(quote.get("_id",""))[:8])}.pdf'
     return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
@@ -559,7 +781,7 @@ async def quote_preview(quote_id: str, request: Request):
     db = request.app.mongodb
     quote = await _find_quote(db, quote_id)
     if not quote: raise HTTPException(404, "Quote not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     return HTMLResponse(render_quote_html(quote, branding))
 
 
@@ -568,7 +790,7 @@ async def download_order_pdf(order_id: str, request: Request):
     db = request.app.mongodb
     order = await _find_order(db, order_id)
     if not order: raise HTTPException(404, "Order not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     pdf_io = html_to_pdf_bytes(render_order_html(order, branding))
     fn = f'Order-{order.get("order_number", str(order.get("_id",""))[:8])}.pdf'
     return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
@@ -579,5 +801,102 @@ async def order_preview(order_id: str, request: Request):
     db = request.app.mongodb
     order = await _find_order(db, order_id)
     if not order: raise HTTPException(404, "Order not found")
-    branding = await db.business_settings.find_one({"type": "invoice_branding"}) or {}
+    branding = await _get_branding(db)
     return HTMLResponse(render_order_html(order, branding))
+
+
+@router.get("/delivery-notes/{note_id}")
+async def download_delivery_note_pdf(note_id: str, request: Request):
+    db = request.app.mongodb
+    note = await _find_delivery_note(db, note_id)
+    if not note: raise HTTPException(404, "Delivery note not found")
+    branding = await _get_branding(db)
+    pdf_io = html_to_pdf_bytes(render_delivery_note_html(note, branding))
+    fn = f'DeliveryNote-{note.get("note_number", str(note.get("_id",""))[:8])}.pdf'
+    return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+
+
+@router.get("/delivery-notes/{note_id}/preview", response_class=HTMLResponse)
+async def delivery_note_preview(note_id: str, request: Request):
+    db = request.app.mongodb
+    note = await _find_delivery_note(db, note_id)
+    if not note: raise HTTPException(404, "Delivery note not found")
+    branding = await _get_branding(db)
+    return HTMLResponse(render_delivery_note_html(note, branding))
+
+
+@router.get("/statements/{customer_email}")
+async def download_statement_pdf(customer_email: str, request: Request):
+    db = request.app.mongodb
+    # Build statement data
+    invoices = await db.invoices.find({"customer_email": customer_email}).sort("created_at", 1).to_list(length=1000)
+    payments = await db.central_payments.find({"customer_email": customer_email}).sort("payment_date", 1).to_list(length=1000)
+    customer = await db.b2b_customers.find_one({"email": customer_email}, {"_id": 0})
+
+    entries = []
+    total_invoiced = 0.0
+    total_paid = 0.0
+    for inv in invoices:
+        total = float(inv.get("total", 0) or 0)
+        total_invoiced += total
+        entries.append({"entry_type": "invoice", "date": inv.get("created_at"), "document_number": inv.get("invoice_number"), "description": f"Invoice {inv.get('invoice_number')}", "debit": round(total, 2), "credit": 0.0})
+    for payment in payments:
+        amount = float(payment.get("amount_received", 0) or 0)
+        total_paid += amount
+        entries.append({"entry_type": "payment", "date": payment.get("payment_date"), "document_number": payment.get("payment_reference") or str(payment.get("_id", ""))[:8], "description": f"Payment ({payment.get('payment_method', 'Unknown')})", "debit": 0.0, "credit": round(amount, 2)})
+    entries = sorted(entries, key=lambda x: str(x.get("date") or ""))
+    running = 0.0
+    for e in entries:
+        running += float(e["debit"] or 0) - float(e["credit"] or 0)
+        e["balance"] = round(running, 2)
+
+    statement = {
+        "customer_email": customer_email,
+        "customer_name": customer.get("contact_name") if customer else None,
+        "customer_company": customer.get("company_name") if customer else None,
+        "entries": entries,
+        "summary": {"total_invoiced": round(total_invoiced, 2), "total_paid": round(total_paid, 2), "balance_due": round(total_invoiced - total_paid, 2)},
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    branding = await _get_branding(db)
+    pdf_io = html_to_pdf_bytes(render_statement_html(statement, branding))
+    fn = f'Statement-{customer_email.split("@")[0]}.pdf'
+    return StreamingResponse(pdf_io, media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{fn}"'})
+
+
+@router.get("/statements/{customer_email}/preview", response_class=HTMLResponse)
+async def statement_preview(customer_email: str, request: Request):
+    db = request.app.mongodb
+    invoices = await db.invoices.find({"customer_email": customer_email}).sort("created_at", 1).to_list(length=1000)
+    payments = await db.central_payments.find({"customer_email": customer_email}).sort("payment_date", 1).to_list(length=1000)
+    customer = await db.b2b_customers.find_one({"email": customer_email}, {"_id": 0})
+
+    entries = []
+    total_invoiced = 0.0
+    total_paid = 0.0
+    for inv in invoices:
+        total = float(inv.get("total", 0) or 0)
+        total_invoiced += total
+        entries.append({"entry_type": "invoice", "date": inv.get("created_at"), "document_number": inv.get("invoice_number"), "description": f"Invoice {inv.get('invoice_number')}", "debit": round(total, 2), "credit": 0.0})
+    for payment in payments:
+        amount = float(payment.get("amount_received", 0) or 0)
+        total_paid += amount
+        entries.append({"entry_type": "payment", "date": payment.get("payment_date"), "document_number": payment.get("payment_reference") or str(payment.get("_id", ""))[:8], "description": f"Payment ({payment.get('payment_method', 'Unknown')})", "debit": 0.0, "credit": round(amount, 2)})
+    entries = sorted(entries, key=lambda x: str(x.get("date") or ""))
+    running = 0.0
+    for e in entries:
+        running += float(e["debit"] or 0) - float(e["credit"] or 0)
+        e["balance"] = round(running, 2)
+
+    statement = {
+        "customer_email": customer_email,
+        "customer_name": customer.get("contact_name") if customer else None,
+        "customer_company": customer.get("company_name") if customer else None,
+        "entries": entries,
+        "summary": {"total_invoiced": round(total_invoiced, 2), "total_paid": round(total_paid, 2), "balance_due": round(total_invoiced - total_paid, 2)},
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    branding = await _get_branding(db)
+    return HTMLResponse(render_statement_html(statement, branding))

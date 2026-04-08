@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Truck, Plus, Check, Package, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Truck, Plus, Check, Package, Clock, CheckCircle, XCircle, Download } from "lucide-react";
 import api from "../../lib/api";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function DeliveryNotesPage() {
   const [items, setItems] = useState([]);
@@ -283,6 +285,18 @@ export default function DeliveryNotesPage() {
                   {item.remarks}
                 </div>
               )}
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+                <a
+                  href={`${API_URL}/api/pdf/delivery-notes/${item.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-2 text-xs font-semibold hover:bg-[#2a4a66] transition-colors"
+                  data-testid={`download-dn-pdf-${item.id}`}
+                >
+                  <Download className="w-3.5 h-3.5" /> PDF
+                </a>
+              </div>
             </div>
           ))}
         </div>

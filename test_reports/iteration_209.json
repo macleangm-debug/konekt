@@ -1,0 +1,87 @@
+{
+  "summary": "Phase F Document Branding Unification testing complete. Fixed 2 bugs: (1) invoice_branding_routes.py was not registered in server.py - now registered, (2) _find_quote in pdf_generation_routes.py was not searching quotes_v2 by ObjectId - now fixed. Also improved StatementPage.jsx to always show PDF download button when statement is loaded. All 12 backend tests pass. Frontend UI verified: Settings Hub Document Branding tab, Delivery Notes page with PDF button, Statement page with PDF button.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_document_branding_phase_f_v209.py",
+    "/app/test_reports/pytest/pytest_results_document_branding_phase_f_v209.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "invoice_branding_routes.py was deregistered but still needed - now re-registered",
+    "_find_quote function was only searching quotes collection by ObjectId, not quotes_v2 - now searches both",
+    "StatementPage.jsx PDF download button was conditional on customer_name/company - now always shows when statement loaded"
+  ],
+  "updated_files": [
+    "/app/backend/server.py (registered invoice_branding_router)",
+    "/app/backend/pdf_generation_routes.py (fixed _find_quote to search quotes_v2 by ObjectId)",
+    "/app/frontend/src/pages/admin/StatementPage.jsx (PDF button always visible when statement loaded)"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (portal: /admin)",
+    "customer": "demo.customer@konekt.com / Demo123! (portal: /login)"
+  },
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Phase F Document Branding Unification complete. Key endpoints: /api/pdf/invoices/{id}/preview, /api/pdf/quotes/{id}/preview, /api/pdf/orders/{id}/preview, /api/pdf/delivery-notes/{id}/preview, /api/pdf/statements/{email}/preview, /api/admin/settings/invoice-branding. Key pages: /admin/settings-hub (Document Branding tab), /admin/delivery-notes (PDF button on cards), /admin/statements (PDF download button). All document types (Invoice, Quote, Delivery Note, Statement) use unified branding from business_settings.invoice_branding via _get_branding() helper.",
+  "features_tested": {
+    "pdf_preview_endpoints": {
+      "invoice_preview_404_for_nonexistent": "PASS",
+      "quote_preview_404_for_nonexistent": "PASS",
+      "order_preview_404_for_nonexistent": "PASS",
+      "delivery_note_preview_404_for_nonexistent": "PASS",
+      "statement_preview_returns_html": "PASS",
+      "statement_pdf_download": "PASS"
+    },
+    "invoice_branding_api": {
+      "get_branding_returns_defaults": "PASS",
+      "save_branding_persists": "PASS",
+      "generate_stamp_returns_svg": "PASS"
+    },
+    "delivery_note_pdf": {
+      "list_and_pdf_download": "PASS"
+    },
+    "existing_document_pdfs": {
+      "invoice_preview": "PASS",
+      "quote_preview": "PASS (after fix)"
+    },
+    "frontend_ui": {
+      "settings_hub_document_branding_tab": "PASS - shows Company Logo, Contact details, CFO fields, Signature toggle, Stamp toggle, Footer preview",
+      "delivery_notes_page_pdf_button": "PASS - PDF button visible on delivery note cards",
+      "statement_page_pdf_button": "PASS - Download PDF button visible when statement loaded"
+    }
+  },
+  "bugs_fixed": [
+    {
+      "issue": "invoice_branding_routes.py not registered in server.py",
+      "fix": "Added import and app.include_router(invoice_branding_router) to server.py",
+      "file": "/app/backend/server.py"
+    },
+    {
+      "issue": "_find_quote only searched quotes collection by ObjectId, not quotes_v2",
+      "fix": "Updated _find_quote to search both quotes and quotes_v2 collections by ObjectId",
+      "file": "/app/backend/pdf_generation_routes.py"
+    },
+    {
+      "issue": "StatementPage PDF download button only visible when customer_name/company exists",
+      "fix": "Made PDF download button always visible when statement is loaded, showing email as fallback",
+      "file": "/app/frontend/src/pages/admin/StatementPage.jsx"
+    }
+  ],
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Resend email service - dry-run mode, logs to console instead of sending emails"]
+  }
+}

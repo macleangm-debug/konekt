@@ -2841,7 +2841,9 @@ app.include_router(multi_request_router)
 from public_payment_info_routes import router as public_payment_info_router
 app.include_router(public_payment_info_router)
 
-# Legacy invoice_branding deregistered — superseded by business_settings_router
+# Invoice Branding Routes — Phase F Document Branding Unification
+from invoice_branding_routes import router as invoice_branding_router
+app.include_router(invoice_branding_router)
 
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)

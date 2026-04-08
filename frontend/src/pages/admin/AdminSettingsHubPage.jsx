@@ -12,7 +12,7 @@ import CustomerActivityRulesCard from "../../components/admin/settings/CustomerA
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
   { key: "payment", label: "Payment Details", icon: CreditCard },
-  { key: "branding", label: "Invoice Branding", icon: FileText },
+  { key: "branding", label: "Document Branding", icon: FileText },
   { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
   { key: "sales", label: "Sales & Commissions", icon: Users },
   { key: "affiliate", label: "Affiliate & Referrals", icon: Globe },
