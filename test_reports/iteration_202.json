@@ -1,0 +1,94 @@
+{
+  "summary": "Bank Transfer E2E and Marketplace Card Redesign Testing - Iteration 202. Backend: 10/10 tests passed covering guest checkout, payment proof submission, admin queue visibility, admin approve/reject flows, payer_name vs customer_name separation. Frontend: Public and in-account marketplaces both use ProductCardCompact with uniform card heights, fixed-height price/action blocks, promo badges working correctly. Fixed a bug in live_commerce_service.py where guest order customer_name was showing as '-' instead of actual name.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_bank_transfer_e2e_v202.py",
+    "/app/test_reports/pytest/pytest_results_bank_transfer_e2e_v202.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/core/live_commerce_service.py",
+    "/app/backend/tests/test_bank_transfer_e2e_v202.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (portal: /admin)",
+    "customer": "demo.customer@konekt.com / Demo123! (portal: /account)"
+  },
+  "seed_data_creation": "None - tests create their own test orders with unique IDs",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bank Transfer E2E flow is complete and verified. Key points: 1) POST /api/public/checkout creates guest order with customer_name, customer_email, customer_phone. 2) POST /api/public/payment-proof creates payment proof with payer_name (separate from customer_name). 3) GET /api/admin/payments/queue returns guest proofs with correct customer_name from order and payer_name from proof. 4) POST /api/admin/payments/{id}/approve requires body with approver_role, updates existing order (no duplicate), sets approved_by, payer_name, payment_status=paid. 5) POST /api/admin/payments/{id}/reject requires body with reason, resets order status, handles invoice=None for guest orders without crash. 6) Marketplace cards use ProductCardCompact component with h-[52px] price block and h-[72px] action block for uniform height. 7) Both public (/marketplace) and in-account (/account/marketplace) marketplaces use identical card component.",
+  "features_tested": {
+    "backend_guest_checkout": {
+      "POST /api/public/checkout creates order": "PASS",
+      "Validates required fields (name, email, phone, items)": "PASS",
+      "Returns order_number, bank_details": "PASS"
+    },
+    "backend_guest_payment_proof": {
+      "POST /api/public/payment-proof creates proof": "PASS",
+      "Validates order_number required": "PASS",
+      "Validates email matches order": "PASS",
+      "Creates entry in payment_proofs collection": "PASS"
+    },
+    "backend_admin_queue": {
+      "GET /api/admin/payments/queue includes guest proofs": "PASS",
+      "customer_name from order (not '-')": "PASS",
+      "payer_name from proof submission": "PASS",
+      "is_guest flag set correctly": "PASS"
+    },
+    "backend_admin_approve": {
+      "POST /api/admin/payments/{id}/approve works": "PASS",
+      "Updates existing order (no duplicate)": "PASS",
+      "Sets approved_by, payer_name, payment_status": "PASS",
+      "Handles invoice=None for guest orders": "PASS"
+    },
+    "backend_admin_reject": {
+      "POST /api/admin/payments/{id}/reject works": "PASS",
+      "Resets order status": "PASS",
+      "Handles invoice=None without crash": "PASS"
+    },
+    "frontend_public_marketplace": {
+      "ProductCardCompact component used": "PASS",
+      "17 product cards displayed": "PASS",
+      "Uniform card heights (0px diff)": "PASS",
+      "7 promo badges visible": "PASS",
+      "Add to Cart primary, Request Quote secondary": "PASS"
+    },
+    "frontend_account_marketplace": {
+      "ProductCardCompact component used": "PASS",
+      "17 product cards displayed": "PASS",
+      "Uniform card heights (0px diff)": "PASS",
+      "7 promo badges visible": "PASS",
+      "Same card design as public": "PASS"
+    },
+    "frontend_admin_payments": {
+      "Payments Queue page loads": "PASS",
+      "Shows 98 total, 18 pending, 50 approved, 10 rejected": "PASS",
+      "Customer and Payer columns correctly separated": "PASS",
+      "Status badges (pending, Approved, Rejected)": "PASS"
+    }
+  },
+  "bug_fix_applied": {
+    "file": "/app/backend/core/live_commerce_service.py",
+    "issue": "Guest order customer_name showing as '-' in admin payments queue",
+    "root_cause": "customer_name was being set to '-' before guest_order was loaded, and the condition 'if not customer_name' was False because '-' is truthy",
+    "fix": "Changed condition to 'if not customer_name or customer_name == \"-\"' to properly check for unresolved customer names and use guest_order.customer_name"
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

@@ -27,7 +27,7 @@ def _clean(doc):
 @router.get("/dashboard/summary")
 async def dashboard_summary(request: Request):
     db = request.app.mongodb
-    pending_payments = await db.payment_proofs.count_documents({"status": "uploaded"})
+    pending_payments = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending"]}})
     open_quotes = await db.quotes.count_documents({"status": {"$in": ["pending", "sent", "quoting"]}})
     active_orders = await db.orders.count_documents({"status": {"$nin": ["completed", "cancelled", "delivered"]}})
     manual_released = await db.orders.count_documents({"release_type": "manual"})
@@ -61,7 +61,7 @@ async def payments_stats(request: Request):
     """Payment queue stat cards."""
     db = request.app.mongodb
     total = await db.payment_proofs.count_documents({})
-    pending = await db.payment_proofs.count_documents({"status": {"$in": ["submitted", "pending"]}})
+    pending = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending"]}})
     approved = await db.payment_proofs.count_documents({"status": "approved"})
     rejected = await db.payment_proofs.count_documents({"status": "rejected"})
     return {"total": total, "pending": pending, "approved": approved, "rejected": rejected}

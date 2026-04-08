@@ -298,8 +298,8 @@ class LiveCommerceService:
         rows = await self.db.payment_proofs.find(query).sort("created_at", -1).to_list(length=500)
         out: List[Dict[str, Any]] = []
         for proof in rows:
-            payment = await self.db.payments.find_one({"id": proof.get("payment_id")})
-            invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
+            payment = await self.db.payments.find_one({"id": proof.get("payment_id")}) if proof.get("payment_id") else None
+            invoice = await self.db.invoices.find_one({"id": proof["invoice_id"]}) if proof.get("invoice_id") else None
 
             # --- Strict party separation (same logic as orders) ---
             customer_name = ""
@@ -338,12 +338,31 @@ class LiveCommerceService:
             approved_at = proof.get("approved_at") or ""
             rejection_reason = proof.get("rejection_reason") or ""
 
+            # For guest proofs: load order data when invoice is missing
+            guest_order = None
+            if not invoice and proof.get("order_number"):
+                guest_order = await self.db.orders.find_one(
+                    {"order_number": proof["order_number"]},
+                    {"_id": 0, "id": 1, "order_number": 1, "items": 1, "total_amount": 1, "total": 1, "customer_name": 1, "customer_email": 1, "customer_id": 1, "customer_phone": 1, "company_name": 1}
+                )
+                # For guest orders, use customer_name from order if not resolved from user/invoice
+                if guest_order and (not customer_name or customer_name == "-"):
+                    customer_name = guest_order.get("customer_name") or guest_order.get("customer_email") or "-"
+                if guest_order and not contact_phone:
+                    contact_phone = guest_order.get("customer_phone") or ""
+                if guest_order and not company_name:
+                    company_name = guest_order.get("company_name") or ""
+                if guest_order and not contact_email:
+                    contact_email = guest_order.get("customer_email") or ""
+
             item = {
                 "payment_proof_id": proof.get("id"),
                 "payment_id": proof.get("payment_id"),
                 "invoice_id": proof.get("invoice_id"),
+                "order_id": proof.get("order_id") or (guest_order or {}).get("id"),
+                "order_number": proof.get("order_number") or "",
                 "invoice_number": (invoice or {}).get("invoice_number", ""),
-                "customer_id": proof.get("customer_id"),
+                "customer_id": proof.get("customer_id") or (guest_order or {}).get("customer_id"),
                 "customer_name": customer_name,
                 "customer_email": contact_email,
                 "payer_name": payer_name,
@@ -352,15 +371,16 @@ class LiveCommerceService:
                 "payment_reference": payment_reference,
                 "amount_paid": proof.get("amount_paid", 0),
                 "amount_due": (payment or {}).get("amount_due", 0),
-                "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0) or (invoice or {}).get("total_amount", 0) or (invoice or {}).get("total", 0),
+                "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0) or (invoice or {}).get("total_amount", 0) or (invoice or {}).get("total", 0) or (guest_order or {}).get("total_amount", 0) or (guest_order or {}).get("total", 0),
                 "payment_mode": (payment or {}).get("payment_mode", "full"),
-                "file_url": proof.get("file_url", ""),
+                "file_url": proof.get("file_url") or proof.get("proof_file_url") or "",
                 "status": proof.get("status", "uploaded"),
-                "items": (invoice or {}).get("items", []),
+                "items": (invoice or {}).get("items", []) or (guest_order or {}).get("items", []),
                 "created_at": str(proof.get("created_at", "")),
                 "approved_by": approved_by,
                 "approved_at": str(approved_at) if approved_at else "",
                 "rejection_reason": rejection_reason,
+                "is_guest": bool(proof.get("is_guest_submission") or proof.get("source") == "guest_payment_proof"),
             }
             if customer_query:
                 haystack = f"{item['customer_name']} {item['customer_email']} {item['invoice_number']} {item['payer_name']}".lower()
@@ -469,16 +489,20 @@ class LiveCommerceService:
                 }},
             )
         elif is_guest_flow and order:
-            # Guest flow: determine fully_paid from order total
             order_total = self._money(order.get("total_amount", order.get("total", 0)))
             approved_paid = self._money(proof.get("amount_paid", 0))
             fully_paid = approved_paid >= order_total
+            invoice_status = "n/a"
         else:
             fully_paid = True
-        )
+            invoice_status = "paid"
 
         order_doc = None
-        if fully_paid:
+        if fully_paid and is_guest_flow and order:
+            order_doc = await self._handle_guest_approval(
+                order, proof, approver_role, assigned_sales_id, assigned_sales_name, now
+            )
+        elif fully_paid and invoice:
             existing_order = await self.db.orders.find_one({"invoice_id": invoice.get("id")})
 
             # Resolve customer_name from user record if missing on invoice
@@ -726,6 +750,178 @@ class LiveCommerceService:
             "invoice_status": invoice_status,
         }
 
+    async def _handle_guest_approval(
+        self,
+        order: Dict[str, Any],
+        proof: Dict[str, Any],
+        approver_role: str,
+        assigned_sales_id: Optional[str],
+        assigned_sales_name: Optional[str],
+        now: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Handle approval for guest orders where no invoice exists."""
+        order_id = order.get("id")
+        order_number = order.get("order_number", "")
+        source_items = order.get("items", [])
+        source_customer_id = order.get("customer_id") or order.get("linked_user_id")
+
+        # Resolve customer_name
+        customer_name = order.get("customer_name") or ""
+        customer_email = order.get("customer_email") or ""
+        if not customer_name and source_customer_id:
+            cust_user = await self.db.users.find_one(
+                {"$or": [{"id": source_customer_id}, {"email": customer_email}]},
+                {"_id": 0, "full_name": 1, "email": 1}
+            )
+            if cust_user:
+                customer_name = cust_user.get("full_name") or cust_user.get("email") or ""
+        if not customer_name:
+            customer_name = customer_email or "-"
+
+        payer_name = proof.get("payer_name") or "-"
+
+        # Vendor assignment
+        order_type = (order.get("type") or "product").lower()
+        vendor_ids = []
+        assigned_vendor_id = ""
+        try:
+            from services.assignment_policy_service import resolve_vendor_assignment
+            assigned_vendor_id, _, vendor_ids, _ = await resolve_vendor_assignment(
+                self.db, items=source_items, order_type=order_type, order_id=order_id
+            )
+            assigned_vendor_id = assigned_vendor_id or ""
+        except Exception:
+            import logging as _lg
+            _lg.getLogger("live_commerce").warning("Stock-first engine failed for guest order, using legacy vendor resolution")
+            resolved_vendor_ids = set()
+            for item in source_items:
+                vid = None
+                product_id = item.get("product_id") or item.get("sku")
+                if product_id:
+                    product = await self.db.products.find_one(
+                        {"$or": [{"id": product_id}, {"sku": product_id}]},
+                        {"_id": 0, "vendor_id": 1, "owner_vendor_id": 1, "uploaded_by_vendor_id": 1, "partner_id": 1}
+                    )
+                    if product:
+                        vid = (product.get("vendor_id") or product.get("owner_vendor_id")
+                               or product.get("uploaded_by_vendor_id") or product.get("partner_id"))
+                if not vid:
+                    vid = item.get("vendor_id")
+                if vid:
+                    partner = await self.db.partner_users.find_one(
+                        {"$or": [{"partner_id": vid}, {"id": vid}]},
+                        {"_id": 0, "partner_id": 1}
+                    )
+                    if partner:
+                        resolved_vendor_ids.add(partner["partner_id"])
+                    else:
+                        resolved_vendor_ids.add(vid)
+            vendor_ids = list(resolved_vendor_ids)
+            assigned_vendor_id = vendor_ids[0] if vendor_ids else ""
+
+        # Update the existing guest order
+        await self.db.orders.update_one(
+            {"id": order_id},
+            {"$set": {
+                "status": "created",
+                "current_status": "created",
+                "payment_status": "paid",
+                "order_status": "processing",
+                "pipeline_stage": "fulfillment",
+                "assigned_sales_id": assigned_sales_id or "",
+                "assigned_sales_name": assigned_sales_name or "",
+                "assigned_vendor_id": assigned_vendor_id,
+                "vendor_ids": vendor_ids,
+                "approved_by": approver_role,
+                "approved_at": now,
+                "payer_name": payer_name,
+                "customer_name": customer_name,
+                "customer_email": customer_email,
+                "updated_at": now,
+            }, "$push": {
+                "status_history": {
+                    "status": "created",
+                    "note": f"Payment approved by {approver_role}",
+                    "timestamp": now,
+                }
+            }}
+        )
+        order_doc = self._clean(await self.db.orders.find_one({"id": order_id}))
+
+        # Create vendor_orders
+        for idx, vid in enumerate(vendor_ids):
+            existing_vo = await self.db.vendor_orders.find_one({"order_id": order_id, "vendor_id": vid})
+            if not existing_vo:
+                vitems = [x for x in source_items if x.get("vendor_id") == vid]
+                base_price = sum(
+                    self._money(x.get("vendor_price") or x.get("unit_price") or x.get("price") or 0)
+                    * int(x.get("quantity") or 1) for x in vitems
+                )
+                await self.db.vendor_orders.insert_one({
+                    "id": str(uuid4()), "vendor_id": vid, "order_id": order_id,
+                    "vendor_order_no": f"VO-{order_number}-{idx+1}",
+                    "customer_id": source_customer_id,
+                    "assigned_sales_id": assigned_sales_id or "",
+                    "sales_owner_name": assigned_sales_name or "",
+                    "order_number": order_number, "base_price": base_price,
+                    "status": "assigned", "items": vitems,
+                    "created_at": now, "updated_at": now,
+                })
+
+        # Sales assignment
+        existing_sa = await self.db.sales_assignments.find_one({"order_id": order_id})
+        if not existing_sa and assigned_sales_id:
+            await self.db.sales_assignments.insert_one({
+                "id": str(uuid4()), "customer_id": source_customer_id,
+                "order_id": order_id, "sales_owner_id": assigned_sales_id,
+                "sales_owner_name": assigned_sales_name or "",
+                "status": "active_followup",
+                "created_at": now, "updated_at": now,
+            })
+
+        # Order event
+        await self.db.order_events.insert_one({
+            "id": str(uuid4()), "order_id": order_id,
+            "customer_id": source_customer_id,
+            "event": "guest_payment_approved", "created_at": now,
+        })
+
+        # Commissions
+        try:
+            from referral_commission_governance_routes import create_commissions_for_order
+            await create_commissions_for_order(
+                self.db, order_id=order_id, customer_id=source_customer_id,
+                commissionable_base=float(order.get("total_amount") or order.get("total") or 0),
+                affiliate_id=order.get("affiliate_id"),
+                promo_code=order.get("affiliate_code"),
+                sales_owner_id=assigned_sales_id,
+            )
+        except Exception:
+            pass
+
+        # Customer notification
+        if source_customer_id:
+            actual_user = await self.db.users.find_one(
+                {"$or": [{"id": source_customer_id}, {"email": customer_email}]},
+                {"_id": 0, "id": 1}
+            )
+            notif_user_id = (actual_user or {}).get("id") or source_customer_id
+            await self.db.notifications.insert_one({
+                "id": str(uuid4()),
+                "user_id": notif_user_id,
+                "role": "customer",
+                "event_type": "payment_approved",
+                "title": "Payment Approved",
+                "message": f"Your payment for order {order_number} has been approved. You can now track your order progress.",
+                "target_url": "/account/orders",
+                "target_ref": order_number,
+                "cta_label": "Track Order",
+                "read": False,
+                "created_at": now,
+            })
+
+        return order_doc
+
     async def reject_payment_proof(self, payment_proof_id: str, approver_role: str, reason: str = "") -> Dict[str, Any]:
         if approver_role not in {"finance", "admin"}:
             raise HTTPException(status_code=403, detail="Only finance/admin can reject")
@@ -741,18 +937,51 @@ class LiveCommerceService:
             {"id": payment_proof_id},
             {"$set": {"status": "rejected", "rejection_reason": reason, "updated_at": now}},
         )
-        await self.db.payments.update_one(
-            {"id": proof.get("payment_id")},
-            {"$set": {"status": "proof_rejected", "review_status": "rejected", "updated_at": now}},
-        )
-        invoice = await self.db.invoices.find_one({"id": proof.get("invoice_id")})
-        await self.db.invoices.update_one(
-            {"id": proof.get("invoice_id")},
-            {"$set": {"status": "pending_payment", "payment_status": "pending", "updated_at": now}},
-        )
+        if proof.get("payment_id"):
+            await self.db.payments.update_one(
+                {"id": proof["payment_id"]},
+                {"$set": {"status": "proof_rejected", "review_status": "rejected", "updated_at": now}},
+            )
+        elif proof.get("order_number"):
+            await self.db.payments.update_many(
+                {"order_number": proof["order_number"]},
+                {"$set": {"status": "proof_rejected", "review_status": "rejected", "updated_at": now}},
+            )
 
-        # Create customer notification — "Payment Rejected" → opens Invoices
+        if proof.get("invoice_id"):
+            invoice = await self.db.invoices.find_one({"id": proof["invoice_id"]})
+        else:
+            invoice = None
+        if invoice:
+            await self.db.invoices.update_one(
+                {"id": invoice["id"]},
+                {"$set": {"status": "pending_payment", "payment_status": "pending", "updated_at": now}},
+            )
+
+        # For guest orders: reset order status
+        is_guest = proof.get("is_guest_submission", False) or proof.get("source") == "guest_payment_proof"
+        if is_guest and proof.get("order_number"):
+            await self.db.orders.update_one(
+                {"order_number": proof["order_number"]},
+                {"$set": {
+                    "payment_status": "rejected",
+                    "current_status": "awaiting_payment_proof",
+                    "order_status": "awaiting_payment_proof",
+                    "updated_at": now,
+                }, "$push": {
+                    "status_history": {
+                        "status": "payment_rejected",
+                        "note": f"Payment rejected: {reason or 'Not specified'}",
+                        "timestamp": now,
+                    }
+                }}
+            )
+
+        # Customer notification
         customer_id = proof.get("customer_id") or (invoice or {}).get("customer_id")
+        ref_label = (invoice or {}).get("invoice_number", "") or proof.get("order_number", "")
+        target_url = "/account/invoices" if invoice else "/account/orders"
+        cta_label = "Open Invoice" if invoice else "View Order"
         if customer_id:
             actual_user = await self.db.users.find_one(
                 {"$or": [{"id": customer_id}, {"email": proof.get("customer_email")}]},
@@ -765,10 +994,10 @@ class LiveCommerceService:
                 "role": "customer",
                 "event_type": "payment_rejected",
                 "title": "Payment Rejected",
-                "message": f"Your payment submission for invoice {(invoice or {}).get('invoice_number', '')} was rejected. Reason: {reason or 'Not specified'}. Please review and resubmit.",
-                "target_url": "/account/invoices",
-                "target_ref": (invoice or {}).get("invoice_number") or (invoice or {}).get("id"),
-                "cta_label": "Open Invoice",
+                "message": f"Your payment submission for {ref_label} was rejected. Reason: {reason or 'Not specified'}. Please review and resubmit.",
+                "target_url": target_url,
+                "target_ref": ref_label,
+                "cta_label": cta_label,
                 "read": False,
                 "created_at": now,
             })

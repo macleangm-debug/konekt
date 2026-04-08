@@ -13,7 +13,9 @@ import MultiServiceRequestBuilder from "../../components/services/MultiServiceRe
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
 import { getAllServicesForGrid } from "../../data/comprehensiveServiceData";
+import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const TABS = [
   { key: "products", label: "Products", icon: Package },
@@ -47,6 +49,8 @@ export default function MarketplaceUnifiedPageV3() {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [detailItem, setDetailItem] = useState(null);
   const { user } = useAuth();
+  const { addItem } = useCartDrawer();
+  const navigate = useNavigate();
   const [showPromoBuilder, setShowPromoBuilder] = useState(false);
   const [showServiceBuilder, setShowServiceBuilder] = useState(false);
   const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
@@ -166,7 +170,21 @@ export default function MarketplaceUnifiedPageV3() {
                   <p className="text-xs text-slate-400">{filteredProducts.length} {tab === "promo" ? "promotional item" : "product"}{filteredProducts.length !== 1 ? "s" : ""}</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                     {visibleProducts.map((product) => (
-                      <ProductCardCompact key={product.id} product={product} onDetail={setDetailItem} isPromo={tab === "promo"} />
+                      <ProductCardCompact
+                        key={product.id}
+                        product={product}
+                        onDetail={setDetailItem}
+                        onAddToCart={(p, price, originalPrice) => {
+                          addItem({ ...p, price: Number(price), quantity: 1 });
+                        }}
+                        onRequestQuote={(p) => {
+                          if (tab === "promo") {
+                            setDetailItem(p);
+                          } else {
+                            navigate(`/request-quote?type=product_bulk&service=${encodeURIComponent(p.name || "")}&category=${encodeURIComponent(p.category || p.group_name || "")}`);
+                          }
+                        }}
+                      />
                     ))}
                   </div>
                   {hasMore && (

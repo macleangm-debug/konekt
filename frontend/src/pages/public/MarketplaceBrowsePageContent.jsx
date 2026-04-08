@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { Package, FileText, ShoppingCart, Search } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { Package, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "../../contexts/CartContext";
 import api from "../../lib/api";
@@ -8,6 +8,7 @@ import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
+import ProductCardCompact from "../../components/marketplace/ProductCardCompact";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
@@ -16,6 +17,7 @@ function money(v) {
 export default function MarketplaceBrowsePageContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,10 +107,29 @@ export default function MarketplaceBrowsePageContent() {
         ) : items.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="marketplace-grid">
             {items.map((item) => (
-              <MarketplaceProductCard
+              <ProductCardCompact
                 key={item.id}
                 product={item}
-                onRequestQuote={requestProductQuote}
+                onDetail={(p) => navigate(`/marketplace/${p.slug || p.id}`)}
+                onAddToCart={(p, price, originalPrice) => {
+                  addItem({
+                    product_id: p.id,
+                    product_name: p.name,
+                    quantity: 1,
+                    unit_price: price,
+                    original_price: originalPrice,
+                    subtotal: price,
+                    listing_type: p.listing_type || "product",
+                    image_url: p.image_url || p.images?.[0] || p.hero_image || "",
+                    category: p.category || p.group_name || "",
+                    promo_applied: !!p.promotion,
+                    promo_id: p.promotion?.promo_id || null,
+                    promo_label: p.promotion?.discount_label || null,
+                    promo_discount: p.promotion?.discount_amount || 0,
+                  });
+                  toast.success(`${p.name} added to cart`);
+                }}
+                onRequestQuote={(p) => requestProductQuote(p)}
               />
             ))}
           </div>
@@ -123,121 +144,6 @@ export default function MarketplaceBrowsePageContent() {
       </section>
 
       <CantFindWhatYouNeedBanner className="mt-8" />
-    </div>
-  );
-}
-
-function MarketplaceProductCard({ product, onRequestQuote }) {
-  const { addItem } = useCart();
-  const originalPrice =
-    product?.customer_price ??
-    product?.price ??
-    product?.base_price ??
-    product?.unit_price ??
-    0;
-  const promo = product?.promotion;
-  const price = promo ? promo.promo_price : Number(originalPrice);
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addItem({
-      product_id: product.id,
-      product_name: product.name,
-      quantity: 1,
-      unit_price: price,
-      original_price: Number(originalPrice),
-      subtotal: price,
-      size: null,
-      color: null,
-      print_method: null,
-      listing_type: product.listing_type || "product",
-      image_url: product.image_url || product.images?.[0] || product.hero_image || "",
-      category: product.category || product.group_name || "",
-      promo_applied: !!promo,
-      promo_id: promo?.promo_id || null,
-      promo_label: promo?.discount_label || null,
-      promo_discount: promo?.discount_amount || 0,
-    });
-    toast.success(`${product.name} added to cart`);
-  };
-
-  return (
-    <div
-      className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group"
-      data-testid={`marketplace-card-${product.id}`}
-    >
-      <Link to={`/marketplace/${product.slug || product.id}`} className="block relative">
-        <div className="h-44 bg-[#f8fafc] overflow-hidden flex items-center justify-center">
-          {product.image_url || product.images?.[0] || product.hero_image ? (
-            <img
-              src={product.image_url || product.images?.[0] || product.hero_image}
-              alt={product.name || "Product"}
-              className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
-            />
-          ) : (
-            <Package className="w-10 h-10 text-gray-300" />
-          )}
-        </div>
-        {promo && (
-          <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm" data-testid={`promo-badge-${product.id}`}>
-            {promo.discount_label}
-          </span>
-        )}
-      </Link>
-
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded bg-[#20364D]/10 text-[#20364D]">
-            {product.category || product.group_name || "General"}
-          </span>
-        </div>
-
-        <Link to={`/marketplace/${product.slug || product.id}`}>
-          <h3 className="text-sm font-semibold text-[#0f172a] line-clamp-2 mb-1 hover:underline">
-            {product.name}
-          </h3>
-        </Link>
-
-        <p className="text-xs text-[#64748b] line-clamp-2 min-h-[32px]">
-          {product.short_description || product.description || ""}
-        </p>
-
-        <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
-          {/* Price block — full width, never squeezed */}
-          <div data-testid={`price-block-${product.id}`}>
-            <div className="flex items-baseline gap-2">
-              <span className="font-bold text-[#0f172a] text-base">{money(price)}</span>
-              {promo && (
-                <span className="text-xs text-slate-400 line-through">{money(originalPrice)}</span>
-              )}
-            </div>
-            {promo && (
-              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
-                Save {money(promo.discount_amount)}
-              </p>
-            )}
-          </div>
-
-          {/* Actions — stacked below price */}
-          <div className="flex flex-col gap-1.5">
-            <button
-              onClick={handleAddToCart}
-              className="w-full rounded-lg bg-[#0f172a] text-white py-2 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center justify-center gap-1.5"
-              data-testid={`add-to-cart-${product.id}`}
-            >
-              <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
-            </button>
-            <button
-              onClick={() => onRequestQuote(product)}
-              className="w-full text-center text-xs text-slate-500 hover:text-[#20364D] font-medium py-1 transition-colors"
-              data-testid={`request-quote-${product.id}`}
-            >
-              Request Quote
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
