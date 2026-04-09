@@ -935,6 +935,252 @@ async def reports_sales(request: Request, days: int = Query(180)):
 
 
 
+@router.get("/reports/inventory-intelligence")
+async def reports_inventory_intelligence(request: Request, days: int = Query(180)):
+    """
+    Inventory & Product Intelligence:
+    - Fast-moving products (by units sold, revenue, order frequency)
+    - Slow/Dead stock classification
+    - Product health distribution
+    - Procurement insights (restock, review, vendor performance)
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+
+    # ── Gather all paid orders with items ──
+    paid_orders = await db.orders.find(
+        {"payment_status": {"$in": ["paid", "verified"]}, "items": {"$exists": True, "$ne": []}},
+        {"_id": 0, "items": 1, "created_at": 1}
+    ).to_list(10000)
+
+    # All orders (including unpaid) for full timeline
+    all_orders_with_items = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}, "items": {"$exists": True, "$ne": []}},
+        {"_id": 0, "items": 1, "created_at": 1}
+    ).to_list(10000)
+
+    # ── Build product performance map ──
+    product_map = {}  # product_name -> stats
+
+    for order in paid_orders:
+        order_date_raw = order.get("created_at", "")
+        order_date = order_date_raw.isoformat() if hasattr(order_date_raw, 'isoformat') else str(order_date_raw or "")
+        for item in order.get("items", []):
+            pname = item.get("product_name") or item.get("name") or "Unknown"
+            pid = item.get("product_id", pname)
+            qty = int(item.get("quantity", 1))
+            revenue = float(item.get("subtotal") or item.get("line_total") or (item.get("unit_price", 0) * qty))
+
+            if pname not in product_map:
+                product_map[pname] = {
+                    "product_id": pid,
+                    "product_name": pname,
+                    "units_sold": 0,
+                    "revenue": 0,
+                    "order_count": 0,
+                    "last_sold": "",
+                    "first_sold": order_date,
+                    "monthly_sales": {},
+                }
+
+            pm = product_map[pname]
+            pm["units_sold"] += qty
+            pm["revenue"] += revenue
+            pm["order_count"] += 1
+            if isinstance(order_date, str) and order_date > pm["last_sold"]:
+                pm["last_sold"] = order_date
+            if isinstance(order_date, str) and (not pm["first_sold"] or order_date < pm["first_sold"]):
+                pm["first_sold"] = order_date
+
+            # Monthly bucket
+            if isinstance(order_date, str) and len(order_date) >= 7:
+                month_key = order_date[:7]  # "2026-03"
+                pm["monthly_sales"][month_key] = pm["monthly_sales"].get(month_key, 0) + qty
+
+    # ── Also include catalog products with zero sales ──
+    all_products = await db.products.find(
+        {},
+        {"_id": 0, "name": 1, "category": 1, "base_price": 1, "vendor_id": 1, "status": 1}
+    ).to_list(500)
+
+    for prod in all_products:
+        pname = prod.get("name", "")
+        if pname and pname not in product_map:
+            product_map[pname] = {
+                "product_id": "",
+                "product_name": pname,
+                "units_sold": 0,
+                "revenue": 0,
+                "order_count": 0,
+                "last_sold": "",
+                "first_sold": "",
+                "monthly_sales": {},
+            }
+
+    # ── Classify products ──
+    now_iso = now.isoformat()
+    thirty_days_ago = (now - timedelta(days=30)).isoformat()
+    sixty_days_ago = (now - timedelta(days=60)).isoformat()
+
+    products_list = []
+    classification_counts = {"fast": 0, "moderate": 0, "slow": 0, "dead": 0}
+
+    for pname, pm in product_map.items():
+        last_sold = pm["last_sold"]
+        units = pm["units_sold"]
+
+        # Determine days_inactive
+        if last_sold:
+            try:
+                from datetime import datetime as dt2
+                ls_dt = dt2.fromisoformat(last_sold.replace("Z", "+00:00"))
+                days_inactive = (now - ls_dt).days
+            except Exception:
+                days_inactive = 999
+        else:
+            days_inactive = 999
+
+        # Classification rules
+        if units == 0 or days_inactive >= 60:
+            classification = "dead"
+        elif days_inactive >= 30:
+            classification = "slow"
+        elif pm["order_count"] >= 5 or units >= 10:
+            classification = "fast"
+        else:
+            classification = "moderate"
+
+        classification_counts[classification] += 1
+
+        # Sales trend (last 3 months direction)
+        months_sorted = sorted(pm["monthly_sales"].keys())
+        trend = "stable"
+        if len(months_sorted) >= 2:
+            last_month_sales = pm["monthly_sales"].get(months_sorted[-1], 0)
+            prev_month_sales = pm["monthly_sales"].get(months_sorted[-2], 0)
+            if last_month_sales > prev_month_sales * 1.2:
+                trend = "increasing"
+            elif last_month_sales < prev_month_sales * 0.8:
+                trend = "decreasing"
+
+        products_list.append({
+            "product_name": pname,
+            "units_sold": units,
+            "revenue": round(pm["revenue"], 0),
+            "order_count": pm["order_count"],
+            "last_sold": last_sold[:10] if last_sold else "Never",
+            "days_inactive": days_inactive if days_inactive < 999 else None,
+            "classification": classification,
+            "trend": trend,
+        })
+
+    # Sort by units sold descending
+    products_list.sort(key=lambda x: -x["units_sold"])
+
+    # ── KPIs ──
+    total_products = len(products_list)
+    top_product = products_list[0] if products_list else None
+    total_units = sum(p["units_sold"] for p in products_list)
+    total_product_revenue = sum(p["revenue"] for p in products_list)
+    fast_count = classification_counts["fast"]
+    slow_count = classification_counts["slow"]
+    dead_count = classification_counts["dead"]
+
+    # ── Charts ──
+    # Top 10 products by revenue
+    top_10_revenue = products_list[:10]
+
+    # Classification distribution
+    classification_dist = [
+        {"name": "Fast", "value": classification_counts["fast"]},
+        {"name": "Moderate", "value": classification_counts["moderate"]},
+        {"name": "Slow", "value": classification_counts["slow"]},
+        {"name": "Dead", "value": classification_counts["dead"]},
+    ]
+
+    # Product sales trend (aggregate monthly)
+    monthly_agg = {}
+    for pm in product_map.values():
+        for mk, qty in pm["monthly_sales"].items():
+            monthly_agg[mk] = monthly_agg.get(mk, 0) + qty
+    sales_trend = [{"month": k, "units": v} for k, v in sorted(monthly_agg.items())][-6:]
+
+    # ── Procurement Insights ──
+    # Restock recommendations: fast + increasing trend
+    restock = [p for p in products_list if p["classification"] == "fast" and p["trend"] == "increasing"][:5]
+
+    # Review/Remove: dead stock or consistently slow + decreasing
+    review_remove = [p for p in products_list if p["classification"] in ("dead", "slow")][:10]
+
+    # ── Vendor Performance ──
+    # Map products to vendors via catalog
+    vendor_product_map = {}
+    for prod in all_products:
+        vid = prod.get("vendor_id")
+        if vid:
+            if vid not in vendor_product_map:
+                vendor_product_map[vid] = []
+            vendor_product_map[vid].append(prod.get("name", ""))
+
+    # Vendor stats
+    vendor_stats = {}
+    for vid, prod_names in vendor_product_map.items():
+        vdata = {"vendor_id": vid, "products": len(prod_names), "fast": 0, "slow": 0, "dead": 0, "total_revenue": 0, "total_units": 0}
+        for pname in prod_names:
+            match = next((p for p in products_list if p["product_name"] == pname), None)
+            if match:
+                vdata[match["classification"]] = vdata.get(match["classification"], 0) + 1
+                vdata["total_revenue"] += match["revenue"]
+                vdata["total_units"] += match["units_sold"]
+        vendor_stats[vid] = vdata
+
+    # Resolve vendor names
+    vendor_ids = list(vendor_stats.keys())
+    vendor_users = await db.users.find(
+        {"$or": [{"id": {"$in": vendor_ids}}, {"role": {"$in": ["vendor", "partner"]}}]},
+        {"_id": 0, "id": 1, "full_name": 1, "email": 1}
+    ).to_list(100)
+    vendor_name_map = {u.get("id", ""): u.get("full_name", u.get("email", "")) for u in vendor_users}
+
+    top_vendors = []
+    weak_vendors = []
+    for vid, vs in vendor_stats.items():
+        vs["vendor_name"] = vendor_name_map.get(vid, vid[:12])
+        vs["total_revenue"] = round(vs["total_revenue"], 0)
+        if vs["fast"] > 0 and vs["dead"] == 0:
+            top_vendors.append(vs)
+        elif vs["dead"] > 0 or (vs["slow"] > vs["fast"]):
+            weak_vendors.append(vs)
+
+    top_vendors.sort(key=lambda x: -x["total_revenue"])
+    weak_vendors.sort(key=lambda x: -x["dead"])
+
+    return {
+        "kpis": {
+            "total_products": total_products,
+            "total_units_sold": total_units,
+            "total_product_revenue": round(total_product_revenue, 0),
+            "top_product": top_product["product_name"] if top_product else "—",
+            "fast_products": fast_count,
+            "slow_products": slow_count,
+            "dead_products": dead_count,
+        },
+        "products": products_list,
+        "charts": {
+            "top_10_revenue": [{"product": p["product_name"][:20], "revenue": p["revenue"], "units": p["units_sold"]} for p in top_10_revenue],
+            "classification_distribution": classification_dist,
+            "sales_trend": sales_trend,
+        },
+        "procurement": {
+            "restock_recommendations": restock[:5],
+            "review_remove": review_remove[:10],
+            "top_vendors": top_vendors[:5],
+            "weak_vendors": weak_vendors[:5],
+        },
+    }
+
+
+
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
 @router.get("/payments/stats")

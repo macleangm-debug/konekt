@@ -122,6 +122,7 @@ export const adminNavigation = [
       { label: "Customer Experience", href: "/admin/sales-ratings", icon: Star, roles: ["admin", "sales_manager"] },
       { label: "Risk & Governance", href: "/admin/discount-analytics", icon: ShieldAlert, roles: ["admin", "finance_manager"] },
       { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
+      { label: "Inventory Intelligence", href: "/admin/reports/inventory", icon: Package, roles: ["admin", "sales_manager", "finance_manager"] },
     ],
   },
   {
