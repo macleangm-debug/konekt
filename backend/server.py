@@ -279,6 +279,8 @@ logger = logging.getLogger(__name__)
 class UserRole(str, Enum):
     ADMIN = "admin"
     SALES = "sales"
+    SALES_MANAGER = "sales_manager"
+    FINANCE_MANAGER = "finance_manager"
     MARKETING = "marketing"
     PRODUCTION = "production"
     CUSTOMER = "customer"
@@ -286,6 +288,8 @@ class UserRole(str, Enum):
 ROLE_PERMISSIONS = {
     UserRole.ADMIN: ["all"],
     UserRole.SALES: ["orders", "customers", "quotes", "analytics_basic"],
+    UserRole.SALES_MANAGER: ["orders", "customers", "quotes", "analytics_basic", "team_performance", "leaderboard", "ratings"],
+    UserRole.FINANCE_MANAGER: ["orders", "payments", "invoices", "commissions", "analytics_financial", "margins"],
     UserRole.MARKETING: ["products", "analytics", "customers"],
     UserRole.PRODUCTION: ["orders", "production_status"],
     UserRole.CUSTOMER: ["own_orders", "own_profile"]
@@ -811,7 +815,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         role = user.get("role", "customer")
-        if role not in ["admin", "sales", "marketing", "production"]:
+        if role not in ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production"]:
             raise HTTPException(status_code=403, detail="Admin access required")
         return user
     except jwt.ExpiredSignatureError:
