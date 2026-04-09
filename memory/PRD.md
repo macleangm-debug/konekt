@@ -199,6 +199,26 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Global native button feedback** — All native `<button>` elements get scale(0.97) active state
 - Applied across all portals: Admin, Sales Manager, Finance Manager, Sales/Staff, Vendor/Partner, Customer
 
+### Phase 13 — Welcome Notification + App Launcher (Apr 9, 2026)
+- **Welcome Notification on First Login**
+  - One-time welcome notification created on first successful login
+  - Role-aware messages: Customer, Sales, Sales Manager, Finance Manager, Admin, Vendor, Partner, Affiliate
+  - Uses existing bell notification system with timestamp + CTA + deep link
+  - Duplicate prevention via `recipient_user_id` + `type: "welcome"` unique check
+  - CTA links to correct dashboard per role (/account, /admin, /staff, /partner)
+  - Backend: `_create_welcome_notification()` in server.py, integrated into both login endpoints
+- **App Launcher** (`AppLauncher.jsx`)
+  - Full-screen premium entry animation with exact Connected Triad logo SVG
+  - Animation sequence: 3 nodes fade+scale in → connector lines draw → glow travel → wordmark fade → tagline fade → fade out
+  - ~2.2s total duration, GPU-friendly (transform + opacity only)
+  - Shows once per session (sessionStorage key `konekt_launcher_shown`)
+  - Dark navy background (#0f172a), gold accent nodes (#D4A843), white secondary nodes
+- **App Loader** (`AppLoader.jsx`)
+  - Reusable branded loading component with pulsing triad + traveling glow
+  - Sizes: sm (40px), md (64px), lg (96px)
+  - Optional text message
+  - Replaced generic spinners in: Admin Dashboard (2), Business Health, Sales, Financial, Inventory Intelligence, Weekly Performance, Alert Dashboard, Customer Profile, Customer Services, Customer Service Requests
+
 ## Backlog
 
 ### P1 — Upcoming
