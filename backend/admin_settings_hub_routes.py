@@ -173,6 +173,13 @@ DEFAULT_SETTINGS = {
             "account_logins": False,
         },
     },
+    "discount_governance": {
+        "enabled": True,
+        "critical_threshold": 3,
+        "warning_threshold": 5,
+        "rolling_window_days": 7,
+        "dedup_window_hours": 24,
+    },
     "updated_at": None,
 }
 

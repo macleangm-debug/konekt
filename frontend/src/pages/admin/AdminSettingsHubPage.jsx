@@ -43,6 +43,7 @@ const defaultState = {
   branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
   notification_sender: { sender_name: "", sender_email: "", whatsapp_number: "", email_footer_text: "" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
+  discount_governance: { enabled: true, critical_threshold: 3, warning_threshold: 5, rolling_window_days: 7, dedup_window_hours: 24 },
 };
 
 function U(state, section, field, value) {
@@ -237,6 +238,7 @@ function CommercialTab({ state, setState }) {
   const c = state.commercial || {};
   const m = state.margin_rules || {};
   const p = state.promotions || {};
+  const dg = state.discount_governance || {};
   return (
     <>
       <SettingsSectionCard title="Core Commercials" description="Company protection and distribution settings.">
@@ -255,6 +257,18 @@ function CommercialTab({ state, setState }) {
           <SettingsToggleField label="Service group margin override" checked={m.allow_service_group_margin_override} onChange={(v) => setState(U(state, "margin_rules", "allow_service_group_margin_override", v))} />
           <SettingsToggleField label="Service margin override" checked={m.allow_service_margin_override} onChange={(v) => setState(U(state, "margin_rules", "allow_service_margin_override", v))} />
           <SettingsToggleField label="Below-minimum requires admin override" checked={m.pricing_below_minimum_margin_requires_admin_override} onChange={(v) => setState(U(state, "margin_rules", "pricing_below_minimum_margin_requires_admin_override", v))} />
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Discount Governance" description="Control risk-behavior alert sensitivity for sales discount patterns.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
+          <SettingsToggleField label="Alerting enabled" checked={dg.enabled} onChange={(v) => setState(U(state, "discount_governance", "enabled", v))} />
+          <SettingsNumberField label="Critical threshold (requests)" value={dg.critical_threshold} onChange={(v) => setState(U(state, "discount_governance", "critical_threshold", v))} />
+          <SettingsNumberField label="Warning threshold (requests)" value={dg.warning_threshold} onChange={(v) => setState(U(state, "discount_governance", "warning_threshold", v))} />
+          <SettingsNumberField label="Rolling window (days)" value={dg.rolling_window_days} onChange={(v) => setState(U(state, "discount_governance", "rolling_window_days", v))} />
+          <SettingsNumberField label="De-dup window (hours)" value={dg.dedup_window_hours} onChange={(v) => setState(U(state, "discount_governance", "dedup_window_hours", v))} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+          When a sales rep submits <strong>{dg.critical_threshold || 3}+</strong> critical-risk or <strong>{dg.warning_threshold || 5}+</strong> warning-level discount requests within <strong>{dg.rolling_window_days || 7} days</strong>, an alert is created for admin review. Duplicate alerts are suppressed for <strong>{dg.dedup_window_hours || 24} hours</strong>.
         </div>
       </SettingsSectionCard>
       <SettingsSectionCard title="Customer Activity Rules" description="Control how the CRM computes Active, At Risk, and Inactive customer status.">

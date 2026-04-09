@@ -441,23 +441,41 @@ def _classify_discount_risk(discount_amount, discount_budget, distributable_marg
 
 # ═══ PROACTIVE GOVERNANCE — RISKY BEHAVIOR DETECTION ═══
 
-# Thresholds — configurable
-_CRITICAL_THRESHOLD = 3    # X critical requests
-_WINDOW_DAYS = 7           # in Y days
-_WARNING_THRESHOLD = 5     # X warning+ requests
-_NEAR_FLOOR_COUNT = 3      # repeated approvals near floor
+# Fallback defaults — overridden at runtime by admin_settings.discount_governance
+_DEFAULT_CRITICAL_THRESHOLD = 3
+_DEFAULT_WARNING_THRESHOLD = 5
+_DEFAULT_WINDOW_DAYS = 7
+_DEFAULT_DEDUP_HOURS = 24
+
+
+async def _load_governance_config(db):
+    """Load discount governance thresholds from Settings Hub at runtime."""
+    doc = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    dg = (doc or {}).get("value", {}).get("discount_governance", {})
+    return {
+        "enabled": dg.get("enabled", True),
+        "critical_threshold": int(dg.get("critical_threshold", _DEFAULT_CRITICAL_THRESHOLD)),
+        "warning_threshold": int(dg.get("warning_threshold", _DEFAULT_WARNING_THRESHOLD)),
+        "window_days": int(dg.get("rolling_window_days", _DEFAULT_WINDOW_DAYS)),
+        "dedup_hours": int(dg.get("dedup_window_hours", _DEFAULT_DEDUP_HOURS)),
+    }
 
 
 async def _check_risky_behavior_alert(db, *, staff_id: str, staff_name: str, risk_level: str):
     """
     After each discount request, check if this sales rep has a pattern
     of repeated critical/warning requests. If threshold exceeded, create
-    an admin alert notification. De-duplicates alerts within the window.
+    an admin alert notification. De-duplicates alerts within the configured window.
+    Reads thresholds from Settings Hub at runtime.
     """
     if risk_level == "safe":
-        return  # no alert needed for safe requests
+        return
 
-    window = datetime.now(timezone.utc) - timedelta(days=_WINDOW_DAYS)
+    cfg = await _load_governance_config(db)
+    if not cfg["enabled"]:
+        return
+
+    window = datetime.now(timezone.utc) - timedelta(days=cfg["window_days"])
     window_iso = window.isoformat()
 
     # Count critical + warning requests from this rep in the window
@@ -485,30 +503,31 @@ async def _check_risky_behavior_alert(db, *, staff_id: str, staff_name: str, ris
     alert_level = "warning"
     alert_message = ""
 
-    if critical_count >= _CRITICAL_THRESHOLD:
+    if critical_count >= cfg["critical_threshold"]:
         should_alert = True
         alert_level = "critical"
         alert_message = (
             f"{staff_name or 'A sales rep'} has submitted {critical_count} critical-risk "
-            f"discount requests in the last {_WINDOW_DAYS} days. "
+            f"discount requests in the last {cfg['window_days']} days. "
             "This pattern may indicate pricing pressure or policy non-compliance."
         )
-    elif (critical_count + warning_count) >= _WARNING_THRESHOLD:
+    elif (critical_count + warning_count) >= cfg["warning_threshold"]:
         should_alert = True
         alert_level = "warning"
         alert_message = (
             f"{staff_name or 'A sales rep'} has submitted {critical_count + warning_count} "
             f"risky discount requests ({critical_count} critical, {warning_count} warning) "
-            f"in the last {_WINDOW_DAYS} days."
+            f"in the last {cfg['window_days']} days."
         )
 
     if not should_alert:
         return
 
-    # De-duplicate: check if we already sent an alert for this rep within the window
+    # De-duplicate: check if we already sent an alert within the dedup window
+    dedup_cutoff = datetime.now(timezone.utc) - timedelta(hours=cfg["dedup_hours"])
     existing_alert = await db.discount_risk_alerts.find_one({
         "staff_id": staff_id,
-        "created_at": {"$gte": window_iso},
+        "created_at": {"$gte": dedup_cutoff.isoformat()},
         "alert_level": alert_level,
     })
     if existing_alert:
@@ -532,7 +551,7 @@ async def _check_risky_behavior_alert(db, *, staff_id: str, staff_name: str, ris
         "alert_level": alert_level,
         "critical_count": critical_count,
         "warning_count": warning_count,
-        "window_days": _WINDOW_DAYS,
+        "window_days": cfg["window_days"],
         "message": alert_message,
         "status": "active",
         "reviewed": False,

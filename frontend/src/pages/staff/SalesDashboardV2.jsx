@@ -5,7 +5,7 @@ import {
   TrendingUp, Phone, ArrowRight, Target, Wallet,
   ShoppingCart, Users, Clock, Flame, AlertTriangle,
   FileText, ChevronRight, Loader2, Share2, Zap,
-  DollarSign, CheckCircle, BarChart3
+  DollarSign, CheckCircle, BarChart3, Star, Trophy, Medal
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
@@ -85,7 +85,8 @@ export default function SalesDashboardV2() {
 
   const {
     kpis, today_actions, pipeline, recent_orders,
-    assigned_customers, staff_name, commission_summary, charts
+    assigned_customers, staff_name, commission_summary, charts,
+    avg_rating, total_ratings, recent_ratings, leaderboard,
   } = data;
 
   return (
@@ -110,7 +111,7 @@ export default function SalesDashboardV2() {
       </div>
 
       {/* ═══ KPI ROW ═══ */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="kpi-row">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3" data-testid="kpi-row">
         <KpiCard
           label="Today's Revenue"
           value={shortMoney(kpis?.today_revenue)}
@@ -143,6 +144,14 @@ export default function SalesDashboardV2() {
           accent="text-[#D4A843]"
           testId="kpi-commission"
         />
+        <KpiCard
+          label="Avg Rating"
+          value={avg_rating > 0 ? `${avg_rating} / 5` : "—"}
+          sub={total_ratings > 0 ? `${total_ratings} rating${total_ratings !== 1 ? "s" : ""}` : "No ratings yet"}
+          icon={<Star className="w-5 h-5" />}
+          accent="text-[#D4A843]"
+          testId="kpi-avg-rating"
+        />
       </div>
 
       {/* ═══ TODAY'S ACTIONS (TOP PRIORITY — above pipeline) ═══ */}
@@ -153,6 +162,16 @@ export default function SalesDashboardV2() {
 
       {/* ═══ COMMISSION SUMMARY ═══ */}
       <CommissionSummarySection summary={commission_summary || {}} />
+
+      {/* ═══ LEADERBOARD + RECENT RATINGS ═══ */}
+      <div className="grid lg:grid-cols-5 gap-4">
+        <div className="lg:col-span-3">
+          <LeaderboardSection leaderboard={leaderboard || []} staffName={staff_name} />
+        </div>
+        <div className="lg:col-span-2">
+          <RecentRatingsSection ratings={recent_ratings || []} avgRating={avg_rating} />
+        </div>
+      </div>
 
       {/* ═══ CRM + CONTENT ═══ */}
       <div className="grid lg:grid-cols-5 gap-4">
@@ -485,4 +504,133 @@ function getGreeting() {
   if (h < 12) return "morning";
   if (h < 17) return "afternoon";
   return "evening";
+}
+
+
+function LeaderboardSection({ leaderboard, staffName }) {
+  const RANK_ICONS = [Trophy, Medal, Medal];
+  const RANK_COLORS = ["text-[#D4A843]", "text-slate-400", "text-amber-700"];
+
+  return (
+    <div className="bg-white border rounded-xl p-5" data-testid="leaderboard-section">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 rounded-lg bg-[#D4A843] text-white flex items-center justify-center">
+          <Trophy className="w-3.5 h-3.5" />
+        </div>
+        <h2 className="text-base font-bold text-[#0f172a]">Sales Leaderboard</h2>
+      </div>
+
+      {leaderboard.length === 0 ? (
+        <p className="text-sm text-slate-400 text-center py-6">No leaderboard data yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[11px] text-slate-400 uppercase tracking-wider border-b">
+                <th className="pb-2 text-left w-10">#</th>
+                <th className="pb-2 text-left">Rep</th>
+                <th className="pb-2 text-right">Deals</th>
+                <th className="pb-2 text-right">Revenue</th>
+                <th className="pb-2 text-right">Commission</th>
+                <th className="pb-2 text-right">Rating</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leaderboard.map((entry) => {
+                const RankIcon = RANK_ICONS[entry.rank - 1];
+                const rankColor = RANK_COLORS[entry.rank - 1] || "text-slate-500";
+                const isMe = entry.name === staffName;
+
+                return (
+                  <tr
+                    key={entry.rank}
+                    className={`border-b border-slate-50 last:border-0 ${isMe ? "bg-[#D4A843]/5" : ""}`}
+                    data-testid={`leaderboard-row-${entry.rank}`}
+                  >
+                    <td className="py-2.5">
+                      {RankIcon ? (
+                        <RankIcon className={`w-4.5 h-4.5 ${rankColor}`} />
+                      ) : (
+                        <span className="text-xs font-bold text-slate-400">{entry.rank}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5">
+                      <span className={`font-semibold ${isMe ? "text-[#D4A843]" : "text-[#20364D]"}`}>
+                        {entry.name}{isMe ? " (You)" : ""}
+                      </span>
+                    </td>
+                    <td className="py-2.5 text-right font-semibold text-[#20364D]">{entry.deals}</td>
+                    <td className="py-2.5 text-right text-slate-600">{shortMoney(entry.revenue)}</td>
+                    <td className="py-2.5 text-right text-[#D4A843] font-semibold">{shortMoney(entry.commission)}</td>
+                    <td className="py-2.5 text-right">
+                      {entry.avg_rating > 0 ? (
+                        <span className="inline-flex items-center gap-0.5">
+                          <Star className="w-3.5 h-3.5 fill-[#D4A843] text-[#D4A843]" />
+                          <span className="text-xs font-semibold text-slate-600">{entry.avg_rating}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+function RecentRatingsSection({ ratings, avgRating }) {
+  return (
+    <div className="bg-white border rounded-xl p-5" data-testid="recent-ratings-section">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-7 h-7 rounded-lg bg-[#D4A843]/20 text-[#D4A843] flex items-center justify-center">
+          <Star className="w-3.5 h-3.5" />
+        </div>
+        <h2 className="text-base font-bold text-[#0f172a]">Recent Ratings</h2>
+        {avgRating > 0 && (
+          <span className="ml-auto text-xs font-semibold text-[#D4A843] bg-[#D4A843]/10 px-2 py-0.5 rounded-full">
+            Avg: {avgRating}/5
+          </span>
+        )}
+      </div>
+
+      {ratings.length === 0 ? (
+        <div className="text-center py-6">
+          <Star className="w-8 h-8 mx-auto mb-2 text-slate-200" />
+          <p className="text-sm text-slate-400">No ratings received yet.</p>
+          <p className="text-xs text-slate-300 mt-1">Ratings appear after completed orders.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {ratings.map((r, i) => (
+            <div key={i} className="border-b border-slate-50 pb-3 last:border-0 last:pb-0" data-testid={`rating-item-${i}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star
+                      key={s}
+                      className={`w-3.5 h-3.5 ${s <= r.stars ? "fill-[#D4A843] text-[#D4A843]" : "text-slate-200"}`}
+                    />
+                  ))}
+                </div>
+                <span className="ml-auto text-[10px] text-slate-400">
+                  {(r.rated_at || "").slice(0, 10)}
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-[#20364D]">{r.customer_name}</p>
+              <p className="text-[10px] text-slate-400">#{r.order_number}</p>
+              {r.comment && (
+                <p className="text-xs text-slate-500 italic mt-1">"{r.comment}"</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

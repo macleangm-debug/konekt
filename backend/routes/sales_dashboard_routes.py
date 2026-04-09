@@ -315,6 +315,28 @@ async def get_sales_dashboard(request: Request):
             "last_contact": str(c.get("last_contact_at", "")),
         })
 
+    # ═══ RATINGS ═══
+    rated_orders = await db.orders.find(
+        {**sales_filter, "rating": {"$exists": True}},
+        {"_id": 0, "order_number": 1, "customer_name": 1, "rating": 1, "created_at": 1}
+    ).sort("rating.rated_at", -1).to_list(100)
+
+    ratings_stars = [o["rating"]["stars"] for o in rated_orders if o.get("rating", {}).get("stars")]
+    avg_rating = round(sum(ratings_stars) / max(len(ratings_stars), 1), 1) if ratings_stars else 0
+    recent_ratings = []
+    for o in rated_orders[:5]:
+        r = o.get("rating", {})
+        recent_ratings.append({
+            "order_number": o.get("order_number", ""),
+            "customer_name": o.get("customer_name", ""),
+            "stars": r.get("stars", 0),
+            "comment": r.get("comment", ""),
+            "rated_at": r.get("rated_at", ""),
+        })
+
+    # ═══ LEADERBOARD ═══
+    leaderboard = await _build_leaderboard(db, now)
+
     return {
         "ok": True,
         "staff_name": user_name or "Sales",
@@ -325,6 +347,10 @@ async def get_sales_dashboard(request: Request):
         "recent_orders": recent_orders,
         "assigned_customers": assigned_customers,
         "charts": charts,
+        "avg_rating": avg_rating,
+        "total_ratings": len(ratings_stars),
+        "recent_ratings": recent_ratings,
+        "leaderboard": leaderboard,
     }
 
 
@@ -378,3 +404,69 @@ def _build_trend_charts(all_orders, commissions, now):
         "deals_closed_trend": deals_closed_trend,
         "commission_trend": commission_trend,
     }
+
+
+async def _build_leaderboard(db, now):
+    """
+    Build sales leaderboard ranked by deals closed.
+    Aggregates across all sales reps: deals, revenue, commission, avg rating.
+    """
+    # All sales users
+    sales_users = await db.users.find(
+        {"role": {"$in": ["sales", "staff"]}},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1}
+    ).to_list(100)
+
+    if not sales_users:
+        return []
+
+    # All non-cancelled orders
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "assigned_sales_id": 1, "total_amount": 1, "total": 1,
+         "payment_status": 1, "rating": 1}
+    ).to_list(5000)
+
+    # All commissions
+    all_commissions = await db.commissions.find(
+        {"beneficiary_type": "sales"},
+        {"_id": 0, "beneficiary_user_id": 1, "amount": 1, "status": 1}
+    ).to_list(5000)
+
+    board = []
+    for user in sales_users:
+        uid = user.get("id", "")
+        uemail = user.get("email", "")
+        name = user.get("full_name", uemail)
+
+        # Filter orders assigned to this rep
+        rep_orders = [o for o in all_orders if o.get("assigned_sales_id") in (uid, uemail)]
+        paid_orders = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
+        deals = len(paid_orders)
+        revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_orders)
+
+        # Commission
+        rep_comms = [c for c in all_commissions if c.get("beneficiary_user_id") == uid]
+        commission = sum(c.get("amount", 0) for c in rep_comms)
+
+        # Avg rating
+        rep_ratings = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
+        avg_r = round(sum(rep_ratings) / max(len(rep_ratings), 1), 1) if rep_ratings else 0
+
+        board.append({
+            "name": name,
+            "deals": deals,
+            "revenue": round(revenue, 0),
+            "commission": round(commission, 0),
+            "avg_rating": avg_r,
+            "total_ratings": len(rep_ratings),
+        })
+
+    # Sort by deals closed desc, then revenue desc
+    board.sort(key=lambda x: (-x["deals"], -x["revenue"]))
+
+    # Add rank
+    for i, entry in enumerate(board):
+        entry["rank"] = i + 1
+
+    return board

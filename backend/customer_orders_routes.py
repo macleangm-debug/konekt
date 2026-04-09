@@ -4,6 +4,7 @@ Get orders for the authenticated customer + Quick Reorder (Phase C.5)
 """
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from starlette.requests import Request
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
@@ -198,6 +199,65 @@ async def get_order_detail(order_id: str, user: dict = Depends(get_user)):
         raise HTTPException(status_code=404, detail="Order not found")
 
     return await enrich_order(order)
+
+
+@router.post("/{order_id}/rate")
+async def rate_order(order_id: str, request: Request, user: dict = Depends(get_user)):
+    """
+    Customer submits a 1-5 star rating + optional comment for a completed order.
+    One rating per order. Rating is stored as subdocument on the order.
+    """
+    if not user:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    body = await request.json()
+    stars = int(body.get("stars", 0))
+    comment = str(body.get("comment", ""))[:500]
+
+    if stars < 1 or stars > 5:
+        raise HTTPException(status_code=400, detail="Rating must be 1-5 stars")
+
+    user_email = user.get("email")
+    user_id = user.get("id")
+    ownership_query = {
+        "$or": [
+            {"user_id": user_id},
+            {"customer_id": user_id},
+            {"customer_email": user_email},
+            {"customer.email": user_email}
+        ]
+    }
+
+    order = None
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id), **ownership_query})
+    except Exception:
+        order = await db.orders.find_one({"order_number": order_id, **ownership_query})
+    if not order:
+        order = await db.orders.find_one({"id": order_id, **ownership_query})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Check if already rated
+    if order.get("rating"):
+        raise HTTPException(status_code=400, detail="This order has already been rated")
+
+    from datetime import datetime, timezone
+    rating_doc = {
+        "stars": stars,
+        "comment": comment,
+        "rated_by": user_id,
+        "rated_by_name": user.get("full_name", ""),
+        "rated_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    oid = order["_id"]
+    await db.orders.update_one(
+        {"_id": oid},
+        {"$set": {"rating": rating_doc}},
+    )
+
+    return {"ok": True, "rating": rating_doc}
 
 
 @router.post("/{order_id}/reorder")
