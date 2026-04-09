@@ -590,6 +590,351 @@ async def dashboard_finance_kpis(request: Request):
     }
 
 
+
+# ─── REPORTS HUB ──────────────────────────────────────────────────────────────
+
+@router.get("/reports/business-health")
+async def reports_business_health(request: Request, days: int = Query(180)):
+    """Executive business health overview with trends and alerts."""
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    cutoff = (now - timedelta(days=days)).isoformat()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # All orders
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "total_amount": 1, "total": 1, "payment_status": 1,
+         "status": 1, "created_at": 1, "rating": 1, "customer_name": 1,
+         "discount_percent": 1}
+    ).to_list(10000)
+
+    paid = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+    total_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid)
+    revenue_month = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid if isinstance(o.get("created_at"), str) and o["created_at"] >= month_start.isoformat())
+
+    # Commission for margin
+    all_comms = await db.commissions.find({}, {"_id": 0, "amount": 1, "created_at": 1}).to_list(5000)
+    total_comm = sum(c.get("amount", 0) for c in all_comms)
+    margin_pct = round(((total_revenue - total_comm) / max(total_revenue, 1)) * 100, 1)
+
+    # Ratings
+    all_ratings = [o["rating"]["stars"] for o in all_orders if o.get("rating", {}).get("stars")]
+    avg_rating = round(sum(all_ratings) / max(len(all_ratings), 1), 1) if all_ratings else 0
+
+    # Active customers
+    customer_set = set(o.get("customer_name") for o in all_orders if o.get("customer_name"))
+    active_customers = len(customer_set)
+
+    # Pending payments
+    pending_count = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending", "pending_verification"]}})
+
+    # Outstanding invoices
+    outstanding = await db.invoices.count_documents({"status": {"$in": ["pending_payment", "sent", "under_review", "partially_paid"]}})
+
+    # Discount risk
+    settings_doc = await db.admin_settings.find_one({"type": "discount_governance"}, {"_id": 0})
+    warning_threshold = 20
+    critical_threshold = 30
+    if settings_doc and settings_doc.get("settings"):
+        warning_threshold = settings_doc["settings"].get("warning_threshold", 20)
+        critical_threshold = settings_doc["settings"].get("critical_threshold", 30)
+
+    discount_reqs = await db.discount_requests.find({}, {"_id": 0, "discount_percent": 1, "status": 1, "created_at": 1}).to_list(500)
+    critical_count = sum(1 for d in discount_reqs if float(d.get("discount_percent", 0)) >= critical_threshold)
+    warning_count = sum(1 for d in discount_reqs if warning_threshold <= float(d.get("discount_percent", 0)) < critical_threshold)
+    risk_score = "Critical" if critical_count > 3 else "Warning" if (critical_count + warning_count) > 5 else "Low"
+
+    # ── Charts (6 months) ──
+    revenue_trend = []
+    margin_trend = []
+    rating_trend_data = []
+    discount_risk_trend = []
+
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        m_start = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        nm = m + 1
+        ny = y
+        if nm > 12:
+            nm = 1
+            ny += 1
+        m_end = datetime(ny, nm, 1, tzinfo=timezone.utc).isoformat()
+        label = datetime(y, m, 1).strftime("%b %Y")
+
+        m_rev = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid if isinstance(o.get("created_at"), str) and m_start <= o["created_at"] < m_end)
+        m_comm = sum(c.get("amount", 0) for c in all_comms if isinstance(c.get("created_at"), str) and m_start <= c["created_at"] < m_end)
+        m_margin = round(((m_rev - m_comm) / max(m_rev, 1)) * 100, 1) if m_rev > 0 else 0
+
+        m_ratings = [o["rating"]["stars"] for o in all_orders if o.get("rating", {}).get("stars") and isinstance(o.get("created_at"), str) and m_start <= o["created_at"] < m_end]
+        m_avg_r = round(sum(m_ratings) / max(len(m_ratings), 1), 1) if m_ratings else 0
+
+        m_warn = sum(1 for d in discount_reqs if isinstance(d.get("created_at"), str) and m_start <= d["created_at"] < m_end and warning_threshold <= float(d.get("discount_percent", 0)) < critical_threshold)
+        m_crit = sum(1 for d in discount_reqs if isinstance(d.get("created_at"), str) and m_start <= d["created_at"] < m_end and float(d.get("discount_percent", 0)) >= critical_threshold)
+
+        revenue_trend.append({"month": label, "revenue": round(m_rev, 0)})
+        margin_trend.append({"month": label, "margin_pct": m_margin})
+        rating_trend_data.append({"month": label, "avg_rating": m_avg_r})
+        discount_risk_trend.append({"month": label, "warning": m_warn, "critical": m_crit})
+
+    # ── Alerts ──
+    alerts = []
+    if pending_count > 10:
+        alerts.append({"type": "Payment", "severity": "warning", "message": f"{pending_count} payments awaiting approval", "date": now.strftime("%Y-%m-%d")})
+    if outstanding > 20:
+        alerts.append({"type": "Invoice", "severity": "warning", "message": f"{outstanding} outstanding invoices", "date": now.strftime("%Y-%m-%d")})
+    if critical_count > 0:
+        alerts.append({"type": "Discount", "severity": "critical", "message": f"{critical_count} critical discount requests flagged", "date": now.strftime("%Y-%m-%d")})
+    low_ratings = sum(1 for r in all_ratings if r <= 2)
+    if low_ratings > 0:
+        alerts.append({"type": "Rating", "severity": "warning", "message": f"{low_ratings} orders received low ratings (≤2 stars)", "date": now.strftime("%Y-%m-%d")})
+    if not alerts:
+        alerts.append({"type": "System", "severity": "info", "message": "All metrics within healthy thresholds", "date": now.strftime("%Y-%m-%d")})
+
+    return {
+        "kpis": {
+            "total_revenue": round(total_revenue, 0),
+            "revenue_month": round(revenue_month, 0),
+            "margin_pct": margin_pct,
+            "avg_rating": avg_rating,
+            "total_orders": len(all_orders),
+            "active_customers": active_customers,
+            "pending_payments": pending_count,
+            "outstanding_invoices": outstanding,
+            "discount_risk_score": risk_score,
+        },
+        "charts": {
+            "revenue_trend": revenue_trend,
+            "margin_trend": margin_trend,
+            "rating_trend": rating_trend_data,
+            "discount_risk_trend": discount_risk_trend,
+        },
+        "alerts": alerts,
+    }
+
+
+@router.get("/reports/financial")
+async def reports_financial(request: Request, days: int = Query(180)):
+    """Financial reports: revenue, cash flow, margin, commission."""
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "total_amount": 1, "total": 1, "payment_status": 1,
+         "created_at": 1, "customer_name": 1}
+    ).to_list(10000)
+
+    paid = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+    total_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid)
+    revenue_month = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid if isinstance(o.get("created_at"), str) and o["created_at"] >= month_start.isoformat())
+
+    # Collected
+    coll_result = await db.payment_proofs.aggregate([
+        {"$match": {"status": "approved"}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}}},
+    ]).to_list(1)
+    collected = coll_result[0]["total"] if coll_result else total_revenue
+
+    # Outstanding
+    out_result = await db.invoices.aggregate([
+        {"$match": {"status": {"$in": ["pending_payment", "sent", "under_review", "partially_paid"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+    ]).to_list(1)
+    outstanding = out_result[0]["total"] if out_result else 0
+
+    # Commissions
+    all_comms = await db.commissions.find({}, {"_id": 0, "amount": 1, "status": 1, "beneficiary_user_id": 1, "created_at": 1}).to_list(5000)
+    comm_total = sum(c.get("amount", 0) for c in all_comms)
+    margin_pct = round(((total_revenue - comm_total) / max(total_revenue, 1)) * 100, 1)
+
+    # Payment breakdown
+    from collections import Counter
+    proofs = await db.payment_proofs.find({}, {"_id": 0, "status": 1}).to_list(500)
+    proof_counts = Counter(p.get("status", "unknown") for p in proofs)
+    payment_breakdown = [{"status": k.replace("_", " ").title(), "count": v} for k, v in proof_counts.most_common()]
+
+    # Top customers
+    cust_rev = {}
+    for o in paid:
+        cn = o.get("customer_name") or "Unknown"
+        if cn != "Unknown":
+            cust_rev[cn] = cust_rev.get(cn, 0) + float(o.get("total_amount") or o.get("total") or 0)
+    top_customers = [{"customer": c, "revenue": round(r, 0)} for c, r in sorted(cust_rev.items(), key=lambda x: -x[1])[:5]]
+
+    # Commission by rep
+    sales = await db.users.find({"role": {"$in": ["sales", "staff"]}}, {"_id": 0, "id": 1, "full_name": 1, "email": 1}).to_list(100)
+    comm_by_rep = []
+    for u in sales:
+        uid = u.get("id", "")
+        rep_c = [c for c in all_comms if c.get("beneficiary_user_id") == uid]
+        total_c = sum(c.get("amount", 0) for c in rep_c)
+        paid_c = sum(c.get("amount", 0) for c in rep_c if c.get("status") == "paid")
+        pending_c = sum(c.get("amount", 0) for c in rep_c if c.get("status") in ("approved", "pending", "expected"))
+        if total_c > 0 or len(rep_c) > 0:
+            comm_by_rep.append({"name": u.get("full_name", u.get("email", "")), "total": round(total_c, 0), "paid": round(paid_c, 0), "pending": round(pending_c, 0), "count": len(rep_c)})
+    comm_by_rep.sort(key=lambda x: -x["total"])
+
+    # 6 month trends
+    revenue_trend = []
+    cash_flow_trend = []
+    margin_trend_data = []
+    commission_trend = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        ms = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        nm = m + 1
+        ny = y
+        if nm > 12:
+            nm = 1
+            ny += 1
+        me = datetime(ny, nm, 1, tzinfo=timezone.utc).isoformat()
+        label = datetime(y, m, 1).strftime("%b %Y")
+
+        mr = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid if isinstance(o.get("created_at"), str) and ms <= o["created_at"] < me)
+        mo = sum(1 for o in paid if isinstance(o.get("created_at"), str) and ms <= o["created_at"] < me)
+        mc = sum(c.get("amount", 0) for c in all_comms if isinstance(c.get("created_at"), str) and ms <= c["created_at"] < me)
+        mp = round(((mr - mc) / max(mr, 1)) * 100, 1) if mr > 0 else 0
+
+        revenue_trend.append({"month": label, "revenue": round(mr, 0), "orders": mo})
+        cash_flow_trend.append({"month": label, "revenue": round(mr, 0), "commissions": round(mc, 0), "net": round(mr - mc, 0)})
+        margin_trend_data.append({"month": label, "margin_pct": mp, "revenue": round(mr, 0), "cost": round(mc, 0)})
+        commission_trend.append({"month": label, "amount": round(mc, 0)})
+
+    return {
+        "kpis": {
+            "total_revenue": round(total_revenue, 0),
+            "revenue_month": round(revenue_month, 0),
+            "collected": round(collected, 0),
+            "outstanding_invoices": round(outstanding, 0),
+            "commission_total": round(comm_total, 0),
+            "margin_pct": margin_pct,
+        },
+        "charts": {
+            "revenue_trend": revenue_trend,
+            "cash_flow_trend": cash_flow_trend,
+            "margin_trend": margin_trend_data,
+            "commission_trend": commission_trend,
+        },
+        "top_customers": top_customers,
+        "commission_by_rep": comm_by_rep,
+        "payment_breakdown": payment_breakdown,
+    }
+
+
+@router.get("/reports/sales")
+async def reports_sales(request: Request, days: int = Query(180)):
+    """Sales reports: performance, conversion, leaderboard."""
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+
+    # Team data
+    sales_users = await db.users.find(
+        {"role": {"$in": ["sales", "staff"]}},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1}
+    ).to_list(100)
+
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "assigned_sales_id": 1, "total_amount": 1, "total": 1,
+         "payment_status": 1, "status": 1, "rating": 1, "created_at": 1,
+         "order_number": 1}
+    ).to_list(10000)
+
+    paid = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+    total_deals = len(paid)
+    total_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid)
+
+    all_ratings = [o["rating"]["stars"] for o in all_orders if o.get("rating", {}).get("stars")]
+    avg_rating = round(sum(all_ratings) / max(len(all_ratings), 1), 1) if all_ratings else 0
+
+    pipeline_orders = [o for o in all_orders if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered")]
+    pipeline_value = sum(float(o.get("total_amount") or o.get("total") or 0) for o in pipeline_orders)
+
+    # Quotes for conversion
+    all_quotes = await db.quotes.find({}, {"_id": 0, "status": 1, "created_at": 1}).to_list(5000)
+    total_quotes = len(all_quotes)
+    converted_quotes = sum(1 for q in all_quotes if q.get("status") in ("accepted", "converted", "ordered"))
+    conversion_rate = round((converted_quotes / max(total_quotes, 1)) * 100, 1)
+
+    # Commissions
+    all_comms = await db.commissions.find({"beneficiary_type": "sales"}, {"_id": 0, "beneficiary_user_id": 1, "amount": 1}).to_list(5000)
+
+    # Per-rep table
+    team_table = []
+    for u in sales_users:
+        uid = u.get("id", "")
+        uemail = u.get("email", "")
+        name = u.get("full_name", uemail)
+        rep_orders = [o for o in all_orders if o.get("assigned_sales_id") in (uid, uemail)]
+        rep_paid = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
+        deals = len(rep_paid)
+        rev = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_paid)
+        pipe = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_orders if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered"))
+        rep_comms = [c for c in all_comms if c.get("beneficiary_user_id") == uid]
+        commission = sum(c.get("amount", 0) for c in rep_comms)
+        rep_ratings = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
+        avg_r = round(sum(rep_ratings) / max(len(rep_ratings), 1), 1) if rep_ratings else 0
+        team_table.append({"id": uid, "name": name, "deals": deals, "revenue": round(rev, 0), "pipeline": round(pipe, 0), "commission": round(commission, 0), "avg_rating": avg_r, "total_orders": len(rep_orders)})
+    team_table.sort(key=lambda x: -x["deals"])
+
+    # Leaderboard
+    from routes.sales_dashboard_routes import _build_leaderboard
+    leaderboard = await _build_leaderboard(db, now, hide_revenue=False)
+
+    # Conversion trend (6 months)
+    conversion_trend = []
+    deals_trend = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        ms = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        nm = m + 1
+        ny = y
+        if nm > 12:
+            nm = 1
+            ny += 1
+        me = datetime(ny, nm, 1, tzinfo=timezone.utc).isoformat()
+        label = datetime(y, m, 1).strftime("%b %Y")
+
+        m_quotes = sum(1 for q in all_quotes if isinstance(q.get("created_at"), str) and ms <= q["created_at"] < me)
+        m_orders = sum(1 for o in paid if isinstance(o.get("created_at"), str) and ms <= o["created_at"] < me)
+        m_rate = round((m_orders / max(m_quotes, 1)) * 100, 1) if m_quotes > 0 else 0
+
+        conversion_trend.append({"month": label, "quotes": m_quotes, "orders": m_orders, "rate": m_rate})
+        deals_trend.append({"month": label, "deals": m_orders})
+
+    return {
+        "kpis": {
+            "total_deals": total_deals,
+            "total_revenue": round(total_revenue, 0),
+            "avg_rating": avg_rating,
+            "conversion_rate": conversion_rate,
+            "active_reps": len(sales_users),
+            "pipeline_value": round(pipeline_value, 0),
+        },
+        "team_table": team_table,
+        "leaderboard": leaderboard,
+        "charts": {
+            "conversion_trend": conversion_trend,
+            "deals_trend": deals_trend,
+        },
+    }
+
+
+
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
 @router.get("/payments/stats")

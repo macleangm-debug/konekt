@@ -152,6 +152,11 @@ import ProductInsightsPage from "@/pages/admin/ProductInsightsPage";
 import AdminSalesRatingsPage from "@/pages/admin/AdminSalesRatingsPage";
 import ServiceInsightsPage from "@/pages/admin/ServiceInsightsPage";
 
+// Reports Hub
+import BusinessHealthReportPage from "@/pages/admin/reports/BusinessHealthReportPage";
+import FinancialReportsPage from "@/pages/admin/reports/FinancialReportsPage";
+import SalesReportsPage from "@/pages/admin/reports/SalesReportsPage";
+
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
 
@@ -677,6 +682,10 @@ function App() {
           <Route path="product-insights" element={<ProductInsightsPage />} />
           <Route path="sales-ratings" element={<AdminSalesRatingsPage />} />
           <Route path="service-insights" element={<ServiceInsightsPage />} />
+          {/* Reports Hub */}
+          <Route path="reports/business-health" element={<BusinessHealthReportPage />} />
+          <Route path="reports/financial" element={<FinancialReportsPage />} />
+          <Route path="reports/sales" element={<SalesReportsPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />
           {/* Super Admin Commercial Controls */}

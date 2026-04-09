@@ -5,6 +5,7 @@ import {
   Route, Inbox, BarChart3, ClipboardList, Package,
   Settings, Users, TrendingUp, MessageSquare, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign, Landmark,
+  Activity, Star, Gauge,
 } from "lucide-react";
 
 /**
@@ -115,8 +116,12 @@ export const adminNavigation = [
     label: "Reports & Analytics",
     roles: ["admin", "sales_manager", "finance_manager"],
     children: [
-      { label: "Product Insights", href: "/admin/product-insights", icon: BarChart3 },
-      { label: "Sales Ratings", href: "/admin/sales-ratings", icon: PieChart },
+      { label: "Business Health", href: "/admin/reports/business-health", icon: Activity, roles: ["admin", "sales_manager", "finance_manager"] },
+      { label: "Financial Reports", href: "/admin/reports/financial", icon: DollarSign, roles: ["admin", "finance_manager"] },
+      { label: "Sales Reports", href: "/admin/reports/sales", icon: BarChart3, roles: ["admin", "sales_manager"] },
+      { label: "Customer Experience", href: "/admin/sales-ratings", icon: Star, roles: ["admin", "sales_manager"] },
+      { label: "Risk & Governance", href: "/admin/discount-analytics", icon: ShieldAlert, roles: ["admin", "finance_manager"] },
+      { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
     ],
   },
   {
