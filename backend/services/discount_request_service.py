@@ -255,15 +255,23 @@ async def _calculate_margin_impact(db, line_items, discount_amount, standard_pri
         dp_pct = rule.get("distributable_margin_pct", 10)
         distributable_margin = _money(standard_price * dp_pct / (100 + rule.get("operational_margin_pct", 20) + dp_pct))
         discount_budget = _money(distributable_margin * discount_pool_pct / 100)
+        remaining_after = _money(distributable_margin - discount_amount)
+        margin_safe = discount_amount <= discount_budget
+        op_margin_val = _money(standard_price * rule.get("operational_margin_pct", 20) / (100 + rule.get("operational_margin_pct", 20) + dp_pct))
+        risk_level, risk_message = _classify_discount_risk(
+            discount_amount, discount_budget, distributable_margin, op_margin_val
+        )
         return {
-            "total_base_cost": _money(standard_price - distributable_margin - _money(standard_price * rule.get("operational_margin_pct", 20) / (100 + rule.get("operational_margin_pct", 20) + dp_pct))),
-            "total_operational_margin": _money(standard_price * rule.get("operational_margin_pct", 20) / (100 + rule.get("operational_margin_pct", 20) + dp_pct)),
+            "total_base_cost": _money(standard_price - distributable_margin - op_margin_val),
+            "total_operational_margin": op_margin_val,
             "total_distributable_margin": distributable_margin,
             "discount_pool_pct": discount_pool_pct,
             "max_safe_discount": discount_budget,
             "requested_discount": discount_amount,
-            "remaining_margin_after_discount": _money(distributable_margin - discount_amount),
-            "margin_safe": discount_amount <= discount_budget,
+            "remaining_margin_after_discount": remaining_after,
+            "margin_safe": margin_safe,
+            "risk_level": risk_level,
+            "risk_message": risk_message,
         }
 
     # Full item-level resolution
@@ -287,6 +295,13 @@ async def _calculate_margin_impact(db, line_items, discount_amount, standard_pri
 
     discount_pool_pct = split_settings.get("discount_share_pct", 30)
     discount_budget = _money(total_dp_margin * discount_pool_pct / 100)
+    remaining_after = _money(total_dp_margin - discount_amount)
+
+    # Classify risk: safe / warning / critical
+    margin_safe = discount_amount <= discount_budget
+    risk_level, risk_message = _classify_discount_risk(
+        discount_amount, discount_budget, total_dp_margin, total_op_margin
+    )
 
     return {
         "total_base_cost": _money(total_base_cost),
@@ -295,8 +310,10 @@ async def _calculate_margin_impact(db, line_items, discount_amount, standard_pri
         "discount_pool_pct": discount_pool_pct,
         "max_safe_discount": discount_budget,
         "requested_discount": discount_amount,
-        "remaining_margin_after_discount": _money(total_dp_margin - discount_amount),
-        "margin_safe": discount_amount <= discount_budget,
+        "remaining_margin_after_discount": remaining_after,
+        "margin_safe": margin_safe,
+        "risk_level": risk_level,
+        "risk_message": risk_message,
     }
 
 
@@ -330,4 +347,38 @@ async def _apply_discount_to_source(db, discount_doc):
         await db.orders.update_one(
             {"order_number": discount_doc["order_ref"]},
             {"$set": discount_stamp}
+        )
+
+
+def _classify_discount_risk(discount_amount, discount_budget, distributable_margin, operational_margin):
+    """
+    Classify discount risk as safe / warning / critical.
+    Uses the same margin thresholds as the pricing engine.
+
+    - Safe: discount is well within the discount budget (< 80% of budget)
+    - Warning: discount is approaching or at the budget limit (80%-100% of budget)
+    - Critical: discount exceeds the budget and eats into operational margin
+    """
+    if discount_budget <= 0:
+        if discount_amount > 0:
+            return "critical", "No distributable margin available. This discount would breach the protected pricing floor."
+        return "safe", "No discount requested."
+
+    usage_pct = (discount_amount / discount_budget) * 100 if discount_budget > 0 else 999
+
+    if usage_pct <= 80:
+        return "safe", "Discount is within safe limits. Healthy margin remains."
+    elif usage_pct <= 100:
+        remaining = _money(distributable_margin - discount_amount)
+        return "warning", (
+            f"This discount uses {usage_pct:.0f}% of the discount budget. "
+            f"Remaining distributable margin: TZS {remaining:,.0f}. "
+            "Approaching the protected pricing floor."
+        )
+    else:
+        over = _money(discount_amount - discount_budget)
+        return "critical", (
+            f"This discount exceeds the safe budget by TZS {over:,.0f}. "
+            f"Maximum safe discount: TZS {discount_budget:,.0f}. "
+            "Approval would breach the protected margin floor."
         )

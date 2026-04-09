@@ -2,9 +2,24 @@ import React, { useEffect, useState, useCallback } from "react";
 import api from "../../lib/api";
 import {
   Clock, CheckCircle, XCircle, AlertTriangle, ChevronRight,
-  Loader2, Filter, Shield, TrendingDown
+  Loader2, Filter, Shield, TrendingDown, AlertOctagon
 } from "lucide-react";
 import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
+
+const RISK_CONFIG = {
+  safe: {
+    bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700",
+    icon: Shield, label: "Safe", badgeBg: "bg-emerald-100 text-emerald-700",
+  },
+  warning: {
+    bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700",
+    icon: AlertTriangle, label: "Warning", badgeBg: "bg-amber-100 text-amber-700",
+  },
+  critical: {
+    bg: "bg-red-50", border: "border-red-200", text: "text-red-700",
+    icon: AlertOctagon, label: "Critical", badgeBg: "bg-red-100 text-red-700",
+  },
+};
 
 const STATUS_STYLES = {
   pending: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", label: "Pending", icon: Clock },
@@ -38,6 +53,7 @@ export default function AdminDiscountRequestsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [adminNote, setAdminNote] = useState("");
+  const [criticalConfirmed, setCriticalConfirmed] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +76,7 @@ export default function AdminDiscountRequestsPage() {
         setSelected(res.data.request);
         setDrawerOpen(true);
         setAdminNote("");
+        setCriticalConfirmed(false);
       }
     } catch (err) {
       console.error(err);
@@ -192,15 +209,16 @@ export default function AdminDiscountRequestsPage() {
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-800">{money(item.proposed_final_price)}</td>
                       <td className="px-4 py-3 text-center">
-                        {item.margin_safe ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600">
-                            <Shield className="w-3 h-3" /> Safe
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-red-600">
-                            <AlertTriangle className="w-3 h-3" /> Risk
-                          </span>
-                        )}
+                        {(() => {
+                          const rl = item.margin_impact?.risk_level || (item.margin_safe ? "safe" : "critical");
+                          const rc = RISK_CONFIG[rl] || RISK_CONFIG.safe;
+                          const RiskIcon = rc.icon;
+                          return (
+                            <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${rc.badgeBg}`}>
+                              <RiskIcon className="w-3 h-3" /> {rc.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full ${st.bg} ${st.text}`}>
@@ -239,6 +257,46 @@ export default function AdminDiscountRequestsPage() {
         })()}
         footer={selected?.status === "pending" ? (
           <div className="space-y-3">
+            {/* Risk Overlay Panel */}
+            {selected.margin_impact && (() => {
+              const rl = selected.margin_impact?.risk_level || (selected.margin_safe ? "safe" : "critical");
+              const rc = RISK_CONFIG[rl] || RISK_CONFIG.safe;
+              const RiskIcon = rc.icon;
+              const isCritical = rl === "critical";
+              const isBlocked = isCritical && !criticalConfirmed;
+
+              return (
+                <div className={`rounded-xl border ${rc.border} ${rc.bg} p-3 space-y-2`} data-testid="risk-overlay-panel">
+                  <div className="flex items-center gap-2">
+                    <RiskIcon className={`w-4 h-4 ${rc.text}`} />
+                    <span className={`text-xs font-bold uppercase ${rc.text}`}>{rc.label}</span>
+                    <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-bold ${rc.badgeBg}`} data-testid={`risk-badge-${rl}`}>
+                      Margin: {money(selected.margin_impact.remaining_margin_after_discount)} remaining
+                    </span>
+                  </div>
+                  <p className={`text-xs ${rc.text}`}>{selected.margin_impact.risk_message}</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600">
+                    <div>Max safe discount: <strong>{money(selected.margin_impact.max_safe_discount)}</strong></div>
+                    <div>Requested: <strong className="text-red-600">-{money(selected.margin_impact.requested_discount)}</strong></div>
+                    <div>Dist. margin: <strong>{money(selected.margin_impact.total_distributable_margin)}</strong></div>
+                    <div>Op. margin: <strong>{money(selected.margin_impact.total_operational_margin)}</strong></div>
+                  </div>
+                  {isCritical && (
+                    <label className="flex items-center gap-2 text-xs text-red-700 font-medium cursor-pointer pt-1 border-t border-red-200 mt-1">
+                      <input
+                        type="checkbox"
+                        checked={criticalConfirmed}
+                        onChange={(e) => setCriticalConfirmed(e.target.checked)}
+                        className="rounded border-red-300 text-red-600"
+                        data-testid="critical-confirm-checkbox"
+                      />
+                      I confirm this discount exceeds safe limits and accept the margin impact
+                    </label>
+                  )}
+                </div>
+              );
+            })()}
+
             <textarea
               value={adminNote}
               onChange={(e) => setAdminNote(e.target.value)}
@@ -250,7 +308,7 @@ export default function AdminDiscountRequestsPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => handleAction("approve")}
-                disabled={actionLoading || !selected?.margin_safe}
+                disabled={actionLoading || (selected.margin_impact?.risk_level === "critical" && !criticalConfirmed)}
                 className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
                 data-testid="approve-discount-btn"
               >
@@ -265,12 +323,6 @@ export default function AdminDiscountRequestsPage() {
                 {actionLoading ? "Processing..." : "Reject"}
               </button>
             </div>
-            {!selected?.margin_safe && (
-              <p className="text-xs text-red-500 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                Cannot approve — discount breaches margin floor
-              </p>
-            )}
           </div>
         ) : null}
       >
@@ -322,28 +374,35 @@ export default function AdminDiscountRequestsPage() {
             </div>
 
             {/* Margin Impact */}
-            {selected.margin_impact && (
-              <div className={`rounded-xl border p-4 space-y-3 ${selected.margin_safe ? "border-emerald-200 bg-emerald-50/30" : "border-red-200 bg-red-50/30"}`}
-                data-testid="margin-impact-block"
-              >
-                <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-                  <Shield className={`w-4 h-4 ${selected.margin_safe ? "text-emerald-600" : "text-red-600"}`} />
-                  Margin Impact
-                </h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="text-slate-500">Base Cost:</span> <span className="font-medium">{money(selected.margin_impact.total_base_cost)}</span></div>
-                  <div><span className="text-slate-500">Op. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_operational_margin)}</span></div>
-                  <div><span className="text-slate-500">Dist. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_distributable_margin)}</span></div>
-                  <div><span className="text-slate-500">Max Safe Discount:</span> <span className="font-medium">{money(selected.margin_impact.max_safe_discount)}</span></div>
+            {selected.margin_impact && (() => {
+              const rl = selected.margin_impact?.risk_level || (selected.margin_safe ? "safe" : "critical");
+              const rc = RISK_CONFIG[rl] || RISK_CONFIG.safe;
+              const RiskIcon = rc.icon;
+              return (
+                <div className={`rounded-xl border p-4 space-y-3 ${rc.border} ${rc.bg}`}
+                  data-testid="margin-impact-block"
+                >
+                  <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                    <RiskIcon className={`w-4 h-4 ${rc.text}`} />
+                    Margin Impact
+                    <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full font-bold ${rc.badgeBg}`}>{rc.label}</span>
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div><span className="text-slate-500">Base Cost:</span> <span className="font-medium">{money(selected.margin_impact.total_base_cost)}</span></div>
+                    <div><span className="text-slate-500">Op. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_operational_margin)}</span></div>
+                    <div><span className="text-slate-500">Dist. Margin:</span> <span className="font-medium">{money(selected.margin_impact.total_distributable_margin)}</span></div>
+                    <div><span className="text-slate-500">Max Safe Discount:</span> <span className="font-medium">{money(selected.margin_impact.max_safe_discount)}</span></div>
+                    <div className="col-span-2"><span className="text-slate-500">After Discount:</span> <span className="font-medium">{money(selected.margin_impact.remaining_margin_after_discount)}</span></div>
+                  </div>
+                  {selected.margin_impact.risk_message && (
+                    <p className={`text-xs mt-2 flex items-start gap-1.5 ${rc.text}`}>
+                      <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      {selected.margin_impact.risk_message}
+                    </p>
+                  )}
                 </div>
-                {selected.margin_warning && (
-                  <p className="text-xs text-red-600 mt-2 flex items-start gap-1.5">
-                    <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                    {selected.margin_warning}
-                  </p>
-                )}
-              </div>
-            )}
+              );
+            })()}
 
             {/* Reason & Notes */}
             <div className="space-y-3">

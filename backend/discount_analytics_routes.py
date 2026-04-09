@@ -166,13 +166,12 @@ async def top_discounted_products(
     for o in orders:
         items = o.get("items") or []
         disc = _safe_float(o.get("discount_amount"))
-        pct = _safe_float(o.get("discount_percent"))
+        per_item_disc = disc / max(len(items), 1)
         for item in items:
             name = item.get("name") or item.get("product_name") or "Unknown"
             if name not in product_map:
                 product_map[name] = {"name": name, "total_discount": 0, "order_count": 0}
-            share = disc / max(len(items), 1)
-            product_map[name]["total_discount"] += share
+            product_map[name]["total_discount"] += per_item_disc
             product_map[name]["order_count"] += 1
 
     result = sorted(product_map.values(), key=lambda x: x["total_discount"], reverse=True)[:limit]
