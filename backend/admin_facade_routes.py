@@ -24,6 +24,133 @@ def _clean(doc):
 
 # ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
+@router.get("/dashboard/kpis")
+async def dashboard_kpis(request: Request):
+    """Comprehensive admin dashboard KPIs, snapshots, and chart data."""
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    # ── Top KPI row ──
+    orders_today = await db.orders.count_documents({"created_at": {"$gte": today_start}})
+    
+    # Revenue this month (from completed/delivered/paid orders)
+    revenue_pipeline = [
+        {"$match": {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+    ]
+    rev_result = await db.orders.aggregate(revenue_pipeline).to_list(length=1)
+    revenue_month = rev_result[0]["total"] if rev_result else 0
+
+    pending_payments = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending"]}})
+    active_quotes = await db.quotes.count_documents({"status": {"$in": ["pending", "sent", "quoting"]}})
+    delayed_orders = await db.orders.count_documents({"status": "delayed"})
+    vo_delayed = await db.vendor_orders.count_documents({"status": "delayed"})
+    pending_approvals = pending_payments  # Payment proofs needing approval
+
+    # ── Operations snapshot ──
+    status_counts = {}
+    pipeline_statuses = ["pending", "confirmed", "paid", "assigned", "in_production", "in_progress", "ready", "dispatched", "in_transit", "delivered", "completed", "delayed", "cancelled"]
+    for st in pipeline_statuses:
+        status_counts[st] = await db.orders.count_documents({"status": st})
+    total_orders = await db.orders.count_documents({})
+
+    # ── Finance snapshot ──
+    invoices_issued = await db.invoices.count_documents({"created_at": {"$gte": month_start}})
+    total_invoices = await db.invoices.count_documents({})
+    outstanding_pipeline = [
+        {"$match": {"status": {"$in": ["unpaid", "pending", "sent"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+    ]
+    outstanding_result = await db.invoices.aggregate(outstanding_pipeline).to_list(length=1)
+    outstanding_amount = outstanding_result[0]["total"] if outstanding_result else 0
+
+    # ── Commercial snapshot ──
+    active_promotions = await db.promotions.count_documents({"status": "active"})
+    discount_requests = await db.discount_requests.count_documents({"status": "pending"})
+
+    # ── Partner snapshot ──
+    active_partners = await db.partner_users.count_documents({"status": "active"})
+    total_affiliates = await db.affiliates.count_documents({})
+    active_vendors = await db.partner_users.count_documents({"status": "active", "partner_type": {"$in": ["vendor", "supplier"]}})
+
+    # ── Team snapshot ──
+    total_customers = await db.users.count_documents({"role": {"$in": ["customer", "user"]}})
+    total_sales = await db.users.count_documents({"role": "sales"})
+
+    # ── Chart: orders by day (last 14 days) ──
+    orders_trend = []
+    for i in range(13, -1, -1):
+        from datetime import timedelta
+        day = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        next_day = day + timedelta(days=1)
+        count = await db.orders.count_documents({"created_at": {"$gte": day.isoformat(), "$lt": next_day.isoformat()}})
+        orders_trend.append({"date": day.strftime("%d %b"), "orders": count})
+
+    # ── Chart: revenue by month (last 6 months) ──
+    revenue_trend = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        m_start = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        nm = m + 1
+        ny = y
+        if nm > 12:
+            nm = 1
+            ny += 1
+        m_end = datetime(ny, nm, 1, tzinfo=timezone.utc).isoformat()
+        rev_p = [
+            {"$match": {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": m_start, "$lt": m_end}}},
+            {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+        ]
+        r = await db.orders.aggregate(rev_p).to_list(length=1)
+        revenue_trend.append({"month": datetime(y, m, 1).strftime("%b %Y"), "revenue": r[0]["total"] if r else 0})
+
+    # ── Chart: status distribution ──
+    status_distribution = [{"status": k.replace("_", " ").title(), "count": v} for k, v in status_counts.items() if v > 0]
+
+    return {
+        "kpis": {
+            "orders_today": orders_today,
+            "revenue_month": revenue_month,
+            "pending_payments": pending_payments,
+            "active_quotes": active_quotes,
+            "open_delays": delayed_orders + vo_delayed,
+            "pending_approvals": pending_approvals,
+        },
+        "operations": {
+            "total_orders": total_orders,
+            "status_counts": status_counts,
+        },
+        "finance": {
+            "invoices_this_month": invoices_issued,
+            "total_invoices": total_invoices,
+            "outstanding_amount": outstanding_amount,
+        },
+        "commercial": {
+            "active_promotions": active_promotions,
+            "pending_discount_requests": discount_requests,
+        },
+        "partners": {
+            "active_partners": active_partners,
+            "active_vendors": active_vendors,
+            "total_affiliates": total_affiliates,
+        },
+        "team": {
+            "total_customers": total_customers,
+            "total_sales": total_sales,
+        },
+        "charts": {
+            "orders_trend": orders_trend,
+            "revenue_trend": revenue_trend,
+            "status_distribution": status_distribution,
+        },
+    }
+
 @router.get("/dashboard/summary")
 async def dashboard_summary(request: Request):
     db = request.app.mongodb
