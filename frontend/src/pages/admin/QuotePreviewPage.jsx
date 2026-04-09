@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import BrandLogo from "@/components/branding/BrandLogo";
+import DocumentFooterSection from "@/components/documents/DocumentFooterSection";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const statusColors = {
   draft: "bg-slate-100 text-slate-700",
@@ -21,6 +23,7 @@ const statusColors = {
 export default function QuotePreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const branding = useBranding();
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState({});
@@ -188,7 +191,7 @@ export default function QuotePreviewPage() {
               {/* From */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-500 mb-3">FROM</h3>
-                <div className="font-bold text-lg">{settings.company_name || "Konekt Limited"}</div>
+                <div className="font-bold text-lg">{settings.company_name || branding.brand_name || "Company"}</div>
                 <div className="text-slate-600 text-sm space-y-1 mt-2">
                   {settings.address_line_1 && <div>{settings.address_line_1}</div>}
                   {settings.city && <div>{settings.city}, {settings.country}</div>}
@@ -295,6 +298,13 @@ export default function QuotePreviewPage() {
                 <p className="text-slate-600 text-sm">{quote.terms}</p>
               </div>
             )}
+
+            {/* Document Footer — Bank, Signature, Stamp, Contact */}
+            <DocumentFooterSection
+              settings={settings}
+              documentNumber={quote.quote_number}
+              brandName={branding.brand_name || settings.trading_name || "Konekt"}
+            />
           </div>
         </div>
 

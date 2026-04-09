@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import BrandLogo from "@/components/branding/BrandLogo";
+import DocumentFooterSection from "@/components/documents/DocumentFooterSection";
+import { useBranding } from "@/contexts/BrandingContext";
 import { toast } from "sonner";
 
 const statusColors = {
@@ -33,6 +35,7 @@ const paymentMethods = [
 export default function InvoicePreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const branding = useBranding();
   const [invoice, setInvoice] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -284,7 +287,7 @@ export default function InvoicePreviewPage() {
               {/* From */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-500 mb-3">FROM</h3>
-                <div className="font-bold text-lg">{settings.company_name || "Konekt Limited"}</div>
+                <div className="font-bold text-lg">{settings.company_name || branding.brand_name || "Company"}</div>
                 <div className="text-slate-600 text-sm space-y-1 mt-2">
                   {settings.address_line_1 && <div>{settings.address_line_1}</div>}
                   {settings.city && <div>{settings.city}, {settings.country}</div>}
@@ -389,6 +392,13 @@ export default function InvoicePreviewPage() {
                 )}
               </div>
             </div>
+
+            {/* Document Footer — Bank, Signature, Stamp, Contact */}
+            <DocumentFooterSection
+              settings={settings}
+              documentNumber={invoice.invoice_number}
+              brandName={branding.brand_name || settings.trading_name || "Konekt"}
+            />
           </div>
         </div>
 

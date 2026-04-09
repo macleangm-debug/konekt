@@ -1,0 +1,88 @@
+{
+  "summary": "Iteration 225: Tested new features - Discount Preview Mode (mode='preview') and Document Footer Section. All backend tests passed (18/18). Frontend UI verified for Invoice Preview and Quote Preview pages with DocumentFooterSection.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/login (staff)", "issue": "Staff credentials (staff@konekt.co.tz / password123) not working - returns 'Invalid credentials'. Used admin token for staff endpoint testing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "discount_preview_mode": {
+      "status": "PASSED",
+      "tests": [
+        "POST /api/staff/discount-requests with mode='preview' returns margin impact data (risk_level, max_safe_discount, remaining_margin_after_discount, risk_message)",
+        "Preview mode does not create a record in DB",
+        "Preview mode works with both percentage and fixed discount types",
+        "Normal mode (without mode='preview') still creates discount request normally"
+      ],
+      "sample_response": {
+        "ok": true,
+        "preview": {
+          "standard_price": 100000,
+          "requested_discount": 10000,
+          "risk_level": "critical",
+          "max_safe_discount": 2400,
+          "remaining_margin_after_discount": -7600,
+          "risk_message": "Requested discount of 10,000 exceeds the maximum safe discount of 2,400. Approval would breach the protected margin floor."
+        }
+      }
+    },
+    "invoice_detail_fix": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/admin/invoices/{invoice_id} returns invoice data correctly by ObjectId",
+        "Invoice list endpoint works"
+      ]
+    },
+    "document_footer_section": {
+      "status": "PASSED",
+      "tests": [
+        "Invoice Preview page renders DocumentFooterSection with Bank Details, Signature, Stamp, and Footer",
+        "Quote Preview page renders DocumentFooterSection with Bank Details, Signature, Stamp, and Footer"
+      ],
+      "components_verified": [
+        "Bank Transfer Details (CRDB BANK, KONEKT LIMITED, Account No: 015C8841347002, Branch: HOLLAND HOUSE)",
+        "Authorized By section (Chief Finance Officer)",
+        "Company Stamp placeholder",
+        "Footer Bar with contact info, TIN, BRN"
+      ]
+    },
+    "discount_requests_list": {
+      "status": "PASSED",
+      "tests": [
+        "Admin can list all discount requests with KPIs",
+        "Risk badges (Safe/Critical) displayed correctly in Margin column"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_discount_preview_document_footer_v225.py",
+    "/app/test_reports/pytest/pytest_results_discount_preview_document_footer_v225.xml"
+  ],
+  "action_items": [
+    "Staff login credentials (staff@konekt.co.tz / password123) not working - may need to seed staff user or update credentials"
+  ],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_discount_preview_document_footer_v225.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100% (all UI components verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "staff": "staff@konekt.co.tz / password123 (NOT WORKING)",
+    "test_quote_ref": "QTN-20260316-0FB116",
+    "test_invoice_id": "69b18d65a8467c2938ccfcae"
+  },
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All new features (discount preview mode, document footer section) are working correctly. Staff login not working but admin token can be used for staff endpoints. Invoice detail API fix verified. DocumentFooterSection renders correctly on both Quote and Invoice preview pages."
+}

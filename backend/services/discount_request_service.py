@@ -317,6 +317,53 @@ async def _calculate_margin_impact(db, line_items, discount_amount, standard_pri
     }
 
 
+async def preview_discount_impact(db, *, payload: dict):
+    """
+    Preview-only: calculate margin impact without saving.
+    Reuses the canonical _calculate_margin_impact + _classify_discount_risk.
+    """
+    quote_ref = payload.get("quote_ref", "")
+    order_ref = payload.get("order_ref", "")
+    discount_type = payload.get("discount_type", "percentage")
+    discount_value = float(payload.get("discount_value", 0))
+
+    source_doc = None
+    if quote_ref:
+        source_doc = await db.quotes_v2.find_one({"quote_number": quote_ref}, {"_id": 0})
+        if not source_doc:
+            source_doc = await db.quotes.find_one({"quote_number": quote_ref}, {"_id": 0})
+    if not source_doc and order_ref:
+        source_doc = await db.orders.find_one({"order_number": order_ref}, {"_id": 0})
+
+    standard_price = 0
+    line_items = []
+    if source_doc:
+        standard_price = _money(source_doc.get("total") or source_doc.get("total_amount") or 0)
+        line_items = source_doc.get("line_items") or source_doc.get("items") or []
+
+    if standard_price <= 0:
+        return {"ok": True, "preview": None, "message": "No source document found or price is zero."}
+
+    if discount_type == "percentage":
+        discount_amount = _money(standard_price * discount_value / 100)
+    else:
+        discount_amount = _money(discount_value)
+
+    proposed_final_price = _money(standard_price - discount_amount)
+
+    margin_impact = await _calculate_margin_impact(db, line_items, discount_amount, standard_price)
+
+    return {
+        "ok": True,
+        "preview": {
+            "standard_price": standard_price,
+            "discount_amount": discount_amount,
+            "proposed_final_price": proposed_final_price,
+            **margin_impact,
+        },
+    }
+
+
 async def _apply_discount_to_source(db, discount_doc):
     """
     When a discount is approved, stamp the discount info on the source quote/order

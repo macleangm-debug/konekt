@@ -369,22 +369,17 @@ async def invoices_stats_facade(request: Request):
 @router.get("/invoices/{invoice_id}")
 async def invoice_detail(invoice_id: str, request: Request):
     db = request.app.mongodb
-    invoice = await db.invoices.find_one({"id": invoice_id})
+    from bson import ObjectId as _OID
+    invoice = None
+    try:
+        invoice = await db.invoices.find_one({"_id": _OID(invoice_id)})
+    except Exception:
+        pass
+    if not invoice:
+        invoice = await db.invoices.find_one({"id": invoice_id})
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    payments = [_clean(p) for p in await db.payments.find({"invoice_id": invoice_id}).to_list(100)]
-    proofs = [_clean(p) for p in await db.payment_proofs.find({"invoice_id": invoice_id}).to_list(100)]
-    proof_submissions = [_clean(p) for p in await db.payment_proof_submissions.find({"invoice_id": invoice_id}).to_list(100)]
-    order = await db.orders.find_one({"invoice_id": invoice_id})
-    splits = [_clean(s) for s in await db.invoice_splits.find({"invoice_id": invoice_id}).to_list(10)]
-    return {
-        "invoice": _clean(invoice),
-        "payments": payments,
-        "proofs": proofs,
-        "proof_submissions": proof_submissions,
-        "order": _clean(order),
-        "splits": splits,
-    }
+    return _clean(invoice)
 
 # ─── ORDERS ───────────────────────────────────────────────────────────────────
 

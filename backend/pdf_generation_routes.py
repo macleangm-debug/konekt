@@ -132,6 +132,8 @@ def _header_block(doc_type, doc_number, doc_date, status_label, status_class, br
     phone = branding.get("contact_phone", "+255 XXX XXX XXX")
     address = branding.get("contact_address", "Dar es Salaam, Tanzania")
     logo_url = branding.get("company_logo_url", "")
+    brand_name = branding.get("brand_name") or branding.get("company_name") or "Konekt"
+    tagline = branding.get("tagline") or "B2B Commerce Platform"
     # Use uploaded logo if available, otherwise render Connected Triad SVG + wordmark
     if logo_url:
         logo_html = f'<img src="file:///app/backend{logo_url}" style="height:44px; object-fit:contain;" />'
@@ -139,14 +141,14 @@ def _header_block(doc_type, doc_number, doc_date, status_label, status_class, br
         triad_svg = _connected_triad_logo_svg()
         logo_html = f'''<div style="display:flex; align-items:center; gap:10px;">
           {triad_svg}
-          <span style="font-size:26px; font-weight:700; color:#fff; letter-spacing:0.02em; font-family:\'Helvetica Neue\',Arial,sans-serif;">Konekt</span>
+          <span style="font-size:26px; font-weight:700; color:#fff; letter-spacing:0.02em; font-family:\'Helvetica Neue\',Arial,sans-serif;">{brand_name}</span>
         </div>'''
     return f'''
     <div class="header">
       <div class="header-inner">
         <div>
           {logo_html}
-          <div class="logo-sub">B2B Commerce Platform</div>
+          <div class="logo-sub">{tagline}</div>
         </div>
         <div class="doc-title">
           <h1>{doc_type}</h1>
@@ -284,9 +286,11 @@ def _footer_html(branding=None):
     branding = branding or {}
     email = branding.get("contact_email", "accounts@konekt.co.tz")
     address = branding.get("contact_address", "Dar es Salaam, Tanzania")
+    brand = branding.get("brand_name") or branding.get("company_name") or "Konekt"
+    legal = branding.get("legal_name") or f"{brand} Limited"
     return f'''<div class="footer">
-      Thank you for choosing Konekt. Please include the document number as payment reference.<br/>
-      Konekt Limited &bull; {email} &bull; {address}
+      Thank you for choosing {brand}. Please include the document number as payment reference.<br/>
+      {legal} &bull; {email} &bull; {address}
     </div>'''
 
 

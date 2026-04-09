@@ -10,6 +10,7 @@ import jwt as pyjwt
 
 from services.discount_request_service import (
     create_discount_request,
+    preview_discount_impact,
     list_discount_requests_for_staff,
     list_discount_requests_for_admin,
     get_discount_request_detail,
@@ -41,10 +42,16 @@ def _extract_user(request: Request):
 
 @router.post("/api/staff/discount-requests")
 async def staff_create_discount_request(request: Request):
-    """Sales staff submits a discount request."""
+    """Sales staff submits a discount request, or previews margin impact (mode='preview')."""
     db = request.app.mongodb
-    user_id, email, name, _ = _extract_user(request)
     payload = await request.json()
+
+    # Preview mode — return margin impact without saving
+    if payload.get("mode") == "preview":
+        result = await preview_discount_impact(db, payload=payload)
+        return result
+
+    user_id, email, name, _ = _extract_user(request)
     result = await create_discount_request(
         db, payload=payload,
         staff_id=user_id, staff_email=email, staff_name=name,
