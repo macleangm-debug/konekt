@@ -738,7 +738,7 @@ function App() {
         {/* Partner Portal Routes — /partner-login redirects to unified /login */}
         <Route path="/partner-login" element={<Navigate to="/login" replace />} />
         <Route path="/partner" element={<PartnerLayout />}>
-          <Route index element={<PartnerDashboardV2 />} />
+          <Route index element={<PartnerDashboardPage />} />
           <Route path="catalog" element={<PartnerCatalogPage2 />} />
           <Route path="catalog/new" element={<PartnerListingEditorPage />} />
           <Route path="catalog/:listingId/edit" element={<PartnerListingEditorPage />} />

@@ -35,7 +35,9 @@ def serialize_doc(doc):
 
 @router.get("/dashboard")
 async def partner_dashboard(authorization: Optional[str] = Header(None)):
-    """Get partner dashboard summary"""
+    """Get partner dashboard summary with vendor fulfillment pipeline, actions, and charts."""
+    from datetime import timedelta
+
     user = await get_partner_user_from_header(authorization)
     partner_id = user["partner_id"]
 
@@ -46,53 +48,227 @@ async def partner_dashboard(authorization: Optional[str] = Header(None)):
         "partner_id": partner_id,
         "is_active": True
     })
-    
+
     active_allocations = await db.partner_catalog_items.count_documents({
         "partner_id": partner_id,
         "partner_available_qty": {"$gt": 0},
         "is_active": True,
     })
 
-    # Vendor order counts (source of truth: vendor_orders collection)
-    fulfillment_count = await db.vendor_orders.count_documents({
-        "vendor_id": partner_id,
-        "status": {"$in": ["assigned", "accepted", "work_scheduled", "in_progress", "ready_to_fulfill", "processing"]},
-    })
+    # ═══ ALL VENDOR ORDERS ═══
+    all_vendor_orders = await db.vendor_orders.find(
+        {"vendor_id": partner_id},
+        {"_id": 0, "id": 1, "status": 1, "created_at": 1, "updated_at": 1,
+         "items": 1, "vendor_order_no": 1, "order_id": 1,
+         "vendor_promised_date": 1, "priority": 1, "vendor_total": 1,
+         "total_amount": 1, "total": 1, "release_status": 1}
+    ).sort("created_at", -1).to_list(500)
 
-    completed_jobs = await db.vendor_orders.count_documents({
-        "vendor_id": partner_id,
-        "status": {"$in": ["completed", "fulfilled", "ready"]},
-    })
+    # Filter out unreleased
+    all_vendor_orders = [o for o in all_vendor_orders if o.get("release_status") != "unreleased"]
 
-    # Settlement estimate from vendor_orders
-    pipeline = [
-        {"$match": {"vendor_id": partner_id}},
-        {"$unwind": {"path": "$items", "preserveNullAndEmptyArrays": True}},
-        {"$group": {
-            "_id": None,
-            "total_amount": {"$sum": {"$ifNull": [
-                {"$multiply": [
-                    {"$ifNull": ["$items.vendor_price", {"$ifNull": ["$items.base_price", {"$ifNull": ["$items.unit_price", 0]}]}]},
-                    {"$ifNull": ["$items.quantity", 1]}
-                ]},
-                0
-            ]}}
-        }}
-    ]
-    settlement_cursor = db.vendor_orders.aggregate(pipeline)
-    settlement_total = 0
-    async for row in settlement_cursor:
-        settlement_total = row.get("total_amount", 0)
+    # ═══ FULFILLMENT PIPELINE (counts per status) ═══
+    status_counts = {}
+    for o in all_vendor_orders:
+        st = o.get("status", "assigned")
+        status_counts[st] = status_counts.get(st, 0) + 1
+
+    def _item_total(order):
+        total = 0
+        for item in order.get("items", []):
+            bp = float(item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or 0)
+            qty = float(item.get("quantity") or 1)
+            total += bp * qty
+        if not total:
+            total = float(order.get("vendor_total") or order.get("total_amount") or order.get("total") or 0)
+        return round(total, 2)
+
+    vendor_pipeline = {
+        "assigned": status_counts.get("assigned", 0) + status_counts.get("accepted", 0),
+        "awaiting_ack": status_counts.get("pending", 0) + status_counts.get("pending_acknowledgment", 0),
+        "in_production": status_counts.get("in_progress", 0) + status_counts.get("processing", 0) + status_counts.get("work_scheduled", 0),
+        "ready_to_dispatch": status_counts.get("ready_for_pickup", 0) + status_counts.get("ready_to_fulfill", 0) + status_counts.get("ready", 0),
+        "delayed": status_counts.get("delayed", 0) + status_counts.get("overdue", 0),
+        "delivered": status_counts.get("delivered", 0) + status_counts.get("in_transit", 0) + status_counts.get("picked_up", 0),
+        "completed": status_counts.get("completed", 0) + status_counts.get("fulfilled", 0),
+    }
+
+    # ═══ KPIs ═══
+    total_jobs = len(all_vendor_orders)
+    active_statuses = {"assigned", "accepted", "pending", "pending_acknowledgment", "in_progress", "processing", "work_scheduled", "ready_for_pickup", "ready_to_fulfill", "ready"}
+    active_jobs = len([o for o in all_vendor_orders if o.get("status") in active_statuses])
+    completed_jobs = vendor_pipeline["completed"]
+    delayed_count = vendor_pipeline["delayed"]
+
+    settlement_total = sum(_item_total(o) for o in all_vendor_orders)
+    pending_settlement = sum(_item_total(o) for o in all_vendor_orders if o.get("status") not in ("completed", "fulfilled"))
+    paid_settlement = sum(_item_total(o) for o in all_vendor_orders if o.get("status") in ("completed", "fulfilled"))
+
+    # ═══ WORK REQUIRING ACTION ═══
+    now = datetime.now(timezone.utc)
+    action_items = []
+
+    # New assignments awaiting acknowledgment
+    new_assigned = [o for o in all_vendor_orders if o.get("status") in ("assigned", "pending", "pending_acknowledgment", "accepted")]
+    for o in new_assigned[:5]:
+        item_names = ", ".join([i.get("name", "Item") for i in (o.get("items") or [])[:2]]) or "Order"
+        action_items.append({
+            "type": "new_assignment",
+            "urgency": "high",
+            "title": f"New: {o.get('vendor_order_no', o.get('id', '')[:8])}",
+            "description": f"{item_names} — TZS {_item_total(o):,.0f}",
+            "order_id": o.get("id"),
+        })
+
+    # Delayed / overdue items
+    delayed_items = [o for o in all_vendor_orders if o.get("status") in ("delayed", "overdue")]
+    for o in delayed_items[:5]:
+        item_names = ", ".join([i.get("name", "Item") for i in (o.get("items") or [])[:2]]) or "Order"
+        action_items.append({
+            "type": "delayed",
+            "urgency": "hot",
+            "title": f"Delayed: {o.get('vendor_order_no', o.get('id', '')[:8])}",
+            "description": f"{item_names} — needs status update",
+            "order_id": o.get("id"),
+        })
+
+    # Overdue by promised date
+    for o in all_vendor_orders:
+        if o.get("status") in ("completed", "fulfilled", "delivered", "delayed", "overdue"):
+            continue
+        promised = o.get("vendor_promised_date")
+        if promised:
+            try:
+                pdt = datetime.fromisoformat(str(promised).replace("Z", "+00:00")) if isinstance(promised, str) else promised
+                if pdt < now:
+                    item_names = ", ".join([i.get("name", "Item") for i in (o.get("items") or [])[:2]]) or "Order"
+                    action_items.append({
+                        "type": "overdue_eta",
+                        "urgency": "hot",
+                        "title": f"Past ETA: {o.get('vendor_order_no', o.get('id', '')[:8])}",
+                        "description": f"{item_names} — promised date passed",
+                        "order_id": o.get("id"),
+                    })
+            except Exception:
+                pass
+
+    # In-production items needing status update (no update in 3+ days)
+    stale_threshold = now - timedelta(days=3)
+    for o in all_vendor_orders:
+        if o.get("status") not in ("in_progress", "processing", "work_scheduled"):
+            continue
+        updated = o.get("updated_at") or o.get("created_at")
+        if updated:
+            try:
+                udt = datetime.fromisoformat(str(updated).replace("Z", "+00:00")) if isinstance(updated, str) else updated
+                if udt < stale_threshold:
+                    item_names = ", ".join([i.get("name", "Item") for i in (o.get("items") or [])[:2]]) or "Order"
+                    action_items.append({
+                        "type": "stale_production",
+                        "urgency": "medium",
+                        "title": f"Update needed: {o.get('vendor_order_no', o.get('id', '')[:8])}",
+                        "description": f"{item_names} — no update in 3+ days",
+                        "order_id": o.get("id"),
+                    })
+            except Exception:
+                pass
+
+    # Sort by urgency
+    urgency_order = {"hot": 0, "high": 1, "medium": 2, "low": 3}
+    action_items.sort(key=lambda a: urgency_order.get(a.get("urgency", "low"), 4))
+
+    # ═══ RECENT ASSIGNMENTS (vendor-safe) ═══
+    recent_assignments = []
+    for o in all_vendor_orders[:10]:
+        vendor_safe_items = []
+        for item in o.get("items", []):
+            vendor_safe_items.append({
+                "name": item.get("name", ""),
+                "quantity": item.get("quantity", 1),
+                "vendor_price": float(item.get("vendor_price") or item.get("base_price") or item.get("unit_price") or 0),
+            })
+        recent_assignments.append({
+            "id": o.get("id"),
+            "vendor_order_no": o.get("vendor_order_no", o.get("id", "")[:12]),
+            "status": o.get("status", "assigned"),
+            "priority": o.get("priority", "normal"),
+            "base_price": _item_total(o),
+            "items": vendor_safe_items,
+            "created_at": str(o.get("created_at", "")),
+        })
+
+    # ═══ TREND CHARTS (6 months) ═══
+    charts = _build_vendor_trends(all_vendor_orders, now)
 
     return {
         "partner": serialize_doc(partner) if partner else None,
         "summary": {
             "catalog_count": catalog_count,
             "active_allocations": active_allocations,
-            "pending_fulfillment": fulfillment_count,
+            "pending_fulfillment": active_jobs,
             "completed_jobs": completed_jobs,
             "settlement_total_estimate": settlement_total,
-        }
+        },
+        "vendor_kpis": {
+            "total_jobs": total_jobs,
+            "active_jobs": active_jobs,
+            "completed_jobs": completed_jobs,
+            "delayed": delayed_count,
+            "settlement_total": round(settlement_total, 2),
+            "pending_settlement": round(pending_settlement, 2),
+            "paid_settlement": round(paid_settlement, 2),
+        },
+        "vendor_pipeline": vendor_pipeline,
+        "work_requiring_action": action_items[:15],
+        "recent_assignments": recent_assignments,
+        "charts": charts,
+    }
+
+
+def _parse_vendor_dt(val):
+    if not val:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        try:
+            return datetime.fromisoformat(val.replace("Z", "+00:00"))
+        except Exception:
+            return None
+    return None
+
+
+def _build_vendor_trends(all_orders, now):
+    """Build 6-month fulfillment volume and delivery performance trends."""
+    from datetime import timedelta
+    months = []
+    for i in range(5, -1, -1):
+        d = now - timedelta(days=30 * i)
+        months.append({"year": d.year, "month": d.month, "label": d.strftime("%b")})
+
+    fulfillment_trend = []
+    delivery_performance = []
+
+    for m in months:
+        y, mo, label = m["year"], m["month"], m["label"]
+
+        month_orders = []
+        for o in all_orders:
+            dt = _parse_vendor_dt(o.get("created_at"))
+            if dt and dt.year == y and dt.month == mo:
+                month_orders.append(o)
+
+        total_in_month = len(month_orders)
+        completed_in_month = len([o for o in month_orders if o.get("status") in ("completed", "fulfilled", "delivered")])
+        delayed_in_month = len([o for o in month_orders if o.get("status") in ("delayed", "overdue")])
+
+        fulfillment_trend.append({"month": label, "assigned": total_in_month, "completed": completed_in_month})
+        on_time = completed_in_month
+        delivery_performance.append({"month": label, "on_time": on_time, "delayed": delayed_in_month})
+
+    return {
+        "fulfillment_trend": fulfillment_trend,
+        "delivery_performance": delivery_performance,
     }
 
 
