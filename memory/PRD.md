@@ -12,10 +12,10 @@ Build a B2B e-commerce platform that is deployable as a single-business-per-depl
 
 ## Core Concepts
 - **Single source of truth for branding:** `admin_settings` collection, key `settings_hub`
-- **Public endpoints:** `/api/public/business-context` (consolidated), `/api/public/branding`, `/api/public/payment-info`
+- **Public endpoints:** `/api/public/business-context`, `/api/public/branding`, `/api/public/payment-info`
 - **Admin settings hub:** `GET/PUT /api/admin/settings-hub` (admin auth required)
 - **BrandingProvider:** React context fetches branding on mount with fallback values, non-blocking
-- **Margin-risk classification:** Safe / Warning / Critical — uses same thresholds as pricing engine
+- **Margin-risk classification:** Safe (<80% budget) / Warning (80-100%) / Critical (>100%) — uses same margin engine
 
 ## What's Been Implemented
 
@@ -32,35 +32,29 @@ Build a B2B e-commerce platform that is deployable as a single-business-per-depl
 - CountryAwarePhoneField system-wide
 - Notification Preferences UI per user
 - Multichannel Notification Dispatch (In-App, Email via Resend, WhatsApp via Twilio)
-- Live Resend email integration verified
 
 ### Phase 3: Business Settings Hub & Dynamic Branding (Apr 2026)
-- Public branding endpoint (`/api/public/branding`) — safe projection, no auth
-- Public payment info endpoint (`/api/public/payment-info`) — bank details for customers
-- Consolidated endpoint (`/api/public/business-context`) — single request for all public data
+- Public branding endpoint, payment-info endpoint, consolidated business-context endpoint
 - Admin Settings Hub with JWT auth protection
 - BrandingProvider React context with fallback values, non-blocking render
 - Frontend de-hardcoding of "Konekt" across 80+ components
 - Backend de-hardcoding in email templates, AI assistant, account emails
-- Legacy hooks delegate to BrandingContext (single source)
 
-### Phase 4: Settings Preview Panel & Discount Analytics (Apr 2026)
+### Phase 4: Settings Preview + Discount Analytics (Apr 2026)
 - **Settings Preview Panel** — Navbar, Footer, Email, Invoice previews using current form state
-- **Discount Analytics Dashboard** at `/admin/discount-analytics`:
-  - 6 KPI cards (Total Discounts, Avg %, Discounted Orders, Revenue, Margin Impact, Approval Rate)
-  - Discount Trend chart, Discount vs Revenue chart
-  - Top Discounted Products chart, Sales Discount Behavior table
-  - High Risk Discounts table with Safe/Warning/Critical badges
-  - Discount Requests table
-  - Date range filter + CSV export
-- Backend endpoints: `/api/admin/discount-analytics/kpis`, `/trend`, `/top-products`, `/sales-behavior`, `/high-risk`, `/requests`
+- **Discount Analytics Dashboard** — 6 KPIs, 4 charts, 2 tables, date range filter, CSV export
+- **Auto-Warning Overlay** — Risk panel in discount approval drawer:
+  - Shows risk_level (Safe/Warning/Critical) from margin engine
+  - Shows remaining margin, distributable margin, max safe discount
+  - Warning: amber alert, admin can approve
+  - Critical: red alert, requires explicit checkbox confirmation before approval
+  - Uses `_classify_discount_risk()` — identical thresholds to pricing engine
 
 ## Prioritized Backlog
 
 ### P1 (High)
-- Wire up Twilio WhatsApp integration (when API keys are provided)
-- Auto-warning during discount request approval (show margin impact before approval)
-- Admin sidebar navigation cleanup for discount analytics discoverability
+- Wire up Twilio WhatsApp integration (when API keys provided)
+- Admin sidebar navigation cleanup for analytics discoverability
 
 ### P2 (Medium/Future)
 - WhatsApp automation flows
@@ -68,7 +62,6 @@ Build a B2B e-commerce platform that is deployable as a single-business-per-depl
 - Sales Leaderboard / Gamification
 - Marketing campaigns + automation
 - Mobile-first optimization
-- Favicon dynamic loading from settings hub
 - CSS custom properties for runtime theme switching
 - Margin-risk trend over time analytics
 - Admin threshold settings for safe/warning/critical levels
