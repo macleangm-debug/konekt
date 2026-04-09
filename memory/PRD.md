@@ -199,7 +199,7 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Global native button feedback** — All native `<button>` elements get scale(0.97) active state
 - Applied across all portals: Admin, Sales Manager, Finance Manager, Sales/Staff, Vendor/Partner, Customer
 
-### Phase 13 — Welcome Notification + App Launcher (Apr 9, 2026)
+### Phase 13 — Welcome Notification + App Launcher + Notification Preferences (Apr 9, 2026)
 - **Welcome Notification on First Login**
   - One-time welcome notification created on first successful login
   - Role-aware messages: Customer, Sales, Sales Manager, Finance Manager, Admin, Vendor, Partner, Affiliate
@@ -209,15 +209,23 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Backend: `_create_welcome_notification()` in server.py, integrated into both login endpoints
 - **App Launcher** (`AppLauncher.jsx`)
   - Full-screen premium entry animation with exact Connected Triad logo SVG
-  - Animation sequence: 3 nodes fade+scale in → connector lines draw → glow travel → wordmark fade → tagline fade → fade out
+  - Shows on EVERY website launch / hard refresh (in-memory React state, no sessionStorage)
+  - Animation: 3 nodes fade+scale → connector lines draw → glow travel → wordmark fade → tagline fade → fade out
   - ~2.2s total duration, GPU-friendly (transform + opacity only)
-  - Shows once per session (sessionStorage key `konekt_launcher_shown`)
   - Dark navy background (#0f172a), gold accent nodes (#D4A843), white secondary nodes
 - **App Loader** (`AppLoader.jsx`)
   - Reusable branded loading component with pulsing triad + traveling glow
-  - Sizes: sm (40px), md (64px), lg (96px)
-  - Optional text message
-  - Replaced generic spinners in: Admin Dashboard (2), Business Health, Sales, Financial, Inventory Intelligence, Weekly Performance, Alert Dashboard, Customer Profile, Customer Services, Customer Service Requests
+  - Sizes: sm (40px), md (64px), lg (96px), optional text message
+  - Replaced generic spinners in 16+ pages: Admin Dashboard (2), Business Health, Sales, Financial, Inventory, Weekly Performance, Alert Dashboard, Customer Dashboard, Customer Profile, Customer Services, Customer Service Requests, Staff Sales Dashboard, Staff Workspace, Vendor Dashboard, Partner Dashboard
+- **Notification Preferences System** (fully enforced)
+  - Extended EVENT_CATALOG: 18 events (order updates, payments, alerts, reports, assignments, earnings)
+  - Extended ROLE_DEFAULTS: 7 roles (customer, sales, sales_manager, finance_manager, vendor, affiliate, admin)
+  - Enforcement: check → then send (not send → then filter)
+    - `notification_dispatch_service.py` bridges to multichannel service
+    - `in_app_notification_service.py` checks prefs before creating notification
+  - Settings Hub → Notifications tab: System-Wide Notifications + Per-Event Preferences (APP/EMAIL/WA toggles)
+  - Also accessible in: Customer MyAccountPageV2, Vendor Dashboard, Affiliate Profile
+  - "Weekly Performance Report" toggle ready for scheduled delivery (Phase C)
 
 ## Backlog
 
