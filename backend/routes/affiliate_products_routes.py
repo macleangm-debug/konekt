@@ -117,9 +117,11 @@ async def get_affiliate_product_promotions(request: Request):
 @router.get("/earnings-summary")
 async def get_affiliate_earnings_summary(request: Request):
     """
-    Returns affiliate earnings: per-order commissions with status.
-    Reads from canonical commissions collection.
+    Returns affiliate earnings with trend charts, conversion metrics.
+    Extended for Affiliate Dashboard V2.
     """
+    from datetime import datetime, timezone, timedelta
+
     db = request.app.mongodb
 
     user_email = None
@@ -145,13 +147,29 @@ async def get_affiliate_earnings_summary(request: Request):
             {"affiliate_email": user_email},
         ]
 
-    commissions = await db.affiliate_commissions.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    commissions = await db.affiliate_commissions.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
 
-    total_earned = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in commissions if c.get("status") in ("approved", "paid"))
+    # Earnings breakdown
+    expected = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in commissions if c.get("status") == "pending")
     pending_payout = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in commissions if c.get("status") == "approved")
     paid_out = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in commissions if c.get("status") == "paid")
+    total_earned = expected + pending_payout + paid_out
     referral_count = len(commissions)
+    successful_orders = len([c for c in commissions if c.get("status") in ("approved", "paid")])
 
+    # Active promotions count
+    active_promos = await db.promotions.count_documents({"status": "active"})
+
+    # Conversion metrics
+    total_clicks = 0
+    try:
+        agg = await db.affiliate_clicks.count_documents({"affiliate_email": user_email} if user_email else {})
+        total_clicks = agg
+    except Exception:
+        pass
+    conversion_rate = round((successful_orders / max(total_clicks, 1)) * 100, 1) if total_clicks > 0 else 0
+
+    # Earnings rows
     earnings_rows = []
     for c in commissions[:50]:
         earnings_rows.append({
@@ -163,13 +181,50 @@ async def get_affiliate_earnings_summary(request: Request):
             "date_label": c.get("created_at", "")[:7] if c.get("created_at") else "",
         })
 
+    # Trend charts (6 months)
+    now = datetime.now(timezone.utc)
+    earnings_trend = []
+    conversions_trend = []
+    for i in range(5, -1, -1):
+        d = now - timedelta(days=30 * i)
+        y, mo, label = d.year, d.month, d.strftime("%b")
+
+        month_comms = []
+        for c in commissions:
+            cdt = c.get("created_at", "")
+            if isinstance(cdt, str) and len(cdt) >= 7:
+                try:
+                    cd = datetime.fromisoformat(cdt.replace("Z", "+00:00"))
+                    if cd.year == y and cd.month == mo:
+                        month_comms.append(c)
+                except Exception:
+                    pass
+            elif hasattr(cdt, "year") and cdt.year == y and cdt.month == mo:
+                month_comms.append(c)
+
+        month_earned = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in month_comms)
+        month_orders = len(month_comms)
+        month_paid = sum(float(c.get("commission_amount", 0) or c.get("amount", 0)) for c in month_comms if c.get("status") == "paid")
+
+        earnings_trend.append({"month": label, "earned": round(month_earned, 0), "paid": round(month_paid, 0)})
+        conversions_trend.append({"month": label, "orders": month_orders})
+
     return {
         "ok": True,
         "summary": {
             "total_earned": _money(total_earned),
+            "expected": _money(expected),
             "pending_payout": _money(pending_payout),
             "paid_out": _money(paid_out),
             "referral_count": referral_count,
+            "successful_orders": successful_orders,
+            "active_promotions": active_promos,
+            "total_clicks": total_clicks,
+            "conversion_rate": conversion_rate,
         },
         "earnings": earnings_rows,
+        "charts": {
+            "earnings_trend": earnings_trend,
+            "conversions_trend": conversions_trend,
+        },
     }
