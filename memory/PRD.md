@@ -174,6 +174,31 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - Both pages nested under "Reports & Analytics" sidebar (not top-level)
 - Accessible by admin, sales_manager, finance_manager roles
 
+### Phase 12 — Global Micro-Interaction System (Apr 9, 2026)
+- **Shared `interactions.css`** — Single source of truth for all interaction feedback
+  - `k-btn-press`: Button press scale(0.97) at 100ms
+  - `k-card-interactive`: Card hover lift translateY(-2px) + shadow at 140ms, active scale(0.98)
+  - `k-row-interactive`: Table row hover highlight at 120ms
+  - `k-page-fade-in`: Page/section fade-slide-up at 180ms
+  - `k-tab-fade`: Tab content fade at 150ms
+  - `k-backdrop-fade` + `k-drawer-panel`: Drawer transitions at 180-200ms
+  - `k-spinner`: Inline loading spinner (600ms rotation)
+  - `k-skeleton` + variants: Shimmer loading placeholders
+  - `k-scale-in`: Modal/popover entrance
+  - `k-notify-new`: Notification highlight
+- **Enhanced Shadcn Button** — `loading` and `loadingText` props (opt-in), auto-spinner + disabled
+- **Enhanced Shadcn Card** — `interactive` prop for hover lift + press scale
+- **Enhanced SurfaceCard** — `interactive` prop
+- **Enhanced MetricCard** — Auto-interactive hover on all metric cards
+- **Enhanced TableRow** — Smooth 120ms hover transitions
+- **Enhanced TabsTrigger** — 140ms active state transition
+- **Enhanced TabsContent** — Fade animation on tab switch
+- **Enhanced StandardDrawerShell** — k-backdrop-fade + k-drawer-panel (200ms)
+- **Enhanced Sheet** — Timing reduced from 300/500ms to 200/200ms
+- **Page Transitions** — All 4 layouts (AdminLayout, CustomerPortalLayoutV2, PartnerLayout, StaffLayout) wrap `<Outlet />` with `k-page-fade-in` keyed by `location.pathname`
+- **Global native button feedback** — All native `<button>` elements get scale(0.97) active state
+- Applied across all portals: Admin, Sales Manager, Finance Manager, Sales/Staff, Vendor/Partner, Customer
+
 ## Backlog
 
 ### P1 — Upcoming
