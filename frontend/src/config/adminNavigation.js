@@ -2,8 +2,8 @@ import {
   LayoutDashboard, ShoppingCart, FileText, CreditCard, Receipt,
   Columns3, Truck, CheckSquare, Contact, Target,
   Network, Megaphone, Wallet, Percent,
-  Route, Inbox, BarChart3,
-  Settings, Users, TrendingUp, MessageSquare, BadgePercent,
+  Route, Inbox, BarChart3, ClipboardList, Package,
+  Settings, Users, TrendingUp, MessageSquare, BadgePercent, PieChart,
 } from "lucide-react";
 
 /**
@@ -30,6 +30,7 @@ export const adminNavigation = [
       { label: "Payments", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
       { label: "Invoices", href: "/admin/invoices", icon: Receipt },
       { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
+      { label: "Discount Analytics", href: "/admin/discount-analytics", icon: PieChart },
     ],
   },
   {
@@ -72,14 +73,16 @@ export const adminNavigation = [
     label: "Operations",
     children: [
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
+      { label: "Delivery Notes", href: "/admin/delivery-notes", icon: ClipboardList },
+      { label: "Purchase Orders", href: "/admin/procurement/purchase-orders", icon: Package },
       { label: "Requests", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
     ],
   },
   {
     key: "reports",
-    label: "Reports",
+    label: "Reports & Analytics",
     children: [
-      { label: "Reports", href: "/admin/product-insights", icon: BarChart3 },
+      { label: "Product Insights", href: "/admin/product-insights", icon: BarChart3 },
     ],
   },
   {

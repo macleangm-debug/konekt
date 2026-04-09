@@ -285,3 +285,51 @@ async def discount_requests_list(
     ).sort("created_at", -1).to_list(500)
 
     return requests_list
+
+
+@router.get("/alerts")
+async def discount_risk_alerts(
+    request: Request,
+    _admin=Depends(_require_admin),
+    days: int = Query(30, ge=1, le=365),
+    status: str = Query(None),
+):
+    """Active risk behavior alerts — sales reps with repeated risky discounts."""
+    db = request.app.mongodb
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    query = {"created_at": {"$gte": cutoff.isoformat()}}
+    if status:
+        query["status"] = status
+
+    alerts = await db.discount_risk_alerts.find(
+        query, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+
+    return {
+        "ok": True,
+        "alerts": alerts,
+        "total": len(alerts),
+        "active": sum(1 for a in alerts if a.get("status") == "active"),
+    }
+
+
+@router.put("/alerts/{alert_id}/dismiss")
+async def dismiss_risk_alert(
+    request: Request,
+    alert_id: str,
+    _admin=Depends(_require_admin),
+):
+    """Admin dismisses/acknowledges a risk behavior alert."""
+    db = request.app.mongodb
+    result = await db.discount_risk_alerts.update_one(
+        {"alert_id": alert_id},
+        {"$set": {
+            "status": "dismissed",
+            "reviewed": True,
+            "reviewed_by": _admin.get("full_name", "Admin"),
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    if result.modified_count == 0:
+        return {"ok": False, "error": "Alert not found"}
+    return {"ok": True}

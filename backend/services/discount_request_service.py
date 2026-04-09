@@ -120,6 +120,13 @@ async def create_discount_request(db, *, payload: dict, staff_id: str, staff_ema
 
     await db.discount_requests.insert_one(doc)
     doc.pop("_id", None)
+
+    # Proactive governance: check for repeated risky behavior
+    await _check_risky_behavior_alert(
+        db, staff_id=staff_id, staff_name=staff_name,
+        risk_level=margin_impact.get("risk_level", "safe"),
+    )
+
     return {"ok": True, "request": doc}
 
 
@@ -429,3 +436,126 @@ def _classify_discount_risk(discount_amount, discount_budget, distributable_marg
             f"Maximum safe discount: TZS {discount_budget:,.0f}. "
             "Approval would breach the protected margin floor."
         )
+
+
+
+# ═══ PROACTIVE GOVERNANCE — RISKY BEHAVIOR DETECTION ═══
+
+# Thresholds — configurable
+_CRITICAL_THRESHOLD = 3    # X critical requests
+_WINDOW_DAYS = 7           # in Y days
+_WARNING_THRESHOLD = 5     # X warning+ requests
+_NEAR_FLOOR_COUNT = 3      # repeated approvals near floor
+
+
+async def _check_risky_behavior_alert(db, *, staff_id: str, staff_name: str, risk_level: str):
+    """
+    After each discount request, check if this sales rep has a pattern
+    of repeated critical/warning requests. If threshold exceeded, create
+    an admin alert notification. De-duplicates alerts within the window.
+    """
+    if risk_level == "safe":
+        return  # no alert needed for safe requests
+
+    window = datetime.now(timezone.utc) - timedelta(days=_WINDOW_DAYS)
+    window_iso = window.isoformat()
+
+    # Count critical + warning requests from this rep in the window
+    recent = await db.discount_requests.find(
+        {
+            "$or": [{"sales_rep_id": staff_id}, {"sales_rep_name": staff_name}],
+            "created_at": {"$gte": window_iso},
+        },
+        {"_id": 0, "margin_impact": 1, "margin_safe": 1},
+    ).to_list(200)
+
+    critical_count = 0
+    warning_count = 0
+    for r in recent:
+        mi = r.get("margin_impact") or {}
+        rl = mi.get("risk_level", "")
+        if rl == "critical":
+            critical_count += 1
+        elif rl == "warning":
+            warning_count += 1
+        elif not r.get("margin_safe", True):
+            critical_count += 1
+
+    should_alert = False
+    alert_level = "warning"
+    alert_message = ""
+
+    if critical_count >= _CRITICAL_THRESHOLD:
+        should_alert = True
+        alert_level = "critical"
+        alert_message = (
+            f"{staff_name or 'A sales rep'} has submitted {critical_count} critical-risk "
+            f"discount requests in the last {_WINDOW_DAYS} days. "
+            "This pattern may indicate pricing pressure or policy non-compliance."
+        )
+    elif (critical_count + warning_count) >= _WARNING_THRESHOLD:
+        should_alert = True
+        alert_level = "warning"
+        alert_message = (
+            f"{staff_name or 'A sales rep'} has submitted {critical_count + warning_count} "
+            f"risky discount requests ({critical_count} critical, {warning_count} warning) "
+            f"in the last {_WINDOW_DAYS} days."
+        )
+
+    if not should_alert:
+        return
+
+    # De-duplicate: check if we already sent an alert for this rep within the window
+    existing_alert = await db.discount_risk_alerts.find_one({
+        "staff_id": staff_id,
+        "created_at": {"$gte": window_iso},
+        "alert_level": alert_level,
+    })
+    if existing_alert:
+        # Update count but don't spam
+        await db.discount_risk_alerts.update_one(
+            {"_id": existing_alert["_id"]},
+            {"$set": {
+                "critical_count": critical_count,
+                "warning_count": warning_count,
+                "updated_at": _now_iso(),
+            }},
+        )
+        return
+
+    alert_id = f"DRA-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+    now = _now_iso()
+    alert_doc = {
+        "alert_id": alert_id,
+        "staff_id": staff_id,
+        "staff_name": staff_name,
+        "alert_level": alert_level,
+        "critical_count": critical_count,
+        "warning_count": warning_count,
+        "window_days": _WINDOW_DAYS,
+        "message": alert_message,
+        "status": "active",
+        "reviewed": False,
+        "reviewed_by": "",
+        "reviewed_at": "",
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.discount_risk_alerts.insert_one(alert_doc)
+    alert_doc.pop("_id", None)
+
+    # Also push a notification to all admin users
+    admin_users = await db.users.find({"role": "admin"}, {"_id": 0, "id": 1}).to_list(50)
+    for admin in admin_users:
+        await db.notifications.insert_one({
+            "id": str(uuid4()),
+            "user_id": admin.get("id", ""),
+            "role": "admin",
+            "event_type": "discount_risk_alert",
+            "title": f"Discount Risk Alert: {staff_name}",
+            "message": alert_message,
+            "target_url": "/admin/discount-analytics",
+            "target_ref": alert_id,
+            "read": False,
+            "created_at": now,
+        })

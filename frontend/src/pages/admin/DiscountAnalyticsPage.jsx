@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   TrendingDown, Percent, ShoppingCart, DollarSign, AlertTriangle,
-  CheckCircle, XCircle, Filter, Download, Calendar,
+  CheckCircle, XCircle, Filter, Download, Calendar, ShieldAlert, X,
 } from "lucide-react";
 import api from "../../lib/api";
+import { toast } from "sonner";
 
 const money = (v) => `TZS ${Number(v || 0).toLocaleString()}`;
 
@@ -21,18 +22,20 @@ export default function DiscountAnalyticsPage() {
   const [salesBehavior, setSalesBehavior] = useState([]);
   const [highRisk, setHighRisk] = useState([]);
   const [requests, setRequests] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [kRes, tRes, pRes, sRes, rRes, hRes] = await Promise.all([
+      const [kRes, tRes, pRes, sRes, rRes, hRes, aRes] = await Promise.all([
         api.get(`/api/admin/discount-analytics/kpis?days=${days}`),
         api.get(`/api/admin/discount-analytics/trend?days=${days}`),
         api.get(`/api/admin/discount-analytics/top-products?days=${days}`),
         api.get(`/api/admin/discount-analytics/sales-behavior?days=${days}`),
         api.get(`/api/admin/discount-analytics/requests?days=${days}`),
         api.get(`/api/admin/discount-analytics/high-risk?days=${days}`),
+        api.get(`/api/admin/discount-analytics/alerts?days=${days}`).catch(() => ({ data: { alerts: [] } })),
       ]);
       setKpis(kRes.data);
       setTrend(tRes.data || []);
@@ -40,6 +43,7 @@ export default function DiscountAnalyticsPage() {
       setSalesBehavior(sRes.data || []);
       setRequests(hRes.data || []);
       setHighRisk(rRes.data || []);
+      setAlerts(aRes.data?.alerts || []);
     } catch (e) {
       console.error("Failed to load analytics:", e);
     }
@@ -47,6 +51,16 @@ export default function DiscountAnalyticsPage() {
   }, [days]);
 
   useEffect(() => { load(); }, [load]);
+
+  const dismissAlert = async (alertId) => {
+    try {
+      await api.put(`/api/admin/discount-analytics/alerts/${alertId}/dismiss`);
+      setAlerts((prev) => prev.filter((a) => a.alert_id !== alertId));
+      toast.success("Alert dismissed");
+    } catch {
+      toast.error("Failed to dismiss alert");
+    }
+  };
 
   const exportCSV = () => {
     if (!requests.length) return;
@@ -105,6 +119,54 @@ export default function DiscountAnalyticsPage() {
             <KpiCard icon={<AlertTriangle className="w-4 h-4 text-red-500" />} label="Margin Impact" value={money(kpis.margin_impact)} />
             <KpiCard icon={<CheckCircle className="w-4 h-4 text-teal-500" />} label="Approval Rate" value={`${kpis.approval_rate}%`} sub={`${kpis.approved_requests} of ${kpis.total_requests}`} />
           </div>
+
+          {/* Risk Behavior Alerts */}
+          {alerts.filter((a) => a.status === "active").length > 0 && (
+            <div className="space-y-2" data-testid="risk-alerts-section">
+              {alerts.filter((a) => a.status === "active").map((alert) => {
+                const isCritical = alert.alert_level === "critical";
+                return (
+                  <div
+                    key={alert.alert_id}
+                    className={`rounded-xl border p-4 flex items-start gap-3 ${
+                      isCritical
+                        ? "border-red-200 bg-red-50"
+                        : "border-amber-200 bg-amber-50"
+                    }`}
+                    data-testid={`risk-alert-${alert.alert_id}`}
+                  >
+                    <ShieldAlert className={`w-5 h-5 mt-0.5 shrink-0 ${isCritical ? "text-red-500" : "text-amber-500"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-bold uppercase ${isCritical ? "text-red-600" : "text-amber-600"}`}>
+                          {alert.alert_level} Risk Pattern
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {(alert.created_at || "").slice(0, 10)}
+                        </span>
+                      </div>
+                      <p className={`text-sm ${isCritical ? "text-red-700" : "text-amber-700"}`}>
+                        {alert.message}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-500">
+                        <span>Critical: <strong>{alert.critical_count}</strong></span>
+                        <span>Warning: <strong>{alert.warning_count}</strong></span>
+                        <span>Window: {alert.window_days} days</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => dismissAlert(alert.alert_id)}
+                      className="shrink-0 p-1 rounded-lg hover:bg-white/60 transition"
+                      title="Dismiss alert"
+                      data-testid={`dismiss-alert-${alert.alert_id}`}
+                    >
+                      <X className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Charts Row */}
           <div className="grid md:grid-cols-2 gap-4">
