@@ -227,11 +227,33 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Also accessible in: Customer MyAccountPageV2, Vendor Dashboard, Affiliate Profile
   - "Weekly Performance Report" toggle ready for scheduled delivery (Phase C)
 
+### Phase 14 — UX Cleanup & Global Confirmation Modal System (Apr 9, 2026)
+- **App Launcher Timing Refinement**
+  - Slowed animation from ~2.2s to ~2.5s for more premium, deliberate feel
+  - Nodes: staggered delays (50/300/550ms), 380ms duration
+  - Connector lines: smoother draw (600ms, ease-in-out, delays 400/620/840ms)
+  - Text: fade delays pushed to 1550/1850ms with 450ms duration
+  - Glow: 1.3s dur, 1.0s begin
+- **Interruptive Popup Removal** (complete deletion, not hiding)
+  - Removed: ExitIntentPopup, PromoBanner, FirstOrderDiscountModal, CountrySelectorModal, ClientPromoStrip, ClientBannerCarousel
+  - Country defaults to Tanzania ("TZ") in localStorage without modal
+  - All associated files deleted, imports removed, event listeners cleaned up
+- **Global Confirmation Modal System** (`ConfirmModalContext.jsx`)
+  - Architecture: `ConfirmModalProvider` wraps entire app in App.js
+  - `useConfirmModal()` hook exposes `confirmAction({ title, message, confirmLabel, cancelLabel, tone, onConfirm })`
+  - Features: loading state, double-click prevention, backdrop blocks interaction, ESC closes (only when safe)
+  - Tones: default (navy), danger (red), success (green), warning (amber)
+  - Converted ALL 22+ `window.confirm()` calls across codebase
+  - Converted all 4 old modal patterns (ConfirmActionModal, ConfirmationModal, useConfirmationModal)
+  - All logout handlers (Admin, Staff, Partner, Customer, Legacy Navbar) now require confirmation
+  - All delete/deactivate/approve/reject/convert actions use global modal
+  - Zero `window.confirm()` remaining in codebase
+
 ## Backlog
 
 ### P1 — Upcoming
+- Scheduled Weekly Report Delivery (respecting notification preferences)
 - Coaching System for Sales Team (flagging underperforming reps)
-- Notification Preferences (in-app/email/WhatsApp control)
 - Twilio WhatsApp integration for alert/report delivery (pending API keys)
 - Resend email integration for automated report delivery (pending API key)
 
