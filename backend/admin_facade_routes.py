@@ -1181,6 +1181,441 @@ async def reports_inventory_intelligence(request: Request, days: int = Query(180
 
 
 
+
+
+# ─── ACTION ALERTS (extends existing risk/notification infrastructure) ─────────
+
+@router.get("/alerts")
+async def get_action_alerts(
+    request: Request,
+    severity: Optional[str] = Query(None),
+    alert_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    limit: int = Query(50),
+):
+    """
+    Unified action alerts with priority scoring.
+    Merges discount_risk_alerts + system-generated alerts.
+    Supports filtering by severity, type, status.
+    """
+    db = request.app.mongodb
+
+    # Build query
+    query = {}
+    if severity:
+        query["severity"] = severity
+    if alert_type:
+        query["alert_type"] = alert_type
+    if status:
+        query["status"] = status
+
+    alerts = await db.action_alerts.find(query, {"_id": 0}).sort("priority_score", -1).to_list(limit)
+
+    # KPI summary
+    all_alerts = await db.action_alerts.find({}, {"_id": 0, "severity": 1, "status": 1}).to_list(1000)
+    critical = sum(1 for a in all_alerts if a.get("severity") == "critical" and a.get("status") == "open")
+    warning = sum(1 for a in all_alerts if a.get("severity") == "warning" and a.get("status") == "open")
+    open_count = sum(1 for a in all_alerts if a.get("status") == "open")
+    resolved = sum(1 for a in all_alerts if a.get("status") == "resolved")
+
+    return {
+        "kpis": {
+            "critical": critical,
+            "warning": warning,
+            "open": open_count,
+            "resolved": resolved,
+            "total": len(all_alerts),
+        },
+        "alerts": alerts,
+    }
+
+
+@router.post("/alerts/{alert_id}/resolve")
+async def resolve_alert(alert_id: str, request: Request):
+    """Mark an alert as resolved."""
+    db = request.app.mongodb
+    result = await db.action_alerts.update_one(
+        {"alert_id": alert_id},
+        {"$set": {"status": "resolved", "resolved_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return {"ok": True, "alert_id": alert_id}
+
+
+@router.post("/alerts/generate")
+async def generate_action_alerts(request: Request):
+    """
+    Auto-generate action alerts from current system state.
+    Triggers: low ratings, critical discounts, delayed orders, dead products, underperforming reps.
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
+    alerts_created = 0
+
+    # Helper: create alert if not already open
+    async def _create_alert(alert_type, severity, entity_type, entity_id, message, recommended_action, assigned_to="admin"):
+        existing = await db.action_alerts.find_one({
+            "alert_type": alert_type, "entity_id": entity_id, "status": "open"
+        })
+        if existing:
+            return
+        # Priority scoring
+        sev_score = {"critical": 100, "warning": 60, "info": 20}.get(severity, 10)
+        impact_score = {"rating": 25, "discount": 30, "delay": 20, "product": 15, "performance": 25}.get(alert_type, 10)
+        priority_score = sev_score + impact_score
+
+        await db.action_alerts.insert_one({
+            "alert_id": f"ALT-{now.strftime('%Y%m%d')}-{str(uuid4())[:6].upper()}",
+            "alert_type": alert_type,
+            "severity": severity,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "message": message,
+            "recommended_action": recommended_action,
+            "assigned_to": assigned_to,
+            "status": "open",
+            "priority_score": priority_score,
+            "created_at": now_iso,
+            "resolved_at": None,
+        })
+        nonlocal alerts_created
+        alerts_created += 1
+
+    # ── 1. Low Ratings (≤2 stars) ──
+    low_rated = await db.orders.find(
+        {"rating.stars": {"$lte": 2}},
+        {"_id": 0, "order_number": 1, "customer_name": 1, "rating": 1, "assigned_sales_id": 1}
+    ).to_list(100)
+    sales_map = {}
+    sales_users = await db.users.find({"role": {"$in": ["sales", "staff"]}}, {"_id": 0, "id": 1, "full_name": 1}).to_list(100)
+    for u in sales_users:
+        sales_map[u.get("id", "")] = u.get("full_name", "")
+
+    for o in low_rated:
+        rep = sales_map.get(o.get("assigned_sales_id", ""), o.get("assigned_sales_id", "Unknown"))
+        await _create_alert(
+            "rating", "critical", "order", o.get("order_number", ""),
+            f"Low rating ({o['rating']['stars']}★) on Order {o.get('order_number', '')} — Customer: {o.get('customer_name', '')}",
+            f"Contact customer within 24h. Review {rep}'s service quality.",
+            "sales_manager"
+        )
+
+    # ── 2. Critical Discounts ──
+    settings_doc = await db.admin_settings.find_one({"type": "discount_governance"}, {"_id": 0})
+    critical_threshold = 30
+    if settings_doc and settings_doc.get("settings"):
+        critical_threshold = settings_doc["settings"].get("critical_threshold", 30)
+
+    crit_discounts = await db.discount_requests.find(
+        {"status": "pending", "discount_percent": {"$gte": critical_threshold}},
+        {"_id": 0, "id": 1, "discount_percent": 1, "requested_by_name": 1, "customer_name": 1}
+    ).to_list(50)
+    for d in crit_discounts:
+        await _create_alert(
+            "discount", "critical", "discount_request", d.get("id", ""),
+            f"Critical discount ({d.get('discount_percent', 0)}%) requested by {d.get('requested_by_name', 'Unknown')} for {d.get('customer_name', '')}",
+            "Review discount justification. Consider tightening approval thresholds.",
+            "admin"
+        )
+
+    # ── 3. Delayed Orders ──
+    three_days_ago = (now - timedelta(days=3)).isoformat()
+    delayed = await db.orders.find(
+        {"status": {"$in": ["confirmed", "assigned", "in_production", "in_progress"]},
+         "created_at": {"$lt": three_days_ago}},
+        {"_id": 0, "order_number": 1, "customer_name": 1, "status": 1, "created_at": 1}
+    ).to_list(50)
+    for o in delayed:
+        created = o.get("created_at", "")
+        if isinstance(created, str):
+            try:
+                days_old = (now - datetime.fromisoformat(created.replace("Z", "+00:00"))).days
+            except Exception:
+                days_old = 0
+        elif hasattr(created, 'isoformat'):
+            days_old = (now - created).days
+        else:
+            days_old = 0
+        if days_old >= 3:
+            await _create_alert(
+                "delay", "warning", "order", o.get("order_number", ""),
+                f"Order {o.get('order_number', '')} delayed — {days_old} days in '{o.get('status', '')}' status. Customer: {o.get('customer_name', '')}",
+                "Follow up with vendor/production. Notify customer of status.",
+                "sales_manager"
+            )
+
+    # ── 4. Dead Products ──
+    sixty_days_ago = (now - timedelta(days=60)).isoformat()
+    all_products = await db.products.find({}, {"_id": 0, "name": 1}).to_list(500)
+    paid_orders = await db.orders.find(
+        {"payment_status": {"$in": ["paid", "verified"]}, "items": {"$exists": True}},
+        {"_id": 0, "items": 1, "created_at": 1}
+    ).to_list(10000)
+
+    product_last_sold = {}
+    for order in paid_orders:
+        ca = order.get("created_at", "")
+        ca_str = ca.isoformat() if hasattr(ca, 'isoformat') else str(ca or "")
+        for item in order.get("items", []):
+            pname = item.get("product_name") or item.get("name") or ""
+            if pname and (pname not in product_last_sold or ca_str > product_last_sold[pname]):
+                product_last_sold[pname] = ca_str
+
+    for prod in all_products:
+        pname = prod.get("name", "")
+        last = product_last_sold.get(pname, "")
+        if not last or last < sixty_days_ago:
+            await _create_alert(
+                "product", "warning", "product", pname,
+                f"Product '{pname}' is dead stock — no sales in 60+ days",
+                "Consider removing from catalog or running a promotion.",
+                "admin"
+            )
+
+    # ── 5. Underperforming Reps ──
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "assigned_sales_id": 1, "payment_status": 1, "rating": 1}
+    ).to_list(10000)
+
+    for u in sales_users:
+        uid = u.get("id", "")
+        name = u.get("full_name", "")
+        rep_orders = [o for o in all_orders if o.get("assigned_sales_id") == uid]
+        rep_paid = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
+        rep_ratings = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
+        avg_r = sum(rep_ratings) / max(len(rep_ratings), 1) if rep_ratings else 5
+
+        if len(rep_paid) < 3 and len(rep_orders) > 5:
+            await _create_alert(
+                "performance", "warning", "user", uid,
+                f"Rep {name} underperforming — {len(rep_paid)} deals closed from {len(rep_orders)} orders",
+                "Schedule coaching session. Review pipeline and conversion.",
+                "sales_manager"
+            )
+        if avg_r < 3 and len(rep_ratings) >= 3:
+            await _create_alert(
+                "performance", "critical", "user", uid,
+                f"Rep {name} has low average rating ({round(avg_r, 1)}★) across {len(rep_ratings)} ratings",
+                "Review customer feedback. Assign training or mentoring.",
+                "sales_manager"
+            )
+
+    return {"ok": True, "alerts_created": alerts_created}
+
+
+# ─── WEEKLY PERFORMANCE REPORT ─────────────────────────────────────────────────
+
+@router.get("/reports/weekly-performance")
+async def reports_weekly_performance(request: Request, weeks_back: int = Query(0)):
+    """
+    Weekly Performance Report — aggregates all business data for the week.
+    weeks_back=0 means current week, 1 means last week, etc.
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+
+    # Calculate week boundaries
+    week_end = now - timedelta(weeks=weeks_back)
+    week_start = week_end - timedelta(days=7)
+    ws = week_start.isoformat()
+    we = week_end.isoformat()
+
+    # ── All orders in window ──
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "total_amount": 1, "total": 1, "payment_status": 1,
+         "status": 1, "created_at": 1, "rating": 1, "customer_name": 1,
+         "assigned_sales_id": 1, "order_number": 1, "discount_percent": 1, "items": 1}
+    ).to_list(10000)
+
+    def _in_range(ca):
+        ca_str = ca.isoformat() if hasattr(ca, 'isoformat') else str(ca or "")
+        return ws <= ca_str <= we
+
+    week_orders = [o for o in all_orders if _in_range(o.get("created_at", ""))]
+    paid_week = [o for o in week_orders if o.get("payment_status") in ("paid", "verified")]
+    paid_all = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+
+    # ── 1. EXECUTIVE SUMMARY KPIs ──
+    week_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_week)
+    orders_completed = len(paid_week)
+
+    all_comms = await db.commissions.find({}, {"_id": 0, "amount": 1, "created_at": 1}).to_list(5000)
+    week_comms = sum(c.get("amount", 0) for c in all_comms if _in_range(c.get("created_at", "")))
+    total_rev_all = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_all)
+    total_comm_all = sum(c.get("amount", 0) for c in all_comms)
+    margin_pct = round(((total_rev_all - total_comm_all) / max(total_rev_all, 1)) * 100, 1)
+
+    week_ratings = [o["rating"]["stars"] for o in week_orders if o.get("rating", {}).get("stars")]
+    avg_rating = round(sum(week_ratings) / max(len(week_ratings), 1), 1) if week_ratings else 0
+
+    week_discount_val = sum(float(o.get("total_amount") or o.get("total") or 0) * float(o.get("discount_percent", 0)) / 100 for o in week_orders if o.get("discount_percent"))
+    net_profit = round(week_revenue - week_comms, 0)
+
+    # ── 2. SALES PERFORMANCE ──
+    sales_users = await db.users.find({"role": {"$in": ["sales", "staff"]}}, {"_id": 0, "id": 1, "full_name": 1, "email": 1}).to_list(100)
+    sales_map = {u.get("id", ""): u.get("full_name", u.get("email", "")) for u in sales_users}
+
+    rep_stats = []
+    for u in sales_users:
+        uid = u.get("id", "")
+        name = u.get("full_name", u.get("email", ""))
+        rep_orders = [o for o in all_orders if o.get("assigned_sales_id") == uid]
+        rep_paid = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
+        deals = len(rep_paid)
+        rev = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_paid)
+        rep_r = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
+        avg_r = round(sum(rep_r) / max(len(rep_r), 1), 1) if rep_r else 0
+        rep_c = sum(c.get("amount", 0) for c in all_comms if c.get("beneficiary_user_id") == uid) if hasattr(all_comms[0], 'get') else 0 if not all_comms else 0
+        rep_stats.append({"name": name, "deals": deals, "revenue": round(rev, 0), "avg_rating": avg_r, "commission": round(rep_c if isinstance(rep_c, (int, float)) else 0, 0)})
+
+    rep_stats.sort(key=lambda x: -x["deals"])
+    top_performers = rep_stats[:3]
+    under_performers = [r for r in rep_stats if r["deals"] < 5 or r["avg_rating"] < 3][:3]
+
+    # Team metrics
+    total_deals = sum(r["deals"] for r in rep_stats)
+    pipeline_orders = [o for o in all_orders if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered")]
+    pipeline_value = sum(float(o.get("total_amount") or o.get("total") or 0) for o in pipeline_orders)
+    all_quotes = await db.quotes.find({}, {"_id": 0, "status": 1}).to_list(5000)
+    converted = sum(1 for q in all_quotes if q.get("status") in ("accepted", "converted", "ordered"))
+    conversion_rate = round((converted / max(len(all_quotes), 1)) * 100, 1)
+
+    # ── 3. RISK & ALERTS ──
+    open_alerts = await db.action_alerts.find(
+        {"status": "open"},
+        {"_id": 0}
+    ).sort("priority_score", -1).to_list(5)
+
+    # ── 4. FINANCIAL SUMMARY ──
+    collected_result = await db.payment_proofs.aggregate([
+        {"$match": {"status": "approved"}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}}},
+    ]).to_list(1)
+    collected = collected_result[0]["total"] if collected_result else total_rev_all
+
+    pending_count = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending", "pending_verification"]}})
+
+    outstanding_result = await db.invoices.aggregate([
+        {"$match": {"status": {"$in": ["pending_payment", "sent", "under_review"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+    ]).to_list(1)
+    outstanding = outstanding_result[0]["total"] if outstanding_result else 0
+
+    commission_payable_result = await db.commissions.aggregate([
+        {"$match": {"status": {"$in": ["approved", "pending", "expected"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}}},
+    ]).to_list(1)
+    commission_payable = commission_payable_result[0]["total"] if commission_payable_result else 0
+
+    # ── 5. CUSTOMER EXPERIENCE ──
+    all_ratings = [o["rating"]["stars"] for o in all_orders if o.get("rating", {}).get("stars")]
+    overall_avg = round(sum(all_ratings) / max(len(all_ratings), 1), 1) if all_ratings else 0
+    from collections import Counter
+    rating_dist = Counter(all_ratings)
+    rating_distribution = [{"stars": s, "count": rating_dist.get(s, 0)} for s in range(5, 0, -1)]
+
+    positive_feedback = []
+    negative_feedback = []
+    for o in all_orders:
+        r = o.get("rating", {})
+        if r.get("stars") and r.get("comment"):
+            entry = {"order": o.get("order_number", ""), "customer": o.get("customer_name", ""), "stars": r["stars"], "comment": r["comment"]}
+            if r["stars"] >= 4:
+                positive_feedback.append(entry)
+            elif r["stars"] <= 2:
+                negative_feedback.append(entry)
+
+    # ── 6. PRODUCT INTELLIGENCE ──
+    product_units = {}
+    for o in paid_all:
+        for item in o.get("items", []):
+            pname = item.get("product_name") or item.get("name") or ""
+            if pname:
+                product_units[pname] = product_units.get(pname, 0) + int(item.get("quantity", 1))
+
+    top_products = sorted(product_units.items(), key=lambda x: -x[1])[:5]
+    top_products_list = [{"name": p, "units": u} for p, u in top_products]
+
+    # Dead products
+    sixty_ago = (now - timedelta(days=60)).isoformat()
+    product_last = {}
+    for o in paid_all:
+        ca = o.get("created_at", "")
+        ca_str = ca.isoformat() if hasattr(ca, 'isoformat') else str(ca or "")
+        for item in o.get("items", []):
+            pname = item.get("product_name") or item.get("name") or ""
+            if pname and (pname not in product_last or ca_str > product_last[pname]):
+                product_last[pname] = ca_str
+
+    all_prods = await db.products.find({}, {"_id": 0, "name": 1}).to_list(500)
+    dead_products = []
+    for p in all_prods:
+        pn = p.get("name", "")
+        last = product_last.get(pn, "")
+        if not last or last < sixty_ago:
+            dead_products.append({"name": pn, "last_sold": last[:10] if last else "Never"})
+
+    # ── 7. PROCUREMENT INSIGHTS ──
+    restock = [{"name": p, "units": u} for p, u in top_products[:3]]
+    remove = dead_products[:5]
+
+    # ── 8. ACTION RECOMMENDATIONS ──
+    actions = []
+    for a in open_alerts:
+        actions.append({"message": a.get("recommended_action", ""), "source": a.get("alert_type", ""), "severity": a.get("severity", "info")})
+    if not actions:
+        actions.append({"message": "All systems healthy — no urgent actions required.", "source": "system", "severity": "info"})
+
+    return {
+        "period": {
+            "start": week_start.strftime("%d %b %Y"),
+            "end": week_end.strftime("%d %b %Y"),
+            "weeks_back": weeks_back,
+        },
+        "executive_summary": {
+            "revenue": round(week_revenue, 0),
+            "orders_completed": orders_completed,
+            "margin_pct": margin_pct,
+            "avg_rating": avg_rating,
+            "discounts_given": round(week_discount_val, 0),
+            "net_profit": net_profit,
+        },
+        "sales_performance": {
+            "top_performers": top_performers,
+            "under_performers": under_performers,
+            "total_deals": total_deals,
+            "pipeline_value": round(pipeline_value, 0),
+            "conversion_rate": conversion_rate,
+        },
+        "risk_alerts": open_alerts,
+        "financial_summary": {
+            "collected": round(collected, 0),
+            "pending_payments": pending_count,
+            "outstanding": round(outstanding, 0),
+            "commission_payable": round(commission_payable, 0),
+        },
+        "customer_experience": {
+            "avg_rating": overall_avg,
+            "rating_distribution": rating_distribution,
+            "positive_feedback": positive_feedback[:3],
+            "negative_feedback": negative_feedback[:3],
+        },
+        "product_intelligence": {
+            "top_products": top_products_list,
+            "dead_products": dead_products[:5],
+        },
+        "procurement": {
+            "restock": restock,
+            "remove": remove,
+        },
+        "action_recommendations": actions,
+    }
+
+
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
 @router.get("/payments/stats")
