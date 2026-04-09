@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import partnerApi from "../../lib/partnerApi";
+import AppLoader from "../../components/branding/AppLoader";
 import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 import {
   Briefcase, Clock, CheckCircle, AlertTriangle,
@@ -78,7 +79,7 @@ export default function VendorDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20" data-testid="vendor-dashboard-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
+        <AppLoader text="Loading vendor dashboard..." size="md" />
       </div>
     );
   }

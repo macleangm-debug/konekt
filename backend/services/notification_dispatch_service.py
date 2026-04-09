@@ -70,12 +70,38 @@ def build_notification(
 
 
 async def dispatch_notification(db, notification_doc: dict):
-    """Persist a notification to the database."""
-    await db.notifications.insert_one(notification_doc)
+    """
+    Persist a notification — routes through multichannel service to enforce
+    user preferences (check → then send) instead of sending blindly.
+    """
+    event_type = notification_doc.get("event_type", "")
+    user_id = notification_doc.get("user_id", "")
+    role = notification_doc.get("role", "customer")
+
+    try:
+        from services.notification_multichannel_service import dispatch_notification as mc_dispatch
+        await mc_dispatch(
+            db=db,
+            event_key=event_type,
+            recipient_user_id=user_id,
+            recipient_role=role,
+            title=notification_doc.get("title", ""),
+            message=notification_doc.get("message", ""),
+            target_url=notification_doc.get("target_url", ""),
+            cta_label=notification_doc.get("cta_label", ""),
+            entity_type=notification_doc.get("entity_type", "order"),
+            entity_id=notification_doc.get("target_ref", ""),
+            context=notification_doc,
+        )
+    except Exception as e:
+        # Fallback: direct insert to ensure notifications never get lost
+        logger.warning("Multichannel dispatch failed, falling back: %s", str(e))
+        await db.notifications.insert_one(notification_doc)
+
     logger.info(
         "[notification_dispatch] dispatched event=%s to user=%s",
-        notification_doc.get("event_type"),
-        notification_doc.get("user_id"),
+        event_type,
+        user_id,
     )
 
 

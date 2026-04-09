@@ -15,6 +15,8 @@ ROLE_DEFAULTS = {
     "customer": {
         "order_created":       {"in_app": True,  "email": True,  "whatsapp": False},
         "payment_verified":    {"in_app": True,  "email": True,  "whatsapp": False},
+        "payment_approved":    {"in_app": True,  "email": True,  "whatsapp": False},
+        "payment_rejected":    {"in_app": True,  "email": True,  "whatsapp": False},
         "order_in_fulfillment":{"in_app": True,  "email": False, "whatsapp": False},
         "order_dispatched":    {"in_app": True,  "email": True,  "whatsapp": False},
         "order_delivered":     {"in_app": True,  "email": True,  "whatsapp": False},
@@ -23,6 +25,18 @@ ROLE_DEFAULTS = {
     "sales": {
         "sales_order_assigned": {"in_app": True, "email": True,  "whatsapp": False},
         "sales_delay_flagged":  {"in_app": True, "email": True,  "whatsapp": False},
+    },
+    "sales_manager": {
+        "admin_sales_override": {"in_app": True, "email": True,  "whatsapp": False},
+        "admin_delay_flagged":  {"in_app": True, "email": True,  "whatsapp": False},
+        "weekly_report":        {"in_app": True, "email": True,  "whatsapp": False},
+        "alert_critical":       {"in_app": True, "email": True,  "whatsapp": False},
+    },
+    "finance_manager": {
+        "admin_sales_override": {"in_app": True, "email": False, "whatsapp": False},
+        "admin_delay_flagged":  {"in_app": True, "email": False, "whatsapp": False},
+        "weekly_report":        {"in_app": True, "email": True,  "whatsapp": False},
+        "alert_critical":       {"in_app": True, "email": True,  "whatsapp": False},
     },
     "vendor": {
         "vendor_order_assigned": {"in_app": True, "email": True, "whatsapp": False},
@@ -34,29 +48,36 @@ ROLE_DEFAULTS = {
     "admin": {
         "admin_sales_override": {"in_app": True, "email": True,  "whatsapp": False},
         "admin_delay_flagged":  {"in_app": True, "email": True,  "whatsapp": False},
+        "weekly_report":        {"in_app": True, "email": True,  "whatsapp": False},
+        "alert_critical":       {"in_app": True, "email": True,  "whatsapp": False},
     },
 }
 
 # ─── All event types with labels and groups ───
 EVENT_CATALOG = {
     # Customer
-    "order_created":        {"label": "Order Received",      "group": "Order Updates", "roles": ["customer"]},
-    "payment_verified":     {"label": "Payment Verified",    "group": "Payments",      "roles": ["customer"]},
-    "order_in_fulfillment": {"label": "Order In Fulfillment","group": "Order Updates", "roles": ["customer"]},
-    "order_dispatched":     {"label": "Order Dispatched",    "group": "Order Updates", "roles": ["customer"]},
-    "order_delivered":      {"label": "Order Delivered",     "group": "Order Updates", "roles": ["customer"]},
-    "order_delayed":        {"label": "Order Delayed",       "group": "Alerts",        "roles": ["customer"]},
+    "order_created":        {"label": "Order Received",       "group": "Order Updates",  "roles": ["customer"]},
+    "payment_verified":     {"label": "Payment Verified",     "group": "Payments",       "roles": ["customer"]},
+    "payment_approved":     {"label": "Payment Approved",     "group": "Payments",       "roles": ["customer"]},
+    "payment_rejected":     {"label": "Payment Rejected",     "group": "Payments",       "roles": ["customer"]},
+    "order_in_fulfillment": {"label": "Order In Fulfillment", "group": "Order Updates",  "roles": ["customer"]},
+    "order_dispatched":     {"label": "Order Dispatched",     "group": "Order Updates",  "roles": ["customer"]},
+    "order_delivered":      {"label": "Order Delivered",      "group": "Order Updates",  "roles": ["customer"]},
+    "order_delayed":        {"label": "Order Delayed",        "group": "Alerts",         "roles": ["customer"]},
     # Sales
-    "sales_order_assigned": {"label": "New Assignment",      "group": "Assignments",   "roles": ["sales"]},
-    "sales_delay_flagged":  {"label": "Delay Flagged",       "group": "Alerts",        "roles": ["sales"]},
+    "sales_order_assigned": {"label": "New Assignment",       "group": "Assignments",    "roles": ["sales"]},
+    "sales_delay_flagged":  {"label": "Delay Flagged",        "group": "Alerts",         "roles": ["sales"]},
     # Vendor
-    "vendor_order_assigned":{"label": "New Assignment",      "group": "Assignments",   "roles": ["vendor"]},
+    "vendor_order_assigned":{"label": "New Assignment",       "group": "Assignments",    "roles": ["vendor"]},
     # Affiliate
-    "affiliate_payout":     {"label": "Payout Update",       "group": "Earnings",      "roles": ["affiliate"]},
-    "affiliate_reward":     {"label": "Reward Earned",       "group": "Earnings",      "roles": ["affiliate"]},
-    # Admin
-    "admin_sales_override": {"label": "Sales Override",      "group": "Approvals",     "roles": ["admin"]},
-    "admin_delay_flagged":  {"label": "Vendor Delay",        "group": "Alerts",        "roles": ["admin"]},
+    "affiliate_payout":     {"label": "Payout Update",        "group": "Earnings",       "roles": ["affiliate"]},
+    "affiliate_reward":     {"label": "Reward Earned",        "group": "Earnings",       "roles": ["affiliate"]},
+    # Admin / Managers
+    "admin_sales_override": {"label": "Sales Override",       "group": "Approvals",      "roles": ["admin", "sales_manager"]},
+    "admin_delay_flagged":  {"label": "Vendor Delay",         "group": "Alerts",         "roles": ["admin", "sales_manager", "finance_manager"]},
+    # Reports & System
+    "weekly_report":        {"label": "Weekly Performance Report", "group": "Reports",   "roles": ["admin", "sales_manager", "finance_manager"]},
+    "alert_critical":       {"label": "Critical Alert",       "group": "Alerts",         "roles": ["admin", "sales_manager", "finance_manager"]},
 }
 
 

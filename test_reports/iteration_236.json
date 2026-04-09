@@ -1,0 +1,143 @@
+{
+  "summary": "Iteration 236: Complete testing of App Launcher, Global Branded Loader, and Notification Preferences features. Backend: 16/16 tests passed. Frontend: All features verified working correctly.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "app_launcher": {
+      "status": "PASSED",
+      "tests": [
+        "AppLauncher shows on every fresh page load (no sessionStorage)",
+        "AppLauncher displays branded triad animation (nodes, lines, glow)",
+        "Wordmark 'Konekt' and tagline 'Business Procurement Simplified' fade in",
+        "AppLauncher completes in ~2.4s and removes from DOM",
+        "Login page renders correctly after launcher completes"
+      ]
+    },
+    "app_loader": {
+      "status": "PASSED",
+      "tests": [
+        "AppLoader component has data-testid='app-loader'",
+        "AppLoader displays branded triad SVG with pulse animation",
+        "AppLoader used in dashboard loading states"
+      ]
+    },
+    "notification_preferences_admin": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/notifications/preferences returns correct structure for admin",
+        "Admin role receives 4 events: admin_sales_override, admin_delay_flagged, weekly_report, alert_critical",
+        "Events grouped into Approvals, Alerts, Reports",
+        "PUT /api/notifications/preferences saves toggle changes",
+        "GET after PUT reflects saved changes",
+        "Settings Hub Notifications tab shows System-Wide Notifications toggles",
+        "Settings Hub Notifications tab shows Notification Preferences section",
+        "Toggle buttons work for APP, EMAIL, WA channels"
+      ]
+    },
+    "notification_preferences_customer": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/notifications/preferences returns correct catalog for customer",
+        "Customer role receives 8 events: order_created, payment_verified, payment_approved, payment_rejected, order_in_fulfillment, order_dispatched, order_delivered, order_delayed",
+        "Events grouped into Order Updates, Payments, Alerts",
+        "Each event has correct structure (event_key, label, in_app, email, whatsapp)"
+      ]
+    },
+    "notification_preferences_sales_manager": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/notifications/preferences returns correct catalog for sales_manager",
+        "Sales Manager receives events: admin_sales_override, admin_delay_flagged, weekly_report, alert_critical"
+      ]
+    },
+    "notification_preferences_finance_manager": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/notifications/preferences returns correct catalog for finance_manager",
+        "Finance Manager receives events: admin_delay_flagged, weekly_report, alert_critical"
+      ]
+    },
+    "notification_preferences_vendor": {
+      "status": "PASSED",
+      "tests": [
+        "GET /api/notifications/preferences returns correct catalog for vendor",
+        "Vendor receives event: vendor_order_assigned"
+      ]
+    },
+    "welcome_notification": {
+      "status": "PASSED",
+      "tests": [
+        "Admin login creates welcome notification with title 'Welcome back'",
+        "Customer login creates welcome notification with title 'Welcome to Konekt'",
+        "Welcome notification has CTA 'Open Dashboard' with correct target_url",
+        "Welcome notification is one-time (no duplicate on second login)",
+        "Sales Manager login creates welcome notification",
+        "Welcome notification visible in notification bell dropdown"
+      ]
+    },
+    "notification_bell": {
+      "status": "PASSED",
+      "tests": [
+        "Admin notification bell shows notifications dropdown",
+        "Customer notification bell shows welcome notification",
+        "Unread count endpoint returns correct count",
+        "Mark all read endpoint works"
+      ]
+    },
+    "console_errors": {
+      "status": "PASSED",
+      "tests": [
+        "No console errors across admin portal",
+        "No console errors across customer portal"
+      ]
+    }
+  },
+  "event_catalog_verified": {
+    "customer_events": ["order_created", "payment_verified", "payment_approved", "payment_rejected", "order_in_fulfillment", "order_dispatched", "order_delivered", "order_delayed"],
+    "sales_events": ["sales_order_assigned", "sales_delay_flagged"],
+    "vendor_events": ["vendor_order_assigned"],
+    "affiliate_events": ["affiliate_payout", "affiliate_reward"],
+    "admin_events": ["admin_sales_override", "admin_delay_flagged", "weekly_report", "alert_critical"]
+  },
+  "role_defaults_verified": {
+    "customer": "8 events with in_app=true, email varies",
+    "sales": "2 events with in_app=true, email=true",
+    "sales_manager": "4 events with in_app=true, email=true",
+    "finance_manager": "4 events with in_app=true, email varies",
+    "vendor": "1 event with in_app=true, email=true",
+    "affiliate": "2 events with in_app=true, email=true",
+    "admin": "4 events with in_app=true, email=true"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_notification_preferences_launcher_v236.py",
+    "/app/test_reports/pytest/pytest_results_notification_prefs_launcher_v236.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_notification_preferences_launcher_v236.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all UI flows verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+    "sales_manager": "sales.manager@konekt.co.tz / Manager123!",
+    "finance_manager": "finance@konekt.co.tz / Finance123!",
+    "staff": "staff@konekt.co.tz / Staff123!",
+    "customer": "test@konekt.tz / TestUser123!",
+    "partner": "demo.partner@konekt.com / Partner123!"
+  },
+  "seed_data_creation": "None - using existing seed data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 236 verified: (1) App Launcher shows on EVERY page load/refresh (no sessionStorage, uses React state only). (2) Notification Preferences fully wired - GET/PUT /api/notifications/preferences endpoints work, EVENT_CATALOG has 18 events, ROLE_DEFAULTS for 7 roles. (3) Settings Hub at /admin/settings-hub has Notifications tab with System-Wide Notifications toggles AND NotificationPreferencesSection. (4) Welcome notifications are one-time, role-aware, use recipient_user_id field. (5) Preference enforcement: in_app_notification_service checks prefs before creating notification (skip_pref_check param available)."
+}

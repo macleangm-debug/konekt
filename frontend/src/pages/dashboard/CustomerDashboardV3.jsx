@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import AppLoader from "../../components/branding/AppLoader";
 import {
   ShoppingCart, FileText, Receipt, Gift,
   ArrowRight, Package, AlertCircle, Bell, Copy,
@@ -61,7 +62,7 @@ export default function CustomerDashboardV3() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="customer-dashboard-loading">
-        <div className="animate-pulse text-slate-400 text-sm">Loading your dashboard...</div>
+        <AppLoader text="Loading your dashboard..." size="md" />
       </div>
     );
   }

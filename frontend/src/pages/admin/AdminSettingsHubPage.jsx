@@ -9,6 +9,7 @@ import SettingsTextField from "../../components/admin/settings/SettingsTextField
 import InvoiceBrandingSettings from "../../components/admin/settings/InvoiceBrandingSettings";
 import CustomerActivityRulesCard from "../../components/admin/settings/CustomerActivityRulesCard";
 import SettingsPreviewPanel from "../../components/admin/settings/SettingsPreviewPanel";
+import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
@@ -373,7 +374,7 @@ function NotificationsTab({ state, setState }) {
   const ai = state.ai_assistant || {};
   return (
     <>
-      <SettingsSectionCard title="Notifications" description="Choose which parties receive default notifications.">
+      <SettingsSectionCard title="System-Wide Notifications" description="Choose which parties receive default notifications.">
         <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
           <SettingsToggleField label="Customer" checked={n.customer_notifications_enabled} onChange={(v) => setState(U(state, "notifications", "customer_notifications_enabled", v))} />
           <SettingsToggleField label="Sales" checked={n.sales_notifications_enabled} onChange={(v) => setState(U(state, "notifications", "sales_notifications_enabled", v))} />
@@ -382,6 +383,7 @@ function NotificationsTab({ state, setState }) {
           <SettingsToggleField label="Vendor" checked={n.vendor_notifications_enabled} onChange={(v) => setState(U(state, "notifications", "vendor_notifications_enabled", v))} />
         </div>
       </SettingsSectionCard>
+      <NotificationPreferencesSection apiClient={api} />
       <SettingsSectionCard title="AI Assistant" description="Control AI help, handoff, and customer-safe behavior.">
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
           <SettingsToggleField label="AI enabled" checked={ai.ai_enabled} onChange={(v) => setState(U(state, "ai_assistant", "ai_enabled", v))} />

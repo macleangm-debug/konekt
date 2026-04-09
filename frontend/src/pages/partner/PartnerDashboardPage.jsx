@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import partnerApi from "../../lib/partnerApi";
+import AppLoader from "../../components/branding/AppLoader";
 import {
   Package, Layers, Truck, Receipt, ArrowRight,
   Loader2, CheckCircle, AlertTriangle, Clock,
@@ -71,7 +72,7 @@ export default function PartnerDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20" data-testid="partner-dashboard-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
+        <AppLoader text="Loading partner dashboard..." size="md" />
       </div>
     );
   }

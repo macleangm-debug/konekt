@@ -3,7 +3,8 @@ import React, { useState, useEffect } from "react";
 /**
  * AppLauncher — Premium full-screen entry animation.
  * Uses the exact Connected Triad logo geometry.
- * Shows once per session, then fades into the app.
+ * Shows on every website launch / hard refresh.
+ * Skips on internal SPA navigation (React state persists).
  *
  * Animation sequence (~2.2s total):
  *   1. Nodes appear one by one (fade + scale)
@@ -14,23 +15,11 @@ import React, { useState, useEffect } from "react";
  *   6. Fade out → app visible
  */
 
-const SESSION_KEY = "konekt_launcher_shown";
-
 export default function AppLauncher({ onComplete, brandName = "Konekt", tagline = "Business Procurement Simplified" }) {
   const [phase, setPhase] = useState("intro"); // intro → fading → done
 
   useEffect(() => {
-    // Skip if already shown this session
-    if (sessionStorage.getItem(SESSION_KEY)) {
-      onComplete?.();
-      setPhase("done");
-      return;
-    }
-
-    // Mark as shown
-    sessionStorage.setItem(SESSION_KEY, "1");
-
-    // Animation timeline
+    // Animation timeline — always play on mount (fresh load / hard refresh)
     const fadeTimer = setTimeout(() => setPhase("fading"), 2200);
     const doneTimer = setTimeout(() => {
       setPhase("done");

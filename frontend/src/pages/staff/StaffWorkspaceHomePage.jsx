@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, TrendingUp, Users, FileText, CheckSquare } from "lucide-react";
+import AppLoader from "../../components/branding/AppLoader";
 import api from "../../lib/api";
 
 export default function StaffWorkspaceHomePage() {
@@ -25,7 +26,7 @@ export default function StaffWorkspaceHomePage() {
   if (loading) {
     return (
       <div className="p-10 flex items-center justify-center min-h-screen bg-slate-50" data-testid="loading-state">
-        <div className="w-8 h-8 border-4 border-[#D4A843] border-t-transparent rounded-full animate-spin" />
+        <AppLoader text="Loading workspace..." size="lg" />
       </div>
     );
   }

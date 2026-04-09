@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import AppLoader from "../../components/branding/AppLoader";
 import {
   TrendingUp, Phone, ArrowRight, Target, Wallet,
   ShoppingCart, Users, Clock, Flame, AlertTriangle,
@@ -70,7 +71,7 @@ export default function SalesDashboardV2() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20" data-testid="sales-dashboard-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#D4A843]" />
+        <AppLoader text="Loading sales dashboard..." size="md" />
       </div>
     );
   }

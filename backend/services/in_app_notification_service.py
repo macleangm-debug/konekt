@@ -140,16 +140,30 @@ async def create_in_app_notification(
     entity_id: str = "",
     order_id: str = "",
     context: dict = None,
+    skip_pref_check: bool = False,
 ):
     """
     Create an in-app notification in the existing notifications collection.
     Uses the same model the frontend NotificationBell expects.
+    Enforces user preferences: check → then send.
     """
     ctx = context or {}
     event_def = NOTIFICATION_EVENTS.get(event_key)
     if not event_def:
         logger.warning("Unknown notification event: %s", event_key)
         return
+
+    # ── Preference enforcement ──
+    if not skip_pref_check:
+        try:
+            from services.notification_multichannel_service import get_user_preferences, _get_channel_prefs
+            prefs = await get_user_preferences(db, recipient_user_id or "", recipient_role or "customer")
+            channel = _get_channel_prefs(prefs, event_key, recipient_role or "customer")
+            if not channel.get("in_app", True):
+                logger.info("In-app suppressed by prefs: [%s] for %s", event_key, recipient_role or recipient_user_id)
+                return
+        except Exception as e:
+            logger.warning("Pref check failed (allowing): %s", str(e))
 
     # Build the message from template
     try:
