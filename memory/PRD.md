@@ -30,28 +30,27 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market with role-base
 - Event-triggered in-app notifications, 10 event types, role-based filtering, CTA deep links
 
 ### Dashboard & Input Standardization (Current Phase)
-- **Admin Dashboard V2**: 6 KPIs, 4 Snapshot sections, 3 charts (Orders Trend, Revenue Trend, Status Distribution)
-- **Customer Dashboard V3**: 4 KPIs, Active Orders, Reminders, Referral Rewards, 2 charts
-- **Sales Dashboard V2** (Apr 9, 2026): KPIs (Revenue, Pipeline, Commission), Today's Sales Actions (top priority), Actionable Pipeline (6 clickable stages with values), Commission Summary (Expected/Pending/Paid), CRM, Content to Share, Commission Table, 3 Trend Charts
-- **Vendor Dashboard V2** (Apr 9, 2026): KPIs (Active Jobs, Completed, Delayed, Settlements), Work Requiring Action (top priority), Fulfillment Pipeline (7 stages), Recent Assignments (vendor-safe), 2 Trend Charts (Fulfillment Volume, Delivery Performance), Quick Actions
-- **Affiliate Dashboard V2** (Apr 9, 2026): KPIs (Total Earned, Pending, Paid Out, Active Promos), Earnings Summary (Expected/Pending/Paid), Referral Tools (promo code + link + copy CTAs), Products to Share (10 products with commission, copy caption, share link), Recent Earnings Table, 2 Trend Charts (Earnings, Conversions)
-- **CountryAwarePhoneField**: Standard phone input with flag + country code
+- **Admin Dashboard V2**: 6 KPIs, 4 Snapshot sections, 3 charts
+- **Customer Dashboard V3**: 4 KPIs, Active Orders, Reminders, Referral, 2 charts
+- **Sales Dashboard V2** (Apr 9, 2026): KPIs, Today's Sales Actions, Actionable Pipeline (6 stages with values), Commission Summary (Expected/Pending/Paid), CRM, Content to Share, Commission Table, 3 Trend Charts
+- **Vendor Dashboard V2** (Apr 9, 2026): KPIs (Active/Completed/Delayed/Settlements), Work Requiring Action, 7-stage Fulfillment Pipeline, Recent Assignments (vendor-safe), 2 Charts (Fulfillment Volume, Delivery Performance)
+- **Affiliate Dashboard V2** (Apr 9, 2026): KPIs (Earned/Pending/Paid/Promos), Earnings Summary, Referral Tools (promo code + link + copy CTAs), Products to Share with commission, Earnings Table, 2 Charts (Earnings, Conversions)
+- **CountryAwarePhoneField** (Apr 9, 2026): System-wide canonical phone input. Flag + country code + prefix selector, auto-strip leading zero, helper text, 10 East African countries. Desktop: inline dropdown. Mobile: self-contained bottom sheet. **PhoneNumberField** converted to thin wrapper — all 53 usages now use CountryAwarePhoneField internally. One raw input in AffiliatePayoutsPage fixed.
 - **MobileBottomSheet**: Shared component for mobile selections
 
 ## Key API Endpoints
 - `GET /api/admin/dashboard/kpis` — Admin dashboard
-- `GET /api/dashboard-metrics/customer?user_id=X` — Customer dashboard
-- `GET /api/staff/sales-dashboard` — Sales dashboard (extended with commission_summary, pipeline values, charts)
-- `GET /api/partner-portal/dashboard` — Vendor dashboard (extended with vendor_kpis, pipeline, work_requiring_action, charts)
-- `GET /api/affiliate/earnings-summary` — Affiliate dashboard (extended with earnings breakdown, charts)
-- `GET /api/affiliate/product-promotions` — Affiliate products with commissions and share links
-- `GET /api/notifications` — User notifications (role-filtered)
+- `GET /api/dashboard-metrics/customer` — Customer dashboard
+- `GET /api/staff/sales-dashboard` — Sales dashboard (extended)
+- `GET /api/partner-portal/dashboard` — Vendor dashboard (extended)
+- `GET /api/affiliate/earnings-summary` — Affiliate dashboard (extended)
+- `GET /api/affiliate/product-promotions` — Affiliate products
+- `GET /api/notifications` — Notifications
 
 ## Backlog
-- P1: System-wide phone input replacement pass (CountryAwarePhoneField everywhere)
 - P1: Notification Preferences (per-user event toggles)
 - P2: Discount Analytics Dashboard
 - P2: Twilio WhatsApp/SMS integration (blocked on API key)
 - P2: Resend email live mode (blocked on API key)
 - P2: Mobile-first optimization
-- P3: Sales Leaderboard / Gamification (after all dashboards and consistency passes are complete)
+- P3: Sales Leaderboard / Gamification
