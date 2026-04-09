@@ -149,7 +149,9 @@ export default function StaffLayout() {
 
         {/* Page Content */}
         <main className="p-6">
-          <Outlet />
+          <div key={location.pathname} className="k-page-fade-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

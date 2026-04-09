@@ -59,12 +59,12 @@ export default function StandardDrawerShell({
     <div className="fixed inset-0 z-50 flex justify-end" data-testid={testId}>
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px] transition-opacity duration-200"
+        className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px] k-backdrop-fade"
         onClick={onClose}
         data-testid={`${testId}-backdrop`}
       />
       {/* Panel */}
-      <div className={`relative flex w-full ${widthClass} flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200`}>
+      <div className={`relative flex w-full ${widthClass} flex-col bg-white shadow-2xl k-drawer-panel`}>
         {/* Header — sticky */}
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4 flex-shrink-0">
           <div className="min-w-0 flex-1">

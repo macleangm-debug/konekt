@@ -239,6 +239,15 @@
     border: 1px solid rgba(45, 62, 80, 0.1);
 }
 
+/* ── Global interactive feedback for native elements ─── */
+/* Applies subtle press feedback to all buttons not using Shadcn */
+button:not([class*="k-btn"]):not([class*="mobile-nav"]):not([class*="canvas-tool"]):not([disabled]) {
+    transition: transform 100ms ease-out, opacity 100ms ease-out;
+}
+button:not([class*="k-btn"]):not([class*="mobile-nav"]):not([class*="canvas-tool"]):not([disabled]):active {
+    transform: scale(0.97);
+}
+
 /* Gold Accent Border */
 .gold-accent {
     position: relative;

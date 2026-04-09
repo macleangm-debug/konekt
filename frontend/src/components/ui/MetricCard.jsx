@@ -2,7 +2,7 @@ import React from "react";
 
 export default function MetricCard({ label, value, hint, icon: Icon, trend, className = "" }) {
   return (
-    <div className={`rounded-3xl border bg-white p-5 ${className}`} data-testid="metric-card">
+    <div className={`rounded-3xl border bg-white p-5 k-card-interactive ${className}`} data-testid="metric-card">
       <div className="flex items-start justify-between">
         <div className="text-sm text-slate-500">{label}</div>
         {Icon && (

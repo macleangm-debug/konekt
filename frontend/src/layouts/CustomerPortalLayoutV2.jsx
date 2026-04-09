@@ -167,7 +167,9 @@ export default function CustomerPortalLayoutV2() {
 
         {/* Page Content */}
         <div className="flex-1 p-4 md:p-6 lg:p-8">
-          <Outlet />
+          <div key={location.pathname} className="k-page-fade-in">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

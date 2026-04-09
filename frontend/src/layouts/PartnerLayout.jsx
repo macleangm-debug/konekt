@@ -151,7 +151,9 @@ export default function PartnerLayout() {
       <main className="flex-1 overflow-auto">
         <PartnerAccountTopbar onLogout={logout} />
         <div className="p-6 lg:p-8">
-          <Outlet />
+          <div key={location.pathname} className="k-page-fade-in">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>

@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════════════════════════
+   Konekt — Global Micro-Interaction System
+   Single source of truth for all interaction feedback.
+   Every interactive element in the system inherits from here.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ─────────────────────────────────────────── */
+
+@keyframes k-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes k-fade-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes k-spinner {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes k-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes k-scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── 1. Button Press Feedback ──────────────────────────── */
+/* Applied to base Button component via className.
+   active: scale(0.97), 80-120ms, no bounce */
+
+.k-btn-press {
+  transition: transform 100ms ease-out, box-shadow 100ms ease-out;
+}
+.k-btn-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ── 2. Interactive Card ───────────────────────────────── */
+/* hover: translateY(-2px) + shadow lift
+   active: scale(0.98)
+   120-160ms transitions */
+
+.k-card-interactive {
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out, border-color 140ms ease-out;
+}
+.k-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(32, 54, 77, 0.07);
+  border-color: rgba(32, 54, 77, 0.15);
+}
+.k-card-interactive:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(32, 54, 77, 0.05);
+}
+
+/* ── 3. Interactive Table/List Row ─────────────────────── */
+/* hover: subtle highlight, smooth 120ms */
+
+.k-row-interactive {
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out;
+  cursor: pointer;
+}
+.k-row-interactive:hover {
+  background-color: rgba(241, 245, 249, 0.7);
+}
+.k-row-interactive:active {
+  background-color: rgba(226, 232, 240, 0.6);
+}
+
+/* ── 4. Page / Section Fade-In ─────────────────────────── */
+/* Subtle slide-up + fade. 180ms. Applied at layout <Outlet /> level. */
+
+.k-page-fade-in {
+  animation: k-fade-slide-up 180ms ease-out both;
+}
+
+/* ── 5. Tab Content Fade ───────────────────────────────── */
+/* Smooth content transition when switching tabs. 150ms. */
+
+.k-tab-fade {
+  animation: k-fade-in 150ms ease-out;
+}
+
+/* ── 6. Drawer / Modal Transitions ─────────────────────── */
+/* Backdrop fade: 180ms. Panel slide: 200ms. */
+
+.k-backdrop-fade {
+  animation: k-fade-in 180ms ease-out both;
+}
+
+.k-drawer-panel {
+  animation: k-slide-in-right 200ms ease-out both;
+}
+
+@keyframes k-slide-in-right {
+  from { transform: translateX(100%); opacity: 0.8; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+/* ── 7. Loading Spinner (inline) ───────────────────────── */
+/* Small spinner for use inside buttons. Inherits currentColor. */
+
+.k-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: k-spinner 600ms linear infinite;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+/* ── 8. Skeleton Loaders ───────────────────────────────── */
+/* Shimmer effect for loading placeholders. */
+
+.k-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: k-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+.k-skeleton-card  { height: 120px; }
+.k-skeleton-row   { height: 40px; margin-bottom: 4px; border-radius: 0.5rem; }
+.k-skeleton-chart { height: 200px; }
+.k-skeleton-kpi   { height: 88px; }
+
+/* ── 9. Scale-In (modals, popovers) ───────────────────── */
+
+.k-scale-in {
+  animation: k-scale-in 160ms ease-out both;
+}
+
+/* ── 10. Notification Highlight ────────────────────────── */
+
+.k-notify-new {
+  animation: k-fade-in 200ms ease-out;
+  border-left: 3px solid #D4A843;
+}
