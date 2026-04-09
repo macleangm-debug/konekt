@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const warehouseTypes = [
   { value: "general", label: "General" },
@@ -24,6 +25,7 @@ export default function WarehousesPage() {
   const [editingWarehouse, setEditingWarehouse] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [stats, setStats] = useState(null);
+  const { confirmAction } = useConfirmModal();
 
   const initialForm = {
     name: "",
@@ -119,16 +121,23 @@ export default function WarehousesPage() {
   };
 
   const deleteWarehouse = async (warehouseId) => {
-    if (!window.confirm("Are you sure you want to deactivate this warehouse?")) return;
-    try {
-      await api.delete(`/api/admin/warehouses/${warehouseId}`);
-      toast.success("Warehouse deactivated");
-      loadWarehouses();
-      loadStats();
-    } catch (error) {
-      console.error("Failed to delete warehouse:", error);
-      toast.error(error.response?.data?.detail || "Failed to delete warehouse");
-    }
+    confirmAction({
+      title: "Deactivate Warehouse?",
+      message: "This warehouse will be deactivated and hidden from active selections.",
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/warehouses/${warehouseId}`);
+          toast.success("Warehouse deactivated");
+          loadWarehouses();
+          loadStats();
+        } catch (error) {
+          console.error("Failed to delete warehouse:", error);
+          toast.error(error.response?.data?.detail || "Failed to delete warehouse");
+        }
+      },
+    });
   };
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));

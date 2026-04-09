@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const SCOPE_OPTIONS = [
   { value: "global", label: "Global (all products)" },
@@ -340,6 +341,7 @@ export default function PromotionEngineAdminPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const { confirmAction } = useConfirmModal();
 
   const fetchPromotions = async () => {
     setLoading(true);
@@ -369,14 +371,21 @@ export default function PromotionEngineAdminPage() {
   };
 
   const deletePromo = async (id) => {
-    if (!window.confirm("Delete this promotion?")) return;
-    try {
-      await api.delete(`/api/promotion-engine/promotions/${id}`);
-      toast.success("Promotion deleted");
-      fetchPromotions();
-    } catch {
-      toast.error("Failed to delete");
-    }
+    confirmAction({
+      title: "Delete Promotion?",
+      message: "This promotion will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/promotion-engine/promotions/${id}`);
+          toast.success("Promotion deleted");
+          fetchPromotions();
+        } catch {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   };
 
   const fmt = (v) => `TZS ${Number(v || 0).toLocaleString("en-US", { minimumFractionDigits: 0 })}`;

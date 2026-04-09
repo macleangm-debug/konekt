@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../lib/api";
 import { getStoredCountryCode, getStoredRegion } from "../lib/countryPreference";
-import CountrySelectorModal from "../components/public/CountrySelectorModal";
 import PublicNavbarV2 from "../components/public/PublicNavbarV2";
 import PremiumHero from "../components/public/PremiumHero";
 import TrustStrip from "../components/public/TrustStrip";
@@ -17,19 +16,17 @@ import FinalCtaSection from "../components/public/FinalCtaSection";
 import PremiumFooterV2 from "../components/public/PremiumFooterV2";
 
 export default function HomepageV2() {
-  const [showCountryModal, setShowCountryModal] = useState(false);
   const [countryAvailability, setCountryAvailability] = useState(null);
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const countryCode = getStoredCountryCode();
+  // Default to Tanzania if no country stored
+  const countryCode = getStoredCountryCode() || "TZ";
   const region = getStoredRegion();
 
   useEffect(() => {
-    if (!countryCode) {
-      setShowCountryModal(true);
-      setLoading(false);
-      return;
+    if (!localStorage.getItem("customer_country_code")) {
+      localStorage.setItem("customer_country_code", "TZ");
     }
 
     const load = async () => {
@@ -52,15 +49,6 @@ export default function HomepageV2() {
 
   return (
     <div className="bg-white min-h-screen" data-testid="homepage-v2">
-      {showCountryModal && (
-        <CountrySelectorModal
-          onDone={() => {
-            setShowCountryModal(false);
-            window.location.reload();
-          }}
-        />
-      )}
-
       <PublicNavbarV2 />
       <PremiumHero
         countryCode={countryCode}

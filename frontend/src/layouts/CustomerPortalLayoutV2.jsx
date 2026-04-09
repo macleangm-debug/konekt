@@ -24,15 +24,25 @@ const nav = [
 ];
 
 import { clearAllAuth } from "../lib/authHelpers";
+import { useConfirmModal } from "../contexts/ConfirmModalContext";
 
 export default function CustomerPortalLayoutV2() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const handleLogout = () => {
-    clearAllAuth();
-    navigate("/login");
+    confirmAction({
+      title: "Sign Out?",
+      message: "You will be logged out of your customer account.",
+      confirmLabel: "Sign Out",
+      tone: "danger",
+      onConfirm: async () => {
+        clearAllAuth();
+        navigate("/login");
+      },
+    });
   };
 
   const customerName = (() => {

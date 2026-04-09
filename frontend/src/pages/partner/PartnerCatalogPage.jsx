@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Package, Eye, FileEdit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import partnerApi from "../../lib/partnerApi";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 export default function PartnerCatalogPage() {
   const [items, setItems] = useState([]);
@@ -12,6 +13,7 @@ export default function PartnerCatalogPage() {
   const [form, setForm] = useState(getDefaultForm());
   const [activeTab, setActiveTab] = useState("basic"); // "basic" | "listings"
   const navigate = useNavigate();
+  const { confirmAction } = useConfirmModal();
 
   function getDefaultForm() {
     return {
@@ -96,13 +98,20 @@ export default function PartnerCatalogPage() {
   };
 
   const handleDelete = async (item) => {
-    if (!window.confirm(`Deactivate "${item.name}"?`)) return;
-    try {
-      await partnerApi.delete(`/api/partner-portal/catalog/${item.id}`);
-      load();
-    } catch (err) {
-      alert("Failed to deactivate item");
-    }
+    confirmAction({
+      title: "Deactivate Item?",
+      message: `This will deactivate "${item.name}" from your catalog.`,
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await partnerApi.delete(`/api/partner-portal/catalog/${item.id}`);
+          load();
+        } catch (err) {
+          alert("Failed to deactivate item");
+        }
+      },
+    });
   };
 
   const getStatusBadge = (status) => {

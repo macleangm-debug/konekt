@@ -4,6 +4,7 @@ import {
   Percent, Globe, Package, Wrench, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -13,6 +14,7 @@ export default function GroupMarkupsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const token = localStorage.getItem("admin_token");
+  const { confirmAction } = useConfirmModal();
 
   const [formData, setFormData] = useState({
     product_group: "",
@@ -115,19 +117,26 @@ export default function GroupMarkupsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this markup setting?")) return;
-    try {
-      const res = await fetch(`${API}/api/admin/group-markup/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        toast.success("Markup setting deleted");
-        loadMarkups();
-      }
-    } catch (error) {
-      toast.error("Failed to delete");
-    }
+    confirmAction({
+      title: "Delete Markup Setting?",
+      message: "This markup configuration will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API}/api/admin/group-markup/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            toast.success("Markup setting deleted");
+            loadMarkups();
+          }
+        } catch (error) {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   };
 
   if (loading) {

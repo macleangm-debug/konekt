@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Pencil, Trash2, ChevronRight, Layers, Package, Palette, Megaphone } from "lucide-react";
 import api from "@/lib/api";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const SECTIONS = [
   { key: "product", label: "Product Taxonomy", icon: Package, type: "product" },
@@ -16,6 +17,7 @@ export default function CatalogTaxonomyPage() {
   const [loading, setLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const { confirmAction } = useConfirmModal();
 
   // Form states
   const [newGroupName, setNewGroupName] = useState("");
@@ -104,15 +106,22 @@ export default function CatalogTaxonomyPage() {
   };
 
   const deleteItem = async (level, id) => {
-    if (!window.confirm("Remove this item?")) return;
-    try {
-      await api.delete(`/api/admin/catalog/${level}/${id}`);
-      if (level === "groups" && selectedGroup?.id === id) setSelectedGroup(null);
-      if (level === "categories" && selectedCategory?.id === id) setSelectedCategory(null);
-      loadData();
-    } catch (err) {
-      alert("Delete failed");
-    }
+    confirmAction({
+      title: "Remove Item?",
+      message: "This item will be permanently removed from the catalog.",
+      confirmLabel: "Remove",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/catalog/${level}/${id}`);
+          if (level === "groups" && selectedGroup?.id === id) setSelectedGroup(null);
+          if (level === "categories" && selectedCategory?.id === id) setSelectedCategory(null);
+          loadData();
+        } catch (err) {
+          alert("Delete failed");
+        }
+      },
+    });
   };
 
   const startEdit = (level, item) => {

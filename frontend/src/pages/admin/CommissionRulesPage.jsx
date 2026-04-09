@@ -4,6 +4,7 @@ import {
   DollarSign, Globe, PieChart, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -13,6 +14,7 @@ export default function CommissionRulesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const token = localStorage.getItem("admin_token");
+  const { confirmAction } = useConfirmModal();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -127,19 +129,26 @@ export default function CommissionRulesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this commission rule?")) return;
-    try {
-      const res = await fetch(`${API}/api/admin/commission-rules/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        toast.success("Commission rule deleted");
-        loadRules();
-      }
-    } catch (error) {
-      toast.error("Failed to delete");
-    }
+    confirmAction({
+      title: "Delete Commission Rule?",
+      message: "This commission rule will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API}/api/admin/commission-rules/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            toast.success("Commission rule deleted");
+            loadRules();
+          }
+        } catch (error) {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   };
 
   if (loading) {

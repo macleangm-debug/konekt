@@ -9,6 +9,7 @@ import { useAdminAuth } from '../../contexts/AdminAuthContext';
 import NotificationBell from '../../components/admin/NotificationBell';
 import BrandLogo from '../../components/branding/BrandLogo';
 import { adminNavigation } from '../../config/adminNavigation';
+import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 
 /* ───── Profile Dropdown ───── */
 function ProfileDropdown({ name, role, onLogout }) {
@@ -174,9 +175,19 @@ export default function AdminLayout() {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    confirmAction({
+      title: "Sign Out?",
+      message: "You will be logged out of the admin workspace. Any unsaved changes will be lost.",
+      confirmLabel: "Sign Out",
+      tone: "danger",
+      onConfirm: async () => {
+        logout();
+        navigate('/login');
+      },
+    });
   };
+
+  const { confirmAction } = useConfirmModal();
 
   const getRoleBadgeColor = (role) => {
     switch (role) {

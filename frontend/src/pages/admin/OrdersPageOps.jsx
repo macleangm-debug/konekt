@@ -3,6 +3,7 @@ import { Package, Search, ArrowRight, ClipboardList, Boxes, Factory, FileText, E
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -358,6 +359,7 @@ export default function OrdersPageOps() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const { confirmAction } = useConfirmModal();
 
   const loadOrders = async () => {
     try { setLoading(true); const res = await adminApi.getOrders(); setOrders(res.data?.orders || res.data || []); } catch (err) { console.error(err); } finally { setLoading(false); }
@@ -377,8 +379,15 @@ export default function OrdersPageOps() {
     try { await adminApi.sendOrderToProduction({ order_id: order.id, order_number: order.order_number || order.id, customer_name: order.customer_name || "Customer", production_type: form.production_type, assigned_to: form.assigned_to || null, priority: form.priority, due_date: form.due_date || null, notes: form.notes || null, status: "queued" }); loadOrders(); alert("Sent to production!"); } catch (err) { alert(err.response?.data?.detail || "Failed"); }
   };
   const convertToInvoice = async (orderId) => {
-    if (!window.confirm("Create invoice from this order?")) return;
-    try { await adminApi.convertOrderToInvoice(orderId, null); alert("Invoice created!"); } catch (err) { alert(err.response?.data?.detail || "Failed"); }
+    confirmAction({
+      title: "Create Invoice?",
+      message: "This will generate an invoice from this order.",
+      confirmLabel: "Create Invoice",
+      tone: "success",
+      onConfirm: async () => {
+        try { await adminApi.convertOrderToInvoice(orderId, null); alert("Invoice created!"); } catch (err) { alert(err.response?.data?.detail || "Failed"); }
+      },
+    });
   };
 
   const filteredOrders = orders.filter((o) => {

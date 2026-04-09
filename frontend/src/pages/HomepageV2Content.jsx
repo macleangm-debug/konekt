@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import api from "../lib/api";
 import { getStoredCountryCode, getStoredRegion } from "../lib/countryPreference";
-import CountrySelectorModal from "../components/public/CountrySelectorModal";
 
 // ═══════════════════════════════════════════════════════
 // 1. HERO
@@ -351,21 +350,16 @@ function CtaSection() {
 // MAIN PAGE COMPOSITION
 // ═══════════════════════════════════════════════════════
 export default function HomepageV2Content() {
-  const [showCountryModal, setShowCountryModal] = useState(false);
-  const countryCode = getStoredCountryCode();
+  const countryCode = getStoredCountryCode() || "TZ";
 
   useEffect(() => {
-    if (!countryCode) setShowCountryModal(true);
-  }, [countryCode]);
+    if (!localStorage.getItem("customer_country_code")) {
+      localStorage.setItem("customer_country_code", "TZ");
+    }
+  }, []);
 
   return (
     <div data-testid="homepage-v2-content">
-      {showCountryModal && (
-        <CountrySelectorModal
-          onDone={() => { setShowCountryModal(false); window.location.reload(); }}
-        />
-      )}
-
       <HeroSection />
       <HowItWorksSection />
       <TrustSignalsSection />

@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { RefreshCw, AlertCircle, DollarSign, Package, TrendingUp, TrendingDown } from "lucide-react";
 import api from "../../lib/api";
-import ConfirmationModal from "../../components/common/ConfirmationModal";
-import useConfirmationModal from "../../hooks/useConfirmationModal";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 const STATUSES = [
   { value: "new", label: "New", color: "bg-slate-100 text-slate-700" },
@@ -34,7 +33,7 @@ export default function ProductionJobsAdminPage() {
   const [newCost, setNewCost] = useState("");
   const [costNote, setCostNote] = useState("");
   
-  const { modalState, openConfirmation, closeConfirmation, setLoading: setModalLoading } = useConfirmationModal();
+  const { confirmAction } = useConfirmModal();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,13 +76,12 @@ export default function ProductionJobsAdminPage() {
     const delta = parsedNewCost - oldCost;
     const isIncrease = delta > 0;
 
-    openConfirmation({
+    confirmAction({
       title: "Update Production Cost?",
       message: `This will change the cost from TZS ${oldCost.toLocaleString()} to TZS ${parsedNewCost.toLocaleString()} (${isIncrease ? "+" : ""}${delta.toLocaleString()}). Sales and admin will be notified.`,
       confirmLabel: "Update Cost",
       tone: isIncrease ? "warning" : "default",
       onConfirm: async () => {
-        setModalLoading(true);
         try {
           const token = localStorage.getItem("admin_token");
           await api.put(`/api/production-progress/${job.id}/cost`, {
@@ -93,41 +91,34 @@ export default function ProductionJobsAdminPage() {
           setCostEditing(null);
           setNewCost("");
           setCostNote("");
-          closeConfirmation();
           load();
         } catch (err) {
           console.error("Failed to update cost:", err);
           alert("Failed to update cost");
-        } finally {
-          setModalLoading(false);
         }
-      }
+      },
     });
   };
 
   const handleStatusUpdate = (job, newStatus) => {
-    openConfirmation({
+    confirmAction({
       title: `Update to "${getStatusLabel(newStatus)}"?`,
       message: `This will change the job status and notify relevant parties.`,
       confirmLabel: "Update Status",
       tone: newStatus === "blocked" || newStatus === "delayed" ? "danger" : "default",
       onConfirm: async () => {
-        setModalLoading(true);
         try {
           const token = localStorage.getItem("admin_token");
           await api.put(`/api/production-progress/${job.id}/status`, {
             status: newStatus,
             progress_note: `Admin updated status to ${newStatus}`,
           }, { headers: { Authorization: `Bearer ${token}` } });
-          closeConfirmation();
           load();
         } catch (err) {
           console.error("Failed to update status:", err);
           alert("Failed to update status");
-        } finally {
-          setModalLoading(false);
         }
-      }
+      },
     });
   };
 
@@ -310,11 +301,6 @@ export default function ProductionJobsAdminPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        {...modalState}
-        onCancel={closeConfirmation}
-      />
     </div>
   );
 }

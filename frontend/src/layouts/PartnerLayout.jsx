@@ -6,12 +6,14 @@ import NotificationBell from "../components/shared/NotificationBell";
 import PartnerAccountTopbar from "../components/layout/PartnerAccountTopbar";
 import BrandLogo from "../components/branding/BrandLogo";
 import { clearAllAuth } from "../lib/authHelpers";
+import { useConfirmModal } from "../contexts/ConfirmModalContext";
 
 export default function PartnerLayout() {
   const [partner, setPartner] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { confirmAction } = useConfirmModal();
 
   useEffect(() => {
     const token = localStorage.getItem("partner_token");
@@ -31,8 +33,16 @@ export default function PartnerLayout() {
   }, [navigate]);
 
   const logout = () => {
-    clearAllAuth();
-    navigate("/login");
+    confirmAction({
+      title: "Sign Out?",
+      message: "You will be logged out of the partner workspace.",
+      confirmLabel: "Sign Out",
+      tone: "danger",
+      onConfirm: async () => {
+        clearAllAuth();
+        navigate("/login");
+      },
+    });
   };
 
   // Determine partner type from partner data

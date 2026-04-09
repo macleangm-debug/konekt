@@ -5,6 +5,7 @@ import SectionCard from "../../components/dashboard/SectionCard";
 import CountryAwarePhoneField from "../../components/vendors/CountryAwarePhoneField";
 import { Loader2, Plus, Trash2, Smartphone, Building2, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
@@ -29,6 +30,7 @@ export default function AffiliatePayoutsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [addMethod, setAddMethod] = useState("mobile_money");
+  const { confirmAction } = useConfirmModal();
   const [addForm, setAddForm] = useState({});
 
   const loadAll = useCallback(async () => {
@@ -90,14 +92,21 @@ export default function AffiliatePayoutsPage() {
   };
 
   const handleDeleteAccount = async (id) => {
-    if (!window.confirm("Delete this payout account?")) return;
-    try {
-      await partnerApi.delete(`/api/affiliate/payout-accounts/${id}`);
-      toast.success("Account removed");
-      loadAll();
-    } catch (err) {
-      toast.error("Failed to delete account");
-    }
+    confirmAction({
+      title: "Delete Payout Account?",
+      message: "This will permanently remove this payout account.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await partnerApi.delete(`/api/affiliate/payout-accounts/${id}`);
+          toast.success("Account removed");
+          loadAll();
+        } catch (err) {
+          toast.error("Failed to delete account");
+        }
+      },
+    });
   };
 
   if (loading) {

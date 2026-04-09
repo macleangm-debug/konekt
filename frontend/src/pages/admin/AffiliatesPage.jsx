@@ -13,6 +13,7 @@ import { Badge } from "../../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { toast } from "sonner";
 import { affiliateApi } from "../../lib/affiliateApi";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 const initialForm = {
   name: "",
@@ -27,6 +28,7 @@ const initialForm = {
 
 export default function AffiliatesPage() {
   const [affiliates, setAffiliates] = useState([]);
+  const { confirmAction } = useConfirmModal();
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,16 +77,22 @@ export default function AffiliatesPage() {
   };
 
   const deleteAffiliate = async (affiliateId) => {
-    if (!window.confirm("Are you sure you want to delete this affiliate?")) return;
-    
-    try {
-      await affiliateApi.deleteAffiliate(affiliateId);
-      toast.success("Affiliate deleted");
-      load();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete affiliate");
-    }
+    confirmAction({
+      title: "Delete Affiliate?",
+      message: "This affiliate will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await affiliateApi.deleteAffiliate(affiliateId);
+          toast.success("Affiliate deleted");
+          load();
+        } catch (error) {
+          console.error(error);
+          toast.error("Failed to delete affiliate");
+        }
+      },
+    });
   };
 
   const copyLink = async (affiliate) => {

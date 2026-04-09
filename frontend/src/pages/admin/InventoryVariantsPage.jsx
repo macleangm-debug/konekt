@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 export default function InventoryVariantsPage() {
   const [variants, setVariants] = useState([]);
@@ -18,6 +19,7 @@ export default function InventoryVariantsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProduct, setFilterProduct] = useState("");
   const [showLowStock, setShowLowStock] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const initialForm = {
     product_id: "",
@@ -110,15 +112,22 @@ export default function InventoryVariantsPage() {
   };
 
   const deleteVariant = async (variantId) => {
-    if (!window.confirm("Are you sure you want to deactivate this variant?")) return;
-    try {
-      await api.delete(`/api/admin/inventory-variants/${variantId}`);
-      toast.success("Variant deactivated");
-      loadVariants();
-    } catch (error) {
-      console.error("Failed to delete variant:", error);
-      toast.error(error.response?.data?.detail || "Failed to delete variant");
-    }
+    confirmAction({
+      title: "Deactivate Variant?",
+      message: "This inventory variant will be deactivated.",
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/inventory-variants/${variantId}`);
+          toast.success("Variant deactivated");
+          loadVariants();
+        } catch (error) {
+          console.error("Failed to delete variant:", error);
+          toast.error(error.response?.data?.detail || "Failed to delete variant");
+        }
+      },
+    });
   };
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));

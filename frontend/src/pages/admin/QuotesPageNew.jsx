@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FileText, Plus, Search, Download, ArrowRight, Trash2, X, CreditCard, User } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const quoteStatuses = ["draft", "sent", "approved", "rejected", "expired", "converted"];
 const statusColors = {
@@ -21,6 +22,7 @@ export default function QuotesPageNew() {
   const [filterStatus, setFilterStatus] = useState("");
   const [customerInfo, setCustomerInfo] = useState(null);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const [form, setForm] = useState({
     customer_name: "",
@@ -155,27 +157,41 @@ export default function QuotesPageNew() {
   };
 
   const convertToOrder = async (quoteId) => {
-    if (!window.confirm("Convert this quote to an order?")) return;
-    try {
-      await adminApi.convertQuoteToOrder(quoteId);
-      loadQuotes();
-      alert("Quote converted to order successfully!");
-    } catch (error) {
-      console.error("Failed to convert:", error);
-      alert(error.response?.data?.detail || "Failed to convert quote");
-    }
+    confirmAction({
+      title: "Convert to Order?",
+      message: "This quote will be converted to an active order.",
+      confirmLabel: "Convert to Order",
+      tone: "success",
+      onConfirm: async () => {
+        try {
+          await adminApi.convertQuoteToOrder(quoteId);
+          loadQuotes();
+          alert("Quote converted to order successfully!");
+        } catch (error) {
+          console.error("Failed to convert:", error);
+          alert(error.response?.data?.detail || "Failed to convert quote");
+        }
+      },
+    });
   };
 
   const convertToInvoice = async (quoteId) => {
-    if (!window.confirm("Convert this quote directly to an invoice?")) return;
-    try {
-      await adminApi.convertQuoteToInvoice(quoteId);
-      loadQuotes();
-      alert("Quote converted to invoice successfully!");
-    } catch (error) {
-      console.error("Failed to convert:", error);
-      alert(error.response?.data?.detail || "Failed to convert quote");
-    }
+    confirmAction({
+      title: "Convert to Invoice?",
+      message: "This quote will be converted directly to an invoice.",
+      confirmLabel: "Convert to Invoice",
+      tone: "success",
+      onConfirm: async () => {
+        try {
+          await adminApi.convertQuoteToInvoice(quoteId);
+          loadQuotes();
+          alert("Quote converted to invoice successfully!");
+        } catch (error) {
+          console.error("Failed to convert:", error);
+          alert(error.response?.data?.detail || "Failed to convert quote");
+        }
+      },
+    });
   };
 
   const filteredQuotes = quotes.filter((q) => {

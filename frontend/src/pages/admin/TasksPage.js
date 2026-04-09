@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CheckSquare, Plus, Search, Calendar, User, Clock, Users, Eye } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const taskStatuses = ["todo", "in_progress", "done", "blocked"];
 const priorities = ["low", "medium", "high", "urgent"];
@@ -23,6 +24,7 @@ const priorityColors = {
 export default function TasksPage() {
   const { user } = useAdminAuth();
   const [tasks, setTasks] = useState([]);
+  const { confirmAction } = useConfirmModal();
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -103,13 +105,20 @@ export default function TasksPage() {
   };
 
   const deleteTask = async (taskId) => {
-    if (!window.confirm("Delete this task?")) return;
-    try {
-      await adminApi.deleteTask(taskId);
-      loadTasks();
-    } catch (error) {
-      console.error("Failed to delete task", error);
-    }
+    confirmAction({
+      title: "Delete Task?",
+      message: "This task will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await adminApi.deleteTask(taskId);
+          loadTasks();
+        } catch (error) {
+          console.error("Failed to delete task", error);
+        }
+      },
+    });
   };
 
   const filteredTasks = tasks.filter((task) => {

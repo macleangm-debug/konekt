@@ -5,7 +5,7 @@ import api from "../../lib/api";
 import axios from "axios";
 import { Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy, Camera, Image } from "lucide-react";
 import LockedSavedDetailsSection from "./LockedSavedDetailsSection";
-import ConfirmActionModal from "../common/ConfirmActionModal";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import PhoneNumberField from "../forms/PhoneNumberField";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -52,8 +52,8 @@ export default function CartDrawerCompleteFlow() {
     invoice_client_phone: "", invoice_client_email: "", invoice_client_tin: "",
   });
   const [proof, setProof] = useState({ payer_name: "", amount_paid: "", file_url: "", file_name: "" });
-  const [showPayConfirm, setShowPayConfirm] = useState(false);
   const [isEditingPayer, setIsEditingPayer] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const loadPrefill = useCallback(async () => {
     if (!open) return;
@@ -454,21 +454,18 @@ export default function CartDrawerCompleteFlow() {
           )}
 
           {step === "payment" && (
-            <>
-              <button data-testid="submit-proof-btn" onClick={() => setShowPayConfirm(true)} disabled={submitting || proofSubmitted || !proof.payer_name}
-                className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
-                <Upload size={16} /> {proofSubmitted ? "Payment Submitted" : submitting ? "Submitting..." : "Submit Payment Proof"}
-              </button>
-              <ConfirmActionModal
-                open={showPayConfirm}
-                title="Submit Payment Proof?"
-                message="Please confirm you want to submit this payment proof. After submission, the button will be locked to avoid duplicate submissions."
-                confirmLabel="Yes, Submit"
-                onConfirm={() => { setShowPayConfirm(false); submitProof(); }}
-                onClose={() => setShowPayConfirm(false)}
-                loading={submitting}
-              />
-            </>
+            <button data-testid="submit-proof-btn" onClick={() => {
+              confirmAction({
+                title: "Submit Payment Proof?",
+                message: "Please confirm you want to submit this payment proof. After submission, the button will be locked to avoid duplicate submissions.",
+                confirmLabel: "Yes, Submit",
+                tone: "success",
+                onConfirm: async () => { await submitProof(); },
+              });
+            }} disabled={submitting || proofSubmitted || !proof.payer_name}
+              className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2a4a66] transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+              <Upload size={16} /> {proofSubmitted ? "Payment Submitted" : submitting ? "Submitting..." : "Submit Payment Proof"}
+            </button>
           )}
 
           {step === "done" && (

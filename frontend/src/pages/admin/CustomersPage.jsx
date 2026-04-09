@@ -3,6 +3,7 @@ import { Users, Plus, Search, Edit2, Trash2, Building2, Mail, CreditCard, Chevro
 import { adminApi } from "@/lib/adminApi";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 import { splitPhone, combinePhone } from "@/utils/phoneUtils";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const paymentTerms = [
   { value: "due_on_receipt", label: "Due on Receipt" },
@@ -37,6 +38,7 @@ const initialForm = {
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState([]);
+  const { confirmAction } = useConfirmModal();
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -106,14 +108,21 @@ export default function CustomersPage() {
   };
 
   const deleteCustomer = async (customerId) => {
-    if (!window.confirm("Are you sure you want to deactivate this customer?")) return;
-    try {
-      await adminApi.deleteCustomer(customerId);
-      loadCustomers();
-    } catch (error) {
-      console.error("Failed to delete customer:", error);
-      alert(error.response?.data?.detail || "Failed to delete customer");
-    }
+    confirmAction({
+      title: "Deactivate Customer?",
+      message: "This customer account will be deactivated.",
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await adminApi.deleteCustomer(customerId);
+          loadCustomers();
+        } catch (error) {
+          console.error("Failed to delete customer:", error);
+          alert(error.response?.data?.detail || "Failed to delete customer");
+        }
+      },
+    });
   };
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));

@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
  * Shows on every website launch / hard refresh.
  * Skips on internal SPA navigation (React state persists).
  *
- * Animation sequence (~2.2s total):
+ * Animation sequence (~2.5s total):
  *   1. Nodes appear one by one (fade + scale)
  *   2. Connector lines draw in (stroke-dashoffset)
  *   3. Subtle glow travels through connections
@@ -19,12 +19,12 @@ export default function AppLauncher({ onComplete, brandName = "Konekt", tagline 
   const [phase, setPhase] = useState("intro"); // intro → fading → done
 
   useEffect(() => {
-    // Animation timeline — always play on mount (fresh load / hard refresh)
-    const fadeTimer = setTimeout(() => setPhase("fading"), 2200);
+    // Animation timeline — premium pacing (~2.5s)
+    const fadeTimer = setTimeout(() => setPhase("fading"), 2500);
     const doneTimer = setTimeout(() => {
       setPhase("done");
       onComplete?.();
-    }, 2400);
+    }, 2750);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -88,12 +88,12 @@ export default function AppLauncher({ onComplete, brandName = "Konekt", tagline 
         <circle r="4" fill="#D4A843" opacity="0" filter="url(#glow)" className="launcher-glow">
           <animateMotion
             path="M69.6,15.6 L14.4,98.4 L108,86.4 L69.6,15.6"
-            dur="1.2s"
-            begin="0.9s"
+            dur="1.3s"
+            begin="1.0s"
             fill="freeze"
             repeatCount="1"
           />
-          <animate attributeName="opacity" values="0;0.8;0.8;0" dur="1.2s" begin="0.9s" fill="freeze" />
+          <animate attributeName="opacity" values="0;0.8;0.8;0" dur="1.3s" begin="1.0s" fill="freeze" />
         </circle>
 
         {/* Nodes — appear one by one */}
@@ -120,45 +120,45 @@ export default function AppLauncher({ onComplete, brandName = "Konekt", tagline 
 
       {/* CSS animations scoped via class names */}
       <style>{`
-        /* ── Nodes: appear one by one ── */
+        /* ── Nodes: appear one by one (slightly delayed sequence) ── */
         .launcher-node {
           opacity: 0;
           transform-origin: center;
-          animation: launcherNodeIn 300ms ease-out forwards;
+          animation: launcherNodeIn 380ms ease-out forwards;
         }
-        .launcher-node-1 { animation-delay: 0ms; }
-        .launcher-node-2 { animation-delay: 200ms; }
-        .launcher-node-3 { animation-delay: 400ms; }
+        .launcher-node-1 { animation-delay: 50ms; }
+        .launcher-node-2 { animation-delay: 300ms; }
+        .launcher-node-3 { animation-delay: 550ms; }
 
         @keyframes launcherNodeIn {
           from { opacity: 0; transform: scale(0); }
           to   { opacity: 1; transform: scale(1); }
         }
 
-        /* ── Lines: draw in via stroke-dashoffset ── */
+        /* ── Lines: smoother draw-in ── */
         .launcher-line {
           stroke-dasharray: 120;
           stroke-dashoffset: 120;
-          animation: launcherLineDraw 500ms ease-out forwards;
+          animation: launcherLineDraw 600ms ease-in-out forwards;
         }
-        .launcher-line-1 { animation-delay: 300ms; }
-        .launcher-line-2 { animation-delay: 500ms; }
-        .launcher-line-3 { animation-delay: 700ms; }
+        .launcher-line-1 { animation-delay: 400ms; }
+        .launcher-line-2 { animation-delay: 620ms; }
+        .launcher-line-3 { animation-delay: 840ms; }
 
         @keyframes launcherLineDraw {
           to { stroke-dashoffset: 0; }
         }
 
-        /* ── Text: fade in ── */
+        /* ── Text: fade in with longer hold ── */
         .launcher-text-1 {
           opacity: 0;
-          animation: launcherFadeIn 400ms ease-out forwards;
-          animation-delay: 1400ms;
+          animation: launcherFadeIn 450ms ease-out forwards;
+          animation-delay: 1550ms;
         }
         .launcher-text-2 {
           opacity: 0;
-          animation: launcherFadeIn 400ms ease-out forwards;
-          animation-delay: 1700ms;
+          animation: launcherFadeIn 450ms ease-out forwards;
+          animation-delay: 1850ms;
         }
 
         @keyframes launcherFadeIn {

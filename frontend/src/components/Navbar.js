@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import BrandLogo from './branding/BrandLogo';
+import { useConfirmModal } from '../contexts/ConfirmModalContext';
 
 // Main product branches with their sub-categories
 const productBranches = [
@@ -47,6 +48,20 @@ export default function Navbar() {
   const { itemCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const { confirmAction } = useConfirmModal();
+
+  const handleLogout = () => {
+    confirmAction({
+      title: "Sign Out?",
+      message: "You will be logged out of your account.",
+      confirmLabel: "Sign Out",
+      tone: "danger",
+      onConfirm: async () => {
+        logout();
+        setMobileMenuOpen(false);
+      },
+    });
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -279,7 +294,7 @@ export default function Navbar() {
                       Dashboard
                     </Link>
                     <button
-                      onClick={() => { logout(); setMobileMenuOpen(false); }}
+                      onClick={handleLogout}
                       className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 w-full text-left text-destructive"
                     >
                       Logout

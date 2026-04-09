@@ -15,9 +15,9 @@ import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithVa
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ChatWidget from "@/components/ChatWidget";
-import ExitIntentPopup from "@/components/ExitIntentPopup";
-import PromoBanner from "@/components/PromoBanner";
+// Removed: ExitIntentPopup, PromoBanner (interruptive popups cleaned up)
 import AIChatWidget from "@/components/AIChatWidget";
+import { ConfirmModalProvider } from "@/contexts/ConfirmModalContext";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 import CartDrawerV2 from "@/components/cart/CartDrawerV2";
 import CartDrawerCompleteFlow from "@/components/cart/CartDrawerCompleteFlow";
@@ -542,6 +542,7 @@ function App() {
 
   return (
     <BrandingProvider>
+    <ConfirmModalProvider>
     {!launcherDone && <AppLauncher onComplete={() => setLauncherDone(true)} />}
     <BrowserRouter>
       <Routes>
@@ -931,7 +932,6 @@ function App() {
           <AuthProvider>
             <CartProvider>
               <div className="App min-h-screen flex flex-col">
-                <PromoBanner />
                 <Navbar />
                 <main className="flex-1 pb-16 md:pb-0">
                   <Routes>
@@ -966,7 +966,6 @@ function App() {
                 </main>
                 <Footer />
                 <ChatWidget />
-                <ExitIntentPopup />
               </div>
             </CartProvider>
           </AuthProvider>
@@ -975,6 +974,7 @@ function App() {
       <Toaster position="top-center" richColors />
       <AIChatWidget />
     </BrowserRouter>
+    </ConfirmModalProvider>
     </BrandingProvider>
   );
 }

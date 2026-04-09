@@ -7,6 +7,7 @@ import {
 import { useStaffAuth } from "../contexts/StaffAuthContext";
 import NotificationBell from "../components/shared/NotificationBell";
 import BrandLogo from "../components/branding/BrandLogo";
+import { useConfirmModal } from "../contexts/ConfirmModalContext";
 
 const staffNavItems = [
   { path: "/staff", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -22,6 +23,7 @@ export default function StaffLayout() {
   const navigate = useNavigate();
   const { staff, logout } = useStaffAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const isActive = (path, exact = false) => {
     if (exact) return location.pathname === path || location.pathname === "/staff/home";
@@ -29,8 +31,16 @@ export default function StaffLayout() {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate("/staff-login");
+    confirmAction({
+      title: "Sign Out?",
+      message: "You will be logged out of the sales workspace.",
+      confirmLabel: "Sign Out",
+      tone: "danger",
+      onConfirm: async () => {
+        logout();
+        navigate("/staff-login");
+      },
+    });
   };
 
   return (

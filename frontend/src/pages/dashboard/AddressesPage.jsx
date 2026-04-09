@@ -6,6 +6,7 @@ import EmptyStateCard from "../../components/customer/EmptyStateCard";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 const initialForm = {
   label: "",
@@ -27,6 +28,7 @@ export default function AddressesPage() {
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
+  const { confirmAction } = useConfirmModal();
 
   const selectedCountry = useMemo(
     () => COUNTRIES.find((c) => c.code === form.country),
@@ -79,15 +81,22 @@ export default function AddressesPage() {
   };
 
   const deleteAddress = async (addressId) => {
-    if (!window.confirm("Are you sure you want to delete this address?")) return;
-    try {
-      await api.delete(`/api/customer/addresses/${addressId}`);
-      toast.success("Address deleted");
-      load();
-    } catch (error) {
-      console.error("Failed to delete address:", error);
-      toast.error("Failed to delete address");
-    }
+    confirmAction({
+      title: "Delete Address?",
+      message: "This address will be permanently removed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/customer/addresses/${addressId}`);
+          toast.success("Address deleted");
+          load();
+        } catch (error) {
+          console.error("Failed to delete address:", error);
+          toast.error("Failed to delete address");
+        }
+      },
+    });
   };
 
   const setDefault = async (addressId) => {

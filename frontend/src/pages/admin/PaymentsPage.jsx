@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CreditCard, Search, Eye, CheckCircle, XCircle, RefreshCcw, FileText } from "lucide-react";
 import { paymentApi } from "@/lib/paymentApi";
 import PaymentStatusBadge from "@/components/PaymentStatusBadge";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const providerLabels = {
   kwikpay: "KwikPay Mobile",
@@ -13,6 +14,7 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const { confirmAction } = useConfirmModal();
 
   const loadPayments = async () => {
     try {
@@ -33,15 +35,22 @@ export default function PaymentsPage() {
   }, [filterStatus]);
 
   const verifyPayment = async (paymentId) => {
-    if (!window.confirm("Confirm this payment as verified and paid?")) return;
-    try {
-      await paymentApi.verifyAdminPayment(paymentId);
-      loadPayments();
-      alert("Payment verified successfully");
-    } catch (error) {
-      console.error(error);
-      alert(error?.response?.data?.detail || "Failed to verify payment");
-    }
+    confirmAction({
+      title: "Verify Payment?",
+      message: "This will confirm the payment as verified and paid.",
+      confirmLabel: "Verify & Confirm",
+      tone: "success",
+      onConfirm: async () => {
+        try {
+          await paymentApi.verifyAdminPayment(paymentId);
+          loadPayments();
+          alert("Payment verified successfully");
+        } catch (error) {
+          console.error(error);
+          alert(error?.response?.data?.detail || "Failed to verify payment");
+        }
+      },
+    });
   };
 
   const rejectPayment = async (paymentId) => {

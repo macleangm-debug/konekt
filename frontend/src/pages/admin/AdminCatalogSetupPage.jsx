@@ -3,6 +3,7 @@ import api from "../../lib/api";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { Plus, Pencil, Trash2, Package, Wrench } from "lucide-react";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 export default function AdminCatalogSetupPage() {
   const [activeTab, setActiveTab] = useState("services");
@@ -12,6 +13,7 @@ export default function AdminCatalogSetupPage() {
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [modalType, setModalType] = useState("service");
+  const { confirmAction } = useConfirmModal();
 
   const loadData = async () => {
     setLoading(true);
@@ -46,14 +48,21 @@ export default function AdminCatalogSetupPage() {
   };
 
   const handleDelete = async (type, id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-    try {
-      await api.delete(`/api/admin/catalog/${type}s/${id}`);
-      toast.success("Item deleted successfully");
-      loadData();
-    } catch (err) {
-      toast.error("Failed to delete item");
-    }
+    confirmAction({
+      title: "Delete Item?",
+      message: "This catalog item will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/catalog/${type}s/${id}`);
+          toast.success("Item deleted successfully");
+          loadData();
+        } catch (err) {
+          toast.error("Failed to delete item");
+        }
+      },
+    });
   };
 
   return (

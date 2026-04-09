@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { RefreshCw, AlertCircle, Clock, CheckCircle, Truck, Package, Wrench } from "lucide-react";
 import api from "../../lib/api";
-import ConfirmationModal from "../../components/common/ConfirmationModal";
-import useConfirmationModal from "../../hooks/useConfirmationModal";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 const STATUSES = [
   { value: "new", label: "New", color: "bg-slate-100 text-slate-700" },
@@ -35,7 +34,7 @@ export default function ProductionJobsPage() {
   const [expandedJob, setExpandedJob] = useState(null);
   const [progressNote, setProgressNote] = useState("");
   
-  const { modalState, openConfirmation, closeConfirmation, setLoading: setModalLoading } = useConfirmationModal();
+  const { confirmAction } = useConfirmModal();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,13 +57,12 @@ export default function ProductionJobsPage() {
   }, [load]);
 
   const handleStatusUpdate = (job, newStatus) => {
-    openConfirmation({
+    confirmAction({
       title: `Update to "${getStatusLabel(newStatus)}"?`,
       message: `This will change the job status and notify relevant parties (customer, sales, admin).`,
       confirmLabel: "Update Status",
       tone: newStatus === "blocked" || newStatus === "delayed" ? "danger" : "default",
       onConfirm: async () => {
-        setModalLoading(true);
         try {
           const token = localStorage.getItem("admin_token");
           await api.put(`/api/production-progress/${job.id}/status`, {
@@ -72,15 +70,12 @@ export default function ProductionJobsPage() {
             progress_note: progressNote || `Status updated to ${newStatus}`,
           }, { headers: { Authorization: `Bearer ${token}` } });
           setProgressNote("");
-          closeConfirmation();
           load();
         } catch (err) {
           console.error("Failed to update status:", err);
           alert("Failed to update status");
-        } finally {
-          setModalLoading(false);
         }
-      }
+      },
     });
   };
 
@@ -251,11 +246,6 @@ export default function ProductionJobsPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        {...modalState}
-        onCancel={closeConfirmation}
-      />
     </div>
   );
 }

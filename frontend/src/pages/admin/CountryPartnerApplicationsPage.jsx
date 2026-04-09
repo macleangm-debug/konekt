@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Building2, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
 import api from "../../lib/api";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 export default function CountryPartnerApplicationsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [stats, setStats] = useState(null);
+  const { confirmAction } = useConfirmModal();
 
   const load = async () => {
     try {
@@ -38,14 +40,21 @@ export default function CountryPartnerApplicationsPage() {
   };
 
   const convertToPartner = async (id) => {
-    if (!window.confirm("Convert this application to a partner account?")) return;
-    try {
-      const res = await api.post(`/api/admin/country-partner-applications/${id}/convert-to-partner`);
-      alert(`Partner "${res.data.partner.name}" created successfully!`);
-      load();
-    } catch (err) {
-      alert(err?.response?.data?.detail || "Failed to convert");
-    }
+    confirmAction({
+      title: "Convert to Partner?",
+      message: "This application will be converted to a partner account.",
+      confirmLabel: "Convert",
+      tone: "success",
+      onConfirm: async () => {
+        try {
+          const res = await api.post(`/api/admin/country-partner-applications/${id}/convert-to-partner`);
+          alert(`Partner "${res.data.partner.name}" created successfully!`);
+          load();
+        } catch (err) {
+          alert(err?.response?.data?.detail || "Failed to convert");
+        }
+      },
+    });
   };
 
   const getStatusBadge = (status) => {

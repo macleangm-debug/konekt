@@ -11,12 +11,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { useConfirmModal } from '../contexts/ConfirmModalContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, token, logout, fetchUser } = useAuth();
+  const { confirmAction } = useConfirmModal();
   const [orders, setOrders] = useState([]);
   const [drafts, setDrafts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,7 +124,7 @@ export default function Dashboard() {
               <h1 className="text-2xl font-bold">Welcome back, {user.full_name}!</h1>
               <p className="text-muted-foreground">{user.email}</p>
             </div>
-            <Button variant="outline" onClick={logout} data-testid="logout-btn">
+            <Button variant="outline" onClick={() => confirmAction({ title: "Sign Out?", message: "You will be logged out of your account.", confirmLabel: "Sign Out", tone: "danger", onConfirm: async () => logout() })} data-testid="logout-btn">
               Logout
             </Button>
           </div>

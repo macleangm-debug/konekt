@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import api from "../../lib/api";
 import { Layers, Plus, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 export default function ServiceTaxonomyAdminSetup() {
   const [rows, setRows] = useState([]);
@@ -8,6 +9,7 @@ export default function ServiceTaxonomyAdminSetup() {
   const [expanded, setExpanded] = useState({});
   const [showAdd, setShowAdd] = useState(false);
   const [newGroup, setNewGroup] = useState({ group_key: "", group_name: "", subgroups: "" });
+  const { confirmAction } = useConfirmModal();
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -38,13 +40,20 @@ export default function ServiceTaxonomyAdminSetup() {
   };
 
   const handleDelete = async (key) => {
-    if (!window.confirm(`Delete group "${key}"?`)) return;
-    try {
-      await api.delete(`/api/multi-request/service-group/${key}`);
-      load();
-    } catch (err) {
-      alert("Failed: " + (err.response?.data?.detail || err.message));
-    }
+    confirmAction({
+      title: "Delete Service Group?",
+      message: `This will permanently delete the group "${key}".`,
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/multi-request/service-group/${key}`);
+          load();
+        } catch (err) {
+          alert("Failed: " + (err.response?.data?.detail || err.message));
+        }
+      },
+    });
   };
 
   if (loading) {

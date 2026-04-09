@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useConfirmModal } from "@/contexts/ConfirmModalContext";
 
 const unitsOfMeasure = [
   "units", "kg", "g", "meters", "cm", "liters", "ml", "sheets", "rolls", "boxes", "pairs"
@@ -19,6 +20,7 @@ export default function RawMaterialsPage() {
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const { confirmAction } = useConfirmModal();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
   const [adjustingMaterial, setAdjustingMaterial] = useState(null);
@@ -175,16 +177,23 @@ export default function RawMaterialsPage() {
   };
 
   const deleteMaterial = async (materialId) => {
-    if (!window.confirm("Are you sure you want to deactivate this material?")) return;
-    try {
-      await api.delete(`/api/admin/raw-materials/${materialId}`);
-      toast.success("Material deactivated");
-      loadMaterials();
-      loadStats();
-    } catch (error) {
-      console.error("Failed to delete material:", error);
-      toast.error(error.response?.data?.detail || "Failed to delete material");
-    }
+    confirmAction({
+      title: "Deactivate Material?",
+      message: "This raw material will be deactivated.",
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/raw-materials/${materialId}`);
+          toast.success("Material deactivated");
+          loadMaterials();
+          loadStats();
+        } catch (error) {
+          console.error("Failed to delete material:", error);
+          toast.error(error.response?.data?.detail || "Failed to delete material");
+        }
+      },
+    });
   };
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));

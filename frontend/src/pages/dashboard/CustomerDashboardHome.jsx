@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
-import ClientBannerCarousel from "../../components/ClientBannerCarousel";
 import ReferralPointsBanner from "../../components/customer/ReferralPointsBanner";
 import PromoArtCards from "../../components/customer/PromoArtCards";
 import {
@@ -127,8 +126,6 @@ export default function CustomerDashboardHome() {
             Order products, request design work, manage invoices, book maintenance, and earn rewards.
           </p>
         </div>
-
-        <ClientBannerCarousel />
       </div>
 
       {/* Referral & Points Banner */}

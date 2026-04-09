@@ -13,6 +13,7 @@ import { Badge } from "../../components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { toast } from "sonner";
 import { heroBannerApi } from "../../lib/heroBannerApi";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
 const initialForm = {
   title: "",
@@ -38,6 +39,7 @@ export default function HeroBannersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const { confirmAction } = useConfirmModal();
 
   const load = async () => {
     setLoading(true);
@@ -120,16 +122,22 @@ export default function HeroBannersPage() {
   };
 
   const removeBanner = async (bannerId) => {
-    if (!window.confirm("Are you sure you want to delete this banner?")) return;
-    
-    try {
-      await heroBannerApi.deleteHeroBanner(bannerId);
-      toast.success("Banner deleted");
-      load();
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete banner");
-    }
+    confirmAction({
+      title: "Delete Banner?",
+      message: "This hero banner will be permanently deleted.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await heroBannerApi.deleteHeroBanner(bannerId);
+          toast.success("Banner deleted");
+          load();
+        } catch (error) {
+          console.error(error);
+          toast.error("Failed to delete banner");
+        }
+      },
+    });
   };
 
   const toggleBannerActive = async (banner) => {
