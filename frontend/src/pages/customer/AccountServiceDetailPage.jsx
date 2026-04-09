@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import AppLoader from "../../components/branding/AppLoader";
 import ServicePageTemplate from "../../components/services/ServicePageTemplate";
 import PageHeader from "../../components/ui/PageHeader";
 import { Loader2, ArrowLeft } from "lucide-react";
@@ -125,7 +126,7 @@ export default function AccountServiceDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20" data-testid="account-service-loading">
-        <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
+        <AppLoader text="Loading service details..." size="md" />
       </div>
     );
   }

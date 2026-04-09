@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PageHeader from "../../components/ui/PageHeader";
+import AppLoader from "../../components/branding/AppLoader";
 import ServiceHeroPanel from "../../components/services/ServiceHeroPanel";
 import ServiceCategoryGrid from "../../components/services/ServiceCategoryGrid";
 import { Loader2 } from "lucide-react";
@@ -91,7 +92,7 @@ export default function AccountServicesDiscoveryPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
+          <AppLoader text="Loading services..." size="md" />
         </div>
       ) : (
         <div className="space-y-10">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import AppLoader from "../../components/branding/AppLoader";
 import { toast } from "sonner";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -44,7 +44,7 @@ export default function ServiceRequestHubPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        <AppLoader text="Loading service requests..." size="md" />
       </div>
     );
   }

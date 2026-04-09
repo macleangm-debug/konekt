@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
@@ -308,6 +308,7 @@ import SalesRatingLeaderboardCard from "@/components/ratings/SalesRatingLeaderbo
 // Branding + Enterprise PDF Pack
 import BrandingSettingsPage from "@/pages/admin/BrandingSettingsPage";
 import BrandLogo from "@/components/branding/BrandLogo";
+import AppLauncher from "@/components/branding/AppLauncher";
 import AccountBrandHeader from "@/components/layout/AccountBrandHeader";
 import EnterprisePdfActions from "@/components/docs/EnterprisePdfActions";
 import useBrandingSettings from "@/hooks/useBrandingSettings";
@@ -533,6 +534,7 @@ function StaffRoute({ children }) {
 }
 
 function App() {
+  const [launcherDone, setLauncherDone] = useState(false);
   // Bootstrap affiliate attribution from URL/localStorage on app load
   useEffect(() => {
     bootstrapAffiliateAttribution();
@@ -540,6 +542,7 @@ function App() {
 
   return (
     <BrandingProvider>
+    {!launcherDone && <AppLauncher onComplete={() => setLauncherDone(true)} />}
     <BrowserRouter>
       <Routes>
         {/* Main Login Page - V2 Branded Design */}

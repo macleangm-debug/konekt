@@ -907,6 +907,85 @@ async def register(request: Request, data: UserCreate):
         }
     }
 
+
+# ═══ Welcome Notification (one-time, fire-and-forget) ═══
+_WELCOME_MESSAGES = {
+    "customer": {
+        "title": "Welcome to Konekt",
+        "message": "Start by exploring your dashboard, orders, and referrals.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/account",
+    },
+    "sales": {
+        "title": "Welcome to Konekt Sales",
+        "message": "Check your actions, pipeline, and performance today.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/staff",
+    },
+    "sales_manager": {
+        "title": "Welcome to Konekt",
+        "message": "Your dashboard and reports are ready.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/admin",
+    },
+    "finance_manager": {
+        "title": "Welcome to Konekt",
+        "message": "Your dashboard and reports are ready.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/admin",
+    },
+    "admin": {
+        "title": "Welcome back",
+        "message": "Your dashboard and reports are ready.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/admin",
+    },
+    "vendor": {
+        "title": "Welcome to Konekt Vendor Portal",
+        "message": "Review your assigned work and fulfillment updates.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/partner",
+    },
+    "partner": {
+        "title": "Welcome to Konekt Vendor Portal",
+        "message": "Review your assigned work and fulfillment updates.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/partner",
+    },
+    "affiliate": {
+        "title": "Welcome to Konekt Affiliate Portal",
+        "message": "View promotions, share links, and track your earnings.",
+        "cta_label": "Open Dashboard",
+        "target_url": "/partner/affiliate",
+    },
+}
+
+async def _create_welcome_notification(database, user_id: str, role: str, full_name: str):
+    """Create a one-time welcome notification. Safe — never blocks login."""
+    try:
+        existing = await database.notifications.find_one({"recipient_user_id": user_id, "type": "welcome"})
+        if existing:
+            return
+        msg = _WELCOME_MESSAGES.get(role, _WELCOME_MESSAGES["customer"])
+        name_part = f", {full_name}" if full_name else ""
+        await database.notifications.insert_one({
+            "id": str(uuid.uuid4()),
+            "recipient_user_id": user_id,
+            "recipient_role": role,
+            "type": "welcome",
+            "title": msg["title"],
+            "message": f"Welcome{name_part}! {msg['message']}",
+            "cta_label": msg["cta_label"],
+            "target_url": msg["target_url"],
+            "priority": "normal",
+            "is_read": False,
+            "status": "unread",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        pass  # Non-critical — never block login
+
+
 @api_router.post("/auth/login")
 async def login(request: Request, data: UserLogin):
     from services.auth_security_service import check_rate_limit
@@ -925,6 +1004,8 @@ async def login(request: Request, data: UserLogin):
         
         role = user.get("role", "customer")
         token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
+        # Fire welcome notification (one-time, non-blocking)
+        await _create_welcome_notification(db, user["id"], role, user.get("full_name", ""))
         return {
             "token": token,
             "user": {
@@ -950,10 +1031,14 @@ async def login(request: Request, data: UserLogin):
             from bson import ObjectId as _OID
             token = create_partner_token(partner_user)
             partner = await db.partners.find_one({"_id": _OID(partner_user["partner_id"])})
+            p_role = partner_user.get("role", "vendor")
+            p_id = str(partner_user["_id"])
+            # Fire welcome notification for partner (one-time, non-blocking)
+            await _create_welcome_notification(db, p_id, p_role, partner_user.get("full_name", partner_user.get("name", "")))
             return {
                 "token": token,
                 "user": {
-                    "id": str(partner_user["_id"]),
+                    "id": p_id,
                     "email": partner_user["email"],
                     "full_name": partner_user.get("full_name", partner_user.get("name", partner_user["email"])),
                     "phone": partner_user.get("phone", ""),
@@ -998,6 +1083,8 @@ async def admin_login(data: UserLogin):
         raise HTTPException(status_code=403, detail="Account is deactivated")
     
     token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
+    # Fire welcome notification (one-time, non-blocking)
+    await _create_welcome_notification(db, user["id"], role, user.get("full_name", ""))
     return {
         "token": token,
         "user": {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
@@ -53,7 +54,7 @@ export default function WeeklyPerformanceReportPage() {
     );
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64" data-testid="weekly-loading"><div className="animate-pulse text-slate-400 text-sm">Loading weekly report...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-64" data-testid="weekly-loading"><AppLoader text="Loading weekly report..." size="md" /></div>;
   if (!data) return <div className="text-center py-12 text-slate-400">Failed to load report</div>;
 
   const es = data.executive_summary || {};

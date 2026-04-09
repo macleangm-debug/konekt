@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
@@ -80,7 +81,7 @@ export default function InventoryIntelligencePage() {
     );
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64" data-testid="inv-loading"><div className="animate-pulse text-slate-400 text-sm">Loading inventory data...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-64" data-testid="inv-loading"><AppLoader text="Loading inventory data..." size="md" /></div>;
 
   const k = data?.kpis || {};
   const products = data?.products || [];

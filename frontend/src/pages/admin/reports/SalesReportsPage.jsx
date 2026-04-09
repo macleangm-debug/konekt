@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
@@ -78,7 +79,7 @@ export default function SalesReportsPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64" data-testid="sales-report-loading"><div className="animate-pulse text-slate-400 text-sm">Loading sales data...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-64" data-testid="sales-report-loading"><AppLoader text="Loading sales data..." size="md" /></div>;
 
   const k = data?.kpis || {};
   const teamTable = data?.team_table || [];

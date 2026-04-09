@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
@@ -75,7 +76,7 @@ export default function BusinessHealthReportPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="bh-report-loading">
-        <div className="animate-pulse text-slate-400 text-sm">Loading business health...</div>
+        <AppLoader text="Loading business health..." size="md" />
       </div>
     );
   }

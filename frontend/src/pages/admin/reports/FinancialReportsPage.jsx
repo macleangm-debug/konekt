@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney, fmtMoneyRaw } from "../../../lib/reportExportUtils";
 import {
@@ -82,7 +83,7 @@ export default function FinancialReportsPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-64" data-testid="fin-report-loading"><div className="animate-pulse text-slate-400 text-sm">Loading financial data...</div></div>;
+  if (loading) return <div className="flex items-center justify-center h-64" data-testid="fin-report-loading"><AppLoader text="Loading financial data..." size="md" /></div>;
 
   const k = data?.kpis || {};
   const revTrend = data?.charts?.revenue_trend || [];

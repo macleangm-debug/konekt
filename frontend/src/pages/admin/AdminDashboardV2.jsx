@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import AppLoader from "../../components/branding/AppLoader";
 import {
   DollarSign, ShoppingCart, Clock, AlertTriangle,
   TrendingUp, CheckCircle, Package, ArrowRight,
@@ -83,7 +84,7 @@ function SalesManagerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="sm-dashboard-loading">
-        <div className="animate-pulse text-slate-400 text-sm">Loading team dashboard...</div>
+        <AppLoader text="Loading team dashboard..." size="md" />
       </div>
     );
   }
@@ -362,7 +363,7 @@ function FinanceManagerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="fm-dashboard-loading">
-        <div className="animate-pulse text-slate-400 text-sm">Loading financial dashboard...</div>
+        <AppLoader text="Loading financial dashboard..." size="md" />
       </div>
     );
   }

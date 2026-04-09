@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "../../../lib/api";
+import AppLoader from "../../../components/branding/AppLoader";
 import { useBranding } from "../../../contexts/BrandingContext";
 import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
@@ -144,7 +145,7 @@ export default function AlertDashboardPage() {
       {/* Alert List */}
       <div className="space-y-2" data-testid="alert-list">
         {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm animate-pulse">Loading alerts...</div>
+          <div className="text-center py-12"><AppLoader text="Loading alerts..." size="md" /></div>
         ) : data.alerts.length === 0 ? (
           <div className="text-center py-12 bg-white border rounded-2xl">
             <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-300" />
