@@ -92,6 +92,18 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Critical Discount Alerts (requests above threshold)
   - Quick Actions (Orders, Customers, Quotes, Sales Ratings)
   - Backend: GET /api/admin/dashboard/team-kpis
+- **Finance Manager Dashboard (Phase 3)**
+  - "Financial Control Center" hero with amber gradient + margin badge
+  - KPI Row: Total Revenue, Collected, Pending Payments, Outstanding Invoices, Commission Payable, Net Margin
+  - Cash Flow Trend chart (6 months: revenue in vs commissions out)
+  - Payment Status distribution (pie chart with breakdown)
+  - Margin Trend line chart (monthly margin %)
+  - Invoice Status breakdown by status
+  - Top Revenue Sources (top 5 customers by paid order value)
+  - Commission Tracking (payable/paid/affiliate summary + per-rep table)
+  - High-Risk Discounts (warning + critical threshold classification)
+  - Quick Actions (Invoices, Payments, Orders, Discount Analytics)
+  - Backend: GET /api/admin/dashboard/finance-kpis
 
 ### Integrations
 - Stripe Payments (sandbox test key — working E2E)
