@@ -5,6 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, AlertCircle, ChevronDown, ChevronRight
 } from "lucide-react";
 import api from "../../lib/api";
+import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 
 const STATUS_BADGE = {
   sent: { cls: "bg-green-100 text-green-700", icon: CheckCircle2, label: "Sent" },
@@ -258,6 +259,9 @@ export default function NotificationSettingsPage() {
           </div>
         )}
       </div>
+
+      {/* ═══ PERSONAL NOTIFICATION PREFERENCES ═══ */}
+      <NotificationPreferencesSection apiClient={api} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import partnerApi from "../../lib/partnerApi";
+import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 import {
   Briefcase, Clock, CheckCircle, AlertTriangle,
   Package, Truck, ChevronRight, Loader2,
@@ -213,6 +214,9 @@ export default function VendorDashboardPage() {
           <BarChart3 className="w-4 h-4 text-[#20364D]" /> Stock Table
         </Link>
       </div>
+
+      {/* ═══ NOTIFICATION PREFERENCES ═══ */}
+      <NotificationPreferencesSection apiClient={partnerApi} />
     </div>
   );
 }

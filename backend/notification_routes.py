@@ -194,3 +194,82 @@ async def mark_all_read(user: dict = Depends(get_current_user)):
     )
     
     return {"ok": True, "message": "All notifications marked as read"}
+
+
+
+# ═══ NOTIFICATION PREFERENCES ═══
+
+@router.get("/preferences")
+async def get_notification_preferences(user: dict = Depends(get_current_user)):
+    """Get current user's notification preferences with role-based defaults."""
+    from services.notification_multichannel_service import (
+        get_user_preferences, EVENT_CATALOG, ROLE_DEFAULTS
+    )
+
+    user_id = user.get("id", "")
+    role = user.get("role", "customer")
+    prefs = await get_user_preferences(db, user_id, role)
+
+    # Build structured response grouped by event group
+    role_events = {k: v for k, v in EVENT_CATALOG.items() if role in v["roles"]}
+    groups = {}
+    for event_key, meta in role_events.items():
+        group = meta["group"]
+        if group not in groups:
+            groups[group] = []
+        channel_prefs = prefs.get(event_key, ROLE_DEFAULTS.get(role, {}).get(
+            event_key, {"in_app": True, "email": False, "whatsapp": False}
+        ))
+        groups[group].append({
+            "event_key": event_key,
+            "label": meta["label"],
+            "in_app": channel_prefs.get("in_app", True),
+            "email": channel_prefs.get("email", False),
+            "whatsapp": channel_prefs.get("whatsapp", False),
+        })
+
+    # Channel availability
+    import os
+    resend_configured = bool(os.getenv("RESEND_API_KEY"))
+    twilio_configured = all([
+        os.getenv("TWILIO_ACCOUNT_SID"),
+        os.getenv("TWILIO_AUTH_TOKEN"),
+        os.getenv("TWILIO_WHATSAPP_FROM"),
+    ])
+
+    return {
+        "ok": True,
+        "role": role,
+        "groups": groups,
+        "channels": {
+            "in_app": True,
+            "email": resend_configured,
+            "whatsapp": twilio_configured,
+        },
+    }
+
+
+@router.put("/preferences")
+async def update_notification_preferences(
+    payload: dict,
+    user: dict = Depends(get_current_user),
+):
+    """Update notification preferences for specific event types."""
+    from services.notification_multichannel_service import save_user_preferences, get_user_preferences
+
+    user_id = user.get("id", "")
+    role = user.get("role", "customer")
+
+    # Merge with existing
+    existing = await get_user_preferences(db, user_id, role)
+    updates = payload.get("preferences", {})
+
+    for event_key, channels in updates.items():
+        if event_key not in existing:
+            existing[event_key] = {}
+        for channel, enabled in channels.items():
+            if channel in ("in_app", "email", "whatsapp"):
+                existing[event_key][channel] = bool(enabled)
+
+    await save_user_preferences(db, user_id, role, existing)
+    return {"ok": True, "message": "Preferences updated"}

@@ -3,6 +3,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import api from "../../lib/api";
 import { ChevronDown, Plus, Trash2, Check } from "lucide-react";
 import PhoneNumberField from "../forms/PhoneNumberField";
+import NotificationPreferencesSection from "../shared/NotificationPreferencesSection";
 
 const EMPTY_ADDRESS = {
   label: "Address",
@@ -235,6 +236,9 @@ export default function MyAccountPageV2() {
         </button>
         {saved && <span className="text-green-600 font-medium flex items-center gap-1"><Check size={16} /> Saved successfully</span>}
       </div>
+
+      {/* Notification Preferences */}
+      <NotificationPreferencesSection apiClient={api} />
     </div>
   );
 }

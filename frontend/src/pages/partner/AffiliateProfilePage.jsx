@@ -1,4 +1,6 @@
 import React from "react";
+import partnerApi from "../../lib/partnerApi";
+import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 
 export default function AffiliateProfilePage() {
   return (
@@ -25,6 +27,9 @@ export default function AffiliateProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Notification Preferences */}
+      <NotificationPreferencesSection apiClient={partnerApi} />
     </div>
   );
 }
