@@ -95,7 +95,7 @@ export default function VendorProductSubmissionsPage() {
               <Package className="w-8 h-8 text-[#D4A843]" />
               Product Submissions
             </h1>
-            <p className="text-slate-600 mt-1">Submit products for Konekt marketplace review.</p>
+            <p className="text-slate-600 mt-1">Submit products for marketplace review.</p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}

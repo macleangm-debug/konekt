@@ -215,8 +215,8 @@ export default function QuoteDetailWithPayment() {
             <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
               <p className="font-medium mb-2">Bank Transfer Details:</p>
               <p>Bank: CRDB Bank</p>
-              <p>Account: Konekt Co. Ltd</p>
-              <p>Account No: 0150XXXXXXXX</p>
+              <p>Account: —</p>
+              <p>Account No: —</p>
               <p className="mt-2 text-xs">Use Quote # as payment reference</p>
             </div>
           </div>
@@ -246,8 +246,8 @@ export default function QuoteDetailWithPayment() {
                 </div>
                 <div className="text-sm text-green-700 space-y-1">
                   <p><strong>Bank:</strong> CRDB Bank</p>
-                  <p><strong>Account Name:</strong> Konekt Co. Ltd</p>
-                  <p><strong>Account Number:</strong> 0150XXXXXXXX</p>
+                  <p><strong>Account Name:</strong> —</p>
+                  <p><strong>Account Number:</strong> —</p>
                   <p><strong>Reference:</strong> {quote.quote_number || quote.id.slice(0, 8).toUpperCase()}</p>
                   <p><strong>Amount:</strong> TZS {(quote.total || 0).toLocaleString()}</p>
                 </div>

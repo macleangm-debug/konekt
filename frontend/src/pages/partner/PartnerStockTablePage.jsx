@@ -126,7 +126,7 @@ export default function PartnerStockTablePage() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Name</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-slate-600">Category</th>
                   <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Base Price</th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Konekt Qty</th>
+                  <th className="text-right px-6 py-4 text-sm font-semibold text-slate-600">Allocated Qty</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-slate-600">Status</th>
                   <th className="text-center px-6 py-4 text-sm font-semibold text-slate-600">Lead Time</th>
                 </tr>

@@ -17,16 +17,16 @@ const DEFAULTS = {
   stamp_mode: "generated",
   stamp_shape: "circle",
   stamp_color: "blue",
-  stamp_text_primary: "Konekt Limited",
-  stamp_text_secondary: "Dar es Salaam, Tanzania",
+  stamp_text_primary: "",
+  stamp_text_secondary: "",
   stamp_registration_number: "",
   stamp_tax_number: "",
   stamp_phrase: "Official Company Stamp",
   stamp_uploaded_url: "",
   stamp_preview_url: "",
-  contact_email: "accounts@konekt.co.tz",
-  contact_phone: "+255 XXX XXX XXX",
-  contact_address: "Dar es Salaam, Tanzania",
+  contact_email: "",
+  contact_phone: "",
+  contact_address: "",
   company_logo_url: "",
 };
 
@@ -114,7 +114,7 @@ export default function InvoiceBrandingSettings() {
         // Auto-generate stamp preview if settings have generated mode
         if (r.data.show_stamp && r.data.stamp_mode === "generated") {
           try {
-            const sr = await adminApi.generateStamp({ stamp_shape: r.data.stamp_shape || "circle", stamp_color: r.data.stamp_color || "blue", stamp_text_primary: r.data.stamp_text_primary || "Konekt Limited", stamp_text_secondary: r.data.stamp_text_secondary || "", stamp_registration_number: r.data.stamp_registration_number || "", stamp_tax_number: r.data.stamp_tax_number || "", stamp_phrase: r.data.stamp_phrase || "Official Company Stamp" });
+            const sr = await adminApi.generateStamp({ stamp_shape: r.data.stamp_shape || "circle", stamp_color: r.data.stamp_color || "blue", stamp_text_primary: r.data.stamp_text_primary || "", stamp_text_secondary: r.data.stamp_text_secondary || "", stamp_registration_number: r.data.stamp_registration_number || "", stamp_tax_number: r.data.stamp_tax_number || "", stamp_phrase: r.data.stamp_phrase || "Official Company Stamp" });
             setStampSvg(sr.data.svg || "");
           } catch {}
         }
@@ -452,7 +452,7 @@ function PreviewFooter({ form }) {
         <span>{address}</span>
       </div>
       <div style={{ padding: "8px 24px", fontSize: 8, color: "#94a3b8", textAlign: "center" }}>
-        Konekt Limited &bull; {address}
+        {form.stamp_text_primary || "Company"} &bull; {address}
       </div>
     </div>
   );

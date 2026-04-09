@@ -39,7 +39,7 @@ export default function ReferralsPage() {
   const shareWhatsApp = () => {
     if (!data?.referral_code) return;
     const link = `${window.location.origin}/r/${data.referral_code}`;
-    const message = `Join me on Konekt and get amazing deals on branded merchandise, design services, and office solutions! Use my code: ${data.referral_code} ${link}`;
+    const message = `Join me and get amazing deals on branded merchandise, design services, and office solutions! Use my code: ${data.referral_code} ${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
   };
 

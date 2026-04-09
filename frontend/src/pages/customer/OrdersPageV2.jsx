@@ -126,7 +126,7 @@ function OrderDrawer({ order, onClose }) {
         {/* 3. Assigned Sales Person */}
         {salesName ? (
         <div className="rounded-xl border-2 border-[#20364D]/20 p-4 bg-[#20364D]/[0.02]" data-testid="sales-person-section">
-          <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Your Konekt Sales Contact</div>
+          <div className="text-xs uppercase tracking-wide text-[#20364D] mb-3 font-semibold">Your Sales Contact</div>
           <div className="font-semibold text-[#20364D] text-base">{salesName}</div>
           <div className="mt-3 space-y-2">
             {salesPhone && (

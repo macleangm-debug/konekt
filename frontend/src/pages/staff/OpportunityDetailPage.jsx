@@ -34,7 +34,7 @@ const GUIDED_QUESTIONS = [
   { id: "q1", question: "What is the customer's primary business need?", type: "text" },
   { id: "q2", question: "What is the expected timeline for this request?", type: "select", options: ["Urgent (ASAP)", "Within 1 week", "Within 1 month", "Flexible"] },
   { id: "q3", question: "What is the approximate budget range?", type: "select", options: ["Under 100K TZS", "100K - 500K TZS", "500K - 1M TZS", "Over 1M TZS", "Not discussed"] },
-  { id: "q4", question: "Has the customer worked with Konekt before?", type: "select", options: ["Yes - Existing customer", "No - New customer", "Referral", "Unknown"] },
+  { id: "q4", question: "Has the customer worked with us before?", type: "select", options: ["Yes - Existing customer", "No - New customer", "Referral", "Unknown"] },
   { id: "q5", question: "Additional notes from conversation", type: "textarea" },
 ];
 

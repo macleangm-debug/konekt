@@ -68,7 +68,7 @@ export default function ClientProfilePage() {
     <div className="space-y-8" data-testid="client-profile-page">
       <PageHeader
         title="Business Profile"
-        subtitle="Help Konekt understand your commercial needs so sales can support you properly."
+        subtitle="Help us understand your commercial needs so sales can support you properly."
       />
 
       <SurfaceCard>

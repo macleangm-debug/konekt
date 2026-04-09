@@ -70,14 +70,14 @@ const testimonials = [
     name: 'James Mwangi',
     company: 'TechCorp Tanzania',
     role: 'IT Manager',
-    text: 'Konekt saved us when our main server went down. Their team arrived within 2 hours and had everything running by evening. Exceptional service!',
+    text: 'The platform saved us when our main server went down. Their team arrived within 2 hours and had everything running by evening. Exceptional service!',
     rating: 5
   },
   {
     name: 'Sarah Kimaro',
     company: 'PrintHouse Ltd',
     role: 'Operations Director',
-    text: 'We have a maintenance contract with Konekt for all our printers. Zero downtime in 6 months. Their preventive maintenance approach really works.',
+    text: 'We have a maintenance contract with them for all our printers. Zero downtime in 6 months. Their preventive maintenance approach really works.',
     rating: 5
   },
   {

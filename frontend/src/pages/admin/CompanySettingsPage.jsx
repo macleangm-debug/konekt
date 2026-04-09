@@ -4,7 +4,7 @@ import { adminApi } from "@/lib/adminApi";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
 const initialForm = {
-  company_name: "Konekt Limited",
+  company_name: "",
   logo_url: "",
   email: "",
   phone: "",

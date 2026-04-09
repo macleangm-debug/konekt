@@ -238,6 +238,7 @@ import NavigationAuditPage from "@/pages/system/NavigationAuditPage";
 
 // Admin Settings Hub
 import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
+import DiscountAnalyticsPage from "@/pages/admin/DiscountAnalyticsPage";
 
 // Admin Control Center
 import AdminControlCenterPage from "@/pages/admin/AdminControlCenterPage";
@@ -721,6 +722,8 @@ function App() {
           <Route path="help" element={<HelpAdminPage />} />
           {/* Admin Settings Hub */}
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
+          {/* Discount Analytics */}
+          <Route path="discount-analytics" element={<DiscountAnalyticsPage />} />
           {/* Admin Control Center */}
           <Route path="control-center" element={<AdminControlCenterPage />} />
           {/* Admin Deliveries */}

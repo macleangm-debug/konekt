@@ -52,7 +52,7 @@ export default function PartnerEcosystemPageV2() {
         <div>
           <div className="text-2xl font-bold text-[#20364D]">Partner Setup Rules</div>
           <div className="text-slate-600 mt-2">
-            Service partners do not need SKU catalog fields. SKU belongs under Konekt admin product settings, not partner catalog settings.
+            Service partners do not need SKU catalog fields. SKU belongs under admin product settings, not partner catalog settings.
           </div>
         </div>
 

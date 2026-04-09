@@ -4,12 +4,14 @@ import { Globe, Users, Shield, Award, ArrowRight } from "lucide-react";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import BrandButton from "../../components/ui/BrandButton";
+import { useBranding } from "../../contexts/BrandingContext";
 
 export default function AboutPageContent() {
+  const { brand_name } = useBranding();
   return (
     <div className="max-w-7xl mx-auto px-6 py-10" data-testid="about-page">
       <PageHeader 
-        title="About Konekt"
+        title={`About ${brand_name}`}
         subtitle="Business products, services, and delivery support through one connected platform."
       />
 
@@ -20,7 +22,7 @@ export default function AboutPageContent() {
             Built for modern African business operations
           </h2>
           <p className="text-slate-200 mt-4 text-lg">
-            Konekt is a business operating system designed to help companies across Africa source products, 
+            {brand_name} is a business operating system designed to help companies across Africa source products, 
             request services, and manage operations through one trusted platform. We combine ordering, 
             delivery, and service coordination to reduce friction and improve visibility.
           </p>
@@ -32,7 +34,7 @@ export default function AboutPageContent() {
         {[
           { icon: Globe, title: "Country-Aware", desc: "Localized availability and pricing for each market" },
           { icon: Users, title: "Business-Focused", desc: "Built for companies and procurement teams" },
-          { icon: Shield, title: "Quality Controlled", desc: "Vetted partners under Konekt standards" },
+          { icon: Shield, title: "Quality Controlled", desc: "Vetted partners under strict standards" },
           { icon: Award, title: "Scalable Model", desc: "Growing ecosystem across Africa" },
         ].map((item) => {
           const Icon = item.icon;
@@ -81,8 +83,8 @@ export default function AboutPageContent() {
               Expanding across Africa
             </h2>
             <p className="text-slate-600 mt-4">
-              Konekt is growing through partnerships with local distributors and service providers. 
-              If you're interested in expanding Konekt into your country, we'd love to hear from you.
+              {brand_name} is growing through partnerships with local distributors and service providers. 
+              If you're interested in expanding into your country, we'd love to hear from you.
             </p>
             <div className="mt-6">
               <BrandButton href="/launch-country" variant="primary">
@@ -105,7 +107,7 @@ export default function AboutPageContent() {
       <div className="mt-12 text-center">
         <h2 className="text-2xl font-bold text-[#20364D] mb-4">Get in touch</h2>
         <p className="text-slate-600 mb-6">
-          Questions about Konekt? We're here to help.
+          Questions about {brand_name}? We're here to help.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <BrandButton href="mailto:info@konekt.co.tz" variant="primary">

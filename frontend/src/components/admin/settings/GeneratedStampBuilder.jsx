@@ -96,7 +96,7 @@ export default function GeneratedStampBuilder({ value, onChange, svgPreview }) {
               style={{ borderColor: strokeColor, color: strokeColor }}
               data-testid="stamp-preview-circle"
             >
-              <div className="text-[9px] leading-tight">{v.stamp_text_primary || "Konekt Limited"}</div>
+              <div className="text-[9px] leading-tight">{v.stamp_text_primary || "Company"}</div>
               <div className="mt-1 text-[8px]">{v.stamp_text_secondary || "Dar es Salaam, Tanzania"}</div>
             </div>
           )}

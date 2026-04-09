@@ -574,7 +574,7 @@ export default function Landing() {
               KonektSeries
             </h2>
             <p className="text-muted-foreground mt-4 max-w-lg mx-auto">
-              Our signature clothing line — premium streetwear with the Konekt touch. Ready to wear, no customization needed.
+              Our signature clothing line — premium streetwear with a distinctive touch. Ready to wear, no customization needed.
             </p>
           </motion.div>
           

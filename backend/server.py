@@ -2680,6 +2680,10 @@ app.include_router(admin_settings_hub_router)
 from public_branding_routes import router as public_branding_router
 app.include_router(public_branding_router)
 
+# Discount Analytics
+from discount_analytics_routes import router as discount_analytics_router
+app.include_router(discount_analytics_router)
+
 # Smart Partner Ecosystem
 from smart_partner_ecosystem_routes import router as smart_partner_ecosystem_router
 app.include_router(smart_partner_ecosystem_router)

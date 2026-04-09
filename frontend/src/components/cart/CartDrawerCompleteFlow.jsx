@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
 import api from "../../lib/api";
+import axios from "axios";
 import { Minus, Plus, ChevronRight, ChevronLeft, Upload, Check, Copy, Camera, Image } from "lucide-react";
 import LockedSavedDetailsSection from "./LockedSavedDetailsSection";
 import ConfirmActionModal from "../common/ConfirmActionModal";
@@ -9,13 +10,7 @@ import PhoneNumberField from "../forms/PhoneNumberField";
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
 
-const BANK_DETAILS = {
-  "Bank": "CRDB Bank PLC",
-  "Account Name": "Konekt Ltd",
-  "Account Number": "0150 2930 0000",
-  "Branch": "Dar es Salaam Main",
-  "SWIFT": "CORUTZTZ",
-};
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function CartDrawerCompleteFlow() {
   const { user } = useAuth();
@@ -23,6 +18,25 @@ export default function CartDrawerCompleteFlow() {
   const { open, items, closeCart, setOpen, setItems } = useCartDrawer();
   const [step, setStep] = useState("cart");
   const [sameAsContact, setSameAsContact] = useState(false);
+  const [bankDetails, setBankDetails] = useState({
+    "Bank": "—",
+    "Account Name": "—",
+    "Account Number": "—",
+    "Branch": "—",
+    "SWIFT": "—",
+  });
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/public/payment-info`).then(r => {
+      if (r.data) setBankDetails({
+        "Bank": r.data.bank_name || "—",
+        "Account Name": r.data.account_name || "—",
+        "Account Number": r.data.account_number || "—",
+        "Branch": r.data.branch_name || "—",
+        "SWIFT": r.data.swift_code || "—",
+      });
+    }).catch(() => {});
+  }, []);
   const [invoiceResult, setInvoiceResult] = useState(null);
   const [paymentIntent, setPaymentIntent] = useState(null);
   const [proofSubmitted, setProofSubmitted] = useState(false);
@@ -321,7 +335,7 @@ export default function CartDrawerCompleteFlow() {
 
               <div className="rounded-2xl border border-slate-200 p-4 space-y-3" data-testid="bank-details-section">
                 <h3 className="text-base font-bold text-[#20364D]">Bank Transfer Details</h3>
-                {Object.entries(BANK_DETAILS).map(([key, val]) => (
+                {Object.entries(bankDetails).map(([key, val]) => (
                   <div key={key} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
                     <span className="text-sm text-slate-600">{key}</span>
                     <div className="flex items-center gap-2">

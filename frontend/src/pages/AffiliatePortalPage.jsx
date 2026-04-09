@@ -344,7 +344,7 @@ export default function AffiliatePortalPage() {
               </h3>
               <div className="grid md:grid-cols-3 gap-4">
                 <a
-                  href={`https://wa.me/?text=Check out Konekt for professional business branding! Use code ${profile.promo_code}: ${tracking_link}`}
+                  href={`https://wa.me/?text=Check out this platform for professional business branding! Use code ${profile.promo_code}: ${tracking_link}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center justify-center gap-2 p-4 rounded-xl bg-green-500 text-white font-medium hover:bg-green-600 transition-colors"
@@ -403,7 +403,7 @@ export default function AffiliatePortalPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <ChevronRight className="w-5 h-5 text-[#D4A843] flex-shrink-0 mt-0.5" />
-                  <span>Create unboxing videos or reviews of Konekt products</span>
+                  <span>Create unboxing videos or reviews of our products</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <ChevronRight className="w-5 h-5 text-[#D4A843] flex-shrink-0 mt-0.5" />

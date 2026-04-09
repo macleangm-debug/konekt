@@ -26,7 +26,7 @@ const FALLBACK_SERVICES = {
     ],
     process_steps: [
       { title: "Submit brief", description: "Share quantities, sizes, deadlines, and branding requirements." },
-      { title: "Commercial review", description: "Konekt aligns pricing, feasibility, and production path." },
+      { title: "Commercial review", description: "We align pricing, feasibility, and production path." },
       { title: "Production", description: "Printing or branding execution starts with monitored follow-up." },
       { title: "Delivery", description: "Completed items are delivered or handed over according to plan." },
     ],
@@ -37,7 +37,7 @@ const FALLBACK_SERVICES = {
     ],
     pricing_guidance: "Pricing depends on item type, quantity, finishing, branding complexity, and delivery requirements.",
     faqs: [
-      { q: "Can Konekt handle both design and printing?", a: "Yes, Konekt can coordinate design support and the printing workflow together." },
+      { q: "Can you handle both design and printing?", a: "Yes, we can coordinate design support and the printing workflow together." },
       { q: "Can I request multiple item types in one brief?", a: "Yes, especially for campaign or event-related requirements." },
     ],
   },
@@ -50,7 +50,7 @@ const FALLBACK_SERVICES = {
     includes: ["Wall branding and reception branding", "Directional graphics and internal signage", "Brand placement planning and installation support"],
     for_who: ["Offices setting up or refreshing workspace identity", "Companies with branches and customer-facing premises", "Organizations needing coordinated branding execution"],
     process_steps: [
-      { title: "Discovery", description: "Konekt captures the office context and branding objective." },
+      { title: "Discovery", description: "We capture the office context and branding objective." },
       { title: "Site review", description: "Measurements, location context, and branding surfaces are reviewed." },
       { title: "Design + quote", description: "Commercial and design direction are aligned." },
       { title: "Installation", description: "Approved branding is produced and installed." },

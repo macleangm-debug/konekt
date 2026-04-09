@@ -98,7 +98,7 @@ export default function AffiliateDashboardPage() {
           <div className="grid gap-3 text-sm text-slate-700">
             <div className="rounded-xl border bg-slate-50 p-4">Your code and links are ready to share at all times.</div>
             <div className="rounded-xl border bg-slate-50 p-4">Each eligible order tracks your commission automatically.</div>
-            <div className="rounded-xl border bg-slate-50 p-4">Customers receive discounts from the distributable margin pool, not from Konekt fixed margin.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">Customers receive discounts from the distributable margin pool, not from the fixed company margin.</div>
           </div>
         </SectionCard>
       </div>

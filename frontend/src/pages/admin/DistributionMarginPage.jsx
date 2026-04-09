@@ -163,7 +163,7 @@ export default function DistributionMarginPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#20364D]">Affiliate & Margin Management</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Configure the distribution layer and affiliate settings. Konekt margin is fixed and untouchable.
+          Configure the distribution layer and affiliate settings. Company margin is fixed and untouchable.
         </p>
       </div>
 
@@ -182,7 +182,7 @@ export default function DistributionMarginPage() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Konekt Margin % (Fixed)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Company Margin % (Fixed)</label>
               <input
                 type="number"
                 step="0.1"
@@ -203,7 +203,7 @@ export default function DistributionMarginPage() {
                 onChange={(e) => setField("distribution_margin_pct", e.target.value)}
                 data-testid="distribution-margin-input"
               />
-              <p className="text-xs text-slate-500 mt-1">Sits on top of Konekt margin. Funds affiliate, sales, and discounts.</p>
+              <p className="text-xs text-slate-500 mt-1">Sits on top of company margin. Funds affiliate, sales, and discounts.</p>
             </div>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function DistributionMarginPage() {
                 </div>
                 {isValid && (
                   <div className="flex justify-between text-emerald-700">
-                    <span>Remaining (Konekt keeps)</span>
+                    <span>Remaining (company keeps)</span>
                     <span className="font-mono font-semibold">{remaining.toFixed(1)}%</span>
                   </div>
                 )}

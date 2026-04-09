@@ -1,8 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { FileText, ArrowLeft } from "lucide-react";
+import { useBranding } from "../../contexts/BrandingContext";
 
 export default function TermsOfServicePage() {
+  const { brand_name } = useBranding();
   return (
     <div className="max-w-4xl mx-auto px-6 py-10" data-testid="terms-of-service-page">
       <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[#20364D] mb-6">
@@ -22,8 +24,8 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">1. Acceptance of Terms</h2>
           <p className="text-slate-600 leading-relaxed">
-            By accessing or using the Konekt platform ("Platform"), you agree to be bound by these
-            Terms of Service ("Terms"). Konekt provides a B2B commerce platform where businesses
+            By accessing or using the {brand_name} platform ("Platform"), you agree to be bound by these
+            Terms of Service ("Terms"). {brand_name} provides a B2B commerce platform where businesses
             can order products, request services, and manage procurement through a single, structured system.
             If you do not agree to these Terms, you must not use the Platform.
           </p>
@@ -32,9 +34,9 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">2. Services Provided</h2>
           <p className="text-slate-600 leading-relaxed">
-            Konekt offers businesses a unified ordering system for products and services including,
+            {brand_name} offers businesses a unified ordering system for products and services including,
             but not limited to, office equipment, stationery, promotional materials, printing, and
-            business services. Konekt handles the complete order lifecycle: from product sourcing
+            business services. {brand_name} handles the complete order lifecycle: from product sourcing
             and payment verification to order processing and delivery coordination.
           </p>
         </section>
@@ -58,12 +60,12 @@ export default function TermsOfServicePage() {
           </p>
           <ol className="list-decimal list-inside text-slate-600 space-y-2 mt-3">
             <li><strong>Order Placement:</strong> You select products, specify quantities, and submit your order through the checkout system.</li>
-            <li><strong>Payment Submission:</strong> After placing your order, you transfer the indicated amount to Konekt's designated bank account using the order number as payment reference.</li>
-            <li><strong>Payment Verification:</strong> Konekt's admin team reviews and verifies your payment proof. This typically takes 1-2 business hours during working days.</li>
-            <li><strong>Order Processing:</strong> Once payment is verified, Konekt processes your order and begins sourcing and preparing your items for delivery.</li>
+            <li><strong>Payment Submission:</strong> After placing your order, you transfer the indicated amount to the designated bank account using the order number as payment reference.</li>
+            <li><strong>Payment Verification:</strong> The admin team reviews and verifies your payment proof. This typically takes 1-2 business hours during working days.</li>
+            <li><strong>Order Processing:</strong> Once payment is verified, your order is processed and sourcing begins to prepare your items for delivery.</li>
           </ol>
           <p className="text-slate-600 leading-relaxed mt-3">
-            Konekt reserves the right to reject orders or payment proofs that do not meet verification
+            {brand_name} reserves the right to reject orders or payment proofs that do not meet verification
             requirements or that contain incomplete or inaccurate information.
           </p>
         </section>
@@ -73,7 +75,7 @@ export default function TermsOfServicePage() {
           <p className="text-slate-600 leading-relaxed">
             All prices displayed on the Platform are in the local currency of the operating market
             (e.g., TZS for Tanzania). Prices are exclusive of VAT unless explicitly stated otherwise.
-            Applicable VAT is calculated and displayed at checkout. Konekt reserves the right to update
+            Applicable VAT is calculated and displayed at checkout. {brand_name} reserves the right to update
             product pricing at any time without prior notice. Pricing at the time of order placement
             is final for that specific order.
           </p>
@@ -82,9 +84,9 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">6. Delivery & Timelines</h2>
           <p className="text-slate-600 leading-relaxed">
-            Konekt manages the complete delivery process for all orders. Delivery timelines are estimates
+            {brand_name} manages the complete delivery process for all orders. Delivery timelines are estimates
             and may vary based on product type, availability, and delivery location. Standard orders
-            are typically delivered within 3-7 business days after payment verification. Konekt will
+            are typically delivered within 3-7 business days after payment verification. {brand_name} will
             communicate any delays through your registered email or phone number. Delivery is available
             within the operating regions specified on the Platform.
           </p>
@@ -93,9 +95,9 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">7. Product Quality & Returns</h2>
           <p className="text-slate-600 leading-relaxed">
-            Konekt is committed to delivering products that meet described specifications and quality
+            {brand_name} is committed to delivering products that meet described specifications and quality
             standards. If you receive a product that is damaged, defective, or materially different
-            from what was ordered, you must notify Konekt within 48 hours of delivery. Konekt will
+            from what was ordered, you must notify {brand_name} within 48 hours of delivery. {brand_name} will
             investigate the issue and, at its discretion, arrange for a replacement, credit, or refund.
             Products that have been used, altered, or damaged by the customer after delivery are not
             eligible for returns.
@@ -108,7 +110,7 @@ export default function TermsOfServicePage() {
             Orders may be cancelled without charge before payment verification is complete. After
             payment has been verified and the order enters processing, cancellation requests are
             handled on a case-by-case basis. If a cancellation is approved after payment, refunds
-            are processed within 7-14 business days through the original payment method. Konekt
+            are processed within 7-14 business days through the original payment method. The company
             may deduct reasonable administrative costs from the refund amount for orders that have
             already entered the processing stage.
           </p>
@@ -118,9 +120,9 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-bold text-[#20364D]">9. Intellectual Property</h2>
           <p className="text-slate-600 leading-relaxed">
             All content on the Platform, including but not limited to text, graphics, logos, images,
-            software, and design, is the property of Konekt or its licensors and is protected by
+            software, and design, is the property of {brand_name} or its licensors and is protected by
             applicable intellectual property laws. You may not reproduce, distribute, modify, or
-            create derivative works from any Platform content without prior written permission from Konekt.
+            create derivative works from any Platform content without prior written permission from the company.
           </p>
         </section>
 
@@ -141,9 +143,9 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">11. Limitation of Liability</h2>
           <p className="text-slate-600 leading-relaxed">
-            To the maximum extent permitted by law, Konekt's total liability for any claim arising
+            To the maximum extent permitted by law, the company's total liability for any claim arising
             from or related to the use of the Platform or any order placed through it shall not
-            exceed the total value of the specific order in question. Konekt shall not be liable
+            exceed the total value of the specific order in question. {brand_name} shall not be liable
             for any indirect, incidental, consequential, or punitive damages, including but not
             limited to loss of profits, business interruption, or data loss.
           </p>
@@ -153,7 +155,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-bold text-[#20364D]">12. Dispute Resolution</h2>
           <p className="text-slate-600 leading-relaxed">
             Any disputes arising from the use of the Platform or these Terms shall first be addressed
-            through Konekt's customer support team. If the dispute cannot be resolved through direct
+            through the customer support team. If the dispute cannot be resolved through direct
             communication within 30 days, either party may pursue resolution through the appropriate
             legal channels under the laws of the United Republic of Tanzania.
           </p>
@@ -162,7 +164,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-xl font-bold text-[#20364D]">13. Modifications to Terms</h2>
           <p className="text-slate-600 leading-relaxed">
-            Konekt reserves the right to modify these Terms at any time. Material changes will be
+            {brand_name} reserves the right to modify these Terms at any time. Material changes will be
             communicated through the Platform or via email to registered users. Continued use of the
             Platform after changes are posted constitutes acceptance of the modified Terms. We recommend
             reviewing these Terms periodically.

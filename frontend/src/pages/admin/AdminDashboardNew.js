@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { 
   ShoppingCart, Users, ClipboardList, Package, FileText, 
-  AlertTriangle, TrendingUp, Briefcase, ArrowRight, Clock
+  AlertTriangle, TrendingUp, Briefcase, ArrowRight, Clock, BarChart3
 } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 
@@ -40,6 +40,7 @@ export default function AdminDashboardNew() {
     { title: "Invoices", desc: "Create and track invoices", href: "/admin/invoices", icon: FileText },
     { title: "Tasks", desc: "Team task management", href: "/admin/tasks", icon: ClipboardList },
     { title: "Quotes", desc: "Quotations and proposals", href: "/admin/quotes", icon: FileText },
+    { title: "Discount Analytics", desc: "Track discount impact and margin risk", href: "/admin/discount-analytics", icon: BarChart3 },
   ];
 
   if (loading) {
@@ -67,7 +68,7 @@ export default function AdminDashboardNew() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-            <p className="mt-1 text-slate-600">Daily operations overview for the Konekt team</p>
+            <p className="mt-1 text-slate-600">Daily operations overview for the team</p>
           </div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
             <Clock className="w-4 h-4" />

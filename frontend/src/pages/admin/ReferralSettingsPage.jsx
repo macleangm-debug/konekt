@@ -29,8 +29,8 @@ const initialForm = {
   point_value_amount: 5000,
   minimum_redeem_points: 100,
   max_redeem_percent_per_order: 50,
-  share_message: "I use Konekt for branded products and design services. Join using my link: {referral_link}",
-  whatsapp_message: "I use Konekt for branded products and design services. Join using my link: {referral_link}",
+  share_message: "I use this platform for branded products and design services. Join using my link: {referral_link}",
+  whatsapp_message: "I use this platform for branded products and design services. Join using my link: {referral_link}",
 };
 
 export default function ReferralSettingsPage() {

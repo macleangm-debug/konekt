@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function BrandingSettingsPage() {
   const [form, setForm] = useState({
-    company_name: "Konekt",
+    company_name: "",
     logo_url: "/branding/konekt-logo-full.png",
     icon_url: "/branding/konekt-icon.png",
     company_email: "",
@@ -63,7 +63,7 @@ export default function BrandingSettingsPage() {
           </div>
           <div>
             <div className="text-4xl font-bold text-[#20364D]">Branding Settings</div>
-            <div className="text-slate-600 mt-2">Set logo, icon, and company details used across Konekt and all PDFs.</div>
+            <div className="text-slate-600 mt-2">Set logo, icon, and company details used across the platform and all PDFs.</div>
           </div>
         </div>
       </div>

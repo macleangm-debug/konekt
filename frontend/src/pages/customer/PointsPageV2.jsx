@@ -56,7 +56,7 @@ export default function PointsPageV2() {
   };
 
   const shareOnWhatsApp = () => {
-    const text = encodeURIComponent(`Check out Konekt - Business products and services made easy! Use my referral link to get started: ${getReferralLink()}`);
+    const text = encodeURIComponent(`Check out this platform - Business products and services made easy! Use my referral link to get started: ${getReferralLink()}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
@@ -71,7 +71,7 @@ export default function PointsPageV2() {
     <div data-testid="referrals-page">
       <PageHeader 
         title="Referrals & Rewards"
-        subtitle="Share Konekt with colleagues and friends. Earn rewards when they order."
+        subtitle="Share with colleagues and friends. Earn rewards when they order."
       />
 
       {/* Hero Referral Card */}
@@ -83,7 +83,7 @@ export default function PointsPageV2() {
               <h2 className="text-xl font-bold">Invite & Earn</h2>
             </div>
             <p className="text-slate-200 max-w-md">
-              Share Konekt with colleagues, companies, and friends. Earn rewards when they order products or request services through your referral.
+              Share with colleagues, companies, and friends. Earn rewards when they order products or request services through your referral.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">

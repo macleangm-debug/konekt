@@ -103,7 +103,7 @@ export default function PointsPage() {
         <EmptyStateCard
           icon={Coins}
           title="No points activity yet"
-          text="Start referring people to Konekt and your points history will appear here."
+          text="Start referring people and your points history will appear here."
           ctaLabel="Open Referrals"
           ctaHref="/account/referrals"
           secondaryCtaLabel="Browse Services"

@@ -32,7 +32,7 @@ function HeroSection() {
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed" data-testid="hero-subtext">
-            Konekt sources, verifies your payment, and ensures
+            We source, verify your payment, and ensure
             your order is delivered — all in one seamless process.
           </p>
 
@@ -79,7 +79,7 @@ function HowItWorksSection() {
     {
       num: "3",
       title: "We Verify & Assign",
-      text: "Konekt verifies your payment and ensures the right products reach you on time.",
+      text: "We verify your payment and ensure the right products reach you on time.",
       Icon: ShieldCheck,
     },
     {
@@ -131,7 +131,7 @@ function TrustSignalsSection() {
   const signals = [
     {
       title: "Quality Assurance",
-      text: "Every product and service on Konekt is sourced and verified to meet business standards before it reaches you.",
+      text: "Every product and service is sourced and verified to meet business standards before it reaches you.",
     },
     {
       title: "Payment Verification",
@@ -246,7 +246,7 @@ function FeaturedCategoriesSection() {
 function TestimonialsSection() {
   const testimonials = [
     {
-      quote: "Konekt makes it easier to coordinate supplies, services, and delivery without running through multiple channels.",
+      quote: "It's easier to coordinate supplies, services, and delivery without running through multiple channels.",
       name: "Operations Manager",
       company: "Growing SME",
     },

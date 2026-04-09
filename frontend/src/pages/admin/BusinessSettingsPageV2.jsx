@@ -282,7 +282,7 @@ const DEFAULT_BRANDING = {
   stamp_mode: "generated",
   stamp_shape: "circle",
   stamp_color: "blue",
-  stamp_text_primary: "Konekt Limited",
+  stamp_text_primary: "",
   stamp_text_secondary: "Dar es Salaam, Tanzania",
   stamp_registration_number: "",
   stamp_tax_number: "",

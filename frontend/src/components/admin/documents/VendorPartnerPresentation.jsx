@@ -4,6 +4,7 @@ import {
   CheckCircle, ArrowRight, Globe, Clock, Lock,
   BarChart3, Handshake, Building2, FileText, Star,
 } from "lucide-react";
+import { useBranding } from "../../../contexts/BrandingContext";
 
 /*
  * VendorPartnerPresentation — Print-ready, state-of-the-art 8-slide deck.
@@ -27,17 +28,8 @@ function SlideNumber({ n, total = 8 }) {
   );
 }
 
-function Logo({ light = false, size = "h-10" }) {
-  return (
-    <img
-      src="/branding/konekt-logo-full.png"
-      alt="Konekt"
-      className={`${size} w-auto object-contain ${light ? "brightness-0 invert" : ""}`}
-    />
-  );
-}
-
 export default function VendorPartnerPresentation() {
+  const { brand_name, primary_logo_url } = useBranding();
   return (
     <div className="vendor-presentation mx-auto" style={{ maxWidth: "1100px" }}>
       <style>{`
@@ -66,14 +58,17 @@ export default function VendorPartnerPresentation() {
           className="absolute inset-0 w-full h-full object-cover opacity-20 mix-blend-luminosity"
         />
         <div className="relative z-10 flex flex-col justify-between h-full">
-          <Logo light size="h-14" />
+          {primary_logo_url
+            ? <img src={primary_logo_url} alt={brand_name} className="h-14 w-auto object-contain brightness-0 invert" />
+            : <div className="text-3xl font-extrabold text-white">{brand_name}</div>
+          }
           <div className="my-auto">
             <h1 className="text-5xl font-extrabold text-white leading-tight tracking-tight">
               Vendor & Partner<br />
               <span className="text-[#D4A843]">Partnership Program</span>
             </h1>
             <p className="mt-6 text-xl text-white/70 max-w-[640px] leading-relaxed font-light">
-              Grow your business with Konekt's B2B commerce platform.<br />
+              Grow your business with our B2B commerce platform.<br />
               Access verified customers, structured workflows, and flexible payment terms.
             </p>
           </div>
@@ -100,7 +95,7 @@ export default function VendorPartnerPresentation() {
               The Platform Built for<br />African Business Operations
             </h2>
             <p className="mt-5 text-base text-slate-500 leading-relaxed max-w-[480px]">
-              Konekt connects businesses to trusted vendors through a unified commerce platform. 
+              {brand_name} connects businesses to trusted vendors through a unified commerce platform. 
               We handle customer acquisition, billing, and collections — so you can focus on what you do best.
             </p>
 
@@ -142,7 +137,7 @@ export default function VendorPartnerPresentation() {
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4A843]">What We Source</p>
         <h2 className="mt-3 text-3xl font-extrabold text-[#20364D]">Three Commercial Lanes</h2>
         <p className="mt-3 text-base text-slate-500 max-w-[600px]">
-          Konekt operates across three distinct categories. Your expertise fits into one or more of these lanes.
+          {brand_name} operates across three distinct categories. Your expertise fits into one or more of these lanes.
         </p>
 
         <div className="mt-8 grid grid-cols-3 gap-6 flex-1">
@@ -200,9 +195,9 @@ export default function VendorPartnerPresentation() {
           <div className="grid grid-cols-5 gap-3 w-full">
             {[
               { step: "01", title: "Receive Order", desc: "Automated assignment based on your capabilities and availability", icon: FileText, color: "bg-blue-50 border-blue-200 text-blue-700" },
-              { step: "02", title: "Set Your ETA", desc: "Commit to a delivery date. Konekt manages customer expectations", icon: Clock, color: "bg-amber-50 border-amber-200 text-amber-700" },
+              { step: "02", title: "Set Your ETA", desc: `Commit to a delivery date. ${brand_name} manages customer expectations`, icon: Clock, color: "bg-amber-50 border-amber-200 text-amber-700" },
               { step: "03", title: "Execute & Update", desc: "Update production status through your vendor portal in real-time", icon: Zap, color: "bg-violet-50 border-violet-200 text-violet-700" },
-              { step: "04", title: "Mark Ready", desc: "Notify Konekt when product/service is ready for pickup or delivery", icon: Package, color: "bg-teal-50 border-teal-200 text-teal-700" },
+              { step: "04", title: "Mark Ready", desc: `Notify ${brand_name} when product/service is ready for pickup or delivery`, icon: Package, color: "bg-teal-50 border-teal-200 text-teal-700" },
               { step: "05", title: "Get Paid", desc: "Payment settlement per agreed terms — on time, every time", icon: CreditCard, color: "bg-emerald-50 border-emerald-200 text-emerald-700" },
             ].map(({ step, title, desc, icon: Icon, color }, idx) => (
               <div key={step} className="relative">
@@ -224,7 +219,7 @@ export default function VendorPartnerPresentation() {
 
         <div className="mt-6 flex items-center gap-3 text-sm text-slate-400">
           <Lock className="h-4 w-4" />
-          <span>Konekt handles all logistics after "Mark Ready" — you never touch last-mile delivery</span>
+          <span>{brand_name} handles all logistics after "Mark Ready" — you never touch last-mile delivery</span>
         </div>
         <SlideNumber n={4} />
       </Slide>
@@ -242,7 +237,7 @@ export default function VendorPartnerPresentation() {
             </h2>
             <p className="mt-4 text-base text-slate-500 leading-relaxed max-w-[480px]">
               We understand that different product categories and vendor sizes require different payment approaches. 
-              Konekt offers multiple settlement models to match your cash flow needs.
+              {brand_name} offers multiple settlement models to match your cash flow needs.
             </p>
 
             <div className="mt-8 space-y-4">
@@ -313,7 +308,7 @@ export default function VendorPartnerPresentation() {
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#D4A843]">Payment Flexibility</p>
         <h2 className="mt-3 text-3xl font-extrabold text-[#20364D]">More Ways We Settle</h2>
         <p className="mt-3 text-base text-slate-500 max-w-[600px]">
-          Beyond Pre-Paid and Weekly Settlement, Konekt accommodates custom arrangements for strategic partners.
+          Beyond Pre-Paid and Weekly Settlement, {brand_name} accommodates custom arrangements for strategic partners.
         </p>
 
         <div className="mt-8 grid grid-cols-3 gap-5 flex-1">
@@ -400,7 +395,7 @@ export default function VendorPartnerPresentation() {
                 "Your base price (tax-inclusive)",
                 "Delivery deadline and ETA management",
                 "Production status controls",
-                "Direct Konekt Sales contact for support",
+                `Direct ${brand_name} Sales contact for support`,
                 "Payment status and settlement history",
                 "Performance metrics and ratings",
               ].map((item) => (
@@ -421,10 +416,10 @@ export default function VendorPartnerPresentation() {
               {[
                 "Customer identity and contact information",
                 "Customer company details",
-                "Konekt's margin or markup",
+                `${brand_name}'s margin or markup`,
                 "Other vendor pricing or assignments",
                 "Customer's payment amount or method",
-                "Internal Konekt operations data",
+                `Internal ${brand_name} operations data`,
                 "Customer account history",
                 "Sales team internal communications",
               ].map((item) => (
@@ -438,7 +433,7 @@ export default function VendorPartnerPresentation() {
         </div>
 
         <div className="mt-5 text-xs text-slate-400 text-center italic">
-          Konekt acts as the operational buffer between customers and vendors — protecting both parties at all times.
+          {brand_name} acts as the operational buffer between customers and vendors — protecting both parties at all times.
         </div>
         <SlideNumber n={7} />
       </Slide>
@@ -454,7 +449,10 @@ export default function VendorPartnerPresentation() {
           className="absolute inset-0 w-full h-full object-cover opacity-10 mix-blend-luminosity"
         />
         <div className="relative z-10 flex flex-col justify-between h-full">
-          <Logo light size="h-14" />
+          {primary_logo_url
+            ? <img src={primary_logo_url} alt={brand_name} className="h-14 w-auto object-contain brightness-0 invert" />
+            : <div className="text-3xl font-extrabold text-white">{brand_name}</div>
+          }
 
           <div className="my-auto text-center">
             <h2 className="text-5xl font-extrabold text-white leading-tight">
@@ -462,7 +460,7 @@ export default function VendorPartnerPresentation() {
               <span className="text-[#D4A843]">Something Great Together</span>
             </h2>
             <p className="mt-6 text-xl text-white/60 max-w-[640px] mx-auto leading-relaxed font-light">
-              Join Tanzania's fastest-growing B2B commerce platform.<br />
+              Join a fast-growing B2B commerce platform.<br />
               Access customers, structure your operations, and grow with confidence.
             </p>
 

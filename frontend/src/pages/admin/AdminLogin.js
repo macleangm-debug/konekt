@@ -125,7 +125,7 @@ export default function AdminLogin() {
         </div>
         
         <p className="text-center mt-6 text-white/40 text-xs">
-          {new Date().getFullYear()} Konekt Limited. Admin Portal.
+          {new Date().getFullYear()} Admin Portal.
         </p>
       </motion.div>
     </div>

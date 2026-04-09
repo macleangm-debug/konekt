@@ -116,7 +116,7 @@ export default function PartnerSmartForm({ form, setForm }) {
 
         {isService ? (
           <div className="rounded-2xl bg-amber-50 text-amber-800 p-4 text-sm">
-            Service partners do not use SKU catalog settings. SKU belongs under Konekt admin product settings, not partner setup.
+            Service partners do not use SKU catalog settings. SKU belongs under admin product settings, not partner setup.
           </div>
         ) : null}
       </PartnerSectionCard>

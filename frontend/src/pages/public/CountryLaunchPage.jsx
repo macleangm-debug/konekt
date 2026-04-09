@@ -115,7 +115,7 @@ export default function CountryLaunchPage() {
             <BrandLogo size="xl" />
           </div>
           <h1 className="text-4xl font-bold text-[#20364D]">
-            {config?.headline || "Konekt is Coming to Your Country"}
+            {config?.headline || "Coming to Your Country"}
           </h1>
           <p className="mt-3 text-slate-600 max-w-2xl mx-auto">
             {config?.message || "We're expanding our B2B promotional materials platform across Africa. Be the first to know when we launch in your country."}

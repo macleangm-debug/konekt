@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -8,11 +8,13 @@ import SettingsSelectField from "../../components/admin/settings/SettingsSelectF
 import SettingsTextField from "../../components/admin/settings/SettingsTextField";
 import InvoiceBrandingSettings from "../../components/admin/settings/InvoiceBrandingSettings";
 import CustomerActivityRulesCard from "../../components/admin/settings/CustomerActivityRulesCard";
+import SettingsPreviewPanel from "../../components/admin/settings/SettingsPreviewPanel";
 
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
   { key: "payment", label: "Payment Details", icon: CreditCard },
   { key: "branding", label: "Document Branding", icon: FileText },
+  { key: "preview", label: "Preview", icon: Eye },
   { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
   { key: "sales", label: "Sales & Commissions", icon: Users },
   { key: "affiliate", label: "Affiliate & Referrals", icon: Globe },
@@ -30,16 +32,16 @@ const defaultState = {
   payouts: { affiliate_minimum_payout: 50000, sales_minimum_payout: 100000, payout_cycle: "monthly", payout_methods_enabled: ["mobile_money", "bank_transfer"], manual_payout_approval: true, payout_review_mode: "admin_required" },
   sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true },
   payments: { bank_only_payments: true, card_payments_enabled: false, mobile_money_enabled: false, kwikpay_enabled: false, payment_proof_required: true, payment_proof_auto_link_to_invoice: true, payment_verification_mode: "manual", commission_creation_on_payment_approval: true },
-  payment_accounts: { default_country: "TZ", account_name: "KONEKT LIMITED", account_number: "015C8841347002", bank_name: "CRDB BANK", swift_code: "CORUTZTZ", branch_name: "", currency: "TZS", show_on_invoice: true, show_on_checkout: true },
+  payment_accounts: { default_country: "TZ", account_name: "", account_number: "", bank_name: "", swift_code: "", branch_name: "", currency: "TZS", show_on_invoice: true, show_on_checkout: true },
   progress_workflows: { hide_internal_provider_details_from_customer: true, customer_safe_external_statuses_only: true, product_workflow_enabled: true, service_workflow_enabled: true },
   ai_assistant: { ai_enabled: true, human_handoff_enabled: true, handoff_after_unresolved_exchanges: 3, lead_capture_on_handoff: true, customer_safe_status_translation_only: true },
   notifications: { customer_notifications_enabled: true, sales_notifications_enabled: true, affiliate_notifications_enabled: true, admin_notifications_enabled: true, vendor_notifications_enabled: true },
   vendors: { vendor_can_update_internal_progress: true, vendor_sees_only_assigned_jobs: true, vendor_cannot_see_customer_financials: true, vendor_cannot_see_commissions: true },
   numbering_rules: { sku_auto_numbering_enabled: true, quote_format: "KON-QT-[YY]-[SEQ]", invoice_format: "KON-IN-[YY]-[SEQ]", order_format: "KON-OR-[YY]-[SEQ]" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
-  business_profile: { legal_name: "KONEKT LIMITED", brand_name: "Konekt", tagline: "", support_email: "support@konekt.co.tz", support_phone: "+255 XXX XXX XXX", business_address: "Dar es Salaam, Tanzania", tax_id: "", vat_number: "", website: "" },
+  business_profile: { legal_name: "", brand_name: "", tagline: "", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "" },
   branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
-  notification_sender: { sender_name: "Konekt", sender_email: "", whatsapp_number: "", email_footer_text: "B2B Platform" },
+  notification_sender: { sender_name: "", sender_email: "", whatsapp_number: "", email_footer_text: "" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
 };
 
@@ -114,6 +116,11 @@ export default function AdminSettingsHubPage() {
         {tab === "profile" && <ProfileTab state={state} setState={setState} />}
         {tab === "payment" && <PaymentTab state={state} setState={setState} />}
         {tab === "branding" && <BrandingTab />}
+        {tab === "preview" && (
+          <div className="max-w-xl mx-auto">
+            <SettingsPreviewPanel state={state} />
+          </div>
+        )}
         {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
         {tab === "sales" && <SalesTab state={state} setState={setState} />}
         {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}

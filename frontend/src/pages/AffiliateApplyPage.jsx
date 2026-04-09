@@ -88,7 +88,7 @@ export default function AffiliateApplyPage() {
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Application Submitted!</h2>
           <p className="text-slate-600 mb-6">
-            Thank you for applying to become a Konekt partner. Our team will review your application 
+            Thank you for applying to become a partner. Our team will review your application 
             and get back to you within 3-5 business days.
           </p>
           <p className="text-sm text-slate-500 mb-6">
@@ -115,7 +115,7 @@ export default function AffiliateApplyPage() {
             Partner Program
           </div>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            Become a Konekt Partner
+            Become a Partner
           </h1>
           <p className="text-slate-200 text-lg mt-4 max-w-2xl mx-auto">
             Join our affiliate network and earn commissions by referring businesses to Konekt's 
