@@ -359,6 +359,237 @@ async def dashboard_team_kpis(request: Request):
         "critical_discount_details": critical_discounts[:10],
     }
 
+
+@router.get("/dashboard/finance-kpis")
+async def dashboard_finance_kpis(request: Request):
+    """
+    Finance Manager dashboard — decision-focused financial data.
+    KPIs: Total Revenue, Collected, Pending, Outstanding, Commission Payable, Net Margin.
+    Sections: Cash Flow, Payment Status, Margin, Commissions, Top Revenue, Risky Discounts.
+    Charts: Cash flow trend, payment distribution, margin trend.
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # ═══ KPIs ═══
+
+    # Total Revenue (all-time paid/delivered/completed orders)
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "total_amount": 1, "total": 1, "payment_status": 1,
+         "status": 1, "created_at": 1, "customer_name": 1,
+         "discount_percent": 1, "assigned_sales_id": 1, "order_number": 1}
+    ).to_list(10000)
+
+    paid_orders = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+    total_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_orders)
+
+    # Revenue this month
+    revenue_month = 0
+    for o in paid_orders:
+        ca = o.get("created_at", "")
+        if isinstance(ca, str) and ca >= month_start.isoformat():
+            revenue_month += float(o.get("total_amount") or o.get("total") or 0)
+
+    # Collected payments (approved payment proofs)
+    collected_pipeline = [
+        {"$match": {"status": "approved"}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}}},
+    ]
+    collected_result = await db.payment_proofs.aggregate(collected_pipeline).to_list(1)
+    collected_payments = collected_result[0]["total"] if collected_result else total_revenue
+
+    # Pending payments (uploaded/pending proofs)
+    pending_proofs = await db.payment_proofs.find(
+        {"status": {"$in": ["uploaded", "submitted", "pending", "pending_verification"]}},
+        {"_id": 0, "amount": 1, "payer_name": 1, "status": 1, "created_at": 1}
+    ).to_list(200)
+    pending_payments_total = sum(float(p.get("amount", 0)) for p in pending_proofs)
+    pending_payments_count = len(pending_proofs)
+
+    # Outstanding invoices
+    outstanding_pipeline = [
+        {"$match": {"status": {"$in": ["pending_payment", "sent", "under_review", "partially_paid"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}, "count": {"$sum": 1}}},
+    ]
+    outstanding_result = await db.invoices.aggregate(outstanding_pipeline).to_list(1)
+    outstanding_amount = outstanding_result[0]["total"] if outstanding_result else 0
+    outstanding_count = outstanding_result[0]["count"] if outstanding_result else 0
+
+    # Commission payable (approved but not paid)
+    commission_pipeline = [
+        {"$match": {"status": {"$in": ["approved", "pending", "expected"]}}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}, "count": {"$sum": 1}}},
+    ]
+    commission_result = await db.commissions.aggregate(commission_pipeline).to_list(1)
+    commission_payable = commission_result[0]["total"] if commission_result else 0
+    commission_pending_count = commission_result[0]["count"] if commission_result else 0
+
+    # Total commissions paid
+    paid_comm_pipeline = [
+        {"$match": {"status": "paid"}},
+        {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$amount", 0]}}}}},
+    ]
+    paid_comm_result = await db.commissions.aggregate(paid_comm_pipeline).to_list(1)
+    commission_paid = paid_comm_result[0]["total"] if paid_comm_result else 0
+
+    # Net margin estimate (revenue - commission paid - commission payable)
+    net_margin = total_revenue - commission_paid - commission_payable
+    margin_pct = round((net_margin / max(total_revenue, 1)) * 100, 1)
+
+    # ═══ PAYMENT STATUS BREAKDOWN ═══
+    from collections import Counter
+    all_proofs = await db.payment_proofs.find({}, {"_id": 0, "status": 1}).to_list(500)
+    proof_statuses = Counter(p.get("status", "unknown") for p in all_proofs)
+    payment_status_breakdown = [
+        {"status": k.replace("_", " ").title(), "count": v}
+        for k, v in proof_statuses.most_common()
+    ]
+
+    # ═══ INVOICE STATUS BREAKDOWN ═══
+    all_invoices = await db.invoices.find({}, {"_id": 0, "status": 1, "total": 1}).to_list(1000)
+    inv_statuses = Counter(i.get("status", "unknown") for i in all_invoices)
+    invoice_breakdown = [
+        {"status": k.replace("_", " ").title(), "count": v}
+        for k, v in inv_statuses.most_common()
+    ]
+
+    # ═══ TOP REVENUE SOURCES ═══ (top 5 customers by paid order value)
+    customer_revenue = {}
+    for o in paid_orders:
+        cname = o.get("customer_name") or "Unknown"
+        customer_revenue[cname] = customer_revenue.get(cname, 0) + float(o.get("total_amount") or o.get("total") or 0)
+    top_customers = sorted(customer_revenue.items(), key=lambda x: -x[1])[:5]
+    top_revenue_sources = [{"customer": c, "revenue": round(r, 0)} for c, r in top_customers if c != "Unknown"]
+
+    # ═══ HIGH-RISK DISCOUNTS ═══
+    settings_doc = await db.admin_settings.find_one({"type": "discount_governance"}, {"_id": 0})
+    warning_threshold = 20
+    critical_threshold = 30
+    if settings_doc and settings_doc.get("settings"):
+        warning_threshold = settings_doc["settings"].get("warning_threshold", 20)
+        critical_threshold = settings_doc["settings"].get("critical_threshold", 30)
+
+    risky_discounts = []
+    discount_reqs = await db.discount_requests.find(
+        {},
+        {"_id": 0, "discount_percent": 1, "requested_by_name": 1, "customer_name": 1,
+         "status": 1, "created_at": 1}
+    ).sort("created_at", -1).to_list(50)
+    for dr in discount_reqs:
+        pct = float(dr.get("discount_percent", 0))
+        if pct >= warning_threshold:
+            risky_discounts.append({
+                "requested_by": dr.get("requested_by_name", ""),
+                "customer_name": dr.get("customer_name", ""),
+                "discount_percent": pct,
+                "status": dr.get("status", ""),
+                "risk": "critical" if pct >= critical_threshold else "warning",
+            })
+
+    # ═══ COMMISSION BY REP ═══
+    sales_users = await db.users.find(
+        {"role": {"$in": ["sales", "staff"]}},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1}
+    ).to_list(100)
+    all_commissions = await db.commissions.find({}, {"_id": 0, "beneficiary_user_id": 1, "amount": 1, "status": 1, "source_type": 1}).to_list(5000)
+
+    commission_by_rep = []
+    for u in sales_users:
+        uid = u.get("id", "")
+        rep_comms = [c for c in all_commissions if c.get("beneficiary_user_id") == uid]
+        total_c = sum(c.get("amount", 0) for c in rep_comms)
+        paid_c = sum(c.get("amount", 0) for c in rep_comms if c.get("status") == "paid")
+        pending_c = sum(c.get("amount", 0) for c in rep_comms if c.get("status") in ("approved", "pending", "expected"))
+        if total_c > 0 or len(rep_comms) > 0:
+            commission_by_rep.append({
+                "name": u.get("full_name", u.get("email", "")),
+                "total": round(total_c, 0),
+                "paid": round(paid_c, 0),
+                "pending": round(pending_c, 0),
+                "count": len(rep_comms),
+            })
+    commission_by_rep.sort(key=lambda x: -x["total"])
+
+    # Affiliate commissions
+    affiliate_comms = [c for c in all_commissions if c.get("source_type") == "affiliate"]
+    affiliate_total = sum(c.get("amount", 0) for c in affiliate_comms)
+
+    # ═══ CHARTS ═══
+
+    # Cash flow trend (last 6 months: revenue in vs commission out)
+    cash_flow_trend = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        m_start = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        nm = m + 1
+        ny = y
+        if nm > 12:
+            nm = 1
+            ny += 1
+        m_end = datetime(ny, nm, 1, tzinfo=timezone.utc).isoformat()
+
+        # Revenue in
+        month_rev = sum(
+            float(o.get("total_amount") or o.get("total") or 0)
+            for o in paid_orders
+            if isinstance(o.get("created_at"), str) and m_start <= o["created_at"] < m_end
+        )
+
+        # Commission out
+        month_comm = sum(
+            c.get("amount", 0) for c in all_commissions
+            if isinstance(c.get("created_at"), str) and m_start <= c["created_at"] < m_end
+        )
+
+        cash_flow_trend.append({
+            "month": datetime(y, m, 1).strftime("%b %Y"),
+            "revenue": round(month_rev, 0),
+            "commissions": round(month_comm, 0),
+            "net": round(month_rev - month_comm, 0),
+        })
+
+    # Margin trend (by month — margin %)
+    margin_trend = []
+    for cf in cash_flow_trend:
+        rev = cf["revenue"]
+        comm = cf["commissions"]
+        m_pct = round(((rev - comm) / max(rev, 1)) * 100, 1) if rev > 0 else 0
+        margin_trend.append({"month": cf["month"], "margin_pct": m_pct, "net": cf["net"]})
+
+    return {
+        "finance_kpis": {
+            "total_revenue": round(total_revenue, 0),
+            "revenue_month": round(revenue_month, 0),
+            "collected_payments": round(collected_payments, 0),
+            "pending_payments": round(pending_payments_total, 0),
+            "pending_payments_count": pending_payments_count,
+            "outstanding_invoices": round(outstanding_amount, 0),
+            "outstanding_count": outstanding_count,
+            "commission_payable": round(commission_payable, 0),
+            "commission_pending_count": commission_pending_count,
+            "commission_paid": round(commission_paid, 0),
+            "net_margin": round(net_margin, 0),
+            "margin_pct": margin_pct,
+        },
+        "payment_status_breakdown": payment_status_breakdown,
+        "invoice_breakdown": invoice_breakdown,
+        "top_revenue_sources": top_revenue_sources,
+        "risky_discounts": risky_discounts[:10],
+        "commission_by_rep": commission_by_rep,
+        "affiliate_commission_total": round(affiliate_total, 0),
+        "charts": {
+            "cash_flow_trend": cash_flow_trend,
+            "margin_trend": margin_trend,
+        },
+    }
+
+
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────
 
 @router.get("/payments/stats")

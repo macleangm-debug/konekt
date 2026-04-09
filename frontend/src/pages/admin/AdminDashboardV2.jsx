@@ -340,12 +340,316 @@ function SalesManagerDashboard() {
   );
 }
 
+/* ═══ Finance Manager Dashboard ═══ */
+function FinanceManagerDashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await api.get("/api/admin/dashboard/finance-kpis");
+        setData(res.data);
+      } catch {
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64" data-testid="fm-dashboard-loading">
+        <div className="animate-pulse text-slate-400 text-sm">Loading financial dashboard...</div>
+      </div>
+    );
+  }
+
+  const fk = data?.finance_kpis || {};
+  const paymentBreakdown = data?.payment_status_breakdown || [];
+  const invoiceBreakdown = data?.invoice_breakdown || [];
+  const topRevenue = data?.top_revenue_sources || [];
+  const riskyDiscounts = data?.risky_discounts || [];
+  const commByRep = data?.commission_by_rep || [];
+  const affiliateTotal = data?.affiliate_commission_total || 0;
+  const cashFlowTrend = data?.charts?.cash_flow_trend || [];
+  const marginTrend = data?.charts?.margin_trend || [];
+
+  const PAYMENT_COLORS = ["#10B981", "#F59E0B", "#3B82F6", "#EF4444", "#8B5CF6", "#6366F1", "#EC4899"];
+  const INVOICE_COLORS = ["#20364D", "#D4A843", "#3B82F6", "#EF4444", "#8B5CF6", "#10B981", "#F59E0B", "#6366F1"];
+
+  return (
+    <div className="space-y-6" data-testid="finance-manager-dashboard">
+      {/* Hero */}
+      <div className="bg-gradient-to-r from-amber-700 to-amber-900 text-white rounded-2xl p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Financial Control Center</h1>
+            <p className="text-amber-200 mt-1 text-sm">Cash flow, margins, and financial health at a glance</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/15 px-3 py-1.5 rounded-lg text-xs font-medium">
+              Margin: {fk.margin_pct || 0}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Finance KPI Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4" data-testid="fm-kpi-row">
+        <KpiCard icon={DollarSign} label="Total Revenue" value={fmtMoney(fk.total_revenue)} color="bg-green-50 text-green-600" trend />
+        <KpiCard icon={CheckCircle} label="Collected" value={fmtMoney(fk.collected_payments || fk.total_revenue)} color="bg-emerald-50 text-emerald-600" />
+        <KpiCard icon={Clock} label="Pending Payments" value={fk.pending_payments_count || 0} color="bg-amber-50 text-amber-600" to="/admin/payments" badge={fk.pending_payments_count} />
+        <KpiCard icon={FileText} label="Outstanding Invoices" value={fk.outstanding_count || 0} color="bg-orange-50 text-orange-600" to="/admin/invoices" badge={fk.outstanding_count} />
+        <KpiCard icon={CreditCard} label="Commission Payable" value={fmtMoney(fk.commission_payable)} color="bg-purple-50 text-purple-600" />
+        <KpiCard icon={TrendingUp} label="Net Margin" value={fmtMoney(fk.net_margin)} color="bg-blue-50 text-blue-600" trend />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Cash Flow Trend */}
+        <div className="lg:col-span-2 bg-white border rounded-2xl p-5" data-testid="fm-cash-flow-chart">
+          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Cash Flow Trend (6 Months)</h3>
+          {cashFlowTrend.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={cashFlowTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => v >= 1e6 ? `${(v / 1e6).toFixed(0)}M` : v >= 1e3 ? `${(v / 1e3).toFixed(0)}K` : v} />
+                <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} formatter={(v, name) => [fmtMoney(v), name === "revenue" ? "Revenue In" : name === "commissions" ? "Commissions Out" : "Net"]} />
+                <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} name="revenue" />
+                <Bar dataKey="commissions" fill="#EF4444" radius={[4, 4, 0, 0]} name="commissions" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-slate-400 text-sm">No cash flow data</div>
+          )}
+        </div>
+
+        {/* Payment Status Distribution */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-payment-distribution">
+          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Payment Status</h3>
+          {paymentBreakdown.length > 0 ? (
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width="50%" height={180}>
+                <PieChart>
+                  <Pie data={paymentBreakdown} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={65} innerRadius={30}>
+                    {paymentBreakdown.map((_, i) => (
+                      <Cell key={i} fill={PAYMENT_COLORS[i % PAYMENT_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex-1 space-y-1.5">
+                {paymentBreakdown.map((item, i) => (
+                  <div key={item.status} className="flex items-center gap-2 text-xs">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PAYMENT_COLORS[i % PAYMENT_COLORS.length] }} />
+                    <span className="text-slate-600 truncate">{item.status}</span>
+                    <span className="ml-auto font-bold text-slate-700">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No payment data</div>
+          )}
+        </div>
+      </div>
+
+      {/* Middle Row: Margin Trend + Invoice Breakdown + Top Revenue */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Margin Trend */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-margin-trend">
+          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Margin Trend</h3>
+          {marginTrend.length > 0 ? (
+            <ResponsiveContainer width="100%" height={180}>
+              <LineChart data={marginTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} unit="%" domain={[0, 100]} />
+                <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} formatter={(v) => [`${v}%`, "Margin"]} />
+                <Line type="monotone" dataKey="margin_pct" stroke="#D4A843" strokeWidth={2.5} dot={{ r: 4, fill: "#D4A843" }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No margin data</div>
+          )}
+        </div>
+
+        {/* Invoice Breakdown */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-invoice-breakdown">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-[#20364D] text-sm">Invoice Status</h3>
+            <Link to="/admin/invoices" className="text-xs text-amber-600 font-semibold hover:underline flex items-center gap-1">
+              View All <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {invoiceBreakdown.map((item, i) => (
+              <div key={item.status} className="flex items-center justify-between py-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: INVOICE_COLORS[i % INVOICE_COLORS.length] }} />
+                  <span className="text-sm text-slate-600">{item.status}</span>
+                </div>
+                <span className="text-sm font-bold text-[#20364D]">{item.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Revenue Sources */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-top-revenue">
+          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Top Revenue Sources</h3>
+          {topRevenue.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm">No revenue data</div>
+          ) : (
+            <div className="space-y-3">
+              {topRevenue.map((src, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                      i === 0 ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+                    }`}>
+                      {i + 1}
+                    </div>
+                    <span className="text-sm text-slate-700 truncate max-w-[150px]">{src.customer}</span>
+                  </div>
+                  <span className="text-sm font-bold text-[#20364D]">{fmtMoney(src.revenue)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Row: Commissions + Risky Discounts */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Commission Tracking */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-commission-tracking">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-purple-600" />
+              <h3 className="font-semibold text-[#20364D] text-sm">Commission Tracking</h3>
+            </div>
+          </div>
+          {/* Summary cards */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-purple-50 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-purple-600 font-semibold uppercase tracking-wider">Payable</p>
+              <p className="text-lg font-bold text-purple-700">{fmtMoney(fk.commission_payable)}</p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-green-600 font-semibold uppercase tracking-wider">Paid</p>
+              <p className="text-lg font-bold text-green-700">{fmtMoney(fk.commission_paid)}</p>
+            </div>
+            <div className="bg-blue-50 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-blue-600 font-semibold uppercase tracking-wider">Affiliate</p>
+              <p className="text-lg font-bold text-blue-700">{fmtMoney(affiliateTotal)}</p>
+            </div>
+          </div>
+          {commByRep.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="text-left py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rep</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Total</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {commByRep.map((rep) => (
+                    <tr key={rep.name} className="border-b border-slate-50">
+                      <td className="py-2 px-2 text-slate-700 font-medium truncate max-w-[140px]">{rep.name}</td>
+                      <td className="py-2 px-2 text-right text-slate-600">{fmtMoney(rep.total)}</td>
+                      <td className="py-2 px-2 text-right text-green-600">{fmtMoney(rep.paid)}</td>
+                      <td className="py-2 px-2 text-right text-amber-600">{fmtMoney(rep.pending)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-slate-400 text-sm">No sales commission data yet</div>
+          )}
+        </div>
+
+        {/* High-Risk Discounts */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="fm-risky-discounts">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-red-500" />
+              <h3 className="font-semibold text-[#20364D] text-sm">High-Risk Discounts</h3>
+            </div>
+            {riskyDiscounts.length > 0 && (
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">{riskyDiscounts.length}</span>
+            )}
+          </div>
+          {riskyDiscounts.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-300" />
+              <p className="text-sm text-slate-400">No high-risk discount requests</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[280px] overflow-y-auto">
+              {riskyDiscounts.map((d, i) => (
+                <div key={i} className={`border-l-2 pl-3 py-2 ${d.risk === "critical" ? "border-red-400" : "border-amber-400"}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#20364D]">{d.requested_by || "Unknown"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-bold ${d.risk === "critical" ? "text-red-600" : "text-amber-600"}`}>
+                        {d.discount_percent}%
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${
+                        d.status === "pending" ? "bg-amber-100 text-amber-700" :
+                        d.status === "approved" ? "bg-green-100 text-green-700" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>{d.status}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">Customer: {d.customer_name || "—"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <Link to="/admin/discount-analytics" className="block mt-3 text-center text-xs text-amber-600 font-semibold hover:underline">
+            View Discount Analytics
+          </Link>
+        </div>
+      </div>
+
+      {/* Quick Actions for Finance Manager */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Link to="/admin/invoices" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="fm-quick-invoices">
+          <FileText className="w-4 h-4 text-amber-700" /> Invoices
+        </Link>
+        <Link to="/admin/payments" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="fm-quick-payments">
+          <CreditCard className="w-4 h-4 text-amber-700" /> Payments
+        </Link>
+        <Link to="/admin/orders" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="fm-quick-orders">
+          <ShoppingCart className="w-4 h-4 text-amber-700" /> Orders
+        </Link>
+        <Link to="/admin/discount-analytics" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="fm-quick-discounts">
+          <BadgePercent className="w-4 h-4 text-amber-700" /> Discount Analytics
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboardV2() {
   const { admin } = useAdminAuth();
   const role = admin?.role || "admin";
 
   if (role === "sales_manager") {
     return <SalesManagerDashboard />;
+  }
+  if (role === "finance_manager") {
+    return <FinanceManagerDashboard />;
   }
 
   return <AdminDashboardMain />;
