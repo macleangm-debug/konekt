@@ -119,9 +119,10 @@ export default function NotificationBell() {
                     markAsRead(notif._id || notif.id);
                     if (notif.target_url) {
                       window.location.href = notif.target_url;
-                      setOpen(false);
+                      setIsOpen(false);
                     }
                   }}
+                  data-testid={`notification-item-${notif.id}`}
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5">
@@ -134,12 +135,19 @@ export default function NotificationBell() {
                       <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">
                         {notif.message}
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        {formatTime(notif.created_at)}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-slate-400">
+                          {formatTime(notif.created_at)}
+                        </span>
+                        {notif.cta_label && (
+                          <span className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider">
+                            {notif.cta_label} →
+                          </span>
+                        )}
                       </div>
                     </div>
                     {!notif.is_read && (
-                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 shrink-0" />
                     )}
                   </div>
                 </div>

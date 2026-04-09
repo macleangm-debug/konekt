@@ -108,6 +108,21 @@ async def create_guest_order_via_service(db, payload_dict: dict, order_number: s
     )
     logger.info("[order_write_service] timeline written for order %s", order_number)
 
+    # Fire in-app "order created" notification
+    try:
+        from services.in_app_notification_service import create_in_app_notification
+        cust_id = doc.get("customer_id") or doc.get("user_id") or ""
+        if cust_id:
+            await create_in_app_notification(
+                db=db, event_key="order_created",
+                recipient_user_id=cust_id, recipient_role="customer",
+                entity_type="order", entity_id=doc.get("id", order_id),
+                order_id=doc.get("id", order_id),
+                context={"order_number": order_number},
+            )
+    except Exception:
+        pass
+
     return doc, order_id
 
 

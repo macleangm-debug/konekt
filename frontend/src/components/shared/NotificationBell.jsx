@@ -179,17 +179,18 @@ export default function NotificationBell({
                       key={item.id}
                       type="button"
                       onClick={() => openNotification(item)}
-                      className={`block w-full text-left px-4 py-4 border-b hover:bg-slate-50 transition group ${priorityStyle.border}`}
+                      className={`block w-full text-left px-4 py-4 border-b hover:bg-slate-50 transition group ${priorityStyle.border} ${!item.is_read ? "bg-blue-50/30" : ""}`}
                       data-testid={`notification-item-${item.id}`}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-[#20364D] group-hover:text-[#D4A843] transition">
+                            <PriorityIcon className={`w-4 h-4 shrink-0 ${priorityStyle.iconColor}`} />
+                            <span className={`font-semibold group-hover:text-[#D4A843] transition truncate ${!item.is_read ? "text-[#20364D]" : "text-slate-500"}`}>
                               {item.title}
                             </span>
                             {item.priority && item.priority !== "normal" && (
-                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${priorityStyle.badge}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${priorityStyle.badge}`}>
                                 {item.priority}
                               </span>
                             )}
@@ -197,18 +198,21 @@ export default function NotificationBell({
                           <div className="text-sm text-slate-600 mt-1 line-clamp-2">
                             {item.message}
                           </div>
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-3 mt-2">
                             <span className="text-xs text-slate-400">
                               {new Date(item.created_at).toLocaleString()}
                             </span>
-                            {item.action_key && (
-                              <span className="text-[10px] text-slate-300 uppercase">
-                                {item.action_key.replace(/_/g, " ")}
+                            {item.cta_label && (
+                              <span className="text-[10px] font-semibold text-[#D4A843] uppercase tracking-wider flex items-center gap-1">
+                                {item.cta_label}
+                                <ExternalLink className="w-3 h-3" />
                               </span>
+                            )}
+                            {!item.is_read && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
                             )}
                           </div>
                         </div>
-                        <ExternalLink className="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition shrink-0 mt-1" />
                       </div>
                     </button>
                   );

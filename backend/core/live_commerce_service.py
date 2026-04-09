@@ -722,27 +722,67 @@ class LiveCommerceService:
                 except Exception:
                     pass
 
-            # Create customer notification — "Payment Approved" → opens Orders
+            # Create notifications via the in-app notification service
             customer_id = invoice.get("customer_id")
-            if customer_id:
-                actual_user = await self.db.users.find_one(
-                    {"$or": [{"id": customer_id}, {"email": invoice.get("customer_email")}]},
-                    {"_id": 0, "id": 1}
-                )
-                notif_user_id = (actual_user or {}).get("id") or customer_id
-                await self.db.notifications.insert_one({
-                    "id": str(uuid4()),
-                    "user_id": notif_user_id,
-                    "role": "customer",
-                    "event_type": "payment_approved",
-                    "title": "Payment Approved",
-                    "message": f"Your payment for invoice {invoice.get('invoice_number', '')} has been approved. You can now track your order progress.",
-                    "target_url": "/account/orders",
-                    "target_ref": (order_doc or {}).get("order_number") or invoice.get("invoice_number") or invoice.get("id"),
-                    "cta_label": "Track Order",
-                    "read": False,
-                    "created_at": now,
-                })
+            order_number = (order_doc or {}).get("order_number", "")
+            oid = (order_doc or {}).get("id", "")
+
+            try:
+                from services.in_app_notification_service import create_in_app_notification
+
+                # Customer: Payment verified
+                if customer_id:
+                    actual_user = await self.db.users.find_one(
+                        {"$or": [{"id": customer_id}, {"email": invoice.get("customer_email")}]},
+                        {"_id": 0, "id": 1}
+                    )
+                    notif_user_id = (actual_user or {}).get("id") or customer_id
+                    await create_in_app_notification(
+                        db=self.db,
+                        event_key="payment_verified",
+                        recipient_user_id=notif_user_id,
+                        recipient_role="customer",
+                        entity_type="order",
+                        entity_id=oid,
+                        order_id=oid,
+                        context={"order_number": order_number},
+                    )
+
+                # Sales: New order assigned
+                if assigned_sales_id:
+                    await create_in_app_notification(
+                        db=self.db,
+                        event_key="sales_order_assigned",
+                        recipient_user_id=assigned_sales_id,
+                        recipient_role="sales",
+                        entity_type="order",
+                        entity_id=oid,
+                        order_id=oid,
+                        context={"order_number": order_number},
+                    )
+
+                # Vendor: Order assigned
+                for vid in vendor_ids:
+                    vo = await self.db.vendor_orders.find_one({"order_id": oid, "vendor_id": vid}, {"_id": 0, "vendor_order_no": 1})
+                    vno = (vo or {}).get("vendor_order_no", order_number)
+                    # Find the partner_user_id for this vendor
+                    partner = await self.db.partner_users.find_one(
+                        {"$or": [{"partner_id": vid}, {"id": vid}]},
+                        {"_id": 0, "id": 1, "partner_id": 1}
+                    )
+                    vid_for_notif = (partner or {}).get("id") or vid
+                    await create_in_app_notification(
+                        db=self.db,
+                        event_key="vendor_order_assigned",
+                        recipient_user_id=vid_for_notif,
+                        recipient_role="vendor",
+                        entity_type="vendor_order",
+                        entity_id=oid,
+                        order_id=oid,
+                        context={"order_number": order_number, "vendor_order_no": vno},
+                    )
+            except Exception:
+                pass
 
         return {
             "fully_paid": fully_paid,

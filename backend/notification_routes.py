@@ -173,18 +173,24 @@ async def mark_all_read(user: dict = Depends(get_current_user)):
     user_id = user.get("id")
     now = datetime.now(timezone.utc)
     
+    # Build role/user conditions
+    role_conditions = [
+        {"recipient_role": role},
+        {"recipient_user_id": user_id},
+    ]
+    if role in ["admin", "super_admin"]:
+        role_conditions.append({"recipient_role": {"$in": ["admin", "super_admin"]}})
+    
     query = {
-        "$or": [
-            {"recipient_role": role},
-            {"recipient_role": {"$in": ["admin", "super_admin"]}} if role in ["admin", "super_admin"] else {"recipient_role": role},
-            {"recipient_user_id": user_id},
-        ],
-        "is_read": False,
+        "$and": [
+            {"$or": role_conditions},
+            {"$or": [{"is_read": False}, {"read": False}]},
+        ]
     }
     
     await db.notifications.update_many(
         query,
-        {"$set": {"is_read": True, "updated_at": now.isoformat()}}
+        {"$set": {"is_read": True, "read": True, "updated_at": now.isoformat()}}
     )
     
     return {"ok": True, "message": "All notifications marked as read"}

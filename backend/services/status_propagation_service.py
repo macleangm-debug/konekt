@@ -187,7 +187,7 @@ def build_audit_entry(
 
 
 async def record_status_change(db, collection: str, doc_id: str, previous_status: str, new_status: str, updated_by: str, role: str, note: str = "", source: str = "system_auto"):
-    """Record a status change with full audit trail."""
+    """Record a status change with full audit trail and fire notifications."""
     entry = build_audit_entry(previous_status, new_status, updated_by, role, note, source)
 
     # Update the document status and push to audit trail
@@ -210,4 +210,39 @@ async def record_status_change(db, collection: str, doc_id: str, previous_status
             "$push": {"status_audit_trail": entry},
         },
     )
+
+    # Fire in-app notifications on meaningful transitions
+    try:
+        from services.in_app_notification_service import notify_on_status_change
+        # Resolve order context for notifications
+        doc = await db[collection].find_one(filter_q, {"_id": 0, "order_number": 1, "order_id": 1, "id": 1, "customer_id": 1, "vendor_id": 1, "vendor_order_no": 1, "assigned_sales_id": 1})
+        if doc:
+            order_id = doc.get("order_id") or doc.get("id") or doc_id
+            order_number = doc.get("order_number") or ""
+            # For vendor_orders, resolve the parent order's order_number if needed
+            if collection == "vendor_orders" and not order_number and doc.get("order_id"):
+                parent = await db.orders.find_one({"id": doc["order_id"]}, {"_id": 0, "order_number": 1, "customer_id": 1, "assigned_sales_id": 1})
+                if parent:
+                    order_number = parent.get("order_number", "")
+                    if not doc.get("customer_id"):
+                        doc["customer_id"] = parent.get("customer_id")
+                    if not doc.get("assigned_sales_id"):
+                        doc["assigned_sales_id"] = parent.get("assigned_sales_id")
+
+            await notify_on_status_change(
+                db=db,
+                new_status=new_status,
+                order_number=order_number,
+                order_id=order_id,
+                customer_id=doc.get("customer_id", ""),
+                vendor_id=doc.get("vendor_id", ""),
+                vendor_order_no=doc.get("vendor_order_no", ""),
+                assigned_sales_id=doc.get("assigned_sales_id", ""),
+                source_role=role,
+                previous_status=previous_status,
+            )
+    except Exception as e:
+        import logging
+        logging.getLogger("status_propagation").warning("Notification fire failed: %s", str(e))
+
     return result.modified_count > 0, entry
