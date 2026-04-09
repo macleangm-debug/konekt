@@ -1,0 +1,100 @@
+{
+  "summary": "Sales Dashboard V217 Upgrade Testing Complete. All backend and frontend features verified. Backend: 22/22 tests passed. Frontend: All UI components, data-testids, and interactions verified via Playwright.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sales_dashboard_upgrade_v217.py",
+    "/app/test_reports/pytest/pytest_results_sales_dashboard_v217.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_sales_dashboard_upgrade_v217.py"
+  ],
+  "success_rate": {
+    "backend": "100% (22/22 tests passed)",
+    "frontend": "100% (all UI components verified)"
+  },
+  "test_credentials": {
+    "sales_staff": "neema.sales@konekt.demo / password123 (portal: /staff-login -> /staff)"
+  },
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sales Dashboard V2 upgrade fully tested. All new features working: commission_summary (Expected/Pending/Paid), pipeline with values per stage, 3 trend charts (pipeline, deals, commission), today_actions section. Login endpoint is /api/auth/login (not /api/staff/login).",
+  "features_tested": {
+    "backend_api": {
+      "endpoint": "GET /api/staff/sales-dashboard",
+      "response_fields": {
+        "ok": "PASS - returns true",
+        "staff_name": "PASS - returns 'Neema Mallya'",
+        "kpis": "PASS - contains today_orders, today_revenue, month_orders, month_revenue, pipeline_value, total_earned, pending_payout, conversion_rate",
+        "commission_summary": {
+          "expected": "PASS - numeric value",
+          "pending": "PASS - numeric value",
+          "paid": "PASS - numeric value",
+          "total": "PASS - numeric value"
+        },
+        "pipeline": {
+          "stage_counts": "PASS - new_leads, contacted, quoted, approved, paid, fulfilled",
+          "values": "PASS - sub-object with per-stage monetary values"
+        },
+        "today_actions": "PASS - array with type, urgency, title, description fields",
+        "charts": {
+          "pipeline_trend": "PASS - 6 monthly entries with month, value",
+          "deals_closed_trend": "PASS - 6 monthly entries with month, count, value",
+          "commission_trend": "PASS - 6 monthly entries with month, amount"
+        },
+        "recent_orders": "PASS - array with commission_amount, commission_status fields",
+        "assigned_customers": "PASS - array"
+      }
+    },
+    "frontend_ui": {
+      "data_testids_verified": {
+        "sales-dashboard-v2": "FOUND",
+        "kpi-row": "FOUND",
+        "kpi-today-revenue": "FOUND",
+        "kpi-month-revenue": "FOUND",
+        "kpi-pipeline": "FOUND",
+        "kpi-commission": "FOUND",
+        "today-actions-section": "FOUND",
+        "pipeline-section": "FOUND",
+        "pipeline-stage-new": "FOUND (clickable Link)",
+        "pipeline-stage-contacted": "FOUND (clickable Link)",
+        "pipeline-stage-quoted": "FOUND (clickable Link)",
+        "pipeline-stage-approved": "FOUND (clickable Link)",
+        "pipeline-stage-paid": "FOUND (clickable Link)",
+        "pipeline-stage-fulfilled": "FOUND (clickable Link)",
+        "commission-summary": "FOUND",
+        "comm-expected": "FOUND - shows 'Expected' label",
+        "comm-pending": "FOUND - shows 'Pending Payout' label",
+        "comm-paid": "FOUND - shows 'Paid' label",
+        "crm-section": "FOUND",
+        "content-block": "FOUND",
+        "commission-table-section": "FOUND",
+        "trend-charts": "FOUND",
+        "chart-pipeline-trend": "FOUND",
+        "chart-deals-trend": "FOUND",
+        "chart-commission-trend": "FOUND"
+      },
+      "dom_order": "PASS - Today's Actions (top: 297) appears ABOVE Pipeline (top: 523)",
+      "tzs_formatting": "PASS - KPI cards show TZS formatted values (e.g., 'TZS 2.6M')",
+      "pipeline_values": "PASS - Pipeline stages show monetary values (e.g., 'TZS 616K' for Paid stage)",
+      "pipeline_clickable": "PASS - All 6 pipeline stages are wrapped in <a> tags linking to /staff/orders",
+      "commission_table": "PASS - Shows Order, Customer, Order Total, Your Commission, Status columns",
+      "trend_charts": "PASS - 3 charts rendered: Pipeline Value (Area), Deals Closed (Bar), Commission Trend (Line)",
+      "content_to_share": "PASS - Shows promotion cards with Copy buttons and closing scripts"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
