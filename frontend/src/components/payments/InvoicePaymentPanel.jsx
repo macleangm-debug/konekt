@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import api from "../../lib/api";
+import axios from "axios";
+
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 export default function InvoicePaymentPanel({
   invoice,
@@ -8,9 +10,8 @@ export default function InvoicePaymentPanel({
   const [bankInfo, setBankInfo] = useState(null);
 
   useEffect(() => {
-    api.get("/api/admin/settings-hub").then(r => {
-      const pa = r.data?.payment_accounts;
-      if (pa) setBankInfo(pa);
+    axios.get(`${API_URL}/api/public/payment-info`).then(r => {
+      if (r.data) setBankInfo(r.data);
     }).catch(() => {});
   }, []);
 

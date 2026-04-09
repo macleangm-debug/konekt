@@ -51,3 +51,24 @@ async def get_public_branding(request: Request):
         "support_phone": profile.get("support_phone") or SAFE_DEFAULTS["support_phone"],
         "sender_name": sender.get("sender_name") or SAFE_DEFAULTS["brand_name"],
     }
+
+
+@router.get("/payment-info")
+async def get_public_payment_info(request: Request):
+    """
+    Public endpoint returning payment account details for invoice payments.
+    Only exposes fields customers need to make a bank transfer.
+    """
+    db = request.app.mongodb
+    row = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    hub = row.get("value", {}) if row else {}
+    pa = hub.get("payment_accounts", {})
+
+    return {
+        "account_name": pa.get("account_name", ""),
+        "account_number": pa.get("account_number", ""),
+        "bank_name": pa.get("bank_name", ""),
+        "swift_code": pa.get("swift_code", ""),
+        "branch_name": pa.get("branch_name", ""),
+        "currency": pa.get("currency", ""),
+    }

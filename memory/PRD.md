@@ -1,66 +1,64 @@
 # Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
-Build a B2B e-commerce platform (Konekt) for the Tanzanian market with role-based access (Admin, Customer, Vendor/Partner, Sales, Affiliate), multi-vendor support, procurement infrastructure, and document branding.
+Build a B2B e-commerce platform (Konekt) that is deployable as a single-business-per-deployment model. The application must support dynamic branding, role-based dashboards, multichannel notifications, and a comprehensive admin settings hub — so any business can run their own instance without code changes.
 
-## Core Architecture
-- **Stack**: React + FastAPI + MongoDB
-- **Portals**: Admin (`/admin`), Customer (`/account`), Vendor (`/partner`), Sales (`/staff`), Affiliate (`/partner/affiliate-dashboard`)
-- **Auth**: JWT-based with role separation
-- **Design Rule**: No new routes unless absolutely necessary — extend existing endpoints
+## Architecture
+- **Frontend:** React (CRA) + Tailwind CSS + Shadcn/UI
+- **Backend:** FastAPI (Python) + MongoDB (Motor async driver)
+- **Auth:** JWT-based with role separation (admin, customer, vendor/partner, sales, staff, affiliate)
+- **Notifications:** In-App + Resend Email (live) + Twilio WhatsApp (ready)
+- **Payments:** Stripe sandbox + Bank transfer proof upload
 
-## Completed Features
+## Core Concepts
+- **Single source of truth for branding:** `admin_settings` collection, key `settings_hub`
+- **Public branding endpoint:** `GET /api/public/branding` (no auth) serves safe projection
+- **Public payment info:** `GET /api/public/payment-info` (no auth) serves bank details for customers
+- **Admin settings hub:** `GET/PUT /api/admin/settings-hub` (admin auth required) manages all config
+- **BrandingProvider:** React context fetches branding on mount with fallback values, non-blocking
 
-### Core Platform (Phase A)
-- Unified login, role-based routing, admin dashboard, customer marketplace, vendor workspace, sales workspace
+## What's Been Implemented
 
-### Payment & Approval (Phase B)
-- Stripe sandbox, payment proof workflow, automated vendor orders, payment queue
+### Phase 1: Core Platform (Previous sessions)
+- Role-based dashboards (Admin, Customer, Vendor, Sales, Affiliate)
+- Product catalog, cart, checkout flow
+- Order management with fulfillment tracking
+- Invoice generation and payment proof upload
+- Vendor order assignment and privacy controls
+- Commission and settlement system
+- Customer points and referral program
 
-### Document System (Phase C)
-- Canonical HTML-to-PDF, Connected Triad SVG stamp
+### Phase 2: Communications & Preferences (Previous session)
+- CountryAwarePhoneField system-wide
+- Notification Preferences UI per user
+- Multichannel Notification Dispatch (In-App, Email via Resend, WhatsApp via Twilio)
+- Live Resend email integration verified
 
-### Purchase Orders & Status Propagation (Phase D)
-- Multi-vendor POs, role-mapped status propagation, sales override with audit notes
+### Phase 3: Business Settings Hub & Dynamic Branding (Current session - Apr 2026)
+- Public branding endpoint (`/api/public/branding`) — safe projection, no auth
+- Public payment info endpoint (`/api/public/payment-info`) — bank details for customers
+- Admin Settings Hub with auth protection (`/api/admin/settings-hub`)
+- BrandingProvider React context — fetches on mount, fallback values, non-blocking
+- Frontend de-hardcoding of "Konekt" across 50+ components (Navbar, Footer, Auth pages, Chat widgets, Partner pages, Landing pages, Public sections)
+- Backend de-hardcoding of "Konekt" in email templates, AI assistant, account creation emails
+- Legacy `useBrandingSettings` hook now delegates to BrandingContext (single source)
+- `branding_settings_routes.py` now reads from Settings Hub as canonical source
 
-### Status Timeline & UI Audit (Phase E)
-- Status Timeline in admin drawer, deep UI audit
+## Prioritized Backlog
 
-### Notification Center (Phase H)
-- Event-triggered in-app notifications, 10 event types, role-based filtering, CTA deep links
+### P0 (Critical)
+- All P0 items completed
 
-### Dashboard & Input Standardization (Current Phase)
-- **Admin Dashboard V2**: 6 KPIs, 4 Snapshots, 3 charts
-- **Customer Dashboard V3**: 4 KPIs, Active Orders, Reminders, Referral, 2 charts
-- **Sales Dashboard V2**: KPIs, Today's Sales Actions, Pipeline, Commission Summary/Table, CRM, Content, 3 Charts
-- **Vendor Dashboard V2**: KPIs, Work Requiring Action, 7-stage Pipeline, Assignments, 2 Charts
-- **Affiliate Dashboard V2**: KPIs, Earnings Summary, Referral Tools, Products to Share, Earnings Table, 2 Charts
-- **CountryAwarePhoneField**: System-wide canonical phone input (53 instances upgraded)
-- **MobileBottomSheet**: Shared mobile selection component
+### P1 (High)
+- Discount Analytics Dashboard
+- Wire up Twilio WhatsApp integration (when API keys are provided)
+- Remaining "Konekt" references in admin document templates (VendorPartnerPresentation)
 
-### Notification Preferences + Multi-Channel (Apr 9, 2026)
-- **Per-user preferences**: Per event type, per channel (in_app, email, whatsapp)
-- **Role-based defaults**: Customer (6 events), Sales (2), Vendor (1), Affiliate (2), Admin (2)
-- **Event groups**: Order Updates, Payments, Alerts, Assignments, Earnings, Approvals
-- **Multi-channel dispatch service**: Checks user preferences → dispatches to in_app + email (Resend) + WhatsApp (Twilio)
-- **Email delivery**: Branded HTML templates via Resend (ready, needs RESEND_API_KEY + RESEND_FROM_EMAIL)
-- **WhatsApp delivery**: Clean messages via Twilio (ready, needs TWILIO_ACCOUNT_SID + AUTH_TOKEN + WHATSAPP_FROM)
-- **Preferences UI**: Reusable `NotificationPreferencesSection` embedded in Customer My Account, Vendor Dashboard, Admin Notification Settings
-- **Channel availability**: Shows configured/not-configured status per channel
-- **Dispatch logging**: All notification dispatches logged to `notification_dispatch_logs`
-- **Safe fallback**: Missing API keys → graceful skip (no crashes)
-- Extended existing `/api/notifications` routes only — no new routes
-
-## Key API Endpoints
-- `GET /api/notifications/preferences` — User's notification preferences (role-based defaults)
-- `PUT /api/notifications/preferences` — Update preferences per event/channel
-- `GET /api/staff/sales-dashboard` — Sales dashboard
-- `GET /api/partner-portal/dashboard` — Vendor dashboard
-- `GET /api/affiliate/earnings-summary` — Affiliate dashboard
-
-## Backlog
-- P1: Discount Analytics Dashboard
-- P2: Twilio WhatsApp live activation (needs API keys in .env)
-- P2: Resend email live activation (needs API keys in .env)
-- P2: Mobile-first optimization
-- P3: Sales Leaderboard / Gamification
+### P2 (Medium/Future)
+- WhatsApp automation flows
+- Email template refinement with logo images
+- Sales Leaderboard / Gamification
+- Marketing campaigns + automation
+- Mobile-first optimization
+- Favicon dynamic loading from settings hub
+- CSS custom properties from branding colors (runtime theme switching)

@@ -1,7 +1,25 @@
 from datetime import datetime
-from fastapi import APIRouter, Request
+import os
+import jwt
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 router = APIRouter(prefix="/api/admin/settings-hub", tags=["Admin Settings Hub"])
+
+security = HTTPBearer()
+JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-change-in-production")
+
+
+async def _require_admin(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
+        db = request.app.mongodb
+        user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
+        if not user or user.get("role") not in ("admin", "staff"):
+            raise HTTPException(status_code=403, detail="Admin access required")
+        return user
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 DEFAULT_SETTINGS = {
     "business_profile": {
@@ -159,7 +177,7 @@ DEFAULT_SETTINGS = {
 }
 
 @router.get("")
-async def get_settings_hub(request: Request):
+async def get_settings_hub(request: Request, _admin=Depends(_require_admin)):
     db = request.app.mongodb
     row = await db.admin_settings.find_one({"key": "settings_hub"})
     if not row:
@@ -177,7 +195,7 @@ async def get_settings_hub(request: Request):
     return merged
 
 @router.put("")
-async def update_settings_hub(payload: dict, request: Request):
+async def update_settings_hub(payload: dict, request: Request, _admin=Depends(_require_admin)):
     db = request.app.mongodb
     value = {**DEFAULT_SETTINGS, **payload, "updated_at": datetime.utcnow().isoformat()}
     await db.admin_settings.update_one(
