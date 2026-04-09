@@ -1,67 +1,71 @@
 # Konekt B2B E-Commerce Platform — PRD
 
-## Original Problem Statement
-Build a B2B e-commerce platform that is deployable as a single-business-per-deployment model. The application must support dynamic branding, role-based dashboards, multichannel notifications, discount analytics with margin-risk intelligence, and a comprehensive admin settings hub — so any business can run their own instance without code changes.
+## Product Vision
+White-label, single-business-per-deployment B2B commerce platform with dynamic branding, margin protection, and role-based access control.
 
-## Architecture
-- **Frontend:** React (CRA) + Tailwind CSS + Shadcn/UI
-- **Backend:** FastAPI (Python) + MongoDB (Motor async driver)
-- **Auth:** JWT-based with role separation (admin, customer, vendor/partner, sales, staff, affiliate)
-- **Notifications:** In-App + Resend Email (live) + Twilio WhatsApp (ready)
-- **Payments:** Stripe sandbox + Bank transfer proof upload
+## Core Architecture
+- **Frontend**: React + Tailwind + Shadcn/UI
+- **Backend**: FastAPI + MongoDB
+- **Payments**: Stripe (Sandbox)
+- **Branding**: Dynamic via AdminSettingsHub → `/api/public/business-context`
 
-## Core Concepts
-- **Single source of truth for branding:** `admin_settings` collection, key `settings_hub`
-- **Public endpoints:** `/api/public/business-context`, `/api/public/branding`, `/api/public/payment-info`
-- **Admin settings hub:** `GET/PUT /api/admin/settings-hub` (admin auth required)
-- **BrandingProvider:** React context fetches branding on mount with fallback values, non-blocking
-- **Margin-risk classification:** Safe (<80% budget) / Warning (80-100%) / Critical (>100%) — uses same margin engine
+## Roles
+- Admin, Sales/Staff, Customer, Vendor/Partner, Affiliate
 
-## What's Been Implemented
+## What's Implemented (Complete)
 
-### Phase 1: Core Platform (Previous sessions)
-- Role-based dashboards (Admin, Customer, Vendor, Sales, Affiliate)
-- Product catalog, cart, checkout flow
-- Order management with fulfillment tracking
-- Invoice generation and payment proof upload
-- Vendor order assignment and privacy controls
-- Commission and settlement system
-- Customer points and referral program
+### Phase 1 — Core Platform
+- Multi-role auth (JWT), registration, login
+- Product catalog, quote workflow, order pipeline
+- Invoice generation & PDF export
+- Payment proof upload + admin approval queue
+- Vendor orders auto-generated on payment approval
+- Strict payer/customer name separation
+- Affiliate/referral system
 
-### Phase 2: Communications & Preferences
-- CountryAwarePhoneField system-wide
-- Notification Preferences UI per user
-- Multichannel Notification Dispatch (In-App, Email via Resend, WhatsApp via Twilio)
+### Phase 2 — White-Label & Branding
+- Global de-hardcoding of "Konekt" references (DONE)
+- AdminSettingsHub: business profile, branding, notifications
+- `/api/public/business-context` public endpoint
+- `BrandingProvider` React context for dynamic brand loading
+- Admin Settings Preview Panel (live visual UI preview)
+- PDF generation uses dynamic branding (logo, colors, footer)
 
-### Phase 3: Business Settings Hub & Dynamic Branding (Apr 2026)
-- Public branding endpoint, payment-info endpoint, consolidated business-context endpoint
-- Admin Settings Hub with JWT auth protection
-- BrandingProvider React context with fallback values, non-blocking render
-- Frontend de-hardcoding of "Konekt" across 80+ components
-- Backend de-hardcoding in email templates, AI assistant, account emails
+### Phase 3 — Margin Protection & Discount Analytics
+- Discount Analytics Dashboard (KPIs, Charts, Tables) (DONE)
+- Margin-Risk Engine: Safe/Warning/Critical classification (DONE)
+- Admin Discount Approval Auto-Warning Overlay (DONE)
+- **Sales Quote Auto-Warning Overlay** — live risk preview in discount request modal (DONE — Apr 9, 2026)
+  - Extended existing `POST /api/staff/discount-requests` with `mode: "preview"` (no new routes)
+  - Shows: risk badge, remaining margin, max safe discount, contextual message
+  - Debounced (500ms) live calculation as sales rep enters discount value
 
-### Phase 4: Settings Preview + Discount Analytics (Apr 2026)
-- **Settings Preview Panel** — Navbar, Footer, Email, Invoice previews using current form state
-- **Discount Analytics Dashboard** — 6 KPIs, 4 charts, 2 tables, date range filter, CSV export
-- **Auto-Warning Overlay** — Risk panel in discount approval drawer:
-  - Shows risk_level (Safe/Warning/Critical) from margin engine
-  - Shows remaining margin, distributable margin, max safe discount
-  - Warning: amber alert, admin can approve
-  - Critical: red alert, requires explicit checkbox confirmation before approval
-  - Uses `_classify_discount_risk()` — identical thresholds to pricing engine
+### Phase 4 — Document Visual Review (DONE — Apr 9, 2026)
+- Created shared `DocumentFooterSection` component
+- Both Quote and Invoice preview pages now render:
+  - Bank Transfer Details (bank, account, branch, reference)
+  - Authorized Signature placeholder (CFO title + company)
+  - Company Stamp placeholder (circular dashed)
+  - Footer Bar (contact info, TIN, BRN)
+- PDF generation footer uses dynamic brand name (not hardcoded)
+- Fixed Invoice detail API bug (admin_facade_routes queried wrong field)
 
-## Prioritized Backlog
+### Integrations
+- Stripe Payments (sandbox test key from env)
+- Resend Email (requires user API key)
+- Twilio WhatsApp (requires user API key — not yet configured)
 
-### P1 (High)
-- Wire up Twilio WhatsApp integration (when API keys provided)
-- Admin sidebar navigation cleanup for analytics discoverability
+## Backlog
 
-### P2 (Medium/Future)
-- WhatsApp automation flows
-- Email template refinement with uploaded logo images
+### P1 — Upcoming
+- Admin sidebar cleanup for analytics discoverability
+- End-to-end Stripe test with real test cards
+
+### P2 — Future
 - Sales Leaderboard / Gamification
-- Marketing campaigns + automation
+- Admin alert system for repeated risky discount behavior
+- Twilio WhatsApp integration (pending API keys)
+- One-click reorder / Saved Carts
+- AI-assisted Auto Quote Suggestions
+- Advanced Analytics dashboard
 - Mobile-first optimization
-- CSS custom properties for runtime theme switching
-- Margin-risk trend over time analytics
-- Admin threshold settings for safe/warning/critical levels
