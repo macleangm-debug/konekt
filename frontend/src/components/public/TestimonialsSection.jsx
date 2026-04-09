@@ -4,7 +4,7 @@ import { Quote } from "lucide-react";
 export default function TestimonialsSection() {
   const items = [
     {
-      quote: "Konekt makes it easier to coordinate supplies, services, and delivery without running through multiple channels.",
+      quote: "This platform makes it easier to coordinate supplies, services, and delivery without running through multiple channels.",
       name: "Operations Manager",
       company: "Growing SME",
     },

@@ -2676,6 +2676,10 @@ app.include_router(vendor_partner_portal_router)
 from admin_settings_hub_routes import router as admin_settings_hub_router
 app.include_router(admin_settings_hub_router)
 
+# Public Branding — safe projection of settings hub (no auth required)
+from public_branding_routes import router as public_branding_router
+app.include_router(public_branding_router)
+
 # Smart Partner Ecosystem
 from smart_partner_ecosystem_routes import router as smart_partner_ecosystem_router
 app.include_router(smart_partner_ecosystem_router)

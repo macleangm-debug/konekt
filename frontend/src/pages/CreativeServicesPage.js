@@ -212,7 +212,7 @@ export default function CreativeServicesPage() {
       {/* Why Konekt */}
       <section className="bg-[#2D3E50] text-white py-16">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">Why businesses choose Konekt for design</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why businesses choose us for design</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: "Remote-First Workflow", desc: "Order design services from anywhere without visiting our office. Everything is done online." },

@@ -29,7 +29,7 @@ const items = [
   },
   {
     title: "Country Expansion",
-    desc: "Launch Konekt in your country through a strong local operating partner model.",
+    desc: "Launch in your country through a strong local operating partner model.",
     href: "/launch-country",
     badge: "Africa Growth",
     icon: Globe,
@@ -50,7 +50,7 @@ export default function HomeBusinessSolutionsSection() {
               Products, promotional materials, and services — in one coordinated platform
             </h2>
             <p className="text-slate-600 mt-5 text-lg max-w-2xl">
-              Konekt helps businesses order ready products, request custom promotional materials,
+              We help businesses order ready products, request custom promotional materials,
               and engage service teams through one structured commercial flow.
             </p>
 

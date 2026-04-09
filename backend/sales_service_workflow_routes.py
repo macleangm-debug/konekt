@@ -117,8 +117,8 @@ async def create_customer_with_invite(payload: dict, request: Request, user: dic
     email_log = {
         "id": str(uuid4()),
         "to": email,
-        "subject": "Your Konekt account has been created",
-        "body": f"Hello {full_name}, your Konekt account has been created. Activate here: {invite_url}",
+        "subject": "Your account has been created",
+        "body": f"Hello {full_name}, your account has been created. Activate here: {invite_url}",
         "status": "logged",
         "created_at": now,
     }

@@ -62,7 +62,7 @@ export default function ReferralPointsBanner({ points: propPoints, referralCode:
           </h3>
           <p className="text-slate-200 mt-2 max-w-2xl">
             Share your referral link, earn more points when your referrals complete purchases,
-            and use those points on creative services, products, and selected offers within Konekt.
+            and use those points on creative services, products, and selected offers.
           </p>
           <div className="flex items-center gap-2 text-sm text-[#F7E7B1] mt-3">
             <span>Referral Code: {referralCode}</span>

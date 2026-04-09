@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, Sparkles, Loader2, User, Bot } from 'lucide-rea
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import axios from 'axios';
+import { useBranding } from '../contexts/BrandingContext';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -14,6 +15,7 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const messagesEndRef = useRef(null);
+  const { brand_name } = useBranding();
 
   useEffect(() => {
     // Generate or retrieve session ID
@@ -138,7 +140,7 @@ export default function ChatWidget() {
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold">Konekt Assistant</h3>
+                  <h3 className="font-bold">{brand_name} Assistant</h3>
                   <p className="text-xs text-primary-foreground/70">AI-powered help</p>
                 </div>
               </div>
@@ -156,7 +158,7 @@ export default function ChatWidget() {
               {messages.length === 0 && (
                 <div className="text-center py-8">
                   <Sparkles className="w-12 h-12 text-primary/30 mx-auto mb-4" />
-                  <h4 className="font-bold mb-2">Hi! I'm your Konekt Assistant</h4>
+                  <h4 className="font-bold mb-2">Hi! I'm your {brand_name} Assistant</h4>
                   <p className="text-sm text-muted-foreground mb-4">
                     I can help you choose products, printing methods, and guide you through ordering.
                   </p>

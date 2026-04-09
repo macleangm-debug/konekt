@@ -46,7 +46,7 @@ const categories = [
   },
   {
     title: "KonektSeries",
-    description: "Exclusive ready-to-buy Konekt branded lifestyle products and apparel.",
+    description: "Exclusive ready-to-buy branded lifestyle products and apparel.",
     cta: "Shop KonektSeries",
     href: "/products?branch=KonektSeries",
     icon: <ShoppingBag className="w-6 h-6" />,
@@ -128,7 +128,7 @@ const testimonials = [
   {
     name: "Amina K.",
     company: "Mwanzo Holdings",
-    quote: "Konekt made it easy for us to order branded materials without sending anyone physically to the office. The online customization is fantastic.",
+    quote: "This platform made it easy for us to order branded materials without sending anyone physically to the office. The online customization is fantastic.",
     rating: 5,
   },
   {
@@ -148,7 +148,7 @@ const testimonials = [
 const trustPoints = [
   { icon: <Truck className="w-7 h-7" />, title: "Nationwide Delivery", text: "We deliver to all regions across Tanzania and can arrange international shipping." },
   { icon: <ShieldCheck className="w-7 h-7" />, title: "Quality Guaranteed", text: "Every order goes through quality checks before dispatch. Not satisfied? We'll make it right." },
-  { icon: <Users className="w-7 h-7" />, title: "500+ Happy Clients", text: "From startups to enterprises, businesses trust Konekt for their branding needs." },
+  { icon: <Users className="w-7 h-7" />, title: "500+ Happy Clients", text: "From startups to enterprises, businesses trust us for their branding needs." },
 ];
 
 export default function Landing() {
@@ -164,7 +164,7 @@ export default function Landing() {
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Everything your business needs in one place</h2>
           <p className="mt-4 text-slate-600 text-lg">
-            From merchandise and office essentials to remote graphic design — Konekt helps teams move faster.
+            From merchandise and office essentials to remote graphic design — we help teams move faster.
           </p>
         </div>
 
@@ -321,7 +321,7 @@ export default function Landing() {
       <section className="bg-[#2D3E50] text-white py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold">How Konekt works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold">How it works</h2>
             <p className="mt-4 text-slate-300">
               A smooth online flow designed for businesses that need speed, quality, and confidence.
             </p>

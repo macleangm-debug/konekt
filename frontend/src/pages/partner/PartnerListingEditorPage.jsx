@@ -486,7 +486,7 @@ export default function PartnerListingEditorPage() {
                   data-testid="price-input"
                 />
                 {errors.base_partner_price && <p className="text-red-500 text-sm mt-1">{errors.base_partner_price}</p>}
-                <p className="text-xs text-slate-500 mt-1">This is your price to Konekt. Customer price is set by Konekt admin.</p>
+                <p className="text-xs text-slate-500 mt-1">This is your price to us. Customer price is set by admin.</p>
               </div>
               
               <div>
@@ -637,7 +637,7 @@ export default function PartnerListingEditorPage() {
             
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-700">
               <AlertCircle className="w-4 h-4 inline mr-2" />
-              Listings are submitted for Konekt review before publishing.
+              Listings are submitted for review before publishing.
             </div>
             
             <button

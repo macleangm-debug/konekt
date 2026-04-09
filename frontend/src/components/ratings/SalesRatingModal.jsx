@@ -55,7 +55,7 @@ export default function SalesRatingModal({ open, onClose, task, customerId, onSu
           <div className="text-2xl font-bold text-[#20364D]">Rate Your Sales Advisor</div>
         </div>
         <div className="text-slate-600 mt-2">
-          Help us keep the Konekt sales experience as strong as a ride-rating system.
+          Help us keep the sales experience as strong as a ride-rating system.
         </div>
 
         <div className="rounded-2xl bg-slate-50 p-4 mt-5">

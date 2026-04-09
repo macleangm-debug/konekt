@@ -31,7 +31,7 @@ export default function LoginChooserPage() {
             Welcome to Konekt
           </h1>
           <p className="text-slate-600 mt-4 text-lg max-w-2xl mx-auto">
-            Choose your login based on your role in the Konekt ecosystem.
+            Choose your login based on your role in the ecosystem.
           </p>
         </div>
 

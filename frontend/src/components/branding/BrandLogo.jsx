@@ -1,7 +1,8 @@
 import React from "react";
+import { useBranding } from "../../contexts/BrandingContext";
 
 /**
- * Konekt Brand Logo System — Connected Triad
+ * Brand Logo System — Connected Triad
  *
  * Variants: "dark" (dark text, light bg) | "light" (white text, dark bg)
  * Sizes:    "xs" | "sm" | "md" | "lg" | "xl"
@@ -10,12 +11,12 @@ import React from "react";
 
 const SIZE_MAP = { xs: 24, sm: 32, md: 40, lg: 52, xl: 64 };
 
-function KonektTriadIcon({ size = 40, variant = "dark" }) {
+function TriadIcon({ size = 40, variant = "dark", primaryColor, accentColor: accent }) {
   const s = size;
   const isLight = variant === "light";
-  const nodeColor = isLight ? "#FFFFFF" : "#20364D";
-  const accentColor = "#D4A843";
-  const connColor = isLight ? "rgba(229,231,235,0.85)" : "rgba(32,54,77,0.45)";
+  const nodeColor = isLight ? "#FFFFFF" : (primaryColor || "#20364D");
+  const accentColor = accent || "#D4A843";
+  const connColor = isLight ? "rgba(229,231,235,0.85)" : `${nodeColor}73`;
 
   // Asymmetric node positions — gold node pushed off-center
   const topX = s * 0.58;
@@ -59,16 +60,21 @@ export default function BrandLogo({
   variant = "dark",
   size = "md",
   type = "secondary",
-  tagline = "Business Procurement Simplified",
   className = "",
 }) {
+  const b = useBranding();
   const iconSize = SIZE_MAP[size] || SIZE_MAP.md;
   const isLight = variant === "light";
-  const textColor = isLight ? "#FFFFFF" : "#20364D";
+  const primaryColor = b.primary_color || "#20364D";
+  const accent = b.accent_color || "#D4A843";
+  const textColor = isLight ? "#FFFFFF" : primaryColor;
   const tagColor = isLight ? "rgba(255,255,255,0.6)" : "#94a3b8";
   const fontSize = Math.max(12, iconSize * 0.46);
   const tagFontSize = Math.max(9, iconSize * 0.19);
   const gap = Math.max(6, iconSize * 0.25);
+  const brandName = b.brand_name || "Konekt";
+  const tagline = b.tagline || "Business Procurement Simplified";
+  const logoUrl = isLight ? (b.secondary_logo_url || b.primary_logo_url) : b.primary_logo_url;
 
   return (
     <div
@@ -76,7 +82,11 @@ export default function BrandLogo({
       style={{ gap }}
       data-testid="brand-logo"
     >
-      <KonektTriadIcon size={iconSize} variant={variant} />
+      {logoUrl ? (
+        <img src={logoUrl} alt={brandName} style={{ height: iconSize, width: "auto" }} />
+      ) : (
+        <TriadIcon size={iconSize} variant={variant} primaryColor={primaryColor} accentColor={accent} />
+      )}
       {type !== "icon" && (
         <div className="flex flex-col justify-center" style={{ minWidth: 0 }}>
           <span
@@ -90,7 +100,7 @@ export default function BrandLogo({
               whiteSpace: "nowrap",
             }}
           >
-            Konekt
+            {brandName}
           </span>
           {type === "full" && (
             <span
@@ -114,4 +124,4 @@ export default function BrandLogo({
   );
 }
 
-export { KonektTriadIcon };
+export { TriadIcon };

@@ -130,7 +130,7 @@ export default function PartnerBulkUploadPage() {
           <li>Fill in your product/service data (one item per row)</li>
           <li>Upload the file and click "Preview" to check for errors</li>
           <li>Fix any validation errors shown in the preview</li>
-          <li>Click "Commit Import" to submit items for Konekt review</li>
+          <li>Click "Commit Import" to submit items for review</li>
         </ol>
         <div className="mt-4 flex gap-3">
           <button
@@ -326,7 +326,7 @@ export default function PartnerBulkUploadPage() {
           </div>
 
           <p className="text-slate-600">
-            Your listings have been submitted and are pending Konekt admin approval. 
+            Your listings have been submitted and are pending admin approval. 
             You'll be able to see them in your catalog once approved.
           </p>
         </div>
@@ -353,7 +353,7 @@ export default function PartnerBulkUploadPage() {
               <tr><td className="px-3 py-2 font-mono">name</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Display name</td></tr>
               <tr><td className="px-3 py-2 font-mono">category</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Main category</td></tr>
               <tr><td className="px-3 py-2 font-mono">base_partner_price</td><td className="px-3 py-2">Yes</td><td className="px-3 py-2">Your price to Konekt</td></tr>
-              <tr><td className="px-3 py-2 font-mono">partner_available_qty</td><td className="px-3 py-2">No</td><td className="px-3 py-2">Quantity allocated for Konekt orders</td></tr>
+              <tr><td className="px-3 py-2 font-mono">partner_available_qty</td><td className="px-3 py-2">No</td><td className="px-3 py-2">Quantity allocated for orders</td></tr>
             </tbody>
           </table>
         </div>

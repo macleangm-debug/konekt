@@ -106,7 +106,7 @@ export default function ActivateAccountPage() {
                 <p className="text-xs text-slate-400 mt-1">{tokenData.customer_email}</p>
               </div>
 
-              <p className="text-sm text-slate-600 text-center">Set your password to activate your Konekt account.</p>
+              <p className="text-sm text-slate-600 text-center">Set your password to activate your account.</p>
 
               {error && <p className="text-xs text-red-500 text-center">{error}</p>}
 

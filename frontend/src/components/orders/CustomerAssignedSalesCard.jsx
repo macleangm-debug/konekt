@@ -10,7 +10,7 @@ export default function CustomerAssignedSalesCard({ sales }) {
         <div className="w-10 h-10 rounded-xl bg-[#20364D]/10 flex items-center justify-center">
           <User className="w-5 h-5 text-[#20364D]" />
         </div>
-        <div className="text-lg font-bold text-[#20364D]">Your Konekt Sales Contact</div>
+        <div className="text-lg font-bold text-[#20364D]">Your Sales Contact</div>
       </div>
       <div className="space-y-3">
         <div className="text-xl font-semibold text-slate-900">{sales.name || "-"}</div>

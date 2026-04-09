@@ -94,7 +94,7 @@ function HowItWorksSection() {
     <section className="bg-slate-50 py-16 md:py-20" data-testid="how-it-works-section">
       <div className="max-w-7xl mx-auto px-6">
         <div className="max-w-2xl mb-10">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">How Konekt Works</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#20364D]">How It Works</h2>
           <p className="text-slate-600 mt-3 text-base md:text-lg">
             From browsing to delivery — a structured, transparent process you can rely on.
           </p>

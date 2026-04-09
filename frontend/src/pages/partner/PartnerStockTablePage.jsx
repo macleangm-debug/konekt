@@ -77,7 +77,7 @@ export default function PartnerStockTablePage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-4xl font-bold text-[#20364D]">Stock Table</h1>
-          <p className="text-slate-600 mt-1">Quick view and update your Konekt allocations</p>
+          <p className="text-slate-600 mt-1">Quick view and update your allocations</p>
         </div>
         <div className="flex gap-3">
           <button

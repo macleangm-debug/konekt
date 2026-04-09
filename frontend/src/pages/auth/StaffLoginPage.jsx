@@ -73,7 +73,7 @@ export default function StaffLoginPage() {
         </div>
 
         <div className="text-slate-500 text-sm">
-          &copy; 2026 Konekt Limited. Internal use only.
+          &copy; {new Date().getFullYear()} Internal use only.
         </div>
       </div>
 

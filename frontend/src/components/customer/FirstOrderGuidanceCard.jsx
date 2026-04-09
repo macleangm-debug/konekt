@@ -43,7 +43,7 @@ export default function FirstOrderGuidanceCard({ hasOrders = false, hasServiceRe
           <Sparkles className="w-6 h-6 text-[#D4A843]" />
         </div>
         <div>
-          <h3 className="text-xl font-bold text-[#20364D]">Welcome to Konekt!</h3>
+          <h3 className="text-xl font-bold text-[#20364D]">Welcome!</h3>
           <p className="text-slate-600 text-sm">Here's how to get started with your first order</p>
         </div>
       </div>

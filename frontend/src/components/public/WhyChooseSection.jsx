@@ -14,7 +14,7 @@ export default function WhyChooseSection() {
   return (
     <section className="max-w-7xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-10 items-start" data-testid="why-choose">
       <div>
-        <h2 className="text-3xl md:text-4xl font-bold text-[#20364D]">Why businesses choose Konekt</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-[#20364D]">Why businesses choose us</h2>
         <p className="text-slate-600 mt-3 text-lg">
           We combine sourcing, support, delivery, and service coordination in one trusted experience.
         </p>

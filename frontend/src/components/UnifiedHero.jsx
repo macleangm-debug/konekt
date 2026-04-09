@@ -11,7 +11,7 @@ const fallbackSlides = [
     title: "Design, Customize & Order Business Branding Online",
     subtitle: "Promotional materials, office equipment, and creative services",
     description:
-      "Konekt helps businesses anywhere in the world order branded merchandise, office equipment, and design services without visiting the office.",
+      "We help businesses anywhere in the world order branded merchandise, office equipment, and design services without visiting the office.",
     primary_cta_label: "Explore Products",
     primary_cta_url: "/products",
     secondary_cta_label: "Start a Design Project",

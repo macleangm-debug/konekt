@@ -20,7 +20,7 @@ export default function TrustSignalsGrid() {
       icon: Users,
     },
     {
-      title: "Konekt-controlled experience",
+      title: "Platform-controlled experience",
       text: "Customers interact with one trusted platform, even as operations scale.",
       icon: Award,
     },

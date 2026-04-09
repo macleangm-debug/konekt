@@ -59,7 +59,7 @@ export default function PartnerSettlementsPage() {
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen space-y-6" data-testid="partner-settlements-page">
       <div>
         <h1 className="text-4xl font-bold text-[#20364D]">Settlement Summary</h1>
-        <p className="text-slate-600 mt-1">Track your earnings from Konekt fulfillment</p>
+        <p className="text-slate-600 mt-1">Track your earnings from fulfillment</p>
       </div>
 
       {/* Summary Cards */}

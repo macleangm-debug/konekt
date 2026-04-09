@@ -13,7 +13,7 @@ export default function ExpansionSection({ availability }) {
           </div>
           <h2 className="text-3xl md:text-4xl font-bold">Built to scale across Africa</h2>
           <p className="text-slate-200 mt-3 text-lg">
-            Konekt supports multi-country expansion through strong local operations and controlled growth.
+            We support multi-country expansion through strong local operations and controlled growth.
           </p>
         </div>
 

@@ -76,7 +76,7 @@ export function ReferralShareCard({ referralCode, referralUrl, commission = "10%
 
   const shareMessages = {
     whatsapp: `🎉 Get office supplies and promotional materials at amazing prices! Use my code ${referralCode} for a special discount. Order here: ${referralUrl}`,
-    general: `Check out Konekt for all your business branding needs! Use code ${referralCode} for a discount.`
+    general: `Check out this platform for all your business branding needs! Use code ${referralCode} for a discount.`
   };
 
   return (

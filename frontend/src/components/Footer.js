@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 import BrandLogo from './branding/BrandLogo';
 import { useMarketSettings } from '../hooks/useMarketSettings';
+import { useBranding } from '../contexts/BrandingContext';
 
 export default function Footer() {
   const market = useMarketSettings();
+  const { legal_name } = useBranding();
   return (
     <footer className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] text-white mt-auto" data-testid="footer">
       <div className="container mx-auto px-6 md:px-12 lg:px-24 py-12">
@@ -75,7 +77,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-wrap items-center justify-between gap-4 text-sm text-white/50">
-          <p>© {new Date().getFullYear()} Konekt Limited. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {legal_name}. All rights reserved.</p>
           <div className="flex gap-6">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>

@@ -165,7 +165,7 @@ async def dispatch_notification(
 
 
 async def _send_email_notification(db, user_id, title, message, target_url, cta_label):
-    """Send email notification via Resend."""
+    """Send email notification via Resend. Branding pulled from Settings Hub."""
     api_key = os.getenv("RESEND_API_KEY")
     sender = os.getenv("RESEND_FROM_EMAIL") or os.getenv("SENDER_EMAIL") or "onboarding@resend.dev"
 
@@ -183,23 +183,40 @@ async def _send_email_notification(db, user_id, title, message, target_url, cta_
     recipient_email = user["email"]
     recipient_name = user.get("full_name") or user.get("name") or ""
 
+    # --- Pull branding from Settings Hub (single source of truth) ---
+    brand_name = "Konekt"
+    primary_color = "#20364D"
+    footer_text = "B2B Platform"
+    try:
+        hub_row = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+        if hub_row:
+            hub = hub_row.get("value", {})
+            profile = hub.get("business_profile", {})
+            branding = hub.get("branding", {})
+            notif_sender = hub.get("notification_sender", {})
+            brand_name = profile.get("brand_name") or brand_name
+            primary_color = branding.get("primary_color") or primary_color
+            footer_text = notif_sender.get("email_footer_text") or footer_text
+    except Exception:
+        pass  # keep defaults
+
     # Build branded HTML
-    frontend_url = os.getenv("FRONTEND_URL", "https://konekt.co.tz")
+    frontend_url = os.getenv("FRONTEND_URL", "")
     full_link = f"{frontend_url}{target_url}" if target_url else frontend_url
 
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;">
-      <div style="text-align:center;padding:16px 0;border-bottom:2px solid #20364D;">
-        <h2 style="color:#20364D;margin:0;font-size:20px;">Konekt</h2>
+      <div style="text-align:center;padding:16px 0;border-bottom:2px solid {primary_color};">
+        <h2 style="color:{primary_color};margin:0;font-size:20px;">{brand_name}</h2>
       </div>
       <div style="padding:24px 0;">
         <p style="color:#334155;font-size:14px;margin:0 0 8px;">Hello{(' ' + recipient_name) if recipient_name else ''},</p>
-        <h3 style="color:#20364D;font-size:16px;margin:0 0 12px;">{title}</h3>
+        <h3 style="color:{primary_color};font-size:16px;margin:0 0 12px;">{title}</h3>
         <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 20px;">{message}</p>
-        {f'<a href="{full_link}" style="display:inline-block;background:#20364D;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">{cta_label or "View Details"}</a>' if target_url else ''}
+        {f'<a href="{full_link}" style="display:inline-block;background:{primary_color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;">{cta_label or "View Details"}</a>' if target_url else ''}
       </div>
       <div style="border-top:1px solid #e2e8f0;padding-top:16px;text-align:center;">
-        <p style="color:#94a3b8;font-size:11px;margin:0;">Konekt B2B Platform &middot; Manage your preferences in your account settings.</p>
+        <p style="color:#94a3b8;font-size:11px;margin:0;">{brand_name} &middot; {footer_text} &middot; Manage your preferences in your account settings.</p>
       </div>
     </div>
     """

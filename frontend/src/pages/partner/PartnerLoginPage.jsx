@@ -29,7 +29,7 @@ export default function PartnerLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6" data-testid="partner-login-page">
       <form onSubmit={handleLogin} className="w-full max-w-md rounded-3xl border bg-white p-8 space-y-5">
         <div className="text-center">
-          <AuthBrandHeader subtitle="Sign in to manage your Konekt allocation" />
+          <AuthBrandHeader subtitle="Sign in to manage your allocation" />
           <h1 className="text-3xl font-bold text-[#20364D]">Partner Portal</h1>
         </div>
 

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import api from "../../lib/api";
+import { useBranding } from "../../contexts/BrandingContext";
 
 export default function AIHelpWidgetV2({ context = {} }) {
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState("");
+  const { brand_name } = useBranding();
 
   const send = async () => {
     const res = await api.post("/api/ai-assistant-v2/chat", { message, context });
@@ -12,7 +14,7 @@ export default function AIHelpWidgetV2({ context = {} }) {
 
   return (
     <div className="fixed bottom-4 right-4 w-[340px] rounded-2xl border bg-white shadow-lg p-4 z-50">
-      <div className="font-bold text-[#20364D]">Konekt Assistant</div>
+      <div className="font-bold text-[#20364D]">{brand_name} Assistant</div>
       <div className="text-sm text-slate-500 mt-1">24/7 help for ordering, payments, and progress.</div>
       <input
         value={message}

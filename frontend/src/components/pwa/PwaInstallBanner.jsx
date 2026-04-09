@@ -20,9 +20,9 @@ function getRoleLabel(role) {
       return "Install the Affiliate Workspace to share links and track earnings quickly.";
     case "admin":
     case "super_admin":
-      return "Install Konekt Admin for quick access to configurations and approvals.";
+      return "Install Admin for quick access to configurations and approvals.";
     default:
-      return "Install Konekt for faster access to your orders, services, and account tools.";
+      return "Install the app for faster access to your orders, services, and account tools.";
   }
 }
 

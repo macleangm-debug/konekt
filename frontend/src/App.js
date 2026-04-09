@@ -7,6 +7,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { CartDrawerProvider } from "@/contexts/CartDrawerContext";
 import { AdminAuthProvider, useAdminAuth } from "@/contexts/AdminAuthContext";
 import { StaffAuthProvider, useStaffAuth } from "@/contexts/StaffAuthContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { bootstrapAffiliateAttribution } from "@/lib/attribution";
 import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithValidation";
 
@@ -528,6 +529,7 @@ function App() {
   }, []);
 
   return (
+    <BrandingProvider>
     <BrowserRouter>
       <Routes>
         {/* Main Login Page - V2 Branded Design */}
@@ -950,6 +952,7 @@ function App() {
       <Toaster position="top-center" richColors />
       <AIChatWidget />
     </BrowserRouter>
+    </BrandingProvider>
   );
 }
 

@@ -6,7 +6,7 @@ export default function AdminAccountTopbar({ onLogout }) {
     <div className="flex items-center justify-between gap-4 p-4 border-b bg-slate-50">
       <div>
         <div className="font-bold text-[#20364D]">Admin Workspace</div>
-        <div className="text-sm text-slate-500">Manage the full Konekt operation</div>
+        <div className="text-sm text-slate-500">Manage the full operation</div>
       </div>
       <PartnerProfileDropdown
         name="Admin"

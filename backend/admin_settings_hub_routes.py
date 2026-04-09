@@ -4,6 +4,31 @@ from fastapi import APIRouter, Request
 router = APIRouter(prefix="/api/admin/settings-hub", tags=["Admin Settings Hub"])
 
 DEFAULT_SETTINGS = {
+    "business_profile": {
+        "legal_name": "KONEKT LIMITED",
+        "brand_name": "Konekt",
+        "tagline": "Business Procurement Simplified",
+        "support_email": "",
+        "support_phone": "",
+        "website": "",
+        "business_address": "",
+        "tax_id": "",
+        "vat_number": "",
+    },
+    "branding": {
+        "primary_logo_url": "",
+        "secondary_logo_url": "",
+        "favicon_url": "",
+        "primary_color": "#20364D",
+        "accent_color": "#D4A843",
+        "dark_bg_color": "#0f172a",
+    },
+    "notification_sender": {
+        "sender_name": "Konekt",
+        "sender_email": "",
+        "whatsapp_number": "",
+        "email_footer_text": "B2B Platform",
+    },
     "commercial": {
         "minimum_company_margin_percent": 20.0,
         "distribution_layer_percent": 10.0,

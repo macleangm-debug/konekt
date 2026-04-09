@@ -52,7 +52,7 @@ export default function AffiliateRegisterPage() {
       <div className="w-full max-w-2xl rounded-3xl border bg-white p-8">
         <div className="text-4xl font-bold text-[#20364D]">Join as Affiliate</div>
         <p className="text-slate-600 mt-3">
-          Create your affiliate account, get your referral code, and start sharing Konekt offers.
+          Create your affiliate account, get your referral code, and start sharing offers.
         </p>
 
         {!result ? (

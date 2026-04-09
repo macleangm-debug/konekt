@@ -1,3 +1,6 @@
+"""
+Branding Settings — Legacy endpoint that now delegates to Settings Hub as canonical source.
+"""
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request
 
@@ -5,26 +8,45 @@ router = APIRouter(prefix="/api/admin/branding-settings", tags=["Branding Settin
 
 DEFAULTS = {
     "company_name": "Konekt",
-    "logo_url": "/branding/konekt-logo-full.png",
-    "icon_url": "/branding/konekt-icon.png",
-    "company_email": "hello@konekt.co.tz",
-    "company_phone": "+255 000 000 000",
-    "company_address": "Dar es Salaam, Tanzania",
+    "logo_url": "",
+    "icon_url": "",
+    "company_email": "",
+    "company_phone": "",
+    "company_address": "",
     "company_tin": "",
     "company_vat_number": "",
-    "quote_footer_note": "Thank you for choosing Konekt.",
+    "quote_footer_note": "Thank you for choosing us.",
     "invoice_footer_note": "Payment terms apply as stated on this document.",
     "order_footer_note": "Order updates will be shared through your account and WhatsApp when enabled.",
 }
 
+
 @router.get("")
 async def get_branding_settings(request: Request):
-    """Get current branding settings"""
+    """Get current branding settings — reads from settings hub as canonical source."""
     db = request.app.mongodb
+    # Try settings hub first (canonical)
+    hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    if hub:
+        v = hub.get("value", {})
+        profile = v.get("business_profile", {})
+        branding = v.get("branding", {})
+        return {
+            **DEFAULTS,
+            "company_name": profile.get("brand_name") or DEFAULTS["company_name"],
+            "logo_url": branding.get("primary_logo_url") or DEFAULTS["logo_url"],
+            "icon_url": branding.get("secondary_logo_url") or branding.get("favicon_url") or DEFAULTS["icon_url"],
+            "company_email": profile.get("support_email") or DEFAULTS["company_email"],
+            "company_phone": profile.get("support_phone") or DEFAULTS["company_phone"],
+            "company_address": profile.get("business_address") or DEFAULTS["company_address"],
+            "company_tin": profile.get("tax_id") or DEFAULTS["company_tin"],
+        }
+    # Fallback to legacy platform_settings
     row = await db.platform_settings.find_one({"key": "branding_settings"})
     if not row:
         return DEFAULTS
     return {**DEFAULTS, **row.get("value", {})}
+
 
 @router.put("")
 async def update_branding_settings(payload: dict, request: Request):

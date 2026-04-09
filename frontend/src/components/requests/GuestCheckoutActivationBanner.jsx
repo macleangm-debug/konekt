@@ -1,8 +1,10 @@
 import React from "react";
 import { UserPlus, ArrowRight } from "lucide-react";
+import { useBranding } from "../../contexts/BrandingContext";
 
 export default function GuestCheckoutActivationBanner({ accountInvite, customerName }) {
   const url = accountInvite?.invite_url || accountInvite?.register_url;
+  const { brand_name } = useBranding();
   if (!url) return null;
 
   return (
@@ -12,9 +14,9 @@ export default function GuestCheckoutActivationBanner({ accountInvite, customerN
           <UserPlus className="w-6 h-6 text-emerald-600" />
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-emerald-800">Create Your Konekt Account</h3>
+          <h3 className="text-lg font-bold text-emerald-800">Create Your {brand_name} Account</h3>
           <p className="text-sm text-emerald-700 mt-1">
-            {customerName ? `Hi ${customerName}, create` : "Create"} your Konekt account to track your orders, manage invoices, and access your full purchase history.
+            {customerName ? `Hi ${customerName}, create` : "Create"} your {brand_name} account to track your orders, manage invoices, and access your full purchase history.
           </p>
           <a
             href={url}

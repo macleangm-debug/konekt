@@ -2,9 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
 import { useMarketSettings } from "../hooks/useMarketSettings";
+import { useBranding } from "../contexts/BrandingContext";
 
 export default function PublicFooter() {
   const market = useMarketSettings();
+  const { brand_name, legal_name } = useBranding();
   return (
     <footer className="bg-[#20364D] text-white mt-20" data-testid="public-footer">
       {/* Pre-footer CTA strip */}
@@ -34,7 +36,7 @@ export default function PublicFooter() {
       <div className="max-w-7xl mx-auto px-6 py-14 grid md:grid-cols-2 xl:grid-cols-5 gap-8">
         {/* Brand */}
         <div>
-          <div className="text-2xl font-bold">Konekt</div>
+          <div className="text-2xl font-bold">{brand_name}</div>
           <p className="text-slate-300 mt-4 text-sm leading-relaxed">
             Custom branding, office solutions, creative services, maintenance support, and business operations tools.
           </p>
@@ -108,7 +110,7 @@ export default function PublicFooter() {
       {/* Bottom bar */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-5 text-sm text-slate-300 flex flex-wrap gap-3 justify-between">
-          <div>&copy; {new Date().getFullYear()} Konekt. All rights reserved.</div>
+          <div>&copy; {new Date().getFullYear()} {legal_name || brand_name}. All rights reserved.</div>
           <div>Built for world-class ordering, branding, and business support.</div>
         </div>
       </div>

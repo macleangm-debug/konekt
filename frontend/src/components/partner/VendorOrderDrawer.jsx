@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Phone, Mail, User, MapPin, Clock, CheckCircle, AlertTriangle, Play, MessageSquare, Calendar, Download } from "lucide-react";
 import partnerApi from "../../lib/partnerApi";
 import VendorEtaInput from "../vendor/VendorEtaInput";
+import { useBranding } from "../../contexts/BrandingContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -47,6 +48,7 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
   const [noteText, setNoteText] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const { brand_name } = useBranding();
 
   const currentStatus = order?.fulfillment_state || order?.status || "processing";
   const nextAction = STATUS_FLOW[currentStatus];
@@ -170,7 +172,7 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
 
       {/* Konekt Sales Contact */}
       <section className="rounded-xl border p-4" data-testid="drawer-sales-contact">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">Konekt Sales Contact</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">{brand_name} Sales Contact</div>
         <div className="grid gap-3 text-sm">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-slate-400 shrink-0" />
@@ -284,7 +286,7 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
             <span className="flex items-center gap-2 text-sm font-medium text-green-600" data-testid="terminal-status-label">
               <CheckCircle className="w-4 h-4" />
               {currentStatus === "issue_reported" ? "Issue Reported" 
-                : isHandedToSales ? "Handed to Konekt Sales for Logistics" 
+                : isHandedToSales ? `Handed to ${brand_name} Sales for Logistics` 
                 : "Order Completed"}
             </span>
           )}
@@ -331,7 +333,7 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
             className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4565] transition"
             data-testid="call-sales-btn"
           >
-            <Phone className="w-4 h-4" /> Call Konekt Sales
+            <Phone className="w-4 h-4" /> Call {brand_name} Sales
           </a>
         </section>
       )}

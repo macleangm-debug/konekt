@@ -266,7 +266,7 @@ export default function PartnerCatalogPage() {
 
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Konekt Allocated Qty</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Allocated Qty</label>
                   <input
                     type="number"
                     className="w-full border rounded-xl px-4 py-3"
@@ -390,7 +390,7 @@ export default function PartnerCatalogPage() {
                     <div className="font-semibold">TZS {Number(item.base_partner_price || 0).toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-slate-500">Konekt Qty</div>
+                    <div className="text-slate-500">Allocated Qty</div>
                     <div className="font-semibold">{item.partner_available_qty || 0}</div>
                   </div>
                   <div>

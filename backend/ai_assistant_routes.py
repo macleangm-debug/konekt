@@ -82,7 +82,7 @@ Do you need help with a specific invoice?"""
     },
     "pricing": {
         "keywords": ["price", "cost", "how much", "pricing", "rates"],
-        "reply": """Pricing at Konekt depends on your specific requirements.
+        "reply": """Pricing depends on your specific requirements.
 
 **For Products:**
 - Browse the marketplace to see listed prices
@@ -119,7 +119,7 @@ Is there something specific I can help you resolve first?"""
     },
     "about_konekt": {
         "keywords": ["what is konekt", "about", "who are you", "company"],
-        "reply": """Konekt is a B2B platform for promotional materials and business services.
+        "reply": """This is a B2B platform for promotional materials and business services.
 
 **What We Offer:**
 - 🖨️ Printing & Branding (business cards, banners, signage)
@@ -158,7 +158,7 @@ def find_best_response(message: str) -> str:
         return KNOWLEDGE_BASE[best_match]["reply"]
     
     # Default response
-    return """I'm here to help with Konekt services. Here's what I can assist with:
+    return """I'm here to help with our services. Here's what I can assist with:
 
 • **Order Products** - How to browse and purchase from marketplace
 • **Request Services** - Get quotes for printing, design, and more
@@ -174,7 +174,7 @@ async def chat(payload: dict):
     message = payload.get("message", "")
     
     if not message.strip():
-        return {"reply": "Hello! How can I assist you with Konekt services today?"}
+        return {"reply": "Hello! How can I assist you with our services today?"}
     
     reply = find_best_response(message)
     return {"reply": reply}

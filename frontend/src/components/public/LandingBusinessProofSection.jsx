@@ -52,7 +52,7 @@ export default function LandingBusinessProofSection() {
             </h2>
 
             <p className="text-slate-600 mt-5 text-lg max-w-3xl leading-8">
-              Konekt helps companies source products, request services, manage quotes,
+              We help companies source products, request services, manage quotes,
               and track delivery through one coordinated platform.
             </p>
 

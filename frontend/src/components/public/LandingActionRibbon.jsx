@@ -10,7 +10,7 @@ export default function LandingActionRibbon() {
       <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-center">
         <div>
           <div className="text-3xl md:text-4xl font-bold">
-            Ready to source smarter with Konekt?
+            Ready to source smarter?
           </div>
           <p className="text-slate-200 mt-3 text-lg max-w-3xl">
             Explore products, request services, and move into a more reliable

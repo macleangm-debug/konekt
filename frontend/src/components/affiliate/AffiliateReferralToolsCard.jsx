@@ -11,7 +11,7 @@ export default function AffiliateReferralToolsCard({ referralLink, promoCode }) 
   };
 
   const shareWhatsapp = () => {
-    const text = encodeURIComponent(`Check out Konekt using my link: ${referralLink}`);
+    const text = encodeURIComponent(`Check out this platform using my link: ${referralLink}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 

@@ -39,7 +39,7 @@ export default function PremiumFooterV2() {
         <div>
           <div className="font-bold mb-4">Company</div>
           <div className="space-y-3 text-slate-300">
-            <Link to="/about" className="block hover:text-white transition">About Konekt</Link>
+            <Link to="/about" className="block hover:text-white transition">About Us</Link>
             <Link to="/help" className="block hover:text-white transition">Help Center</Link>
             <Link to="/privacy" className="block hover:text-white transition">Privacy Policy</Link>
             <Link to="/terms" className="block hover:text-white transition">Terms of Service</Link>
@@ -85,7 +85,7 @@ export default function PremiumFooterV2() {
 
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-5 text-sm text-slate-400 flex flex-col md:flex-row gap-3 justify-between items-center">
-          <div>© {new Date().getFullYear()} Konekt. All rights reserved.</div>
+          <div>&copy; {new Date().getFullYear()} All rights reserved.</div>
           <div className="flex items-center gap-4">
             <Link to="/privacy" className="hover:text-white transition">Privacy</Link>
             <Link to="/terms" className="hover:text-white transition">Terms</Link>

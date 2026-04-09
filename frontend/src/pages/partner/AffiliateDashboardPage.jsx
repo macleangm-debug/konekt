@@ -52,7 +52,7 @@ export default function AffiliateDashboardPage() {
 
   const shareText = useMemo(() => {
     if (!summary?.share_link) return "";
-    return `Check out Konekt through my referral link: ${summary.share_link}`;
+    return `Check out this platform through my referral link: ${summary.share_link}`;
   }, [summary]);
 
   const copyLink = async () => {

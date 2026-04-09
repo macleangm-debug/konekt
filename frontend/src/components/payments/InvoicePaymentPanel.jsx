@@ -1,9 +1,19 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import api from "../../lib/api";
 
 export default function InvoicePaymentPanel({
   invoice,
   onUploadProof,
 }) {
+  const [bankInfo, setBankInfo] = useState(null);
+
+  useEffect(() => {
+    api.get("/api/admin/settings-hub").then(r => {
+      const pa = r.data?.payment_accounts;
+      if (pa) setBankInfo(pa);
+    }).catch(() => {});
+  }, []);
+
   if (!invoice) return null;
 
   return (
@@ -33,12 +43,12 @@ export default function InvoicePaymentPanel({
         </div>
 
         <div className="rounded-3xl border bg-white p-6">
-          <div className="text-xl font-bold text-[#20364D]">Bank transfer details (Tanzania)</div>
+          <div className="text-xl font-bold text-[#20364D]">Bank transfer details</div>
           <div className="space-y-3 mt-5 text-slate-700">
-            <div><strong>Account Name:</strong> KONEKT LIMITED</div>
-            <div><strong>Account Number:</strong> 015C8841347002</div>
-            <div><strong>Bank:</strong> CRDB BANK</div>
-            <div><strong>SWIFT:</strong> CORUTZTZ</div>
+            <div><strong>Account Name:</strong> {bankInfo?.account_name || "—"}</div>
+            <div><strong>Account Number:</strong> {bankInfo?.account_number || "—"}</div>
+            <div><strong>Bank:</strong> {bankInfo?.bank_name || "—"}</div>
+            <div><strong>SWIFT:</strong> {bankInfo?.swift_code || "—"}</div>
           </div>
 
           <div className="rounded-2xl border bg-slate-50 px-4 py-4 mt-6 text-sm text-slate-600">

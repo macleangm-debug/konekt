@@ -2,7 +2,7 @@ import React from "react";
 import { Copy, CheckCircle2, Award, Link as LinkIcon } from "lucide-react";
 
 export default function AffiliateCard({
-  title = "Konekt Verified Affiliate",
+  title = "Verified Affiliate",
   affiliateName = "",
   promoCode = "",
   referralLink = "",

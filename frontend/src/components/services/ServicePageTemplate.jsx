@@ -70,11 +70,11 @@ export default function ServicePageTemplate({
         <ServiceProcessSteps steps={service.process_steps} />
       )}
 
-      {/* Why Konekt & Pricing */}
+      {/* Why Choose Us & Pricing */}
       <section className="grid lg:grid-cols-[1fr_1fr] gap-6">
         {(service.why_konekt || []).length > 0 && (
           <div className="rounded-[2rem] border bg-white p-8" data-testid="why-konekt">
-            <div className="text-2xl font-bold text-[#20364D]">Why choose Konekt</div>
+            <div className="text-2xl font-bold text-[#20364D]">Why choose us</div>
             <ul className="space-y-3 mt-5 text-slate-700">
               {service.why_konekt.map((item, idx) => (
                 <li key={idx} className="rounded-2xl bg-slate-50 px-4 py-3">{item}</li>
@@ -104,7 +104,7 @@ export default function ServicePageTemplate({
       <section className="rounded-[2rem] border bg-white p-8" data-testid="service-cta-bottom">
         <div className="text-3xl font-bold text-[#20364D]">Ready to proceed?</div>
         <p className="text-slate-600 mt-4 text-lg">
-          Submit your requirements and let Konekt coordinate the next steps.
+          Submit your requirements and let our team coordinate the next steps.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-8">

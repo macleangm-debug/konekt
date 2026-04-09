@@ -15,7 +15,7 @@ export default function HowItWorksSection() {
     },
     {
       title: "Track orders in one place",
-      text: "Konekt manages the experience while the right sourcing is handled internally.",
+      text: "We manage the experience while the right sourcing is handled internally.",
       icon: Truck,
     },
   ];
@@ -24,7 +24,7 @@ export default function HowItWorksSection() {
     <section className="bg-slate-50 py-16" data-testid="how-it-works">
       <div className="max-w-7xl mx-auto px-6 space-y-8">
         <div className="max-w-3xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#20364D]">How Konekt works</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#20364D]">How it works</h2>
           <p className="text-slate-600 mt-3 text-lg">
             A simpler way to source products and services for your business.
           </p>

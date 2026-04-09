@@ -166,7 +166,7 @@ export default function FirstOrderDiscountModal() {
             // Form state
             <form onSubmit={handleSubmit} data-testid="fod-form">
               <p className="text-slate-600 text-center mb-6">
-                Enter your email to receive an exclusive discount on your first order with Konekt.
+                Enter your email to receive an exclusive discount on your first order.
               </p>
               <div className="relative mb-4">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />

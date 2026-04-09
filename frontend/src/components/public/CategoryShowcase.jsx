@@ -66,7 +66,7 @@ export default function CategoryShowcase() {
           Everything businesses need
         </h2>
         <p className="text-slate-600 mt-4 text-lg max-w-2xl mx-auto">
-          From products to services, Konekt helps businesses order faster, operate better, and scale smarter across Africa.
+          From products to services, we help businesses order faster, operate better, and scale smarter across Africa.
         </p>
       </div>
 

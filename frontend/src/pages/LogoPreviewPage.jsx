@@ -1,5 +1,5 @@
 import React from "react";
-import BrandLogo, { KonektTriadIcon } from "../components/branding/BrandLogo";
+import BrandLogo, { TriadIcon } from "../components/branding/BrandLogo";
 
 function SizeStrip({ variant = "dark" }) {
   const sizes = [16, 24, 32, 40, 48, 64];
@@ -17,7 +17,7 @@ function SizeStrip({ variant = "dark" }) {
     >
       {sizes.map((s) => (
         <div key={s} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-          <KonektTriadIcon size={s} variant={variant} />
+          <TriadIcon size={s} variant={variant} />
           <span style={{ fontSize: 10, color: isDark ? "rgba(255,255,255,0.5)" : "#94a3b8", fontFamily: "monospace" }}>{s}px</span>
         </div>
       ))}
