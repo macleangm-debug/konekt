@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import partnerApi from "../../lib/partnerApi";
 import KpiCard from "../../components/dashboard/KpiCard";
 import SectionCard from "../../components/dashboard/SectionCard";
+import CountryAwarePhoneField from "../../components/vendors/CountryAwarePhoneField";
 import { Loader2, Plus, Trash2, Smartphone, Building2, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -225,7 +226,14 @@ export default function AffiliatePayoutsPage() {
                 <>
                   <input placeholder="Provider (e.g. M-Pesa, Tigo Pesa)" className="w-full rounded-lg border px-3 py-2 text-sm" value={addForm.provider || ""} onChange={(e) => setAddForm({ ...addForm, provider: e.target.value })} data-testid="add-provider-input" />
                   <input placeholder="Account Name" className="w-full rounded-lg border px-3 py-2 text-sm" value={addForm.account_name || ""} onChange={(e) => setAddForm({ ...addForm, account_name: e.target.value })} data-testid="add-account-name-input" />
-                  <input placeholder="Phone Number" className="w-full rounded-lg border px-3 py-2 text-sm" value={addForm.phone_number || ""} onChange={(e) => setAddForm({ ...addForm, phone_number: e.target.value })} data-testid="add-phone-input" />
+                  <CountryAwarePhoneField
+                    prefix={addForm.phone_prefix || "+255"}
+                    onPrefixChange={(val) => setAddForm({ ...addForm, phone_prefix: val })}
+                    phone={addForm.phone_number || ""}
+                    onPhoneChange={(val) => setAddForm({ ...addForm, phone_number: val })}
+                    label="Phone Number"
+                    testIdPrefix="add-payout-phone"
+                  />
                 </>
               ) : (
                 <>
