@@ -28,52 +28,56 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - AdminSettingsHub: business profile, branding, notifications
 - `/api/public/business-context` public endpoint
 - `BrandingProvider` React context for dynamic brand loading
-- Admin Settings Preview Panel (live visual UI preview)
 - PDF generation uses dynamic branding (logo, colors, footer)
 
 ### Phase 3 — Margin Protection & Discount Analytics
 - Discount Analytics Dashboard (KPIs, Charts, Tables)
 - Margin-Risk Engine: Safe/Warning/Critical classification
-- Admin Discount Approval Auto-Warning Overlay
-- Sales Quote Auto-Warning Overlay (mode: "preview" on existing endpoint)
+- Admin + Sales Discount Auto-Warning Overlays
+- Configurable alert thresholds in Settings Hub → Discount Governance
 
 ### Phase 4 — Document Visual Review (Apr 9, 2026)
-- Shared `DocumentFooterSection` component (Bank Details, Signature, Stamp, Footer)
+- Shared `DocumentFooterSection` (Bank Details, Signature, Stamp, Footer)
 - Quote and Invoice preview pages use dynamic footer
-- PDF generation footer uses dynamic brand name
 
-### Phase 5 — Governance & Analytics Discoverability (Apr 9, 2026)
-- Admin sidebar cleanup: Discount Analytics, Delivery Notes, Purchase Orders added
-- Admin Risk Behavior Alert System (proactive governance)
-- Stripe E2E validated (session creation, status polling, real Checkout URLs)
+### Phase 5 — Governance & Proactive Alerts (Apr 9, 2026)
+- Admin Risk Behavior Alert System
+- Admin sidebar cleanup: Discount Analytics, Delivery Notes, Purchase Orders
+- Stripe E2E validated
 
 ### Phase 6 — Sales Performance Management (Apr 9, 2026)
-- **Configurable Alert Thresholds**: Settings Hub → Discount Governance section
-  - Critical threshold, warning threshold, rolling window, dedup window, enable/disable
-  - Alert engine reads from settings at runtime (not hardcoded)
-- **Customer Service Rating**: POST /api/customer/orders/{id}/rate
-  - 1-5 stars + optional comment, one rating per order
-  - Rating stored as subdocument on order
-  - Rating prompt on completed order detail page
+- **Customer Service Rating**: 1-5 stars + optional comment on completed orders
+  - One rating per order, stored as subdocument
+  - "Remind me later" dismiss option on customer order detail
   - Duplicate prevention
-- **Sales Dashboard Rating KPI**: Avg Rating card + Recent Ratings section
-- **Sales Leaderboard**: Ranked table (deals, revenue, commission, avg rating)
-  - Current user highlighted with "(You)" label
-  - Top 3 positions have trophy/medal icons
+- **Sales Dashboard**: Avg Rating KPI + Recent Ratings (negative highlighted with LOW badge)
+- **Sales Leaderboard**: Balanced scoring (Deals 30%, Commission 30%, Rating 25%, Revenue 15% internal)
+  - Revenue hidden from sales view (privacy)
+  - Performance labels: Top Performer / Strong / Improving / Needs Attention
+  - Current user highlighted
+
+### Phase 7 — Admin Team Intelligence (Apr 9, 2026)
+- **Admin Sales Ratings & Feedback Page** (under Reports & Analytics)
+  - KPI row: Avg Team Rating, Total Ratings, Highest/Lowest Rated Rep
+  - Ratings by Sales Rep table (name, avg, count, deals, last rated)
+  - Low Rating Alerts (≤2 stars) with admin review + internal notes
+  - Rating Trend chart (daily averages)
+  - Recent Feedback (positive/neutral/negative sentiment borders)
+  - Time filter (30/60/90/180/365 days)
 
 ### Integrations
-- Stripe Payments (sandbox test key from env — working E2E)
+- Stripe Payments (sandbox test key — working E2E)
 - Resend Email (requires user API key)
 - Twilio WhatsApp (requires user API key — not yet configured)
 
 ## Backlog
 
 ### P1 — Upcoming
-- Admin view of sales ratings in existing analytics/reporting area
+- Coaching system for low-performing reps (based on ratings + alerts)
+- Automated weekly performance summary for admin
 - End-to-end Stripe test with real payment cards
 
 ### P2 — Future
-- Sales Leaderboard / Gamification enhancements
 - Twilio WhatsApp integration (pending API keys)
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
