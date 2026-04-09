@@ -83,6 +83,7 @@ export const adminNavigation = [
     label: "Reports & Analytics",
     children: [
       { label: "Product Insights", href: "/admin/product-insights", icon: BarChart3 },
+      { label: "Sales Ratings", href: "/admin/sales-ratings", icon: PieChart },
     ],
   },
   {

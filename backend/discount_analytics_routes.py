@@ -333,3 +333,170 @@ async def dismiss_risk_alert(
     if result.modified_count == 0:
         return {"ok": False, "error": "Alert not found"}
     return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# SALES RATINGS & FEEDBACK — Admin Team Performance Intelligence
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.get("/sales-ratings")
+async def sales_ratings_overview(
+    request: Request,
+    _admin=Depends(_require_admin),
+    days: int = Query(90, ge=1, le=365),
+):
+    """
+    Admin sales ratings overview: KPIs, per-rep breakdown, low-rating alerts,
+    rating trend, and recent feedback.
+    """
+    db = request.app.mongodb
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff_iso = cutoff.isoformat()
+
+    # All rated orders within window
+    rated_orders = await db.orders.find(
+        {"rating": {"$exists": True}, "rating.rated_at": {"$gte": cutoff_iso}},
+        {"_id": 0, "order_number": 1, "customer_name": 1, "customer_email": 1,
+         "assigned_sales_id": 1, "rating": 1, "total_amount": 1, "total": 1,
+         "created_at": 1}
+    ).sort("rating.rated_at", -1).to_list(1000)
+
+    # All sales users
+    sales_users = await db.users.find(
+        {"role": {"$in": ["sales", "staff"]}},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1}
+    ).to_list(100)
+
+    sales_map = {u.get("id", ""): u.get("full_name", u.get("email", "")) for u in sales_users}
+
+    # ── KPIs ──
+    all_stars = [o["rating"]["stars"] for o in rated_orders if o.get("rating", {}).get("stars")]
+    avg_team = round(sum(all_stars) / max(len(all_stars), 1), 2) if all_stars else 0
+    total_ratings = len(all_stars)
+
+    # Per-rep aggregation
+    rep_stats = {}
+    for o in rated_orders:
+        sid = o.get("assigned_sales_id", "")
+        if not sid:
+            continue
+        if sid not in rep_stats:
+            rep_stats[sid] = {"name": sales_map.get(sid, sid), "stars": [], "deals": 0,
+                              "last_rated": ""}
+        r = o.get("rating", {})
+        if r.get("stars"):
+            rep_stats[sid]["stars"].append(r["stars"])
+        rep_stats[sid]["deals"] += 1
+        if r.get("rated_at", "") > rep_stats[sid]["last_rated"]:
+            rep_stats[sid]["last_rated"] = r["rated_at"]
+
+    reps_table = []
+    for sid, s in rep_stats.items():
+        avg = round(sum(s["stars"]) / max(len(s["stars"]), 1), 1) if s["stars"] else 0
+        reps_table.append({
+            "sales_rep_id": sid,
+            "name": s["name"],
+            "avg_rating": avg,
+            "ratings_count": len(s["stars"]),
+            "deals_closed": s["deals"],
+            "last_rating_date": (s["last_rated"] or "")[:10],
+        })
+    reps_table.sort(key=lambda x: (-x["avg_rating"], -x["ratings_count"]))
+
+    lowest_rep = min(reps_table, key=lambda x: x["avg_rating"]) if reps_table else None
+    highest_rep = max(reps_table, key=lambda x: x["avg_rating"]) if reps_table else None
+
+    # ── Low rating alerts (≤2 stars) ──
+    low_alerts = []
+    for o in rated_orders:
+        r = o.get("rating", {})
+        if r.get("stars", 5) <= 2:
+            sid = o.get("assigned_sales_id", "")
+            low_alerts.append({
+                "order_number": o.get("order_number", ""),
+                "customer_name": o.get("customer_name", ""),
+                "sales_rep": sales_map.get(sid, sid),
+                "sales_rep_id": sid,
+                "stars": r.get("stars", 0),
+                "comment": r.get("comment", ""),
+                "rated_at": (r.get("rated_at", ""))[:10],
+                "reviewed": r.get("admin_reviewed", False),
+                "admin_note": r.get("admin_note", ""),
+            })
+
+    # ── Rating trend (daily avg over the window) ──
+    day_buckets = {}
+    for o in rated_orders:
+        r = o.get("rating", {})
+        day = (r.get("rated_at", "") or "")[:10]
+        if not day:
+            continue
+        if day not in day_buckets:
+            day_buckets[day] = []
+        if r.get("stars"):
+            day_buckets[day].append(r["stars"])
+
+    trend = []
+    for day in sorted(day_buckets.keys()):
+        vals = day_buckets[day]
+        trend.append({
+            "date": day,
+            "avg": round(sum(vals) / len(vals), 1),
+            "count": len(vals),
+        })
+
+    # ── Recent feedback (last 10) ──
+    recent_feedback = []
+    for o in rated_orders[:10]:
+        r = o.get("rating", {})
+        sid = o.get("assigned_sales_id", "")
+        sentiment = "positive" if r.get("stars", 3) >= 4 else ("negative" if r.get("stars", 3) <= 2 else "neutral")
+        recent_feedback.append({
+            "order_number": o.get("order_number", ""),
+            "customer_name": o.get("customer_name", ""),
+            "sales_rep": sales_map.get(sid, sid),
+            "stars": r.get("stars", 0),
+            "comment": r.get("comment", ""),
+            "rated_at": (r.get("rated_at", ""))[:10],
+            "sentiment": sentiment,
+        })
+
+    return {
+        "ok": True,
+        "kpis": {
+            "avg_team_rating": avg_team,
+            "total_ratings": total_ratings,
+            "lowest_rep": {"name": lowest_rep["name"], "avg": lowest_rep["avg_rating"]} if lowest_rep else None,
+            "highest_rep": {"name": highest_rep["name"], "avg": highest_rep["avg_rating"]} if highest_rep else None,
+        },
+        "reps_table": reps_table,
+        "low_alerts": low_alerts,
+        "trend": trend,
+        "recent_feedback": recent_feedback,
+    }
+
+
+@router.put("/sales-ratings/{order_number}/review")
+async def review_low_rating(
+    request: Request,
+    order_number: str,
+    _admin=Depends(_require_admin),
+):
+    """Admin marks a low rating as reviewed and optionally adds an internal note."""
+    db = request.app.mongodb
+    body = await request.json()
+    admin_note = str(body.get("admin_note", ""))[:500]
+
+    result = await db.orders.update_one(
+        {"order_number": order_number, "rating": {"$exists": True}},
+        {"$set": {
+            "rating.admin_reviewed": True,
+            "rating.admin_note": admin_note,
+            "rating.reviewed_by": _admin.get("full_name", "Admin"),
+            "rating.reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    if result.modified_count == 0:
+        return {"ok": False, "error": "Order or rating not found"}
+    return {"ok": True}

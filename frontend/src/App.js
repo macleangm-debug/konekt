@@ -149,6 +149,7 @@ import RecurringInvoicePlansPage from "@/pages/admin/RecurringInvoicePlansPage";
 // Admin Performance & Insights Pack
 import PartnerPerformancePage from "@/pages/admin/PartnerPerformancePage";
 import ProductInsightsPage from "@/pages/admin/ProductInsightsPage";
+import AdminSalesRatingsPage from "@/pages/admin/AdminSalesRatingsPage";
 import ServiceInsightsPage from "@/pages/admin/ServiceInsightsPage";
 
 // Super Admin Ecosystem Dashboard
@@ -674,6 +675,7 @@ function App() {
           {/* Admin Performance & Insights Routes */}
           <Route path="partner-performance" element={<PartnerPerformancePage />} />
           <Route path="product-insights" element={<ProductInsightsPage />} />
+          <Route path="sales-ratings" element={<AdminSalesRatingsPage />} />
           <Route path="service-insights" element={<ServiceInsightsPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />

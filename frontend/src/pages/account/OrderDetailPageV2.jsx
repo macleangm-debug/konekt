@@ -171,6 +171,7 @@ function OrderRatingSection({ order, orderId, onRated }) {
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const existing = order.rating;
 
   if (existing) {
@@ -195,6 +196,8 @@ function OrderRatingSection({ order, orderId, onRated }) {
       </div>
     );
   }
+
+  if (dismissed) return null;
 
   const submit = async () => {
     if (stars < 1) return;
@@ -258,14 +261,23 @@ function OrderRatingSection({ order, orderId, onRated }) {
         data-testid="rating-comment-input"
       />
 
-      <button
-        onClick={submit}
-        disabled={stars < 1 || submitting}
-        className="rounded-xl bg-[#20364D] text-white px-6 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition"
-        data-testid="submit-rating-btn"
-      >
-        {submitting ? "Submitting..." : "Submit Rating"}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={submit}
+          disabled={stars < 1 || submitting}
+          className="rounded-xl bg-[#20364D] text-white px-6 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition"
+          data-testid="submit-rating-btn"
+        >
+          {submitting ? "Submitting..." : "Submit Rating"}
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          className="rounded-xl border border-slate-200 text-slate-500 px-4 py-2.5 text-sm hover:bg-slate-50 transition"
+          data-testid="remind-later-btn"
+        >
+          Remind me later
+        </button>
+      </div>
     </div>
   );
 }

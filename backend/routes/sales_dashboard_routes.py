@@ -335,7 +335,7 @@ async def get_sales_dashboard(request: Request):
         })
 
     # ═══ LEADERBOARD ═══
-    leaderboard = await _build_leaderboard(db, now)
+    leaderboard = await _build_leaderboard(db, now, hide_revenue=True)
 
     return {
         "ok": True,
@@ -406,12 +406,12 @@ def _build_trend_charts(all_orders, commissions, now):
     }
 
 
-async def _build_leaderboard(db, now):
+async def _build_leaderboard(db, now, hide_revenue=False):
     """
-    Build sales leaderboard ranked by deals closed.
-    Aggregates across all sales reps: deals, revenue, commission, avg rating.
+    Build sales leaderboard with balanced performance scoring.
+    Weights: Deals 30%, Commission 30%, Rating 25%, Revenue 15% (internal).
+    Revenue is used for scoring but hidden from sales view.
     """
-    # All sales users
     sales_users = await db.users.find(
         {"role": {"$in": ["sales", "staff"]}},
         {"_id": 0, "id": 1, "email": 1, "full_name": 1}
@@ -420,40 +420,35 @@ async def _build_leaderboard(db, now):
     if not sales_users:
         return []
 
-    # All non-cancelled orders
     all_orders = await db.orders.find(
         {"status": {"$nin": ["cancelled", "draft"]}},
         {"_id": 0, "assigned_sales_id": 1, "total_amount": 1, "total": 1,
          "payment_status": 1, "rating": 1}
     ).to_list(5000)
 
-    # All commissions
     all_commissions = await db.commissions.find(
         {"beneficiary_type": "sales"},
-        {"_id": 0, "beneficiary_user_id": 1, "amount": 1, "status": 1}
+        {"_id": 0, "beneficiary_user_id": 1, "amount": 1}
     ).to_list(5000)
 
-    board = []
+    raw = []
     for user in sales_users:
         uid = user.get("id", "")
         uemail = user.get("email", "")
         name = user.get("full_name", uemail)
 
-        # Filter orders assigned to this rep
         rep_orders = [o for o in all_orders if o.get("assigned_sales_id") in (uid, uemail)]
         paid_orders = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
         deals = len(paid_orders)
         revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_orders)
 
-        # Commission
         rep_comms = [c for c in all_commissions if c.get("beneficiary_user_id") == uid]
         commission = sum(c.get("amount", 0) for c in rep_comms)
 
-        # Avg rating
         rep_ratings = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
         avg_r = round(sum(rep_ratings) / max(len(rep_ratings), 1), 1) if rep_ratings else 0
 
-        board.append({
+        raw.append({
             "name": name,
             "deals": deals,
             "revenue": round(revenue, 0),
@@ -462,11 +457,35 @@ async def _build_leaderboard(db, now):
             "total_ratings": len(rep_ratings),
         })
 
-    # Sort by deals closed desc, then revenue desc
-    board.sort(key=lambda x: (-x["deals"], -x["revenue"]))
+    # ── Balanced scoring (normalized) ──
+    max_deals = max((e["deals"] for e in raw), default=1) or 1
+    max_rev = max((e["revenue"] for e in raw), default=1) or 1
+    max_comm = max((e["commission"] for e in raw), default=1) or 1
 
-    # Add rank
-    for i, entry in enumerate(board):
+    for e in raw:
+        norm_deals = (e["deals"] / max_deals) * 100
+        norm_rev = (e["revenue"] / max_rev) * 100
+        norm_comm = (e["commission"] / max_comm) * 100
+        norm_rating = (e["avg_rating"] / 5) * 100
+
+        score = (norm_deals * 0.30) + (norm_comm * 0.30) + (norm_rating * 0.25) + (norm_rev * 0.15)
+        e["score"] = round(score, 1)
+
+        if score >= 75:
+            e["label"] = "Top Performer"
+        elif score >= 50:
+            e["label"] = "Strong"
+        elif score >= 25:
+            e["label"] = "Improving"
+        else:
+            e["label"] = "Needs Attention"
+
+    # Sort by balanced score desc
+    raw.sort(key=lambda x: -x["score"])
+
+    for i, entry in enumerate(raw):
         entry["rank"] = i + 1
+        if hide_revenue:
+            del entry["revenue"]
 
-    return board
+    return raw

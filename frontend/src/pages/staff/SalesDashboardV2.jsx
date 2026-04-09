@@ -530,9 +530,9 @@ function LeaderboardSection({ leaderboard, staffName }) {
                 <th className="pb-2 text-left w-10">#</th>
                 <th className="pb-2 text-left">Rep</th>
                 <th className="pb-2 text-right">Deals</th>
-                <th className="pb-2 text-right">Revenue</th>
                 <th className="pb-2 text-right">Commission</th>
                 <th className="pb-2 text-right">Rating</th>
+                <th className="pb-2 text-right">Score</th>
               </tr>
             </thead>
             <tbody>
@@ -540,6 +540,12 @@ function LeaderboardSection({ leaderboard, staffName }) {
                 const RankIcon = RANK_ICONS[entry.rank - 1];
                 const rankColor = RANK_COLORS[entry.rank - 1] || "text-slate-500";
                 const isMe = entry.name === staffName;
+                const labelColors = {
+                  "Top Performer": "bg-emerald-100 text-emerald-700",
+                  "Strong": "bg-blue-100 text-blue-700",
+                  "Improving": "bg-amber-100 text-amber-700",
+                  "Needs Attention": "bg-red-100 text-red-700",
+                };
 
                 return (
                   <tr
@@ -560,7 +566,6 @@ function LeaderboardSection({ leaderboard, staffName }) {
                       </span>
                     </td>
                     <td className="py-2.5 text-right font-semibold text-[#20364D]">{entry.deals}</td>
-                    <td className="py-2.5 text-right text-slate-600">{shortMoney(entry.revenue)}</td>
                     <td className="py-2.5 text-right text-[#D4A843] font-semibold">{shortMoney(entry.commission)}</td>
                     <td className="py-2.5 text-right">
                       {entry.avg_rating > 0 ? (
@@ -571,6 +576,11 @@ function LeaderboardSection({ leaderboard, staffName }) {
                       ) : (
                         <span className="text-xs text-slate-300">—</span>
                       )}
+                    </td>
+                    <td className="py-2.5 text-right">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${labelColors[entry.label] || "bg-slate-100 text-slate-500"}`}>
+                        {entry.label || "—"}
+                      </span>
                     </td>
                   </tr>
                 );
@@ -607,17 +617,20 @@ function RecentRatingsSection({ ratings, avgRating }) {
         </div>
       ) : (
         <div className="space-y-3">
-          {ratings.map((r, i) => (
-            <div key={i} className="border-b border-slate-50 pb-3 last:border-0 last:pb-0" data-testid={`rating-item-${i}`}>
+          {ratings.map((r, i) => {
+            const isNeg = r.stars <= 2;
+            return (
+            <div key={i} className={`border-b pb-3 last:border-0 last:pb-0 ${isNeg ? "border-b-red-100" : "border-slate-50"}`} data-testid={`rating-item-${i}`}>
               <div className="flex items-center gap-2 mb-1">
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <Star
                       key={s}
-                      className={`w-3.5 h-3.5 ${s <= r.stars ? "fill-[#D4A843] text-[#D4A843]" : "text-slate-200"}`}
+                      className={`w-3.5 h-3.5 ${s <= r.stars ? (isNeg ? "fill-red-400 text-red-400" : "fill-[#D4A843] text-[#D4A843]") : "text-slate-200"}`}
                     />
                   ))}
                 </div>
+                {isNeg && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-bold">LOW</span>}
                 <span className="ml-auto text-[10px] text-slate-400">
                   {(r.rated_at || "").slice(0, 10)}
                 </span>
@@ -625,10 +638,11 @@ function RecentRatingsSection({ ratings, avgRating }) {
               <p className="text-xs font-semibold text-[#20364D]">{r.customer_name}</p>
               <p className="text-[10px] text-slate-400">#{r.order_number}</p>
               {r.comment && (
-                <p className="text-xs text-slate-500 italic mt-1">"{r.comment}"</p>
+                <p className={`text-xs italic mt-1 ${isNeg ? "text-red-600" : "text-slate-500"}`}>"{r.comment}"</p>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
