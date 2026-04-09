@@ -22,7 +22,7 @@ export function clearAllAuth() {
  * Returns the redirect path based on stored user role.
  */
 export function getDashboardPath(role) {
-  if (role === "admin") return "/admin";
+  if (["admin", "sales_manager", "finance_manager"].includes(role)) return "/admin";
   if (["sales", "marketing", "production", "supervisor"].includes(role)) return "/staff";
   if (["partner", "vendor", "affiliate"].includes(role)) return "/partner";
   return "/account";

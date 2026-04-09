@@ -24,7 +24,7 @@ export const AdminAuthProvider = ({ children }) => {
     try {
       const response = await axios.get(`${API_URL}/api/auth/me`);
       const user = response.data;
-      if (['admin', 'sales', 'marketing', 'production'].includes(user.role)) {
+      if (['admin', 'sales', 'sales_manager', 'finance_manager', 'marketing', 'production'].includes(user.role)) {
         setAdmin(user);
       } else {
         logout();

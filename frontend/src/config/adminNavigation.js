@@ -26,6 +26,7 @@ export const adminNavigation = [
     icon: LayoutDashboard,
     href: "/admin",
     exact: true,
+    roles: ["admin", "sales_manager", "finance_manager", "sales", "marketing", "production"],
   },
   {
     key: "commerce",

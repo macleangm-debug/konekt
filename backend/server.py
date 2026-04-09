@@ -991,7 +991,7 @@ async def admin_login(data: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     role = user.get("role", "customer")
-    if role not in ["admin", "sales", "marketing", "production"]:
+    if role not in ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production"]:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     if not user.get("is_active", True):
@@ -3011,6 +3011,37 @@ async def startup_event():
         await ensure_auth_indexes(db)
     except Exception as e:
         logger.warning("Auth security indexes: %s", e)
+
+    # Seed management users (sales_manager, finance_manager)
+    manager_seeds = [
+        {
+            "email": "sales.manager@konekt.co.tz",
+            "full_name": "Sales Manager",
+            "role": "sales_manager",
+            "password": "Manager123!",
+        },
+        {
+            "email": "finance@konekt.co.tz",
+            "full_name": "Finance Manager",
+            "role": "finance_manager",
+            "password": "Finance123!",
+        },
+    ]
+    for seed in manager_seeds:
+        existing = await db.users.find_one({"email": seed["email"]})
+        if not existing:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            await db.users.insert_one({
+                "id": str(uuid.uuid4()),
+                "email": seed["email"],
+                "full_name": seed["full_name"],
+                "role": seed["role"],
+                "password_hash": hash_password(seed["password"]),
+                "is_active": True,
+                "created_at": now_iso,
+                "updated_at": now_iso,
+            })
+            logger.info("Seeded %s user: %s", seed["role"], seed["email"])
 
     # Migrate old leads from 'leads' collection to 'crm_leads' (one-time compat)
     try:

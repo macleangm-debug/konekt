@@ -1,13 +1,26 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from uuid import uuid4
 import os
+import jwt as pyjwt
 
 from fastapi import APIRouter, Query, Request, HTTPException
 
 from core.live_commerce_service import LiveCommerceService
 
 router = APIRouter(prefix="/api/admin", tags=["Admin Facade"])
+
+def _get_caller_role(request: Request) -> str:
+    """Extract caller role from JWT without strict validation (dashboard only)."""
+    auth = request.headers.get("authorization", "")
+    if auth.startswith("Bearer "):
+        try:
+            token = auth.split(" ")[1]
+            payload = pyjwt.decode(token, options={"verify_signature": False})
+            return payload.get("role", "admin")
+        except Exception:
+            pass
+    return "admin"
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
@@ -149,6 +162,7 @@ async def dashboard_kpis(request: Request):
             "revenue_trend": revenue_trend,
             "status_distribution": status_distribution,
         },
+        "caller_role": _get_caller_role(request),
     }
 
 @router.get("/dashboard/summary")
@@ -179,6 +193,170 @@ async def dashboard_pending_actions(request: Request):
     return {
         "pending_proofs": [_clean(p) for p in proofs],
         "pending_quotes": [_clean(q) for q in quotes],
+    }
+
+
+@router.get("/dashboard/team-kpis")
+async def dashboard_team_kpis(request: Request):
+    """
+    Team-level KPIs for Sales Manager dashboard.
+    Returns: team deals, team revenue, avg rating, pipeline value,
+    critical alerts, low rating alerts, team performance table,
+    leaderboard, and pipeline overview.
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # ── Get all sales reps ──
+    sales_users = await db.users.find(
+        {"role": {"$in": ["sales", "staff"]}},
+        {"_id": 0, "id": 1, "email": 1, "full_name": 1}
+    ).to_list(100)
+
+    sales_ids = []
+    sales_map = {}
+    for u in sales_users:
+        uid = u.get("id", "")
+        sales_ids.append(uid)
+        sales_map[uid] = u.get("full_name", u.get("email", ""))
+        sales_map[u.get("email", "")] = u.get("full_name", u.get("email", ""))
+
+    # ── All team orders ──
+    all_orders = await db.orders.find(
+        {"status": {"$nin": ["cancelled", "draft"]}},
+        {"_id": 0, "assigned_sales_id": 1, "total_amount": 1, "total": 1,
+         "payment_status": 1, "status": 1, "rating": 1, "created_at": 1,
+         "customer_name": 1, "order_number": 1}
+    ).to_list(10000)
+
+    # ── Team KPIs ──
+    paid_orders = [o for o in all_orders if o.get("payment_status") in ("paid", "verified")]
+    team_deals = len(paid_orders)
+    team_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_orders)
+
+    # Monthly team revenue
+    team_revenue_month = 0
+    for o in paid_orders:
+        created = o.get("created_at", "")
+        if isinstance(created, str) and created >= month_start.isoformat():
+            team_revenue_month += float(o.get("total_amount") or o.get("total") or 0)
+
+    # Pipeline value (open orders not yet paid/completed)
+    pipeline_orders = [o for o in all_orders if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered")]
+    pipeline_value = sum(float(o.get("total_amount") or o.get("total") or 0) for o in pipeline_orders)
+
+    # Team ratings
+    all_ratings = []
+    low_rating_alerts = []
+    for o in all_orders:
+        r = o.get("rating")
+        if r and r.get("stars"):
+            all_ratings.append(r["stars"])
+            if r["stars"] <= 2:
+                rep_id = o.get("assigned_sales_id", "")
+                low_rating_alerts.append({
+                    "order_number": o.get("order_number", ""),
+                    "customer_name": o.get("customer_name", ""),
+                    "stars": r["stars"],
+                    "comment": r.get("comment", ""),
+                    "rep_name": sales_map.get(rep_id, rep_id),
+                    "rated_at": r.get("rated_at", ""),
+                })
+    avg_rating = round(sum(all_ratings) / max(len(all_ratings), 1), 1) if all_ratings else 0
+
+    # ── Discount risk alerts (critical) ──
+    settings_doc = await db.admin_settings.find_one({"type": "discount_governance"}, {"_id": 0})
+    critical_threshold = 30
+    if settings_doc and settings_doc.get("settings"):
+        critical_threshold = settings_doc["settings"].get("critical_threshold", 30)
+
+    critical_discount_count = 0
+    discount_requests = await db.discount_requests.find(
+        {"status": "pending"},
+        {"_id": 0, "discount_percent": 1, "requested_by_name": 1, "customer_name": 1}
+    ).to_list(100)
+    critical_discounts = []
+    for dr in discount_requests:
+        pct = float(dr.get("discount_percent", 0))
+        if pct >= critical_threshold:
+            critical_discount_count += 1
+            critical_discounts.append({
+                "requested_by": dr.get("requested_by_name", ""),
+                "customer_name": dr.get("customer_name", ""),
+                "discount_percent": pct,
+            })
+
+    # ── Per-rep performance table ──
+    all_commissions = await db.commissions.find(
+        {"beneficiary_type": "sales"},
+        {"_id": 0, "beneficiary_user_id": 1, "amount": 1}
+    ).to_list(5000)
+
+    team_table = []
+    for user in sales_users:
+        uid = user.get("id", "")
+        uemail = user.get("email", "")
+        name = user.get("full_name", uemail)
+
+        rep_orders = [o for o in all_orders if o.get("assigned_sales_id") in (uid, uemail)]
+        rep_paid = [o for o in rep_orders if o.get("payment_status") in ("paid", "verified")]
+        deals = len(rep_paid)
+        revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_paid)
+        pipeline = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_orders if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered"))
+
+        rep_comms = [c for c in all_commissions if c.get("beneficiary_user_id") == uid]
+        commission = sum(c.get("amount", 0) for c in rep_comms)
+
+        rep_ratings = [o["rating"]["stars"] for o in rep_orders if o.get("rating", {}).get("stars")]
+        avg_r = round(sum(rep_ratings) / max(len(rep_ratings), 1), 1) if rep_ratings else 0
+
+        team_table.append({
+            "id": uid,
+            "name": name,
+            "deals": deals,
+            "revenue": round(revenue, 0),
+            "pipeline": round(pipeline, 0),
+            "commission": round(commission, 0),
+            "avg_rating": avg_r,
+            "total_ratings": len(rep_ratings),
+            "total_orders": len(rep_orders),
+        })
+
+    # Sort by deals desc
+    team_table.sort(key=lambda x: -x["deals"])
+
+    # ── Pipeline overview (status breakdown) ──
+    pipeline_statuses = ["pending", "confirmed", "paid", "assigned", "in_production",
+                         "in_progress", "ready", "dispatched", "in_transit", "delivered", "completed"]
+    pipeline_overview = []
+    for st in pipeline_statuses:
+        count = sum(1 for o in all_orders if o.get("status") == st)
+        value = sum(float(o.get("total_amount") or o.get("total") or 0) for o in all_orders if o.get("status") == st)
+        if count > 0:
+            pipeline_overview.append({"status": st.replace("_", " ").title(), "count": count, "value": round(value, 0)})
+
+    # ── Build leaderboard (revenue visible to manager) ──
+    from routes.sales_dashboard_routes import _build_leaderboard
+    leaderboard = await _build_leaderboard(db, now, hide_revenue=False)
+
+    return {
+        "team_kpis": {
+            "team_deals": team_deals,
+            "team_revenue": round(team_revenue, 0),
+            "team_revenue_month": round(team_revenue_month, 0),
+            "avg_rating": avg_rating,
+            "total_ratings": len(all_ratings),
+            "pipeline_value": round(pipeline_value, 0),
+            "critical_discount_alerts": critical_discount_count,
+            "low_rating_alerts": len(low_rating_alerts),
+            "total_reps": len(sales_users),
+        },
+        "team_table": team_table,
+        "pipeline_overview": pipeline_overview,
+        "leaderboard": leaderboard,
+        "low_rating_details": low_rating_alerts[:10],
+        "critical_discount_details": critical_discounts[:10],
     }
 
 # ─── PAYMENTS ─────────────────────────────────────────────────────────────────

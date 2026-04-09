@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import { useAdminAuth } from "../../contexts/AdminAuthContext";
 import {
   DollarSign, ShoppingCart, Clock, AlertTriangle,
   TrendingUp, CheckCircle, Package, ArrowRight,
   Settings, FileText, Users, UserCheck, CreditCard,
-  Truck, Activity, BarChart3, Layers
+  Truck, Activity, BarChart3, Layers, Trophy,
+  Star, ShieldAlert, BadgePercent, Target
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -59,7 +61,297 @@ function SnapshotRow({ icon: Icon, label, value, sub, to }) {
   );
 }
 
+/* ═══ Sales Manager Dashboard ═══ */
+function SalesManagerDashboard() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await api.get("/api/admin/dashboard/team-kpis");
+        setData(res.data);
+      } catch {
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64" data-testid="sm-dashboard-loading">
+        <div className="animate-pulse text-slate-400 text-sm">Loading team dashboard...</div>
+      </div>
+    );
+  }
+
+  const tk = data?.team_kpis || {};
+  const teamTable = data?.team_table || [];
+  const pipeline = data?.pipeline_overview || [];
+  const leaderboard = data?.leaderboard || [];
+  const lowRatings = data?.low_rating_details || [];
+  const criticalDiscounts = data?.critical_discount_details || [];
+
+  const PIPELINE_COLORS = [
+    "#F59E0B", "#3B82F6", "#10B981", "#8B5CF6",
+    "#20364D", "#D4A843", "#EF4444", "#6366F1",
+    "#14B8A6", "#EC4899", "#84CC16"
+  ];
+
+  return (
+    <div className="space-y-6" data-testid="sales-manager-dashboard">
+      {/* Hero */}
+      <div className="bg-gradient-to-r from-teal-700 to-teal-900 text-white rounded-2xl p-6 md:p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Team Command Center</h1>
+            <p className="text-teal-200 mt-1 text-sm">Monitor performance, quality, and pipeline health</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/15 px-3 py-1.5 rounded-lg text-xs font-medium">
+              {tk.total_reps || 0} Reps Active
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Team KPI Row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4" data-testid="sm-kpi-row">
+        <KpiCard icon={ShoppingCart} label="Team Deals" value={tk.team_deals || 0} color="bg-blue-50 text-blue-600" to="/admin/orders" />
+        <KpiCard icon={DollarSign} label="Revenue (Month)" value={fmtMoney(tk.team_revenue_month)} color="bg-green-50 text-green-600" trend />
+        <KpiCard icon={Star} label="Avg Rating" value={tk.avg_rating || "—"} color="bg-amber-50 text-amber-600" to="/admin/sales-ratings" />
+        <KpiCard icon={Target} label="Pipeline Value" value={fmtMoney(tk.pipeline_value)} color="bg-purple-50 text-purple-600" to="/admin/orders" />
+        <KpiCard icon={ShieldAlert} label="Critical Discounts" value={tk.critical_discount_alerts || 0} color="bg-red-50 text-red-600" badge={tk.critical_discount_alerts} to="/admin/discount-analytics" />
+        <KpiCard icon={AlertTriangle} label="Low Ratings" value={tk.low_rating_alerts || 0} color="bg-orange-50 text-orange-600" badge={tk.low_rating_alerts} to="/admin/sales-ratings" />
+      </div>
+
+      {/* Main Grid: Team Performance + Leaderboard */}
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Team Performance Table (2 cols wide) */}
+        <div className="lg:col-span-2 bg-white border rounded-2xl p-5" data-testid="sm-team-table">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-teal-700" />
+              <h3 className="font-semibold text-[#20364D] text-sm">Team Performance</h3>
+            </div>
+            <Link to="/admin/team/overview" className="text-xs text-teal-600 font-semibold hover:underline flex items-center gap-1">
+              Full View <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {teamTable.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm">No sales reps found</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100">
+                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rep</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Deals</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Revenue</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Pipeline</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rating</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Commission</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamTable.map((rep) => (
+                    <tr key={rep.id} className="border-b border-slate-50 hover:bg-slate-50 transition">
+                      <td className="py-2.5 px-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center text-xs font-bold">
+                            {(rep.name || "?").charAt(0)}
+                          </div>
+                          <span className="font-medium text-[#20364D] truncate max-w-[140px]">{rep.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-semibold text-slate-700">{rep.deals}</td>
+                      <td className="py-2.5 px-2 text-right text-slate-600">{fmtMoney(rep.revenue)}</td>
+                      <td className="py-2.5 px-2 text-right text-slate-600">{fmtMoney(rep.pipeline)}</td>
+                      <td className="py-2.5 px-2 text-center">
+                        <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
+                          rep.avg_rating >= 4 ? "text-green-600" :
+                          rep.avg_rating >= 3 ? "text-amber-600" :
+                          rep.avg_rating > 0 ? "text-red-600" : "text-slate-400"
+                        }`}>
+                          <Star className="w-3 h-3" /> {rep.avg_rating || "—"}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-2 text-right font-medium text-emerald-600">{fmtMoney(rep.commission)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Leaderboard (1 col) */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="sm-leaderboard">
+          <div className="flex items-center gap-2 mb-4">
+            <Trophy className="w-4 h-4 text-amber-500" />
+            <h3 className="font-semibold text-[#20364D] text-sm">Leaderboard</h3>
+          </div>
+          {leaderboard.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-sm">No data</div>
+          ) : (
+            <div className="space-y-2">
+              {leaderboard.slice(0, 8).map((entry) => (
+                <div key={entry.rank} className="flex items-center gap-3 py-2 px-2 rounded-lg hover:bg-slate-50 transition">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    entry.rank === 1 ? "bg-amber-100 text-amber-700" :
+                    entry.rank === 2 ? "bg-slate-200 text-slate-700" :
+                    entry.rank === 3 ? "bg-orange-100 text-orange-700" :
+                    "bg-slate-100 text-slate-500"
+                  }`}>
+                    {entry.rank}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#20364D] truncate">{entry.name}</p>
+                    <p className="text-[10px] text-slate-400">{entry.deals} deals &middot; Score: {entry.score}</p>
+                  </div>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    entry.label === "Top Performer" ? "bg-green-100 text-green-700" :
+                    entry.label === "Strong" ? "bg-blue-100 text-blue-700" :
+                    entry.label === "Improving" ? "bg-amber-100 text-amber-700" :
+                    "bg-red-100 text-red-700"
+                  }`}>{entry.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <Link to="/admin/team/leaderboard" className="block mt-3 text-center text-xs text-teal-600 font-semibold hover:underline">
+            View Full Leaderboard
+          </Link>
+        </div>
+      </div>
+
+      {/* Pipeline Overview + Alerts */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Pipeline Overview */}
+        <div className="lg:col-span-1 bg-white border rounded-2xl p-5" data-testid="sm-pipeline-overview">
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-4 h-4 text-[#20364D]" />
+            <h3 className="font-semibold text-[#20364D] text-sm">Pipeline Overview</h3>
+          </div>
+          {pipeline.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={pipeline} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
+                <YAxis type="category" dataKey="status" tick={{ fontSize: 10, fill: "#94a3b8" }} width={90} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }}
+                  formatter={(v, name) => [name === "value" ? fmtMoney(v) : v, name === "value" ? "Value" : "Count"]}
+                />
+                <Bar dataKey="count" fill="#20364D" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[200px] flex items-center justify-center text-slate-400 text-sm">No pipeline data</div>
+          )}
+        </div>
+
+        {/* Low Rating Alerts */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="sm-low-rating-alerts">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertTriangle className="w-4 h-4 text-orange-500" />
+            <h3 className="font-semibold text-[#20364D] text-sm">Low Rating Alerts</h3>
+            {lowRatings.length > 0 && (
+              <span className="ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full bg-orange-100 text-orange-700">{lowRatings.length}</span>
+            )}
+          </div>
+          {lowRatings.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-300" />
+              <p className="text-sm text-slate-400">No low ratings — great job!</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {lowRatings.map((alert, i) => (
+                <div key={i} className="border-l-2 border-orange-400 pl-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#20364D]">{alert.rep_name}</span>
+                    <span className="text-xs text-orange-600 font-semibold flex items-center gap-0.5">
+                      <Star className="w-3 h-3" /> {alert.stars}/5
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Order {alert.order_number} &middot; {alert.customer_name}
+                  </p>
+                  {alert.comment && <p className="text-xs text-slate-400 italic mt-0.5">"{alert.comment}"</p>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Critical Discount Alerts */}
+        <div className="bg-white border rounded-2xl p-5" data-testid="sm-discount-alerts">
+          <div className="flex items-center gap-2 mb-4">
+            <BadgePercent className="w-4 h-4 text-red-500" />
+            <h3 className="font-semibold text-[#20364D] text-sm">Critical Discount Requests</h3>
+            {criticalDiscounts.length > 0 && (
+              <span className="ml-auto px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">{criticalDiscounts.length}</span>
+            )}
+          </div>
+          {criticalDiscounts.length === 0 ? (
+            <div className="text-center py-8">
+              <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-300" />
+              <p className="text-sm text-slate-400">No critical discount requests</p>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+              {criticalDiscounts.map((d, i) => (
+                <div key={i} className="border-l-2 border-red-400 pl-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-[#20364D]">{d.requested_by || "Unknown"}</span>
+                    <span className="text-xs text-red-600 font-bold">{d.discount_percent}%</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">Customer: {d.customer_name || "—"}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          <Link to="/admin/discount-analytics" className="block mt-3 text-center text-xs text-teal-600 font-semibold hover:underline">
+            View All Discount Analytics
+          </Link>
+        </div>
+      </div>
+
+      {/* Quick Actions for Sales Manager */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Link to="/admin/orders" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="sm-quick-orders">
+          <ShoppingCart className="w-4 h-4 text-teal-700" /> Orders
+        </Link>
+        <Link to="/admin/customers" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="sm-quick-customers">
+          <Users className="w-4 h-4 text-teal-700" /> Customers
+        </Link>
+        <Link to="/admin/quotes" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="sm-quick-quotes">
+          <FileText className="w-4 h-4 text-teal-700" /> Quotes
+        </Link>
+        <Link to="/admin/sales-ratings" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="sm-quick-ratings">
+          <Star className="w-4 h-4 text-teal-700" /> Sales Ratings
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboardV2() {
+  const { admin } = useAdminAuth();
+  const role = admin?.role || "admin";
+
+  if (role === "sales_manager") {
+    return <SalesManagerDashboard />;
+  }
+
+  return <AdminDashboardMain />;
+}
+
+function AdminDashboardMain() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recentOrders, setRecentOrders] = useState([]);

@@ -14,12 +14,21 @@ import { adminNavigation } from '../../config/adminNavigation';
 function ProfileDropdown({ name, role, onLogout }) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
+  const isAdmin = role === 'admin';
 
   React.useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const displayRole = (() => {
+    switch (role) {
+      case 'sales_manager': return 'Sales Manager';
+      case 'finance_manager': return 'Finance Manager';
+      default: return role;
+    }
+  })();
 
   return (
     <div className="relative" ref={ref} data-testid="admin-profile-dropdown">
@@ -36,11 +45,13 @@ function ProfileDropdown({ name, role, onLogout }) {
         <div className="absolute right-0 mt-2 w-56 rounded-xl border bg-white shadow-lg p-2 z-50" data-testid="admin-profile-menu">
           <div className="px-3 py-2 border-b mb-1">
             <div className="font-semibold text-[#20364D] text-sm truncate">{name}</div>
-            <div className="text-xs text-slate-400 capitalize">{role || "admin"}</div>
+            <div className="text-xs text-slate-400 capitalize">{displayRole || "admin"}</div>
           </div>
-          <a href="/admin/settings-hub" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition" onClick={() => setOpen(false)} data-testid="admin-profile-settings">
-            <Settings className="w-4 h-4" /> Settings
-          </a>
+          {isAdmin && (
+            <a href="/admin/settings-hub" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition" onClick={() => setOpen(false)} data-testid="admin-profile-settings">
+              <Settings className="w-4 h-4" /> Settings
+            </a>
+          )}
           <button
             type="button"
             onClick={() => { setOpen(false); onLogout(); }}
@@ -171,11 +182,45 @@ export default function AdminLayout() {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-700';
       case 'sales': return 'bg-blue-100 text-blue-700';
+      case 'sales_manager': return 'bg-teal-100 text-teal-700';
+      case 'finance_manager': return 'bg-amber-100 text-amber-700';
       case 'marketing': return 'bg-purple-100 text-purple-700';
       case 'production': return 'bg-green-100 text-green-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
+
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case 'sales_manager': return 'Sales Manager';
+      case 'finance_manager': return 'Finance Manager';
+      default: return role;
+    }
+  };
+
+  // Role-based sidebar filtering: admin sees everything, others see only permitted sections
+  const filteredNavigation = React.useMemo(() => {
+    const userRole = admin?.role || 'admin';
+    if (userRole === 'admin') return adminNavigation;
+
+    return adminNavigation
+      .filter((section) => {
+        // Top-level items without roles array → admin-only
+        if (!section.roles) return false;
+        return section.roles.includes(userRole);
+      })
+      .map((section) => {
+        // If section has children, filter them too
+        if (!section.children) return section;
+        const filteredChildren = section.children.filter((child) => {
+          if (!child.roles) return true; // child inherits section visibility
+          return child.roles.includes(userRole);
+        });
+        if (filteredChildren.length === 0) return null; // remove empty groups
+        return { ...section, children: filteredChildren };
+      })
+      .filter(Boolean); // remove nulls (empty groups)
+  }, [admin?.role]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex" data-testid="admin-layout">
@@ -188,9 +233,9 @@ export default function AdminLayout() {
             <p className="text-slate-400 text-xs mt-2 tracking-wide">Admin Portal</p>
           </div>
 
-          {/* Navigation — single source of truth from adminNavigation.js */}
+          {/* Navigation — role-filtered from adminNavigation.js */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto" data-testid="admin-nav">
-            {adminNavigation.map((section) => (
+            {filteredNavigation.map((section) => (
               <NavSection
                 key={section.key}
                 section={section}
@@ -210,7 +255,7 @@ export default function AdminLayout() {
               <div className="flex-1 min-w-0">
                 <p className="text-[#20364D] font-medium truncate">{admin?.full_name}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getRoleBadgeColor(admin?.role)}`}>
-                  {admin?.role}
+                  {getRoleDisplayName(admin?.role)}
                 </span>
               </div>
             </div>
