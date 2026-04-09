@@ -208,6 +208,12 @@ async def get_notification_preferences(user: dict = Depends(get_current_user)):
 
     user_id = user.get("id", "")
     role = user.get("role", "customer")
+
+    # Map partner users to vendor role for notification preferences
+    is_partner = user.get("is_partner", False) or user.get("partner_id")
+    if is_partner and role not in ("affiliate",):
+        role = "vendor"
+
     prefs = await get_user_preferences(db, user_id, role)
 
     # Build structured response grouped by event group
