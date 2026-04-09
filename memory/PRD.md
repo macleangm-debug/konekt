@@ -28,25 +28,35 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market with role-base
 ### Notification Center (Phase H)
 - Event-triggered in-app notifications, 10 event types, role-based filtering, CTA deep links, enhanced bell components
 
-### Dashboard & Input Standardization (Current Session)
-- **Admin Dashboard V2**: 6 KPI cards (Orders Today, Revenue Month, Pending Payments, Active Quotes, Open Delays, Pending Approvals), 4 Snapshot sections (Operations, Finance, Commercial, Partners & Team), 3 charts (Orders Trend bar, Revenue Trend line, Status Distribution donut), Recent Orders table, Quick Actions
-- **Customer Dashboard V3**: 4 KPI cards (Active Orders, Pending Invoices, Referral Balance, Active Quotes), Active Orders list with customer-safe labels, Account Reminders, Referral Rewards card, Order History + Spend Trend charts, Quick Actions
+### Dashboard & Input Standardization (Current Phase)
+- **Admin Dashboard V2**: 6 KPI cards, 4 Snapshot sections (Operations, Finance, Commercial, Partners & Team), 3 charts (Orders Trend bar, Revenue Trend line, Status Distribution donut), Recent Orders table, Quick Actions
+- **Customer Dashboard V3**: 4 KPI cards (Active Orders, Pending Invoices, Referral Balance, Active Quotes), Active Orders list, Reminders, Referral Rewards, Order History + Spend Trend charts, Quick Actions
+- **Sales Dashboard V2** (Apr 9, 2026): Full upgrade with:
+  - 4 KPI cards (Today's Revenue, This Month, Open Pipeline, Commission)
+  - Today's Sales Actions (top priority, above pipeline): quotes expiring, delayed orders, stale clients (3+ days), promotions ready to share
+  - Actionable Pipeline funnel: 6 clickable stages (New → Contacted → Quoted → Approved → Paid → Fulfilled) with count + monetary values
+  - Commission Summary cards: Expected / Pending Payout / Paid
+  - My Customers CRM sidebar
+  - Content to Share (promotion cards, captions, copy CTA, share link)
+  - Commission per Order table (order, customer, total, your commission, status)
+  - 3 Trend Charts: Pipeline Value (area), Deals Closed (bar), Commission Trend (line)
 - **CountryAwarePhoneField**: Flag + country code + prefix selector, auto-strip leading zero, helper text, 10 East African countries
 - **MobileBottomSheet**: Shared component for mobile selections (bottom sheet on mobile, dropdown on desktop), slide-up animation
 
 ## Key API Endpoints
 - `GET /api/admin/dashboard/kpis` — Admin dashboard KPIs, snapshots, charts
 - `GET /api/dashboard-metrics/customer?user_id=X` — Customer dashboard with active orders, reminders, referral, charts
+- `GET /api/staff/sales-dashboard` — Sales dashboard with KPIs, commission_summary, today_actions, pipeline (with values), charts (pipeline_trend, deals_closed_trend, commission_trend), recent_orders, assigned_customers
 - `GET /api/notifications` — User notifications (role-filtered)
 - `POST /api/admin/payments/{id}/approve` — Payment approval
 - `GET /api/admin/orders-ops` — Admin orders
 - `GET /api/customer/orders` — Customer orders (status-mapped)
 - `GET /api/vendor/orders` — Vendor orders (privacy-filtered)
+- `GET /api/staff/content-feed` — Sales content feed for promotions
 
 ## Backlog
-- P1: Sales Dashboard upgrade (pipeline, commission, content-to-share, charts)
-- P1: Vendor Dashboard upgrade (fulfillment workload, charts)
-- P1: Affiliate Dashboard upgrade (earnings/motivation, charts)
+- P0: Vendor Dashboard upgrade (fulfillment workload, charts)
+- P0: Affiliate Dashboard upgrade (earnings/motivation, charts)
 - P1: System-wide phone input replacement pass
 - P1: Notification Preferences (per-user event toggles)
 - P1: Phase G: Discount Analytics Dashboard
