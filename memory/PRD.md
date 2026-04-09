@@ -105,6 +105,33 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Quick Actions (Invoices, Payments, Orders, Discount Analytics)
   - Backend: GET /api/admin/dashboard/finance-kpis
 
+### Phase 9 — Reports Hub / Decision Engine (Apr 9, 2026)
+- **Business Health Report** (`/admin/reports/business-health`)
+  - Executive overview: Revenue, Net Margin, Avg Rating, Total Orders, Pending Payments, Risk Score KPIs
+  - 4 trend charts: Revenue, Margin, Rating, Discount Risk (6 months)
+  - Active Alerts section (critical/warning/info)
+  - Quick links to Financial, Sales, Customer Experience, Risk & Governance
+  - Date filter (30/90/180/365 days), PDF + CSV export
+- **Financial Reports** (`/admin/reports/financial`)
+  - 4 tabs: Revenue, Cash Flow, Margin, Commission
+  - 6 KPIs: Total Revenue, Revenue Month, Collected, Outstanding, Commission, Net Margin
+  - Revenue trend (area chart), Cash flow (revenue vs commissions bars), Margin trend (line)
+  - Commission by rep table, Commission trend chart
+  - Top customers, Payment status breakdown (pie chart)
+  - Date filter, PDF + CSV export
+- **Sales Reports** (`/admin/reports/sales`)
+  - 3 tabs: Performance, Conversion, Leaderboard
+  - 6 KPIs: Total Deals, Revenue, Avg Rating, Conversion Rate, Active Reps, Pipeline
+  - Team performance table (deals, revenue, pipeline, rating, commission)
+  - Deals trend chart, Conversion chart (quotes vs orders + rate line)
+  - Leaderboard with balanced scoring and labels (reuses existing engine)
+  - Date filter, PDF + CSV export
+- **Customer Experience** — Links to existing Sales Ratings page (`/admin/sales-ratings`)
+- **Risk & Governance** — Links to existing Discount Analytics page (`/admin/discount-analytics`)
+- **Sidebar role filtering**: Admin sees all 6 report links; Sales Manager sees Business Health, Sales, CX; Finance Manager sees Business Health, Financial, Risk
+- **Export infrastructure**: `reportExportUtils.js` — branded PDF (jsPDF+autotable, logo, colors, footer, pagination), CSV (Blob download)
+- Backend: 3 new endpoints in `admin_facade_routes.py` (`/reports/business-health`, `/reports/financial`, `/reports/sales`)
+
 ### Integrations
 - Stripe Payments (sandbox test key — working E2E)
 - Resend Email (requires user API key)
@@ -113,11 +140,11 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 ## Backlog
 
 ### P0 — In Progress
-- Phase 3: Finance Manager Dashboard (Cash Flow, Payment Status, Margin Analysis, Commission Tracking)
+- Phase 5: Inventory & Product Intelligence (Fast-moving / Slow-moving / Dead stock, Procurement insights)
 
 ### P1 — Upcoming
-- Phase 4: Reports Hub Refinement (Financial, Sales, CX, Risk/Governance reports — visual, exportable, branded)
-- Phase 5: Inventory & Product Intelligence (Fast-moving / Slow-moving / Dead stock, Procurement insights)
+- Complete Reports exports with actual branded logos rendering
+- Full end-to-end PDF export visual QA
 
 ### P2 — Future
 - Twilio WhatsApp integration (pending API keys)
