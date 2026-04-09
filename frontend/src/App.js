@@ -157,6 +157,8 @@ import BusinessHealthReportPage from "@/pages/admin/reports/BusinessHealthReport
 import FinancialReportsPage from "@/pages/admin/reports/FinancialReportsPage";
 import SalesReportsPage from "@/pages/admin/reports/SalesReportsPage";
 import InventoryIntelligencePage from "@/pages/admin/reports/InventoryIntelligencePage";
+import WeeklyPerformanceReportPage from "@/pages/admin/reports/WeeklyPerformanceReportPage";
+import AlertDashboardPage from "@/pages/admin/reports/AlertDashboardPage";
 
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
@@ -688,6 +690,8 @@ function App() {
           <Route path="reports/financial" element={<FinancialReportsPage />} />
           <Route path="reports/sales" element={<SalesReportsPage />} />
           <Route path="reports/inventory" element={<InventoryIntelligencePage />} />
+          <Route path="reports/weekly-performance" element={<WeeklyPerformanceReportPage />} />
+          <Route path="reports/alerts" element={<AlertDashboardPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />
           {/* Super Admin Commercial Controls */}
