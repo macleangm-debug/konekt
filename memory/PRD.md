@@ -10,7 +10,7 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Branding**: Dynamic via AdminSettingsHub → `/api/public/business-context`
 
 ## Roles
-- Admin, Sales/Staff, Customer, Vendor/Partner, Affiliate
+- Admin, Sales/Staff, Sales Manager, Finance Manager, Customer, Vendor/Partner, Affiliate
 
 ## What's Implemented (Complete)
 
@@ -65,6 +65,34 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Recent Feedback (positive/neutral/negative sentiment borders)
   - Time filter (30/60/90/180/365 days)
 
+### Phase 8 — Unified Access Model & Management Dashboards (Apr 9, 2026)
+- **Role Infrastructure (Phase 1)**
+  - Backend: `sales_manager` and `finance_manager` roles in UserRole enum + ROLE_PERMISSIONS
+  - Admin login gate (server.py) allows manager roles
+  - Frontend auth context (AdminAuthContext.js) validates manager roles
+  - Manager users seeded on startup (sales.manager@konekt.co.tz, finance@konekt.co.tz)
+  - Login flow: unified /login → /api/auth/login → konekt_admin_token → /admin redirect
+  - `getDashboardPath` routes manager roles to /admin
+- **Sidebar Role Filtering**
+  - `adminNavigation.js`: each section has `roles` array
+  - `AdminLayout.js`: `filteredNavigation` useMemo filters by `admin.role`
+  - Empty groups removed after filtering
+  - Admin sees everything; managers see permitted sections only
+  - Sales Manager: Dashboard, Commerce, Customers, Team/Performance, Reports & Analytics
+  - Finance Manager: Dashboard, Commerce, Finance, Reports & Analytics
+- **Role Badge Colors**: teal (sales_manager), amber (finance_manager), red (admin)
+- **Profile Dropdown**: Settings link hidden for non-admin roles
+- **Sales Manager Dashboard (Phase 2)**
+  - "Team Command Center" hero with teal gradient
+  - KPI Row: Team Deals, Revenue (Month), Avg Rating, Pipeline Value, Critical Discounts, Low Ratings
+  - Team Performance Table (per-rep: deals, revenue, pipeline, rating, commission)
+  - Leaderboard with balanced scoring and performance labels
+  - Pipeline Overview (horizontal bar chart by status)
+  - Low Rating Alerts (≤2 stars with rep name, customer, comment)
+  - Critical Discount Alerts (requests above threshold)
+  - Quick Actions (Orders, Customers, Quotes, Sales Ratings)
+  - Backend: GET /api/admin/dashboard/team-kpis
+
 ### Integrations
 - Stripe Payments (sandbox test key — working E2E)
 - Resend Email (requires user API key)
@@ -72,14 +100,17 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 
 ## Backlog
 
+### P0 — In Progress
+- Phase 3: Finance Manager Dashboard (Cash Flow, Payment Status, Margin Analysis, Commission Tracking)
+
 ### P1 — Upcoming
-- Coaching system for low-performing reps (based on ratings + alerts)
-- Automated weekly performance summary for admin
-- End-to-end Stripe test with real payment cards
+- Phase 4: Reports Hub Refinement (Financial, Sales, CX, Risk/Governance reports — visual, exportable, branded)
+- Phase 5: Inventory & Product Intelligence (Fast-moving / Slow-moving / Dead stock, Procurement insights)
 
 ### P2 — Future
 - Twilio WhatsApp integration (pending API keys)
+- Resend email integration (pending API key)
+- Automated weekly/monthly performance summary reports
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
-- Advanced Analytics dashboard
 - Mobile-first optimization

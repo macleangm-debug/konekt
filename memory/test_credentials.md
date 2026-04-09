@@ -5,6 +5,16 @@
 - Password: `KnktcKk_L-hw1wSyquvd!`
 - Portal: `/login` -> `/admin`
 
+## Sales Manager
+- Email: `sales.manager@konekt.co.tz`
+- Password: `Manager123!`
+- Portal: `/login` -> `/admin` (sees Team Command Center dashboard, filtered sidebar)
+
+## Finance Manager
+- Email: `finance@konekt.co.tz`
+- Password: `Finance123!`
+- Portal: `/login` -> `/admin` (sees standard dashboard, finance-filtered sidebar)
+
 ## Staff / Sales
 - Email: `staff@konekt.co.tz`
 - Password: `Staff123!`
