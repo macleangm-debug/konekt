@@ -37,7 +37,9 @@ const defaultState = {
   vendors: { vendor_can_update_internal_progress: true, vendor_sees_only_assigned_jobs: true, vendor_cannot_see_customer_financials: true, vendor_cannot_see_commissions: true },
   numbering_rules: { sku_auto_numbering_enabled: true, quote_format: "KON-QT-[YY]-[SEQ]", invoice_format: "KON-IN-[YY]-[SEQ]", order_format: "KON-OR-[YY]-[SEQ]" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
-  business_profile: { legal_name: "KONEKT LIMITED", brand_name: "Konekt", support_email: "support@konekt.co.tz", support_phone: "+255 XXX XXX XXX", business_address: "Dar es Salaam, Tanzania", tax_id: "", vat_number: "" },
+  business_profile: { legal_name: "KONEKT LIMITED", brand_name: "Konekt", tagline: "", support_email: "support@konekt.co.tz", support_phone: "+255 XXX XXX XXX", business_address: "Dar es Salaam, Tanzania", tax_id: "", vat_number: "", website: "" },
+  branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
+  notification_sender: { sender_name: "Konekt", sender_email: "", whatsapp_number: "", email_footer_text: "B2B Platform" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
 };
 
@@ -129,18 +131,51 @@ export default function AdminSettingsHubPage() {
 function ProfileTab({ state, setState }) {
   const s = state.business_profile || {};
   const n = state.numbering_rules || {};
+  const b = state.branding || {};
+  const ns = state.notification_sender || {};
   return (
     <>
       <SettingsSectionCard title="Company Information" description="Legal identity and contact details.">
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           <SettingsTextField label="Legal Company Name" value={s.legal_name} onChange={(v) => setState(U(state, "business_profile", "legal_name", v))} />
           <SettingsTextField label="Brand Name" value={s.brand_name} onChange={(v) => setState(U(state, "business_profile", "brand_name", v))} />
+          <SettingsTextField label="Tagline" value={s.tagline} onChange={(v) => setState(U(state, "business_profile", "tagline", v))} />
           <SettingsTextField label="Support Email" value={s.support_email} onChange={(v) => setState(U(state, "business_profile", "support_email", v))} />
           <SettingsTextField label="Support Phone" value={s.support_phone} onChange={(v) => setState(U(state, "business_profile", "support_phone", v))} />
+          <SettingsTextField label="Website" value={s.website} onChange={(v) => setState(U(state, "business_profile", "website", v))} />
           <SettingsTextField label="Business Address" value={s.business_address} onChange={(v) => setState(U(state, "business_profile", "business_address", v))} />
           <SettingsTextField label="Tax/VAT ID" value={s.tax_id} onChange={(v) => setState(U(state, "business_profile", "tax_id", v))} />
           <SettingsTextField label="Default Country" value={state.payment_accounts?.default_country} onChange={(v) => setState(U(state, "payment_accounts", "default_country", v))} />
           <SettingsTextField label="Default Currency" value={state.payment_accounts?.currency} onChange={(v) => setState(U(state, "payment_accounts", "currency", v))} />
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Branding" description="Logo, colors, and visual identity. Used across frontend, emails, and documents.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SettingsTextField label="Primary Logo URL" value={b.primary_logo_url} onChange={(v) => setState(U(state, "branding", "primary_logo_url", v))} />
+          <SettingsTextField label="Secondary Logo URL" value={b.secondary_logo_url} onChange={(v) => setState(U(state, "branding", "secondary_logo_url", v))} />
+          <SettingsTextField label="Favicon URL" value={b.favicon_url} onChange={(v) => setState(U(state, "branding", "favicon_url", v))} />
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">Primary Color</label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={b.primary_color || "#20364D"} onChange={(e) => setState(U(state, "branding", "primary_color", e.target.value))} className="w-10 h-10 rounded-lg border cursor-pointer" />
+              <input type="text" value={b.primary_color || ""} onChange={(e) => setState(U(state, "branding", "primary_color", e.target.value))} className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="#20364D" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">Accent Color</label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={b.accent_color || "#D4A843"} onChange={(e) => setState(U(state, "branding", "accent_color", e.target.value))} className="w-10 h-10 rounded-lg border cursor-pointer" />
+              <input type="text" value={b.accent_color || ""} onChange={(e) => setState(U(state, "branding", "accent_color", e.target.value))} className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="#D4A843" />
+            </div>
+          </div>
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Notification Sender" description="Sender identity for emails and WhatsApp messages.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SettingsTextField label="Sender Name" value={ns.sender_name} onChange={(v) => setState(U(state, "notification_sender", "sender_name", v))} />
+          <SettingsTextField label="Sender Email" value={ns.sender_email} onChange={(v) => setState(U(state, "notification_sender", "sender_email", v))} />
+          <SettingsTextField label="WhatsApp Number" value={ns.whatsapp_number} onChange={(v) => setState(U(state, "notification_sender", "whatsapp_number", v))} />
+          <SettingsTextField label="Email Footer Text" value={ns.email_footer_text} onChange={(v) => setState(U(state, "notification_sender", "email_footer_text", v))} />
         </div>
       </SettingsSectionCard>
       <SettingsSectionCard title="Document Numbering" description="Set professional document numbering defaults.">
