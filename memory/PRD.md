@@ -151,16 +151,38 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - Resend Email (requires user API key)
 - Twilio WhatsApp (requires user API key — not yet configured)
 
+### Phase 11 — Automation & Leverage (Apr 9, 2026)
+- **Weekly Performance Report** (`/admin/reports/weekly-performance`)
+  - Executive Summary KPIs: Revenue, Orders, Margin, Avg Rating, Discounts, Net Profit
+  - Sales Performance: Top Performers, Needs Attention, Total Deals, Pipeline Value, Conversion Rate
+  - Risk & Alerts section (critical/warning alerts from the week)
+  - Financial Summary: Collected, Pending Payments, Outstanding Invoices, Commission Payable
+  - Customer Experience: Overall Rating with distribution chart + negative feedback highlights
+  - Product Intelligence: Top Products, Dead Stock
+  - Procurement Insights: Restock recommendations, Review/Remove suggestions
+  - Action Recommendations: Priority-ordered week actions with severity badges
+  - Week navigation (prev/next), Branded PDF + CSV export
+  - Backend: `GET /api/admin/reports/weekly-performance?weeks_back=N`
+- **Alert Dashboard / Action Center** (`/admin/reports/alerts`)
+  - KPI Summary: Critical, Warning, Open, Resolved counts
+  - Filter Bar: Severity, Type (rating/discount/delay/product/performance), Status
+  - Priority-sorted alert cards (Critical > Warning > Info > Resolved, scored by priority_score)
+  - Expandable card detail: Recommended Action, Entity info, Priority Score, Resolve button
+  - Scan for Alerts button auto-generates from current system state
+  - CSV export
+  - Backend: `GET /api/admin/alerts`, `POST /api/admin/alerts/generate`, `POST /api/admin/alerts/{id}/resolve`
+- Both pages nested under "Reports & Analytics" sidebar (not top-level)
+- Accessible by admin, sales_manager, finance_manager roles
+
 ## Backlog
 
 ### P1 — Upcoming
-- Reports export visual QA (branded logo rendering in PDFs)
-- Full end-to-end PDF export visual QA
+- Coaching System for Sales Team (flagging underperforming reps)
+- Notification Preferences (in-app/email/WhatsApp control)
+- Twilio WhatsApp integration for alert/report delivery (pending API keys)
+- Resend email integration for automated report delivery (pending API key)
 
 ### P2 — Future
-- Twilio WhatsApp integration (pending API keys)
-- Resend email integration (pending API key)
-- Automated weekly/monthly performance summary reports
 - One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
 - Mobile-first optimization
