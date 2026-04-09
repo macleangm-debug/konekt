@@ -1,4 +1,4 @@
-# Konekt B2B E-Commerce Platform — Product Requirements Document
+# Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
 Build a B2B e-commerce platform (Konekt) for the Tanzanian market with role-based access (Admin, Customer, Vendor/Partner, Sales), multi-vendor support, procurement infrastructure, and document branding.
@@ -8,87 +8,48 @@ Build a B2B e-commerce platform (Konekt) for the Tanzanian market with role-base
 - **Portals**: Admin (`/admin`), Customer (`/account`), Vendor (`/partner`), Sales (`/staff`)
 - **Auth**: JWT-based with role separation
 
-## Key Technical Principles
-- **Strict Payer/Customer Separation**: `customer_name` from business records, `payer_name` from payment proof
-- **Vendor Privacy**: Vendors see only their vendor order number, base price, work details, and Konekt Sales Contact — no customer identity or margins
-- **Status Propagation**: Internal statuses mapped to role-appropriate labels via `status_propagation_service.py`
-- **Multi-Vendor POs**: POs generated from customer orders, grouped by vendor. No separate PO dashboard.
-- **Notification System**: Event-triggered, actionable, role-based in-app notifications via existing infrastructure
-
 ## Completed Features
 
-### Phase A: Core Platform
-- Unified login system with role-based routing
-- Admin dashboard with summary cards, order management
-- Customer marketplace with product/service ordering
-- Vendor partner workspace with fulfillment tracking
-- Sales workspace with order management and customer management
+### Core Platform (Phase A)
+- Unified login, role-based routing, admin dashboard, customer marketplace, vendor workspace, sales workspace
 
-### Phase B: Payment & Approval
-- Stripe sandbox payment gateway integration
-- Payment proof upload and approval workflow
-- Automated vendor order generation on payment approval
-- Payment queue with Customer/Payer separation
+### Payment & Approval (Phase B)
+- Stripe sandbox, payment proof workflow, automated vendor orders, payment queue with Customer/Payer separation
 
-### Phase C: Document System
-- Canonical HTML-to-PDF generation (Invoices, Quotes, Delivery Notes, Statements, Purchase Orders)
-- Programmatic Connected Triad SVG stamp
-- Document Preview Panel in Admin Settings
-- Business Settings hub (identity, contact, banking, tax)
+### Document System (Phase C)
+- Canonical HTML-to-PDF (Invoices, Quotes, Delivery Notes, Statements, POs), Connected Triad SVG stamp, Document Preview
 
-### Phase D: Purchase Orders & Status Propagation
-- Multi-vendor PO generation (grouped by vendor_id)
-- Role-mapped status propagation (customer-safe, vendor-safe, sales, admin)
-- Sales status override with mandatory audit notes
+### Purchase Orders & Status Propagation (Phase D)
+- Multi-vendor POs, role-mapped status propagation, sales override with audit notes
 
-### Phase E: Status Timeline & UI Audit
-- Status Timeline in admin order drawer showing full audit trail
-- Deep UI audit across all 4 role portals (100% pass)
-- Status propagation audit verified across all roles
-- Customer status filter updated with safe label options
+### Status Timeline & UI Audit (Phase E)
+- Status Timeline in admin drawer, deep UI audit, status propagation audit
 
-### Phase H: Notification Center (Current Session)
-- Event-triggered in-app notifications using existing notification infrastructure
-- No new routes created — extended existing `notification_routes.py`
-- Notification events: order_created, payment_verified, order_in_fulfillment, order_dispatched, order_delivered, order_delayed, vendor_order_assigned, sales_order_assigned, sales_delay_flagged, admin_sales_override
-- Role-based filtering: customers see order progress, sales see delays + assignments, vendors see assignments, admin sees exceptions
-- Actionable CTA deep links: View Order → `/account/orders/{id}`, Review Order → `/admin/orders`, etc.
-- Enhanced all 3 notification bell components (admin, shared, standalone) with CTA labels, unread indicators, priority badges
-- Fixed mark-all-read bug (now sets both `is_read` and `read` fields)
+### Notification Center (Phase H)
+- Event-triggered in-app notifications, 10 event types, role-based filtering, CTA deep links, enhanced bell components
 
-## Notification Event Map
-
-| Event | Notify Roles | CTA |
-|-------|-------------|-----|
-| Order created | customer + sales | View Order / Open Order |
-| Payment verified | customer | Track Order |
-| In fulfillment | customer | Track Order |
-| Dispatched | customer | Track Delivery |
-| Delivered | customer | View Order |
-| Delayed | customer + sales | View Order / Review Delay |
-| Vendor assigned | vendor | View Assignment |
-| Sales override | admin | Review Order |
-
-## DB Schema
-- `orders`: Core transaction with `status_audit_trail` array
-- `vendor_orders`: Created with payment approval, contains `status_audit_trail`
-- `users`: admin, customer, vendor, sales roles
-- `payment_proofs`: Source of truth for payer_name
-- `notifications`: id, title, message, type, priority, action_key, entity_type, entity_id, recipient_user_id, recipient_role, target_url, cta_label, is_read, read, created_at
+### Dashboard & Input Standardization (Current Session)
+- **Admin Dashboard V2**: 6 KPI cards (Orders Today, Revenue Month, Pending Payments, Active Quotes, Open Delays, Pending Approvals), 4 Snapshot sections (Operations, Finance, Commercial, Partners & Team), 3 charts (Orders Trend bar, Revenue Trend line, Status Distribution donut), Recent Orders table, Quick Actions
+- **Customer Dashboard V3**: 4 KPI cards (Active Orders, Pending Invoices, Referral Balance, Active Quotes), Active Orders list with customer-safe labels, Account Reminders, Referral Rewards card, Order History + Spend Trend charts, Quick Actions
+- **CountryAwarePhoneField**: Flag + country code + prefix selector, auto-strip leading zero, helper text, 10 East African countries
+- **MobileBottomSheet**: Shared component for mobile selections (bottom sheet on mobile, dropdown on desktop), slide-up animation
 
 ## Key API Endpoints
-- `POST /api/admin/payments/{id}/approve` — LiveCommerceService
-- `GET /api/admin/orders-ops` — Admin orders list
-- `GET /api/vendor/orders` — Vendor orders (privacy-filtered)
-- `GET /api/customer/orders` — Customer orders (status-mapped)
+- `GET /api/admin/dashboard/kpis` — Admin dashboard KPIs, snapshots, charts
+- `GET /api/dashboard-metrics/customer?user_id=X` — Customer dashboard with active orders, reminders, referral, charts
 - `GET /api/notifications` — User notifications (role-filtered)
-- `GET /api/notifications/unread-count` — Unread count
-- `PUT /api/notifications/{id}/read` — Mark single read
-- `PUT /api/notifications/mark-all-read` — Mark all read
+- `POST /api/admin/payments/{id}/approve` — Payment approval
+- `GET /api/admin/orders-ops` — Admin orders
+- `GET /api/customer/orders` — Customer orders (status-mapped)
+- `GET /api/vendor/orders` — Vendor orders (privacy-filtered)
 
 ## Backlog
+- P1: Sales Dashboard upgrade (pipeline, commission, content-to-share, charts)
+- P1: Vendor Dashboard upgrade (fulfillment workload, charts)
+- P1: Affiliate Dashboard upgrade (earnings/motivation, charts)
+- P1: System-wide phone input replacement pass
+- P1: Notification Preferences (per-user event toggles)
 - P1: Phase G: Discount Analytics Dashboard
 - P2: Twilio WhatsApp/SMS integration (blocked on API key)
 - P2: Resend email live mode (blocked on API key)
-- P2: AI-assisted Auto Quote Suggestions
 - P2: Mobile-first optimization
