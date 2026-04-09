@@ -132,6 +132,20 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Export infrastructure**: `reportExportUtils.js` — branded PDF (jsPDF+autotable, logo, colors, footer, pagination), CSV (Blob download)
 - Backend: 3 new endpoints in `admin_facade_routes.py` (`/reports/business-health`, `/reports/financial`, `/reports/sales`)
 
+### Phase 10 — Inventory & Product Intelligence (Apr 9, 2026)
+- **Inventory Intelligence Report** (`/admin/reports/inventory`)
+  - 7 KPIs: Total Products, Units Sold, Revenue, Top Product, Fast Count, Slow Count, Dead Count
+  - 4 tabs: Overview, Fast, Slow/Dead, Procurement
+  - **Overview tab**: Top 10 Products bar chart (by revenue), Product Health pie chart (Fast/Moderate/Slow/Dead), Sales Trend line chart
+  - **Fast tab**: Table of fast-moving products with units, revenue, orders, last sold, trend
+  - **Slow/Dead tab**: Table with days inactive column, classification badges (Slow/Dead), trend arrows
+  - **Procurement tab**: Restock Recommendations (fast + increasing demand), Review/Remove (dead + slow items), Top Vendors (high-performing), Underperforming Vendors (dead/slow products)
+  - Classification: Fast (5+ orders or 10+ units), Moderate (default), Slow (30+ days inactive), Dead (60+ days or zero sales)
+  - Trend detection: Increasing/Decreasing/Stable based on month-over-month unit comparison
+  - Date filter (30/90/180/365 days), PDF + CSV export
+  - Accessible by all management roles (admin, sales_manager, finance_manager)
+  - Backend: `GET /api/admin/reports/inventory-intelligence`
+
 ### Integrations
 - Stripe Payments (sandbox test key — working E2E)
 - Resend Email (requires user API key)
@@ -139,11 +153,8 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 
 ## Backlog
 
-### P0 — In Progress
-- Phase 5: Inventory & Product Intelligence (Fast-moving / Slow-moving / Dead stock, Procurement insights)
-
 ### P1 — Upcoming
-- Complete Reports exports with actual branded logos rendering
+- Reports export visual QA (branded logo rendering in PDFs)
 - Full end-to-end PDF export visual QA
 
 ### P2 — Future
