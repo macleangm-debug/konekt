@@ -430,6 +430,28 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Kanban cards: show assigned rep and follow-up status
   - Create lead form: "Assign Sales Rep" placeholder
 
+### Phase 23 — Pipeline Intelligence Layer (Apr 10, 2026)
+- **Auto Stage Movement** (Backend hooks, no manual guesswork)
+  - Quote created → auto-advance lead to "Quote Sent" (`sales_routes.py`)
+  - Payment approved → auto-advance lead to "Won" (`live_commerce_service.py`)
+  - Hooks are try/catch wrapped — failures don't break core flows
+- **Stuck Deal Detection** (Backend service + API)
+  - `pipeline_intelligence_service.py`: Configurable thresholds per stage (new_lead: 3d, contacted: 5d, qualified: 5d, quote_sent: 3d, negotiation: 5d)
+  - `GET /api/admin/pipeline/stale-deals`: Returns stale leads with `days_inactive` and `threshold_days`
+- **Conversion Metrics** (Revenue visibility)
+  - `GET /api/admin/pipeline/conversion-metrics`: Stage-by-stage funnel with count, value, conversion %, total leads, win rate, avg days to close
+  - `GET /api/admin/pipeline/rep-performance`: Per-rep conversion stats (win rate, not just activity counts)
+- **Frontend Intelligence Tab** (Existing CRM → Intelligence tab enriched)
+  - 6 headline KPIs: Total Leads, Won, Lost, Win Rate, Avg Days to Close, Stale Deals
+  - Conversion Funnel: Horizontal bar chart with color-coded conversion percentages (green >= 50%, amber >= 25%, red < 25%)
+  - Stale Deals panel: Lists inactive leads with "Xd inactive" badges
+  - Rep Conversion Performance panel: Win rate % per rep
+- **CRM Table/Kanban Stale Badges**
+  - Table: "STALE" red badge in Last Activity column for leads exceeding threshold
+  - Kanban: "STALE (Xd)" badge on card for inactive leads
+  - Drawer: Overdue follow-up highlighted with red border/background
+- **No new routes/pages** — all integrated into existing CRM + dashboards
+
 ## Backlog
 
 ### P1 — Upcoming
