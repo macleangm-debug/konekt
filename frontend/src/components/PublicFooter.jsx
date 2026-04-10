@@ -73,7 +73,7 @@ export default function PublicFooter() {
             <Link to="/track-order" className="block hover:text-white transition-colors">Track Order</Link>
             <Link to="/payment-info" className="block hover:text-white transition-colors">Payment Options</Link>
             <Link to="/delivery-info" className="block hover:text-white transition-colors">Delivery Information</Link>
-            <Link to="/privacy-policy" className="block hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/privacy" className="block hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="block hover:text-white transition-colors">Terms & Conditions</Link>
           </div>
         </div>

@@ -263,6 +263,30 @@ function CommercialTab({ state, setState }) {
         </div>
         <p className="text-xs text-slate-400 mt-3">Referral rewards are funded from the distribution margin pool. Ensure total allocations (affiliate + sales + discount + referral) do not exceed 100%.</p>
       </SettingsSectionCard>
+      <SettingsSectionCard title="Welcome Bonus Campaign" description="One-time bonus for referred users on their first verified purchase. Funded strictly from the distribution margin.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsToggleField label="Enable Welcome Bonus" checked={c.welcome_bonus_enabled} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_enabled", v))} />
+          <SettingsSelectField label="Bonus Type" value={c.welcome_bonus_type} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_type", v))} options={[{ value: "fixed", label: "Fixed Amount (TZS)" }, { value: "percentage", label: "% of Dist. Margin" }]} />
+          <SettingsNumberField label={c.welcome_bonus_type === "percentage" ? "Bonus % of Margin" : "Bonus Amount (TZS)"} value={c.welcome_bonus_value} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_value", v))} />
+          <SettingsNumberField label="Max Cap (TZS, 0=none)" value={c.welcome_bonus_max_cap} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_max_cap", v))} />
+        </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+          <SettingsToggleField label="First purchase only" checked={c.welcome_bonus_first_purchase_only} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_first_purchase_only", v))} />
+          <SettingsToggleField label="Stack with referral reward" checked={c.welcome_bonus_stack_with_referral} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_stack_with_referral", v))} />
+          <SettingsToggleField label="Stack with wallet usage" checked={c.welcome_bonus_stack_with_wallet} onChange={(v) => setState(U(state, "commercial", "welcome_bonus_stack_with_wallet", v))} />
+        </div>
+        {!c.welcome_bonus_enabled && (
+          <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
+            Campaign is <strong>disabled</strong>. Enable it above to activate the welcome bonus for new referred users.
+          </div>
+        )}
+        {c.welcome_bonus_enabled && (
+          <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+            Active: Referred users receive a {c.welcome_bonus_type === "fixed" ? `TZS ${(c.welcome_bonus_value || 0).toLocaleString()} bonus` : `${c.welcome_bonus_value || 0}% of distributable margin bonus`} on their first verified purchase.
+            {!c.welcome_bonus_stack_with_referral && " Will NOT stack with referral rewards on the same order."}
+          </div>
+        )}
+      </SettingsSectionCard>
       <SettingsSectionCard title="Margin Rules" description="Control margin overrides across products and services.">
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           <SettingsToggleField label="Product group margin override" checked={m.allow_product_group_margin_override} onChange={(v) => setState(U(state, "margin_rules", "allow_product_group_margin_override", v))} />
