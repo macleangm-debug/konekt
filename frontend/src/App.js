@@ -317,6 +317,9 @@ import useBrandingSettings from "@/hooks/useBrandingSettings";
 // HelpMenuCard Component
 import HelpMenuCard from "@/components/navigation/HelpMenuCard";
 
+// Service Tasks
+import AdminServiceTasksPage from "@/pages/admin/AdminServiceTasksPage";
+
 // New Design Pack - V2 Pages
 import LoginPageV2 from "@/pages/auth/LoginPageV2";
 import RegisterPageV2 from "@/pages/auth/RegisterPageV2";
@@ -649,6 +652,7 @@ function App() {
           <Route path="staff-performance" element={<StaffPerformancePage />} />
           <Route path="inventory-operations" element={<InventoryOperationsPage />} />
           <Route path="delivery-notes" element={<DeliveryNotesPage />} />
+          <Route path="service-tasks" element={<AdminServiceTasksPage />} />
           <Route path="goods-receiving" element={<GoodsReceivingPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />
           <Route path="procurement/purchase-orders" element={<PurchaseOrdersPage />} />

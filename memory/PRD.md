@@ -11,8 +11,9 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 
 ## Key Technical Principles
 - **Strict Payer/Customer Separation**: `customer_name` from account/business records ONLY. `payer_name` from payment proof/submission ONLY. Never fallback to each other.
+- **Partner Data Access Control**: Service partners NEVER see client identity (client_name, delivery_address, contact_person, contact_phone). Only logistics/distributor/delivery partners can see delivery details. Enforced at API level, not UI.
 - **Vendor Privacy**: Vendors see only their `vendor_order_no`, base_price, work details, and Konekt Sales Contact. No customer identity or margins.
-- **Unified Service Execution**: Logistics and Service partners use the same pricing engine. Mode A (partner inputs cost) or Mode B (sales inputs cost).
+- **Unified Service Execution**: Logistics and Service partners use the same pricing engine. Mode A (Partner inputs cost) or Mode B (Sales inputs cost).
 - **Global Confirmation Modal**: Never use `window.confirm`. All destructive actions use `useConfirmationModal` hook.
 
 ## What's Been Implemented
@@ -43,6 +44,20 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Partner task assigned** → notification with deep link to `/partner/assigned-work?task={id}` with CTA "Submit Cost"
 - **Partner cost submitted** → admin notification with deep link to `/admin/service-tasks?task={id}` with CTA "Review Cost"
 - **Overdue cost endpoint**: `GET /api/admin/service-tasks/overdue-costs` returns tasks awaiting cost >48h
+
+### Partner Data Access Control (DONE — April 10, 2026)
+- **Backend enforcement**: `_resolve_partner_type()` checks the `partners` collection for `partner_type`
+- **Logistics types** (`logistics`, `distributor`, `delivery`): CAN see `client_name`, `delivery_address`, `contact_person`, `contact_phone`
+- **Service types** (`service`, `service_partner`, `product`, `hybrid`): Fields set to `null` — NEVER see client identity
+- **Frontend**: Conditional rendering — client section and delivery details only visible when `is_logistics=true`
+- **Table column**: "Client" replaced with "Scope" in partner table for service partners
+
+### Admin Dashboard Widget (DONE — April 10, 2026)
+- **Partner Response Pipeline** widget between KPI row and Snapshots Grid
+- Shows: Awaiting count, Overdue count (>48h), To Review count (cost_submitted)
+- **Warning state**: Amber border + red animated pill when overdue tasks exist
+- **CTA**: "View Tasks →" or "Review Overdue" deep-linking to `/admin/service-tasks`
+- **Admin Service Tasks Page**: Full task management with status tabs, search, detail drawer, overdue highlight
 
 ## Backlog (Prioritized)
 
@@ -75,8 +90,10 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - `GET /api/admin/orders-ops` — Admin orders with full enrichment
 - `GET /api/customer/orders` — Customer orders with status labels
 - `GET /api/customer/invoices` — Customer invoices with payer resolution
+- `GET /api/admin/service-tasks` — Full task list
 - `GET /api/admin/service-tasks/stats/summary` — Service task KPIs
 - `GET /api/admin/service-tasks/overdue-costs` — Overdue cost submissions
+- `GET /api/partner-portal/assigned-work` — Partner tasks (data-filtered by partner_type)
 - `POST /api/admin/payments/{id}/approve` — Payment approval (via LiveCommerceService)
 
 ## Test Credentials
