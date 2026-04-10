@@ -199,3 +199,149 @@ async def process_referral_reward_on_payment(db, order: dict):
         f"Referral reward: TZS {reward_amount:,.0f} credited to {referrer.get('email')} "
         f"for order {order_number} (tier-aware, distribution-margin funded)"
     )
+
+
+async def process_welcome_bonus_on_payment(db, order: dict):
+    """
+    Process welcome bonus for a referred user on their first purchase.
+    Campaign-based: disabled by default, margin-safe, anti-stacking.
+    """
+    settings = await _get_referral_settings(db)
+
+    # Get welcome bonus settings from admin hub
+    hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    commercial = {}
+    if hub and hub.get("value"):
+        commercial = hub["value"].get("commercial", {})
+
+    # Check if welcome bonus is enabled
+    if not commercial.get("welcome_bonus_enabled", False):
+        return
+
+    # Check trigger event
+    trigger = commercial.get("welcome_bonus_trigger_event", "payment_verified")
+    if trigger != "payment_verified":
+        return
+
+    customer_email = order.get("customer_email")
+    customer_id = order.get("customer_id")
+    order_id = order.get("id") or str(order.get("_id", ""))
+    order_number = order.get("order_number", "")
+    order_total = float(order.get("total_amount") or order.get("total") or 0)
+
+    if not customer_email and not customer_id:
+        return
+
+    # Find the customer
+    user = None
+    if customer_id:
+        user = await db.users.find_one({"id": customer_id})
+    if not user and customer_email:
+        user = await db.users.find_one({"email": customer_email})
+    if not user:
+        return
+
+    user_id = user.get("id") or str(user.get("_id", ""))
+
+    # Must be a referred user
+    referred_by = user.get("referred_by") or user.get("referred_by_code") or user.get("referral_code_used")
+    if not referred_by:
+        return
+
+    # First purchase only check
+    first_only = commercial.get("welcome_bonus_first_purchase_only", True)
+    if first_only:
+        existing_bonus = await db.welcome_bonus_transactions.find_one({
+            "user_id": user_id, "status": "credited"
+        })
+        if existing_bonus:
+            return
+
+    # Anti-stacking: check if referral reward was already applied to this order
+    stack_with_referral = commercial.get("welcome_bonus_stack_with_referral", False)
+    if not stack_with_referral:
+        ref_tx = await db.referral_transactions.find_one({
+            "referred_user_id": user_id, "order_id": order_id, "status": "credited"
+        })
+        if ref_tx:
+            logger.info(f"Welcome bonus blocked: referral reward already applied to order {order_number}, stacking disabled")
+            return
+
+    # Calculate bonus amount (margin-safe)
+    bonus_type = commercial.get("welcome_bonus_type", "fixed")
+    bonus_value = float(commercial.get("welcome_bonus_value", 5000))
+    bonus_max_cap = float(commercial.get("welcome_bonus_max_cap", 10000))
+
+    if bonus_type == "fixed":
+        bonus_amount = bonus_value
+    elif bonus_type == "percentage":
+        # Calculate from distributable margin (tier-aware)
+        bonus_amount = await calculate_tier_aware_referral_reward(db, order)
+        # Apply the percentage to the referral-calculated amount
+        bonus_amount = float(_money(Decimal(str(bonus_amount)) * Decimal(str(bonus_value)) / Decimal("100")))
+    else:
+        bonus_amount = bonus_value
+
+    # Apply max cap
+    if bonus_max_cap > 0:
+        bonus_amount = min(bonus_amount, bonus_max_cap)
+
+    if bonus_amount <= 0:
+        return
+
+    # Margin safety: ensure bonus doesn't exceed distributable margin
+    from services.margin_engine import resolve_margin_rule_for_price, get_split_settings
+    total_dist_margin = Decimal("0")
+    for item in order.get("items", []):
+        vp = float(item.get("vendor_price") or item.get("partner_cost") or item.get("unit_price") or item.get("price") or 0)
+        qty = int(item.get("quantity") or item.get("qty") or 1)
+        if vp <= 0:
+            continue
+        rule = await resolve_margin_rule_for_price(db, vp)
+        dp_pct = Decimal(str(rule.get("distributable_margin_pct", 10)))
+        total_dist_margin += _money(Decimal(str(vp)) * dp_pct / Decimal("100")) * qty
+
+    if Decimal(str(bonus_amount)) > total_dist_margin:
+        bonus_amount = float(total_dist_margin)
+        if bonus_amount <= 0:
+            return
+
+    now = datetime.now(timezone.utc)
+
+    # Credit the user's wallet
+    await db.users.update_one(
+        {"id": user_id},
+        {"$inc": {"credit_balance": bonus_amount}}
+    )
+
+    # Record the welcome bonus transaction
+    await db.welcome_bonus_transactions.insert_one({
+        "user_id": user_id,
+        "user_email": user.get("email", ""),
+        "order_id": order_id,
+        "order_number": order_number,
+        "bonus_amount": bonus_amount,
+        "bonus_type": bonus_type,
+        "bonus_source": "distribution_margin",
+        "status": "credited",
+        "trigger_event": "payment_verified",
+        "created_at": now,
+    })
+
+    # Send notification
+    try:
+        from services.in_app_notification_service import create_in_app_notification
+        await create_in_app_notification(
+            db,
+            event_key="welcome_bonus",
+            recipient_user_id=user_id,
+            recipient_role="customer",
+            entity_type="bonus",
+            entity_id=order_id,
+            context={"bonus_amount": f"{int(bonus_amount):,}"},
+            skip_pref_check=True,
+        )
+    except Exception as e:
+        logger.warning(f"Failed to send welcome bonus notification: {e}")
+
+    logger.info(f"Welcome bonus: TZS {bonus_amount:,.0f} credited to {user.get('email')} for order {order_number}")

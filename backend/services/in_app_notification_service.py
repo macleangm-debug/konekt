@@ -81,6 +81,15 @@ NOTIFICATION_EVENTS = {
         "cta_path": "/account/referrals",
         "roles": ["customer"],
     },
+    "welcome_bonus": {
+        "title": "Welcome Bonus!",
+        "message_tpl": "TZS {bonus_amount} welcome bonus added to your wallet.",
+        "type": "success",
+        "priority": "normal",
+        "cta_label": "View Wallet",
+        "cta_path": "/account/referrals",
+        "roles": ["customer"],
+    },
     # ── Sales notifications ──
     "sales_order_assigned": {
         "title": "New Order Assigned",

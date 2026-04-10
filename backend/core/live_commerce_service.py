@@ -826,9 +826,10 @@ class LiveCommerceService:
 
             # Trigger referral reward for the referrer (purchase-based, tier-aware)
             try:
-                from referral_hooks import process_referral_reward_on_payment
+                from referral_hooks import process_referral_reward_on_payment, process_welcome_bonus_on_payment
                 if order_doc and fully_paid:
                     await process_referral_reward_on_payment(self.db, order_doc)
+                    await process_welcome_bonus_on_payment(self.db, order_doc)
             except Exception as ref_err:
                 import logging as _rl
                 _rl.getLogger("live_commerce").warning(f"Referral reward hook error: {ref_err}")
