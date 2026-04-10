@@ -1,0 +1,71 @@
+{
+  "summary": "Settings Centralization Audit Testing Complete. All 26 backend tests passed. Frontend verified with all 14 tabs including new Operational Rules and Partner Policy tabs. Settings Hub API (GET/PUT) working correctly with deep-merge defaults and cache invalidation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_settings_centralization_audit_v258.py",
+    "/app/test_reports/pytest/pytest_results_settings_centralization_v258.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "settings_resolver.py: Well-structured central resolver with PLATFORM_DEFAULTS as single source of truth, 30s TTL cache, deep-merge logic, and section-specific getters (get_distribution_config, get_operational_rules, get_business_identity, etc.)",
+    "admin_settings_hub_routes.py: Correctly imports PLATFORM_DEFAULTS from settings_resolver and calls invalidate_settings_cache() on PUT",
+    "margin_engine.py: resolve_margin_rule global fallback correctly reads from Settings Hub via get_platform_settings()",
+    "commission_margin_engine_service.py: calculate_order_commission correctly calls get_distribution_config(db) when no config override provided",
+    "sales_followup_automation.py: run_followup_checks correctly reads thresholds from get_operational_rules(db)",
+    "affiliate_commission_service.py: Reads default_affiliate_commission_percent from hub via get_affiliate_settings()",
+    "business_settings_resolver_service.py: Falls back to Settings Hub via get_business_identity() and get_bank_details() when business_settings collection is empty",
+    "AdminSettingsHubPage.jsx: All 14 tabs present with correct data-testid attributes, OperationsTab shows Date/Time, Automation Thresholds, and Commission Distribution sections, PartnersTab shows Auto-Assignment Mode and Logistics Handling Default"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_settings_centralization_audit_v258.py"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26 passed)",
+    "frontend": "100% (all 14 tabs verified, all fields present)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - used existing settings",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Settings Centralization Audit complete. Settings Hub at /admin/settings-hub has 14 tabs. New sections added: operational_rules (date/time format, timezone, automation thresholds), distribution_config (commission distribution percentages), partner_policy (assignment mode, logistics defaults). All backend services (margin_engine, commission_margin_engine, sales_followup_automation, affiliate_commission_service, business_settings_resolver) now read from central settings_resolver.py instead of local defaults. Cache invalidation works via invalidate_settings_cache() called on PUT.",
+  "verified_features": {
+    "settings_hub_api": {
+      "GET /api/admin/settings-hub": "Returns all 23+ sections including new operational_rules, distribution_config, partner_policy",
+      "PUT /api/admin/settings-hub": "Persists changes, sets updated_at, calls invalidate_settings_cache()"
+    },
+    "new_sections": {
+      "operational_rules": {
+        "fields": ["date_format", "time_format", "timezone", "default_country", "follow_up_threshold_days", "stale_deal_threshold_days", "quote_response_threshold_days", "payment_overdue_threshold_days"],
+        "default_values": {"follow_up_threshold_days": 3, "stale_deal_threshold_days": 7, "quote_response_threshold_days": 5, "payment_overdue_threshold_days": 7}
+      },
+      "distribution_config": {
+        "fields": ["protected_company_margin_percent", "affiliate_percent_of_distributable", "sales_percent_of_distributable", "promo_percent_of_distributable", "referral_percent_of_distributable", "country_bonus_percent_of_distributable"],
+        "default_values": {"protected_company_margin_percent": 8, "affiliate_percent_of_distributable": 10, "sales_percent_of_distributable": 15}
+      },
+      "partner_policy": {
+        "fields": ["auto_assignment_mode", "logistics_handling_default", "vendor_types"],
+        "default_values": {"auto_assignment_mode": "capability_match", "logistics_handling_default": "konekt_managed"}
+      }
+    },
+    "frontend_tabs": {
+      "total_tabs": 14,
+      "new_tabs": ["Operational Rules (operations)", "Partner Policy (partners)"],
+      "all_tabs": ["Business Profile", "Payment Details", "Document Branding", "Preview", "Commercial Rules", "Operational Rules", "Sales & Commissions", "Affiliate & Referrals", "Payout Settings", "Workflows & Vendors", "Partner Policy", "Notifications", "Report Delivery", "Launch Controls"]
+    },
+    "service_integrations_verified": {
+      "margin_engine.py": "resolve_margin_rule global fallback reads from Settings Hub commercial section",
+      "commission_margin_engine_service.py": "calculate_order_commission uses get_distribution_config(db)",
+      "sales_followup_automation.py": "Uses get_operational_rules(db) for threshold values",
+      "affiliate_commission_service.py": "Uses get_affiliate_settings(db) for default commission rate",
+      "business_settings_resolver_service.py": "Falls back to get_business_identity() and get_bank_details()"
+    }
+  }
+}

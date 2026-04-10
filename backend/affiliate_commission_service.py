@@ -29,8 +29,15 @@ async def create_affiliate_commission_on_closed_business(
     
     Includes fraud protection and campaign override support.
     """
+    # Read settings — prefer Settings Hub, fallback to legacy affiliate_settings collection
+    from services.settings_resolver import get_affiliate_settings as get_hub_affiliate
+    hub_affiliate = await get_hub_affiliate(db)
+
     settings = await db.affiliate_settings.find_one({})
-    if not settings or not settings.get("enabled", True):
+    if not settings:
+        settings = {}
+    # Merge: hub takes precedence for defaults
+    if not settings.get("enabled", True):
         return None
 
     trigger = settings.get("commission_trigger", "business_closed_paid")
@@ -58,9 +65,9 @@ async def create_affiliate_commission_on_closed_business(
     if not allowed:
         return None
 
-    # Calculate commission
+    # Calculate commission — resolve rate from hub first, then legacy settings
     commission_type = settings.get("commission_type", "percentage")
-    default_rate = float(settings.get("default_commission_rate", 10) or 0)
+    default_rate = float(hub_affiliate.get("default_affiliate_commission_percent") or settings.get("default_commission_rate", 10) or 0)
     default_fixed = float(settings.get("default_fixed_commission", 0) or 0)
     partner_rate = affiliate.get("commission_rate")
 

@@ -61,13 +61,15 @@ async def resolve_margin_rule(db, product_id=None, group_id=None, service_id=Non
     if rule:
         return _normalize_rule(rule, "global")
 
-    # 5. Fallback: read from distribution_settings for backward compat
-    settings = await db.distribution_settings.find_one({"type": "global"}, {"_id": 0})
+    # 5. Fallback: read from Settings Hub (single source of truth)
+    from services.settings_resolver import get_platform_settings
+    hub = await get_platform_settings(db)
+    commercial = hub.get("commercial", {})
     return {
         "scope_type": "global",
         "scope_label": "Global Default",
-        "operational_margin_pct": settings.get("konekt_margin_pct", 20) if settings else 20,
-        "distributable_margin_pct": settings.get("distribution_margin_pct", 10) if settings else 10,
+        "operational_margin_pct": commercial.get("minimum_company_margin_percent", 20),
+        "distributable_margin_pct": commercial.get("distribution_layer_percent", 10),
     }
 
 
@@ -130,15 +132,15 @@ def _normalize_rule(rule, scope_type):
 
 
 async def get_split_settings(db):
-    """Get the global split percentages (of distributable pool)."""
+    """Get the global split percentages (of distributable pool) from Settings Hub."""
+    from services.settings_resolver import get_platform_settings
+    hub = await get_platform_settings(db)
+    commercial = hub.get("commercial", {})
+
+    # Also check distribution_settings for backward compat split percentages
     settings = await db.distribution_settings.find_one({"type": "global"}, {"_id": 0})
     if not settings:
         settings = {}
-    # Also read referral_pct from admin_settings commercial section
-    hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
-    commercial = {}
-    if hub and hub.get("value"):
-        commercial = hub["value"].get("commercial", {})
     return {
         "sales_share_pct": settings.get("sales_pct", 30),
         "affiliate_share_pct": settings.get("affiliate_pct", 40),

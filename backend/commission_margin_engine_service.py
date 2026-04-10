@@ -181,7 +181,10 @@ async def calculate_order_commission(
     Returns:
         dict with order_id, total amounts, and per-item breakdowns
     """
-    cfg = config or DEFAULT_DISTRIBUTION_CONFIG
+    cfg = config
+    if not cfg:
+        from services.settings_resolver import get_distribution_config
+        cfg = await get_distribution_config(db)
     
     # Adjust percentages based on source type
     affiliate_pct = cfg["affiliate_percent_of_distributable"] if affiliate_user_id else 0

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -18,17 +18,19 @@ const TABS = [
   { key: "branding", label: "Document Branding", icon: FileText },
   { key: "preview", label: "Preview", icon: Eye },
   { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
+  { key: "operations", label: "Operational Rules", icon: Settings },
   { key: "sales", label: "Sales & Commissions", icon: Users },
   { key: "affiliate", label: "Affiliate & Referrals", icon: Globe },
   { key: "payout", label: "Payout Settings", icon: Wallet },
   { key: "workflows", label: "Workflows & Vendors", icon: Shield },
+  { key: "partners", label: "Partner Policy", icon: Truck },
   { key: "notifications", label: "Notifications", icon: Bell },
   { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
   { key: "launch", label: "Launch Controls", icon: Rocket },
 ];
 
 const defaultState = {
-  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18, referral_pct: 10, max_wallet_usage_pct: 30, referral_min_order_amount: 0, referral_max_reward_per_order: 0, welcome_bonus_enabled: false, welcome_bonus_type: "fixed", welcome_bonus_value: 5000, welcome_bonus_max_cap: 10000, welcome_bonus_first_purchase_only: true, welcome_bonus_trigger_event: "payment_verified", welcome_bonus_stack_with_referral: false, welcome_bonus_stack_with_wallet: true },
+  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, protected_company_margin_percent: 8, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18, referral_pct: 10, max_wallet_usage_pct: 30, referral_min_order_amount: 0, referral_max_reward_per_order: 0, welcome_bonus_enabled: false, welcome_bonus_type: "fixed", welcome_bonus_value: 5000, welcome_bonus_max_cap: 10000, welcome_bonus_first_purchase_only: true, welcome_bonus_trigger_event: "payment_verified", welcome_bonus_stack_with_referral: false, welcome_bonus_stack_with_wallet: true },
   margin_rules: { allow_product_group_margin_override: true, allow_product_margin_override: true, allow_service_group_margin_override: true, allow_service_margin_override: true, pricing_below_minimum_margin_requires_admin_override: true },
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
   affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
@@ -47,6 +49,9 @@ const defaultState = {
   notification_sender: { sender_name: "", sender_email: "", whatsapp_number: "", email_footer_text: "" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
   discount_governance: { enabled: true, critical_threshold: 3, warning_threshold: 5, rolling_window_days: 7, dedup_window_hours: 24 },
+  operational_rules: { date_format: "DD MMM YYYY", time_format: "HH:mm", timezone: "Africa/Dar_es_Salaam", default_country: "TZ", follow_up_threshold_days: 3, stale_deal_threshold_days: 7, quote_response_threshold_days: 5, payment_overdue_threshold_days: 7 },
+  distribution_config: { protected_company_margin_percent: 8, affiliate_percent_of_distributable: 10, sales_percent_of_distributable: 15, promo_percent_of_distributable: 10, referral_percent_of_distributable: 5, country_bonus_percent_of_distributable: 5 },
+  partner_policy: { auto_assignment_mode: "capability_match", logistics_handling_default: "konekt_managed", vendor_types: ["product_supplier", "service_provider", "logistics_partner"] },
 };
 
 function U(state, section, field, value) {
@@ -126,10 +131,12 @@ export default function AdminSettingsHubPage() {
           </div>
         )}
         {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
+        {tab === "operations" && <OperationsTab state={state} setState={setState} />}
         {tab === "sales" && <SalesTab state={state} setState={setState} />}
         {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}
         {tab === "payout" && <PayoutTab state={state} setState={setState} />}
         {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
+        {tab === "partners" && <PartnersTab state={state} setState={setState} />}
         {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
         {tab === "report_delivery" && <ReportScheduleSection />}
         {tab === "launch" && <LaunchTab state={state} setState={setState} />}
@@ -448,3 +455,60 @@ function LaunchTab({ state, setState }) {
     </SettingsSectionCard>
   );
 }
+
+function OperationsTab({ state, setState }) {
+  const o = state.operational_rules || {};
+  const dc = state.distribution_config || {};
+  return (
+    <>
+      <SettingsSectionCard title="Date & Time" description="Global formatting and timezone used across the platform.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsSelectField label="Date Format" value={o.date_format} onChange={(v) => setState(U(state, "operational_rules", "date_format", v))} options={[{ value: "DD MMM YYYY", label: "DD MMM YYYY (10 Apr 2026)" }, { value: "YYYY-MM-DD", label: "YYYY-MM-DD (2026-04-10)" }, { value: "DD/MM/YYYY", label: "DD/MM/YYYY (10/04/2026)" }, { value: "MM/DD/YYYY", label: "MM/DD/YYYY (04/10/2026)" }]} />
+          <SettingsSelectField label="Time Format" value={o.time_format} onChange={(v) => setState(U(state, "operational_rules", "time_format", v))} options={[{ value: "HH:mm", label: "24-hour (14:30)" }, { value: "hh:mm A", label: "12-hour (2:30 PM)" }]} />
+          <SettingsSelectField label="Timezone" value={o.timezone} onChange={(v) => setState(U(state, "operational_rules", "timezone", v))} options={[{ value: "Africa/Dar_es_Salaam", label: "East Africa (EAT)" }, { value: "Africa/Nairobi", label: "Nairobi (EAT)" }, { value: "Africa/Lagos", label: "West Africa (WAT)" }, { value: "Africa/Johannesburg", label: "South Africa (SAST)" }, { value: "UTC", label: "UTC" }]} />
+          <SettingsTextField label="Default Country" value={o.default_country} onChange={(v) => setState(U(state, "operational_rules", "default_country", v))} />
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Automation Thresholds" description="Control when follow-up alerts, stale warnings, and overdue notices trigger.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Follow-up threshold (days)" value={o.follow_up_threshold_days} onChange={(v) => setState(U(state, "operational_rules", "follow_up_threshold_days", v))} />
+          <SettingsNumberField label="Stale deal threshold (days)" value={o.stale_deal_threshold_days} onChange={(v) => setState(U(state, "operational_rules", "stale_deal_threshold_days", v))} />
+          <SettingsNumberField label="Quote response threshold (days)" value={o.quote_response_threshold_days} onChange={(v) => setState(U(state, "operational_rules", "quote_response_threshold_days", v))} />
+          <SettingsNumberField label="Payment overdue threshold (days)" value={o.payment_overdue_threshold_days} onChange={(v) => setState(U(state, "operational_rules", "payment_overdue_threshold_days", v))} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+          These thresholds are used by the background sales follow-up automation. Changes take effect within 30 seconds.
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Commission Distribution Defaults" description="Default percentages for distributing the distributable margin pool across stakeholders.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SettingsNumberField label="Protected Company Margin %" value={dc.protected_company_margin_percent} onChange={(v) => setState(U(state, "distribution_config", "protected_company_margin_percent", v))} />
+          <SettingsNumberField label="Affiliate % of distributable" value={dc.affiliate_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "affiliate_percent_of_distributable", v))} />
+          <SettingsNumberField label="Sales % of distributable" value={dc.sales_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "sales_percent_of_distributable", v))} />
+          <SettingsNumberField label="Promo % of distributable" value={dc.promo_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "promo_percent_of_distributable", v))} />
+          <SettingsNumberField label="Referral % of distributable" value={dc.referral_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "referral_percent_of_distributable", v))} />
+          <SettingsNumberField label="Country Bonus % of distributable" value={dc.country_bonus_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "country_bonus_percent_of_distributable", v))} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          Total allocations (affiliate + sales + promo + referral + country) should not exceed 100% of the distributable margin. The system auto-scales if exceeded.
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+function PartnersTab({ state, setState }) {
+  const pp = state.partner_policy || {};
+  return (
+    <SettingsSectionCard title="Partner & Vendor Policy" description="Control assignment, logistics defaults, and vendor type configurations.">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <SettingsSelectField label="Auto-Assignment Mode" value={pp.auto_assignment_mode} onChange={(v) => setState(U(state, "partner_policy", "auto_assignment_mode", v))} options={[{ value: "capability_match", label: "Capability Match" }, { value: "round_robin", label: "Round Robin" }, { value: "manual", label: "Manual Only" }]} />
+        <SettingsSelectField label="Logistics Handling Default" value={pp.logistics_handling_default} onChange={(v) => setState(U(state, "partner_policy", "logistics_handling_default", v))} options={[{ value: "konekt_managed", label: "Konekt Managed" }, { value: "vendor_managed", label: "Vendor Managed" }, { value: "customer_pickup", label: "Customer Pickup" }]} />
+      </div>
+      <div className="mt-4 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+        <strong>Supported vendor types:</strong> Product Supplier, Service Provider, Logistics Partner. These types are used for partner classification and assignment matching.
+      </div>
+    </SettingsSectionCard>
+  );
+}
+

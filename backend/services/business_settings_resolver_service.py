@@ -42,11 +42,33 @@ DEFAULTS = {
 
 
 async def get_business_settings(db=None):
-    """Get business settings from DB, falling back to defaults."""
+    """Get business settings from DB, falling back to Settings Hub, then to local defaults."""
     database = db or _db
     doc = await database.business_settings.find_one({}, {"_id": 0})
+
+    # If no legacy business_settings doc, read from the Settings Hub
     if not doc:
-        return dict(DEFAULTS)
+        try:
+            from services.settings_resolver import get_business_identity, get_bank_details
+            identity = await get_business_identity(database)
+            bank = await get_bank_details(database)
+            merged = dict(DEFAULTS)
+            merged["company_name"] = identity.get("company_name") or merged["company_name"]
+            merged["phone"] = identity.get("support_phone") or merged["phone"]
+            merged["email"] = identity.get("support_email") or merged["email"]
+            merged["website"] = identity.get("website") or merged["website"]
+            merged["tax_id"] = identity.get("tax_id") or merged["tax_id"]
+            merged["vat_number"] = identity.get("vat_number") or merged["vat_number"]
+            merged["bank_name"] = bank.get("bank_name") or merged["bank_name"]
+            merged["account_name"] = bank.get("account_name") or merged["account_name"]
+            merged["account_number"] = bank.get("account_number") or merged["account_number"]
+            merged["swift_code"] = bank.get("swift_code") or merged["swift_code"]
+            merged["currency_code"] = identity.get("currency_code") or merged["currency_code"]
+            merged["currency_symbol"] = identity.get("currency_symbol") or merged["currency_symbol"]
+            return merged
+        except Exception:
+            return dict(DEFAULTS)
+
     # Merge with defaults
     merged = dict(DEFAULTS)
     merged.update({k: v for k, v in doc.items() if v is not None and v != ""})

@@ -178,10 +178,26 @@ async def sales_followup_loop(app):
         try:
             db = app.mongodb
 
-            settings = await _get_crm_settings(db)
-            stale_days = int(settings.get("stale_lead_days", STALE_LEAD_DAYS_DEFAULT) or STALE_LEAD_DAYS_DEFAULT)
-            quote_days = int(settings.get("quote_response_days", QUOTE_RESPONSE_DAYS_DEFAULT) or QUOTE_RESPONSE_DAYS_DEFAULT)
-            payment_days = int(settings.get("payment_overdue_days", PAYMENT_OVERDUE_DAYS_DEFAULT) or PAYMENT_OVERDUE_DAYS_DEFAULT)
+            # Read thresholds from Settings Hub (single source of truth)
+            from services.settings_resolver import get_operational_rules
+            ops_rules = await get_operational_rules(db)
+
+            crm_settings = await _get_crm_settings(db)
+            stale_days = int(
+                ops_rules.get("stale_deal_threshold_days")
+                or crm_settings.get("stale_lead_days")
+                or STALE_LEAD_DAYS_DEFAULT
+            )
+            quote_days = int(
+                ops_rules.get("quote_response_threshold_days")
+                or crm_settings.get("quote_response_days")
+                or QUOTE_RESPONSE_DAYS_DEFAULT
+            )
+            payment_days = int(
+                ops_rules.get("payment_overdue_threshold_days")
+                or crm_settings.get("payment_overdue_days")
+                or PAYMENT_OVERDUE_DAYS_DEFAULT
+            )
 
             overdue = await check_overdue_followups(db)
             stale = await check_stale_leads(db, stale_days)
