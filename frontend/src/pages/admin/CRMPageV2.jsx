@@ -6,6 +6,7 @@ import api from "@/lib/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import QuoteBuilderDrawer from "@/components/crm/QuoteBuilderDrawer";
 import { combinePhone } from "@/utils/phoneUtils";
 
 const CRM_TABS = [
@@ -260,30 +261,11 @@ export default function CRMPageV2() {
     setDrawerRelated(null);
   };
 
-  const createQuoteFromDrawer = async () => {
+  const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
+  
+  const openQuoteBuilder = () => {
     if (!drawerLead) return;
-    setCreatingQuote(true);
-    try {
-      const leadId = drawerLead.id || drawerLead._id;
-      const res = await adminApi.createQuoteFromLead(leadId, {
-        line_items: [{ description: "Item", quantity: 1, unit_price: 0, total: 0 }],
-        subtotal: 0,
-        tax: 0,
-        discount: 0,
-        total: 0,
-        currency: "TZS",
-        source_lead_id: leadId,
-        created_from_crm: true,
-      });
-      const quoteId = res.data?.id;
-      closeDrawer();
-      if (quoteId) {
-        navigate(`/admin/quotes/${quoteId}`);
-      }
-    } catch (err) {
-      console.error("Failed to create quote from lead:", err);
-    }
-    setCreatingQuote(false);
+    setShowQuoteBuilder(true);
   };
 
   const createLead = async (e) => {
@@ -889,13 +871,12 @@ export default function CRMPageV2() {
               {/* Create Quote Action */}
               <div className="space-y-2">
                 <button
-                  onClick={createQuoteFromDrawer}
-                  disabled={creatingQuote}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#20364D] py-3 text-sm font-bold hover:bg-[#c49933] disabled:opacity-40 transition-colors"
+                  onClick={openQuoteBuilder}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#20364D] py-3 text-sm font-bold hover:bg-[#c49933] transition-colors"
                   data-testid="crm-create-quote-btn"
                 >
                   <FileText className="h-4 w-4" />
-                  {creatingQuote ? "Creating Quote..." : "Create Quote"}
+                  Create Quote
                 </button>
                 {drawerRelated?.quotes?.length > 0 && (
                   <div className="text-center text-xs text-slate-500">
@@ -1016,6 +997,17 @@ export default function CRMPageV2() {
           ) : null}
         </SheetContent>
       </Sheet>
+      {showQuoteBuilder && drawerLead && (
+        <QuoteBuilderDrawer
+          lead={drawerLead}
+          onClose={() => setShowQuoteBuilder(false)}
+          onCreated={(data) => {
+            setShowQuoteBuilder(false);
+            closeDrawer();
+            if (data?.id) navigate(`/admin/quotes/${data.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

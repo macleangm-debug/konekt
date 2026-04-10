@@ -635,3 +635,8 @@ export function getServiceBySlug(slug) {
 }
 
 export default COMPREHENSIVE_SERVICES;
+
+/**
+ * Flat array of all services for dropdown/selection UI.
+ */
+export const comprehensiveServicesList = Object.values(COMPREHENSIVE_SERVICES);
