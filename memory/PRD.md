@@ -9,109 +9,88 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Auth**: JWT-based custom authentication
 - **Payments**: Stripe sandbox integration
 - **Storage**: Emergent Object Storage for product images
-- **Background Services**: Sales follow-up automation, weekly digest scheduler, scheduled reports
+- **Settings**: Central `settings_resolver.py` — single source of truth for all platform config
+- **Background Services**: Sales follow-up, weekly digest, scheduled reports
 
 ## Key Technical Principles
+- **Single Source of Truth for Settings**: All engines (margin, commission, affiliate, follow-up, reports) read from `settings_resolver.py` which deep-merges `admin_settings.settings_hub` with `PLATFORM_DEFAULTS`. Cache TTL: 30s, invalidated on PUT.
 - **Strict Payer/Customer Separation**: `customer_name` from account records ONLY, `payer_name` from payment proof ONLY.
-- **Partner Data Access Control**: Service partners NEVER see client identity. Only logistics/distributor partners see delivery details.
-- **Category-Aware Pricing Engine**: Partner cost -> Category margin rules (individual > default > global fallback) -> Selling price.
-- **Automated Partner Assignment**: Auto-assigns by service_key capability or category fallback. Alerts on failure.
-- **No Empty Tables**: Every table shows complete data or proper empty states.
-- **Vendor Privacy**: Vendors only see their own orders, pricing, and Konekt sales contact.
+- **Vendor Privacy**: Vendors ONLY see their own orders, pricing, and Konekt sales contact.
+- **Multi-Vendor Auto-Split**: Orders split by vendor automatically on payment approval.
+- **No Horizontal Scrolling**: All admin tables use `table-fixed` with `truncate` on text cells.
 
 ## What's Been Implemented
 
-### Core Operations (DONE)
-- Stripe sandbox payment integration
-- CRM Quote Builder Drawer
-- Full System Wiring Audit (zero blank cells)
-- Partner Data Access Control
-- Quote <-> Service Task Auto-Linking
-- Automated Partner Assignment & Unassigned Tasks Alert System
-- Global Readability Hardening (typography, contrast)
+### Settings Centralization Audit (DONE — April 10, 2026)
+- Created `services/settings_resolver.py` with `get_platform_settings(db)` and section-specific getters
+- 30s TTL in-memory cache with `invalidate_settings_cache()` on PUT
+- Wired margin engine, commission engine, sales follow-up, affiliate commission, business identity resolver to read from Settings Hub
+- Added 3 new settings sections: `operational_rules` (date/time/thresholds), `distribution_config` (commission split %), `partner_policy` (assignment/logistics)
+- Frontend: 14 tabs in Settings Hub including new "Operational Rules" and "Partner Policy" tabs
+
+### Salesperson Vendor Visibility (DONE — April 10, 2026)
+- `GET /api/sales/orders/{id}` now returns `vendor_orders` array with full vendor resolution
+- Each vendor_order includes: vendor_name, contact_person, contact_phone, contact_email, items, status
+- `SalesOrderDrawerV2` renders expandable `VendorOrderCard` components with clickable phone/email links
+- Fixed UUID preservation (order.id no longer overwritten by ObjectId string)
+
+### Vendor Specialization Fields (DONE — April 10, 2026)
+- Added to partner model: `vendor_type`, `supported_services`, `preferred_partner`, `capacity_notes`
+- Partner create/update endpoints accept and persist new fields
+- `PartnerSmartForm` includes Vendor Classification dropdown and Capacity Notes textarea
+- `PartnerUnifiedTable` shows vendor_type badges and preferred partner star icons
+
+### Desktop Table Hardening (DONE — April 10, 2026)
+- Applied `table-fixed` to: Admin Orders, Product Approvals, Affiliates, Sales Commissions, Partner tables
+- Removed `min-w-[1100px]` horizontal scroll trigger from PartnerUnifiedTable
+- Added `truncate` to text cells, column width percentages for fixed layouts
 
 ### Vendor Product Upload with Images (DONE — April 10, 2026)
-- **File Upload UI**: Drag-and-drop + file picker replacing text URL inputs
-- **Object Storage**: Emergent Object Storage integration via `/api/files/upload`
-- **Image Gallery**: Admin approval drawer shows image gallery with navigation arrows and thumbnails
-- **Allocated Quantity**: Flows through vendor upload form → submission record → admin drawer → approved catalog product
-- **Backend Validation**: Negative allocated_quantity rejected, invalid file types rejected
-- **Multi-image support**: Up to 10 images per product, first = primary, rest = gallery
-- **E2E Flow**: Vendor uploads product with images → Admin reviews in drawer → Approve/Reject inside drawer → Gallery images and allocated_quantity preserved in catalog
+- Drag-and-drop file upload calling `/api/files/upload`
+- `allocated_quantity` field flows through entire pipeline
+- Admin approval drawer with image gallery navigation
 
-### Admin Product Approval (DONE — April 10, 2026)
-- Vendor product submission via `/api/vendor/products/upload`
-- Admin review page at `/admin/product-approvals` with summary cards, filter tabs, search
-- **Drawer-based review** with image gallery, product details, approve/reject actions
-- Individual approve/reject with confirmation modals
-- Bulk approve/reject with checkbox selection
-- Nested format normalization (product.product_name, supply.base_price_vat_inclusive -> flat)
-- Vendor notification on approve/reject
-- Approved products created in catalog with proper metadata
+### Object Storage Integration (DONE)
+- Emergent Object Storage via `/api/files/upload`
 
-### Object Storage Integration (DONE — April 10, 2026)
-- Emergent Object Storage via `file_storage.py`
-- Upload: `POST /api/files/upload` (single), `POST /api/files/upload-multiple` (batch)
-- Serve: `GET /api/files/serve/{path}` with caching
-- DB tracking via `uploaded_files` collection
-- 10MB max, JPEG/PNG/GIF/WebP/SVG supported
-
-### Logistics Partner UI Extensions (DONE — April 10, 2026)
-- PartnerLayout detects logistics/distributor/delivery partner types
-- Simplified nav for logistics: Dashboard, Delivery Operations, Orders, Settlements
-- Role-safe data access enforced
-
-### Category-Based Margin Rules (DONE — April 10, 2026)
-- Extended pricing engine with category-specific > default > global rules
-- Admin CRUD endpoints for margin rules
-- Preview endpoint for margin calculations
-
-### Sales Follow-Up Automation (DONE — April 10, 2026)
-- Background service running hourly
-- Detects overdue follow-ups, stale leads, quotes awaiting response
-
-### Weekly Operations Digest (DONE — April 10, 2026)
-- Background scheduler with admin preview and manual trigger
-
-### Shared Drawer & Date Standardization (DONE — April 10, 2026)
-- Global `StandardDrawerShell` component with fixed scrolling/overlay
-- `dateFormat.js` utility for canonical DD MMM YYYY, HH:mm formatting
+### Core Operations (DONE)
+- Stripe sandbox payment integration
+- CRM Quote Builder
+- Full System Wiring Audit
+- Automated Partner Assignment
+- Global Readability Hardening
+- Category-Based Margin Rules
+- Sales Follow-Up Automation
+- Weekly Operations Digest
+- Shared Drawer & Date Standardization
 
 ## Backlog (Prioritized)
 
 ### P1 (Next)
-- Salesperson Vendor Visibility (all assigned vendors + contacts in order detail drawer)
-- Vendor Specialization Fields (type, categories, regions, capacity)
-- Desktop Table Hardening (eliminate horizontal scrolling)
 - Customer company conditional rendering
 - CRM Kanban text wrapping
-- Restructure Vendor supply review page
-- Clarify Partner Ecosystem page
+- Vendor supply review restructuring
+- Marketplace/public catalog product image previews
 
 ### P2
 - Promotions & Affiliate Policy Restructure
 - Content Creator Media Visibility
-- Admin data entry config (system logo, TIN, BRN, bank details)
-- Instant Quote Estimation UI
+- Admin business data config completion (logo, TIN, BRN, bank details)
+- Weekly digest browser view
 
 ### Future
-- Twilio WhatsApp integration (blocked on API key)
-- Resend email integration (blocked on API key)
+- Instant Quote Estimation UI
+- Twilio WhatsApp / Resend Email (blocked on keys)
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
 
 ## Key API Endpoints
-- `POST /api/files/upload` — Upload image to object storage
-- `GET /api/files/serve/{path}` — Serve uploaded file
-- `POST /api/vendor/products/upload` — Vendor submits product (with images + allocated_quantity)
-- `GET /api/admin/vendor-submissions` — Admin review submissions
-- `POST /api/admin/vendor-submissions/{id}/approve` — Approve submission
-- `POST /api/admin/vendor-submissions/{id}/reject` — Reject submission
-- `POST /api/admin/vendor-submissions/bulk-approve` — Bulk approve
-- `POST /api/admin/vendor-submissions/bulk-reject` — Bulk reject
-- `GET /api/admin/category-margin-rules` — Category margin rules
-- `GET /api/admin/digest/preview` — Weekly digest preview
+- `GET/PUT /api/admin/settings-hub` — Central settings CRUD
+- `GET /api/sales/orders/{id}` — Sales order detail with vendor_orders
+- `POST/PUT /api/admin/partners` — Partner CRUD with specialization fields
+- `POST /api/files/upload` — Object storage upload
+- `GET /api/admin/vendor-submissions` — Admin product review
 
 ## Test Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
