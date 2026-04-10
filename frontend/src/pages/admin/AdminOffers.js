@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 import { 
   Gift, Plus, Edit, Trash2, Copy, Calendar, Percent, 
   DollarSign, Tag, CheckCircle, XCircle, Loader2
@@ -31,6 +32,7 @@ const defaultOffer = {
 };
 
 export default function AdminOffers() {
+  const { confirmAction } = useConfirmModal();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -106,16 +108,22 @@ export default function AdminOffers() {
   };
 
   const handleDelete = async (offerId) => {
-    if (!confirm('Are you sure you want to delete this offer?')) return;
-
-    try {
-      await axios.delete(`${API_URL}/api/admin/offers/${offerId}`);
-      toast.success('Offer deleted');
-      fetchOffers();
-    } catch (error) {
-      console.error('Failed to delete offer:', error);
-      toast.error('Failed to delete offer');
-    }
+    confirmAction({
+      title: "Delete Offer?",
+      message: "This offer will be permanently removed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await axios.delete(`${API_URL}/api/admin/offers/${offerId}`);
+          toast.success('Offer deleted');
+          fetchOffers();
+        } catch (error) {
+          console.error('Failed to delete offer:', error);
+          toast.error('Failed to delete offer');
+        }
+      },
+    });
   };
 
   const toggleOfferStatus = async (offer) => {

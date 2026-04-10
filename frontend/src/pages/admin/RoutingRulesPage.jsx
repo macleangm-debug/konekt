@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Route as RouteIcon, Plus, Check, MapPin } from "lucide-react";
 import api from "../../lib/api";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
+import { toast } from "sonner";
 
 export default function RoutingRulesPage() {
+  const { confirmAction } = useConfirmModal();
   const [items, setItems] = useState([]);
   const [countries, setCountries] = useState([]);
   const [partners, setPartners] = useState([]);
@@ -75,18 +78,25 @@ export default function RoutingRulesPage() {
       });
       load();
     } catch (error) {
-      alert(error.response?.data?.detail || "Failed to save routing rule");
+      toast.error(error.response?.data?.detail || "Failed to save routing rule");
     }
   };
 
   const deleteRule = async (id) => {
-    if (!confirm("Delete this routing rule?")) return;
-    try {
-      await api.delete(`/api/admin/routing-rules/${id}`);
-      load();
-    } catch (error) {
-      alert("Failed to delete");
-    }
+    confirmAction({
+      title: "Delete Routing Rule?",
+      message: "This routing rule will be permanently removed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/routing-rules/${id}`);
+          load();
+        } catch (error) {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   };
 
   const getPriorityLabel = (mode) => {

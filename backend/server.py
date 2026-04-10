@@ -3108,6 +3108,9 @@ app.include_router(affiliate_products_router)
 from routes.sales_status_routes import router as sales_status_router
 app.include_router(sales_status_router)
 
+from service_task_routes import router as service_task_router
+app.include_router(service_task_router)
+
 
 
 

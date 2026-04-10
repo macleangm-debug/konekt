@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Loader2, FolderTree, FileText, Save, X, ChevronRight } from "lucide-react";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import { adminServiceApi } from "../../lib/serviceCatalogApi";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
@@ -12,6 +13,7 @@ import { Switch } from "../../components/ui/switch";
 import { Label } from "../../components/ui/label";
 
 export default function ServiceCatalogPage() {
+  const { confirmAction } = useConfirmModal();
   const { admin } = useAdminAuth();
   const token = localStorage.getItem("admin_token");
 
@@ -129,15 +131,21 @@ export default function ServiceCatalogPage() {
   };
 
   const deleteGroup = async (groupId) => {
-    if (!confirm("Delete this service group? This cannot be undone.")) return;
-    
-    try {
-      await adminServiceApi.deleteGroup(groupId, token);
-      toast.success("Group deleted");
-      fetchData();
-    } catch (err) {
-      toast.error(err.message);
-    }
+    confirmAction({
+      title: "Delete Service Group?",
+      message: "This service group will be permanently deleted. This cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await adminServiceApi.deleteGroup(groupId, token);
+          toast.success("Group deleted");
+          fetchData();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
   };
 
   // Type CRUD
@@ -213,15 +221,21 @@ export default function ServiceCatalogPage() {
   };
 
   const deleteType = async (typeId) => {
-    if (!confirm("Delete this service type? This cannot be undone.")) return;
-    
-    try {
-      await adminServiceApi.deleteType(typeId, token);
-      toast.success("Service type deleted");
-      fetchData();
-    } catch (err) {
-      toast.error(err.message);
-    }
+    confirmAction({
+      title: "Delete Service Type?",
+      message: "This service type will be permanently deleted. This cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await adminServiceApi.deleteType(typeId, token);
+          toast.success("Service type deleted");
+          fetchData();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
   };
 
   // Filter types by selected group

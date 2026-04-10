@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Loader2, Package, Save, X, Image } from "lucide-react";
 import { useAdminAuth } from "../../contexts/AdminAuthContext";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import { adminServiceApi } from "../../lib/serviceCatalogApi";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/button";
@@ -33,6 +34,7 @@ const BRANDING_METHODS = [
 ];
 
 export default function BlankProductsPage() {
+  const { confirmAction } = useConfirmModal();
   const { admin } = useAdminAuth();
   const token = localStorage.getItem("admin_token");
 
@@ -159,15 +161,21 @@ export default function BlankProductsPage() {
   };
 
   const deleteProduct = async (productId) => {
-    if (!confirm("Delete this blank product? This cannot be undone.")) return;
-    
-    try {
-      await adminServiceApi.deleteBlankProduct(productId, token);
-      toast.success("Product deleted");
-      fetchProducts();
-    } catch (err) {
-      toast.error(err.message);
-    }
+    confirmAction({
+      title: "Delete Product?",
+      message: "This blank product will be permanently deleted. This cannot be undone.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await adminServiceApi.deleteBlankProduct(productId, token);
+          toast.success("Product deleted");
+          fetchProducts();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
   };
 
   const addToArray = (field, value, setValue) => {

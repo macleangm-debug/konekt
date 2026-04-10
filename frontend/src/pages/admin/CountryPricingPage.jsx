@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Globe, Plus, Check, Percent, DollarSign } from "lucide-react";
 import api from "../../lib/api";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
+import { toast } from "sonner";
 
 export default function CountryPricingPage() {
+  const { confirmAction } = useConfirmModal();
   const [items, setItems] = useState([]);
   const [countries, setCountries] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,18 +51,25 @@ export default function CountryPricingPage() {
       setShowForm(false);
       load();
     } catch (error) {
-      alert(error.response?.data?.detail || "Failed to save pricing rule");
+      toast.error(error.response?.data?.detail || "Failed to save pricing rule");
     }
   };
 
   const deleteRule = async (id) => {
-    if (!confirm("Delete this pricing rule?")) return;
-    try {
-      await api.delete(`/api/admin/country-pricing/${id}`);
-      load();
-    } catch (error) {
-      alert("Failed to delete");
-    }
+    confirmAction({
+      title: "Delete Pricing Rule?",
+      message: "This pricing rule will be permanently removed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/country-pricing/${id}`);
+          load();
+        } catch (error) {
+          toast.error("Failed to delete");
+        }
+      },
+    });
   };
 
   return (

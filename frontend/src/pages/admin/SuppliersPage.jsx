@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Building2, Plus, Check, Phone, Mail, Edit2, Trash2 } from "lucide-react";
 import api from "../../lib/api";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
+import { toast } from "sonner";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 export default function SuppliersPage() {
+  const { confirmAction } = useConfirmModal();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -91,13 +94,20 @@ export default function SuppliersPage() {
   };
 
   const deleteSupplier = async (id) => {
-    if (!confirm("Are you sure you want to delete this supplier?")) return;
-    try {
-      await api.delete(`/api/admin/suppliers/${id}`);
-      load();
-    } catch (error) {
-      alert(error.response?.data?.detail || "Failed to delete supplier");
-    }
+    confirmAction({
+      title: "Delete Supplier?",
+      message: "This supplier record will be permanently removed.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await api.delete(`/api/admin/suppliers/${id}`);
+          load();
+        } catch (error) {
+          toast.error(error.response?.data?.detail || "Failed to delete supplier");
+        }
+      },
+    });
   };
 
   return (

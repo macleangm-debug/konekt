@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 import { 
   Search, Plus, Edit, UserX, Users, Shield, Briefcase, 
   Palette, Factory, ChevronLeft, ChevronRight, Mail, Phone
@@ -27,6 +28,7 @@ const roleConfig = {
 };
 
 export default function AdminUsers() {
+  const { confirmAction } = useConfirmModal();
   const { admin } = useAdminAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -140,16 +142,22 @@ export default function AdminUsers() {
   };
 
   const handleDeactivate = async (userId) => {
-    if (!confirm('Are you sure you want to deactivate this user?')) return;
-    
-    try {
-      await axios.delete(`${API_URL}/api/admin/users/${userId}`);
-      toast.success('User deactivated');
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to deactivate user:', error);
-      toast.error(error.response?.data?.detail || 'Failed to deactivate user');
-    }
+    confirmAction({
+      title: "Deactivate User?",
+      message: "This user will lose access to the system. You can reactivate them later.",
+      confirmLabel: "Deactivate",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await axios.delete(`${API_URL}/api/admin/users/${userId}`);
+          toast.success('User deactivated');
+          fetchUsers();
+        } catch (error) {
+          console.error('Failed to deactivate user:', error);
+          toast.error(error.response?.data?.detail || 'Failed to deactivate user');
+        }
+      },
+    });
   };
 
   const isAdmin = admin?.role === 'admin';

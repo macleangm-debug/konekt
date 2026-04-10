@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 import { 
   Search, Plus, Edit, Trash2, Package, ChevronLeft, ChevronRight,
   Image, DollarSign, Layers
@@ -40,6 +41,7 @@ const defaultProduct = {
 };
 
 export default function AdminProducts() {
+  const { confirmAction } = useConfirmModal();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -153,16 +155,22 @@ export default function AdminProducts() {
   };
 
   const handleDelete = async (productId) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    
-    try {
-      await axios.delete(`${API_URL}/api/admin/products/${productId}`);
-      toast.success('Product deleted');
-      fetchProducts();
-    } catch (error) {
-      console.error('Failed to delete product:', error);
-      toast.error('Failed to delete product');
-    }
+    confirmAction({
+      title: "Delete Product?",
+      message: "This product will be permanently removed from the catalog.",
+      confirmLabel: "Delete",
+      tone: "danger",
+      onConfirm: async () => {
+        try {
+          await axios.delete(`${API_URL}/api/admin/products/${productId}`);
+          toast.success('Product deleted');
+          fetchProducts();
+        } catch (error) {
+          console.error('Failed to delete product:', error);
+          toast.error('Failed to delete product');
+        }
+      },
+    });
   };
 
   // Get available categories based on selected branch
