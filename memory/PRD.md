@@ -275,11 +275,38 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - Added `EVENT_DEEP_LINKS` for report-specific deep links
   - In-app notifications deep link to `/admin/reports/weekly-performance?weeks_back=1`
   - Email/WhatsApp channels: placeholder ready for Resend/Twilio integration
+  - **Trend Indicators** (added Apr 10, 2026)
+    - Week-over-week comparison in notification messages
+    - Format: `Revenue TZS X (+12% ↑) | 5 orders (-2 ↓) | Rating 4.2 (+0.2) | 22 alerts (+3 ⚠)`
+    - Applied to both scheduled delivery and manual deliver-now
+
+### Phase 16 — Sales Team Coaching System (Apr 10, 2026)
+- **Coaching Engine** (`services/coaching_engine.py`)
+  - Signal detection: customer ratings, discount behavior, performance metrics, activity gaps, pipeline stagnation
+  - Classification: Top Performer (≥75), Strong (50-74), Improving (25-49), Needs Attention (10-24), Critical (<10)
+  - Trigger conditions: avg rating <3.5, ≥2 low ratings in 7 days, ≥2 critical discounts, no activity 5 days, stale pipeline
+  - Output per rep: status label, 1-2 reasons, 1-2 suggested actions, metrics snapshot
+- **Dashboard Integration** (extended `admin_facade_routes.py` — no new route files)
+  - `GET /api/admin/dashboard/team-kpis` returns `coaching_insights` (flagged reps) + `coaching_all` (all reps)
+  - `GET /api/admin/reports/weekly-performance` returns `coaching_summary` (Critical + Needs Attention only)
+- **Frontend: Team Coaching Insights** (Sales Manager Dashboard)
+  - Section with coaching cards: avatar, name, status badge, reasons, suggested actions, metrics snapshot
+  - Status badges: Critical (red), Needs Attention (orange), Improving (amber), Strong (blue), Top Performer (green)
+  - Empty state: "No coaching issues right now — your team is performing within healthy thresholds"
+  - Max 7 flagged reps displayed
+- **Frontend: Team Coaching Summary** (Weekly Performance Report page)
+  - Compact coaching section between Procurement and Actions
+  - Shows Critical/Needs Attention reps with issue + action
+  - Conditionally renders only when flagged reps exist
+- **Scheduled Report Integration**
+  - Weekly report notifications include coaching flag: "X rep(s) need coaching attention"
 
 ## Backlog
 
 ### P1 — Upcoming
-- Coaching System for Sales Team (flagging underperforming reps)
+- Role-Based Onboarding Card Carousel (3-5 swipeable cards, role-specific, one-time, skippable)
+- Phone + PIN Login (alongside email/password, hashed, rate-limited)
+- Registration Simplification (staged flow, canonical phone normalization)
 - Resend email integration for live report delivery (pending API key)
 - Twilio WhatsApp integration for alert/report delivery (pending API keys)
 
