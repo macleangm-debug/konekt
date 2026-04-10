@@ -332,9 +332,14 @@ class LiveCommerceService:
         }
 
     async def finance_queue(self, customer_query: Optional[str] = None, status_filter: Optional[str] = None) -> List[Dict[str, Any]]:
+        # Normalize status filter: treat "uploaded" as all pending-like statuses
+        _PENDING_STATUSES = {"uploaded", "pending", "pending_verification", "pending_review"}
         query: Dict[str, Any] = {}
         if status_filter:
-            query["status"] = status_filter
+            if status_filter in _PENDING_STATUSES:
+                query["status"] = {"$in": list(_PENDING_STATUSES)}
+            else:
+                query["status"] = status_filter
         rows = await self.db.payment_proofs.find(query).sort("created_at", -1).to_list(length=500)
         out: List[Dict[str, Any]] = []
         for proof in rows:
@@ -395,8 +400,15 @@ class LiveCommerceService:
                 if guest_order and not contact_email:
                     contact_email = guest_order.get("customer_email") or ""
 
+            # Resolve proof ID — never return None
+            proof_id = proof.get("id") or str(proof.get("_id", ""))
+
+            # Normalize raw status for frontend consistency
+            raw_status = proof.get("status", "uploaded")
+            normalized_status = "uploaded" if raw_status in _PENDING_STATUSES else raw_status
+
             item = {
-                "payment_proof_id": proof.get("id"),
+                "payment_proof_id": proof_id,
                 "payment_id": proof.get("payment_id"),
                 "invoice_id": proof.get("invoice_id"),
                 "order_id": proof.get("order_id") or (guest_order or {}).get("id"),
@@ -417,7 +429,7 @@ class LiveCommerceService:
                 "total_invoice_amount": (payment or {}).get("total_invoice_amount", 0) or (invoice or {}).get("total_amount", 0) or (invoice or {}).get("total", 0) or (guest_order or {}).get("total_amount", 0) or (guest_order or {}).get("total", 0),
                 "payment_mode": (payment or {}).get("payment_mode", "full"),
                 "file_url": proof.get("file_url") or proof.get("proof_file_url") or "",
-                "status": proof.get("status", "uploaded"),
+                "status": normalized_status,
                 "items": (invoice or {}).get("items", []) or (guest_order or {}).get("items", []),
                 "created_at": str(proof.get("created_at", "")),
                 "approved_by": approved_by,

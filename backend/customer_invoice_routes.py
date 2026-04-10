@@ -54,10 +54,10 @@ async def _enrich_invoice(doc):
                     doc["customer_name"] = cust.get("full_name") or cemail
 
     # Payer name resolution — strict: only from payer_name fields, NEVER from customer_name
-    payer = doc.get("payer_name") or ""
+    payer = doc.get("payer_name") or (doc.get("billing") or {}).get("invoice_client_name") or ""
     if not payer:
         proof = await db.payment_proofs.find_one(
-            {"invoice_id": doc.get("id")},
+            {"$or": [{"invoice_id": doc.get("id")}, {"order_id": doc.get("order_id")}, {"order_number": doc.get("order_number")}]},
             {"_id": 0, "payer_name": 1},
             sort=[("created_at", -1)]
         )
@@ -72,6 +72,10 @@ async def _enrich_invoice(doc):
         if submission:
             payer = submission.get("payer_name") or ""
     doc["payer_name"] = payer or "-"
+
+    # Ensure total_amount is always present
+    doc.setdefault("total_amount", doc.get("total") or 0)
+
     return doc
 
 

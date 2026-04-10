@@ -151,6 +151,14 @@ async def enrich_order(order):
     order.pop("sales_owner_id", None)
     order.pop("assigned_sales_id", None)
 
+    # ── Ensure all customer-facing fields always present ──
+    order.setdefault("payer_name", "-")
+    order.setdefault("fulfillment_status", order.get("status") or "processing")
+    # Map payment_status to a user-friendly label
+    _ps = (order.get("payment_status") or "pending").lower()
+    _psl_map = {"paid": "Paid", "approved": "Paid", "partial": "Partially Paid", "overdue": "Overdue", "refunded": "Refunded"}
+    order["payment_status_label"] = _psl_map.get(_ps, "Awaiting Payment")
+
     return order
 
 

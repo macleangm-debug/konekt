@@ -137,7 +137,7 @@ async def list_orders(
             order["sales_name"] = order["sales_owner"]
             order["sales_email"] = ""
             order["sales_phone"] = ""
-        # Payer + approval info from invoice
+        # --- Payer + Approval enrichment (multi-source waterfall) ---
         inv_id = order.get("invoice_id")
         inv = None
         if inv_id:
@@ -149,35 +149,39 @@ async def list_orders(
                         inv.pop("_id", None)
                 except Exception:
                     inv = None
-        # Reverse lookup if no invoice_id
         if not inv:
             inv = await db.invoices.find_one(
                 {"$or": [{"order_id": order.get("id")}, {"linked_order_id": order.get("id")}]},
-                {"_id": 0, "payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1}
+                {"_id": 0, "id": 1, "payer_name": 1, "billing": 1, "customer_name": 1, "approved_by": 1, "approved_at": 1, "paid_at": 1, "payment_status": 1}
             )
-        # Extract payer and approval info from the resolved invoice
+
+        # Payer name waterfall: order.payer_name → invoice.payer_name → invoice.billing.invoice_client_name → payment_proof.payer_name → order_number proof lookup
+        payer = order.get("payer_name") or ""
+        if not payer and inv:
+            payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or ""
+        if not payer:
+            _proof_query = []
+            if inv_id:
+                _proof_query.append({"invoice_id": inv_id})
+            if inv and inv.get("id") and inv["id"] != inv_id:
+                _proof_query.append({"invoice_id": inv["id"]})
+            if order.get("order_number"):
+                _proof_query.append({"order_number": order["order_number"]})
+            if order.get("id"):
+                _proof_query.append({"order_id": order["id"]})
+            if _proof_query:
+                proof = await db.payment_proofs.find_one(
+                    {"$or": _proof_query},
+                    {"_id": 0, "payer_name": 1},
+                    sort=[("created_at", -1)]
+                )
+                payer = (proof or {}).get("payer_name") or ""
+        order["payer_name"] = payer or "-"
+
+        # Approval info waterfall
         if inv:
-            payer = inv.get("payer_name") or ""
-            if payer:
-                order["payer_name"] = payer
             order["approved_at"] = order.get("approved_at") or inv.get("approved_at") or inv.get("paid_at") or ""
             order["approved_by"] = order.get("approved_by") or inv.get("approved_by") or ""
-        if "payer_name" not in order:
-            # Try payment_proofs as last resort
-            proof = None
-            if inv_id:
-                proof = await db.payment_proofs.find_one({"invoice_id": inv_id}, {"_id": 0, "payer_name": 1}, sort=[("created_at", -1)])
-            if not proof and order.get("id"):
-                inv_for_proof = await db.invoices.find_one(
-                    {"$or": [{"order_id": order.get("id")}, {"linked_order_id": order.get("id")}]},
-                    {"_id": 0, "id": 1}
-                )
-                if inv_for_proof:
-                    proof = await db.payment_proofs.find_one({"invoice_id": inv_for_proof["id"]}, {"_id": 0, "payer_name": 1}, sort=[("created_at", -1)])
-            if proof and proof.get("payer_name"):
-                order["payer_name"] = proof["payer_name"]
-            else:
-                order["payer_name"] = "-"
         if "approved_at" not in order:
             order["approved_at"] = ""
         if "approved_by" not in order:
@@ -260,10 +264,14 @@ async def get_order(order_id: str):
     # Payment info from invoice + proof — STRICT payer separation
     payment_proof = None
     if invoice:
-        payer = invoice.get("payer_name") or ""
+        payer = invoice.get("payer_name") or (invoice.get("billing") or {}).get("invoice_client_name") or ""
         if not payer:
             proof_doc = await db.payment_proofs.find_one(
-                {"invoice_id": invoice.get("id")},
+                {"$or": [
+                    {"invoice_id": invoice.get("id")},
+                    {"order_number": order.get("order_number")},
+                    {"order_id": oid},
+                ]},
                 {"_id": 0, "payer_name": 1},
                 sort=[("created_at", -1)]
             )

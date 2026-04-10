@@ -203,6 +203,8 @@ async def approve_payment_proof(proof_id: str, payload: dict):
         customer_user_id=proof.get("customer_user_id") or proof.get("customer_id"),
         payment_proof_id=proof_id,
         approved=True,
+        order_id=proof.get("order_id") or "",
+        invoice_id=invoice_id or proof.get("invoice_id") or "",
         triggered_by_user_id=payload.get("approved_by"),
         triggered_by_role="admin",
     )
@@ -282,6 +284,7 @@ async def reject_payment_proof(proof_id: str, payload: dict):
         customer_user_id=proof.get("customer_user_id") or proof.get("customer_id"),
         payment_proof_id=proof_id,
         approved=False,
+        invoice_id=proof.get("invoice_id") or "",
         triggered_by_user_id=payload.get("rejected_by"),
         triggered_by_role="admin",
     )

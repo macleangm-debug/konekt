@@ -149,7 +149,7 @@ async def list_invoices(
             billing = inv.get("billing") or {}
             payer = billing.get("invoice_client_name") or ""
         if not payer:
-            payer = inv.get("customer_name") or inv.get("customer_email") or "-"
+            payer = "-"
         inv["payer_name"] = payer
         # Payment status label
         ps = inv.get("payment_status") or inv.get("status") or "pending_payment"
@@ -172,14 +172,38 @@ async def list_invoices(
 
 @router.get("/{invoice_id}")
 async def get_invoice(invoice_id: str):
-    """Get a specific invoice"""
+    """Get a specific invoice — enriched"""
+    doc = None
     try:
         doc = await db.invoices.find_one({"_id": ObjectId(invoice_id)})
-        if not doc:
-            raise HTTPException(status_code=404, detail="Invoice not found")
-        return serialize_doc(doc)
     except Exception:
+        pass
+    if not doc:
+        doc = await db.invoices.find_one({"id": invoice_id})
+    if not doc:
+        doc = await db.invoices.find_one({"invoice_number": invoice_id})
+    if not doc:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    inv = serialize_doc(doc)
+    # Resolve customer_name
+    if not inv.get("customer_name"):
+        cid = inv.get("customer_id") or inv.get("customer_user_id") or inv.get("user_id")
+        if cid:
+            cust = await db.users.find_one({"id": cid}, {"_id": 0, "full_name": 1, "email": 1})
+            if cust:
+                inv["customer_name"] = cust.get("full_name") or cust.get("email") or ""
+    # Resolve payer_name
+    payer = inv.get("payer_name") or (inv.get("billing") or {}).get("invoice_client_name") or ""
+    if not payer:
+        proof = await db.payment_proofs.find_one(
+            {"invoice_id": inv.get("id")},
+            {"_id": 0, "payer_name": 1},
+            sort=[("created_at", -1)]
+        )
+        payer = (proof or {}).get("payer_name") or ""
+    inv["payer_name"] = payer or "-"
+    inv.setdefault("total_amount", inv.get("total") or 0)
+    return inv
 
 
 @router.get("/{invoice_id}/payments")

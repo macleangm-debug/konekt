@@ -9,6 +9,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from datetime import datetime, timezone
 
+from notification_service import build_notification_doc
+
 router = APIRouter(prefix="/api", tags=["Service Tasks"])
 
 mongo_url = os.environ.get('MONGO_URL')
@@ -23,6 +25,48 @@ def serialize(doc):
     d = {k: v for k, v in doc.items() if k != "_id"}
     d["id"] = str(doc["_id"])
     return d
+
+
+async def _notify_partner_task_assigned(task_id: str, partner_id: str, partner_name: str, service_type: str, assigned_by: str = "admin"):
+    """Send in-app notification to partner when a task is assigned or reassigned."""
+    # Find the partner's user record to get recipient_user_id
+    partner_user = await db.partner_users.find_one({"partner_id": partner_id}, {"_id": 0, "id": 1, "user_id": 1})
+    recipient_id = (partner_user or {}).get("user_id") or (partner_user or {}).get("id")
+    if not recipient_id:
+        return
+    doc = build_notification_doc(
+        notification_type="service_task_assigned",
+        title="New Task Assigned",
+        message=f"A {service_type} task has been assigned to you. Please review and submit your cost.",
+        target_url=f"/partner/assigned-work?task={task_id}",
+        recipient_user_id=recipient_id,
+        entity_type="service_task",
+        entity_id=task_id,
+        priority="high",
+        action_key="partner_cost_request",
+        triggered_by_user_id=assigned_by,
+        triggered_by_role="admin",
+    )
+    doc["cta_label"] = "Submit Cost"
+    await db.notifications.insert_one(doc)
+
+
+async def _notify_admin_cost_submitted(task_id: str, partner_name: str, partner_cost: float, service_type: str):
+    """Notify admins when a partner submits their cost for review."""
+    doc = build_notification_doc(
+        notification_type="partner_cost_submitted",
+        title="Cost Submitted for Review",
+        message=f"{partner_name} submitted TZS {partner_cost:,.0f} for a {service_type} task.",
+        target_url=f"/admin/service-tasks?task={task_id}",
+        recipient_role="admin",
+        entity_type="service_task",
+        entity_id=task_id,
+        priority="high",
+        action_key="review_partner_cost",
+        triggered_by_role="partner",
+    )
+    doc["cta_label"] = "Review Cost"
+    await db.notifications.insert_one(doc)
 
 
 async def _get_partner(authorization: str):
@@ -98,6 +142,20 @@ async def create_service_task(request: Request, payload: dict):
     result = await db.service_tasks.insert_one(doc)
     created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
     created["id"] = str(result.inserted_id)
+
+    # Notify partner if assigned at creation
+    if payload.get("partner_id"):
+        try:
+            await _notify_partner_task_assigned(
+                task_id=str(result.inserted_id),
+                partner_id=payload["partner_id"],
+                partner_name=payload.get("partner_name", ""),
+                service_type=payload.get("service_type", "general"),
+                assigned_by=payload.get("assigned_by", "admin"),
+            )
+        except Exception as e:
+            print(f"Warning: Failed to send partner notification: {e}")
+
     return created
 
 
@@ -113,6 +171,41 @@ async def list_service_tasks(request: Request, status: str = None, service_type:
         query["partner_id"] = partner_id
 
     docs = await db.service_tasks.find(query).sort("created_at", -1).to_list(length=500)
+    return [serialize(d) for d in docs]
+
+
+@router.get("/admin/service-tasks/stats/summary")
+async def service_task_stats(request: Request):
+    """Get summary stats for service tasks."""
+    pipeline = [
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+    ]
+    results = await db.service_tasks.aggregate(pipeline).to_list(length=50)
+    stats = {r["_id"]: r["count"] for r in results}
+    return {
+        "assigned": stats.get("assigned", 0),
+        "awaiting_cost": stats.get("awaiting_cost", 0),
+        "cost_submitted": stats.get("cost_submitted", 0),
+        "in_progress": stats.get("in_progress", 0),
+        "completed": stats.get("completed", 0),
+        "delayed": stats.get("delayed", 0),
+        "failed": stats.get("failed", 0),
+        "unassigned": stats.get("unassigned", 0),
+        "total": sum(stats.values()),
+    }
+
+
+@router.get("/admin/service-tasks/overdue-costs")
+async def overdue_cost_tasks(request: Request):
+    """Return tasks assigned to partners but still awaiting cost after 48h."""
+    from datetime import timedelta
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+    docs = await db.service_tasks.find({
+        "status": {"$in": ["assigned", "awaiting_cost"]},
+        "partner_id": {"$ne": None},
+        "partner_cost": None,
+        "created_at": {"$lt": cutoff},
+    }).sort("created_at", 1).to_list(length=100)
     return [serialize(d) for d in docs]
 
 
@@ -151,6 +244,20 @@ async def assign_task_to_partner(request: Request, task_id: str, payload: dict):
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Task not found")
+
+    # Notify partner of assignment
+    try:
+        task = await db.service_tasks.find_one({"_id": ObjectId(task_id)}, {"_id": 0, "service_type": 1})
+        await _notify_partner_task_assigned(
+            task_id=task_id,
+            partner_id=payload["partner_id"],
+            partner_name=payload.get("partner_name", ""),
+            service_type=(task or {}).get("service_type", "general"),
+            assigned_by=payload.get("assigned_by", "admin"),
+        )
+    except Exception as e:
+        print(f"Warning: Failed to send partner assignment notification: {e}")
+
     return {"ok": True, "status": "assigned"}
 
 
@@ -176,25 +283,6 @@ async def admin_update_task_status(request: Request, task_id: str, payload: dict
     return {"ok": True, "status": new_status}
 
 
-@router.get("/admin/service-tasks/stats/summary")
-async def service_task_stats(request: Request):
-    """Get summary stats for service tasks."""
-    pipeline = [
-        {"$group": {"_id": "$status", "count": {"$sum": 1}}}
-    ]
-    results = await db.service_tasks.aggregate(pipeline).to_list(length=50)
-    stats = {r["_id"]: r["count"] for r in results}
-    return {
-        "assigned": stats.get("assigned", 0),
-        "awaiting_cost": stats.get("awaiting_cost", 0),
-        "cost_submitted": stats.get("cost_submitted", 0),
-        "in_progress": stats.get("in_progress", 0),
-        "completed": stats.get("completed", 0),
-        "delayed": stats.get("delayed", 0),
-        "failed": stats.get("failed", 0),
-        "unassigned": stats.get("unassigned", 0),
-        "total": sum(stats.values()),
-    }
 
 
 # ──────────────────────────────────────────
@@ -307,6 +395,17 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
             "$push": {"timeline": timeline_entry}
         }
     )
+
+    # Notify admins that partner has submitted cost
+    try:
+        await _notify_admin_cost_submitted(
+            task_id=task_id,
+            partner_name=partner_name,
+            partner_cost=partner_cost,
+            service_type=task.get("service_type", "general"),
+        )
+    except Exception as e:
+        print(f"Warning: Failed to notify admin of cost submission: {e}")
 
     return {
         "ok": True,

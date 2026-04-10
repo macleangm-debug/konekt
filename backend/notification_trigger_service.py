@@ -85,18 +85,34 @@ async def notify_customer_payment_reviewed(
     customer_user_id: str | None,
     payment_proof_id: str,
     approved: bool,
+    order_id: str | None = None,
+    invoice_id: str | None = None,
     triggered_by_user_id: str | None = None,
     triggered_by_role: str | None = None,
 ):
-    """Notify customer when their payment proof is reviewed"""
+    """Notify customer when their payment proof is reviewed.
+    Approved → deep link to /account/orders
+    Rejected → deep link to /account/invoices
+    """
     if not customer_user_id:
         return
 
+    if approved:
+        target = f"/account/orders/{order_id}" if order_id else "/account/orders"
+        title = "Payment Approved"
+        message = "Your payment has been approved. You can now track your order progress."
+        cta_label = "Track Order"
+    else:
+        target = f"/account/invoices/{invoice_id}" if invoice_id else "/account/invoices"
+        title = "Payment Rejected"
+        message = "Your payment submission was rejected. Review the invoice and next steps."
+        cta_label = "Open Invoice"
+
     doc = build_notification_doc(
         notification_type="payment_reviewed",
-        title="Payment proof reviewed",
-        message="Your payment proof has been approved." if approved else "Your payment proof needs attention.",
-        target_url="/account/invoices",
+        title=title,
+        message=message,
+        target_url=target,
         recipient_user_id=customer_user_id,
         entity_type="payment_proof",
         entity_id=payment_proof_id,
@@ -105,6 +121,7 @@ async def notify_customer_payment_reviewed(
         triggered_by_user_id=triggered_by_user_id,
         triggered_by_role=triggered_by_role,
     )
+    doc["cta_label"] = cta_label
     await db.notifications.insert_one(doc)
 
 
