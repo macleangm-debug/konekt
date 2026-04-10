@@ -154,6 +154,7 @@ from routes.marketplace_taxonomy_routes import router as marketplace_taxonomy_ro
 from routes.vendor_catalog_routes import router as vendor_catalog_router
 from routes.admin_vendor_submission_routes import router as admin_vendor_submission_router
 from routes.admin_digest_routes import router as admin_digest_router
+from routes.file_routes import router as file_routes_router
 from routes.admin_catalog_routes import router as admin_catalog_router
 
 # Service Orchestration Routes
@@ -3054,6 +3055,7 @@ app.include_router(marketplace_taxonomy_router)
 app.include_router(vendor_catalog_router)
 app.include_router(admin_vendor_submission_router)
 app.include_router(admin_digest_router)
+app.include_router(file_routes_router)
 app.include_router(admin_catalog_router)
 
 from routes.vendor_product_upload_routes import router as vendor_product_upload_router
@@ -3287,6 +3289,14 @@ async def startup_event():
             logger.info("Migrated %d old leads from 'leads' to 'crm_leads'", migrated)
     except Exception as e:
         logger.warning("Lead migration check: %s", e)
+
+    # ── Initialize object storage ──
+    try:
+        from services.file_storage import init_storage
+        init_storage()
+        logger.info("Object storage initialized")
+    except Exception as e:
+        logger.warning("Object storage init failed (images disabled): %s", e)
 
     # ── Start scheduled report delivery background loop ──
     try:

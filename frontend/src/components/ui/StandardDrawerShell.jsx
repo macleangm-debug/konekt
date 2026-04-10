@@ -56,15 +56,15 @@ export default function StandardDrawerShell({
   const widthClass = widthMap[width] || widthMap.lg;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" data-testid={testId}>
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-[60] flex justify-end" data-testid={testId}>
+      {/* Backdrop — full viewport coverage */}
       <div
-        className="absolute inset-0 bg-[#20364D]/30 backdrop-blur-[3px] k-backdrop-fade"
+        className="fixed inset-0 bg-[#20364D]/30 backdrop-blur-[3px] k-backdrop-fade"
         onClick={onClose}
         data-testid={`${testId}-backdrop`}
       />
-      {/* Panel */}
-      <div className={`relative flex w-full ${widthClass} flex-col bg-white shadow-2xl k-drawer-panel`}>
+      {/* Panel — full height, scrollable body */}
+      <div className={`relative flex w-full h-full ${widthClass} flex-col bg-white shadow-2xl k-drawer-panel`}>
         {/* Header — sticky */}
         <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4 flex-shrink-0">
           <div className="min-w-0 flex-1">
@@ -87,7 +87,7 @@ export default function StandardDrawerShell({
         </div>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+        <div className="flex-1 overflow-y-auto overscroll-contain p-6 min-h-0">{children}</div>
 
         {/* Sticky footer */}
         {footer && (

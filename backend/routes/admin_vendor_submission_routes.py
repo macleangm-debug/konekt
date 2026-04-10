@@ -78,6 +78,11 @@ async def list_all_submissions(
             doc["base_cost"] = sup.get("base_price_vat_inclusive", 0)
             doc["min_quantity"] = sup.get("default_quantity", 1)
             doc["vendor_product_code"] = sup.get("vendor_product_code", "")
+            if not doc.get("allocated_quantity"):
+                doc["allocated_quantity"] = sup.get("allocated_quantity", 0)
+        # Ensure gallery_images always exists
+        if not doc.get("gallery_images"):
+            doc["gallery_images"] = []
 
         # Enrich with vendor name if missing
         if not doc.get("vendor_name") and doc.get("vendor_id") and doc["vendor_id"] != "unknown":
@@ -137,7 +142,9 @@ async def approve_submission(submission_id: str, body: ReviewAction, request: Re
         "currency": sub.get("currency_code", "TZS"),
         "min_quantity": int(sup.get("default_quantity") or sub.get("min_quantity", 1)),
         "image_url": prod.get("primary_image") or sub.get("image_url", ""),
+        "gallery_images": sub.get("gallery_images", []),
         "brand": prod.get("brand") or sub.get("brand", ""),
+        "allocated_quantity": int(sub.get("allocated_quantity") or sup.get("allocated_quantity") or 0),
         "is_active": body.publish,
         "status": "published" if body.publish else "approved",
         "visibility_mode": sub.get("visibility_mode", "request_quote"),

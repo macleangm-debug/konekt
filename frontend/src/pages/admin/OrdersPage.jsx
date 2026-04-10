@@ -11,9 +11,8 @@ import AssignmentReasonBadge from "../../components/assignment/AssignmentReasonB
 import AssignmentDecisionDrawer from "../../components/assignment/AssignmentDecisionDrawer";
 import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList, Eye, Download, Activity, ArrowRight, User, MessageSquare } from "lucide-react";
 
+import { formatDate, formatDateShort } from "../../utils/dateFormat";
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
-function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
-function fmtDateTime(v) { try { const d = new Date(v); return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) + " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }); } catch { return "-"; } }
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -79,7 +78,7 @@ function StatusTimeline({ entries }) {
               }`} />
               <div className="rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors p-3 shadow-sm">
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[10px] text-slate-400 font-medium" data-testid={`timeline-timestamp-${idx}`}>{fmtDateTime(entry.timestamp)}</span>
+                  <span className="text-[10px] text-slate-400 font-medium" data-testid={`timeline-timestamp-${idx}`}>{formatDate(entry.timestamp)}</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${src.bg} ${src.text} ${src.border}`} data-testid={`timeline-source-${idx}`}>{src.label}</span>
                 </div>
                 <div className="flex items-center gap-2 mb-1.5" data-testid={`timeline-status-change-${idx}`}>
@@ -266,7 +265,7 @@ export default function OrdersPage() {
               <tbody className="divide-y divide-slate-100">
                 {[...rows].sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0)).map((row) => (
                   <tr key={row.id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`order-row-${row.id}`}>
-                    <td className="px-4 py-3 text-xs text-slate-500">{fmtDate(row.created_at)}</td>
+                    <td className="px-4 py-3 text-xs text-slate-500">{formatDateShort(row.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
                     <td className="px-4 py-3">
                       <CustomerLinkCell customerId={row.customer_id} customerName={row.customer_name} />
@@ -295,7 +294,7 @@ export default function OrdersPage() {
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Summary</p>
               <div className="grid gap-2 text-sm text-slate-700">
                 <div><strong>Order No:</strong> {detail.order?.order_number || "-"}</div>
-                <div><strong>Date:</strong> {fmtDate(detail.order?.created_at)}</div>
+                <div><strong>Date:</strong> {formatDateShort(detail.order?.created_at)}</div>
                 <div><strong>Source Type:</strong> <span className="capitalize">{detail.order?.source_type || detail.order?.type || "-"}</span></div>
                 <div><strong>Linked Invoice:</strong> {detail.invoice?.invoice_number || "-"}</div>
                 {detail.quote && <div><strong>Linked Quote:</strong> {detail.quote.quote_number || "-"}</div>}
@@ -376,7 +375,7 @@ export default function OrdersPage() {
                   <div><strong>Payment Status:</strong> <StatusBadge status={detail.payment_proof.payment_status} /></div>
                   <div><strong>Payer Name:</strong> {detail.payment_proof.payer_name || "-"}</div>
                   <div><strong>Approved By:</strong> {detail.payment_proof.approved_by || "-"}</div>
-                  <div><strong>Approval Date:</strong> {detail.payment_proof.approved_at ? fmtDate(detail.payment_proof.approved_at) : "-"}</div>
+                  <div><strong>Approval Date:</strong> {detail.payment_proof.approved_at ? formatDateShort(detail.payment_proof.approved_at) : "-"}</div>
                 </div>
               </section>
             )}
