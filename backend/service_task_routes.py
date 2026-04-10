@@ -115,6 +115,168 @@ async def _propagate_cost_to_quote(task, partner_cost: float, selling_price: flo
     return True
 
 
+# ──────────────────────────────────────────
+# AUTOMATED PARTNER ASSIGNMENT ENGINE (V1)
+# ──────────────────────────────────────────
+
+async def _auto_assign_partner(task_doc: dict) -> dict:
+    """Attempt to automatically assign a partner to a service task.
+    
+    Matching logic (V1 — simple, deterministic):
+    1. Match by service_key in partner_service_capabilities
+    2. Filter by capability_status=active, cross-ref partner status=active
+    3. Prefer preferred_routing=True, then priority_rank, then quality_score
+    4. Fallback: match partners.categories against service_type
+    5. If no match: return failure reason
+    
+    Returns: {"assigned": True/False, "partner_id": ..., "partner_name": ..., "reason": ...}
+    """
+    service_type = (task_doc.get("service_type") or "").lower().strip()
+    if not service_type:
+        return {"assigned": False, "reason": "No service type specified on task"}
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Strategy 1: Match via partner_service_capabilities (most precise)
+    caps = await db.partner_service_capabilities.find({
+        "capability_status": "active",
+        "$or": [
+            {"service_key": {"$regex": service_type, "$options": "i"}},
+            {"service_name": {"$regex": service_type, "$options": "i"}},
+        ]
+    }).sort([("preferred_routing", -1), ("priority_rank", 1), ("quality_score", -1)]).to_list(length=50)
+
+    for cap in caps:
+        pid = cap.get("partner_id")
+        if not pid:
+            continue
+        # Verify partner is active
+        partner = None
+        try:
+            partner = await db.partners.find_one({"_id": ObjectId(pid), "status": "active"})
+        except Exception:
+            partner = await db.partners.find_one({"id": pid, "status": "active"})
+        if not partner:
+            continue
+
+        partner_id = str(partner["_id"])
+        partner_name = cap.get("partner_name") or partner.get("name") or ""
+        return {
+            "assigned": True,
+            "partner_id": partner_id,
+            "partner_name": partner_name,
+            "reason": f"Matched via capability: {cap.get('service_name', service_type)}",
+            "match_source": "capability",
+            "preferred": bool(cap.get("preferred_routing")),
+        }
+
+    # Strategy 2: Match via partners.categories (broader)
+    partners = await db.partners.find({
+        "status": "active",
+        "partner_type": {"$in": ["service", "service_partner", "hybrid"]},
+        "categories": {"$regex": service_type, "$options": "i"},
+    }).to_list(length=20)
+
+    if partners:
+        partner = partners[0]
+        partner_id = str(partner["_id"])
+        partner_name = partner.get("name") or ""
+        return {
+            "assigned": True,
+            "partner_id": partner_id,
+            "partner_name": partner_name,
+            "reason": f"Matched via category: {service_type}",
+            "match_source": "category",
+            "preferred": False,
+        }
+
+    # No match found
+    return {
+        "assigned": False,
+        "reason": f"No eligible partner found for service type: {service_type}",
+    }
+
+
+async def _apply_auto_assignment(task_id: str, task_doc: dict) -> dict:
+    """Run auto-assignment and update the task + send notifications.
+    Returns assignment result."""
+    result = await _auto_assign_partner(task_doc)
+    now = datetime.now(timezone.utc).isoformat()
+
+    if result["assigned"]:
+        # Assign partner to task
+        await db.service_tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$set": {
+                "partner_id": result["partner_id"],
+                "partner_name": result["partner_name"],
+                "status": "assigned",
+                "auto_assigned": True,
+                "assignment_attempted_at": now,
+                "assignment_match_source": result.get("match_source"),
+                "assignment_failure_reason": None,
+                "updated_at": now,
+            }, "$push": {"timeline": {
+                "action": "auto_assigned",
+                "by": "system",
+                "at": now,
+                "note": result["reason"],
+            }}}
+        )
+        # Notify partner
+        try:
+            await _notify_partner_task_assigned(
+                task_id=task_id,
+                partner_id=result["partner_id"],
+                partner_name=result["partner_name"],
+                service_type=task_doc.get("service_type", "general"),
+                assigned_by="system",
+            )
+        except Exception as e:
+            print(f"Warning: Auto-assign notification failed: {e}")
+    else:
+        # Mark as unassigned with reason
+        await db.service_tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$set": {
+                "auto_assigned": False,
+                "assignment_attempted_at": now,
+                "assignment_failure_reason": result["reason"],
+                "updated_at": now,
+            }, "$push": {"timeline": {
+                "action": "auto_assignment_failed",
+                "by": "system",
+                "at": now,
+                "note": result["reason"],
+            }}}
+        )
+        # Create unassigned task alert for admin
+        await _create_unassigned_alert(task_id, task_doc, result["reason"])
+
+    return result
+
+
+async def _create_unassigned_alert(task_id: str, task_doc: dict, reason: str):
+    """Create an admin alert for an unassigned service task."""
+    service_type = task_doc.get("service_type", "general")
+    task_ref = f"ST-{task_id[-6:].upper()}"
+    doc = build_notification_doc(
+        notification_type="unassigned_task_alert",
+        title="Unassigned Service Task",
+        message=f"No eligible partner found for {task_ref} ({service_type}). {reason}",
+        target_url=f"/admin/service-tasks?task={task_id}",
+        recipient_role="admin",
+        entity_type="service_task",
+        entity_id=task_id,
+        priority="high",
+        action_key="assign_partner",
+        triggered_by_role="system",
+    )
+    doc["cta_label"] = "Assign Partner"
+    doc["alert_severity"] = "warning"
+    await db.notifications.insert_one(doc)
+
+
 async def _notify_partner_task_assigned(task_id: str, partner_id: str, partner_name: str, service_type: str, assigned_by: str = "admin"):
     """Send in-app notification to partner when a task is assigned or reassigned."""
     # Find the partner's user record to get recipient_user_id
@@ -228,14 +390,15 @@ async def create_service_task(request: Request, payload: dict):
         })
 
     result = await db.service_tasks.insert_one(doc)
+    task_id = str(result.inserted_id)
     created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
-    created["id"] = str(result.inserted_id)
+    created["id"] = task_id
 
-    # Notify partner if assigned at creation
     if payload.get("partner_id"):
+        # Manual assignment — notify partner
         try:
             await _notify_partner_task_assigned(
-                task_id=str(result.inserted_id),
+                task_id=task_id,
                 partner_id=payload["partner_id"],
                 partner_name=payload.get("partner_name", ""),
                 service_type=payload.get("service_type", "general"),
@@ -243,6 +406,17 @@ async def create_service_task(request: Request, payload: dict):
             )
         except Exception as e:
             print(f"Warning: Failed to send partner notification: {e}")
+    else:
+        # No partner specified — attempt auto-assignment
+        try:
+            assignment = await _apply_auto_assignment(task_id, doc)
+            if assignment["assigned"]:
+                created["partner_id"] = assignment["partner_id"]
+                created["partner_name"] = assignment["partner_name"]
+                created["status"] = "assigned"
+                created["auto_assigned"] = True
+        except Exception as e:
+            print(f"Warning: Auto-assignment failed: {e}")
 
     return created
 
@@ -344,7 +518,7 @@ async def create_task_from_quote_line(request: Request, payload: dict):
                   "updated_at": now}}
     )
 
-    # Notify partner if assigned
+    # Notify partner if manually assigned
     if payload.get("partner_id"):
         try:
             await _notify_partner_task_assigned(
@@ -356,6 +530,16 @@ async def create_task_from_quote_line(request: Request, payload: dict):
             )
         except Exception as e:
             print(f"Warning: Failed to send partner notification: {e}")
+    else:
+        # No partner specified — attempt auto-assignment
+        try:
+            assignment = await _apply_auto_assignment(task_id, doc)
+            if assignment["assigned"]:
+                doc["partner_id"] = assignment["partner_id"]
+                doc["partner_name"] = assignment["partner_name"]
+                doc["status"] = "assigned"
+        except Exception as e:
+            print(f"Warning: Auto-assignment from quote line failed: {e}")
 
     created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
     created["id"] = task_id
@@ -381,6 +565,8 @@ async def get_linked_tasks(request: Request, quote_id: str):
             "selling_price": doc.get("selling_price"),
             "cost_submitted": doc.get("partner_cost") is not None,
             "cost_submitted_at": doc.get("cost_submitted_at"),
+            "auto_assigned": doc.get("auto_assigned", False),
+            "assignment_failure_reason": doc.get("assignment_failure_reason"),
             "created_at": doc.get("created_at"),
             "updated_at": doc.get("updated_at"),
         })

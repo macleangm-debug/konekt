@@ -821,26 +821,35 @@ function AdminDashboardMain() {
         <KpiCard icon={CheckCircle} label="Pending Approvals" value={kpis.pending_approvals || 0} color="bg-teal-50 text-teal-600" to="/admin/payments" />
       </div>
 
-      {/* ═══ Awaiting Partner Response Widget ═══ */}
+      {/* ═══ Partner Response Pipeline + Unassigned Alerts ═══ */}
       {(() => {
         const awaitingCount = (taskStats?.assigned || 0) + (taskStats?.awaiting_cost || 0);
+        const unassignedCount = taskStats?.unassigned || 0;
         const hasOverdue = overdueCount > 0;
-        if (awaitingCount === 0 && overdueCount === 0 && !taskStats?.cost_submitted) return null;
+        const hasUnassigned = unassignedCount > 0;
+        const hasIssues = hasOverdue || hasUnassigned;
+        if (awaitingCount === 0 && overdueCount === 0 && !taskStats?.cost_submitted && !hasUnassigned) return null;
         return (
-          <div className={`rounded-2xl border-2 p-5 transition ${hasOverdue ? "border-amber-400 bg-amber-50/60" : "border-slate-200 bg-white"}`} data-testid="partner-response-widget">
+          <div className={`rounded-2xl border-2 p-5 transition ${
+            hasOverdue || hasUnassigned ? "border-amber-400 bg-amber-50/60" : "border-slate-200 bg-white"
+          }`} data-testid="partner-response-widget">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${hasOverdue ? "bg-amber-200 text-amber-800" : "bg-blue-100 text-blue-700"}`}>
-                  <Clock className="w-5 h-5" />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                  hasIssues ? "bg-amber-200 text-amber-800" : "bg-blue-100 text-blue-700"
+                }`}>
+                  {hasUnassigned ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#20364D]">Partner Response Pipeline</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {hasOverdue
-                      ? `${overdueCount} overdue cost request${overdueCount > 1 ? "s" : ""} — partners haven't responded in 48+ hours`
-                      : awaitingCount > 0
-                        ? `${awaitingCount} task${awaitingCount > 1 ? "s" : ""} awaiting partner cost submission`
-                        : "All partner tasks are up to date"
+                    {hasUnassigned
+                      ? `${unassignedCount} task${unassignedCount > 1 ? "s" : ""} could not be auto-assigned — manual action needed`
+                      : hasOverdue
+                        ? `${overdueCount} overdue cost request${overdueCount > 1 ? "s" : ""} — partners haven't responded in 48+ hours`
+                        : awaitingCount > 0
+                          ? `${awaitingCount} task${awaitingCount > 1 ? "s" : ""} awaiting partner cost submission`
+                          : "All partner tasks are up to date"
                     }
                   </p>
                 </div>
@@ -848,6 +857,11 @@ function AdminDashboardMain() {
               <div className="flex items-center gap-3">
                 {/* Stat pills */}
                 <div className="flex items-center gap-2 flex-wrap">
+                  {hasUnassigned && (
+                    <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-200 text-amber-800">
+                      {unassignedCount} Unassigned
+                    </span>
+                  )}
                   {awaitingCount > 0 && (
                     <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700">
                       {awaitingCount} Awaiting
@@ -866,15 +880,20 @@ function AdminDashboardMain() {
                 </div>
                 {/* CTA */}
                 <Link
-                  to={hasOverdue ? "/admin/service-tasks?filter=overdue" : "/admin/service-tasks"}
+                  to={hasUnassigned
+                    ? "/admin/service-tasks?filter=unassigned"
+                    : hasOverdue
+                      ? "/admin/service-tasks?filter=overdue"
+                      : "/admin/service-tasks"
+                  }
                   className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
-                    hasOverdue
+                    hasIssues
                       ? "bg-amber-600 text-white hover:bg-amber-700"
                       : "bg-[#20364D] text-white hover:bg-[#17283c]"
                   }`}
                   data-testid="partner-response-cta"
                 >
-                  {hasOverdue ? "Review Overdue" : "View Tasks"} <ArrowRight className="w-3.5 h-3.5" />
+                  {hasUnassigned ? "Assign Partners" : hasOverdue ? "Review Overdue" : "View Tasks"} <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             </div>
