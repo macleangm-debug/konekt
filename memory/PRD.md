@@ -363,12 +363,34 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Profile Settings** — PIN management section (set/change PIN, requires current password)
 - **Existing users** — No forced migration, can add PIN later from settings
 
+### Phase 20 — Welcome Bonus Campaign & Public Content Upgrade (Apr 10, 2026)
+- **Welcome Bonus Campaign Setting** (Admin Settings Hub → Commercial Rules tab)
+  - Disabled by default; admin-togglable via "Enable Welcome Bonus"
+  - Triggered only on first verified purchase by a referred user
+  - Bonus type: Fixed Amount (TZS) or Percentage of distributable margin
+  - Configurable value, max cap, first-purchase-only enforcement
+  - Anti-stacking: does NOT stack with referral reward by default (configurable)
+  - Margin-safe: bonus capped at total distributable margin of the order
+  - Backend: `process_welcome_bonus_on_payment()` in `referral_hooks.py` (called from `live_commerce_service.py`)
+  - Frontend: Welcome Bonus Campaign card in `AdminSettingsHubPage.jsx` CommercialTab
+  - Status banners: amber "disabled" / green "active" contextual messaging
+- **Public Content Upgrade — Canonical Page Layout System**
+  - `LegalPageLayout` component: shared legal/info layout with sticky TOC sidebar, numbered sections, intersection-observer highlighting, branded header, responsive design
+  - `PublicPageShell` component: shared outer wrapper (nav + footer) for standalone public pages
+  - **About Us** (`/about`): Full marketing-style redesign — dark hero with gold accent, stats bar (500+, 50+, 24hr, 99%), values grid, offerings grid, how-it-works steps, CTA section
+  - **Privacy Policy** (`/privacy`): 10 expanded sections (Information Collection, Usage, Sharing, Payment Security, Retention, Cookies, Rights, Third-Party, Changes, Contact) with sticky TOC
+  - **Terms of Service** (`/terms`): 14 comprehensive sections (Acceptance, Services, Registration, Ordering, Wallet/Referrals, Delivery, Pricing, Cancellations, IP, Prohibited Use, Liability, Changes, Governing Law, Contact) with sticky TOC
+  - **Help Center** (`/help`): Dark hero with live search filter, category pill navigation, 7 expandable FAQ sections (Ordering 5Q, Payment 5Q, Delivery 4Q, Account 4Q, Wallet 4Q, Notifications 3Q, Security 3Q), contact CTA
+- **Footer Link Cleanup**
+  - `Footer.js`: Fixed Company section links (About Us → `/about`, Help Center → `/help`, Privacy → `/privacy`, Terms → `/terms`)
+  - `PublicFooter.jsx`: Fixed Privacy link `/privacy-policy` → `/privacy`
+  - `PremiumFooterV2.jsx`: Already had correct links (verified)
+
 ## Backlog
 
 ### P1 — Upcoming
-- Role-Based Onboarding Card Carousel (3-5 swipeable cards, role-specific, one-time, skippable)
-- Phone + PIN Login (alongside email/password, hashed, rate-limited)
-- Registration Simplification (staged flow, canonical phone normalization)
+- Admin data entry configuration: system logo, TIN, BRN, bank account details
+- End-to-end Stripe test with real test cards
 - Resend email integration for live report delivery (pending API key)
 - Twilio WhatsApp integration for alert/report delivery (pending API keys)
 
