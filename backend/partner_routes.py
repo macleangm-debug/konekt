@@ -54,22 +54,26 @@ async def create_partner(payload: dict):
     """Create a new partner."""
     doc = {
         "name": payload.get("name"),
-        "partner_type": payload.get("partner_type", "distributor"),  # distributor | service_partner | manufacturer | print_partner
+        "partner_type": payload.get("partner_type", "distributor"),
+        "vendor_type": payload.get("vendor_type", "product_supplier"),
         "contact_person": payload.get("contact_person"),
         "email": payload.get("email"),
         "phone": payload.get("phone"),
         "country_code": payload.get("country_code", "TZ").upper(),
         "regions": payload.get("regions", []),
         "categories": payload.get("categories", []),
-        "coverage_mode": payload.get("coverage_mode", "regional"),  # national | regional
-        "fulfillment_type": payload.get("fulfillment_type", "partner_fulfilled"),  # partner_fulfilled | konekt_pickup | mixed
-        "status": payload.get("status", "active"),  # active | inactive | pending_approval
+        "supported_services": payload.get("supported_services", []),
+        "coverage_mode": payload.get("coverage_mode", "regional"),
+        "fulfillment_type": payload.get("fulfillment_type", "partner_fulfilled"),
+        "status": payload.get("status", "active"),
+        "preferred_partner": payload.get("preferred_partner", False),
         "lead_time_days": int(payload.get("lead_time_days", 2) or 2),
-        "settlement_terms": payload.get("settlement_terms", "weekly"),  # weekly | monthly | per_order
-        "commission_rate": float(payload.get("commission_rate", 0) or 0),  # Konekt's commission %
+        "settlement_terms": payload.get("settlement_terms", "weekly"),
+        "commission_rate": float(payload.get("commission_rate", 0) or 0),
         "bank_details": payload.get("bank_details"),
         "address": payload.get("address"),
         "notes": payload.get("notes", ""),
+        "capacity_notes": payload.get("capacity_notes", ""),
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
@@ -89,21 +93,25 @@ async def update_partner(partner_id: str, payload: dict):
     update_data = {
         "name": payload.get("name", existing.get("name")),
         "partner_type": payload.get("partner_type", existing.get("partner_type")),
+        "vendor_type": payload.get("vendor_type", existing.get("vendor_type", "product_supplier")),
         "contact_person": payload.get("contact_person", existing.get("contact_person")),
         "email": payload.get("email", existing.get("email")),
         "phone": payload.get("phone", existing.get("phone")),
         "country_code": payload.get("country_code", existing.get("country_code")),
         "regions": payload.get("regions", existing.get("regions")),
         "categories": payload.get("categories", existing.get("categories")),
+        "supported_services": payload.get("supported_services", existing.get("supported_services", [])),
         "coverage_mode": payload.get("coverage_mode", existing.get("coverage_mode")),
         "fulfillment_type": payload.get("fulfillment_type", existing.get("fulfillment_type")),
         "status": payload.get("status", existing.get("status")),
+        "preferred_partner": payload.get("preferred_partner", existing.get("preferred_partner", False)),
         "lead_time_days": int(payload.get("lead_time_days", existing.get("lead_time_days", 2)) or 2),
         "settlement_terms": payload.get("settlement_terms", existing.get("settlement_terms")),
         "commission_rate": float(payload.get("commission_rate", existing.get("commission_rate", 0)) or 0),
         "bank_details": payload.get("bank_details", existing.get("bank_details")),
         "address": payload.get("address", existing.get("address")),
         "notes": payload.get("notes", existing.get("notes")),
+        "capacity_notes": payload.get("capacity_notes", existing.get("capacity_notes", "")),
         "updated_at": datetime.now(timezone.utc),
     }
 

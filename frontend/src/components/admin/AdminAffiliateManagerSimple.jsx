@@ -206,7 +206,7 @@ export default function AdminAffiliateManagerSimple() {
       ) : (
         <div className="rounded-[2rem] border border-slate-200 bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm" data-testid="affiliates-table">
+            <table className="w-full table-fixed text-sm" data-testid="affiliates-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>

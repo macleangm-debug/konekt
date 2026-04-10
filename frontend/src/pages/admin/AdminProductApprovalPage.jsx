@@ -214,7 +214,7 @@ export default function AdminProductApprovalPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border overflow-hidden" data-testid="submissions-table">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-slate-50 border-b">
               <tr>
                 {isPending && <th className="w-12 py-3 px-4"><input type="checkbox" checked={checkedIds.size === filtered.length && filtered.length > 0} onChange={toggleAll} data-testid="select-all-checkbox" className="rounded border-slate-300" /></th>}

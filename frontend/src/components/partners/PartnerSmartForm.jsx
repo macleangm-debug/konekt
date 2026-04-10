@@ -23,10 +23,19 @@ export default function PartnerSmartForm({ form, setForm }) {
 
           <label className="block">
             <div className="text-sm text-slate-500 mb-2">Partner Type</div>
-            <select className="w-full border rounded-xl px-4 py-3" value={form.partner_type} onChange={(e) => setForm({ ...form, partner_type: e.target.value })}>
+            <select className="w-full border rounded-xl px-4 py-3" value={form.partner_type} onChange={(e) => setForm({ ...form, partner_type: e.target.value })} data-testid="partner-type-select">
               <option value="service">Service Partner</option>
               <option value="product">Product Partner</option>
               <option value="hybrid">Hybrid Partner</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <div className="text-sm text-slate-500 mb-2">Vendor Classification</div>
+            <select className="w-full border rounded-xl px-4 py-3" value={form.vendor_type || "product_supplier"} onChange={(e) => setForm({ ...form, vendor_type: e.target.value })} data-testid="vendor-type-select">
+              <option value="product_supplier">Product Supplier</option>
+              <option value="service_provider">Service Provider</option>
+              <option value="logistics_partner">Logistics Partner</option>
             </select>
           </label>
 
@@ -147,13 +156,24 @@ export default function PartnerSmartForm({ form, setForm }) {
             <input type="number" className="w-full border rounded-xl px-4 py-3" value={form.turnaround_days} onChange={(e) => setForm({ ...form, turnaround_days: e.target.value })} />
           </label>
 
-          <label className="flex items-center gap-3 rounded-xl border px-4 py-3 mt-6">
+          <label className="flex items-center gap-3 rounded-xl border px-4 py-3 mt-6" data-testid="preferred-partner-toggle">
             <input type="checkbox" checked={!!form.preferred_partner} onChange={(e) => setForm({ ...form, preferred_partner: e.target.checked })} />
             <span className="text-sm text-[#20364D] font-medium">Preferred Partner</span>
           </label>
         </div>
 
-        <label className="flex items-center gap-3 rounded-xl border px-4 py-3">
+        <label className="block mt-4">
+          <div className="text-sm text-slate-500 mb-2">Capacity Notes</div>
+          <textarea
+            className="w-full min-h-[80px] border rounded-xl px-4 py-3 text-sm"
+            placeholder="Monthly capacity, limitations, seasonal availability..."
+            value={form.capacity_notes || ""}
+            onChange={(e) => setForm({ ...form, capacity_notes: e.target.value })}
+            data-testid="capacity-notes-input"
+          />
+        </label>
+
+        <label className="flex items-center gap-3 rounded-xl border px-4 py-3 mt-4">
           <input type="checkbox" checked={!!form.temporarily_unavailable} onChange={(e) => setForm({ ...form, temporarily_unavailable: e.target.checked })} />
           <span className="text-sm text-[#20364D] font-medium">Temporarily Unavailable</span>
         </label>

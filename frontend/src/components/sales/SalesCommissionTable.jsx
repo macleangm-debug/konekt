@@ -29,7 +29,7 @@ export default function SalesCommissionTable({ rows = [] }) {
 
   return (
     <div className="overflow-x-auto rounded-2xl border" data-testid="sales-commission-table">
-      <table className="min-w-full text-sm">
+      <table className="w-full table-fixed text-sm">
         <thead className="bg-slate-50 text-left">
           <tr>
             <th className="px-4 py-3 font-medium text-slate-600">Order</th>

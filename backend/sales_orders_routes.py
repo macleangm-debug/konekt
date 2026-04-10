@@ -117,8 +117,10 @@ async def get_sales_order_detail(
         raise HTTPException(404, "Order not found")
 
     order = dict(order)
+    order_uuid = order.get("id", "")
     if "_id" in order:
-        order["id"] = str(order["_id"])
+        if not order_uuid:
+            order["id"] = str(order["_id"])
         del order["_id"]
 
     # Sales users can only see their own assigned orders
@@ -159,5 +161,39 @@ async def get_sales_order_detail(
     # Linked documents
     order["invoice_no"] = order.get("invoice_number") or order.get("linked_invoice_number", "")
     order["quote_no"] = order.get("quote_number") or order.get("linked_quote_number", "")
+
+    # ── Vendor Orders Detail (multi-vendor visibility) ──
+    from bson import ObjectId as OID2
+    raw_vos = await db.vendor_orders.find({"order_id": order.get("id")}).to_list(50)
+    vendor_orders_detail = []
+    for vo in raw_vos:
+        if "_id" in vo:
+            vo["id"] = str(vo["_id"])
+            del vo["_id"]
+        # Resolve vendor info
+        vid = vo.get("vendor_id") or vo.get("partner_id")
+        vendor_info = {}
+        if vid:
+            try:
+                vdoc = await db.partners.find_one({"_id": OID2(vid)})
+            except Exception:
+                vdoc = await db.partners.find_one({"id": vid})
+            if vdoc:
+                vendor_info = {
+                    "vendor_name": vdoc.get("name") or vdoc.get("company_name") or vdoc.get("business_name", ""),
+                    "contact_person": vdoc.get("contact_person") or vdoc.get("full_name", ""),
+                    "contact_phone": vdoc.get("phone") or vdoc.get("contact_phone", ""),
+                    "contact_email": vdoc.get("email") or vdoc.get("contact_email", ""),
+                }
+        vendor_orders_detail.append({
+            "vendor_order_id": vo.get("id"),
+            "vendor_order_no": vo.get("vendor_order_no", ""),
+            "status": vo.get("status", "assigned"),
+            "items": vo.get("items", []),
+            "created_at": vo.get("created_at"),
+            **vendor_info,
+        })
+    order["vendor_orders"] = vendor_orders_detail
+    order["vendor_count"] = len(vendor_orders_detail)
 
     return order

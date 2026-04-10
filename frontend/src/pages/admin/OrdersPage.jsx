@@ -250,30 +250,30 @@ export default function OrdersPage() {
       ) : rows.length > 0 ? (
         <div className="rounded-[2rem] border border-slate-200 bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm" data-testid="orders-table">
+            <table className="w-full table-fixed text-sm" data-testid="orders-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Order #</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Payer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Total</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payment</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Fulfillment</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase w-[12%]">Date</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase w-[16%]">Order #</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase w-[22%]">Customer</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell w-[14%]">Payer</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase text-right w-[12%]">Total</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase w-[12%]">Payment</th>
+                  <th className="px-3 py-3 text-xs font-semibold text-slate-600 uppercase w-[12%]">Fulfillment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {[...rows].sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0)).map((row) => (
                   <tr key={row.id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`order-row-${row.id}`}>
-                    <td className="px-4 py-3 text-xs text-slate-500">{formatDateShort(row.created_at)}</td>
-                    <td className="px-4 py-3 font-semibold text-[#20364D]">{row.order_number || "-"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-3 text-xs text-slate-500">{formatDateShort(row.created_at)}</td>
+                    <td className="px-3 py-3 font-semibold text-[#20364D] truncate">{row.order_number || "-"}</td>
+                    <td className="px-3 py-3">
                       <CustomerLinkCell customerId={row.customer_id} customerName={row.customer_name} />
                     </td>
-                    <td className="px-4 py-3 text-slate-600 hidden md:table-cell">{row.payer_name || "-"}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
-                    <td className="px-4 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
-                    <td className="px-4 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
+                    <td className="px-3 py-3 text-slate-600 hidden md:table-cell truncate">{row.payer_name || "-"}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
+                    <td className="px-3 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
+                    <td className="px-3 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
                   </tr>
                 ))}
               </tbody>
