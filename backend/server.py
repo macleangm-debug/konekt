@@ -1524,7 +1524,7 @@ async def delete_product(product_id: str, user: dict = Depends(get_admin_user)):
 
 @api_router.post("/referrals/use")
 async def use_referral(data: ReferralUse, user: dict = Depends(get_current_user)):
-    if user.get("referred_by"):
+    if user.get("referred_by") or user.get("referred_by_code") or user.get("referral_code_used"):
         raise HTTPException(status_code=400, detail="You have already used a referral code")
     
     referrer = await db.users.find_one({"referral_code": data.referral_code}, {"_id": 0})
@@ -1533,10 +1533,17 @@ async def use_referral(data: ReferralUse, user: dict = Depends(get_current_user)
     if referrer["id"] == user["id"]:
         raise HTTPException(status_code=400, detail="Cannot use your own referral code")
     
-    await db.users.update_one({"id": referrer["id"]}, {"$inc": {"points": 200, "total_referrals": 1}})
-    await db.users.update_one({"id": user["id"]}, {"$set": {"referred_by": referrer["id"]}, "$inc": {"points": 150}})
+    # Only mark as referred — NO immediate reward. Reward triggers on purchase.
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "referred_by": referrer["id"],
+            "referred_by_code": data.referral_code,
+            "referral_code_used": data.referral_code,
+        }}
+    )
     
-    return {"message": "Referral applied! You earned 150 points, your friend earned 200 points."}
+    return {"message": "Referral code applied! Your referrer will earn rewards when you complete a purchase."}
 
 @api_router.get("/referrals/stats")
 async def get_referral_stats(user: dict = Depends(get_current_user)):

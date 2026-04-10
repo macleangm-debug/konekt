@@ -15,8 +15,9 @@ export default function CheckoutPageV2() {
   const navigate = useNavigate();
   const { items: cartContextItems, total: cartTotal, clearCart } = useCart();
   const [cartItems, setCartItems] = useState([]);
-  const [requestedPointsAmount, setRequestedPointsAmount] = useState(0);
-  const [validation, setValidation] = useState(null);
+  const [walletData, setWalletData] = useState({ balance: 0, max_pct: 30 });
+  const [walletApplyAmount, setWalletApplyAmount] = useState(0);
+  const [walletApplied, setWalletApplied] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [selectedMethod, setSelectedMethod] = useState("bank_transfer");
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,19 @@ export default function CheckoutPageV2() {
           } catch (err) {
             console.log("Failed to load user data");
           }
+
+          // Load wallet data
+          try {
+            const walletRes = await api.get("/api/customer/referrals/wallet-usage-rules");
+            if (walletRes.data) {
+              setWalletData({
+                balance: walletRes.data.wallet_balance || 0,
+                max_pct: walletRes.data.max_wallet_usage_pct || 30,
+              });
+            }
+          } catch {
+            // Wallet not available
+          }
         }
       } finally {
         setLoading(false);
@@ -90,11 +104,6 @@ export default function CheckoutPageV2() {
     [cartItems, cartTotal]
   );
 
-  const partnerCostTotal = useMemo(
-    () => cartItems.reduce((sum, x) => sum + Number(x.partner_cost || 0) * Number(x.qty || x.quantity || 0), 0),
-    [cartItems]
-  );
-
   const tzSettings = useMemo(
     () => (paymentSettings || []).find((x) => x.country_code === "TZ") || {
       account_name: "KONEKT LIMITED",
@@ -105,24 +114,8 @@ export default function CheckoutPageV2() {
     [paymentSettings]
   );
 
-  const validatePoints = async () => {
-    if (subtotal <= 0) return;
-    try {
-      const res = await api.post("/api/checkout-points/validate", {
-        subtotal,
-        partner_cost_total: partnerCostTotal,
-        requested_points_amount: Number(requestedPointsAmount || 0),
-        protected_margin_percent: 40,
-        points_cap_percent_of_distributable_margin: 10,
-      });
-      setValidation(res.data);
-    } catch (err) {
-      console.log("Points validation not available");
-    }
-  };
-
   useEffect(() => {
-    if (cartItems.length) validatePoints();
+    // no-op: wallet loaded separately
   }, [cartItems, subtotal]);
 
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
@@ -161,8 +154,8 @@ export default function CheckoutPageV2() {
           partner_cost: item.partner_cost || 0,
         })),
         subtotal,
-        total: validation?.checkout?.final_total || subtotal,
-        points_used: validation?.checkout?.approved_points_amount || 0,
+        total: Math.max(0, subtotal - (walletApplied ? walletApplyAmount : 0)),
+        wallet_applied: walletApplied ? walletApplyAmount : 0,
         payment_method: "bank_transfer",
       });
 
@@ -210,7 +203,7 @@ export default function CheckoutPageV2() {
     <div className="space-y-8" data-testid="checkout-page-v2">
       <PageHeader
         title="Checkout"
-        subtitle="Review your order, apply points safely, and continue using bank transfer."
+        subtitle="Review your order, apply wallet credits, and continue with payment."
       />
 
       <form onSubmit={handleSubmit}>
@@ -301,55 +294,104 @@ export default function CheckoutPageV2() {
               />
             </SurfaceCard>
 
-            {/* Points & Totals */}
+            {/* Wallet & Totals */}
             <SurfaceCard>
-              <div className="text-2xl font-bold text-[#20364D]">Rewards & Totals</div>
+              <div className="text-2xl font-bold text-[#20364D]">Wallet & Totals</div>
 
               <div className="mt-5 space-y-4">
-                <div>
-                  <label className="block text-sm text-slate-500 mb-2">Points to use</label>
-                  <input
-                    type="number"
-                    className="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                    value={requestedPointsAmount}
-                    onChange={(e) => setRequestedPointsAmount(e.target.value)}
-                    data-testid="points-input"
-                  />
-                </div>
+                {/* Wallet Usage Block */}
+                {walletData.balance > 0 && (
+                  <div className="rounded-2xl border bg-gradient-to-br from-[#20364D]/5 to-[#D4A843]/5 p-4 space-y-3" data-testid="wallet-usage-block">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#20364D]">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                      Use Wallet Balance
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">Wallet Balance</span>
+                        <div className="font-bold text-[#2D3E50]" data-testid="checkout-wallet-balance">
+                          TZS {Number(walletData.balance).toLocaleString()}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Max usable ({walletData.max_pct}%)</span>
+                        <div className="font-bold text-[#2D3E50]" data-testid="checkout-wallet-max">
+                          TZS {Number(Math.min(walletData.balance, Math.floor(subtotal * walletData.max_pct / 100))).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
 
-                <button
-                  type="button"
-                  onClick={validatePoints}
-                  className="rounded-xl border px-5 py-3 font-semibold text-[#20364D] hover:bg-slate-50"
-                  data-testid="validate-points-btn"
-                >
-                  Validate Points
-                </button>
+                    {!walletApplied ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const maxUsable = Math.min(walletData.balance, Math.floor(subtotal * walletData.max_pct / 100));
+                          setWalletApplyAmount(maxUsable);
+                          setWalletApplied(true);
+                          toast.success(`TZS ${maxUsable.toLocaleString()} will be applied from wallet`);
+                        }}
+                        className="rounded-xl bg-[#D4A843] px-4 py-2.5 text-sm font-semibold text-[#20364D] hover:bg-[#c49a3d] transition w-full"
+                        data-testid="apply-wallet-btn"
+                      >
+                        Apply Wallet Balance
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2.5">
+                          <span className="text-sm text-emerald-800 font-medium">
+                            Applied: TZS {Number(walletApplyAmount).toLocaleString()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWalletApplyAmount(0);
+                              setWalletApplied(false);
+                              toast.info("Wallet credit removed");
+                            }}
+                            className="text-xs text-red-600 underline"
+                            data-testid="remove-wallet-btn"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-slate-400">
+                      You can use up to {walletData.max_pct}% of this fee from your wallet.
+                      {walletData.balance > Math.floor(subtotal * walletData.max_pct / 100) && (
+                        <span> You have enough balance, but only up to {walletData.max_pct}% can be applied.</span>
+                      )}
+                    </p>
+                  </div>
+                )}
+
+                {walletData.balance <= 0 && (
+                  <div className="rounded-2xl border bg-slate-50 p-4 text-sm text-slate-500" data-testid="wallet-empty-state">
+                    Your wallet is currently empty. Earn rewards by referring others!
+                  </div>
+                )}
 
                 <div className="rounded-2xl border bg-slate-50 p-4">
                   <div className="flex justify-between py-1">
                     <span>Subtotal</span>
                     <span>TZS {Number(subtotal || 0).toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between py-1">
-                    <span>Approved Points</span>
-                    <span className="text-emerald-600">
-                      -TZS {Number(validation?.checkout?.approved_points_amount || 0).toLocaleString()}
-                    </span>
-                  </div>
+                  {walletApplied && walletApplyAmount > 0 && (
+                    <div className="flex justify-between py-1 text-emerald-600">
+                      <span>Wallet Applied</span>
+                      <span data-testid="checkout-wallet-applied">
+                        -TZS {Number(walletApplyAmount).toLocaleString()}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-1 font-bold text-[#20364D] border-t mt-2 pt-2">
                     <span>Final Total</span>
                     <span data-testid="checkout-final-total">
-                      TZS {Number(validation?.checkout?.final_total || subtotal).toLocaleString()}
+                      TZS {Number(Math.max(0, (subtotal || 0) - (walletApplied ? walletApplyAmount : 0))).toLocaleString()}
                     </span>
                   </div>
                 </div>
-
-                {validation?.message && (
-                  <div className="rounded-2xl border bg-amber-50 text-amber-800 px-4 py-3 text-sm">
-                    {validation.message}
-                  </div>
-                )}
               </div>
             </SurfaceCard>
           </div>
@@ -409,9 +451,15 @@ export default function CheckoutPageV2() {
                     <div className="flex justify-between py-1 font-bold text-[#20364D]">
                       <span>Amount Due</span>
                       <span data-testid="confirmation-amount-due">
-                        TZS {Number(validation?.checkout?.final_total || subtotal).toLocaleString()}
+                        TZS {Number(Math.max(0, (subtotal || 0) - (walletApplied ? walletApplyAmount : 0))).toLocaleString()}
                       </span>
                     </div>
+                    {walletApplied && walletApplyAmount > 0 && (
+                      <div className="flex justify-between py-1 text-xs text-emerald-600">
+                        <span>Wallet applied</span>
+                        <span>-TZS {Number(walletApplyAmount).toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
 
                   <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border hover:bg-slate-50 transition" data-testid="payment-confirmation-label">

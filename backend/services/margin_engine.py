@@ -134,10 +134,17 @@ async def get_split_settings(db):
     settings = await db.distribution_settings.find_one({"type": "global"}, {"_id": 0})
     if not settings:
         settings = {}
+    # Also read referral_pct from admin_settings commercial section
+    hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    commercial = {}
+    if hub and hub.get("value"):
+        commercial = hub["value"].get("commercial", {})
     return {
         "sales_share_pct": settings.get("sales_pct", 30),
         "affiliate_share_pct": settings.get("affiliate_pct", 40),
         "discount_share_pct": settings.get("discount_pct", 30),
+        "referral_share_pct": commercial.get("referral_pct", 10),
+        "max_wallet_usage_pct": commercial.get("max_wallet_usage_pct", 30),
     }
 
 
@@ -157,10 +164,12 @@ def resolve_pricing(vendor_price, rule, split_settings):
     sales_pct = Decimal(str(split_settings.get("sales_share_pct", 0)))
     aff_pct = Decimal(str(split_settings.get("affiliate_share_pct", 0)))
     disc_pct = Decimal(str(split_settings.get("discount_share_pct", 0)))
+    ref_pct = Decimal(str(split_settings.get("referral_share_pct", 0)))
 
     sales_amt = _money(dp_val * sales_pct / Decimal("100")) if dp_val else _money(0)
     aff_amt = _money(dp_val * aff_pct / Decimal("100")) if dp_val else _money(0)
     disc_amt = _money(dp_val * disc_pct / Decimal("100")) if dp_val else _money(0)
+    ref_amt = _money(dp_val * ref_pct / Decimal("100")) if dp_val else _money(0)
 
     return {
         "base_price": float(vp),
@@ -171,9 +180,11 @@ def resolve_pricing(vendor_price, rule, split_settings):
         "sales_share_pct": float(sales_pct),
         "affiliate_share_pct": float(aff_pct),
         "discount_share_pct": float(disc_pct),
+        "referral_share_pct": float(ref_pct),
         "sales_amount": float(sales_amt),
         "affiliate_amount": float(aff_amt),
         "discount_amount": float(disc_amt),
+        "referral_amount": float(ref_amt),
         "final_price": float(final),
         "rule_scope": rule.get("scope_type", "global"),
         "rule_label": rule.get("scope_label", "Global Default"),

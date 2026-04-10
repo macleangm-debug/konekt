@@ -63,6 +63,15 @@ NOTIFICATION_EVENTS = {
         "cta_label": "View Order",
         "roles": ["customer"],
     },
+    "referral_reward": {
+        "title": "Referral Reward Earned!",
+        "message_tpl": "You earned TZS {reward_amount} from a referral purchase.",
+        "type": "success",
+        "priority": "normal",
+        "cta_label": "View Rewards",
+        "cta_path": "/account/referrals",
+        "roles": ["customer"],
+    },
     # ── Sales notifications ──
     "sales_order_assigned": {
         "title": "New Order Assigned",

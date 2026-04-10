@@ -45,17 +45,19 @@ def validate_distribution_split(
     sales_pct: float,
     discount_pct: float,
     distribution_margin_pct: float,
+    referral_pct: float = 0,
 ):
     """
     Split percentages are OF the distributable pool (not of vendor price).
     Total must be <= 100%.
     """
-    total = Decimal(str(affiliate_pct)) + Decimal(str(sales_pct)) + Decimal(str(discount_pct))
+    total = Decimal(str(affiliate_pct)) + Decimal(str(sales_pct)) + Decimal(str(discount_pct)) + Decimal(str(referral_pct))
     cap = Decimal("100")
     return {
         "affiliate_pct": float(affiliate_pct),
         "sales_pct": float(sales_pct),
         "discount_pct": float(discount_pct),
+        "referral_pct": float(referral_pct),
         "total_split_pct": float(total),
         "distribution_margin_pct": float(distribution_margin_pct),
         "is_valid": total <= cap,

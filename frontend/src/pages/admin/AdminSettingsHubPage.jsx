@@ -28,7 +28,7 @@ const TABS = [
 ];
 
 const defaultState = {
-  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18 },
+  commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18, referral_pct: 10, max_wallet_usage_pct: 30, referral_min_order_amount: 0, referral_max_reward_per_order: 0 },
   margin_rules: { allow_product_group_margin_override: true, allow_product_margin_override: true, allow_service_group_margin_override: true, allow_service_margin_override: true, pricing_below_minimum_margin_requires_admin_override: true },
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
   affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
@@ -253,6 +253,15 @@ function CommercialTab({ state, setState }) {
           <SettingsSelectField label="Commission Mode" value={c.commission_mode} onChange={(v) => setState(U(state, "commercial", "commission_mode", v))} options={[{ value: "fair_balanced", label: "Fair Balanced" }, { value: "sales_priority", label: "Sales Priority" }, { value: "affiliate_priority", label: "Affiliate Priority" }, { value: "fixed_split", label: "Fixed Split" }]} />
           <SettingsToggleField label="Affiliate reduces sales commission" checked={c.affiliate_attribution_reduces_sales_commission} onChange={(v) => setState(U(state, "commercial", "affiliate_attribution_reduces_sales_commission", v))} />
         </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Referral & Wallet" description="Configure referral reward allocation (from distribution margin) and wallet usage limits.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Referral Reward % (of dist. margin)" value={c.referral_pct} onChange={(v) => setState(U(state, "commercial", "referral_pct", v))} />
+          <SettingsNumberField label="Max Wallet Usage % per Order" value={c.max_wallet_usage_pct} onChange={(v) => setState(U(state, "commercial", "max_wallet_usage_pct", v))} />
+          <SettingsNumberField label="Min Order for Referral Reward" value={c.referral_min_order_amount} onChange={(v) => setState(U(state, "commercial", "referral_min_order_amount", v))} />
+          <SettingsNumberField label="Max Reward per Order (0=no cap)" value={c.referral_max_reward_per_order} onChange={(v) => setState(U(state, "commercial", "referral_max_reward_per_order", v))} />
+        </div>
+        <p className="text-xs text-slate-400 mt-3">Referral rewards are funded from the distribution margin pool. Ensure total allocations (affiliate + sales + discount + referral) do not exceed 100%.</p>
       </SettingsSectionCard>
       <SettingsSectionCard title="Margin Rules" description="Control margin overrides across products and services.">
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">

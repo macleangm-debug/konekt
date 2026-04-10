@@ -53,6 +53,10 @@ DEFAULT_SETTINGS = {
         "commission_mode": "fair_balanced",
         "affiliate_attribution_reduces_sales_commission": True,
         "vat_percent": 18.0,
+        "referral_pct": 10.0,
+        "max_wallet_usage_pct": 30.0,
+        "referral_min_order_amount": 0,
+        "referral_max_reward_per_order": 0,
     },
     "margin_rules": {
         "allow_product_group_margin_override": True,

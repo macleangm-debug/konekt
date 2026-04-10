@@ -310,6 +310,31 @@ export default function BankTransferPage() {
             >
               {submitting ? "Submitting..." : "I Have Made the Transfer"}
             </button>
+
+            {/* Post-checkout referral CTA (Growth Loop 3) */}
+            <div className="mt-4 rounded-xl border bg-gradient-to-r from-[#20364D]/5 to-[#D4A843]/5 p-4" data-testid="post-checkout-referral-cta">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#D4A843]/20 flex items-center justify-center shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#2D3E50]">
+                    Invite others and earn rewards
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Share your referral link and earn when others complete purchases.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate("/account/referrals")}
+                  className="shrink-0 rounded-lg bg-[#D4A843] px-3 py-1.5 text-xs font-semibold text-[#20364D] hover:bg-[#c49a3d] transition"
+                  data-testid="post-checkout-referral-btn"
+                >
+                  Share
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

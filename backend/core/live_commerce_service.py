@@ -64,6 +64,7 @@ class LiveCommerceService:
         delivery = payload.get("delivery") or {}
         customer = payload.get("customer") or {}
         quote_details = payload.get("quote_details") or {}
+        wallet_apply_amount = float(payload.get("wallet_apply_amount", 0) or 0)
 
         if not items:
             raise HTTPException(status_code=400, detail="items are required")
@@ -95,6 +96,41 @@ class LiveCommerceService:
         vat_percent = float(payload.get("vat_percent", 18) or 18)
         vat_amount = self._money(subtotal * vat_percent / 100.0)
         total_amount = self._money(subtotal + vat_amount)
+
+        # --- Wallet application logic ---
+        wallet_applied = 0.0
+        if wallet_apply_amount > 0 and customer_id:
+            user_doc = await self.db.users.find_one(
+                {"$or": [{"id": customer_id}, {"email": customer_id}]},
+                {"_id": 0, "id": 1, "credit_balance": 1}
+            )
+            if user_doc:
+                balance = float(user_doc.get("credit_balance", 0))
+                # Get max wallet usage % from settings
+                hub = await self.db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+                max_pct = 30.0
+                if hub and hub.get("value"):
+                    max_pct = float(hub["value"].get("commercial", {}).get("max_wallet_usage_pct", 30))
+                max_usable = self._money(total_amount * max_pct / 100.0)
+                wallet_applied = min(wallet_apply_amount, balance, max_usable)
+                wallet_applied = self._money(wallet_applied)
+                if wallet_applied > 0:
+                    # Deduct from user balance
+                    await self.db.users.update_one(
+                        {"id": user_doc["id"]},
+                        {"$inc": {"credit_balance": -wallet_applied}}
+                    )
+                    # Record wallet transaction
+                    await self.db.wallet_transactions.insert_one({
+                        "user_id": user_doc["id"],
+                        "type": "debit",
+                        "amount": -wallet_applied,
+                        "description": f"Wallet applied to checkout",
+                        "reference_type": "checkout",
+                        "created_at": self._now(),
+                    })
+
+        final_payable = self._money(total_amount - wallet_applied)
         now = self._now()
 
         checkout_id = str(uuid4())
@@ -112,6 +148,8 @@ class LiveCommerceService:
             "subtotal_amount": self._money(subtotal),
             "vat_amount": vat_amount,
             "total_amount": total_amount,
+            "wallet_applied": wallet_applied,
+            "final_payable": final_payable,
             "delivery": delivery,
             "customer": customer,
             "quote_details": quote_details,
@@ -137,7 +175,8 @@ class LiveCommerceService:
             "vat_amount": vat_amount,
             "total_amount": total_amount,
             "total": total_amount,
-            "amount_due": total_amount,
+            "amount_due": final_payable,
+            "wallet_applied": wallet_applied,
             "delivery": delivery,
             "customer": customer,
             "quote_details": quote_details,
@@ -152,7 +191,8 @@ class LiveCommerceService:
         return {
             "checkout": self._clean(checkout_doc),
             "invoice": self._clean(invoice_doc),
-            "bank_details": self.bank_details(total_amount),
+            "bank_details": self.bank_details(final_payable),
+            "wallet_applied": wallet_applied,
         }
 
     async def accept_quote(self, quote_id: str, accepted_by_role: str = "customer") -> Dict[str, Any]:
@@ -783,6 +823,15 @@ class LiveCommerceService:
                     )
             except Exception:
                 pass
+
+            # Trigger referral reward for the referrer (purchase-based, tier-aware)
+            try:
+                from referral_hooks import process_referral_reward_on_payment
+                if order_doc and fully_paid:
+                    await process_referral_reward_on_payment(self.db, order_doc)
+            except Exception as ref_err:
+                import logging as _rl
+                _rl.getLogger("live_commerce").warning(f"Referral reward hook error: {ref_err}")
 
         return {
             "fully_paid": fully_paid,

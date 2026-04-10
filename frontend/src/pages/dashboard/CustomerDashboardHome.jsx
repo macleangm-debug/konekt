@@ -48,21 +48,16 @@ export default function CustomerDashboardHome() {
     activeOrders: 0,
     openQuotes: 0,
     pendingInvoices: 0,
-    points: 0,
-    referralCode: "",
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [ordersRes, quotesRes, invoicesRes, referralRes] = await Promise.all([
+        const [ordersRes, quotesRes, invoicesRes] = await Promise.all([
           api.get("/api/customer/orders").catch(() => ({ data: [] })),
           api.get("/api/customer/quotes").catch(() => ({ data: [] })),
           api.get("/api/customer/invoices").catch(() => ({ data: [] })),
-          api.get("/api/customer/referrals/overview").catch(() => ({
-            data: { points_balance: 0, referral_code: "" },
-          })),
         ]);
 
         const orders = ordersRes.data || [];
@@ -86,8 +81,6 @@ export default function CustomerDashboardHome() {
           activeOrders,
           openQuotes,
           pendingInvoices,
-          points: referralRes.data?.points_balance || referralRes.data?.wallet?.points_balance || 0,
-          referralCode: referralRes.data?.referral_code || "",
         });
       } catch (error) {
         console.error("Failed to load dashboard stats:", error);
@@ -128,14 +121,11 @@ export default function CustomerDashboardHome() {
         </div>
       </div>
 
-      {/* Referral & Points Banner */}
-      <ReferralPointsBanner
-        points={stats.points}
-        referralCode={stats.referralCode}
-      />
+      {/* Referral & Earn Card */}
+      <ReferralPointsBanner />
 
       {/* Stats Grid */}
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <StatCard 
           label="Active Orders" 
           value={stats.activeOrders} 
@@ -150,11 +140,6 @@ export default function CustomerDashboardHome() {
           label="Pending Invoices" 
           value={stats.pendingInvoices} 
           subtext="Complete payment faster" 
-        />
-        <StatCard 
-          label="Points Balance" 
-          value={stats.points.toLocaleString()} 
-          subtext="Use points for discounts" 
         />
       </div>
 
