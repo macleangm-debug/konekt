@@ -4,6 +4,7 @@ import api from "../../lib/api";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
+import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import {
   CreditCard, CheckCircle2, XCircle, Clock, FileText, Eye,
   User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight, Loader2,
@@ -27,6 +28,7 @@ function StatusBadge({ status }) {
 }
 
 export default function PaymentsQueuePage() {
+  const { confirmAction } = useConfirmModal();
   const [proofs, setProofs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -132,32 +134,43 @@ export default function PaymentsQueuePage() {
         <table className="w-full text-sm" data-testid="payments-table">
           <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Date</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Invoice</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Customer</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Payer</th>
-              <th className="text-right px-4 py-3 font-semibold text-slate-600">Amount</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
-              <th className="text-left px-4 py-3 font-semibold text-slate-600">Approved By</th>
-              <th className="text-right px-4 py-3 font-semibold text-slate-600"></th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Invoice</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="text-center py-12 text-slate-400">Loading...</td></tr>
+              <tr><td colSpan={8} className="text-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" /></td></tr>
             ) : proofs.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-12 text-slate-400">No payments found</td></tr>
+              <tr><td colSpan={8} className="text-center py-12">
+                <CreditCard className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                <h3 className="text-base font-semibold text-slate-700">No data available yet</h3>
+                <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+              </td></tr>
             ) : proofs.map((p) => (
               <tr key={p.payment_proof_id} className="border-b last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDrawer(p)} data-testid={`payment-row-${p.payment_proof_id}`}>
-                <td className="px-4 py-3 text-slate-600">{p.created_at ? new Date(p.created_at).toLocaleDateString() : "-"}</td>
-                <td className="px-4 py-3 font-medium text-[#20364D]">{p.invoice_number || "-"}</td>
+                <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{p.created_at ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
+                <td className="px-4 py-3 font-semibold text-sm text-[#20364D]">{p.invoice_number || p.order_number || p.payment_reference || "—"}</td>
                 <td className="px-4 py-3">
                   <CustomerLinkCell customerId={p.customer_id} customerName={p.customer_name} />
                 </td>
-                <td className="px-4 py-3 text-slate-600">{p.payer_name || "-"}</td>
-                <td className="px-4 py-3 text-right font-medium">TZS {Number(p.amount_paid || 0).toLocaleString()}</td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-medium text-slate-700">{p.payer_name || "—"}</div>
+                  {p.payer_phone && <div className="text-xs text-slate-500">{p.payer_phone}</div>}
+                </td>
+                <td className="px-4 py-3">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${p.source === "public" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
+                    {p.source === "public" ? "Public" : "Account"}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-sm">TZS {Number(p.amount_paid || 0).toLocaleString()}</td>
                 <td className="px-4 py-3"><StatusBadge status={p.status} /></td>
-                <td className="px-4 py-3 text-slate-500 text-xs">{p.approved_by || "-"}</td>
                 <td className="px-4 py-3 text-right"><ChevronRight className="w-4 h-4 text-slate-400" /></td>
               </tr>
             ))}
@@ -327,7 +340,15 @@ export default function PaymentsQueuePage() {
               <div className="space-y-3 pt-1" data-testid="drawer-actions">
                 <div className="flex gap-3">
                   <button
-                    onClick={handleApprove}
+                    onClick={() => {
+                      confirmAction({
+                        title: "Approve Payment?",
+                        message: `Approve TZS ${Number(selected.amount_paid || 0).toLocaleString()} from ${selected.payer_name || "payer"}?`,
+                        confirmLabel: "Approve",
+                        tone: "success",
+                        onConfirm: handleApprove,
+                      });
+                    }}
                     disabled={acting}
                     className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition disabled:opacity-40 flex items-center justify-center gap-2"
                     data-testid="approve-payment-btn"
@@ -336,8 +357,13 @@ export default function PaymentsQueuePage() {
                   </button>
                   <button
                     onClick={() => {
-                      const reason = window.prompt("Rejection reason:");
-                      if (reason !== null) handleReject(reason);
+                      confirmAction({
+                        title: "Reject Payment?",
+                        message: "Are you sure you want to reject this payment proof?",
+                        confirmLabel: "Reject",
+                        tone: "danger",
+                        onConfirm: () => handleReject("Payment proof rejected by admin"),
+                      });
                     }}
                     disabled={acting}
                     className="flex-1 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold text-sm hover:bg-red-100 transition disabled:opacity-40 flex items-center justify-center gap-2"
