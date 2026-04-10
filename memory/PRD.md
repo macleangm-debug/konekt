@@ -386,6 +386,28 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - `PublicFooter.jsx`: Fixed Privacy link `/privacy-policy` → `/privacy`
   - `PremiumFooterV2.jsx`: Already had correct links (verified)
 
+### Phase 21 — Canonical Service Page Template (Apr 10, 2026)
+- **Canonical Service Page Template System**
+  - Built 8 reusable sub-components in `/components/services/canonical/`:
+    - `ServiceHero` — Full-width dark hero with group label, title, description, dual CTAs (Request Quote + Get Business Pricing)
+    - `ServiceIncludes` — Grid cards with check icons for what's included
+    - `ServiceAudience` — Who this service is for, arrow-icon cards
+    - `ServiceProcess` — 4-step numbered flow with connector line between steps
+    - `ServiceBenefits` — Why choose this service, gold check-icon list
+    - `ServiceUseCases` — Common use cases with lightbulb icons (gracefully hidden when empty)
+    - `ServiceFAQ` — Expandable accordion with centered heading
+    - `ServiceCTA` — Dark final conversion block with dual CTAs
+  - `CanonicalServicePage.jsx` — Master template assembling all 8 sections, accepts data props
+  - `index.js` barrel export for clean imports
+- **Applied to all service routes:**
+  - `DynamicServiceDetailPage.jsx` (`/services/:slug`) — Standalone route with nav/footer
+  - `ServiceDetailContent.jsx` (`/services/:groupSlug/:serviceSlug`) — Inside PublicSiteLayout
+- **Data enrichment** for priority services:
+  - `printing-promotional-materials`: +2 includes, +4 use_cases, +3 FAQs (now 5 total)
+  - `office-branding`: +2 includes, +4 use_cases, +3 FAQs (now 4 total)
+  - `graphic-design-support`: +2 includes, +4 use_cases, +3 FAQs (now 4 total)
+- **Design rules enforced:** Same spacing, typography, card components, CTA style across all service pages. No one-off layouts.
+
 ## Backlog
 
 ### P1 — Upcoming
