@@ -28,6 +28,60 @@ function maskName(name) {
   return name.slice(0, 2) + "***" + name.slice(-1);
 }
 
+function MilestoneBar({ label, current, nextTarget, achieved, allComplete, format }) {
+  const prev = achieved.length > 0 ? achieved[achieved.length - 1] : 0;
+  const progress = allComplete
+    ? 100
+    : nextTarget
+    ? Math.min(100, Math.round(((current - prev) / (nextTarget - prev)) * 100))
+    : 0;
+
+  return (
+    <div data-testid={`milestone-${label.toLowerCase()}`}>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-sm font-medium text-[#2D3E50]">{label}</span>
+        <span className="text-xs text-slate-500">
+          {allComplete ? (
+            <span className="text-emerald-600 font-medium">All milestones reached</span>
+          ) : nextTarget ? (
+            `${format(current)} / ${format(nextTarget)}`
+          ) : null}
+        </span>
+      </div>
+      {/* Progress bar */}
+      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#D4A843] to-[#c49a3d] transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+      {/* Milestone dots */}
+      {achieved.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-2">
+          {achieved.map((m) => (
+            <span
+              key={m}
+              className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-medium text-emerald-700"
+            >
+              {format(m)}
+            </span>
+          ))}
+          {!allComplete && nextTarget && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+              {format(nextTarget)}
+            </span>
+          )}
+        </div>
+      )}
+      {achieved.length === 0 && !allComplete && nextTarget && (
+        <p className="text-xs text-slate-400 mt-1.5">
+          Next milestone: {format(nextTarget)}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ReferralsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +126,10 @@ export default function ReferralsPage() {
   const referralCode = data?.referral_code || "";
   const referralLink = data?.referral_link || `${window.location.origin}/register?ref=${referralCode}`;
   const maxUsagePct = data?.max_wallet_usage_pct || 30;
+  const milestones = data?.milestones || {
+    referrals: { current: 0, achieved: [], next_target: 1, all_complete: false },
+    earnings: { current: 0, achieved: [], next_target: 10000, all_complete: false },
+  };
 
   return (
     <div className="space-y-6" data-testid="referrals-page">
@@ -104,6 +162,31 @@ export default function ReferralsPage() {
         <p className="text-xs text-slate-400 mt-3">
           Wallet rewards can be used for eligible ecosystem fees.
         </p>
+      </div>
+
+      {/* Section 1.5 — Your Progress */}
+      <div className="rounded-2xl border bg-white p-6" data-testid="milestones-section">
+        <h2 className="text-lg font-bold text-[#2D3E50] mb-4">Your Progress</h2>
+        <div className="space-y-5">
+          {/* Referral Count Progress */}
+          <MilestoneBar
+            label="Referrals"
+            current={milestones.referrals.current}
+            nextTarget={milestones.referrals.next_target}
+            achieved={milestones.referrals.achieved}
+            allComplete={milestones.referrals.all_complete}
+            format={(v) => `${v} referral${v !== 1 ? "s" : ""}`}
+          />
+          {/* Earnings Progress */}
+          <MilestoneBar
+            label="Earnings"
+            current={milestones.earnings.current}
+            nextTarget={milestones.earnings.next_target}
+            achieved={milestones.earnings.achieved}
+            allComplete={milestones.earnings.all_complete}
+            format={(v) => money(v)}
+          />
+        </div>
       </div>
 
       {/* Section 2 — Referral Link / Code */}

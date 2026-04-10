@@ -72,6 +72,15 @@ NOTIFICATION_EVENTS = {
         "cta_path": "/account/referrals",
         "roles": ["customer"],
     },
+    "referral_milestone": {
+        "title": "Referral Milestone Reached!",
+        "message_tpl": "You've reached {milestone_value} {milestone_type}. Keep sharing to earn more.",
+        "type": "success",
+        "priority": "normal",
+        "cta_label": "View Progress",
+        "cta_path": "/account/referrals",
+        "roles": ["customer"],
+    },
     # ── Sales notifications ──
     "sales_order_assigned": {
         "title": "New Order Assigned",

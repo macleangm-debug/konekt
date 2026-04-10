@@ -202,6 +202,18 @@ export default function CustomerDashboardV3() {
             </div>
             <div className="text-2xl font-bold text-[#D4A843] mb-1">{fmtMoney(ref.balance || 0)}</div>
             <p className="text-xs text-slate-300 mb-3">Earn rewards when your referrals purchase</p>
+            {/* Subtle progress */}
+            {ref.successful_referrals !== undefined && (
+              <div className="mb-3">
+                <p className="text-[10px] text-slate-400 mb-1">
+                  {ref.successful_referrals || 0} referral{(ref.successful_referrals || 0) !== 1 ? "s" : ""} completed
+                  {ref.next_milestone ? ` · Next: ${ref.next_milestone}` : ""}
+                </p>
+                <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full bg-[#D4A843] transition-all duration-500" style={{ width: `${Math.min(100, ref.next_milestone ? Math.round(((ref.successful_referrals || 0) / ref.next_milestone) * 100) : 0)}%` }} />
+                </div>
+              </div>
+            )}
             {ref.code && (
               <div className="flex items-center gap-2 bg-white/10 rounded-lg border border-white/20 p-2">
                 <code className="flex-1 text-sm font-mono text-white font-bold">{ref.code}</code>

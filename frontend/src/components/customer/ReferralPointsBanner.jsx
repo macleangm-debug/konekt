@@ -95,6 +95,30 @@ export default function ReferralPointsBanner() {
           </div>
         </div>
 
+        {/* Progress Indicator */}
+        {data?.milestones?.referrals?.next_target && (
+          <div className="mb-5" data-testid="dashboard-milestone-progress">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs text-slate-300">
+                {successfulReferrals} referral{successfulReferrals !== 1 ? "s" : ""} completed
+              </span>
+              <span className="text-xs text-slate-400">
+                Next: {data.milestones.referrals.next_target}
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-[#D4A843] transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, Math.round(
+                    (successfulReferrals / data.milestones.referrals.next_target) * 100
+                  ))}%`,
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Action Row */}
         <div className="flex flex-wrap items-center gap-3">
           <Button

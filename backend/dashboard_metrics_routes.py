@@ -135,6 +135,8 @@ async def customer_dashboard_metrics(request: Request, user_id: str | None = Non
             "balance": referral_balance,
             "code": user_referral_code,
             "total_earned": referral_total_earned,
+            "successful_referrals": len(referral_txns),
+            "next_milestone": next((m for m in [1, 5, 10, 25, 50] if len(referral_txns) < m), None),
         },
         "charts": {
             "order_trend": order_trend,
