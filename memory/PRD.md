@@ -249,13 +249,39 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - All delete/deactivate/approve/reject/convert actions use global modal
   - Zero `window.confirm()` remaining in codebase
 
+### Phase 15 — Scheduled Weekly Report Delivery (Apr 10, 2026)
+- **Backend Scheduler** (`services/scheduled_report_delivery.py`)
+  - Lightweight asyncio background loop (60s check interval)
+  - Default schedule: Monday 08:00 AM, Africa/Dar_es_Salaam timezone
+  - Reads config from `admin_settings` collection (key: `report_schedule`)
+  - Prevents duplicate deliveries (same ISO week check)
+  - Generates executive snapshot: revenue, orders completed, avg rating, open alerts
+  - Delivers via multichannel dispatch (respects per-user notification preferences)
+  - Safe failure handling: logs errors, never crashes the app
+- **Settings Hub: Report Delivery Tab**
+  - Enable/disable toggle
+  - Day of week selector (Mon-Sun)
+  - Delivery time selector (24h, hourly)
+  - Timezone selector (7 African/common timezones)
+  - Recipient role toggles: Admin, Sales Manager, Finance Manager
+  - "Deliver Report Now" manual trigger with confirmation modal
+  - Last delivery status display (timestamp + recipient count)
+- **API Endpoints** (added to `admin_settings_hub_routes.py`)
+  - `GET /api/admin/settings-hub/report-schedule`
+  - `PUT /api/admin/settings-hub/report-schedule`
+  - `POST /api/admin/settings-hub/report-schedule/deliver-now`
+- **Notification Integration**
+  - Added `weekly_report` event to `NOTIFICATION_EVENTS` in `in_app_notification_service.py`
+  - Added `EVENT_DEEP_LINKS` for report-specific deep links
+  - In-app notifications deep link to `/admin/reports/weekly-performance?weeks_back=1`
+  - Email/WhatsApp channels: placeholder ready for Resend/Twilio integration
+
 ## Backlog
 
 ### P1 — Upcoming
-- Scheduled Weekly Report Delivery (respecting notification preferences)
 - Coaching System for Sales Team (flagging underperforming reps)
+- Resend email integration for live report delivery (pending API key)
 - Twilio WhatsApp integration for alert/report delivery (pending API keys)
-- Resend email integration for automated report delivery (pending API key)
 
 ### P2 — Future
 - One-click reorder / Saved Carts
