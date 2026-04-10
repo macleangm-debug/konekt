@@ -10,11 +10,11 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Payments**: Stripe sandbox integration
 
 ## Key Technical Principles
-- **Strict Payer/Customer Separation**: `customer_name` from account/business records ONLY. `payer_name` from payment proof/submission ONLY. Never fallback to each other.
-- **Partner Data Access Control**: Service partners NEVER see client identity (client_name, delivery_address, contact_person, contact_phone). Only logistics/distributor/delivery partners can see delivery details. Enforced at API level, not UI.
-- **Vendor Privacy**: Vendors see only their `vendor_order_no`, base_price, work details, and Konekt Sales Contact. No customer identity or margins.
-- **Unified Service Execution**: Logistics and Service partners use the same pricing engine. Mode A (Partner inputs cost) or Mode B (Sales inputs cost).
-- **Global Confirmation Modal**: Never use `window.confirm`. All destructive actions use `useConfirmationModal` hook.
+- **Strict Payer/Customer Separation**: `customer_name` from account/business records ONLY. `payer_name` from payment proof/submission ONLY.
+- **Partner Data Access Control**: Service partners NEVER see client identity. Only logistics/distributor/delivery partners see delivery details. Enforced at API level.
+- **Quote ↔ Service Task Linking**: Service-type quote lines link to service tasks. Partner cost flows through pricing engine → quote line → invoice. Partner cost is INTERNAL, customer/invoice sees selling price only.
+- **Unified Service Execution**: Logistics and Service partners use the same pricing engine.
+- **Global Confirmation Modal**: Never use `window.confirm`.
 
 ## What's Been Implemented
 
@@ -22,50 +22,55 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - Stripe sandbox payment integration
 - CRM Quote Builder Drawer with auto-calculated margins
 - Document Tables standardization (Quotes, Invoices, POs, Delivery Notes)
-- Dashboard Empty States (Team Performance, Leaderboard, Alerts)
-- Global Confirmation Modal enforcement (replaced 9 native alerts)
+- Dashboard Empty States, Global Confirmation Modal
 
 ### Service Task Execution — Phase 1 (DONE)
-- Service Task data model and backend APIs (`service_task_routes.py`)
+- Service Task data model and backend APIs
 - Partner Assigned Work Page UI with cost input
 - Task creation, assignment, cost submission, status updates
-- KPI dashboard for partners
 
 ### P0 Full Wiring Audit (DONE — April 10, 2026)
-- **Payment Queue**: Status normalization (`pending`/`pending_verification` → `uploaded`), `payment_proof_id` fallback, `payer_phone`/`payer_email`/`source` wired in table + drawer
-- **Admin Orders**: Payer name waterfall (order → invoice → billing.invoice_client_name → proof), `customer_name` never null
-- **Customer Orders**: Added `payment_status_label`, `fulfillment_status`, `customer_status` to API response
-- **Customer Invoices**: Added `total_amount` guarantee, payer resolution with billing fallback
-- **Admin Invoices**: Fixed strict payer separation (no customer_name fallback), enriched detail endpoint
+- Payment Queue status normalization, payment_proof_id fallback, payer/source fields
+- Orders payer_name waterfall (order → invoice → billing → proof)
+- Customer portal enrichment (payment_status_label, fulfillment_status)
+- Admin invoices strict payer separation
 
 ### P1 Notifications (DONE — April 10, 2026)
-- **Payment approved** → deep link to `/account/orders` with CTA "Track Order"
-- **Payment rejected** → deep link to `/account/invoices` with CTA "Open Invoice"
-- **Partner task assigned** → notification with deep link to `/partner/assigned-work?task={id}` with CTA "Submit Cost"
-- **Partner cost submitted** → admin notification with deep link to `/admin/service-tasks?task={id}` with CTA "Review Cost"
-- **Overdue cost endpoint**: `GET /api/admin/service-tasks/overdue-costs` returns tasks awaiting cost >48h
+- Payment approved → /account/orders, rejected → /account/invoices
+- Partner task assigned → /partner/assigned-work?task={id}
+- Partner cost submitted → admin notification + quote-specific notification
+- Overdue cost endpoint (>48h)
 
 ### Partner Data Access Control (DONE — April 10, 2026)
-- **Backend enforcement**: `_resolve_partner_type()` checks the `partners` collection for `partner_type`
-- **Logistics types** (`logistics`, `distributor`, `delivery`): CAN see `client_name`, `delivery_address`, `contact_person`, `contact_phone`
-- **Service types** (`service`, `service_partner`, `product`, `hybrid`): Fields set to `null` — NEVER see client identity
-- **Frontend**: Conditional rendering — client section and delivery details only visible when `is_logistics=true`
-- **Table column**: "Client" replaced with "Scope" in partner table for service partners
+- Backend enforcement via _resolve_partner_type()
+- Logistics types see delivery details, service types see null
 
 ### Admin Dashboard Widget (DONE — April 10, 2026)
-- **Partner Response Pipeline** widget between KPI row and Snapshots Grid
-- Shows: Awaiting count, Overdue count (>48h), To Review count (cost_submitted)
-- **Warning state**: Amber border + red animated pill when overdue tasks exist
-- **CTA**: "View Tasks →" or "Review Overdue" deep-linking to `/admin/service-tasks`
-- **Admin Service Tasks Page**: Full task management with status tabs, search, detail drawer, overdue highlight
+- Partner Response Pipeline widget (Awaiting, Overdue, To Review counts)
+- Admin Service Tasks Page with filters, search, detail drawer
+
+### Quote ↔ Service Task Auto-Linking (DONE — April 10, 2026)
+- **POST /api/admin/service-tasks/from-quote-line**: Creates task from service-type quote line
+  - Validates service/logistics type only
+  - Prevents duplicate tasks (409 Conflict)
+  - Pre-populates task with quote context (client, delivery, service type)
+  - Marks quote line with service_task_id + cost_source=awaiting_partner
+- **Cost Propagation Pipeline**: When partner submits cost:
+  - Pricing engine runs (platform_settings.commercial_rules.minimum_company_margin_percent)
+  - Quote line auto-updated: effective_cost=partner_cost, unit_price=selling_price, total recalculated
+  - Quote subtotal/total recalculated
+  - Traceability: cost_source=partner_submitted, service_task_id set
+  - Admin/sales notified with "Review Quote" CTA
+- **GET /api/admin/quotes-v2/{quote_id}/linked-tasks**: Shows task status per quote
+- **Frontend**: Quote detail modal shows Type column, Task status column, "Assign Partner" dropdown for unlinked service lines
+- **Data Protection**: Partner sees only partner_cost. Invoice uses unit_price (selling price) only.
 
 ## Backlog (Prioritized)
 
 ### P1
-- Quote ↔ Service Task auto-linking
-- Automated partner assignment matching rules
+- Automated partner assignment matching rules (service type, region, availability)
+- Global Readability Hardening (contrast, font weights, typography)
 - Logistics partner specific UI extensions
-- Global Readability Hardening (contrast, font weights, light/dark modes)
 
 ### P2
 - Category-Based Margin Rules
@@ -73,28 +78,22 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - Sales follow-up automation
 - Instant Quote Estimation UI
 
-### HOLD (Do Not Start)
-- Product Delivery Logistics Workflow (new system, not stabilization)
-- Hybrid Margin Engine (new pricing system, risk of breaking flows)
+### HOLD
+- Product Delivery Logistics Workflow
+- Hybrid Margin Engine
 
 ### Future
-- Twilio WhatsApp integration (blocked on API keys)
-- Resend email integration (blocked on API keys)
-- One-click reorder / Saved Carts
+- Twilio WhatsApp / Resend Email (blocked on API keys)
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
 
 ## Key API Endpoints
-- `GET /api/admin/payments/queue` — Payment queue with enrichment
-- `GET /api/admin/orders-ops` — Admin orders with full enrichment
-- `GET /api/customer/orders` — Customer orders with status labels
-- `GET /api/customer/invoices` — Customer invoices with payer resolution
-- `GET /api/admin/service-tasks` — Full task list
-- `GET /api/admin/service-tasks/stats/summary` — Service task KPIs
+- `POST /api/admin/service-tasks/from-quote-line` — Create task from quote line
+- `GET /api/admin/quotes-v2/{quote_id}/linked-tasks` — Linked tasks view
+- `PUT /api/partner-portal/assigned-work/{task_id}/submit-cost` — Partner cost + pricing engine + quote propagation
+- `GET /api/admin/service-tasks/stats/summary` — Task KPIs
 - `GET /api/admin/service-tasks/overdue-costs` — Overdue cost submissions
-- `GET /api/partner-portal/assigned-work` — Partner tasks (data-filtered by partner_type)
-- `POST /api/admin/payments/{id}/approve` — Payment approval (via LiveCommerceService)
 
 ## Test Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
