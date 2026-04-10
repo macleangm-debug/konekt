@@ -52,7 +52,10 @@ export default function AdminProductApprovalPage() {
   const filtered = useMemo(() => {
     let list = submissions;
     if (statusFilter !== "all") {
-      list = list.filter(s => s.review_status === statusFilter);
+      list = list.filter(s => {
+        if (statusFilter === "pending") return s.review_status === "pending" || s.review_status === "pending_review";
+        return s.review_status === statusFilter;
+      });
     }
     if (search) {
       const q = search.toLowerCase();

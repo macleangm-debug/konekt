@@ -144,7 +144,7 @@ function SalesManagerDashboard() {
             </Link>
           </div>
           {teamTable.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">No sales reps found</div>
+            <div className="text-center py-8 text-slate-500 text-sm font-medium">No sales reps data available yet</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -197,7 +197,7 @@ function SalesManagerDashboard() {
             <h3 className="font-semibold text-[#20364D] text-sm">Leaderboard</h3>
           </div>
           {leaderboard.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">No data</div>
+            <div className="text-center py-8 text-slate-500 text-sm font-medium">No invoices to display</div>
           ) : (
             <div className="space-y-2">
               {leaderboard.slice(0, 8).map((entry) => (
@@ -666,7 +666,7 @@ function FinanceManagerDashboard() {
               </table>
             </div>
           ) : (
-            <div className="text-center py-4 text-slate-400 text-sm">No sales commission data yet</div>
+            <div className="text-center py-4 text-slate-500 text-sm font-medium">No sales commission data yet</div>
           )}
         </div>
 
@@ -969,7 +969,7 @@ function AdminDashboardMain() {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
+            <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm font-medium">No data available yet</div>
           )}
         </div>
 
@@ -987,7 +987,7 @@ function AdminDashboardMain() {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
+            <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm font-medium">No data available yet</div>
           )}
         </div>
 
@@ -1017,7 +1017,7 @@ function AdminDashboardMain() {
               </div>
             </div>
           ) : (
-            <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
+            <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm font-medium">No data available yet</div>
           )}
         </div>
       </div>
@@ -1031,7 +1031,7 @@ function AdminDashboardMain() {
           </Link>
         </div>
         {recentOrders.length === 0 ? (
-          <div className="text-center py-6"><Package className="w-8 h-8 mx-auto mb-2 text-slate-300" /><p className="text-sm text-slate-400">No orders yet</p></div>
+          <div className="text-center py-6"><Package className="w-8 h-8 mx-auto mb-2 text-slate-300" /><p className="text-sm text-slate-500 font-medium">No orders yet</p></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

@@ -38,7 +38,7 @@ async def submission_stats(request: Request):
     total = sum(counts.values())
     return {
         "total": total,
-        "pending": counts.get("pending", 0),
+        "pending": counts.get("pending", 0) + counts.get("pending_review", 0),
         "approved": counts.get("approved", 0),
         "rejected": counts.get("rejected", 0),
         "changes_requested": counts.get("changes_requested", 0),
@@ -61,21 +61,32 @@ async def list_all_submissions(
 
     subs = []
     async for doc in db.vendor_product_submissions.find(query, {"_id": 0}).sort("created_at", -1):
-        # Enrich with vendor name
-        if doc.get("vendor_id") and doc["vendor_id"] != "unknown":
+        # Normalize nested format (from product_upload_service) to flat
+        if doc.get("product") and isinstance(doc["product"], dict):
+            prod = doc["product"]
+            doc["product_name"] = prod.get("product_name", "")
+            doc["description"] = prod.get("short_description") or prod.get("full_description", "")
+            doc["group_id"] = prod.get("group_id")
+            doc["group_name"] = prod.get("group_name", "")
+            doc["category_id"] = prod.get("category_id")
+            doc["category_name"] = prod.get("category_name", "")
+            doc["subcategory_id"] = prod.get("subcategory_id")
+            doc["image_url"] = prod.get("primary_image", "")
+            doc["brand"] = prod.get("brand", "")
+        if doc.get("supply") and isinstance(doc["supply"], dict):
+            sup = doc["supply"]
+            doc["base_cost"] = sup.get("base_price_vat_inclusive", 0)
+            doc["min_quantity"] = sup.get("default_quantity", 1)
+            doc["vendor_product_code"] = sup.get("vendor_product_code", "")
+
+        # Enrich with vendor name if missing
+        if not doc.get("vendor_name") and doc.get("vendor_id") and doc["vendor_id"] != "unknown":
             vendor = await db.users.find_one({"id": doc["vendor_id"]}, {"_id": 0, "name": 1, "email": 1})
             if vendor:
                 doc["vendor_name"] = vendor.get("name", vendor.get("email", ""))
             else:
                 partner = await db.partners.find_one({"id": doc["vendor_id"]}, {"_id": 0, "name": 1})
                 doc["vendor_name"] = partner.get("name", "") if partner else ""
-        # Enrich with taxonomy names
-        if doc.get("group_id"):
-            grp = await db.product_groups.find_one({"id": doc["group_id"]}, {"_id": 0, "name": 1})
-            doc["group_name"] = grp.get("name", "") if grp else ""
-        if doc.get("category_id"):
-            cat = await db.catalog_categories.find_one({"id": doc["category_id"]}, {"_id": 0, "name": 1})
-            doc["category_name"] = cat.get("name", "") if cat else ""
 
         subs.append(doc)
     return subs
@@ -98,26 +109,35 @@ async def approve_submission(submission_id: str, body: ReviewAction, request: Re
     sub = await db.vendor_product_submissions.find_one({"id": submission_id}, {"_id": 0})
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
-    if sub.get("review_status") == "approved":
+    if sub.get("review_status") in ("approved",):
         raise HTTPException(status_code=400, detail="Already approved")
 
     now = datetime.now(timezone.utc).isoformat()
 
+    # Normalize nested format
+    prod = sub.get("product", {}) if isinstance(sub.get("product"), dict) else {}
+    sup = sub.get("supply", {}) if isinstance(sub.get("supply"), dict) else {}
+
+    product_name = prod.get("product_name") or sub.get("product_name", "")
+    description = prod.get("short_description") or prod.get("full_description") or sub.get("description", "")
+    base_price = float(sup.get("base_price_vat_inclusive") or sub.get("base_cost", 0))
+
     # Create a product in the catalog
     product_doc = {
-        "name": sub.get("product_name", ""),
-        "description": sub.get("description", ""),
-        "base_price": float(sub.get("base_cost", 0)),
-        "category": sub.get("category_name") or sub.get("category_id") or "",
-        "group_id": sub.get("group_id"),
-        "category_id": sub.get("category_id"),
-        "subcategory_id": sub.get("subcategory_id"),
+        "name": product_name,
+        "description": description,
+        "base_price": base_price,
+        "category": prod.get("category_name") or sub.get("category_name") or sub.get("category_id") or "",
+        "group_id": prod.get("group_id") or sub.get("group_id"),
+        "category_id": prod.get("category_id") or sub.get("category_id"),
+        "subcategory_id": prod.get("subcategory_id") or sub.get("subcategory_id"),
         "vendor_id": sub.get("vendor_id"),
         "source": "vendor_submission",
         "submission_id": submission_id,
         "currency": sub.get("currency_code", "TZS"),
-        "min_quantity": sub.get("min_quantity", 1),
-        "image_url": sub.get("image_url", ""),
+        "min_quantity": int(sup.get("default_quantity") or sub.get("min_quantity", 1)),
+        "image_url": prod.get("primary_image") or sub.get("image_url", ""),
+        "brand": prod.get("brand") or sub.get("brand", ""),
         "is_active": body.publish,
         "status": "published" if body.publish else "approved",
         "visibility_mode": sub.get("visibility_mode", "request_quote"),
@@ -143,7 +163,8 @@ async def approve_submission(submission_id: str, body: ReviewAction, request: Re
     )
 
     # Notify vendor
-    await _notify_vendor(db, sub.get("vendor_id"), submission_id, "approved", sub.get("product_name", ""))
+    pname = product_name or "your product"
+    await _notify_vendor(db, sub.get("vendor_id"), submission_id, "approved", pname)
 
     return {"ok": True, "product_id": product_id}
 
@@ -167,7 +188,9 @@ async def reject_submission(submission_id: str, body: ReviewAction, request: Req
         }}
     )
 
-    await _notify_vendor(db, sub.get("vendor_id"), submission_id, "rejected", sub.get("product_name", ""))
+    prod_r = sub.get("product", {}) if isinstance(sub.get("product"), dict) else {}
+    pname = prod_r.get("product_name") or sub.get("product_name", "your product")
+    await _notify_vendor(db, sub.get("vendor_id"), submission_id, "rejected", pname)
     return {"ok": True}
 
 
@@ -188,21 +211,29 @@ async def bulk_approve(body: BulkAction, request: Request):
             errors.append(f"{sid}: already approved")
             continue
 
-        # Create product
+        # Normalize nested format
+        prod = sub.get("product", {}) if isinstance(sub.get("product"), dict) else {}
+        sup = sub.get("supply", {}) if isinstance(sub.get("supply"), dict) else {}
+
+        product_name = prod.get("product_name") or sub.get("product_name", "")
+        description = prod.get("short_description") or prod.get("full_description") or sub.get("description", "")
+        base_price = float(sup.get("base_price_vat_inclusive") or sub.get("base_cost", 0))
+
         product_doc = {
-            "name": sub.get("product_name", ""),
-            "description": sub.get("description", ""),
-            "base_price": float(sub.get("base_cost", 0)),
-            "category": sub.get("category_name") or sub.get("category_id") or "",
-            "group_id": sub.get("group_id"),
-            "category_id": sub.get("category_id"),
-            "subcategory_id": sub.get("subcategory_id"),
+            "name": product_name,
+            "description": description,
+            "base_price": base_price,
+            "category": prod.get("category_name") or sub.get("category_name") or sub.get("category_id") or "",
+            "group_id": prod.get("group_id") or sub.get("group_id"),
+            "category_id": prod.get("category_id") or sub.get("category_id"),
+            "subcategory_id": prod.get("subcategory_id") or sub.get("subcategory_id"),
             "vendor_id": sub.get("vendor_id"),
             "source": "vendor_submission",
             "submission_id": sid,
             "currency": sub.get("currency_code", "TZS"),
-            "min_quantity": sub.get("min_quantity", 1),
-            "image_url": sub.get("image_url", ""),
+            "min_quantity": int(sup.get("default_quantity") or sub.get("min_quantity", 1)),
+            "image_url": prod.get("primary_image") or sub.get("image_url", ""),
+            "brand": prod.get("brand") or sub.get("brand", ""),
             "is_active": body.publish,
             "status": "published" if body.publish else "approved",
             "visibility_mode": sub.get("visibility_mode", "request_quote"),
@@ -222,7 +253,7 @@ async def bulk_approve(body: BulkAction, request: Request):
             }}
         )
         approved += 1
-        await _notify_vendor(db, sub.get("vendor_id"), sid, "approved", sub.get("product_name", ""))
+        await _notify_vendor(db, sub.get("vendor_id"), sid, "approved", product_name or "your product")
 
     return {"ok": True, "approved": approved, "errors": errors}
 
@@ -254,7 +285,9 @@ async def bulk_reject(body: BulkAction, request: Request):
             }}
         )
         rejected += 1
-        await _notify_vendor(db, sub.get("vendor_id"), sid, "rejected", sub.get("product_name", ""))
+        prod_r2 = sub.get("product", {}) if isinstance(sub.get("product"), dict) else {}
+        pname2 = prod_r2.get("product_name") or sub.get("product_name", "your product")
+        await _notify_vendor(db, sub.get("vendor_id"), sid, "rejected", pname2)
 
     return {"ok": True, "rejected": rejected, "errors": errors}
 
