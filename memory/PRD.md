@@ -329,6 +329,17 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Frontend: Checkout Wallet UX** — Wallet usage block in both `CheckoutPageV2` and `AccountCheckoutPage` with balance display
 - **Frontend: Post-Checkout CTA** — Referral sharing CTA on BankTransferPage
 
+### Phase 17b — Referral Milestones / Progress System (Apr 10, 2026)
+- **Milestone Definitions** — Two dimensions: Referral Count (1, 5, 10, 25, 50) and Earnings (TZS 10K, 50K, 100K, 250K, 500K)
+  - Pure computation from existing referral_transactions — no new tracking system
+  - `compute_milestones()` returns current, achieved list, next_target, all_complete per dimension
+- **Backend** — `/overview` and `/me` endpoints return `milestones` object; dashboard metrics return `next_milestone`
+  - `check_and_send_milestone_notification()` deduplicates via `user_milestones` collection
+  - `referral_milestone` notification event registered in notification service
+- **Frontend: Referrals Page** — "Your Progress" section with `MilestoneBar` components (gold progress bars, achieved badges in emerald, next target in slate)
+- **Frontend: Dashboard Cards** — Small progress indicator on both `CustomerDashboardV3` referral card and `ReferralPointsBanner`
+- **Design Principle** — Subtle, premium progress recognition. No gamification, popups, or confetti.
+
 ## Backlog
 
 ### P1 — Upcoming
