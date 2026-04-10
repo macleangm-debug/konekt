@@ -81,7 +81,13 @@ export default function SalesPerformancePage() {
               {loading ? (
                 <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">No sales team members found.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-16 text-center">
+                  <div data-testid="sales-performance-empty">
+                    <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                    <h3 className="text-lg font-semibold text-slate-700">No data available yet</h3>
+                    <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+                  </div>
+                </td></tr>
               ) : filtered.map((m) => (
                 <tr key={m.user_id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors" data-testid={`sales-row-${m.user_id}`}>
                   <td className="px-4 py-3 font-medium text-[#20364D]">{m.name || "—"}</td>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Users } from "lucide-react";
 import api from "../../lib/api";
 
 export default function StaffPerformancePage() {
@@ -96,8 +97,10 @@ export default function StaffPerformancePage() {
             </table>
           </div>
         ) : (
-          <div className="text-center py-10 text-slate-500">
-            No staff performance data available yet.
+          <div className="text-center py-16" data-testid="staff-performance-empty">
+            <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+            <h3 className="text-lg font-semibold text-slate-700">No data available yet</h3>
+            <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
           </div>
         )}
       </div>

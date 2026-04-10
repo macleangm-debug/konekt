@@ -177,7 +177,11 @@ export default function AdminSalesRatingsPage() {
         <div className="lg:col-span-3 bg-white border rounded-xl p-5" data-testid="ratings-by-rep">
           <h2 className="text-base font-bold text-[#0f172a] mb-4">Ratings by Sales Rep</h2>
           {reps_table.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">No rated orders yet.</p>
+            <div className="text-center py-12" data-testid="reps-table-empty">
+              <Users className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+              <h3 className="text-base font-semibold text-slate-700">No data available yet</h3>
+              <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -215,7 +219,11 @@ export default function AdminSalesRatingsPage() {
         <div className="lg:col-span-2 bg-white border rounded-xl p-5" data-testid="rating-trend">
           <h2 className="text-base font-bold text-[#0f172a] mb-4">Rating Trend</h2>
           {trend.length === 0 ? (
-            <p className="text-sm text-slate-400 text-center py-6">No trend data available.</p>
+            <div className="text-center py-12" data-testid="trend-empty">
+              <TrendingUp className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+              <h3 className="text-base font-semibold text-slate-700">No data available yet</h3>
+              <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+            </div>
           ) : (
             <div className="space-y-2">
               {trend.slice(-14).map((t, i) => (

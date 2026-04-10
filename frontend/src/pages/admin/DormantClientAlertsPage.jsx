@@ -114,8 +114,10 @@ export default function DormantClientAlertsPage() {
         {loading ? (
           <div className="p-8 text-center text-sm text-slate-500">Loading dormant clients...</div>
         ) : alerts.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500" data-testid="no-dormant-clients">
-            No dormant clients found with current filters.
+          <div className="p-12 text-center" data-testid="no-dormant-clients">
+            <AlertTriangle className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+            <h3 className="text-lg font-semibold text-slate-700">No data available yet</h3>
+            <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
           </div>
         ) : (
           <table className="w-full text-sm" data-testid="dormant-clients-table">

@@ -434,15 +434,15 @@ export default function QuotesPage() {
             {viewMode === "list" && (
               <div className="rounded-2xl border bg-white overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-left">
+                  <table className="min-w-full text-left" data-testid="quotes-table">
                     <thead className="bg-slate-50 border-b">
                       <tr>
-                        <th className="px-5 py-4 text-sm font-semibold">Quote #</th>
-                        <th className="px-5 py-4 text-sm font-semibold">Customer</th>
-                        <th className="px-5 py-4 text-sm font-semibold">Amount</th>
-                        <th className="px-5 py-4 text-sm font-semibold">Status</th>
-                        <th className="px-5 py-4 text-sm font-semibold">Payment Terms</th>
-                        <th className="px-5 py-4 text-sm font-semibold">Actions</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Document #</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Client</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                        <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -452,37 +452,47 @@ export default function QuotesPage() {
                         </tr>
                       ) : filteredQuotes.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-5 py-10 text-center text-slate-500">No quotes found</td>
+                          <td colSpan={6} className="px-5 py-12 text-center">
+                            <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                            <h3 className="text-base font-semibold text-slate-700">No data available yet</h3>
+                            <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+                          </td>
                         </tr>
                       ) : (
                         filteredQuotes.map((quote) => (
                           <tr key={quote.id} className="border-b last:border-b-0 hover:bg-slate-50" data-testid={`quote-row-${quote.id}`}>
-                            <td className="px-5 py-4 font-semibold">{quote.quote_number}</td>
-                            <td className="px-5 py-4">
-                              <div>{quote.customer_name}</div>
-                              <div className="text-sm text-slate-500">{quote.customer_company || "—"}</div>
+                            <td className="px-5 py-3.5 font-semibold text-sm text-[#20364D]">{quote.quote_number}</td>
+                            <td className="px-5 py-3.5">
+                              <div className="text-sm font-medium">{quote.customer_company || quote.customer_name || "—"}</div>
+                              {quote.customer_company && quote.customer_name && (
+                                <div className="text-xs text-slate-500">{quote.customer_name}</div>
+                              )}
                             </td>
-                            <td className="px-5 py-4">{formatMoney(quote.total, quote.currency)}</td>
-                            <td className="px-5 py-4">
-                              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[quote.status] || "bg-slate-100"}`}>
+                            <td className="px-5 py-3.5 text-sm text-slate-500 whitespace-nowrap">
+                              {quote.created_at ? new Date(quote.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                            </td>
+                            <td className="px-5 py-3.5 text-sm font-semibold">{formatMoney(quote.total, quote.currency)}</td>
+                            <td className="px-5 py-3.5">
+                              <span className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize ${statusColors[quote.status] || "bg-slate-100"}`}>
                                 {quote.status}
                               </span>
                             </td>
-                            <td className="px-5 py-4 text-sm">{quote.payment_term_label || "—"}</td>
-                            <td className="px-5 py-4">
+                            <td className="px-5 py-3.5">
                               <div className="flex gap-2">
                                 <a
                                   href={adminApi.downloadQuotePdf(quote.id)}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
+                                  className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-slate-100"
+                                  data-testid={`quote-pdf-${quote.id}`}
                                 >
                                   PDF
                                 </a>
                                 <button
                                   type="button"
                                   onClick={() => sendQuote(quote.id)}
-                                  className="rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-100"
+                                  className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-slate-100"
+                                  data-testid={`quote-send-${quote.id}`}
                                 >
                                   Send
                                 </button>
@@ -490,7 +500,8 @@ export default function QuotesPage() {
                                   <button
                                     type="button"
                                     onClick={() => convertToOrder(quote.id)}
-                                    className="rounded-lg bg-[#D4A843] text-[#2D3E50] px-3 py-1.5 text-sm font-medium hover:bg-[#c49933]"
+                                    className="rounded-lg bg-[#D4A843] text-[#2D3E50] px-3 py-1.5 text-xs font-medium hover:bg-[#c49933]"
+                                    data-testid={`quote-convert-${quote.id}`}
                                   >
                                     Convert
                                   </button>

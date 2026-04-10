@@ -21,6 +21,9 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
   const [addingType, setAddingType] = useState(null); // "product" | "service" | null
   const [submitting, setSubmitting] = useState(false);
 
+  // Item Type Lock-in: once the first item is added, lock to that type
+  const lockedType = lineItems.length > 0 ? lineItems[0].type : null;
+
   // Product search
   const [productQuery, setProductQuery] = useState("");
   const [productResults, setProductResults] = useState([]);
@@ -197,10 +200,20 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
           {!addingType ? (
             <div className="rounded-xl border-2 border-dashed border-slate-200 p-5">
               <p className="text-sm font-semibold text-[#20364D] mb-3">Add Item</p>
+              {lockedType && (
+                <p className="text-xs text-slate-400 mb-2">
+                  Locked to <span className="font-semibold capitalize">{lockedType}s</span> — all items must be the same type.
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setAddingType("product")}
-                  className="rounded-xl border border-slate-200 p-4 text-left hover:border-[#20364D] hover:bg-[#20364D]/5 transition-all"
+                  disabled={lockedType === "service"}
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    lockedType === "service"
+                      ? "border-slate-100 opacity-40 cursor-not-allowed bg-slate-50"
+                      : "border-slate-200 hover:border-[#20364D] hover:bg-[#20364D]/5"
+                  }`}
                   data-testid="add-product-btn"
                 >
                   <Package className="w-5 h-5 text-blue-500 mb-2" />
@@ -209,7 +222,12 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
                 </button>
                 <button
                   onClick={() => setAddingType("service")}
-                  className="rounded-xl border border-slate-200 p-4 text-left hover:border-[#20364D] hover:bg-[#20364D]/5 transition-all"
+                  disabled={lockedType === "product"}
+                  className={`rounded-xl border p-4 text-left transition-all ${
+                    lockedType === "product"
+                      ? "border-slate-100 opacity-40 cursor-not-allowed bg-slate-50"
+                      : "border-slate-200 hover:border-[#20364D] hover:bg-[#20364D]/5"
+                  }`}
                   data-testid="add-service-btn"
                 >
                   <Wrench className="w-5 h-5 text-amber-500 mb-2" />
@@ -466,7 +484,7 @@ function SelectedItemConfig({
 
       <button
         onClick={onAdd}
-        disabled={basePrice <= 0 && !showBaseInput}
+        disabled={basePrice <= 0}
         className="w-full rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#17283c] transition flex items-center justify-center gap-2 disabled:opacity-40"
         data-testid="add-item-confirm"
       >

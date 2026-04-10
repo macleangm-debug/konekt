@@ -266,88 +266,92 @@ export default function PurchaseOrdersPage() {
       {/* List */}
       {loading ? (
         <div className="text-center py-10">Loading...</div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-10 text-slate-500">No purchase orders yet</div>
       ) : (
-        <div className="grid xl:grid-cols-2 gap-4">
-          {items.map((item) => (
-            <div key={item.id} className="rounded-3xl border bg-white p-6" data-testid={`po-${item.id}`}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <div className="text-xl font-bold">{item.po_number}</div>
-                    <div className="text-sm text-slate-500">{item.supplier_name || "Unknown supplier"}</div>
-                  </div>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
-                  {item.status?.replace("_", " ")}
-                </span>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <div className="text-slate-500">Total Cost</div>
-                  <div className="font-bold text-lg">TZS {Number(item.total_cost || 0).toLocaleString()}</div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Items</div>
-                  <div className="font-medium">{item.items?.length || 0} items ({item.total_qty || 0} units)</div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Expected Delivery</div>
-                  <div className="font-medium">
-                    {item.expected_delivery_date ? new Date(item.expected_delivery_date).toLocaleDateString() : "-"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Warehouse</div>
-                  <div className="font-medium">{item.warehouse_name || "-"}</div>
-                </div>
-              </div>
-
-              {/* Actions based on status */}
-              <div className="mt-4 pt-4 border-t flex flex-wrap gap-2">
-                {item.status === "draft" && (
-                  <>
-                    <button
-                      onClick={() => approvePO(item.id)}
-                      className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Approve & Order
-                    </button>
-                    <button
-                      onClick={() => updateStatus(item.id, "cancelled")}
-                      className="flex items-center gap-1 px-3 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200"
-                    >
-                      Cancel
-                    </button>
-                  </>
+        <div className="rounded-2xl border bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left" data-testid="purchase-orders-table">
+              <thead className="bg-slate-50 border-b">
+                <tr>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Document #</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Vendor</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-12 text-center">
+                      <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                      <h3 className="text-base font-semibold text-slate-700">No data available yet</h3>
+                      <p className="text-sm text-slate-500 mt-1">Data will appear once activity is recorded</p>
+                    </td>
+                  </tr>
+                ) : (
+                  items.map((item) => (
+                    <tr key={item.id} className="border-b last:border-b-0 hover:bg-slate-50" data-testid={`po-row-${item.id}`}>
+                      <td className="px-5 py-3.5 font-semibold text-sm text-[#20364D]">{item.po_number}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="text-sm font-medium">{item.supplier_name || "—"}</div>
+                        <div className="text-xs text-slate-500">{item.warehouse_name || ""}</div>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-slate-500 whitespace-nowrap">
+                        {item.created_at ? new Date(item.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
+                      </td>
+                      <td className="px-5 py-3.5 text-sm font-semibold">TZS {Number(item.total_cost || 0).toLocaleString()}</td>
+                      <td className="px-5 py-3.5">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize ${getStatusColor(item.status)}`}>
+                          {(item.status || "draft").replace(/_/g, " ")}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex gap-2">
+                          {item.status === "draft" && (
+                            <>
+                              <button
+                                onClick={() => approvePO(item.id)}
+                                className="rounded-lg bg-green-100 text-green-700 px-3 py-1.5 text-xs font-medium hover:bg-green-200"
+                                data-testid={`approve-po-${item.id}`}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => updateStatus(item.id, "cancelled")}
+                                className="rounded-lg bg-red-100 text-red-700 px-3 py-1.5 text-xs font-medium hover:bg-red-200"
+                                data-testid={`cancel-po-${item.id}`}
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          {item.status === "ordered" && (
+                            <button
+                              onClick={() => updateStatus(item.id, "received")}
+                              className="rounded-lg bg-green-100 text-green-700 px-3 py-1.5 text-xs font-medium hover:bg-green-200"
+                              data-testid={`receive-po-${item.id}`}
+                            >
+                              Mark Received
+                            </button>
+                          )}
+                          {(item.status === "ordered" || item.status === "partially_received") && (
+                            <button
+                              onClick={() => updateStatus(item.id, "partially_received")}
+                              className="rounded-lg bg-amber-100 text-amber-700 px-3 py-1.5 text-xs font-medium hover:bg-amber-200"
+                              data-testid={`partial-po-${item.id}`}
+                            >
+                              Partial
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
                 )}
-                {item.status === "ordered" && (
-                  <button
-                    onClick={() => updateStatus(item.id, "partially_received")}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-amber-100 text-amber-700 text-sm font-medium hover:bg-amber-200"
-                  >
-                    <Clock className="w-4 h-4" />
-                    Mark Partial Receipt
-                  </button>
-                )}
-                {(item.status === "ordered" || item.status === "partially_received") && (
-                  <button
-                    onClick={() => updateStatus(item.id, "received")}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200"
-                  >
-                    <CheckCircle className="w-4 h-4" />
-                    Mark Fully Received
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
