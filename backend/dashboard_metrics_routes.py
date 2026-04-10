@@ -37,9 +37,24 @@ async def customer_dashboard_metrics(request: Request, user_id: str | None = Non
     pending_invoice_count = len(pending_invoices)
     pending_amount = sum(float(x.get("total") or x.get("total_amount", 0) or 0) for x in pending_invoices)
 
-    # Referral wallet
-    referral = await db.referral_wallets.find_one({"user_id": user_id}, {"_id": 0})
-    referral_balance = float((referral or {}).get("balance", 0))
+    # Referral wallet — use credit_balance from users collection + referral_transactions
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "credit_balance": 1, "referral_code": 1})
+    referral_balance = float((user_doc or {}).get("credit_balance", 0))
+    user_referral_code = (user_doc or {}).get("referral_code", "")
+
+    # Calculate total earned from referral transactions
+    referral_txns = await db.referral_transactions.find(
+        {"referrer_id": user_id, "status": "credited"}
+    ).to_list(length=500)
+    referral_total_earned = sum(float(t.get("reward_amount", 0)) for t in referral_txns)
+
+    # Fallback to old referral_wallets if exists
+    if referral_balance == 0 and not user_referral_code:
+        referral_old = await db.referral_wallets.find_one({"user_id": user_id}, {"_id": 0})
+        if referral_old:
+            referral_balance = float(referral_old.get("balance", 0))
+            user_referral_code = referral_old.get("referral_code", "")
+            referral_total_earned = float(referral_old.get("total_earned", 0))
 
     quote_count = await db.quotes.count_documents(quote_filter) + await db.quotes_v2.count_documents(quote_filter)
     pending_quotes = await db.quotes.count_documents({**quote_filter, "status": {"$in": ["pending", "sent"]}})
@@ -118,8 +133,8 @@ async def customer_dashboard_metrics(request: Request, user_id: str | None = Non
         "reminders": reminders,
         "referral": {
             "balance": referral_balance,
-            "code": (referral or {}).get("referral_code", ""),
-            "total_earned": float((referral or {}).get("total_earned", 0)),
+            "code": user_referral_code,
+            "total_earned": referral_total_earned,
         },
         "charts": {
             "order_trend": order_trend,

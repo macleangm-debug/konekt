@@ -19,6 +19,8 @@ export default function AccountCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [vatPercent, setVatPercent] = useState(18);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [maxWalletPct, setMaxWalletPct] = useState(30);
   
   // Address fields (multi-field progressive input)
   const [address, setAddress] = useState({
@@ -71,6 +73,17 @@ export default function AccountCheckoutPage() {
           }
         } catch (e) {
           // No saved address
+        }
+        
+        // Load wallet balance
+        try {
+          const walletRes = await api.get("/api/customer/referrals/wallet-usage-rules");
+          if (walletRes.data) {
+            setWalletBalance(walletRes.data.wallet_balance || 0);
+            setMaxWalletPct(walletRes.data.max_wallet_usage_pct || 30);
+          }
+        } catch (e) {
+          // Wallet not available
         }
       } catch (err) {
         console.error("Failed to load checkout data", err);
@@ -350,6 +363,23 @@ export default function AccountCheckoutPage() {
             </div>
           </div>
           
+          {/* Wallet Balance Info */}
+          {walletBalance > 0 && (
+            <div className="rounded-xl bg-gradient-to-r from-[#20364D]/5 to-[#D4A843]/5 border p-4" data-testid="checkout-wallet-info">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-4 h-4 text-[#D4A843]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                <span className="text-sm font-semibold text-[#20364D]">Wallet Available</span>
+              </div>
+              <div className="text-sm text-slate-700">
+                Balance: <strong>TZS {walletBalance.toLocaleString()}</strong>
+                <span className="text-xs text-slate-500 ml-2">(up to {maxWalletPct}% usable per order)</span>
+              </div>
+              <p className="text-xs text-slate-400 mt-1">
+                Wallet credits will be applied when your invoice is ready for payment.
+              </p>
+            </div>
+          )}
+
           {/* Delivery Cost Disclaimer */}
           <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
             <div className="flex items-start gap-2">

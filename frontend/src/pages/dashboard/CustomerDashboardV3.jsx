@@ -111,12 +111,12 @@ export default function CustomerDashboardV3() {
           {kpis.pending_amount > 0 && <p className="text-[10px] text-amber-600 font-semibold mt-0.5">{fmtMoney(kpis.pending_amount)} due</p>}
         </Link>
         <Link to="/account/referrals" className="bg-white border rounded-2xl p-4 hover:shadow-lg transition group" data-testid="kpi-referral-wallet">
-          <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center mb-2.5">
-            <Gift className="w-4.5 h-4.5 text-green-600" />
+          <div className="w-9 h-9 rounded-xl bg-[#D4A843]/10 flex items-center justify-center mb-2.5">
+            <Gift className="w-4.5 h-4.5 text-[#D4A843]" />
           </div>
-          <p className="text-xs text-slate-500 font-medium">Referral Balance</p>
+          <p className="text-xs text-slate-500 font-medium">Wallet Balance</p>
           <p className="text-2xl font-bold text-[#20364D]">{fmtMoney(ref.balance || 0)}</p>
-          {ref.code && <p className="text-[10px] text-green-600 font-semibold mt-0.5">Up to 10% off next order</p>}
+          {ref.total_earned > 0 && <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">{fmtMoney(ref.total_earned)} earned</p>}
         </Link>
         <Link to="/account/quotes" className="bg-white border rounded-2xl p-4 hover:shadow-lg transition group" data-testid="kpi-quotes">
           <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center mb-2.5">
@@ -195,23 +195,23 @@ export default function CustomerDashboardV3() {
           )}
 
           {/* Referral Card */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-4" data-testid="referral-card">
+          <div className="bg-gradient-to-br from-[#20364D] to-[#2a4560] rounded-2xl p-4 text-white" data-testid="referral-card">
             <div className="flex items-center gap-2 mb-3">
-              <Gift className="w-4 h-4 text-green-600" />
-              <h3 className="font-semibold text-green-800 text-sm">Referral Rewards</h3>
+              <Gift className="w-4 h-4 text-[#D4A843]" />
+              <h3 className="font-semibold text-sm">Refer & Earn</h3>
             </div>
-            <div className="text-2xl font-bold text-green-700 mb-1">{fmtMoney(ref.balance || 0)}</div>
-            <p className="text-xs text-green-600 mb-3">Usable up to 10% of next order</p>
+            <div className="text-2xl font-bold text-[#D4A843] mb-1">{fmtMoney(ref.balance || 0)}</div>
+            <p className="text-xs text-slate-300 mb-3">Earn rewards when your referrals purchase</p>
             {ref.code && (
-              <div className="flex items-center gap-2 bg-white rounded-lg border border-green-200 p-2">
-                <code className="flex-1 text-sm font-mono text-green-700 font-bold">{ref.code}</code>
-                <button onClick={copyCode} type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200 transition" data-testid="copy-referral-code">
+              <div className="flex items-center gap-2 bg-white/10 rounded-lg border border-white/20 p-2">
+                <code className="flex-1 text-sm font-mono text-white font-bold">{ref.code}</code>
+                <button onClick={copyCode} type="button" className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#D4A843] text-[#20364D] text-xs font-semibold hover:bg-[#c49a3d] transition" data-testid="copy-referral-code">
                   {copied ? <CheckCircle className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                   {copied ? "Copied" : "Copy"}
                 </button>
               </div>
             )}
-            <Link to="/account/referrals" className="text-xs text-green-700 font-semibold mt-2 inline-block hover:underline">View History →</Link>
+            <Link to="/account/referrals" className="text-xs text-[#D4A843] font-semibold mt-2 inline-block hover:underline">View Details →</Link>
           </div>
         </div>
       </div>

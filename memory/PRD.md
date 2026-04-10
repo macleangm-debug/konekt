@@ -301,6 +301,34 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Scheduled Report Integration**
   - Weekly report notifications include coaching flag: "X rep(s) need coaching attention"
 
+### Phase 17 — Referral System Revamp (Apr 10, 2026)
+- **Purchase-Triggered Rewards** — Referral rewards trigger ONLY on payment verification/approval, not on signup
+  - Only the REFERRER gets rewarded (referee gets no immediate reward)
+  - `referral_hooks.py` completely rewritten with tier-aware calculation
+  - `process_referral_reward_on_payment()` called from `live_commerce_service.py` after payment approval
+  - `server.py` `/api/referrals/use` updated to only mark user as referred (no immediate points)
+- **Distribution Margin Funding** — Rewards calculated from actual distributable margin per item
+  - Uses `resolve_margin_rule_for_price()` from margin engine for each order item
+  - `referral_pct` of distribution pool = reward amount
+  - Respects margin tiers: different price points yield different rewards
+  - `distribution_margin_service.py` validation updated to include `referral_pct`
+  - `margin_engine.py` `get_split_settings()` and `resolve_pricing()` include referral share
+- **Admin Settings** — New "Referral & Wallet" section in Commercial Rules
+  - `referral_pct` (default 10%) — % of distribution margin for referral rewards
+  - `max_wallet_usage_pct` (default 30%) — max % of order payable via wallet
+  - `referral_min_order_amount` — minimum order for referral reward eligibility
+  - `referral_max_reward_per_order` — cap per order (0 = no cap)
+- **Wallet Credit System** — Uses existing `credit_balance` on user record
+  - Tracks total_earned, total_used via `referral_transactions` and `wallet_transactions` collections
+  - Wallet checkout UX with transparent breakdown (balance, max usable, applied, remaining)
+  - `customer_referral_routes.py` rewritten with `/me`, `/overview`, `/stats`, `/wallet-usage-rules` endpoints
+- **Anti-Abuse** — Self-referral prevention, one reward per order, duplicate check
+- **Notifications** — In-app "Referral Reward Earned!" notification sent to referrer
+- **Frontend: Dashboard Refer & Earn Card** — Prominent card on `CustomerDashboardV3` with wallet balance, referral code (copyable), total earned
+- **Frontend: Referrals Page** — 5 sections: Wallet Summary, Referral Link/Code, How It Works (3 steps), Activity Table, Usage Rules
+- **Frontend: Checkout Wallet UX** — Wallet usage block in both `CheckoutPageV2` and `AccountCheckoutPage` with balance display
+- **Frontend: Post-Checkout CTA** — Referral sharing CTA on BankTransferPage
+
 ## Backlog
 
 ### P1 — Upcoming
