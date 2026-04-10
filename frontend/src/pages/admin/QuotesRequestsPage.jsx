@@ -83,25 +83,34 @@ export default function QuotesRequestsPage() {
             <table className="w-full text-sm" data-testid="quotes-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Number</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Type</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Document #</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Client</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
                   <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Sales</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {rows.map((row, idx) => (
                   <tr key={row.id || idx} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`quote-row-${row.id || idx}`}>
-                    <td className="px-4 py-3 text-xs text-slate-500 hidden md:table-cell">{fmtDate(row.created_at)}</td>
                     <td className="px-4 py-3 font-semibold text-[#20364D]">{row.quote_number || row.request_number || "-"}</td>
-                    <td className="px-4 py-3 text-slate-700">{row.customer_name || row.customer_email || "-"}</td>
-                    <td className="px-4 py-3 hidden md:table-cell">{typeBadge(row.record_type)}</td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm font-medium text-slate-700">{row.customer_name || row.customer_email || "-"}</div>
+                      {row.customer_company && <div className="text-xs text-slate-400">{row.customer_company}</div>}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(row.created_at)}</td>
                     <td className="px-4 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount)}</td>
                     <td className="px-4 py-3"><StatusBadge status={row.status} /></td>
-                    <td className="px-4 py-3 text-xs text-slate-600 hidden md:table-cell">{row.assigned_sales || "Unassigned"}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openDetail(row); }}
+                        className="rounded-lg border px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-100 transition"
+                        data-testid={`view-quote-${row.id || idx}`}
+                      >
+                        View
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

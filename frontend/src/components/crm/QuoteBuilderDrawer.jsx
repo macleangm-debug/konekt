@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import {
   Package, Wrench, Plus, Trash2, Search, Loader2,
@@ -13,7 +14,7 @@ const LABEL = "block text-xs font-semibold text-slate-500 mb-1";
 const DEFAULT_MARGIN_PCT = 30;
 
 function getToken() {
-  return localStorage.getItem("konekt_staff_token") || localStorage.getItem("konekt_token") || localStorage.getItem("token");
+  return localStorage.getItem("konekt_admin_token") || localStorage.getItem("konekt_staff_token") || localStorage.getItem("konekt_token") || localStorage.getItem("token");
 }
 
 export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
@@ -154,8 +155,8 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
   // Services list from static data
   const servicesList = comprehensiveServicesList || [];
 
-  return (
-    <div className="fixed inset-0 z-50 flex" data-testid="quote-builder-drawer">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex" data-testid="quote-builder-drawer">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="ml-auto w-full max-w-lg bg-white h-full overflow-y-auto relative flex flex-col">
         {/* Header */}
@@ -379,7 +380,8 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -257,14 +257,17 @@ export default function CRMPageV2() {
 
   const closeDrawer = () => {
     setDrawerOpen(false);
-    setDrawerLead(null);
-    setDrawerRelated(null);
+    if (!showQuoteBuilder) {
+      setDrawerLead(null);
+      setDrawerRelated(null);
+    }
   };
 
   const [showQuoteBuilder, setShowQuoteBuilder] = useState(false);
   
   const openQuoteBuilder = () => {
     if (!drawerLead) return;
+    setDrawerOpen(false); // Close Sheet to release focus trap
     setShowQuoteBuilder(true);
   };
 
@@ -1000,9 +1003,11 @@ export default function CRMPageV2() {
       {showQuoteBuilder && drawerLead && (
         <QuoteBuilderDrawer
           lead={drawerLead}
-          onClose={() => setShowQuoteBuilder(false)}
+          onClose={() => { setShowQuoteBuilder(false); setDrawerLead(null); setDrawerRelated(null); }}
           onCreated={(data) => {
             setShowQuoteBuilder(false);
+            setDrawerLead(null);
+            setDrawerRelated(null);
             closeDrawer();
             if (data?.id) navigate(`/admin/quotes/${data.id}`);
           }}
