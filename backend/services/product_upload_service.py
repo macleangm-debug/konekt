@@ -16,30 +16,33 @@ logger = logging.getLogger("product_upload")
 
 MAX_IMAGES = 10
 URL_PATTERN = re.compile(r'^https?://\S+\.\S+')
+STORAGE_PATH_PATTERN = re.compile(r'^konekt/\S+\.\w+$')
 
 
 def _now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def validate_image_url(url: str) -> bool:
-    if not url or not url.strip():
+def validate_image_ref(ref: str) -> bool:
+    """Validate an image reference — either a URL or an object-storage path."""
+    if not ref or not ref.strip():
         return False
-    return bool(URL_PATTERN.match(url.strip()))
+    ref = ref.strip()
+    return bool(URL_PATTERN.match(ref)) or bool(STORAGE_PATH_PATTERN.match(ref))
 
 
 def validate_images(images: list) -> tuple:
-    """Validate image URLs. Returns (valid_urls, errors)."""
+    """Validate image references (URLs or storage paths). Returns (valid_refs, errors)."""
     errors = []
     valid = []
     if len(images) > MAX_IMAGES:
         errors.append(f"Maximum {MAX_IMAGES} images allowed, got {len(images)}")
         images = images[:MAX_IMAGES]
-    for i, url in enumerate(images):
-        if validate_image_url(url):
-            valid.append(url.strip())
+    for i, ref in enumerate(images):
+        if validate_image_ref(ref):
+            valid.append(ref.strip())
         else:
-            errors.append(f"Image {i+1}: invalid URL format")
+            errors.append(f"Image {i+1}: invalid reference format")
     return valid, errors
 
 
@@ -57,6 +60,9 @@ def build_submission_doc(
     raw_images = product.get("images", [])
     valid_images, img_errors = validate_images(raw_images)
     primary_image = valid_images[0] if valid_images else ""
+    gallery_images = valid_images[1:] if len(valid_images) > 1 else []
+
+    allocated_quantity = int(supply.get("allocated_quantity", 0))
 
     now = _now()
     return {
@@ -80,6 +86,10 @@ def build_submission_doc(
             "images": valid_images,
             "primary_image": primary_image,
         },
+        # Top-level image fields for admin normalization
+        "gallery_images": gallery_images,
+        "image_url": primary_image,
+        "allocated_quantity": allocated_quantity,
         # Vendor Supply
         "supply": {
             "base_price_vat_inclusive": float(supply.get("base_price_vat_inclusive", 0)),
@@ -87,6 +97,7 @@ def build_submission_doc(
             "supply_mode": supply.get("supply_mode", "in_stock"),
             "default_quantity": int(supply.get("default_quantity", 1)),
             "vendor_product_code": supply.get("vendor_product_code", "").strip(),
+            "allocated_quantity": allocated_quantity,
         },
         # Variants
         "variants": _build_variants(variants),

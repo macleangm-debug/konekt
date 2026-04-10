@@ -80,9 +80,18 @@ async def list_all_submissions(
             doc["vendor_product_code"] = sup.get("vendor_product_code", "")
             if not doc.get("allocated_quantity"):
                 doc["allocated_quantity"] = sup.get("allocated_quantity", 0)
-        # Ensure gallery_images always exists
+        # Ensure gallery_images always exists — pull from product.images if needed
         if not doc.get("gallery_images"):
-            doc["gallery_images"] = []
+            prod_imgs = (doc.get("product") or {}).get("images", []) if isinstance(doc.get("product"), dict) else []
+            if prod_imgs:
+                doc["gallery_images"] = prod_imgs
+            else:
+                doc["gallery_images"] = []
+        # Also ensure image_url is set from product.primary_image fallback
+        if not doc.get("image_url"):
+            primary = (doc.get("product") or {}).get("primary_image", "") if isinstance(doc.get("product"), dict) else ""
+            if primary:
+                doc["image_url"] = primary
 
         # Enrich with vendor name if missing
         if not doc.get("vendor_name") and doc.get("vendor_id") and doc["vendor_id"] != "unknown":

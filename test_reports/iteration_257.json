@@ -1,0 +1,109 @@
+{
+  "summary": "Vendor Image Upload Flow (Phase 1) - E2E Testing Complete. Backend: 20/21 tests passed (1 validation bug). Frontend: All UI elements verified for vendor product upload and admin product approvals.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "POST /api/vendor/products/upload",
+        "issue": "Backend accepts negative allocated_quantity values (-10 stored instead of being rejected or normalized to 0)",
+        "priority": "MEDIUM"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_vendor_image_upload_flow_v257.py",
+    "/app/test_reports/pytest/pytest_results_vendor_image_upload_v257.xml"
+  ],
+  "action_items": [
+    "Add validation in backend to reject or normalize negative allocated_quantity values in POST /api/vendor/products/upload"
+  ],
+  "critical_code_review_comments": [
+    "VendorProductUploadPage.jsx: File upload zone correctly implemented with drag-and-drop, calls POST /api/files/upload, stores storage_path",
+    "VendorProductUploadPage.jsx: allocated_quantity field present in supply section with proper validation on frontend (parseInt, >= 0 check)",
+    "AdminProductApprovalPage.jsx: Drawer-based review working with image gallery navigation (arrows + thumbnails)",
+    "AdminProductApprovalPage.jsx: Approve/Reject buttons inside drawer working, bulk actions visible when items selected",
+    "admin_vendor_submission_routes.py: Properly normalizes nested product.images to gallery_images for admin display",
+    "product_upload_service.py: build_submission_doc correctly stores gallery_images at top level and allocated_quantity",
+    "file_routes.py: POST /api/files/upload returns storage_path like 'konekt/products/{uuid}.png', GET /api/files/serve/{path} serves images correctly"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_vendor_image_upload_flow_v257.py"
+  ],
+  "success_rate": {
+    "backend": "95% (20/21 passed, 1 validation bug)",
+    "frontend": "100% (all UI elements verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, Partner: demo.partner@konekt.com / Partner123!",
+  "seed_data_creation": "Created test products: TEST_NoImage_Product, TEST_SingleImage_Product, TEST_Gallery_Product, TEST_Bulk_Product_1, TEST_Bulk_Product_2",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Vendor Image Upload Flow Phase 1 verified. File upload via POST /api/files/upload works (returns storage_path). Vendor product upload via POST /api/vendor/products/upload accepts images array with storage paths. Admin product approvals at /admin/product-approvals shows submissions with images in table and drawer. Drawer has image gallery with navigation arrows and thumbnails. Approve/Reject buttons work. Bulk approve/reject work. One minor bug: backend accepts negative allocated_quantity. Partner login uses POST /api/partner-auth/login (returns access_token). Admin login uses POST /api/auth/login.",
+  "verified_features": {
+    "vendor_product_upload_page": {
+      "url": "/partner/product-upload",
+      "elements_verified": [
+        "Image dropzone (data-testid='image-dropzone') - file upload zone, not text URL inputs",
+        "File input (data-testid='image-file-input') - accepts JPEG, PNG, GIF, WebP",
+        "Allocated quantity input (data-testid='allocated-qty-input')",
+        "Product name input (data-testid='product-name-input')",
+        "Category select (data-testid='category-select')",
+        "Base price input (data-testid='base-price-input')",
+        "Submit button (data-testid='submit-product-btn')"
+      ]
+    },
+    "file_upload_api": {
+      "endpoint": "POST /api/files/upload",
+      "tests_passed": [
+        "Single image upload returns storage_path",
+        "Multiple images upload (3+) works",
+        "Invalid file type (text/plain) rejected with 400",
+        "Uploaded file served via GET /api/files/serve/{path}"
+      ]
+    },
+    "vendor_product_upload_api": {
+      "endpoint": "POST /api/vendor/products/upload",
+      "tests_passed": [
+        "Product without images - creates submission with empty gallery_images",
+        "Product with single image - sets image_url to first image",
+        "Product with multiple images (3+) - sets image_url and gallery_images correctly",
+        "allocated_quantity stored at top level and in supply object"
+      ],
+      "tests_failed": [
+        "Negative allocated_quantity accepted instead of rejected"
+      ]
+    },
+    "admin_product_approvals_page": {
+      "url": "/admin/product-approvals",
+      "elements_verified": [
+        "Stats cards (Pending, Approved, Rejected, Total)",
+        "Tabs (Pending, Approved, Rejected, All)",
+        "Submissions table with images, vendor, cost, QTY, status, date columns",
+        "Search input",
+        "Bulk approve/reject buttons (appear when items selected)",
+        "Drawer opens on row click",
+        "Drawer shows image gallery with navigation arrows and thumbnails",
+        "Drawer shows allocated_quantity",
+        "Approve & Publish button in drawer",
+        "Reject button in drawer opens modal",
+        "Reject modal with notes input and confirm button"
+      ]
+    },
+    "admin_submission_api": {
+      "endpoints_tested": [
+        "GET /api/admin/vendor-submissions - returns normalized list with gallery_images",
+        "GET /api/admin/vendor-submissions/stats - returns counts",
+        "GET /api/admin/vendor-submissions?status=pending - filtered list",
+        "GET /api/admin/vendor-submissions/{id} - single submission",
+        "POST /api/admin/vendor-submissions/{id}/approve - creates catalog product with gallery_images and allocated_quantity",
+        "POST /api/admin/vendor-submissions/{id}/reject - rejects with notes",
+        "POST /api/admin/vendor-submissions/bulk-approve - bulk approve",
+        "POST /api/admin/vendor-submissions/bulk-reject - bulk reject"
+      ]
+    }
+  }
+}

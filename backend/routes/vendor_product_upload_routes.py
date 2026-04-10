@@ -99,6 +99,7 @@ class SupplyDataIn(BaseModel):
     supply_mode: str = "in_stock"
     default_quantity: int = 1
     vendor_product_code: str = ""
+    allocated_quantity: int = 0
 
 class VariantIn(BaseModel):
     sku: str = ""

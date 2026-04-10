@@ -1,10 +1,27 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Package, Plus, X, ChevronDown, Loader2, CheckCircle2, AlertCircle, ImagePlus, Trash2 } from "lucide-react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { Package, Plus, X, Loader2, CheckCircle2, AlertCircle, Upload, Trash2, Image as ImageIcon, GripVertical } from "lucide-react";
 import api from "@/lib/api";
+
+const API_BASE = process.env.REACT_APP_BACKEND_URL || "";
 
 function authHeaders() {
   const token = localStorage.getItem("partner_token") || localStorage.getItem("konekt_token") || localStorage.getItem("token");
   return { Authorization: `Bearer ${token}` };
+}
+
+function ImageThumb({ src, onRemove, isPrimary }) {
+  const url = src.startsWith("http") ? src : `${API_BASE}/api/files/serve/${src}`;
+  return (
+    <div className="relative group w-20 h-20 rounded-lg overflow-hidden border-2 border-slate-200 flex-shrink-0" data-testid="image-thumb">
+      <img src={url} alt="product" className="w-full h-full object-cover" onError={e => { e.target.src = ""; e.target.className = "hidden"; }} />
+      {isPrimary && <span className="absolute top-0.5 left-0.5 bg-[#20364D] text-white text-[9px] font-bold px-1.5 py-0.5 rounded">PRIMARY</span>}
+      <button type="button" onClick={onRemove}
+        className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition"
+        data-testid="remove-image-thumb">
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
 }
 
 export default function VendorProductUploadPage() {
@@ -23,10 +40,15 @@ export default function VendorProductUploadPage() {
   const [product, setProduct] = useState({
     product_name: "", brand: "", short_description: "", full_description: "",
   });
-  const [images, setImages] = useState([""]);
+  // Images now stored as storage paths (from /api/files/upload)
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef(null);
+
   const [supply, setSupply] = useState({
     base_price_vat_inclusive: "", lead_time_days: "", supply_mode: "in_stock",
-    default_quantity: "1", vendor_product_code: "",
+    default_quantity: "1", vendor_product_code: "", allocated_quantity: "",
   });
   const [variants, setVariants] = useState([]);
 
@@ -58,34 +80,73 @@ export default function VendorProductUploadPage() {
     setSelectedSubcategoryId("");
   };
 
+  // ── File Upload Logic ──
+  const handleFileSelect = async (files) => {
+    if (!files || files.length === 0) return;
+    const remaining = 10 - uploadedImages.length;
+    if (remaining <= 0) { setUploadError("Maximum 10 images allowed"); return; }
+
+    const toUpload = Array.from(files).slice(0, remaining);
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+    setUploadError("");
+    setUploading(true);
+
+    for (const file of toUpload) {
+      if (!allowed.includes(file.type)) {
+        setUploadError(`"${file.name}" is not a supported image type. Use JPEG, PNG, GIF, or WebP.`);
+        continue;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError(`"${file.name}" exceeds 10MB limit.`);
+        continue;
+      }
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("folder", "products");
+        const res = await api.post("/api/files/upload", formData, {
+          headers: { ...authHeaders(), "Content-Type": "multipart/form-data" },
+        });
+        if (res.data?.storage_path) {
+          setUploadedImages(prev => [...prev, {
+            storage_path: res.data.storage_path,
+            original_filename: res.data.original_filename,
+            file_id: res.data.file_id,
+          }]);
+        }
+      } catch (err) {
+        setUploadError(`Failed to upload "${file.name}": ${err.response?.data?.detail || err.message}`);
+      }
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeUploadedImage = (idx) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleFileSelect(e.dataTransfer.files);
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
+
+  // ── Variants ──
   const addVariant = () => {
     setVariants([...variants, { sku: "", size: "", color: "", model: "", quantity: 0, price_override: "", image_url: "" }]);
   };
-
   const updateVariant = (idx, field, val) => {
     const updated = [...variants];
     updated[idx] = { ...updated[idx], [field]: val };
     setVariants(updated);
   };
+  const removeVariant = (idx) => { setVariants(variants.filter((_, i) => i !== idx)); };
 
-  const removeVariant = (idx) => {
-    setVariants(variants.filter((_, i) => i !== idx));
-  };
-
-  const addImageSlot = () => {
-    if (images.length < 10) setImages([...images, ""]);
-  };
-
-  const updateImage = (idx, val) => {
-    const updated = [...images];
-    updated[idx] = val;
-    setImages(updated);
-  };
-
-  const removeImage = (idx) => {
-    setImages(images.filter((_, i) => i !== idx));
-  };
-
+  // ── Submit ──
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -94,8 +155,12 @@ export default function VendorProductUploadPage() {
     const price = parseFloat(supply.base_price_vat_inclusive);
     if (!price || price <= 0) { setError("Base price must be greater than 0"); return; }
 
+    const allocQty = parseInt(supply.allocated_quantity) || 0;
+    if (allocQty < 0) { setError("Allocated quantity cannot be negative"); return; }
+
     setSubmitting(true);
     try {
+      const imagePaths = uploadedImages.map(img => img.storage_path);
       const payload = {
         product: {
           product_name: product.product_name,
@@ -105,7 +170,7 @@ export default function VendorProductUploadPage() {
           subcategory_id: selectedSubcategoryId || undefined,
           short_description: product.short_description,
           full_description: product.full_description,
-          images: images.filter(u => u.trim()),
+          images: imagePaths,
         },
         supply: {
           base_price_vat_inclusive: price,
@@ -113,6 +178,7 @@ export default function VendorProductUploadPage() {
           supply_mode: supply.supply_mode,
           default_quantity: parseInt(supply.default_quantity) || 1,
           vendor_product_code: supply.vendor_product_code,
+          allocated_quantity: allocQty,
         },
         variants: variants.map(v => ({
           sku: v.sku, size: v.size || undefined, color: v.color || undefined,
@@ -129,6 +195,7 @@ export default function VendorProductUploadPage() {
     setSubmitting(false);
   };
 
+  // ── Render States ──
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20" data-testid="upload-loading">
@@ -156,7 +223,7 @@ export default function VendorProductUploadPage() {
           <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto mb-3" />
           <h2 className="text-lg font-semibold text-green-800">Product Submitted for Review</h2>
           <p className="text-sm text-green-700 mt-2">Your product has been submitted and is pending admin review.</p>
-          <button onClick={() => { setSubmitted(false); setProduct({ product_name: "", brand: "", short_description: "", full_description: "" }); setImages([""]); setSupply({ base_price_vat_inclusive: "", lead_time_days: "", supply_mode: "in_stock", default_quantity: "1", vendor_product_code: "" }); setVariants([]); setSelectedGroupId(""); setSelectedCategoryId(""); setSelectedSubcategoryId(""); }}
+          <button onClick={() => { setSubmitted(false); setProduct({ product_name: "", brand: "", short_description: "", full_description: "" }); setUploadedImages([]); setSupply({ base_price_vat_inclusive: "", lead_time_days: "", supply_mode: "in_stock", default_quantity: "1", vendor_product_code: "", allocated_quantity: "" }); setVariants([]); setSelectedGroupId(""); setSelectedCategoryId(""); setSelectedSubcategoryId(""); }}
             className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
             data-testid="upload-another-btn">
             Upload Another Product
@@ -185,7 +252,7 @@ export default function VendorProductUploadPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Taxonomy */}
+        {/* 1. Taxonomy */}
         <section className="rounded-xl border bg-white p-5" data-testid="taxonomy-section">
           <h2 className="text-base font-semibold text-slate-800 mb-3">1. Taxonomy</h2>
           <div className="grid gap-3 md:grid-cols-3">
@@ -217,7 +284,7 @@ export default function VendorProductUploadPage() {
           </div>
         </section>
 
-        {/* Product Details */}
+        {/* 2. Product Details */}
         <section className="rounded-xl border bg-white p-5" data-testid="product-details-section">
           <h2 className="text-base font-semibold text-slate-800 mb-3">2. Product Details</h2>
           <div className="grid gap-3 md:grid-cols-2">
@@ -248,37 +315,62 @@ export default function VendorProductUploadPage() {
           </div>
         </section>
 
-        {/* Images */}
+        {/* 3. Product Images — File Upload */}
         <section className="rounded-xl border bg-white p-5" data-testid="images-section">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-slate-800">3. Images</h2>
-            <button type="button" onClick={addImageSlot} disabled={images.length >= 10}
-              className="flex items-center gap-1 text-xs text-slate-600 hover:text-slate-900 disabled:opacity-40"
-              data-testid="add-image-btn">
-              <ImagePlus className="w-3.5 h-3.5" /> Add Image
-            </button>
+            <div>
+              <h2 className="text-base font-semibold text-slate-800">3. Product Images</h2>
+              <p className="text-xs text-slate-400 mt-0.5">First image becomes the primary. Max 10 images. JPEG, PNG, GIF, WebP up to 10MB each.</p>
+            </div>
+            <span className="text-xs text-slate-400 font-medium">{uploadedImages.length}/10</span>
           </div>
-          <p className="text-xs text-slate-400 mb-2">First image = primary. Max 10 image URLs.</p>
-          <div className="space-y-2">
-            {images.map((url, i) => (
-              <div key={i} className="flex gap-2 items-center">
-                <span className="text-xs text-slate-400 w-5">{i === 0 ? "P" : i + 1}</span>
-                <input value={url} onChange={e => updateImage(i, e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
-                  placeholder={i === 0 ? "Primary image URL (https://...)" : "Image URL"}
-                  data-testid={`image-url-input-${i}`} />
-                {images.length > 1 && (
-                  <button type="button" onClick={() => removeImage(i)} className="text-slate-400 hover:text-red-500"
-                    data-testid={`remove-image-btn-${i}`}>
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+
+          {/* Drag-and-drop zone */}
+          <div
+            className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-[#20364D]/40 transition cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            data-testid="image-dropzone"
+          >
+            <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple
+              className="hidden" onChange={e => handleFileSelect(e.target.files)} data-testid="image-file-input" />
+            {uploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-8 h-8 text-[#20364D] animate-spin" />
+                <p className="text-sm text-slate-600 font-medium">Uploading...</p>
               </div>
-            ))}
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="w-8 h-8 text-slate-300" />
+                <p className="text-sm text-slate-600 font-medium">Click to select or drag & drop images</p>
+                <p className="text-xs text-slate-400">JPEG, PNG, GIF, WebP — max 10MB each</p>
+              </div>
+            )}
           </div>
+
+          {uploadError && (
+            <div className="mt-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2" data-testid="image-upload-error">
+              {uploadError}
+            </div>
+          )}
+
+          {/* Uploaded image thumbnails */}
+          {uploadedImages.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2" data-testid="uploaded-images-grid">
+              {uploadedImages.map((img, idx) => (
+                <ImageThumb
+                  key={img.file_id || idx}
+                  src={img.storage_path}
+                  isPrimary={idx === 0}
+                  onRemove={() => removeUploadedImage(idx)}
+                />
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* Supply */}
+        {/* 4. Vendor Supply */}
         <section className="rounded-xl border bg-white p-5" data-testid="supply-section">
           <h2 className="text-base font-semibold text-slate-800 mb-3">4. Vendor Supply</h2>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -288,6 +380,14 @@ export default function VendorProductUploadPage() {
                 onChange={e => setSupply({ ...supply, base_price_vat_inclusive: e.target.value })}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. 15000"
                 data-testid="base-price-input" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-slate-500 mb-1 block">Allocated Quantity *</label>
+              <input type="number" min="0" value={supply.allocated_quantity}
+                onChange={e => setSupply({ ...supply, allocated_quantity: e.target.value })}
+                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. 100"
+                data-testid="allocated-qty-input" />
+              <p className="text-[10px] text-slate-400 mt-0.5">Total units available for this product</p>
             </div>
             <div>
               <label className="text-xs font-medium text-slate-500 mb-1 block">Lead Time (days)</label>
@@ -322,7 +422,7 @@ export default function VendorProductUploadPage() {
           </div>
         </section>
 
-        {/* Variants */}
+        {/* 5. Variants */}
         <section className="rounded-xl border bg-white p-5" data-testid="variants-section">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -368,9 +468,6 @@ export default function VendorProductUploadPage() {
                     <input type="number" min="0" step="0.01" value={v.price_override} onChange={e => updateVariant(i, "price_override", e.target.value)}
                       className="rounded-md border border-slate-200 px-2 py-1.5 text-xs" placeholder="Price Override"
                       data-testid={`variant-price-${i}`} />
-                    <input value={v.image_url} onChange={e => updateVariant(i, "image_url", e.target.value)}
-                      className="rounded-md border border-slate-200 px-2 py-1.5 text-xs col-span-2" placeholder="Image URL (optional)"
-                      data-testid={`variant-img-${i}`} />
                   </div>
                 </div>
               ))}
