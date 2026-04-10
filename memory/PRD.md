@@ -8,6 +8,7 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Backend**: FastAPI + MongoDB (Motor async)
 - **Auth**: JWT-based custom authentication
 - **Payments**: Stripe sandbox integration
+- **Storage**: Emergent Object Storage for product images
 - **Background Services**: Sales follow-up automation, weekly digest scheduler, scheduled reports
 
 ## Key Technical Principles
@@ -16,6 +17,7 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Category-Aware Pricing Engine**: Partner cost -> Category margin rules (individual > default > global fallback) -> Selling price.
 - **Automated Partner Assignment**: Auto-assigns by service_key capability or category fallback. Alerts on failure.
 - **No Empty Tables**: Every table shows complete data or proper empty states.
+- **Vendor Privacy**: Vendors only see their own orders, pricing, and Konekt sales contact.
 
 ## What's Been Implemented
 
@@ -28,60 +30,69 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - Automated Partner Assignment & Unassigned Tasks Alert System
 - Global Readability Hardening (typography, contrast)
 
-### Vendor Product Upload + Admin Approval (DONE — April 10, 2026)
-- Vendor product submission via `/api/vendor/catalog/submissions`
+### Vendor Product Upload with Images (DONE — April 10, 2026)
+- **File Upload UI**: Drag-and-drop + file picker replacing text URL inputs
+- **Object Storage**: Emergent Object Storage integration via `/api/files/upload`
+- **Image Gallery**: Admin approval drawer shows image gallery with navigation arrows and thumbnails
+- **Allocated Quantity**: Flows through vendor upload form → submission record → admin drawer → approved catalog product
+- **Backend Validation**: Negative allocated_quantity rejected, invalid file types rejected
+- **Multi-image support**: Up to 10 images per product, first = primary, rest = gallery
+- **E2E Flow**: Vendor uploads product with images → Admin reviews in drawer → Approve/Reject inside drawer → Gallery images and allocated_quantity preserved in catalog
+
+### Admin Product Approval (DONE — April 10, 2026)
+- Vendor product submission via `/api/vendor/products/upload`
 - Admin review page at `/admin/product-approvals` with summary cards, filter tabs, search
+- **Drawer-based review** with image gallery, product details, approve/reject actions
 - Individual approve/reject with confirmation modals
 - Bulk approve/reject with checkbox selection
 - Nested format normalization (product.product_name, supply.base_price_vat_inclusive -> flat)
 - Vendor notification on approve/reject
 - Approved products created in catalog with proper metadata
 
+### Object Storage Integration (DONE — April 10, 2026)
+- Emergent Object Storage via `file_storage.py`
+- Upload: `POST /api/files/upload` (single), `POST /api/files/upload-multiple` (batch)
+- Serve: `GET /api/files/serve/{path}` with caching
+- DB tracking via `uploaded_files` collection
+- 10MB max, JPEG/PNG/GIF/WebP/SVG supported
+
 ### Logistics Partner UI Extensions (DONE — April 10, 2026)
 - PartnerLayout detects logistics/distributor/delivery partner types
 - Simplified nav for logistics: Dashboard, Delivery Operations, Orders, Settlements
-- Delivery-specific KPIs: Assigned, In Transit, Delivered, Delayed, Completed
-- Delivery columns in table: Recipient, Delivery Area
-- Adaptive page header: "Delivery Operations" vs "Assigned Work"
-- Role-safe data access enforced (only logistics see client details)
+- Role-safe data access enforced
 
 ### Category-Based Margin Rules (DONE — April 10, 2026)
-- Extended pricing engine with `_get_margin_rules(category)` — category-specific > default > global
-- Admin CRUD: GET/PUT/DELETE `/api/admin/category-margin-rules/category/{key}`
-- Preview endpoint: POST `/api/admin/category-margin-rules/preview`
-- Rule profiles: min_margin_pct, target_margin_pct, max_discount_pct, negotiation_allowed
-- Seeded: printing=35%, logistics=20%, consulting=40%, default=30%
-- Audit trail: margin_rule_source stored on each task
+- Extended pricing engine with category-specific > default > global rules
+- Admin CRUD endpoints for margin rules
+- Preview endpoint for margin calculations
 
 ### Sales Follow-Up Automation (DONE — April 10, 2026)
-- Background service running every hour
-- Detects: overdue follow-ups, stale leads, quotes awaiting response, deals awaiting payment
-- Configurable thresholds via CRM settings
-- Deduplication: same alert not re-sent within 24h
-- Creates notifications for sales reps and admins
+- Background service running hourly
+- Detects overdue follow-ups, stale leads, quotes awaiting response
 
 ### Weekly Operations Digest (DONE — April 10, 2026)
-- Background scheduler (Monday 6-10AM UTC)
-- Sections: Task Pipeline, Partner Performance, Revenue Flow, Alerts
-- Admin preview: GET `/api/admin/digest/preview`
-- Manual trigger: POST `/api/admin/digest/deliver`
-- In-app notification delivery (email-ready structure for Resend later)
+- Background scheduler with admin preview and manual trigger
 
-### Final Wiring/Table Audit (DONE — April 10, 2026)
-- All dashboard empty states hardened (text-slate-400→500, proper messages)
-- Table headers darkened across 20+ admin pages
-- StatusBadge, PaymentStatusBadge font weights strengthened
-- StandardSummaryCardsRow labels hardened
+### Shared Drawer & Date Standardization (DONE — April 10, 2026)
+- Global `StandardDrawerShell` component with fixed scrolling/overlay
+- `dateFormat.js` utility for canonical DD MMM YYYY, HH:mm formatting
 
 ## Backlog (Prioritized)
 
+### P1 (Next)
+- Salesperson Vendor Visibility (all assigned vendors + contacts in order detail drawer)
+- Vendor Specialization Fields (type, categories, regions, capacity)
+- Desktop Table Hardening (eliminate horizontal scrolling)
+- Customer company conditional rendering
+- CRM Kanban text wrapping
+- Restructure Vendor supply review page
+- Clarify Partner Ecosystem page
+
 ### P2
+- Promotions & Affiliate Policy Restructure
+- Content Creator Media Visibility
 - Admin data entry config (system logo, TIN, BRN, bank details)
 - Instant Quote Estimation UI
-
-### HOLD
-- Product Delivery Workflow (full logistics status chain)
-- Hybrid Margin Engine (advanced tiered pricing)
 
 ### Future
 - Twilio WhatsApp integration (blocked on API key)
@@ -89,18 +100,18 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
-- Trend comparison in weekly digest (vs last week)
-- Partner ranking over time
 
 ## Key API Endpoints
-- `POST /api/admin/service-tasks` — Create task (auto-assigns)
-- `POST /api/admin/service-tasks/from-quote-line` — Create from quote
+- `POST /api/files/upload` — Upload image to object storage
+- `GET /api/files/serve/{path}` — Serve uploaded file
+- `POST /api/vendor/products/upload` — Vendor submits product (with images + allocated_quantity)
 - `GET /api/admin/vendor-submissions` — Admin review submissions
+- `POST /api/admin/vendor-submissions/{id}/approve` — Approve submission
+- `POST /api/admin/vendor-submissions/{id}/reject` — Reject submission
 - `POST /api/admin/vendor-submissions/bulk-approve` — Bulk approve
+- `POST /api/admin/vendor-submissions/bulk-reject` — Bulk reject
 - `GET /api/admin/category-margin-rules` — Category margin rules
-- `POST /api/admin/category-margin-rules/preview` — Preview margin calc
 - `GET /api/admin/digest/preview` — Weekly digest preview
-- `POST /api/admin/digest/deliver` — Manual digest trigger
 
 ## Test Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

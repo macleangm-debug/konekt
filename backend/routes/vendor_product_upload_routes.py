@@ -130,6 +130,8 @@ async def upload_product(payload: ProductUploadIn, authorization: Optional[str] 
         raise HTTPException(400, "Product name is required")
     if payload.supply.base_price_vat_inclusive <= 0:
         raise HTTPException(400, "Base price must be greater than 0")
+    if payload.supply.allocated_quantity < 0:
+        raise HTTPException(400, "Allocated quantity cannot be negative")
 
     # Resolve taxonomy names for display
     product_dict = payload.product.dict()
