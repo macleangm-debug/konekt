@@ -391,8 +391,6 @@ async def create_service_task(request: Request, payload: dict):
 
     result = await db.service_tasks.insert_one(doc)
     task_id = str(result.inserted_id)
-    created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
-    created["id"] = task_id
 
     if payload.get("partner_id"):
         # Manual assignment — notify partner
@@ -409,15 +407,13 @@ async def create_service_task(request: Request, payload: dict):
     else:
         # No partner specified — attempt auto-assignment
         try:
-            assignment = await _apply_auto_assignment(task_id, doc)
-            if assignment["assigned"]:
-                created["partner_id"] = assignment["partner_id"]
-                created["partner_name"] = assignment["partner_name"]
-                created["status"] = "assigned"
-                created["auto_assigned"] = True
+            await _apply_auto_assignment(task_id, doc)
         except Exception as e:
             print(f"Warning: Auto-assignment failed: {e}")
 
+    # Re-fetch from DB to reflect auto-assignment updates
+    created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
+    created["id"] = task_id
     return created
 
 
@@ -533,14 +529,11 @@ async def create_task_from_quote_line(request: Request, payload: dict):
     else:
         # No partner specified — attempt auto-assignment
         try:
-            assignment = await _apply_auto_assignment(task_id, doc)
-            if assignment["assigned"]:
-                doc["partner_id"] = assignment["partner_id"]
-                doc["partner_name"] = assignment["partner_name"]
-                doc["status"] = "assigned"
+            await _apply_auto_assignment(task_id, doc)
         except Exception as e:
             print(f"Warning: Auto-assignment from quote line failed: {e}")
 
+    # Re-fetch from DB to reflect auto-assignment updates
     created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
     created["id"] = task_id
     return created

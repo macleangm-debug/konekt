@@ -26,7 +26,10 @@ export default function AdminServiceTasksPage() {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("filter") === "overdue" ? "overdue" : "all");
+  const initFilter = searchParams.get("filter") || "all";
+  const [statusFilter, setStatusFilter] = useState(
+    ["overdue", "unassigned", "awaiting", "cost_submitted", "in_progress", "completed"].includes(initFilter) ? initFilter : "all"
+  );
   const [selected, setSelected] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -63,6 +66,10 @@ export default function AdminServiceTasksPage() {
     let list = tasks;
     if (statusFilter === "overdue") {
       list = list.filter(isOverdue);
+    } else if (statusFilter === "unassigned") {
+      list = list.filter(t => t.status === "unassigned");
+    } else if (statusFilter === "awaiting") {
+      list = list.filter(t => ["assigned", "awaiting_cost"].includes(t.status));
     } else if (statusFilter !== "all") {
       list = list.filter(t => t.status === statusFilter);
     }
@@ -81,7 +88,8 @@ export default function AdminServiceTasksPage() {
 
   const tabs = [
     { key: "all", label: "All", count: stats.total || 0 },
-    { key: "assigned", label: "Awaiting", count: (stats.assigned || 0) + (stats.awaiting_cost || 0) },
+    { key: "unassigned", label: "Unassigned", count: stats.unassigned || 0 },
+    { key: "awaiting", label: "Awaiting", count: (stats.assigned || 0) + (stats.awaiting_cost || 0) },
     { key: "cost_submitted", label: "To Review", count: stats.cost_submitted || 0 },
     { key: "in_progress", label: "In Progress", count: stats.in_progress || 0 },
     { key: "completed", label: "Completed", count: stats.completed || 0 },
@@ -109,8 +117,12 @@ export default function AdminServiceTasksPage() {
               statusFilter === tab.key
                 ? tab.key === "overdue"
                   ? "bg-red-600 text-white"
-                  : "bg-[#20364D] text-white"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  : tab.key === "unassigned"
+                    ? "bg-amber-600 text-white"
+                    : "bg-[#20364D] text-white"
+                : tab.key === "unassigned" && tab.count > 0
+                  ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
             data-testid={`filter-${tab.key}`}
           >
@@ -232,6 +244,26 @@ export default function AdminServiceTasksPage() {
               </div>
             )}
 
+            {/* Auto-assignment Info */}
+            {selected.auto_assigned === false && selected.assignment_failure_reason && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <span className="text-sm font-semibold text-amber-800">Auto-assignment Failed</span>
+                </div>
+                <p className="text-xs text-amber-700">{selected.assignment_failure_reason}</p>
+              </div>
+            )}
+            {selected.auto_assigned === true && (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-800">Auto-assigned</span>
+                  {selected.assignment_match_source && <span className="text-xs text-green-600 ml-1">(via {selected.assignment_match_source})</span>}
+                </div>
+              </div>
+            )}
+
             {/* Timeline */}
             {selected.timeline && selected.timeline.length > 0 && (
               <div className="border-t pt-4">
@@ -242,8 +274,8 @@ export default function AdminServiceTasksPage() {
                       <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
                       <div>
                         <span className="font-medium">{entry.action}</span>
-                        <span className="text-slate-400 ml-2">{entry.timestamp ? new Date(entry.timestamp).toLocaleString("en-GB") : ""}</span>
-                        {entry.notes && <p className="text-slate-500 mt-0.5">{entry.notes}</p>}
+                        <span className="text-slate-400 ml-2">{entry.at ? new Date(entry.at).toLocaleString("en-GB") : ""}</span>
+                        {entry.note && <p className="text-slate-500 mt-0.5">{entry.note}</p>}
                       </div>
                     </div>
                   ))}
