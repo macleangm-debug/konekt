@@ -340,6 +340,12 @@ async def dashboard_team_kpis(request: Request):
     from routes.sales_dashboard_routes import _build_leaderboard
     leaderboard = await _build_leaderboard(db, now, hide_revenue=False)
 
+    # ── Generate coaching insights ──
+    from services.coaching_engine import generate_coaching_insights
+    coaching_insights = await generate_coaching_insights(db, team_table, all_orders, sales_map)
+    # Filter to flagged reps only for the dashboard
+    coaching_flagged = [c for c in coaching_insights if c["status"] in ("Critical", "Needs Attention", "Improving")]
+
     return {
         "team_kpis": {
             "team_deals": team_deals,
@@ -357,6 +363,8 @@ async def dashboard_team_kpis(request: Request):
         "leaderboard": leaderboard,
         "low_rating_details": low_rating_alerts[:10],
         "critical_discount_details": critical_discounts[:10],
+        "coaching_insights": coaching_flagged[:7],
+        "coaching_all": coaching_insights,
     }
 
 
@@ -1563,7 +1571,29 @@ async def reports_weekly_performance(request: Request, weeks_back: int = Query(0
     restock = [{"name": p, "units": u} for p, u in top_products[:3]]
     remove = dead_products[:5]
 
-    # ── 8. ACTION RECOMMENDATIONS ──
+    # ── 8. COACHING SUMMARY ──
+    # Build a team_table compatible format for the coaching engine
+    coaching_team_table = []
+    for u in sales_users:
+        uid = u.get("id", "")
+        name = u.get("full_name", u.get("email", ""))
+        rep_orders_c = [o for o in all_orders if o.get("assigned_sales_id") == uid]
+        rep_paid_c = [o for o in rep_orders_c if o.get("payment_status") in ("paid", "verified")]
+        rep_r_c = [o["rating"]["stars"] for o in rep_orders_c if o.get("rating", {}).get("stars")]
+        avg_r_c = round(sum(rep_r_c) / max(len(rep_r_c), 1), 1) if rep_r_c else 0
+        pipeline_c = sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_orders_c if o.get("payment_status") not in ("paid", "verified") and o.get("status") not in ("completed", "cancelled", "delivered"))
+        coaching_team_table.append({
+            "id": uid, "name": name, "deals": len(rep_paid_c),
+            "revenue": round(sum(float(o.get("total_amount") or o.get("total") or 0) for o in rep_paid_c), 0),
+            "pipeline": round(pipeline_c, 0), "avg_rating": avg_r_c,
+            "total_ratings": len(rep_r_c), "total_orders": len(rep_orders_c),
+        })
+
+    from services.coaching_engine import generate_coaching_insights, get_coaching_summary_for_report
+    coaching_insights = await generate_coaching_insights(db, coaching_team_table, all_orders, sales_map)
+    coaching_summary = get_coaching_summary_for_report(coaching_insights)
+
+    # ── 9. ACTION RECOMMENDATIONS ──
     actions = []
     for a in open_alerts:
         actions.append({"message": a.get("recommended_action", ""), "source": a.get("alert_type", ""), "severity": a.get("severity", "info")})
@@ -1613,6 +1643,7 @@ async def reports_weekly_performance(request: Request, weeks_back: int = Query(0
             "remove": remove,
         },
         "action_recommendations": actions,
+        "coaching_summary": coaching_summary,
     }
 
 

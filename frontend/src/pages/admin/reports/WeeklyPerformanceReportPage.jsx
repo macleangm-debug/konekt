@@ -6,7 +6,8 @@ import { exportCSV, exportPDF, fmtMoney } from "../../../lib/reportExportUtils";
 import {
   DollarSign, ShoppingCart, TrendingUp, Star, BadgePercent, CheckCircle,
   AlertTriangle, Clock, FileText, Download, ChevronLeft, ChevronRight,
-  Users, Package, Truck, CreditCard, Target, ArrowUpRight, ArrowDownRight
+  Users, Package, Truck, CreditCard, Target, ArrowUpRight, ArrowDownRight,
+  Lightbulb
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -65,6 +66,7 @@ export default function WeeklyPerformanceReportPage() {
   const proc = data.procurement || {};
   const alerts = data.risk_alerts || [];
   const actions = data.action_recommendations || [];
+  const coachingSummary = data.coaching_summary || [];
   const period = data.period || {};
 
   return (
@@ -321,7 +323,39 @@ export default function WeeklyPerformanceReportPage() {
         </div>
       </div>
 
-      {/* 8. Action Recommendations */}
+      {/* 8. Team Coaching Summary */}
+      {coachingSummary.length > 0 && (
+        <div className="bg-white border rounded-2xl p-6" data-testid="weekly-coaching-summary">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="w-5 h-5 text-amber-500" />
+            <h3 className="font-semibold text-[#20364D] text-lg">Team Coaching Summary</h3>
+          </div>
+          <div className="space-y-3">
+            {coachingSummary.map((rep, i) => {
+              const isC = rep.status === "Critical";
+              return (
+                <div key={i} className={`flex items-start gap-3 p-3 rounded-xl border-l-[3px] ${isC ? "border-l-red-500 bg-red-50/50" : "border-l-orange-400 bg-orange-50/50"}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isC ? "bg-red-500 text-white" : "bg-orange-400 text-white"}`}>
+                    {i + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-[#20364D]">{rep.name}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isC ? "bg-red-100 text-red-700" : "bg-orange-100 text-orange-700"}`}>
+                        {rep.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">{rep.issue}</p>
+                    <p className="text-xs text-teal-700 font-medium mt-1">&#8594; {rep.action}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 9. Action Recommendations */}
       <div className="bg-gradient-to-r from-[#20364D] to-[#2a4a6b] text-white rounded-2xl p-6" data-testid="weekly-actions">
         <div className="flex items-center gap-2 mb-4">
           <Target className="w-5 h-5 text-amber-300" />

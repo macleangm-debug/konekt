@@ -120,13 +120,14 @@ async def _already_delivered_this_week(db, config: dict) -> bool:
 
 
 async def _generate_executive_snapshot(db) -> dict:
-    """Generate a lightweight executive summary for the notification body.
-    Reuses the same aggregation logic as the full weekly report."""
+    """Generate a lightweight executive summary with week-over-week trends."""
     now = datetime.now(timezone.utc)
     week_end = now
     week_start = now - timedelta(days=7)
+    prev_week_start = now - timedelta(days=14)
     ws = week_start.isoformat()
     we = week_end.isoformat()
+    pws = prev_week_start.isoformat()
 
     all_orders = await db.orders.find(
         {"status": {"$nin": ["cancelled", "draft"]}},
@@ -134,22 +135,80 @@ async def _generate_executive_snapshot(db) -> dict:
          "created_at": 1, "rating": 1}
     ).to_list(10000)
 
-    def _in_range(ca):
+    def _in_range(ca, start, end):
         ca_str = ca.isoformat() if hasattr(ca, "isoformat") else str(ca or "")
-        return ws <= ca_str <= we
+        return start <= ca_str <= end
 
-    week_orders = [o for o in all_orders if _in_range(o.get("created_at", ""))]
+    # Current week
+    week_orders = [o for o in all_orders if _in_range(o.get("created_at", ""), ws, we)]
     paid_week = [o for o in week_orders if o.get("payment_status") in ("paid", "verified")]
-
     revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_week)
     orders_completed = len(paid_week)
     week_ratings = [o["rating"]["stars"] for o in week_orders if o.get("rating", {}).get("stars")]
     avg_rating = round(sum(week_ratings) / max(len(week_ratings), 1), 1) if week_ratings else 0
 
+    # Previous week
+    prev_orders = [o for o in all_orders if _in_range(o.get("created_at", ""), pws, ws)]
+    prev_paid = [o for o in prev_orders if o.get("payment_status") in ("paid", "verified")]
+    prev_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in prev_paid)
+    prev_completed = len(prev_paid)
+    prev_ratings = [o["rating"]["stars"] for o in prev_orders if o.get("rating", {}).get("stars")]
+    prev_avg_rating = round(sum(prev_ratings) / max(len(prev_ratings), 1), 1) if prev_ratings else 0
+
     open_alerts = await db.action_alerts.count_documents({"status": "open"})
+    prev_alerts = await db.action_alerts.count_documents({
+        "status": "open",
+        "created_at": {"$lt": week_start.isoformat()}
+    })
+
+    # Coaching signals count
+    coaching_critical = 0
+    try:
+        from services.coaching_engine import generate_coaching_insights
+        sales_users = await db.users.find(
+            {"role": {"$in": ["sales", "staff"]}},
+            {"_id": 0, "id": 1, "full_name": 1, "email": 1}
+        ).to_list(100)
+        simple_table = []
+        for u in sales_users:
+            uid = u.get("id", "")
+            rep_ords = [o for o in all_orders if o.get("assigned_sales_id") == uid]
+            rep_paid_s = [o for o in rep_ords if o.get("payment_status") in ("paid", "verified")]
+            rep_r = [o["rating"]["stars"] for o in rep_ords if o.get("rating", {}).get("stars")]
+            simple_table.append({
+                "id": uid, "name": u.get("full_name", ""),
+                "deals": len(rep_paid_s), "revenue": 0, "pipeline": 0,
+                "avg_rating": round(sum(rep_r) / max(len(rep_r), 1), 1) if rep_r else 0,
+                "total_ratings": len(rep_r), "total_orders": len(rep_ords),
+            })
+        insights = await generate_coaching_insights(db, simple_table, all_orders, {})
+        coaching_critical = sum(1 for i in insights if i["status"] in ("Critical", "Needs Attention"))
+    except Exception as e:
+        logger.warning("Coaching signals in snapshot failed: %s", e)
 
     period_start = week_start.strftime("%d %b")
     period_end = week_end.strftime("%d %b %Y")
+
+    # Calculate trends
+    def _pct_trend(curr, prev):
+        if prev == 0:
+            return "+100%" if curr > 0 else "0%"
+        pct = round(((curr - prev) / prev) * 100)
+        return f"+{pct}%" if pct >= 0 else f"{pct}%"
+
+    def _abs_trend(curr, prev):
+        diff = curr - prev
+        return f"+{diff}" if diff >= 0 else str(diff)
+
+    rev_trend = _pct_trend(revenue, prev_revenue)
+    rev_arrow = "↑" if revenue >= prev_revenue else "↓"
+    ord_diff = orders_completed - prev_completed
+    ord_trend = f"+{ord_diff}" if ord_diff >= 0 else str(ord_diff)
+    ord_arrow = "↑" if ord_diff >= 0 else "↓"
+    rat_diff = round(avg_rating - prev_avg_rating, 1)
+    rat_trend = f"+{rat_diff}" if rat_diff >= 0 else str(rat_diff)
+    alert_diff = open_alerts - prev_alerts
+    alert_trend = f"+{alert_diff}" if alert_diff >= 0 else str(alert_diff)
 
     return {
         "revenue": round(revenue, 0),
@@ -157,6 +216,13 @@ async def _generate_executive_snapshot(db) -> dict:
         "avg_rating": avg_rating,
         "open_alerts": open_alerts,
         "period_label": f"{period_start} — {period_end}",
+        "coaching_critical": coaching_critical,
+        "trends": {
+            "revenue": f"{rev_trend} {rev_arrow}",
+            "orders": f"{ord_trend} {ord_arrow}",
+            "rating": rat_trend,
+            "alerts": f"{alert_trend}",
+        },
     }
 
 
@@ -168,15 +234,21 @@ async def _deliver_report(db):
     snapshot = await _generate_executive_snapshot(db)
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    # Build notification content
+    # Build notification content with trends
     rev_fmt = f"TZS {snapshot['revenue']:,.0f}"
+    trends = snapshot.get("trends", {})
     message = (
         f"Weekly Performance ({snapshot['period_label']}): "
-        f"Revenue {rev_fmt} | "
-        f"{snapshot['orders_completed']} orders completed | "
-        f"Avg rating {snapshot['avg_rating']}/5 | "
-        f"{snapshot['open_alerts']} open alerts"
+        f"Revenue {rev_fmt} ({trends.get('revenue', '')}) | "
+        f"{snapshot['orders_completed']} orders ({trends.get('orders', '')}) | "
+        f"Rating {snapshot['avg_rating']}/5 ({trends.get('rating', '')}) | "
+        f"{snapshot['open_alerts']} alerts ({trends.get('alerts', '')} ⚠)"
     )
+
+    # Add coaching flag if any reps need attention
+    coaching_critical = snapshot.get("coaching_critical", 0)
+    if coaching_critical > 0:
+        message += f" | {coaching_critical} rep(s) need coaching attention"
 
     # Find eligible recipients by role
     role_queries = []
@@ -219,6 +291,7 @@ async def _deliver_report(db):
                     "rating": snapshot["avg_rating"],
                     "alerts": snapshot["open_alerts"],
                     "period": snapshot["period_label"],
+                    "trends": snapshot.get("trends", {}),
                 },
             )
             delivered_count += 1

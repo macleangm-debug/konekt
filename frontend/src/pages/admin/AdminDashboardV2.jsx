@@ -8,7 +8,7 @@ import {
   TrendingUp, CheckCircle, Package, ArrowRight,
   Settings, FileText, Users, UserCheck, CreditCard,
   Truck, Activity, BarChart3, Layers, Trophy,
-  Star, ShieldAlert, BadgePercent, Target
+  Star, ShieldAlert, BadgePercent, Target, Lightbulb
 } from "lucide-react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -95,6 +95,7 @@ function SalesManagerDashboard() {
   const leaderboard = data?.leaderboard || [];
   const lowRatings = data?.low_rating_details || [];
   const criticalDiscounts = data?.critical_discount_details || [];
+  const coachingInsights = data?.coaching_insights || [];
 
   const PIPELINE_COLORS = [
     "#F59E0B", "#3B82F6", "#10B981", "#8B5CF6",
@@ -320,6 +321,96 @@ function SalesManagerDashboard() {
             View All Discount Analytics
           </Link>
         </div>
+      </div>
+
+      {/* Team Coaching Insights */}
+      <div className="bg-white border rounded-2xl p-5" data-testid="sm-coaching-insights">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-amber-500" />
+            <h3 className="font-semibold text-[#20364D] text-sm">Team Coaching Insights</h3>
+          </div>
+          <span className="text-[10px] text-slate-400">Reps needing attention based on ratings, discounts, activity, and performance</span>
+        </div>
+        {coachingInsights.length === 0 ? (
+          <div className="text-center py-8">
+            <CheckCircle className="w-10 h-10 mx-auto mb-3 text-green-300" />
+            <p className="text-sm font-medium text-[#20364D]">No coaching issues right now</p>
+            <p className="text-xs text-slate-400 mt-1">Your team is performing within healthy thresholds this week.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {coachingInsights.slice(0, 7).map((rep) => {
+              const statusColors = {
+                "Critical": "bg-red-100 text-red-700 border-red-200",
+                "Needs Attention": "bg-orange-100 text-orange-700 border-orange-200",
+                "Improving": "bg-amber-100 text-amber-700 border-amber-200",
+                "Strong": "bg-blue-100 text-blue-700 border-blue-200",
+                "Top Performer": "bg-green-100 text-green-700 border-green-200",
+              };
+              const borderColors = {
+                "Critical": "border-l-red-500",
+                "Needs Attention": "border-l-orange-500",
+                "Improving": "border-l-amber-400",
+                "Strong": "border-l-blue-400",
+                "Top Performer": "border-l-green-500",
+              };
+              return (
+                <div
+                  key={rep.id}
+                  className={`border-l-[3px] ${borderColors[rep.status] || "border-l-slate-300"} rounded-xl border bg-slate-50/50 p-4 hover:bg-white transition-colors`}
+                  data-testid={`coaching-card-${rep.id}`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Avatar + Name */}
+                    <div className="w-9 h-9 rounded-full bg-[#20364D] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                      {(rep.name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-sm text-[#20364D]">{rep.name}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColors[rep.status] || "bg-slate-100 text-slate-600"}`}>
+                          {rep.status}
+                        </span>
+                      </div>
+                      {/* Reasons */}
+                      <div className="mt-1.5 space-y-0.5">
+                        {(rep.reasons || []).map((r, i) => (
+                          <p key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                            <span className="text-orange-400 mt-0.5 shrink-0">&#8226;</span> {r}
+                          </p>
+                        ))}
+                      </div>
+                      {/* Actions */}
+                      <div className="mt-2 space-y-0.5">
+                        {(rep.actions || []).map((a, i) => (
+                          <p key={i} className="text-xs text-teal-700 font-medium flex items-start gap-1.5">
+                            <span className="mt-0.5 shrink-0">&#8594;</span> {a}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Metrics snapshot */}
+                    <div className="hidden sm:flex items-center gap-3 text-[10px] text-slate-500 shrink-0">
+                      <div className="text-center">
+                        <Star className="w-3 h-3 mx-auto text-amber-400" />
+                        <span className="font-bold text-xs text-[#20364D]">{rep.metrics?.avg_rating || "—"}</span>
+                      </div>
+                      <div className="text-center">
+                        <ShieldAlert className="w-3 h-3 mx-auto text-red-400" />
+                        <span className="font-bold text-xs text-[#20364D]">{rep.metrics?.critical_discounts || 0}</span>
+                      </div>
+                      <div className="text-center">
+                        <ShoppingCart className="w-3 h-3 mx-auto text-blue-400" />
+                        <span className="font-bold text-xs text-[#20364D]">{rep.metrics?.deals || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Quick Actions for Sales Manager */}
