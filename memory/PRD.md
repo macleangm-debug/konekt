@@ -408,6 +408,28 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
   - `graphic-design-support`: +2 includes, +4 use_cases, +3 FAQs (now 4 total)
 - **Design rules enforced:** Same spacing, typography, card components, CTA style across all service pages. No one-off layouts.
 
+### Phase 22 — Quote Request Flow Optimization + Payment Drawer + CRM Refinements (Apr 10, 2026)
+- **Quote Request Flow Optimization** (Revenue conversion path)
+  - Complete rewrite of `/request-quote` into a 3-step wizard: What you need → Timeline & Budget → Contact Details
+  - 4 need-type cards: Products, Promotional, Services, Other
+  - URL pre-fill from service pages: `?type=service_quote&service=<slug>` auto-selects "Services" and pre-fills service name (read-only)
+  - Logged-in user auto-fill: fetches `/api/auth/me` and populates name, email, phone, company
+  - Step 2: urgency selector (4 options) + budget range dropdown (6 ranges)
+  - Step 3: contact fields with request summary card
+  - Inline success state: reference number, 24-hour expected response, "Submit Another Request" + "Browse Marketplace" CTAs
+  - Trust signal: "No payment required. Our team reviews every request and responds within 24 hours."
+- **Payment Review Drawer** (Operational fix)
+  - Canonical 5-section layout: Status Banner (with source label) → Payer Details (name, phone, email, reference) → Customer/Account → Invoice/Reference (invoice no, expected amount, paid amount, mode, date) → Payment Proof Preview → Admin Actions
+  - Inline image preview for proof files (jpg/png/gif/webp), file card with filename and "Open" link for PDFs/other
+  - "No proof uploaded" warning for missing proofs
+  - Approve/Reject buttons with Loader2 spinner and icons
+- **CRM Pipeline Refinements**
+  - "Owner" → "Assigned Rep" across table header, form, drawer
+  - Status dropdown: text-sm, font-semibold for improved readability
+  - Next Follow-up: overdue highlighting (red badge in table, red border in drawer, red chip on Kanban cards)
+  - Kanban cards: show assigned rep and follow-up status
+  - Create lead form: "Assign Sales Rep" placeholder
+
 ## Backlog
 
 ### P1 — Upcoming
