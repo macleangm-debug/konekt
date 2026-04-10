@@ -189,6 +189,8 @@ async def list_orders(
         # States
         order["payment_state"] = order.get("payment_status") or "paid"
         order["fulfillment_state"] = order.get("status") or "new"
+        # Ensure critical fields are never null
+        order["customer_name"] = order.get("customer_name") or order.get("customer_email") or "-"
         out.append(order)
     return out
 

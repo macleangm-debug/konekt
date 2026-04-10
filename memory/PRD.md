@@ -1,88 +1,85 @@
-# Konekt B2B E-Commerce Platform — PRD
+# Konekt B2B E-Commerce Platform — Product Requirements
 
-## Original Problem Statement
-Build a B2B e-commerce platform with role-based access (Admin, Customer, Vendor, Sales), CRM pipeline management, payment processing, quote generation, unified service execution, and operational workflows.
+## Core Vision
+A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/Partner, Sales) featuring quote management, payment processing, service task execution, and full operational data integrity.
 
-## Core Architecture
-- **Frontend:** React (CRA) + TailwindCSS + Shadcn/UI
-- **Backend:** FastAPI + MongoDB
-- **Auth:** JWT-based with role-based routing
-- **Payments:** Stripe sandbox integration
+## Architecture
+- **Frontend**: React + Tailwind CSS + Shadcn/UI
+- **Backend**: FastAPI + MongoDB (Motor async)
+- **Auth**: JWT-based custom authentication
+- **Payments**: Stripe sandbox integration
+
+## Key Technical Principles
+- **Strict Payer/Customer Separation**: `customer_name` from account/business records ONLY. `payer_name` from payment proof/submission ONLY. Never fallback to each other.
+- **Vendor Privacy**: Vendors see only their `vendor_order_no`, base_price, work details, and Konekt Sales Contact. No customer identity or margins.
+- **Unified Service Execution**: Logistics and Service partners use the same pricing engine. Mode A (partner inputs cost) or Mode B (sales inputs cost).
+- **Global Confirmation Modal**: Never use `window.confirm`. All destructive actions use `useConfirmationModal` hook.
 
 ## What's Been Implemented
 
-### Phase 1 — Platform Foundation (Complete)
-- Multi-role authentication (Admin, Customer, Vendor, Sales, Partner)
-- Product catalog with categories
-- Order management with payment proofs
-- Stripe sandbox payment gateway
-- Vendor order generation on payment approval
-- Strict payer/customer separation
+### Core Operations (DONE)
+- Stripe sandbox payment integration
+- CRM Quote Builder Drawer with auto-calculated margins
+- Document Tables standardization (Quotes, Invoices, POs, Delivery Notes)
+- Dashboard Empty States (Team Performance, Leaderboard, Alerts)
+- Global Confirmation Modal enforcement (replaced 9 native alerts)
 
-### Phase 2 — CRM & Pipeline Intelligence (Complete)
-- CRM lead management with pipeline stages
-- Quote Request Flow (pre-filled service context, 3-step form)
-- Payment Review Drawer (inline proof previews)
-- Pipeline Intelligence Layer (auto-stage movement, stale deal detection, conversion metrics)
+### Service Task Execution — Phase 1 (DONE)
+- Service Task data model and backend APIs (`service_task_routes.py`)
+- Partner Assigned Work Page UI with cost input
+- Task creation, assignment, cost submission, status updates
+- KPI dashboard for partners
 
-### Phase 3 — P0 Core Operations (Complete — Apr 10, 2026)
-- **CRM Create Quote Drawer**: Guided quote creation with catalog product search, service type selection, effective_cost = negotiated_cost || base_price, 30% margin auto-calculation, negotiated cost toggle, item type lock-in. Rendered via React Portal.
-- **Dashboard Empty States**: StaffPerformance, SalesPerformance, AdminSalesRatings, DormantClientAlerts — all show "No data available yet" with icon when empty.
-- **Document Tables Standardization**: QuotesRequestsPage, PurchaseOrdersPage, DeliveryNotesPage — identical structure: Document #, Client/Vendor, Date, Amount, Status, Actions.
+### P0 Full Wiring Audit (DONE — April 10, 2026)
+- **Payment Queue**: Status normalization (`pending`/`pending_verification` → `uploaded`), `payment_proof_id` fallback, `payer_phone`/`payer_email`/`source` wired in table + drawer
+- **Admin Orders**: Payer name waterfall (order → invoice → billing.invoice_client_name → proof), `customer_name` never null
+- **Customer Orders**: Added `payment_status_label`, `fulfillment_status`, `customer_status` to API response
+- **Customer Invoices**: Added `total_amount` guarantee, payer resolution with billing fallback
+- **Admin Invoices**: Fixed strict payer separation (no customer_name fallback), enriched detail endpoint
 
-### Phase 4 — System Stabilization & Service Execution (Complete — Apr 10, 2026)
-- **Global Confirmation Modal Enforcement**: Replaced all 9 `window.confirm()` calls across admin pages with the brand-styled `ConfirmModalContext` (danger/warning/neutral/success tones). Applied to: AdminUsers, AdminProducts, AdminOffers, RoutingRules, CountryPricing, ServiceCatalog, BlankProducts, Suppliers.
-- **Service Task Data Model + Backend APIs**: Created `service_tasks` collection with full CRUD. Supports both service partners and logistics partners. Endpoints: create task, list/filter tasks, assign partner, admin status override, partner cost submission (triggers margin engine), partner status update, proof upload, notes, timeline. Partner sees ONLY cost layer — never margin or selling price.
-- **Partner "Assigned Work" Page**: Full operational page in partner portal. Features: KPI row (Assigned, Awaiting Cost, In Progress, Completed, Delayed), Work Requiring Action section, main task table (Task Ref, Service Type, Client, Deadline, Status, Actions), task detail drawer with cost input, status update buttons, proof section, notes, and activity timeline.
+### P1 Notifications (DONE — April 10, 2026)
+- **Payment approved** → deep link to `/account/orders` with CTA "Track Order"
+- **Payment rejected** → deep link to `/account/invoices` with CTA "Open Invoice"
+- **Partner task assigned** → notification with deep link to `/partner/assigned-work?task={id}` with CTA "Submit Cost"
+- **Partner cost submitted** → admin notification with deep link to `/admin/service-tasks?task={id}` with CTA "Review Cost"
+- **Overdue cost endpoint**: `GET /api/admin/service-tasks/overdue-costs` returns tasks awaiting cost >48h
 
-## Key Technical Decisions
-- `effective_cost = negotiated_cost || base_price` — margin calculations use this
-- QuoteBuilderDrawer uses `createPortal(document.body)` to escape Shadcn Sheet focus trap
-- DEFAULT_MARGIN_PCT = 30 (30% markup on effective_cost)
-- Service Tasks use unified model for both service and logistics partners
-- Partner endpoints sanitize responses: no margin, no selling_price, no internal pricing
-- Global ConfirmModalContext wraps entire app via provider in App.js
+## Backlog (Prioritized)
 
-## Service Task Data Model
-```
-service_tasks {
-  service_type, service_subtype, description, scope, quantity,
-  client_name, client_id, order_ref, quote_id,
-  delivery_address, contact_person, contact_phone,
-  partner_id, partner_name, assigned_by, assignment_mode,
-  partner_cost, cost_notes, cost_submitted_at,
-  base_price, negotiated_cost, selling_price, margin_pct, margin_amount,
-  status, deadline,
-  proof_url, proof_notes, proof_uploaded_at,
-  timeline[], notes[],
-  created_at, updated_at
-}
-```
+### P1
+- Quote ↔ Service Task auto-linking
+- Automated partner assignment matching rules
+- Logistics partner specific UI extensions
+- Global Readability Hardening (contrast, font weights, light/dark modes)
 
-## Prioritized Backlog
+### P2
+- Category-Based Margin Rules
+- Admin data entry config (logo, TIN, BRN, bank details)
+- Sales follow-up automation
+- Instant Quote Estimation UI
 
-### P1 — Integration Layer (Next)
-- Quote ↔ Service Task integration (partner cost → margin engine → auto-populate quote line)
-- Invoice pulls from quote (selling price, not cost)
-- Logistics partner flow (delivery-specific statuses: In Transit, Delivered, etc.)
-- Automated partner assignment (Mode 1: direct, Mode 2: cost request/bid)
-- Partner matching: service type + region + availability
+### HOLD (Do Not Start)
+- Product Delivery Logistics Workflow (new system, not stabilization)
+- Hybrid Margin Engine (new pricing system, risk of breaking flows)
 
-### P1 — Growth Layer
-- Instant Quote Estimation on CanonicalServicePage
-- Category-Based Margin Rules (target/min margin per category)
-- Deliveries Logistics Structure
-
-### P2 — Standards Enforcement
-- Document stamp update to Connected Triad
-- Bulk actions / checkbox selection for tables
-- CSV/Excel export for payments, orders, reports
-- Audit trail enhancement (who/what/when)
-
-### P2 — Future
-- AI-assisted auto-generated quotes
-- Sales follow-up automation (WhatsApp/Email nudges)
+### Future
 - Twilio WhatsApp integration (blocked on API keys)
-- Resend email integration (blocked on API key)
+- Resend email integration (blocked on API keys)
+- One-click reorder / Saved Carts
+- AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
+
+## Key API Endpoints
+- `GET /api/admin/payments/queue` — Payment queue with enrichment
+- `GET /api/admin/orders-ops` — Admin orders with full enrichment
+- `GET /api/customer/orders` — Customer orders with status labels
+- `GET /api/customer/invoices` — Customer invoices with payer resolution
+- `GET /api/admin/service-tasks/stats/summary` — Service task KPIs
+- `GET /api/admin/service-tasks/overdue-costs` — Overdue cost submissions
+- `POST /api/admin/payments/{id}/approve` — Payment approval (via LiveCommerceService)
+
+## Test Credentials
+- Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
+- Customer: `demo.customer@konekt.com` / `Demo123!`
+- Partner: `demo.partner@konekt.com` / `Partner123!`
