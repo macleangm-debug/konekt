@@ -289,18 +289,41 @@ async def admin_update_task_status(request: Request, task_id: str, payload: dict
 # PARTNER ENDPOINTS (partner sees cost only)
 # ──────────────────────────────────────────
 
+# Partner types that are allowed to see client delivery details
+_LOGISTICS_TYPES = {"logistics", "distributor", "delivery"}
+
+
+async def _resolve_partner_type(partner_id: str) -> str:
+    """Look up partner_type from the partners collection."""
+    try:
+        partner = await db.partners.find_one({"_id": ObjectId(partner_id)}, {"_id": 0, "partner_type": 1})
+        return (partner or {}).get("partner_type", "service")
+    except Exception:
+        return "service"
+
+
 @router.get("/partner-portal/assigned-work")
 async def partner_assigned_work(request: Request, authorization: str = Header(None)):
-    """Get tasks assigned to the authenticated partner."""
+    """Get tasks assigned to the authenticated partner.
+    
+    DATA ACCESS RULES:
+    - Service/product/hybrid partners: NEVER see client identity
+    - Logistics/distributor/delivery partners: CAN see delivery name, phone, address
+    """
     partner_user = await _get_partner(authorization)
     partner_id = partner_user.get("partner_id")
+
+    # Resolve partner type for data filtering
+    partner_type = await _resolve_partner_type(partner_id)
+    is_logistics = partner_type in _LOGISTICS_TYPES
 
     docs = await db.service_tasks.find({"partner_id": partner_id}).sort("created_at", -1).to_list(length=300)
 
     # Sanitize: partner must NOT see margin/selling_price
+    # Service partners must NOT see client identity
     tasks = []
     for doc in docs:
-        tasks.append({
+        task = {
             "id": str(doc["_id"]),
             "task_ref": f"ST-{str(doc['_id'])[-6:].upper()}",
             "service_type": doc.get("service_type"),
@@ -308,10 +331,6 @@ async def partner_assigned_work(request: Request, authorization: str = Header(No
             "description": doc.get("description", ""),
             "scope": doc.get("scope", ""),
             "quantity": doc.get("quantity", 1),
-            "client_name": doc.get("client_name", "Client"),
-            "delivery_address": doc.get("delivery_address"),
-            "contact_person": doc.get("contact_person"),
-            "contact_phone": doc.get("contact_phone"),
             "order_ref": doc.get("order_ref"),
             "status": doc.get("status"),
             "deadline": doc.get("deadline"),
@@ -325,7 +344,24 @@ async def partner_assigned_work(request: Request, authorization: str = Header(No
             "notes": doc.get("notes", []),
             "created_at": doc.get("created_at"),
             "updated_at": doc.get("updated_at"),
-        })
+            "partner_type": partner_type,
+            "is_logistics": is_logistics,
+        }
+
+        if is_logistics:
+            # Logistics/delivery partners need delivery details
+            task["client_name"] = doc.get("client_name", "Client")
+            task["delivery_address"] = doc.get("delivery_address")
+            task["contact_person"] = doc.get("contact_person")
+            task["contact_phone"] = doc.get("contact_phone")
+        else:
+            # Service partners see only project reference, NEVER client identity
+            task["client_name"] = None
+            task["delivery_address"] = None
+            task["contact_person"] = None
+            task["contact_phone"] = None
+
+        tasks.append(task)
 
     return tasks
 

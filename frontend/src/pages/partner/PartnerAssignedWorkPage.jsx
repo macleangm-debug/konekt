@@ -154,18 +154,27 @@ function TaskDetailDrawer({ task, onClose, onRefresh }) {
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div><span className="text-slate-500">Status:</span> <StatusBadge status={task.status} /></div>
               <div><span className="text-slate-500">Quantity:</span> <span className="font-medium">{task.quantity}</span></div>
-              <div><span className="text-slate-500">Client:</span> <span className="font-medium">{task.client_name || "—"}</span></div>
+              {task.is_logistics && task.client_name && (
+                <div><span className="text-slate-500">Client:</span> <span className="font-medium">{task.client_name}</span></div>
+              )}
               <div><span className="text-slate-500">Deadline:</span> <span className="font-medium">{task.deadline ? new Date(task.deadline).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</span></div>
             </div>
             {task.description && <p className="text-sm text-slate-600 mt-3 bg-slate-50 rounded-xl p-3">{task.description}</p>}
             {task.scope && <p className="text-xs text-slate-500 mt-1">Scope: {task.scope}</p>}
-            {task.delivery_address && (
-              <p className="text-sm text-slate-600 mt-2"><span className="text-slate-500">Delivery:</span> {task.delivery_address}</p>
-            )}
-            {task.contact_person && (
-              <p className="text-sm text-slate-600 mt-1"><span className="text-slate-500">Contact:</span> {task.contact_person} {task.contact_phone ? `(${task.contact_phone})` : ""}</p>
-            )}
           </section>
+
+          {/* Delivery Details — only shown to logistics/delivery partners */}
+          {task.is_logistics && (task.delivery_address || task.contact_person) && (
+            <section>
+              <h3 className="text-sm font-semibold text-slate-500 uppercase mb-3">Delivery Details</h3>
+              {task.delivery_address && (
+                <p className="text-sm text-slate-600"><span className="text-slate-500">Address:</span> {task.delivery_address}</p>
+              )}
+              {task.contact_person && (
+                <p className="text-sm text-slate-600 mt-1"><span className="text-slate-500">Contact:</span> {task.contact_person} {task.contact_phone ? `(${task.contact_phone})` : ""}</p>
+              )}
+            </section>
+          )}
 
           {/* Cost Input */}
           <section className="rounded-xl border-2 border-dashed border-slate-200 p-4">
@@ -351,7 +360,7 @@ export default function PartnerAssignedWorkPage() {
       return (
         (t.task_ref || "").toLowerCase().includes(q) ||
         (t.service_type || "").toLowerCase().includes(q) ||
-        (t.client_name || "").toLowerCase().includes(q) ||
+        (t.scope || "").toLowerCase().includes(q) ||
         (t.description || "").toLowerCase().includes(q)
       );
     }
@@ -446,7 +455,7 @@ export default function PartnerAssignedWorkPage() {
                 <tr>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Task Ref</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Service Type</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Client</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Scope</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Deadline</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
                   <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
@@ -471,7 +480,7 @@ export default function PartnerAssignedWorkPage() {
                     >
                       <td className="px-5 py-3.5 font-semibold text-sm text-[#20364D]">{task.task_ref}</td>
                       <td className="px-5 py-3.5 text-sm capitalize">{task.service_type}{task.service_subtype ? ` — ${task.service_subtype}` : ""}</td>
-                      <td className="px-5 py-3.5 text-sm">{task.client_name || "—"}</td>
+                      <td className="px-5 py-3.5 text-sm text-slate-600">{task.scope || task.description?.substring(0, 40) || "—"}</td>
                       <td className="px-5 py-3.5 text-sm text-slate-500 whitespace-nowrap">
                         {task.deadline ? new Date(task.deadline).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                       </td>

@@ -751,6 +751,8 @@ function AdminDashboardMain() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recentOrders, setRecentOrders] = useState([]);
+  const [taskStats, setTaskStats] = useState(null);
+  const [overdueCount, setOverdueCount] = useState(0);
 
   useEffect(() => {
     loadDashboard();
@@ -758,13 +760,18 @@ function AdminDashboardMain() {
 
   const loadDashboard = async () => {
     try {
-      const [kpiRes, ordersRes] = await Promise.all([
+      const [kpiRes, ordersRes, taskRes, overdueRes] = await Promise.all([
         api.get("/api/admin/dashboard/kpis").catch(() => ({ data: {} })),
         api.get("/api/orders?limit=5").catch(() => ({ data: [] })),
+        api.get("/api/admin/service-tasks/stats/summary").catch(() => ({ data: {} })),
+        api.get("/api/admin/service-tasks/overdue-costs").catch(() => ({ data: [] })),
       ]);
       setData(kpiRes.data);
       const orders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
       setRecentOrders(orders.slice(0, 5));
+      setTaskStats(taskRes.data);
+      const overdue = Array.isArray(overdueRes.data) ? overdueRes.data : [];
+      setOverdueCount(overdue.length);
     } catch {
       setData(null);
     } finally {
@@ -813,6 +820,67 @@ function AdminDashboardMain() {
         <KpiCard icon={AlertTriangle} label="Open Delays" value={kpis.open_delays || 0} color="bg-red-50 text-red-600" to="/admin/orders" badge={kpis.open_delays} />
         <KpiCard icon={CheckCircle} label="Pending Approvals" value={kpis.pending_approvals || 0} color="bg-teal-50 text-teal-600" to="/admin/payments" />
       </div>
+
+      {/* ═══ Awaiting Partner Response Widget ═══ */}
+      {(() => {
+        const awaitingCount = (taskStats?.assigned || 0) + (taskStats?.awaiting_cost || 0);
+        const hasOverdue = overdueCount > 0;
+        if (awaitingCount === 0 && overdueCount === 0 && !taskStats?.cost_submitted) return null;
+        return (
+          <div className={`rounded-2xl border-2 p-5 transition ${hasOverdue ? "border-amber-400 bg-amber-50/60" : "border-slate-200 bg-white"}`} data-testid="partner-response-widget">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${hasOverdue ? "bg-amber-200 text-amber-800" : "bg-blue-100 text-blue-700"}`}>
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#20364D]">Partner Response Pipeline</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {hasOverdue
+                      ? `${overdueCount} overdue cost request${overdueCount > 1 ? "s" : ""} — partners haven't responded in 48+ hours`
+                      : awaitingCount > 0
+                        ? `${awaitingCount} task${awaitingCount > 1 ? "s" : ""} awaiting partner cost submission`
+                        : "All partner tasks are up to date"
+                    }
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Stat pills */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {awaitingCount > 0 && (
+                    <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-700">
+                      {awaitingCount} Awaiting
+                    </span>
+                  )}
+                  {overdueCount > 0 && (
+                    <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-100 text-red-700 animate-pulse">
+                      {overdueCount} Overdue
+                    </span>
+                  )}
+                  {(taskStats?.cost_submitted || 0) > 0 && (
+                    <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-100 text-cyan-700">
+                      {taskStats.cost_submitted} To Review
+                    </span>
+                  )}
+                </div>
+                {/* CTA */}
+                <Link
+                  to={hasOverdue ? "/admin/service-tasks?filter=overdue" : "/admin/service-tasks"}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition whitespace-nowrap ${
+                    hasOverdue
+                      ? "bg-amber-600 text-white hover:bg-amber-700"
+                      : "bg-[#20364D] text-white hover:bg-[#17283c]"
+                  }`}
+                  data-testid="partner-response-cta"
+                >
+                  {hasOverdue ? "Review Overdue" : "View Tasks"} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Snapshots Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
