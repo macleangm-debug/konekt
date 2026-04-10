@@ -64,6 +64,31 @@ class QuoteLineItem(BaseModel):
     quantity: int
     unit_price: float
     total: float
+    # Service task linking fields
+    name: Optional[str] = None
+    type: Optional[str] = None  # product | service | logistics | partner_cost
+    service_type: Optional[str] = None
+    service_subtype: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    product_id: Optional[str] = None
+    product_name: Optional[str] = None
+    # Pricing engine fields
+    effective_cost: Optional[float] = None  # Partner/base cost (internal only)
+    negotiated_cost: Optional[float] = None
+    specifications: Optional[str] = None
+    scope: Optional[str] = None
+    # Traceability markers
+    service_task_id: Optional[str] = None
+    cost_source: Optional[str] = None  # partner_submitted | manual | catalog
+    # Promotion fields
+    original_price: Optional[float] = None
+    promo_applied: Optional[bool] = None
+    promo_id: Optional[str] = None
+    promo_label: Optional[str] = None
+    promo_discount_per_unit: Optional[float] = None
+    subtotal: Optional[float] = None
+    category_name: Optional[str] = None
 
 
 class QuoteCreate(BaseModel):
@@ -78,6 +103,10 @@ class QuoteCreate(BaseModel):
     customer_id: Optional[str] = None  # Fallback for notification routing
     lead_id: Optional[str] = None
     order_reference: Optional[str] = None
+    # Delivery / client context
+    delivery_address: Optional[str] = None
+    contact_person: Optional[str] = None
+    contact_phone: Optional[str] = None
     currency: str = "TZS"
     line_items: List[QuoteLineItem]
     subtotal: float

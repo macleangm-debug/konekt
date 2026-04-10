@@ -45,6 +45,8 @@ export default function AdminQuotes() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(null);
+  const [linkedTasks, setLinkedTasks] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -131,6 +133,59 @@ export default function AdminQuotes() {
     } catch (error) {
       toast.error('Failed to send quote');
     }
+  };
+
+  const fetchLinkedTasks = async (quoteId) => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/quotes-v2/${quoteId}/linked-tasks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLinkedTasks(res.data || []);
+    } catch {
+      setLinkedTasks([]);
+    }
+  };
+
+  const fetchPartners = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/admin/partners`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = Array.isArray(res.data) ? res.data : (res.data?.partners || []);
+      setPartners(data);
+    } catch {
+      setPartners([]);
+    }
+  };
+
+  const createTaskFromLine = async (quoteId, lineIndex, partnerId, partnerName) => {
+    try {
+      await axios.post(`${API_URL}/api/admin/service-tasks/from-quote-line`, {
+        quote_id: quoteId,
+        line_index: lineIndex,
+        partner_id: partnerId || null,
+        partner_name: partnerName || "",
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Service task created and linked to quote line");
+      fetchLinkedTasks(quoteId);
+    } catch (error) {
+      const msg = error?.response?.data?.detail || "Failed to create task";
+      toast.error(msg);
+    }
+  };
+
+  const openQuoteDetail = (quote) => {
+    setSelectedQuote(quote);
+    setShowDetailModal(true);
+    const qid = quote._id || quote.id;
+    fetchLinkedTasks(qid);
+    fetchPartners();
+  };
+
+  const getLinkedTask = (lineIndex) => {
+    return linkedTasks.find(t => t.quote_line_index === lineIndex);
   };
 
   const resetForm = () => {
@@ -297,10 +352,7 @@ export default function AdminQuotes() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setSelectedQuote(quote);
-                            setShowDetailModal(true);
-                          }}
+                          onClick={() => openQuoteDetail(quote)}
                         >
                           View
                         </Button>
@@ -584,20 +636,89 @@ export default function AdminQuotes() {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-2">Product</th>
+                        <th className="text-left py-2">Type</th>
                         <th className="text-center py-2">Qty</th>
                         <th className="text-right py-2">Price</th>
                         <th className="text-right py-2">Total</th>
+                        <th className="text-right py-2">Task</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedQuote.items?.map((item, index) => (
-                        <tr key={index} className="border-b last:border-0">
-                          <td className="py-2">{item.product_name}</td>
-                          <td className="text-center py-2">{item.quantity}</td>
-                          <td className="text-right py-2">{formatCurrency(item.unit_price)}</td>
-                          <td className="text-right py-2">{formatCurrency(item.quantity * item.unit_price)}</td>
-                        </tr>
-                      ))}
+                      {(selectedQuote.line_items || selectedQuote.items || []).map((item, index) => {
+                        const isService = ['service', 'logistics', 'partner_cost'].includes(item.type);
+                        const linked = getLinkedTask(index);
+                        return (
+                          <tr key={index} className="border-b last:border-0">
+                            <td className="py-2">
+                              <span>{item.product_name || item.name || item.description}</span>
+                              {item.cost_source === 'partner_submitted' && (
+                                <span className="ml-2 text-xs text-green-600 font-semibold">Cost received</span>
+                              )}
+                            </td>
+                            <td className="py-2">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                isService ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'
+                              }`}>
+                                {item.type || 'product'}
+                              </span>
+                            </td>
+                            <td className="text-center py-2">{item.quantity}</td>
+                            <td className="text-right py-2">
+                              {formatCurrency(item.unit_price)}
+                              {isService && item.effective_cost != null && item.effective_cost !== item.unit_price && (
+                                <span className="block text-xs text-slate-400">Cost: {formatCurrency(item.effective_cost)}</span>
+                              )}
+                            </td>
+                            <td className="text-right py-2">{formatCurrency((item.quantity || 1) * (item.unit_price || 0))}</td>
+                            <td className="text-right py-2">
+                              {isService ? (
+                                linked ? (
+                                  <span className={`text-xs px-2 py-1 rounded-lg font-semibold ${
+                                    linked.status === 'cost_submitted' ? 'bg-cyan-100 text-cyan-700' :
+                                    linked.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                    linked.status === 'in_progress' ? 'bg-indigo-100 text-indigo-700' :
+                                    'bg-amber-100 text-amber-700'
+                                  }`}>
+                                    {linked.status === 'cost_submitted' ? `Cost: ${formatCurrency(linked.partner_cost)}` :
+                                     linked.status === 'assigned' || linked.status === 'awaiting_cost' ? 'Awaiting' :
+                                     linked.status}
+                                  </span>
+                                ) : (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="outline" size="sm" className="text-xs h-7">
+                                        Assign Partner
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="max-h-60 overflow-y-auto">
+                                      <DropdownMenuItem
+                                        onClick={() => createTaskFromLine(selectedQuote._id || selectedQuote.id, index)}
+                                      >
+                                        Create Unassigned Task
+                                      </DropdownMenuItem>
+                                      {partners.map(p => (
+                                        <DropdownMenuItem
+                                          key={p._id || p.id}
+                                          onClick={() => createTaskFromLine(
+                                            selectedQuote._id || selectedQuote.id,
+                                            index,
+                                            p._id || p.id,
+                                            p.name || p.full_name
+                                          )}
+                                        >
+                                          {p.name || p.full_name}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )
+                              ) : (
+                                <span className="text-xs text-slate-400">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                   <div className="border-t mt-4 pt-4 space-y-2">

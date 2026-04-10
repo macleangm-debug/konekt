@@ -10,6 +10,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 
 from notification_service import build_notification_doc
+from collection_mode_service import get_quote_collection
 
 router = APIRouter(prefix="/api", tags=["Service Tasks"])
 
@@ -25,6 +26,93 @@ def serialize(doc):
     d = {k: v for k, v in doc.items() if k != "_id"}
     d["id"] = str(doc["_id"])
     return d
+
+
+# ──────────────────────────────────────────
+# PRICING ENGINE — uses platform_settings
+# ──────────────────────────────────────────
+
+async def _get_margin_settings():
+    """Get margin settings from platform_settings.commercial_rules."""
+    row = await db.platform_settings.find_one({"key": "commercial_rules"})
+    if row and row.get("value"):
+        return float(row["value"].get("minimum_company_margin_percent", 30) or 30)
+    return 30.0  # Default margin pct
+
+
+async def _apply_pricing_engine(partner_cost: float) -> dict:
+    """Apply the margin engine to a partner cost.
+    Returns dict with selling_price, margin_pct, margin_amount."""
+    margin_pct = await _get_margin_settings()
+    selling_price = round(partner_cost * (1 + margin_pct / 100), 2)
+    margin_amount = round(selling_price - partner_cost, 2)
+    return {
+        "selling_price": selling_price,
+        "margin_pct": margin_pct,
+        "margin_amount": margin_amount,
+    }
+
+
+async def _propagate_cost_to_quote(task, partner_cost: float, selling_price: float):
+    """When a linked service task receives partner cost,
+    auto-update the related quote line with selling price.
+    
+    Rules:
+    - Only touches service-type quote lines
+    - Updates effective_cost, unit_price, total on the line
+    - Recalculates quote subtotal and total
+    - Adds service_task_id and cost_source markers for traceability
+    """
+    quote_id = task.get("quote_id")
+    line_index = task.get("quote_line_index")
+    if quote_id is None or line_index is None:
+        return False
+
+    quotes_collection = await get_quote_collection(db)
+    try:
+        quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
+    except Exception:
+        quote = await quotes_collection.find_one({"id": quote_id})
+    if not quote:
+        return False
+
+    items = quote.get("line_items") or quote.get("items") or []
+    idx = int(line_index)
+    if idx < 0 or idx >= len(items):
+        return False
+
+    line = items[idx]
+    # Only update service-type lines
+    if line.get("type") not in ("service", "logistics", "partner_cost"):
+        return False
+
+    qty = int(line.get("quantity", 1))
+    line["effective_cost"] = partner_cost
+    line["unit_price"] = selling_price
+    line["total"] = round(selling_price * qty, 2)
+    line["service_task_id"] = str(task.get("_id", ""))
+    line["cost_source"] = "partner_submitted"
+
+    items[idx] = line
+
+    # Recalculate quote totals
+    new_subtotal = sum(float(it.get("total", 0) or 0) for it in items)
+    tax = float(quote.get("tax", 0) or 0)
+    discount = float(quote.get("discount", 0) or 0)
+    new_total = new_subtotal + tax - discount
+
+    items_field = "line_items" if "line_items" in quote else "items"
+    now = datetime.now(timezone.utc).isoformat()
+    await quotes_collection.update_one(
+        {"_id": quote["_id"]},
+        {"$set": {
+            items_field: items,
+            "subtotal": round(new_subtotal, 2),
+            "total": round(new_total, 2),
+            "updated_at": now,
+        }}
+    )
+    return True
 
 
 async def _notify_partner_task_assigned(task_id: str, partner_id: str, partner_name: str, service_type: str, assigned_by: str = "admin"):
@@ -157,6 +245,146 @@ async def create_service_task(request: Request, payload: dict):
             print(f"Warning: Failed to send partner notification: {e}")
 
     return created
+
+
+# ──────────────────────────────────────────
+# QUOTE ↔ SERVICE TASK LINKING
+# ──────────────────────────────────────────
+
+@router.post("/admin/service-tasks/from-quote-line")
+async def create_task_from_quote_line(request: Request, payload: dict):
+    """Create a service task linked to a specific quote line.
+    
+    Rules:
+    - Only works for service/logistics/partner_cost type lines
+    - Validates line_index exists
+    - Prevents duplicate tasks for the same quote line
+    """
+    quote_id = payload.get("quote_id")
+    line_index = payload.get("line_index")
+    if quote_id is None or line_index is None:
+        raise HTTPException(status_code=400, detail="quote_id and line_index are required")
+
+    line_index = int(line_index)
+
+    # Find the quote
+    quotes_collection = await get_quote_collection(db)
+    try:
+        quote = await quotes_collection.find_one({"_id": ObjectId(quote_id)})
+    except Exception:
+        quote = await quotes_collection.find_one({"id": quote_id})
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+
+    items = quote.get("line_items") or quote.get("items") or []
+    if line_index < 0 or line_index >= len(items):
+        raise HTTPException(status_code=400, detail=f"Invalid line_index {line_index}. Quote has {len(items)} items.")
+
+    line = items[line_index]
+
+    # Only service-type lines can create tasks
+    line_type = line.get("type", "product")
+    if line_type not in ("service", "logistics", "partner_cost"):
+        raise HTTPException(status_code=400, detail=f"Cannot create task for '{line_type}' type line. Only service/logistics lines are supported.")
+
+    # Prevent duplicate task for same quote line
+    existing = await db.service_tasks.find_one({
+        "quote_id": str(quote["_id"]),
+        "quote_line_index": line_index,
+    })
+    if existing:
+        raise HTTPException(status_code=409, detail=f"A task already exists for this quote line (Task ST-{str(existing['_id'])[-6:].upper()})")
+
+    now = datetime.now(timezone.utc).isoformat()
+    quote_number = quote.get("quote_number", "")
+
+    doc = {
+        "quote_id": str(quote["_id"]),
+        "quote_number": quote_number,
+        "quote_line_index": line_index,
+        "service_type": line.get("service_type") or line.get("category") or line_type,
+        "service_subtype": line.get("service_subtype") or line.get("subcategory") or "",
+        "description": line.get("description") or line.get("name") or "",
+        "scope": line.get("scope") or line.get("specifications") or "",
+        "quantity": int(line.get("quantity", 1)),
+        "client_name": quote.get("customer_name") or quote.get("client_name") or "",
+        "delivery_address": quote.get("delivery_address") or "",
+        "contact_person": quote.get("contact_person") or "",
+        "contact_phone": quote.get("contact_phone") or "",
+        "order_ref": quote_number,
+        "partner_id": payload.get("partner_id"),
+        "partner_name": payload.get("partner_name") or "",
+        "partner_cost": None,
+        "selling_price": None,
+        "margin_pct": None,
+        "margin_amount": None,
+        "status": "assigned" if payload.get("partner_id") else "unassigned",
+        "timeline": [{
+            "action": "task_created_from_quote",
+            "by": "admin",
+            "at": now,
+            "note": f"Created from quote {quote_number} line {line_index + 1}",
+        }],
+        "notes": [],
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    result = await db.service_tasks.insert_one(doc)
+    task_id = str(result.inserted_id)
+
+    # Mark the quote line with the service_task_id
+    items_field = "line_items" if "line_items" in quote else "items"
+    items[line_index]["service_task_id"] = task_id
+    items[line_index]["cost_source"] = "awaiting_partner"
+    await quotes_collection.update_one(
+        {"_id": quote["_id"]},
+        {"$set": {f"{items_field}.{line_index}.service_task_id": task_id,
+                  f"{items_field}.{line_index}.cost_source": "awaiting_partner",
+                  "updated_at": now}}
+    )
+
+    # Notify partner if assigned
+    if payload.get("partner_id"):
+        try:
+            await _notify_partner_task_assigned(
+                task_id=task_id,
+                partner_id=payload["partner_id"],
+                partner_name=payload.get("partner_name", ""),
+                service_type=doc["service_type"],
+                assigned_by="admin",
+            )
+        except Exception as e:
+            print(f"Warning: Failed to send partner notification: {e}")
+
+    created = await db.service_tasks.find_one({"_id": result.inserted_id}, {"_id": 0})
+    created["id"] = task_id
+    return created
+
+
+@router.get("/admin/quotes-v2/{quote_id}/linked-tasks")
+async def get_linked_tasks(request: Request, quote_id: str):
+    """Return all service tasks linked to a specific quote.
+    Admin-safe: shows task ref, line index, partner, status, timestamps."""
+    docs = await db.service_tasks.find({"quote_id": quote_id}).sort("quote_line_index", 1).to_list(length=100)
+    tasks = []
+    for doc in docs:
+        tasks.append({
+            "id": str(doc["_id"]),
+            "task_ref": f"ST-{str(doc['_id'])[-6:].upper()}",
+            "quote_line_index": doc.get("quote_line_index"),
+            "service_type": doc.get("service_type"),
+            "partner_name": doc.get("partner_name") or "Unassigned",
+            "partner_id": doc.get("partner_id"),
+            "status": doc.get("status"),
+            "partner_cost": doc.get("partner_cost"),
+            "selling_price": doc.get("selling_price"),
+            "cost_submitted": doc.get("partner_cost") is not None,
+            "cost_submitted_at": doc.get("cost_submitted_at"),
+            "created_at": doc.get("created_at"),
+            "updated_at": doc.get("updated_at"),
+        })
+    return tasks
 
 
 @router.get("/admin/service-tasks")
@@ -388,7 +616,7 @@ async def partner_work_stats(request: Request, authorization: str = Header(None)
 
 @router.put("/partner-portal/assigned-work/{task_id}/submit-cost")
 async def partner_submit_cost(request: Request, task_id: str, payload: dict, authorization: str = Header(None)):
-    """Partner submits their cost for a task. Triggers margin engine."""
+    """Partner submits their cost for a task. Triggers margin engine + quote propagation."""
     partner_user = await _get_partner(authorization)
     partner_id = partner_user.get("partner_id")
     partner_name = partner_user.get("full_name", "Partner")
@@ -402,11 +630,11 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
     cost_notes = payload.get("notes", "")
     now = datetime.now(timezone.utc).isoformat()
 
-    # Apply margin engine
-    effective_cost = partner_cost
-    margin_pct = 30.0  # Default 30% margin — will use margin engine rules later
-    selling_price = round(effective_cost * (1 + margin_pct / 100), 2)
-    margin_amount = round(selling_price - effective_cost, 2)
+    # Apply pricing engine (uses platform_settings margin rules)
+    pricing = await _apply_pricing_engine(partner_cost)
+    selling_price = pricing["selling_price"]
+    margin_pct = pricing["margin_pct"]
+    margin_amount = pricing["margin_amount"]
 
     timeline_entry = {
         "action": "cost_submitted",
@@ -432,6 +660,13 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
         }
     )
 
+    # Propagate cost to linked quote line (if quote_id + quote_line_index exist)
+    quote_updated = False
+    try:
+        quote_updated = await _propagate_cost_to_quote(task, partner_cost, selling_price)
+    except Exception as e:
+        print(f"Warning: Failed to propagate cost to quote: {e}")
+
     # Notify admins that partner has submitted cost
     try:
         await _notify_admin_cost_submitted(
@@ -440,13 +675,31 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
             partner_cost=partner_cost,
             service_type=task.get("service_type", "general"),
         )
+        # If linked to a quote, send additional quote-specific notification
+        if quote_updated and task.get("quote_id"):
+            quote_number = task.get("quote_number") or ""
+            doc = build_notification_doc(
+                notification_type="quote_cost_updated",
+                title="Quote Line Updated",
+                message=f"{partner_name} submitted cost for a service line. Quote pricing has been auto-updated.",
+                target_url=f"/admin/quotes/{task['quote_id']}",
+                recipient_role="admin",
+                entity_type="quote",
+                entity_id=task["quote_id"],
+                priority="high",
+                action_key="review_quote_pricing",
+                triggered_by_role="system",
+            )
+            doc["cta_label"] = "Review Quote"
+            await db.notifications.insert_one(doc)
     except Exception as e:
-        print(f"Warning: Failed to notify admin of cost submission: {e}")
+        print(f"Warning: Failed to notify: {e}")
 
     return {
         "ok": True,
         "status": "cost_submitted",
         "partner_cost": partner_cost,
+        "quote_updated": quote_updated,
         # Partner does NOT see selling_price or margin
     }
 
