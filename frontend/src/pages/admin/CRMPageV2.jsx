@@ -569,7 +569,7 @@ export default function CRMPageV2() {
                     {(crmSettings?.sources || []).map((item) => (<option key={item} value={item}>{item}</option>))}
                   </select>
                   <select className="border border-slate-300 rounded-xl px-4 py-3 bg-white" value={form.assigned_to} onChange={(e) => setForm({ ...form, assigned_to: e.target.value })}>
-                    <option value="">Assign To</option>
+                    <option value="">Assign Sales Rep</option>
                     {staffList.map((member) => (<option key={member.id} value={member.email}>{member.full_name || member.email}</option>))}
                   </select>
                   <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Estimated Value (TZS)" type="number" value={form.estimated_value} onChange={(e) => setForm({ ...form, estimated_value: e.target.value })} />
@@ -593,7 +593,7 @@ export default function CRMPageV2() {
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Lead Name</th>
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Company</th>
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Owner</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Assigned Rep</th>
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Stage</th>
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
                         <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Last Activity</th>
@@ -626,10 +626,10 @@ export default function CRMPageV2() {
                                 <span className="ml-1 inline-flex text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 font-medium">req</span>
                               )}
                             </td>
-                            <td className="px-4 py-3 text-sm text-slate-600">{lead.assigned_to || "\u2014"}</td>
+                            <td className="px-4 py-3 text-sm text-slate-600">{lead.assigned_to || <span className="text-slate-300 italic text-xs">Unassigned</span>}</td>
                             <td className="px-4 py-3">
-                              <span className={`px-2 py-0.5 rounded-lg text-xs font-medium ${statusColors[lead.stage] || statusColors[lead.status] || "bg-slate-100"}`}>
-                                {lead.stage || lead.status || "\u2014"}
+                              <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${statusColors[lead.stage] || statusColors[lead.status] || "bg-slate-100"}`}>
+                                {(lead.stage || lead.status || "—").replace(/_/g, " ")}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -637,14 +637,23 @@ export default function CRMPageV2() {
                                 value={lead.status}
                                 onChange={(e) => { e.stopPropagation(); changeStatus(lead.id, e.target.value); }}
                                 onClick={(e) => e.stopPropagation()}
-                                className={`px-2 py-0.5 rounded-lg text-xs font-medium border-0 cursor-pointer ${statusColors[lead.status] || "bg-slate-100"}`}
+                                className={`px-2.5 py-1 rounded-lg text-sm font-semibold border-0 cursor-pointer ${statusColors[lead.status] || "bg-slate-100"}`}
                                 data-testid={`lead-status-select-${lead.id}`}
                               >
-                                {leadStatuses.map((s) => (<option key={s} value={s}>{s}</option>))}
+                                {leadStatuses.map((s) => (<option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>))}
                               </select>
                             </td>
                             <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(lead.updated_at)}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(lead.next_follow_up_at)}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              {lead.next_follow_up_at ? (() => {
+                                const isOverdue = new Date(lead.next_follow_up_at) < new Date();
+                                return (
+                                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${isOverdue ? "bg-red-50 text-red-700" : "bg-blue-50 text-blue-700"}`}>
+                                    {isOverdue ? "Overdue: " : ""}{formatDate(lead.next_follow_up_at)}
+                                  </span>
+                                );
+                              })() : <span className="text-xs text-slate-300">—</span>}
+                            </td>
                             <td className="px-4 py-3">
                               <button
                                 onClick={(e) => { e.stopPropagation(); openDrawer(lead); }}
@@ -753,9 +762,20 @@ export default function CRMPageV2() {
                           >
                             <div className="font-medium text-sm">{lead.company_name || lead.contact_name}</div>
                             <div className="text-xs text-slate-600 mt-1">{lead.contact_name}</div>
-                            {lead.estimated_value ? (
-                              <div className="text-xs text-[#D4A843] font-medium mt-2">TZS {Number(lead.estimated_value).toLocaleString()}</div>
-                            ) : null}
+                            {lead.assigned_to && <div className="text-[11px] text-slate-400 mt-1">{lead.assigned_to}</div>}
+                            <div className="flex items-center justify-between mt-2">
+                              {lead.estimated_value ? (
+                                <span className="text-xs text-[#D4A843] font-medium">TZS {Number(lead.estimated_value).toLocaleString()}</span>
+                              ) : <span />}
+                              {lead.next_follow_up_at && (() => {
+                                const isOverdue = new Date(lead.next_follow_up_at) < new Date();
+                                return (
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${isOverdue ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
+                                    {isOverdue ? "Overdue" : formatDate(lead.next_follow_up_at)}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </div>
                         ))}
                         {stageLeads.length === 0 && (
@@ -792,11 +812,21 @@ export default function CRMPageV2() {
                 <InfoCard label="Stage" value={drawerLead.stage || drawerLead.status || "\u2014"} />
                 <InfoCard label="Lead Score" value={drawerLead.lead_score || 0} />
                 <InfoCard label="Expected Value" value={`TZS ${Number(drawerLead.expected_value || drawerLead.estimated_value || 0).toLocaleString()}`} />
-                <InfoCard label="Next Follow-up" value={formatDateTime(drawerLead.next_follow_up_at)} />
+                {drawerLead.next_follow_up_at ? (() => {
+                  const isOverdue = new Date(drawerLead.next_follow_up_at) < new Date();
+                  return (
+                    <div className={`rounded-xl border p-3 ${isOverdue ? "bg-red-50 border-red-200" : "bg-blue-50 border-blue-200"}`}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">Next Follow-up</div>
+                      <div className={`text-sm font-bold ${isOverdue ? "text-red-700" : "text-blue-700"}`}>
+                        {isOverdue && "OVERDUE: "}{formatDateTime(drawerLead.next_follow_up_at)}
+                      </div>
+                    </div>
+                  );
+                })() : <InfoCard label="Next Follow-up" value="Not scheduled" />}
                 <InfoCard label="Phone" value={drawerLead.phone || "\u2014"} />
                 <InfoCard label="Source" value={drawerLead.source || "\u2014"} />
                 {drawerLead.industry && <InfoCard label="Industry" value={drawerLead.industry} />}
-                {drawerLead.assigned_to && <InfoCard label="Owner" value={drawerLead.assigned_to} />}
+                {drawerLead.assigned_to && <InfoCard label="Assigned Rep" value={drawerLead.assigned_to} />}
               </div>
 
               {/* Request traceability */}

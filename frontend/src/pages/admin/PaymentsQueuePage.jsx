@@ -6,7 +6,7 @@ import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import {
   CreditCard, CheckCircle2, XCircle, Clock, FileText, Eye,
-  User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight,
+  User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight, Loader2,
 } from "lucide-react";
 
 const STATUS_TABS = [
@@ -166,10 +166,10 @@ export default function PaymentsQueuePage() {
       </div>
 
       {/* Detail Drawer */}
-      <DetailDrawer open={!!selected} onClose={() => { setSelected(null); setDetailData(null); }} title="Payment Details">
+      <DetailDrawer open={!!selected} onClose={() => { setSelected(null); setDetailData(null); }} title="Payment Review">
         {selected && (
-          <div className="space-y-6" data-testid="payment-drawer">
-            {/* Status Banner */}
+          <div className="space-y-5" data-testid="payment-drawer">
+            {/* Section 1 — Status Banner */}
             <div className={`rounded-xl p-4 flex items-center gap-3 ${
               selected.status === "approved" ? "bg-green-50 border border-green-200" :
               selected.status === "rejected" ? "bg-red-50 border border-red-200" :
@@ -178,57 +178,131 @@ export default function PaymentsQueuePage() {
               {selected.status === "approved" ? <CheckCircle2 className="w-5 h-5 text-green-600" /> :
                selected.status === "rejected" ? <XCircle className="w-5 h-5 text-red-600" /> :
                <Clock className="w-5 h-5 text-amber-600" />}
-              <div>
-                <p className="font-semibold text-sm">{selected.status === "approved" ? "Approved" : selected.status === "rejected" ? "Rejected" : "Pending Review"}</p>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-sm">{selected.status === "approved" ? "Approved" : selected.status === "rejected" ? "Rejected" : "Pending Review"}</p>
+                  <span className="text-xs text-slate-400">{selected.source === "public" ? "Public submission" : "In-account"}</span>
+                </div>
                 {selected.approved_by && <p className="text-xs text-slate-500">by {selected.approved_by} {selected.approved_at ? `on ${new Date(selected.approved_at).toLocaleDateString()}` : ""}</p>}
                 {selected.rejection_reason && <p className="text-xs text-red-600 mt-1">Reason: {selected.rejection_reason}</p>}
               </div>
             </div>
 
-            {/* Customer & Payer */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-2"><User className="w-3.5 h-3.5" />CUSTOMER</div>
-                <p className="font-semibold text-[#20364D]" data-testid="drawer-customer-name">{selected.customer_name || "-"}</p>
-                {selected.company_name && <p className="text-xs text-slate-500 mt-1"><Building2 className="w-3 h-3 inline mr-1" />{selected.company_name}</p>}
-                {selected.customer_email && <p className="text-xs text-slate-500 mt-1"><Mail className="w-3 h-3 inline mr-1" />{selected.customer_email}</p>}
-                {selected.contact_phone && <p className="text-xs text-slate-500 mt-1"><Phone className="w-3 h-3 inline mr-1" />{selected.contact_phone}</p>}
-              </div>
-              <div className="rounded-xl border p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-2"><CreditCard className="w-3.5 h-3.5" />PAYER</div>
-                <p className="font-semibold text-[#20364D]" data-testid="drawer-payer-name">{selected.payer_name || "-"}</p>
-                {selected.payment_reference && <p className="text-xs text-slate-500 mt-1"><Receipt className="w-3 h-3 inline mr-1" />Ref: {selected.payment_reference}</p>}
-              </div>
-            </div>
-
-            {/* Financial Details */}
-            <div className="rounded-xl border p-4 space-y-3">
-              <div className="text-xs font-semibold text-slate-500 mb-2"><FileText className="w-3.5 h-3.5 inline mr-1" />FINANCIAL DETAILS</div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div><span className="text-slate-500">Invoice:</span> <span className="font-semibold">{selected.invoice_number || "-"}</span></div>
-                <div><span className="text-slate-500">Amount Paid:</span> <span className="font-semibold">TZS {Number(selected.amount_paid || 0).toLocaleString()}</span></div>
-                <div><span className="text-slate-500">Invoice Total:</span> <span className="font-medium">TZS {Number(selected.total_invoice_amount || 0).toLocaleString()}</span></div>
-                <div><span className="text-slate-500">Payment Mode:</span> <span className="font-medium">{selected.payment_mode || "full"}</span></div>
-                <div><span className="text-slate-500">Submitted:</span> <span className="font-medium">{selected.created_at ? new Date(selected.created_at).toLocaleString() : "-"}</span></div>
+            {/* Section 2 — Payer Details */}
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3"><CreditCard className="w-3.5 h-3.5" />PAYER DETAILS</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Payer Name</span>
+                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-payer-name">{selected.payer_name || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Payer Phone</span>
+                  <span className="text-sm font-medium text-[#20364D]" data-testid="drawer-payer-phone">{selected.payer_phone || selected.contact_phone || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Payer Email</span>
+                  <span className="text-sm font-medium text-[#20364D]">{selected.payer_email || selected.customer_email || "—"}</span>
+                </div>
+                {selected.payment_reference && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Reference</span>
+                    <span className="text-sm font-medium text-[#20364D]">{selected.payment_reference}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Invoice Link */}
-            {selected.invoice_id && (
-              <a href={`/admin/invoices/${selected.invoice_id}`} className="flex items-center gap-2 text-sm font-semibold text-[#20364D] hover:underline" data-testid="drawer-invoice-link">
-                <FileText className="w-4 h-4" />View Linked Invoice ({selected.invoice_number})
-              </a>
-            )}
+            {/* Section 2b — Customer (separate from payer) */}
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3"><User className="w-3.5 h-3.5" />CUSTOMER / ACCOUNT</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Customer</span>
+                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-customer-name">{selected.customer_name || "—"}</span>
+                </div>
+                {selected.company_name && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Company</span>
+                    <span className="text-sm font-medium">{selected.company_name}</span>
+                  </div>
+                )}
+              </div>
+            </div>
 
-            {/* Payment Proof File */}
-            {selected.file_url && (
-              <div className="rounded-xl border p-4">
-                <p className="text-xs font-semibold text-slate-500 mb-2">PAYMENT PROOF</p>
-                <a href={selected.file_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-600 hover:underline" data-testid="drawer-proof-file">
-                  <Eye className="w-4 h-4" />View uploaded proof
+            {/* Section 3 — Invoice / Reference Details */}
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3"><FileText className="w-3.5 h-3.5" />INVOICE / REFERENCE</div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div>
+                  <span className="text-slate-500 text-xs">Invoice No.</span>
+                  <p className="font-semibold text-[#20364D]">{selected.invoice_number || selected.order_number || "N/A"}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-xs">Expected Amount</span>
+                  <p className="font-semibold text-[#20364D]">TZS {Number(selected.total_invoice_amount || selected.expected_amount || 0).toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-xs">Amount Paid</span>
+                  <p className="font-bold text-emerald-700">TZS {Number(selected.amount_paid || 0).toLocaleString()}</p>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-xs">Payment Mode</span>
+                  <p className="font-medium capitalize">{selected.payment_mode || "full"}</p>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-slate-500 text-xs">Submitted</span>
+                  <p className="font-medium">{selected.created_at ? new Date(selected.created_at).toLocaleString() : "—"}</p>
+                </div>
+              </div>
+              {selected.invoice_id && (
+                <a href={`/admin/invoices/${selected.invoice_id}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#20364D] hover:underline mt-3" data-testid="drawer-invoice-link">
+                  <FileText className="w-3.5 h-3.5" />View Invoice
                 </a>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Section 4 — Payment Proof Preview */}
+            <div className="rounded-xl border p-4" data-testid="drawer-proof-section">
+              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-3"><Eye className="w-3.5 h-3.5" />PAYMENT PROOF</div>
+              {selected.file_url ? (
+                <>
+                  {/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(selected.file_url) ? (
+                    <div className="space-y-2">
+                      <img
+                        src={selected.file_url}
+                        alt="Payment proof"
+                        className="w-full max-h-80 object-contain rounded-lg border bg-slate-50 cursor-pointer"
+                        onClick={() => window.open(selected.file_url, "_blank")}
+                        data-testid="drawer-proof-image"
+                      />
+                      <p className="text-xs text-slate-400 text-center">Click to view full size</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-slate-50 p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[#20364D]/10 flex items-center justify-center shrink-0">
+                        <FileText className="w-5 h-5 text-[#20364D]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#20364D] truncate">
+                          {selected.file_url.split("/").pop() || "Payment proof document"}
+                        </p>
+                        <p className="text-xs text-slate-400 uppercase">{selected.file_url.split(".").pop() || "file"}</p>
+                      </div>
+                      <a href={selected.file_url} target="_blank" rel="noopener noreferrer"
+                        className="text-xs font-semibold text-[#20364D] hover:underline shrink-0"
+                        data-testid="drawer-proof-file">
+                        Open
+                      </a>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
+                  <p className="text-xs text-amber-700 font-medium">No proof uploaded</p>
+                </div>
+              )}
+            </div>
 
             {/* Approval History */}
             {detailData?.approval_history?.length > 0 && (
@@ -248,28 +322,30 @@ export default function PaymentsQueuePage() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Section 5 — Admin Actions */}
             {selected.status === "uploaded" && (
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={handleApprove}
-                  disabled={acting}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition disabled:opacity-40"
-                  data-testid="approve-payment-btn"
-                >
-                  {acting ? "Processing..." : "Approve Payment"}
-                </button>
-                <button
-                  onClick={() => {
-                    const reason = window.prompt("Rejection reason:");
-                    if (reason !== null) handleReject(reason);
-                  }}
-                  disabled={acting}
-                  className="flex-1 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold text-sm hover:bg-red-100 transition disabled:opacity-40"
-                  data-testid="reject-payment-btn"
-                >
-                  Reject
-                </button>
+              <div className="space-y-3 pt-1" data-testid="drawer-actions">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleApprove}
+                    disabled={acting}
+                    className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold text-sm hover:bg-green-700 transition disabled:opacity-40 flex items-center justify-center gap-2"
+                    data-testid="approve-payment-btn"
+                  >
+                    {acting ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : <><CheckCircle2 className="w-4 h-4" />Approve Payment</>}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const reason = window.prompt("Rejection reason:");
+                      if (reason !== null) handleReject(reason);
+                    }}
+                    disabled={acting}
+                    className="flex-1 py-3 bg-red-50 text-red-600 border border-red-200 rounded-xl font-semibold text-sm hover:bg-red-100 transition disabled:opacity-40 flex items-center justify-center gap-2"
+                    data-testid="reject-payment-btn"
+                  >
+                    <XCircle className="w-4 h-4" />Reject
+                  </button>
+                </div>
               </div>
             )}
           </div>
