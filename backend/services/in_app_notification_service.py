@@ -106,6 +106,15 @@ NOTIFICATION_EVENTS = {
         "cta_label": "Review Order",
         "roles": ["admin"],
     },
+    # ── Report notifications ──
+    "weekly_report": {
+        "title": "Weekly Performance Report",
+        "message_tpl": "{report_summary}",
+        "type": "info",
+        "priority": "normal",
+        "cta_label": "View Full Report",
+        "roles": ["admin", "sales_manager", "finance_manager"],
+    },
 }
 
 # ── Role → CTA deep link templates ──
@@ -114,6 +123,11 @@ ROLE_DEEP_LINKS = {
     "sales": "/staff/orders",
     "vendor": "/partner/orders",
     "admin": "/admin/orders",
+}
+
+# ── Event-specific deep links (override role-based links) ──
+EVENT_DEEP_LINKS = {
+    "weekly_report": "/admin/reports/weekly-performance?weeks_back=1",
 }
 
 # ── Status → notification event mapping ──
@@ -171,10 +185,13 @@ async def create_in_app_notification(
     except KeyError:
         message = event_def["message_tpl"]
 
-    # Resolve deep link
-    target_role = recipient_role or (event_def["roles"][0] if event_def["roles"] else "customer")
-    link_tpl = ROLE_DEEP_LINKS.get(target_role, "/")
-    target_url = link_tpl.format(order_id=order_id or entity_id)
+    # Resolve deep link — event-specific links take priority
+    if event_key in EVENT_DEEP_LINKS:
+        target_url = EVENT_DEEP_LINKS[event_key]
+    else:
+        target_role = recipient_role or (event_def["roles"][0] if event_def["roles"] else "customer")
+        link_tpl = ROLE_DEEP_LINKS.get(target_role, "/")
+        target_url = link_tpl.format(order_id=order_id or entity_id)
 
     now = datetime.now(timezone.utc).isoformat()
 

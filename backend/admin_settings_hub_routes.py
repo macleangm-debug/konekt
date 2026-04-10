@@ -139,6 +139,13 @@ DEFAULT_SETTINGS = {
         "admin_notifications_enabled": True,
         "vendor_notifications_enabled": True,
     },
+    "report_schedule": {
+        "enabled": True,
+        "day": "monday",
+        "time": "08:00",
+        "timezone": "Africa/Dar_es_Salaam",
+        "recipient_roles": ["admin", "sales_manager", "finance_manager"],
+    },
     "vendors": {
         "vendor_can_update_internal_progress": True,
         "vendor_sees_only_assigned_jobs": True,
@@ -211,3 +218,45 @@ async def update_settings_hub(payload: dict, request: Request, _admin=Depends(_r
         upsert=True,
     )
     return value
+
+
+@router.get("/report-schedule")
+async def get_report_schedule(request: Request, _admin=Depends(_require_admin)):
+    """Get the scheduled report delivery configuration."""
+    db = request.app.mongodb
+    from services.scheduled_report_delivery import get_schedule_config, _get_last_delivery
+    config = await get_schedule_config(db)
+    last = await _get_last_delivery(db)
+    last_row = await db.admin_settings.find_one({"key": "report_last_delivery"}, {"_id": 0})
+    last_info = last_row.get("value", {}) if last_row else {}
+    return {**config, "last_delivery": last_info}
+
+
+@router.put("/report-schedule")
+async def update_report_schedule(payload: dict, request: Request, _admin=Depends(_require_admin)):
+    """Update the scheduled report delivery configuration."""
+    db = request.app.mongodb
+    from services.scheduled_report_delivery import save_schedule_config, DEFAULT_SCHEDULE
+    config = {**DEFAULT_SCHEDULE, **payload}
+    # Only keep valid fields
+    clean = {
+        "enabled": bool(config.get("enabled", True)),
+        "day": str(config.get("day", "monday")).lower(),
+        "time": str(config.get("time", "08:00")),
+        "timezone": str(config.get("timezone", "Africa/Dar_es_Salaam")),
+        "recipient_roles": list(config.get("recipient_roles", ["admin", "sales_manager", "finance_manager"])),
+    }
+    await save_schedule_config(db, clean)
+    return clean
+
+
+@router.post("/report-schedule/deliver-now")
+async def deliver_report_now(request: Request, _admin=Depends(_require_admin)):
+    """Manually trigger weekly report delivery (for testing)."""
+    db = request.app.mongodb
+    from services.scheduled_report_delivery import _deliver_report
+    try:
+        count = await _deliver_report(db)
+        return {"status": "delivered", "recipients_count": count}
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}

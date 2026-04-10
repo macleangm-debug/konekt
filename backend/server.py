@@ -3179,6 +3179,14 @@ async def startup_event():
     except Exception as e:
         logger.warning("Lead migration check: %s", e)
 
+    # ── Start scheduled report delivery background loop ──
+    try:
+        from services.scheduled_report_delivery import scheduled_report_loop
+        asyncio.create_task(scheduled_report_loop(app))
+        logger.info("Scheduled report delivery loop started")
+    except Exception as e:
+        logger.warning("Failed to start scheduled report loop: %s", e)
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()

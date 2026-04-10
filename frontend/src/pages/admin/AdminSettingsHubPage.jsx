@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -10,6 +10,7 @@ import InvoiceBrandingSettings from "../../components/admin/settings/InvoiceBran
 import CustomerActivityRulesCard from "../../components/admin/settings/CustomerActivityRulesCard";
 import SettingsPreviewPanel from "../../components/admin/settings/SettingsPreviewPanel";
 import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
+import ReportScheduleSection from "../../components/admin/settings/ReportScheduleSection";
 
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
@@ -22,6 +23,7 @@ const TABS = [
   { key: "payout", label: "Payout Settings", icon: Wallet },
   { key: "workflows", label: "Workflows & Vendors", icon: Shield },
   { key: "notifications", label: "Notifications", icon: Bell },
+  { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
   { key: "launch", label: "Launch Controls", icon: Rocket },
 ];
 
@@ -129,6 +131,7 @@ export default function AdminSettingsHubPage() {
         {tab === "payout" && <PayoutTab state={state} setState={setState} />}
         {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
         {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
+        {tab === "report_delivery" && <ReportScheduleSection />}
         {tab === "launch" && <LaunchTab state={state} setState={setState} />}
       </div>
     </div>
