@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
+import OnboardingGate from "../components/onboarding/OnboardingGate";
 import PartnerAccountTopbar from "../components/layout/PartnerAccountTopbar";
 import BrandLogo from "../components/branding/BrandLogo";
 import { clearAllAuth } from "../lib/authHelpers";
@@ -162,7 +163,9 @@ export default function PartnerLayout() {
         <PartnerAccountTopbar onLogout={logout} />
         <div className="p-6 lg:p-8">
           <div key={location.pathname} className="k-page-fade-in">
-            <Outlet />
+            <OnboardingGate>
+              <Outlet />
+            </OnboardingGate>
           </div>
         </div>
       </main>

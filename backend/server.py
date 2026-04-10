@@ -314,6 +314,8 @@ class UserCreate(BaseModel):
     full_name: str
     phone: Optional[str] = None
     company: Optional[str] = None
+    pin: Optional[str] = None
+    country_code: Optional[str] = "+255"
     # Attribution fields
     affiliate_code: Optional[str] = None
     campaign_id: Optional[str] = None
@@ -321,8 +323,11 @@ class UserCreate(BaseModel):
     website: Optional[str] = None
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    phone: Optional[str] = None
+    pin: Optional[str] = None
+    country_code: Optional[str] = "+255"
 
 class AdminUserCreate(BaseModel):
     email: EmailStr
@@ -776,6 +781,22 @@ def create_token(user_id: str, email: str, role: str = "customer", full_name: st
 def generate_referral_code(user_id: str) -> str:
     return f"KONEKT-{user_id[:6].upper()}"
 
+
+def normalize_phone(phone: str, country_code: str = "+255") -> str:
+    """Normalize phone to international format: strip spaces, dashes, leading 0, prepend country code."""
+    if not phone:
+        return ""
+    p = phone.strip().replace(" ", "").replace("-", "").replace("(", "").replace(")", "")
+    if p.startswith("+"):
+        return p
+    if p.startswith("00"):
+        return "+" + p[2:]
+    if p.startswith("0"):
+        p = p[1:]
+    if not country_code.startswith("+"):
+        country_code = "+" + country_code
+    return country_code + p
+
 def generate_order_number() -> str:
     return f"KNK-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
@@ -866,12 +887,14 @@ async def register(request: Request, data: UserCreate):
     
     user_id = str(uuid.uuid4())
     referral_code = generate_referral_code(user_id)
+    normalized_phone = normalize_phone(data.phone or "", data.country_code or "+255") if data.phone else ""
     user_doc = {
         "id": user_id,
         "email": data.email,
         "password_hash": hash_password(data.password),
         "full_name": data.full_name,
-        "phone": data.phone,
+        "phone": normalized_phone or data.phone,
+        "phone_normalized": normalized_phone,
         "company": data.company,
         "points": 100,
         "credit_balance": 0,
@@ -881,10 +904,14 @@ async def register(request: Request, data: UserCreate):
         "total_referrals": 0,
         "role": "customer",
         "is_active": True,
+        "onboarding_completed": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
         # Attribution fields
         **build_attribution_block(attribution),
     }
+    # Optional PIN setup
+    if data.pin and len(data.pin) >= 4 and len(data.pin) <= 6 and data.pin.isdigit():
+        user_doc["pin_hash"] = hash_password(data.pin)
     await db.users.insert_one(user_doc)
     
     # Send welcome email (fire and forget)
@@ -991,66 +1018,89 @@ async def login(request: Request, data: UserLogin):
     from services.auth_security_service import check_rate_limit
     
     client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
-    if not check_rate_limit("login", f"{client_ip}:{data.email}"):
+    
+    # Determine login mode: email+password or phone+PIN
+    is_phone_login = bool(data.phone and data.pin)
+    is_email_login = bool(data.email and data.password)
+    
+    if not is_phone_login and not is_email_login:
+        raise HTTPException(status_code=400, detail="Provide email+password or phone+PIN")
+    
+    rate_key = f"{client_ip}:{data.email or data.phone}"
+    if not check_rate_limit("login", rate_key):
         raise HTTPException(status_code=429, detail="Too many login attempts. Please try again later.")
     
-    # 1. Check main users collection (customers + admin staff)
-    user = await db.users.find_one({"email": data.email}, {"_id": 0})
-    # Check both password_hash and password fields (demo sales users use 'password')
-    pw_hash = user.get("password_hash") or user.get("password", "") if user else ""
-    if user and pw_hash and verify_password(data.password, pw_hash):
-        if not user.get("is_active", True):
-            raise HTTPException(status_code=403, detail="Account is deactivated")
-        
-        role = user.get("role", "customer")
-        token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
-        # Fire welcome notification (one-time, non-blocking)
-        await _create_welcome_notification(db, user["id"], role, user.get("full_name", ""))
-        return {
-            "token": token,
-            "user": {
-                "id": user["id"],
-                "email": user["email"],
-                "full_name": user["full_name"],
-                "phone": user.get("phone"),
-                "company": user.get("company"),
-                "points": user.get("points", 0),
-                "referral_code": user.get("referral_code"),
-                "role": role,
-                "created_at": user["created_at"]
-            }
+    user = None
+    
+    if is_email_login:
+        # Standard email+password flow
+        user = await db.users.find_one({"email": data.email}, {"_id": 0})
+        pw_hash = user.get("password_hash") or user.get("password", "") if user else ""
+        if not (user and pw_hash and verify_password(data.password, pw_hash)):
+            # Check partner_users collection
+            partner_user = await db.partner_users.find_one({"email": data.email, "status": "active"})
+            if partner_user:
+                import bcrypt as _bcrypt
+                pp_hash = partner_user.get("password_hash", "")
+                if pp_hash and _bcrypt.checkpw(data.password.encode("utf-8"), pp_hash.encode("utf-8")):
+                    from partner_auth_routes import create_partner_token
+                    from bson import ObjectId as _OID
+                    token = create_partner_token(partner_user)
+                    partner = await db.partners.find_one({"_id": _OID(partner_user["partner_id"])})
+                    p_role = partner_user.get("role", "vendor")
+                    p_id = str(partner_user["_id"])
+                    await _create_welcome_notification(db, p_id, p_role, partner_user.get("full_name", partner_user.get("name", "")))
+                    return {
+                        "token": token,
+                        "user": {
+                            "id": p_id,
+                            "email": partner_user["email"],
+                            "full_name": partner_user.get("full_name", partner_user.get("name", partner_user["email"])),
+                            "phone": partner_user.get("phone", ""),
+                            "company": partner.get("company_name", "") if partner else "",
+                            "points": 0,
+                            "referral_code": "",
+                            "role": "partner",
+                            "created_at": str(partner_user.get("created_at", ""))
+                        }
+                    }
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    elif is_phone_login:
+        # Phone + PIN flow
+        normalized = normalize_phone(data.phone, data.country_code or "+255")
+        # Search by normalized phone, or raw phone
+        user = await db.users.find_one(
+            {"$or": [{"phone_normalized": normalized}, {"phone": normalized}, {"phone": data.phone}]},
+            {"_id": 0}
+        )
+        pin_hash = user.get("pin_hash", "") if user else ""
+        if not (user and pin_hash and verify_password(data.pin, pin_hash)):
+            raise HTTPException(status_code=401, detail="Invalid phone number or PIN")
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Account is deactivated")
+    
+    role = user.get("role", "customer")
+    token = create_token(user["id"], user["email"], role, full_name=user.get("full_name", ""))
+    await _create_welcome_notification(db, user["id"], role, user.get("full_name", ""))
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "full_name": user["full_name"],
+            "phone": user.get("phone"),
+            "company": user.get("company"),
+            "points": user.get("points", 0),
+            "referral_code": user.get("referral_code"),
+            "role": role,
+            "created_at": user["created_at"]
         }
-    
-    # 2. Check partner_users collection
-    partner_user = await db.partner_users.find_one({"email": data.email, "status": "active"})
-    if partner_user:
-        import bcrypt as _bcrypt
-        pw_hash = partner_user.get("password_hash", "")
-        if pw_hash and _bcrypt.checkpw(data.password.encode("utf-8"), pw_hash.encode("utf-8")):
-            from partner_auth_routes import create_partner_token
-            from bson import ObjectId as _OID
-            token = create_partner_token(partner_user)
-            partner = await db.partners.find_one({"_id": _OID(partner_user["partner_id"])})
-            p_role = partner_user.get("role", "vendor")
-            p_id = str(partner_user["_id"])
-            # Fire welcome notification for partner (one-time, non-blocking)
-            await _create_welcome_notification(db, p_id, p_role, partner_user.get("full_name", partner_user.get("name", "")))
-            return {
-                "token": token,
-                "user": {
-                    "id": p_id,
-                    "email": partner_user["email"],
-                    "full_name": partner_user.get("full_name", partner_user.get("name", partner_user["email"])),
-                    "phone": partner_user.get("phone", ""),
-                    "company": partner.get("company_name", "") if partner else "",
-                    "points": 0,
-                    "referral_code": "",
-                    "role": "partner",
-                    "created_at": str(partner_user.get("created_at", ""))
-                }
-            }
-    
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+    }
 
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
@@ -1063,8 +1113,50 @@ async def get_me(user: dict = Depends(get_current_user)):
         "points": user.get("points", 0),
         "referral_code": user.get("referral_code"),
         "role": user.get("role", "customer"),
-        "created_at": user["created_at"]
+        "created_at": user["created_at"],
+        "onboarding_completed": user.get("onboarding_completed", False),
+        "has_pin": bool(user.get("pin_hash")),
     }
+
+
+@api_router.post("/auth/onboarding-complete")
+async def mark_onboarding_complete(user: dict = Depends(get_current_user)):
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"onboarding_completed": True, "onboarding_completed_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"status": "ok"}
+
+
+@api_router.post("/auth/set-pin")
+async def set_pin(request: Request, user: dict = Depends(get_current_user)):
+    body = await request.json()
+    pin = body.get("pin", "")
+    current_password = body.get("current_password", "")
+    
+    # Validate PIN format
+    if not pin or len(pin) < 4 or len(pin) > 6 or not pin.isdigit():
+        raise HTTPException(status_code=400, detail="PIN must be 4 to 6 digits")
+    
+    # Verify identity with current password
+    pw_hash = user.get("password_hash") or user.get("password", "")
+    if not pw_hash or not verify_password(current_password, pw_hash):
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    
+    # Normalize and store phone if not already normalized
+    phone = user.get("phone", "")
+    phone_normalized = user.get("phone_normalized", "")
+    if phone and not phone_normalized:
+        phone_normalized = normalize_phone(phone)
+    
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {
+            "pin_hash": hash_password(pin),
+            "phone_normalized": phone_normalized or normalize_phone(phone) if phone else "",
+        }}
+    )
+    return {"status": "ok", "message": "PIN set successfully"}
 
 # ==================== ADMIN AUTH ====================
 
@@ -2828,7 +2920,8 @@ async def create_quick_service_request(payload: dict, request: Request):
     user = None
     if token:
         try:
-            import jwt, os
+            import jwt
+            import os
             decoded = jwt.decode(token, os.environ.get("JWT_SECRET", "konekt-secret-key"), algorithms=["HS256"])
             user = decoded
         except Exception:

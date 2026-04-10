@@ -25,6 +25,7 @@ const nav = [
 
 import { clearAllAuth } from "../lib/authHelpers";
 import { useConfirmModal } from "../contexts/ConfirmModalContext";
+import OnboardingGate from "../components/onboarding/OnboardingGate";
 
 export default function CustomerPortalLayoutV2() {
   const location = useLocation();
@@ -177,9 +178,11 @@ export default function CustomerPortalLayoutV2() {
 
         {/* Page Content */}
         <div className="flex-1 p-4 md:p-6 lg:p-8">
-          <div key={location.pathname} className="k-page-fade-in">
-            <Outlet />
-          </div>
+          <OnboardingGate>
+            <div key={location.pathname} className="k-page-fade-in">
+              <Outlet />
+            </div>
+          </OnboardingGate>
         </div>
       </div>
     </div>

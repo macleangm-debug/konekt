@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import OnboardingGate from "../../components/onboarding/OnboardingGate";
 import {
   LogOut, ChevronRight, ChevronDown, Menu, X, Settings,
 } from 'lucide-react';
@@ -323,9 +324,11 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="p-6">
-          <div key={location.pathname} className="k-page-fade-in">
-            <Outlet />
-          </div>
+          <OnboardingGate>
+            <div key={location.pathname} className="k-page-fade-in">
+              <Outlet />
+            </div>
+          </OnboardingGate>
         </main>
       </div>
     </div>

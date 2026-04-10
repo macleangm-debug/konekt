@@ -21,6 +21,8 @@ export default function RegisterPageV2() {
   const [validating, setValidating] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
   const [honeypot, setHoneypot] = useState("");
+  const [pinValue, setPinValue] = useState("");
+  const [showPin, setShowPin] = useState(false);
 
   const source = searchParams.get("source") || "";
   const affiliateCode = searchParams.get("ref") || searchParams.get("affiliate_code") || "";
@@ -69,6 +71,8 @@ export default function RegisterPageV2() {
       const payload = {
         full_name: fullName, email, password,
         phone, company: company || undefined,
+        pin: pinValue || undefined,
+        country_code: phonePrefix || "+255",
         affiliate_code: affiliateCode || undefined,
         website: honeypot || undefined,
       };
@@ -211,6 +215,27 @@ export default function RegisterPageV2() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+              </div>
+
+              {/* Optional PIN Setup */}
+              <div>
+                <label className="block text-sm font-medium text-[#0E1A2B] mb-1.5">Quick Login PIN <span className="text-slate-400 font-normal">(optional)</span></label>
+                <div className="relative">
+                  <input
+                    type={showPin ? "text" : "password"}
+                    inputMode="numeric"
+                    maxLength={6}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 pr-12 text-sm tracking-[0.3em] font-mono focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D] outline-none transition"
+                    placeholder="4-6 digits"
+                    value={pinValue}
+                    onChange={(e) => setPinValue(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    data-testid="register-pin-input"
+                  />
+                  <button type="button" onClick={() => setShowPin(!showPin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition" tabIndex={-1}>
+                    {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">Set a PIN for quick phone login later</p>
               </div>
 
               <button
