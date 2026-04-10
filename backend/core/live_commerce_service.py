@@ -834,6 +834,17 @@ class LiveCommerceService:
                 import logging as _rl
                 _rl.getLogger("live_commerce").warning(f"Referral reward hook error: {ref_err}")
 
+            # Auto-advance CRM lead stage on payment approval
+            if fully_paid:
+                try:
+                    from services.pipeline_intelligence_service import on_payment_approved
+                    lead_id = order_doc.get("lead_id") or order_doc.get("linked_lead_id")
+                    if lead_id:
+                        await on_payment_approved(self.db, lead_id)
+                except Exception as pipe_err:
+                    import logging as _pl
+                    _pl.getLogger("live_commerce").warning(f"Pipeline auto-stage error: {pipe_err}")
+
         return {
             "fully_paid": fully_paid,
             "order": order_doc,

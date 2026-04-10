@@ -112,6 +112,7 @@ from crm_intelligence_routes import router as crm_intelligence_router
 from sales_kpi_routes import router as sales_kpi_router
 from marketing_performance_routes import router as marketing_performance_router
 from crm_deal_routes import router as crm_deal_router
+from pipeline_intelligence_routes import router as pipeline_intelligence_router
 from customer_account_routes import router as customer_account_router
 from customer_statement_delivery_routes import router as statement_delivery_router
 from sales_performance_routes import router as sales_performance_router
@@ -2588,6 +2589,7 @@ app.include_router(crm_intelligence_router)
 app.include_router(sales_kpi_router)
 app.include_router(marketing_performance_router)
 app.include_router(crm_deal_router)
+app.include_router(pipeline_intelligence_router)
 app.include_router(customer_account_router)
 app.include_router(statement_delivery_router)
 app.include_router(sales_performance_router)

@@ -400,6 +400,14 @@ def create_sales_routes(db, get_admin_user, generate_quote_number, EmailService)
                 {"$inc": {"total_quotes": 1}}
             )
         
+        # Auto-advance CRM lead stage
+        if data.lead_id:
+            try:
+                from services.pipeline_intelligence_service import on_quote_created
+                await on_quote_created(db, data.lead_id)
+            except Exception as e:
+                logger.warning("pipeline auto-stage failed: %s", e)
+        
         return {"quote": {k: v for k, v in quote_doc.items() if k != "_id"}}
     
     @sales_router.get("/quotes/{quote_id}")

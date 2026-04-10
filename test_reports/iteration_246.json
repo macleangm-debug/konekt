@@ -1,0 +1,116 @@
+{
+  "summary": "Iteration 246: Complete testing of Pipeline Intelligence Layer features. All 3 pipeline API endpoints verified working. CRM Intelligence tab shows 6 KPIs, conversion funnel, stale deals panel, and rep performance. CRM table/kanban show STALE badges and overdue highlighting. Regression tests passed for Quote Request and Payment Review pages.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "features_tested": {
+    "pipeline_api_endpoints": {
+      "status": "PASSED",
+      "endpoints_verified": [
+        "GET /api/admin/pipeline/conversion-metrics - Returns funnel array with stage, label, count, value, conversion_from_prev, plus total_leads, won_count, lost_count, win_rate, avg_days_to_close",
+        "GET /api/admin/pipeline/stale-deals - Returns stale_deals array with days_inactive and threshold_days for inactive leads",
+        "GET /api/admin/pipeline/rep-performance - Returns reps array with rep name, total_leads, won, lost, active, pipeline_value, conversion_rate"
+      ]
+    },
+    "crm_intelligence_tab": {
+      "status": "PASSED",
+      "features_verified": [
+        "6 headline KPIs: Total Leads (44), Won (1), Lost (0), Win Rate (100%), Avg Days to Close, Stale Deals (5)",
+        "Conversion Funnel with horizontal bars for each stage and conversion % from previous stage (color-coded: green >= 50%, amber >= 25%, red < 25%)",
+        "Stale Deals panel listing 5 inactive leads with 'Xd inactive' badges",
+        "Rep Conversion Performance panel showing win rate percentage per rep"
+      ]
+    },
+    "crm_table_refinements": {
+      "status": "PASSED",
+      "features_verified": [
+        "'Assigned Rep' column header (not 'Owner')",
+        "Status dropdown uses text-sm font-semibold",
+        "Last Activity column shows STALE badge (red) for leads inactive beyond stage threshold",
+        "Next Follow-up column shows overdue badge (red) for past dates"
+      ]
+    },
+    "crm_kanban_refinements": {
+      "status": "PASSED",
+      "features_verified": [
+        "Kanban cards show STALE badge with days count (e.g., 'STALE (7d)', 'STALE (28d)')",
+        "Kanban cards show assigned rep name",
+        "Kanban cards show next follow-up overdue indicator in red"
+      ]
+    },
+    "crm_drawer_refinements": {
+      "status": "PASSED",
+      "features_verified": [
+        "Next Follow-up shows red border/background when overdue with 'OVERDUE: date' text",
+        "Timeline section shows stage changes",
+        "Create Quote button visible"
+      ]
+    },
+    "crm_create_lead_form": {
+      "status": "PASSED",
+      "features_verified": [
+        "'Assign Sales Rep' placeholder in dropdown"
+      ]
+    },
+    "auto_stage_movement_hooks": {
+      "status": "VERIFIED_IN_CODE",
+      "hooks_verified": [
+        "sales_routes.py line ~406: on_quote_created hook after quote insert - advances lead to quote_sent",
+        "live_commerce_service.py line ~840: on_payment_approved hook after payment approval - advances lead to won"
+      ]
+    },
+    "regression_quote_request": {
+      "status": "PASSED",
+      "route": "/request-quote",
+      "features_verified": [
+        "3-step progress indicator (What you need, Timeline, Contact)",
+        "4 need type cards (Products, Promotional, Services, Other)",
+        "Step 2 Timeline with 4 urgency options (Flexible, Within a month, Within a week, Urgent)",
+        "Budget range dropdown"
+      ]
+    },
+    "regression_payment_review": {
+      "status": "PASSED",
+      "route": "/admin/payments",
+      "features_verified": [
+        "Canonical 5-section layout in drawer",
+        "Section 1: Status Banner (Pending Review)",
+        "Section 2: PAYER DETAILS (Payer Name, Phone, Email)",
+        "Section 3: CUSTOMER / ACCOUNT",
+        "Section 4: INVOICE / REFERENCE (Invoice No., Expected Amount, Amount Paid, Payment Mode, Submitted, View Invoice link)",
+        "Section 5: PAYMENT PROOF (file card with filename and Open link for PDF)"
+      ]
+    }
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pipeline_intelligence.py",
+    "/app/test_reports/pytest/pytest_results_pipeline_intelligence_v246.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "pipeline_intelligence_service.py properly implements STALE_THRESHOLDS for each stage (new_lead: 3d, contacted: 5d, qualified: 5d, meeting_demo: 5d, quote_sent: 3d, negotiation: 5d)",
+    "CRMPageV2.jsx correctly fetches all 3 pipeline endpoints in parallel via Promise.all in loadIntelligence()",
+    "Auto-stage hooks properly integrated in sales_routes.py and live_commerce_service.py with try/catch for graceful failure",
+    "Conversion funnel visualization uses horizontal bars with width proportional to count and color-coded conversion percentages"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pipeline_intelligence.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed after fix)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"
+  },
+  "seed_data_creation": "None - using existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 246 verified Pipeline Intelligence Layer: (1) 3 API endpoints at /api/admin/pipeline/ for conversion-metrics, stale-deals, rep-performance. (2) CRM Intelligence tab with 6 KPIs, conversion funnel, stale deals panel, rep performance. (3) STALE badges in table and kanban with days count. (4) Overdue highlighting in table, kanban, and drawer. (5) Auto-stage hooks in sales_routes.py (on_quote_created) and live_commerce_service.py (on_payment_approved). (6) Regression tests passed for /request-quote and /admin/payments."
+}

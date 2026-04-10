@@ -125,6 +125,9 @@ export default function CRMPageV2() {
   const [intelSales, setIntelSales] = useState(null);
   const [intelMarketing, setIntelMarketing] = useState(null);
   const [intelLoading, setIntelLoading] = useState(false);
+  const [pipelineMetrics, setPipelineMetrics] = useState(null);
+  const [staleDeals, setStaleDeals] = useState(null);
+  const [repPerformance, setRepPerformance] = useState(null);
 
   const [form, setForm] = useState({
     company_name: "",
@@ -183,14 +186,20 @@ export default function CRMPageV2() {
   const loadIntelligence = useCallback(async () => {
     setIntelLoading(true);
     try {
-      const [crmRes, salesRes, marketingRes] = await Promise.all([
+      const [crmRes, salesRes, marketingRes, metricsRes, staleRes, repRes] = await Promise.all([
         api.get("/api/admin/crm-intelligence/dashboard"),
         api.get("/api/admin/sales-kpis/summary"),
         api.get("/api/admin/marketing-performance/sources"),
+        api.get("/api/admin/pipeline/conversion-metrics").catch(() => ({ data: null })),
+        api.get("/api/admin/pipeline/stale-deals").catch(() => ({ data: { stale_deals: [] } })),
+        api.get("/api/admin/pipeline/rep-performance").catch(() => ({ data: { reps: [] } })),
       ]);
       setIntelData(crmRes.data);
       setIntelSales(salesRes.data);
       setIntelMarketing(marketingRes.data);
+      setPipelineMetrics(metricsRes.data);
+      setStaleDeals(staleRes.data?.stale_deals || []);
+      setRepPerformance(repRes.data?.reps || []);
     } catch (err) {
       console.error("Failed to load intelligence", err);
     } finally {
@@ -477,6 +486,9 @@ export default function CRMPageV2() {
             data={intelData}
             sales={intelSales}
             marketing={intelMarketing}
+            pipelineMetrics={pipelineMetrics}
+            staleDeals={staleDeals}
+            repPerformance={repPerformance}
             loading={intelLoading}
             onRefresh={loadIntelligence}
           />
@@ -643,7 +655,23 @@ export default function CRMPageV2() {
                                 {leadStatuses.map((s) => (<option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>))}
                               </select>
                             </td>
-                            <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatDate(lead.updated_at)}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">
+                              {formatDate(lead.updated_at)}
+                              {(() => {
+                                const thresholds = { new_lead: 3, contacted: 5, qualified: 5, meeting_demo: 5, quote_sent: 3, negotiation: 5 };
+                                const threshold = thresholds[lead.stage];
+                                if (!threshold) return null;
+                                const lastActivity = lead.last_activity_at || lead.updated_at;
+                                if (!lastActivity) return null;
+                                const daysInactive = Math.floor((Date.now() - new Date(lastActivity).getTime()) / 86400000);
+                                if (daysInactive >= threshold) return (
+                                  <span className="ml-1.5 text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded" data-testid={`stale-badge-${lead.id}`}>
+                                    STALE
+                                  </span>
+                                );
+                                return null;
+                              })()}
+                            </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               {lead.next_follow_up_at ? (() => {
                                 const isOverdue = new Date(lead.next_follow_up_at) < new Date();
@@ -763,6 +791,22 @@ export default function CRMPageV2() {
                             <div className="font-medium text-sm">{lead.company_name || lead.contact_name}</div>
                             <div className="text-xs text-slate-600 mt-1">{lead.contact_name}</div>
                             {lead.assigned_to && <div className="text-[11px] text-slate-400 mt-1">{lead.assigned_to}</div>}
+                            {(() => {
+                              const thresholds = { new_lead: 3, contacted: 5, qualified: 5, meeting_demo: 5, quote_sent: 3, negotiation: 5 };
+                              const threshold = thresholds[lead.stage || lead.status];
+                              if (!threshold) return null;
+                              const lastActivity = lead.last_activity_at || lead.updated_at;
+                              if (!lastActivity) return null;
+                              const daysInactive = Math.floor((Date.now() - new Date(lastActivity).getTime()) / 86400000);
+                              if (daysInactive >= threshold) return (
+                                <div className="mt-1">
+                                  <span className="text-[10px] font-bold text-red-700 bg-red-100 px-1.5 py-0.5 rounded">
+                                    STALE ({daysInactive}d)
+                                  </span>
+                                </div>
+                              );
+                              return null;
+                            })()}
                             <div className="flex items-center justify-between mt-2">
                               {lead.estimated_value ? (
                                 <span className="text-xs text-[#D4A843] font-medium">TZS {Number(lead.estimated_value).toLocaleString()}</span>
@@ -1051,30 +1095,114 @@ function ServiceLeadsTabContent({ leads, loading, search, onSearchChange, onStat
 }
 
 /* ── Intelligence Tab Content ── */
-function IntelligenceTabContent({ data, sales, marketing, loading, onRefresh }) {
+function IntelligenceTabContent({ data, sales, marketing, pipelineMetrics, staleDeals, repPerformance, loading, onRefresh }) {
   if (loading) {
     return <div className="text-center py-10 text-slate-500">Loading intelligence data...</div>;
   }
 
+  const funnel = pipelineMetrics?.funnel || [];
+  const maxCount = Math.max(...funnel.map((s) => s.count), 1);
+
   return (
     <div className="space-y-6" data-testid="intelligence-tab">
       <div className="flex items-center justify-between">
-        <p className="text-slate-600 text-sm">Pipeline health, follow-ups, sales performance, and source quality.</p>
+        <p className="text-slate-600 text-sm">Pipeline health, conversion funnel, stale deals, and rep performance.</p>
         <button onClick={onRefresh} className="text-sm text-[#2D3E50] font-medium hover:underline" data-testid="refresh-intel-btn">
           Refresh
         </button>
       </div>
 
-      {data && (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <IntelStatCard label="Total Leads" value={data.summary?.total_leads || 0} />
-          <IntelStatCard label="Won" value={data.summary?.won || 0} />
-          <IntelStatCard label="Lost" value={data.summary?.lost || 0} />
-          <IntelStatCard label="Quote Sent" value={data.summary?.quote_sent || 0} />
-          <IntelStatCard label="Overdue Follow-ups" value={data.summary?.overdue_followups || 0} highlight />
-          <IntelStatCard label="Stale Leads" value={data.summary?.stale_leads || 0} highlight />
-        </div>
+      {/* ── Headline KPIs ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        <IntelStatCard label="Total Leads" value={pipelineMetrics?.total_leads || data?.summary?.total_leads || 0} />
+        <IntelStatCard label="Won" value={pipelineMetrics?.won_count || data?.summary?.won || 0} />
+        <IntelStatCard label="Lost" value={pipelineMetrics?.lost_count || data?.summary?.lost || 0} />
+        <IntelStatCard label="Win Rate" value={`${pipelineMetrics?.win_rate || 0}%`} />
+        <IntelStatCard label="Avg Days to Close" value={pipelineMetrics?.avg_days_to_close || "—"} />
+        <IntelStatCard label="Stale Deals" value={staleDeals?.length || 0} highlight={staleDeals?.length > 0} />
+      </div>
+
+      {/* ── Conversion Funnel ── */}
+      {funnel.length > 0 && (
+        <IntelPanel title="Conversion Funnel" data-testid="conversion-funnel">
+          <div className="space-y-2">
+            {funnel.map((stage) => (
+              <div key={stage.stage} className="flex items-center gap-3">
+                <div className="w-32 text-sm text-slate-600 capitalize shrink-0">{stage.label}</div>
+                <div className="flex-1 h-7 bg-slate-100 rounded-lg overflow-hidden relative">
+                  <div
+                    className="h-full bg-[#20364D] rounded-lg transition-all duration-500"
+                    style={{ width: `${Math.max((stage.count / maxCount) * 100, 2)}%` }}
+                  />
+                  <span className="absolute inset-0 flex items-center px-3 text-xs font-bold text-white mix-blend-difference">
+                    {stage.count}
+                  </span>
+                </div>
+                {stage.conversion_from_prev !== null && stage.conversion_from_prev !== undefined && (
+                  <span className={`text-xs font-semibold w-14 text-right shrink-0 ${
+                    stage.conversion_from_prev >= 50 ? "text-green-600" : stage.conversion_from_prev >= 25 ? "text-amber-600" : "text-red-600"
+                  }`}>
+                    {stage.conversion_from_prev}%
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </IntelPanel>
       )}
+
+      <div className="grid xl:grid-cols-2 gap-6">
+        {/* ── Stale Deals ── */}
+        <IntelPanel title={`Stale Deals (${staleDeals?.length || 0})`}>
+          {staleDeals && staleDeals.length > 0 ? (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {staleDeals.map((deal, i) => (
+                <div key={i} className="flex items-center justify-between rounded-lg border bg-amber-50 border-amber-200 px-4 py-2.5">
+                  <div>
+                    <div className="text-sm font-semibold text-[#20364D]">{deal.company_name || deal.contact_name || "Unknown"}</div>
+                    <div className="text-xs text-slate-500 capitalize">
+                      {(deal.stage || "").replace(/_/g, " ")} {deal.assigned_to ? `· ${deal.assigned_to}` : ""}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                      {deal.days_inactive}d inactive
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400 text-center py-6">No stale deals. All deals are active.</div>
+          )}
+        </IntelPanel>
+
+        {/* ── Rep Conversion Performance ── */}
+        <IntelPanel title="Rep Conversion Performance">
+          {repPerformance && repPerformance.length > 0 ? (
+            <div className="space-y-2">
+              {repPerformance.map((rep, i) => (
+                <div key={i} className="flex items-center justify-between rounded-lg border bg-slate-50 px-4 py-2.5">
+                  <div>
+                    <div className="text-sm font-semibold text-[#20364D]">{rep.rep}</div>
+                    <div className="text-xs text-slate-500">
+                      {rep.total_leads} leads · {rep.won} won · {rep.lost} lost · {rep.active} active
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-bold ${rep.conversion_rate >= 50 ? "text-green-600" : rep.conversion_rate >= 25 ? "text-amber-600" : "text-slate-500"}`}>
+                      {rep.conversion_rate}%
+                    </div>
+                    <div className="text-[10px] text-slate-400">win rate</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400 text-center py-6">No rep data yet. Assign leads to sales reps to see performance.</div>
+          )}
+        </IntelPanel>
+      </div>
 
       <div className="grid xl:grid-cols-2 gap-6">
         {sales && (
