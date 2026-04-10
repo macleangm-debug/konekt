@@ -14,11 +14,19 @@ const COMPREHENSIVE_SERVICES = {
       "Business cards, flyers, brochures, and booklets",
       "Promotional items such as lanyards, name tags, diaries, and branded giveaways",
       "Artwork coordination, revisions, and print production follow-up",
+      "Large format printing — banners, posters, roll-ups",
+      "Packaging and label printing",
     ],
     for_who: [
       "Businesses launching campaigns or events",
       "Teams that need recurring branded materials",
       "Organizations that want structured print coordination",
+    ],
+    use_cases: [
+      "Product launch marketing collateral",
+      "Trade show and expo materials",
+      "Corporate event branding packages",
+      "Monthly marketing material runs",
     ],
     process_steps: [
       { title: "Submit brief", description: "Share quantities, sizes, deadlines, and branding requirements." },
@@ -30,11 +38,16 @@ const COMPREHENSIVE_SERVICES = {
       "Coordinated handling from brief to production",
       "Support across one-off and recurring needs",
       "Better visibility for business clients and teams",
+      "Quality assurance at every stage",
+      "Transparent pricing with no hidden costs",
     ],
     pricing_guidance: "Pricing depends on item type, quantity, finishing, branding complexity, and delivery requirements.",
     faqs: [
       { q: "Can Konekt handle both design and printing?", a: "Yes, Konekt can coordinate design support and the printing workflow together." },
       { q: "Can I request multiple item types in one brief?", a: "Yes, especially for campaign or event-related requirements." },
+      { q: "What file formats do you accept?", a: "We accept PDF, AI, PSD, PNG, and other standard design formats. Our team can also help convert files if needed." },
+      { q: "What is the typical turnaround time?", a: "Standard orders are completed within 3-5 business days. Rush orders can be accommodated with prior arrangement." },
+      { q: "Do you offer bulk pricing?", a: "Yes, larger quantities typically receive better per-unit pricing. Submit your quantities in the brief for an accurate quote." },
     ],
   },
   "office-branding": {
@@ -46,11 +59,19 @@ const COMPREHENSIVE_SERVICES = {
       "Wall branding and reception branding",
       "Directional graphics and internal signage",
       "Brand placement planning and installation support",
+      "Window and glass graphics",
+      "Floor branding and wayfinding systems",
     ],
     for_who: [
       "Offices setting up or refreshing workspace identity",
       "Companies with branches and customer-facing premises",
       "Organizations needing coordinated branding execution",
+    ],
+    use_cases: [
+      "New office setup and fit-out",
+      "Brand refresh or rebrand rollout",
+      "Multi-branch identity standardization",
+      "Customer-facing reception and lobby areas",
     ],
     process_steps: [
       { title: "Discovery", description: "Konekt captures the office context and branding objective." },
@@ -62,10 +83,14 @@ const COMPREHENSIVE_SERVICES = {
       "Structured coordination across design, production, and installation",
       "Suitable for one office or multiple branches",
       "Clearer client communication throughout the process",
+      "Professional installation with quality guarantees",
     ],
     pricing_guidance: "Pricing depends on site size, materials, installation complexity, and branding coverage.",
     faqs: [
       { q: "Is a site visit required?", a: "In most office branding projects, yes — site review helps quote accurately." },
+      { q: "Can you handle multiple office locations?", a: "Yes, we coordinate across multiple sites with consistent branding standards." },
+      { q: "How long does installation take?", a: "Typical office branding is completed within 1-2 weeks after design approval, depending on scope." },
+      { q: "Do you remove existing branding?", a: "Yes, removal of old branding can be included as part of the project scope." },
     ],
   },
   "showroom-design": {
@@ -158,11 +183,19 @@ const COMPREHENSIVE_SERVICES = {
       "Logo refinement and brand identity support",
       "Marketing collateral design (brochures, flyers, banners)",
       "Digital asset creation for web and social media",
+      "Packaging and label design",
+      "Social media graphic templates",
     ],
     for_who: [
       "Businesses without in-house design teams",
       "Marketing teams needing overflow design capacity",
       "Startups building brand presence",
+    ],
+    use_cases: [
+      "Brand identity creation for new businesses",
+      "Marketing campaign asset production",
+      "Product packaging design",
+      "Event invitation and program design",
     ],
     process_steps: [
       { title: "Brief", description: "Describe the design need, style preferences, and deliverables." },
@@ -170,9 +203,19 @@ const COMPREHENSIVE_SERVICES = {
       { title: "Revision", description: "Feedback is incorporated into the final design." },
       { title: "Delivery", description: "Final files delivered in required formats." },
     ],
-    why_konekt: ["Flexible design support without long-term commitments", "Consistent quality across projects"],
+    why_konekt: [
+      "Flexible design support without long-term commitments",
+      "Consistent quality across projects",
+      "All source files delivered to you",
+      "Fast turnaround with structured revision process",
+    ],
     pricing_guidance: "Pricing depends on complexity, number of concepts, revision rounds, and deliverable formats.",
-    faqs: [{ q: "Can I request multiple design projects at once?", a: "Yes — you can submit multiple briefs and track them independently." }],
+    faqs: [
+      { q: "Can I request multiple design projects at once?", a: "Yes — you can submit multiple briefs and track them independently." },
+      { q: "How many revision rounds are included?", a: "Standard projects include 2-3 rounds. Additional rounds can be arranged." },
+      { q: "Do I own the final designs?", a: "Yes, all final files and source files are transferred to you." },
+      { q: "Can you work with our existing brand guidelines?", a: "Absolutely — we follow your brand book for fonts, colors, and style." },
+    ],
   },
   "presentation-design": {
     slug: "presentation-design",

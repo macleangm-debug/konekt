@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import PublicNavbarV2 from "../../components/public/PublicNavbarV2";
-import PublicFooter from "../../components/PublicFooter";
-import ServicePageTemplateV2 from "../../components/services/ServicePageTemplateV2";
+import PremiumFooterV2 from "../../components/public/PremiumFooterV2";
+import CanonicalServicePage from "../../components/services/CanonicalServicePage";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
 import { getServiceBySlug } from "../../data/comprehensiveServiceData";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -30,8 +30,8 @@ export default function DynamicServiceDetailPage() {
             for_who: data.for_who || [],
             process_steps: data.process_steps || [],
             why_konekt: data.why_konekt || [],
+            use_cases: data.use_cases || [],
             faqs: data.faqs || [],
-            pricing_guidance: data.pricing_guidance,
           });
           return;
         }
@@ -49,8 +49,8 @@ export default function DynamicServiceDetailPage() {
           for_who: found.for_who || [],
           process_steps: found.process_steps || [],
           why_konekt: found.why_konekt || [],
+          use_cases: found.use_cases || [],
           faqs: found.faqs || [],
-          pricing_guidance: found.pricing_guidance,
         });
       }
     };
@@ -59,21 +59,21 @@ export default function DynamicServiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen flex flex-col bg-slate-50">
         <PublicNavbarV2 />
-        <div className="flex items-center justify-center py-32">
+        <div className="flex-1 flex items-center justify-center py-32">
           <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
         </div>
-        <PublicFooter />
+        <PremiumFooterV2 />
       </div>
     );
   }
 
   if (!service) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen flex flex-col bg-slate-50">
         <PublicNavbarV2 />
-        <div className="max-w-4xl mx-auto px-6 py-16 text-center">
+        <div className="flex-1 max-w-4xl mx-auto px-6 py-16 text-center">
           <h1 className="text-3xl font-bold text-[#20364D]">Service Not Found</h1>
           <p className="text-slate-600 mt-3">The service you are looking for does not exist or has been removed.</p>
           <Link
@@ -87,39 +87,32 @@ export default function DynamicServiceDetailPage() {
             <CantFindWhatYouNeedBanner />
           </div>
         </div>
-        <PublicFooter />
+        <PremiumFooterV2 />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="dynamic-service-detail-page">
+    <div className="min-h-screen flex flex-col bg-slate-50" data-testid="dynamic-service-detail-page">
       <PublicNavbarV2 />
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <Link
-            to="/marketplace?tab=services"
-            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[#20364D]"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Services
-          </Link>
-        </div>
-        <ServicePageTemplateV2
+      <main className="flex-1">
+        <CanonicalServicePage
           slug={service.key || slug}
           title={service.name}
-          overview={service.description}
-          included={service.includes || []}
-          idealFor={service.for_who || []}
-          benefits={service.why_konekt || []}
-          howItWorks={(service.process_steps || []).map((s) => s.title || s)}
-          faqs={(service.faqs || []).map((f) => ({ question: f.q || f.question, answer: f.a || f.answer }))}
+          description={service.description}
+          groupName={service.group_name}
+          includes={service.includes}
+          audience={service.for_who}
+          process={service.process_steps}
+          benefits={service.why_konekt}
+          useCases={service.use_cases}
+          faqs={service.faqs}
         />
-        <div className="max-w-6xl mx-auto mt-10 px-4">
+        <div className="max-w-4xl mx-auto px-4 py-8">
           <CantFindWhatYouNeedBanner />
         </div>
       </main>
-      <PublicFooter />
+      <PremiumFooterV2 />
     </div>
   );
 }

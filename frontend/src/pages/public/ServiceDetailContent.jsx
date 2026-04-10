@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
-import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import BrandButton from "../../components/ui/BrandButton";
-import ServicePageTemplate from "../../components/services/ServicePageTemplate";
+import CanonicalServicePage from "../../components/services/CanonicalServicePage";
 import { getServiceBySlug, getServiceDetail } from "../../lib/serviceCatalogApi";
 
 export default function ServiceDetailContent() {
@@ -24,7 +23,6 @@ export default function ServiceDetailContent() {
         } catch {
           data = await getServiceDetail(serviceSlug);
         }
-        // Normalize for ServicePageTemplate
         setService({
           ...data,
           key: data.key || data.slug || serviceSlug,
@@ -37,8 +35,8 @@ export default function ServiceDetailContent() {
           for_who: data.for_who || [],
           process_steps: data.process_steps || [],
           why_konekt: data.why_konekt || [],
+          use_cases: data.use_cases || [],
           faqs: data.faqs || [],
-          pricing_guidance: data.pricing_guidance,
         });
       } catch (err) {
         setError(err.message);
@@ -51,10 +49,8 @@ export default function ServiceDetailContent() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-10" data-testid="service-detail-loading">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]" data-testid="service-detail-loading">
+        <Loader2 className="w-8 h-8 animate-spin text-[#20364D]" />
       </div>
     );
   }
@@ -76,18 +72,19 @@ export default function ServiceDetailContent() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-10" data-testid="service-detail-page">
-      <div className="mb-6">
-        <Link
-          to={groupSlug ? `/services/${groupSlug}` : "/services"}
-          className="inline-flex items-center text-slate-600 hover:text-[#20364D] transition"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to {groupSlug || "services"}
-        </Link>
-      </div>
-
-      <ServicePageTemplate service={service} />
+    <div data-testid="service-detail-page">
+      <CanonicalServicePage
+        slug={service.key || serviceSlug}
+        title={service.name}
+        description={service.description}
+        groupName={service.group_name}
+        includes={service.includes}
+        audience={service.for_who}
+        process={service.process_steps}
+        benefits={service.why_konekt}
+        useCases={service.use_cases}
+        faqs={service.faqs}
+      />
     </div>
   );
 }
