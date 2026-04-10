@@ -152,6 +152,8 @@ from stripe_webhook_routes import router as stripe_webhook_router
 # Marketplace Taxonomy & Vendor Catalog Routes
 from routes.marketplace_taxonomy_routes import router as marketplace_taxonomy_router
 from routes.vendor_catalog_routes import router as vendor_catalog_router
+from routes.admin_vendor_submission_routes import router as admin_vendor_submission_router
+from routes.admin_digest_routes import router as admin_digest_router
 from routes.admin_catalog_routes import router as admin_catalog_router
 
 # Service Orchestration Routes
@@ -3050,6 +3052,8 @@ from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)
 app.include_router(vendor_catalog_router)
+app.include_router(admin_vendor_submission_router)
+app.include_router(admin_digest_router)
 app.include_router(admin_catalog_router)
 
 from routes.vendor_product_upload_routes import router as vendor_product_upload_router
@@ -3291,6 +3295,22 @@ async def startup_event():
         logger.info("Scheduled report delivery loop started")
     except Exception as e:
         logger.warning("Failed to start scheduled report loop: %s", e)
+
+    # ── Start sales follow-up automation ──
+    try:
+        from services.sales_followup_automation import sales_followup_loop
+        asyncio.create_task(sales_followup_loop(app))
+        logger.info("Sales follow-up automation started")
+    except Exception as e:
+        logger.warning("Failed to start sales follow-up automation: %s", e)
+
+    # ── Start weekly operations digest scheduler ──
+    try:
+        from services.weekly_digest import weekly_digest_loop
+        asyncio.create_task(weekly_digest_loop(app))
+        logger.info("Weekly digest scheduler started")
+    except Exception as e:
+        logger.warning("Failed to start weekly digest scheduler: %s", e)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

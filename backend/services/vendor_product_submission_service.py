@@ -15,6 +15,7 @@ async def create_submission(db, payload: dict, vendor_id: str, market_code: str 
     doc = {
         "id": str(uuid4()),
         "vendor_id": vendor_id,
+        "vendor_name": payload.get("vendor_name", ""),
         "market_code": market_code,
         "product_name": payload.get("product_name", ""),
         "description": payload.get("description", ""),

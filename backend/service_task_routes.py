@@ -29,27 +29,77 @@ def serialize(doc):
 
 
 # ──────────────────────────────────────────
-# PRICING ENGINE — uses platform_settings
+# PRICING ENGINE — uses platform_settings (category-aware)
 # ──────────────────────────────────────────
 
-async def _get_margin_settings():
-    """Get margin settings from platform_settings.commercial_rules."""
+async def _get_margin_rules(category: str = None):
+    """Get margin rules from platform_settings.
+    
+    Priority: category_margin_rules.categories.{category} -> category_margin_rules.default -> commercial_rules.
+    Returns a dict with min_margin_pct, target_margin_pct, max_discount_pct, negotiation_allowed.
+    """
+    # Try category-specific rules first
+    cat_rules = await db.platform_settings.find_one({"key": "category_margin_rules"})
+    if cat_rules and cat_rules.get("value"):
+        rules = cat_rules["value"]
+        # Check category-specific rule
+        if category:
+            cat_key = category.lower().replace(" ", "_").replace("-", "_")
+            cat_specific = (rules.get("categories") or {}).get(cat_key)
+            if cat_specific:
+                return {
+                    "min_margin_pct": float(cat_specific.get("min_margin_pct", 15)),
+                    "target_margin_pct": float(cat_specific.get("target_margin_pct", 30)),
+                    "max_discount_pct": float(cat_specific.get("max_discount_pct", 10)),
+                    "negotiation_allowed": bool(cat_specific.get("negotiation_allowed", True)),
+                    "rule_source": f"category:{cat_key}",
+                }
+        # Fallback to default rules
+        default = rules.get("default", {})
+        if default:
+            return {
+                "min_margin_pct": float(default.get("min_margin_pct", 15)),
+                "target_margin_pct": float(default.get("target_margin_pct", 30)),
+                "max_discount_pct": float(default.get("max_discount_pct", 10)),
+                "negotiation_allowed": bool(default.get("negotiation_allowed", True)),
+                "rule_source": "default",
+            }
+
+    # Legacy fallback: commercial_rules global setting
     row = await db.platform_settings.find_one({"key": "commercial_rules"})
+    global_pct = 30.0
     if row and row.get("value"):
-        return float(row["value"].get("minimum_company_margin_percent", 30) or 30)
-    return 30.0  # Default margin pct
+        global_pct = float(row["value"].get("minimum_company_margin_percent", 30) or 30)
+    return {
+        "min_margin_pct": global_pct,
+        "target_margin_pct": global_pct,
+        "max_discount_pct": 0,
+        "negotiation_allowed": True,
+        "rule_source": "global",
+    }
 
 
-async def _apply_pricing_engine(partner_cost: float) -> dict:
-    """Apply the margin engine to a partner cost.
-    Returns dict with selling_price, margin_pct, margin_amount."""
-    margin_pct = await _get_margin_settings()
+async def _apply_pricing_engine(partner_cost: float, category: str = None) -> dict:
+    """Apply the category-aware margin engine to a partner cost.
+    Returns dict with selling_price, margin_pct, margin_amount, rule_source, and margin_rules."""
+    rules = await _get_margin_rules(category)
+    margin_pct = rules["target_margin_pct"]
     selling_price = round(partner_cost * (1 + margin_pct / 100), 2)
     margin_amount = round(selling_price - partner_cost, 2)
+
+    # Validate minimum margin floor
+    min_price = round(partner_cost * (1 + rules["min_margin_pct"] / 100), 2)
+    if selling_price < min_price:
+        selling_price = min_price
+        margin_amount = round(selling_price - partner_cost, 2)
+        margin_pct = round((margin_amount / partner_cost) * 100, 2) if partner_cost > 0 else 0
+
     return {
         "selling_price": selling_price,
         "margin_pct": margin_pct,
         "margin_amount": margin_amount,
+        "rule_source": rules["rule_source"],
+        "margin_rules": rules,
     }
 
 
@@ -809,8 +859,9 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
     cost_notes = payload.get("notes", "")
     now = datetime.now(timezone.utc).isoformat()
 
-    # Apply pricing engine (uses platform_settings margin rules)
-    pricing = await _apply_pricing_engine(partner_cost)
+    # Apply pricing engine (uses platform_settings margin rules — category-aware)
+    service_type = task.get("service_type", "general")
+    pricing = await _apply_pricing_engine(partner_cost, category=service_type)
     selling_price = pricing["selling_price"]
     margin_pct = pricing["margin_pct"]
     margin_amount = pricing["margin_amount"]
@@ -832,6 +883,7 @@ async def partner_submit_cost(request: Request, task_id: str, payload: dict, aut
                 "selling_price": selling_price,
                 "margin_pct": margin_pct,
                 "margin_amount": margin_amount,
+                "margin_rule_source": pricing.get("rule_source", "global"),
                 "status": "cost_submitted",
                 "updated_at": now,
             },
@@ -971,3 +1023,81 @@ async def partner_add_note(request: Request, task_id: str, payload: dict, author
         {"$push": {"notes": note, "timeline": {"action": "note_added", "by": partner_name, "at": now, "note": payload["note"]}}, "$set": {"updated_at": now}}
     )
     return {"ok": True}
+
+
+
+# ──────────────────────────────────────────
+# ADMIN: Category Margin Rules Management
+# ──────────────────────────────────────────
+
+@router.get("/admin/category-margin-rules")
+async def get_category_margin_rules():
+    """Get all category margin rules."""
+    doc = await db.platform_settings.find_one({"key": "category_margin_rules"}, {"_id": 0})
+    if doc and doc.get("value"):
+        return doc["value"]
+    return {
+        "default": {
+            "min_margin_pct": 30,
+            "target_margin_pct": 30,
+            "max_discount_pct": 10,
+            "negotiation_allowed": True,
+        },
+        "categories": {}
+    }
+
+
+@router.put("/admin/category-margin-rules")
+async def update_category_margin_rules(payload: dict, request: Request):
+    """Update category margin rules."""
+    now = datetime.now(timezone.utc).isoformat()
+    await db.platform_settings.update_one(
+        {"key": "category_margin_rules"},
+        {"$set": {"key": "category_margin_rules", "value": payload, "updated_at": now}},
+        upsert=True,
+    )
+    return {"ok": True}
+
+
+@router.put("/admin/category-margin-rules/category/{category_key}")
+async def update_single_category_rule(category_key: str, payload: dict, request: Request):
+    """Update or create a single category margin rule."""
+    now = datetime.now(timezone.utc).isoformat()
+    doc = await db.platform_settings.find_one({"key": "category_margin_rules"})
+    if not doc or not doc.get("value"):
+        value = {"default": {"min_margin_pct": 30, "target_margin_pct": 30, "max_discount_pct": 10, "negotiation_allowed": True}, "categories": {}}
+    else:
+        value = doc["value"]
+
+    if "categories" not in value:
+        value["categories"] = {}
+
+    value["categories"][category_key] = payload
+    await db.platform_settings.update_one(
+        {"key": "category_margin_rules"},
+        {"$set": {"key": "category_margin_rules", "value": value, "updated_at": now}},
+        upsert=True,
+    )
+    return {"ok": True, "category_key": category_key}
+
+
+@router.delete("/admin/category-margin-rules/category/{category_key}")
+async def delete_single_category_rule(category_key: str, request: Request):
+    """Delete a single category margin rule."""
+    doc = await db.platform_settings.find_one({"key": "category_margin_rules"})
+    if doc and doc.get("value", {}).get("categories", {}).get(category_key):
+        del doc["value"]["categories"][category_key]
+        await db.platform_settings.update_one(
+            {"key": "category_margin_rules"},
+            {"$set": {"value": doc["value"], "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    return {"ok": True}
+
+
+@router.post("/admin/category-margin-rules/preview")
+async def preview_category_margin(payload: dict, request: Request):
+    """Preview the margin calculation for a given cost and category."""
+    partner_cost = float(payload.get("partner_cost", 0))
+    category = payload.get("category", None)
+    result = await _apply_pricing_engine(partner_cost, category=category)
+    return result

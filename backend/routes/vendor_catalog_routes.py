@@ -2,11 +2,11 @@
 Vendor Catalog Routes
 Vendor-facing endpoints for product submissions.
 """
-from fastapi import APIRouter, HTTPException, Request
-import os
+from fastapi import APIRouter, HTTPException, Request, Header
+from typing import Optional
+import os, jwt
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
-from typing import Optional
 from services.vendor_product_submission_service import (
     create_submission,
     list_submissions,
@@ -18,6 +18,20 @@ mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 db_name = os.environ.get('DB_NAME', 'konekt_db')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
+
+JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
+
+
+def _extract_user_id(authorization: str = None):
+    """Extract user_id from JWT token."""
+    if not authorization:
+        return "unknown"
+    token = authorization.replace("Bearer ", "").strip()
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload.get("user_id", payload.get("sub", "unknown"))
+    except Exception:
+        return "unknown"
 
 
 class VendorSubmissionIn(BaseModel):
@@ -34,32 +48,35 @@ class VendorSubmissionIn(BaseModel):
 
 
 @router.post("/submissions")
-async def submit_product(payload: VendorSubmissionIn, request: Request):
+async def submit_product(
+    payload: VendorSubmissionIn,
+    request: Request,
+    authorization: Optional[str] = Header(None),
+):
     """Vendor submits a product for admin review."""
-    # Extract vendor_id from JWT
-    vendor_id = "unknown"
-    try:
-        user = getattr(request.state, "user", None)
-        if user:
-            vendor_id = user.get("id", user.get("user_id", "unknown"))
-    except Exception:
-        pass
+    vendor_id = _extract_user_id(authorization)
 
-    sub = await create_submission(db, payload.dict(), vendor_id=vendor_id)
+    # Also try to get vendor/partner name
+    vendor_name = ""
+    if vendor_id != "unknown":
+        user = await db.users.find_one({"id": vendor_id}, {"_id": 0, "name": 1})
+        if user:
+            vendor_name = user.get("name", "")
+
+    data = payload.dict()
+    data["vendor_name"] = vendor_name
+
+    sub = await create_submission(db, data, vendor_id=vendor_id)
     return {"ok": True, "submission": sub}
 
 
 @router.get("/submissions")
-async def get_my_submissions(request: Request):
+async def get_my_submissions(
+    request: Request,
+    authorization: Optional[str] = Header(None),
+):
     """Vendor lists their own submissions."""
-    vendor_id = None
-    try:
-        user = getattr(request.state, "user", None)
-        if user:
-            vendor_id = user.get("id", user.get("user_id"))
-    except Exception:
-        pass
-
+    vendor_id = _extract_user_id(authorization)
     subs = await list_submissions(db, vendor_id=vendor_id)
     return subs
 

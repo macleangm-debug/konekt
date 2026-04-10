@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, Loader2, ChevronRight, Upload, Send, X, MessageSquare } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, Loader2, ChevronRight, Upload, Send, X, MessageSquare, MapPin, Phone, User, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 
@@ -353,6 +353,13 @@ export default function PartnerAssignedWorkPage() {
 
   const urgent = tasks.filter((t) => ["assigned", "awaiting_cost", "delayed"].includes(t.status));
 
+  // Detect logistics partner
+  const isLogistics = tasks.length > 0 && tasks[0].is_logistics;
+  const pageTitle = isLogistics ? "Delivery Operations" : "Assigned Work";
+  const pageDescription = isLogistics
+    ? "Manage delivery tasks, update statuses, and submit proof of delivery."
+    : "View assigned tasks, submit costs, and update execution status.";
+
   const filtered = tasks.filter((t) => {
     if (statusFilter !== "all" && t.status !== statusFilter) return false;
     if (search) {
@@ -372,8 +379,8 @@ export default function PartnerAssignedWorkPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#20364D]">Assigned Work</h1>
-          <p className="text-sm text-slate-500 mt-1">View assigned tasks, submit costs, and update execution status.</p>
+          <h1 className="text-2xl font-bold text-[#20364D]">{pageTitle}</h1>
+          <p className="text-sm text-slate-500 mt-1">{pageDescription}</p>
         </div>
         <button onClick={loadData} className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50" data-testid="refresh-btn">
           Refresh
@@ -382,11 +389,23 @@ export default function PartnerAssignedWorkPage() {
 
       {/* KPI Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KpiCard label="Assigned" value={stats.assigned || 0} icon={ClipboardList} color="bg-blue-100 text-blue-600" />
-        <KpiCard label="Awaiting Cost" value={stats.awaiting_cost || 0} icon={Clock} color="bg-amber-100 text-amber-600" />
-        <KpiCard label="In Progress" value={stats.in_progress || 0} icon={Loader2} color="bg-indigo-100 text-indigo-600" />
-        <KpiCard label="Completed" value={stats.completed || 0} icon={CheckCircle} color="bg-green-100 text-green-600" />
-        <KpiCard label="Delayed" value={stats.delayed || 0} icon={AlertTriangle} color="bg-red-100 text-red-600" />
+        {isLogistics ? (
+          <>
+            <KpiCard label="Assigned" value={stats.assigned || 0} icon={Truck} color="bg-blue-100 text-blue-600" />
+            <KpiCard label="In Transit" value={tasks.filter(t => t.status === "in_transit").length} icon={MapPin} color="bg-purple-100 text-purple-600" />
+            <KpiCard label="Delivered" value={tasks.filter(t => t.status === "delivered").length} icon={CheckCircle} color="bg-green-100 text-green-600" />
+            <KpiCard label="Delayed" value={stats.delayed || 0} icon={AlertTriangle} color="bg-red-100 text-red-600" />
+            <KpiCard label="Completed" value={stats.completed || 0} icon={CheckCircle} color="bg-emerald-100 text-emerald-600" />
+          </>
+        ) : (
+          <>
+            <KpiCard label="Assigned" value={stats.assigned || 0} icon={ClipboardList} color="bg-blue-100 text-blue-600" />
+            <KpiCard label="Awaiting Cost" value={stats.awaiting_cost || 0} icon={Clock} color="bg-amber-100 text-amber-600" />
+            <KpiCard label="In Progress" value={stats.in_progress || 0} icon={Loader2} color="bg-indigo-100 text-indigo-600" />
+            <KpiCard label="Completed" value={stats.completed || 0} icon={CheckCircle} color="bg-green-100 text-green-600" />
+            <KpiCard label="Delayed" value={stats.delayed || 0} icon={AlertTriangle} color="bg-red-100 text-red-600" />
+          </>
+        )}
       </div>
 
       {/* Work Requiring Action */}
@@ -453,21 +472,22 @@ export default function PartnerAssignedWorkPage() {
             <table className="min-w-full text-left" data-testid="assigned-work-table">
               <thead className="bg-slate-50 border-b">
                 <tr>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Task Ref</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Service Type</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Scope</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Deadline</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Task Ref</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Service Type</th>
+                  {isLogistics && <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Recipient</th>}
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">{isLogistics ? "Delivery Area" : "Scope"}</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Deadline</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-14 text-center">
+                    <td colSpan={isLogistics ? 7 : 6} className="px-5 py-14 text-center">
                       <ClipboardList className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                      <h3 className="text-base font-semibold text-slate-700">No assigned work yet</h3>
-                      <p className="text-sm text-slate-500 mt-1">Assigned tasks will appear here when available.</p>
+                      <h3 className="text-base font-semibold text-slate-700">{isLogistics ? "No delivery tasks yet" : "No assigned work yet"}</h3>
+                      <p className="text-sm text-slate-500 mt-1">{isLogistics ? "Delivery tasks will appear here when assigned." : "Assigned tasks will appear here when available."}</p>
                     </td>
                   </tr>
                 ) : (
@@ -480,7 +500,16 @@ export default function PartnerAssignedWorkPage() {
                     >
                       <td className="px-5 py-3.5 font-semibold text-sm text-[#20364D]">{task.task_ref}</td>
                       <td className="px-5 py-3.5 text-sm capitalize">{task.service_type}{task.service_subtype ? ` — ${task.service_subtype}` : ""}</td>
-                      <td className="px-5 py-3.5 text-sm text-slate-600">{task.scope || task.description?.substring(0, 40) || "—"}</td>
+                      {isLogistics && (
+                        <td className="px-5 py-3.5 text-sm text-slate-700">
+                          {task.client_name || task.contact_person || "—"}
+                        </td>
+                      )}
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
+                        {isLogistics
+                          ? (task.delivery_address?.substring(0, 35) || "—")
+                          : (task.scope || task.description?.substring(0, 40) || "—")}
+                      </td>
                       <td className="px-5 py-3.5 text-sm text-slate-500 whitespace-nowrap">
                         {task.deadline ? new Date(task.deadline).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}
                       </td>

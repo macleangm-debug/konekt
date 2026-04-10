@@ -49,6 +49,7 @@ export default function PartnerLayout() {
   // Determine partner type from partner data
   const isAffiliate = partner?.type === "affiliate" || partner?.role === "affiliate";
   const isVendor = partner?.type === "vendor" || partner?.role === "vendor";
+  const isLogistics = partner?.partner_type === "logistics" || partner?.partner_type === "delivery" || partner?.partner_type === "distributor";
 
   // Base nav items for product partners
   const productPartnerItems = [
@@ -59,6 +60,14 @@ export default function PartnerLayout() {
     { path: "/partner/stock", label: "Stock Table", icon: ListPlus },
     { path: "/partner/bulk-upload", label: "Bulk Upload", icon: Upload },
     { path: "/partner/orders", label: "My Orders", icon: Truck },
+    { path: "/partner/settlements", label: "Settlements", icon: Receipt },
+  ];
+
+  // Logistics/delivery partner nav
+  const logisticsPartnerItems = [
+    { path: "/partner", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/partner/assigned-work", label: "Delivery Operations", icon: Truck },
+    { path: "/partner/orders", label: "My Orders", icon: ClipboardList },
     { path: "/partner/settlements", label: "Settlements", icon: Receipt },
   ];
 
@@ -91,8 +100,11 @@ export default function PartnerLayout() {
   } else if (isVendor) {
     // Vendor sees ONLY vendor nav
     navItems = [...vendorItems];
+  } else if (isLogistics) {
+    // Logistics/delivery/distributor partner — delivery workflow
+    navItems = [...logisticsPartnerItems];
   } else {
-    // Default product partner (distributor, etc.) — vendor workflow
+    // Default product partner — vendor workflow
     navItems = [...productPartnerItems];
   }
 

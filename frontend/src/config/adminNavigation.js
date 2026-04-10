@@ -48,6 +48,7 @@ export const adminNavigation = [
     roles: ["admin", "marketing"],
     children: [
       { label: "Catalog", href: "/admin/catalog", icon: Columns3 },
+      { label: "Product Approvals", href: "/admin/product-approvals", icon: CheckSquare },
       { label: "Vendors", href: "/admin/vendors", icon: Truck },
       { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare },
     ],
