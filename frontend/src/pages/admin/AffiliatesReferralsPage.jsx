@@ -89,30 +89,30 @@ export default function AffiliatesReferralsPage() {
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
                   {tab === "affiliates" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Email</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Code</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Name</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Email</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Code</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                   </>)}
                   {tab === "referrals" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Code / Event</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">User</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Type</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Code / Event</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">User</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                   </>)}
                   {tab === "commissions" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Recipient</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Order</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Recipient</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Order</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Amount</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                   </>)}
                   {tab === "payouts" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Recipient</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Recipient</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Amount</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                   </>)}
                 </tr>
               </thead>

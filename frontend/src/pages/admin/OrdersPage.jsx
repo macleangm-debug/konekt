@@ -254,13 +254,13 @@ export default function OrdersPage() {
             <table className="w-full text-sm" data-testid="orders-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Order #</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payer</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payment</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Fulfillment</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Order #</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Payer</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Total</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payment</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Fulfillment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -292,7 +292,7 @@ export default function OrdersPage() {
           <div className="space-y-6">
             {/* A. Order Summary */}
             <section className="rounded-2xl border p-4" data-testid="drawer-order-summary">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Order Summary</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Summary</p>
               <div className="grid gap-2 text-sm text-slate-700">
                 <div><strong>Order No:</strong> {detail.order?.order_number || "-"}</div>
                 <div><strong>Date:</strong> {fmtDate(detail.order?.created_at)}</div>
@@ -306,7 +306,7 @@ export default function OrdersPage() {
 
             {/* B. Customer */}
             <section className="rounded-2xl border p-4" data-testid="drawer-customer">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Customer</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Customer</p>
               <div className="grid gap-2 text-sm text-slate-700">
                 <div><strong>Name:</strong> {detail.customer?.full_name || detail.order?.customer_name || "-"}</div>
                 <div><strong>Email:</strong> {detail.customer?.email || detail.order?.customer_email || "-"}</div>
@@ -316,16 +316,16 @@ export default function OrdersPage() {
 
             {/* C. Assignment */}
             <section className="rounded-2xl border p-4" data-testid="drawer-assignment">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Assignment</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Assignment</p>
               <div className="grid md:grid-cols-2 gap-4 text-sm text-slate-700">
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold mb-1">Sales Person</div>
+                  <div className="text-xs text-slate-500 font-semibold mb-1">Sales Person</div>
                   <div><strong>Name:</strong> {detail.sales_user?.full_name || detail.sales_assignment?.sales_owner_name || "Unassigned"}</div>
                   {detail.sales_user?.email && <div><strong>Email:</strong> {detail.sales_user.email}</div>}
                   {detail.sales_user?.phone && <div><strong>Phone:</strong> {detail.sales_user.phone}</div>}
                 </div>
                 <div>
-                  <div className="text-xs text-slate-400 font-semibold mb-1">Vendor</div>
+                  <div className="text-xs text-slate-500 font-semibold mb-1">Vendor</div>
                   {detail.vendor_orders && detail.vendor_orders.length > 0 ? detail.vendor_orders.map((vo, idx) => (
                     <div key={idx} className="mb-2">
                       <div><strong>Name:</strong> {vo.vendor_name || "-"}</div>
@@ -340,7 +340,7 @@ export default function OrdersPage() {
               {assignmentExplain && (
                 <div className="mt-3 pt-3 border-t border-slate-100" data-testid="assignment-reasoning-inline">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-slate-400 font-semibold">Assignment Reasoning</span>
+                    <span className="text-xs text-slate-500 font-semibold">Assignment Reasoning</span>
                     <AssignmentReasonBadge reasonCode={assignmentExplain.reason_code} />
                   </div>
                   <div className="text-xs text-slate-500">{assignmentExplain.reason_detail}</div>
@@ -371,7 +371,7 @@ export default function OrdersPage() {
             </section>
             {detail.payment_proof && (
               <section className="rounded-2xl border p-4" data-testid="drawer-payment">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Payment</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Payment</p>
                 <div className="grid gap-2 text-sm text-slate-700">
                   <div><strong>Payment Status:</strong> <StatusBadge status={detail.payment_proof.payment_status} /></div>
                   <div><strong>Payer Name:</strong> {detail.payment_proof.payer_name || "-"}</div>
@@ -384,7 +384,7 @@ export default function OrdersPage() {
             {/* E. Fulfillment / Items */}
             {detail.order?.items && detail.order.items.length > 0 && (
               <section className="rounded-2xl border p-4" data-testid="drawer-fulfillment">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Fulfillment ({detail.order.items.length} items)</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Fulfillment ({detail.order.items.length} items)</p>
                 <div className="space-y-2">
                   {detail.order.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
@@ -405,7 +405,7 @@ export default function OrdersPage() {
             {/* E.5. Vendor Purchase Orders */}
             {purchaseOrders.length > 0 && (
               <section className="rounded-2xl border p-4" data-testid="drawer-purchase-orders">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Vendor Purchase Orders</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Vendor Purchase Orders</p>
                 <div className="space-y-2">
                   {purchaseOrders.map((po, idx) => (
                     <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
@@ -431,14 +431,14 @@ export default function OrdersPage() {
             <section className="rounded-2xl border p-4" data-testid="drawer-timeline">
               <div className="flex items-center gap-2 mb-3">
                 <Activity className="w-4 h-4 text-[#D4A843]" />
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Timeline</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Status Timeline</p>
               </div>
               <StatusTimeline entries={auditEntries} />
             </section>
 
             {/* G. Admin Actions */}
             <section className="pt-4 border-t border-slate-200 space-y-3" data-testid="drawer-admin-actions">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Actions</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Admin Actions</p>
               <div className="grid grid-cols-2 gap-2">
                 {["assigned", "in_progress", "quality_check", "ready_for_pickup", "picked_up", "in_transit", "delivered", "completed", "cancelled"].map((s) => (
                   <button key={s} onClick={() => handleStatusUpdate(s)} disabled={actionLoading || detail.order?.status === s}
@@ -454,7 +454,7 @@ export default function OrdersPage() {
             {/* Commissions */}
             {detail.commissions && detail.commissions.length > 0 && (
               <section className="rounded-2xl border p-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Commissions ({detail.commissions.length})</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Commissions ({detail.commissions.length})</p>
                 <div className="space-y-2">
                   {detail.commissions.map((c, idx) => (
                     <div key={idx} className="rounded-xl border border-slate-200 p-3 flex justify-between items-center">

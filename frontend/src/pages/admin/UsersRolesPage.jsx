@@ -71,11 +71,11 @@ export default function UsersRolesPage() {
             <table className="w-full text-sm" data-testid="users-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Role</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Name</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Email</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Role</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -112,7 +112,7 @@ export default function UsersRolesPage() {
               </div>
             </div>
             <div className="pt-4 border-t border-slate-200">
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Assign Role</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase mb-3">Assign Role</p>
               <div className="grid grid-cols-3 gap-2">
                 {ROLES.filter(r => !["customer","user"].includes(r)).map(r => (
                   <button key={r} onClick={() => handleRoleChange(selected.id, r)} disabled={actionLoading || selected.role === r}

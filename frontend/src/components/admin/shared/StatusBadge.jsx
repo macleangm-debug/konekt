@@ -44,7 +44,7 @@ const STATUS_THEMES = {
 export default function StatusBadge({ status, label: overrideLabel }) {
   const cfg = STATUS_THEMES[status] || { label: (status || "").replace(/_/g, " "), color: "bg-slate-100 text-slate-600" };
   return (
-    <span className={`inline-flex text-xs px-2.5 py-1 rounded-full font-medium capitalize whitespace-nowrap ${cfg.color}`} data-testid={`badge-${status}`}>
+    <span className={`inline-flex text-xs px-2.5 py-1 rounded-full font-semibold capitalize whitespace-nowrap ${cfg.color}`} data-testid={`badge-${status}`}>
       {overrideLabel || cfg.label}
     </span>
   );

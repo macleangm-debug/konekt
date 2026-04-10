@@ -272,7 +272,7 @@ export default function AdminProductsServicesPage() {
                   if (!gCats.length) return null;
                   return (
                     <div key={g.id}>
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{g.name}</div>
+                      <div className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">{g.name}</div>
                       <div className="flex flex-wrap gap-2">
                         {gCats.map((c) => (
                           <span key={c.id} className="rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium">{c.name}</span>
@@ -318,13 +318,13 @@ export default function AdminProductsServicesPage() {
               <table className="min-w-full text-left" data-testid="submissions-table">
                 <thead className="bg-slate-50 border-b">
                   <tr>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Product Name</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Vendor</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Base Cost</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Visibility</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Product Name</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Vendor</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Base Cost</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Visibility</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -393,7 +393,7 @@ export default function AdminProductsServicesPage() {
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="font-semibold text-sm text-[#20364D]">Approve & Publish</h3>
                   <div>
-                    <label className="text-xs font-semibold text-slate-500 uppercase block mb-1">Margin %</label>
+                    <label className="text-xs font-semibold text-slate-600 uppercase block mb-1">Margin %</label>
                     <input
                       type="number"
                       className="border rounded-xl px-3 py-2.5 text-sm w-32"
@@ -418,7 +418,7 @@ export default function AdminProductsServicesPage() {
                   </button>
 
                   <div className="border-t pt-4 space-y-2">
-                    <label className="text-xs font-semibold text-slate-500 uppercase block">Notes for vendor</label>
+                    <label className="text-xs font-semibold text-slate-600 uppercase block">Notes for vendor</label>
                     <textarea
                       className="w-full border rounded-xl px-3 py-2 text-sm min-h-[60px]"
                       value={rejectNotes}

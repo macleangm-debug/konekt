@@ -240,11 +240,11 @@ export default function FinancialReportsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-slate-100">
-                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Rep</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Total</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Paid</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Pending</th>
-                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Count</th>
+                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Rep</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Total</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Paid</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Pending</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Count</th>
                   </tr></thead>
                   <tbody>
                     {commRep.map((r) => (

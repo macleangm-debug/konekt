@@ -233,7 +233,7 @@ export default function ClientReassignmentPage() {
 
                 {/* New owner select */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">New Owner</label>
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">New Owner</label>
                   <select
                     value={newOwnerId}
                     onChange={(e) => setNewOwnerId(e.target.value)}
@@ -251,7 +251,7 @@ export default function ClientReassignmentPage() {
 
                 {/* Reason */}
                 <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Reason</label>
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Reason</label>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}

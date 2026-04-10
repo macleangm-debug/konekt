@@ -8,7 +8,7 @@ export default function MetricCard({ label, value, icon: Icon, color = "text-[#2
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}><Icon size={18} /></div>
         )}
         <div>
-          <p className="text-xs text-slate-500">{label}</p>
+          <p className="text-xs text-slate-600 font-medium uppercase tracking-wider">{label}</p>
           <p className="text-xl font-bold text-[#20364D] mt-0.5">{value}</p>
         </div>
       </div>

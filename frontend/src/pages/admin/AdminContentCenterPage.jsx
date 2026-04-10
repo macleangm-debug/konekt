@@ -158,14 +158,14 @@ export default function AdminContentCenterPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-slate-50 text-left">
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase">Title</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase">Role</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-right">Price</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-right">Discount</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-right">Earning</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-center">Promo</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-center">Status</th>
-                  <th className="p-3 text-xs font-semibold text-slate-500 uppercase text-center">Actions</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase">Title</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase">Role</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Price</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Discount</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Earning</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Promo</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Status</th>
+                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -320,7 +320,7 @@ function ContentDrawer({ item, editMode, editData, onClose, onEdit, onSave, setE
 
           {/* Headline */}
           <div>
-            <label className="text-xs font-semibold text-slate-400 uppercase mb-1 block">Headline</label>
+            <label className="text-xs font-semibold text-slate-600 uppercase mb-1 block">Headline</label>
             {editMode ? (
               <input
                 value={editData.headline || ""}
@@ -338,7 +338,7 @@ function ContentDrawer({ item, editMode, editData, onClose, onEdit, onSave, setE
           {/* Captions */}
           {["short_social", "professional", "closing_script"].map(key => (
             <div key={key}>
-              <label className="text-xs font-semibold text-slate-400 uppercase mb-1 block">
+              <label className="text-xs font-semibold text-slate-600 uppercase mb-1 block">
                 {key.replace(/_/g, " ")}
               </label>
               {editMode ? (

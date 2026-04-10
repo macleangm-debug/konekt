@@ -55,12 +55,12 @@ export default function CustomersPageV3() {
             <table className="w-full text-sm" data-testid="customers-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Email</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Company</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Orders</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Referral</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Sales</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Name</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Email</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Company</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Orders</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Referral</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Sales</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -102,7 +102,7 @@ export default function CustomersPageV3() {
             </div>
             {detail.orders && detail.orders.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Recent Orders ({detail.orders.length})</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Recent Orders ({detail.orders.length})</p>
                 <div className="space-y-2">
                   {detail.orders.slice(0, 10).map((o, idx) => (
                     <div key={idx} className="rounded-xl border border-slate-200 p-3 flex justify-between items-center">
@@ -121,7 +121,7 @@ export default function CustomersPageV3() {
             )}
             {detail.invoices && detail.invoices.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Recent Invoices ({detail.invoices.length})</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Recent Invoices ({detail.invoices.length})</p>
                 <div className="space-y-2">
                   {detail.invoices.slice(0, 10).map((inv, idx) => (
                     <div key={idx} className="rounded-xl border border-slate-200 p-3 flex justify-between items-center">

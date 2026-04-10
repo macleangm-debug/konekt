@@ -272,12 +272,12 @@ export default function PurchaseOrdersPage() {
             <table className="min-w-full text-left" data-testid="purchase-orders-table">
               <thead className="bg-slate-50 border-b">
                 <tr>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Document #</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Vendor</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Document #</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Vendor</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Amount</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                  <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody>

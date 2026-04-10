@@ -134,14 +134,14 @@ export default function PaymentsQueuePage() {
         <table className="w-full text-sm" data-testid="payments-table">
           <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Invoice</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Payer</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Amount</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase"></th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Invoice</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payer</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Source</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Amount</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase"></th>
             </tr>
           </thead>
           <tbody>

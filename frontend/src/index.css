@@ -240,6 +240,48 @@
     bottom: 90px !important;
 }
 
+/* ─── Global Readability Hardening ─── */
+
+/* Table headers — darker, stronger weight in admin contexts */
+[data-testid] th,
+.bg-white th,
+.bg-slate-50 th {
+  color: #334155; /* slate-700 */
+  font-weight: 600; /* semibold */
+}
+
+/* Table body cells — ensure readable base contrast */
+[data-testid] td {
+  color: #334155; /* slate-700 */
+}
+
+/* Status badge text strengthening */
+span[data-testid^="badge-"] {
+  font-weight: 600;
+}
+
+/* Form labels — darker, medium weight */
+label {
+  color: #1e293b; /* slate-800 */
+  font-weight: 500;
+}
+
+/* Input fields — darker text when filled */
+input, textarea, select {
+  color: #1e293b; /* slate-800 */
+}
+
+/* Input placeholders — visible but distinct */
+input::placeholder,
+textarea::placeholder {
+  color: #94a3b8; /* slate-400 — distinct from value text */
+}
+
+/* Card section titles (.font-semibold inside cards) — ensure bold enough */
+.bg-white .font-semibold {
+  font-weight: 600;
+}
+
 /* ─── Global Micro-Interactions ─── */
 
 /* Focus rings — consistent across all inputs */

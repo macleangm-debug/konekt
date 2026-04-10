@@ -586,16 +586,16 @@ export default function CRMPageV2() {
                   <table className="min-w-full text-left" data-testid="crm-leads-table">
                     <thead className="bg-slate-50 border-b">
                       <tr>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date Created</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Lead Name</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Company</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Source</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Assigned Rep</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Stage</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Last Activity</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Next Follow-up</th>
-                        <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date Created</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Lead Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Company</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Source</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Assigned Rep</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Stage</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Last Activity</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Next Follow-up</th>
+                        <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1050,11 +1050,11 @@ function ServiceLeadsTabContent({ leads, loading, search, onSearchChange, onStat
             <table className="w-full text-sm" data-testid="service-leads-table">
               <thead>
                 <tr className="text-left border-b bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Client</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Lead</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Type</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Client</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Lead</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Type</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

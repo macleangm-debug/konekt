@@ -63,19 +63,19 @@ export default function ProductsServicesPage() {
             <table className="w-full text-sm" data-testid={`${tab}-table`}>
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Name</th>
                   {(tab === "products" || tab === "promo") && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">SKU</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Price</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Category</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">SKU</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Price</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Category</th>
                   </>)}
                   {tab === "services" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Type</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Base Price</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Base Price</th>
                   </>)}
                   {tab === "groups" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Type</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Items</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Items</th>
                   </>)}
                 </tr>
               </thead>

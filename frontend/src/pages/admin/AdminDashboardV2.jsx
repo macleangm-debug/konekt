@@ -40,7 +40,7 @@ function KpiCard({ icon: Icon, label, value, color, to, trend, badge }) {
         )}
         {trend && <TrendingUp className="w-4 h-4 text-green-500" />}
       </div>
-      <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-slate-600 font-semibold uppercase tracking-wider">{label}</p>
       <p className="text-2xl font-bold text-[#20364D] mt-0.5">{value}</p>
     </Wrapper>
   );
@@ -51,10 +51,10 @@ function SnapshotRow({ icon: Icon, label, value, sub, to }) {
   return (
     <Wrapper to={to} className={`flex items-center justify-between py-3 border-b border-slate-50 last:border-0 ${to ? "hover:bg-slate-50 cursor-pointer" : ""} transition rounded-lg px-2`}>
       <div className="flex items-center gap-3">
-        <Icon className="w-4 h-4 text-slate-400" />
+        <Icon className="w-4 h-4 text-slate-500" />
         <div>
-          <span className="text-sm text-slate-700 font-medium">{label}</span>
-          {sub && <p className="text-xs text-slate-400">{sub}</p>}
+          <span className="text-sm text-slate-800 font-medium">{label}</span>
+          {sub && <p className="text-xs text-slate-500">{sub}</p>}
         </div>
       </div>
       <span className="text-sm font-bold text-[#20364D]">{value}</span>
@@ -150,12 +150,12 @@ function SalesManagerDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100">
-                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rep</th>
-                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Deals</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Revenue</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Pipeline</th>
-                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rating</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Commission</th>
+                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Rep</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Deals</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Revenue</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Pipeline</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Rating</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Commission</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -647,10 +647,10 @@ function FinanceManagerDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100">
-                    <th className="text-left py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Rep</th>
-                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Total</th>
-                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Paid</th>
-                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Pending</th>
+                    <th className="text-left py-2 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Rep</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Total</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Paid</th>
+                    <th className="text-right py-2 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Pending</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1037,10 +1037,10 @@ function AdminDashboardMain() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100">
-                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Order</th>
-                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Customer</th>
-                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-                  <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Total</th>
+                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Order</th>
+                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+                  <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+                  <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Total</th>
                 </tr>
               </thead>
               <tbody>

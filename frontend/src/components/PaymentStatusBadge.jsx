@@ -48,7 +48,7 @@ export default function PaymentStatusBadge({ status = "unpaid" }) {
 
   return (
     <span 
-      className={`rounded-full px-3 py-1 text-xs font-medium ${style}`}
+      className={`rounded-full px-3 py-1 text-xs font-semibold ${style}`}
       data-testid="payment-status-badge"
     >
       {label}

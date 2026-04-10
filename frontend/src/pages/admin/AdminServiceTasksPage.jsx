@@ -149,13 +149,13 @@ export default function AdminServiceTasksPage() {
         <table className="w-full">
           <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Task</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Service</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Partner</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Client</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Cost</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Status</th>
-              <th className="px-5 py-3 text-xs font-semibold text-slate-500 uppercase text-left">Created</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Task</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Service</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Partner</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Client</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Cost</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Status</th>
+              <th className="px-5 py-3 text-xs font-semibold text-slate-600 uppercase text-left">Created</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -210,21 +210,21 @@ export default function AdminServiceTasksPage() {
 
             {selected.description && (
               <div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1">Description</h4>
+                <h4 className="text-xs font-semibold text-slate-600 uppercase mb-1">Description</h4>
                 <p className="text-sm text-slate-700 bg-slate-50 rounded-xl p-3">{selected.description}</p>
               </div>
             )}
 
             {selected.scope && (
               <div>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-1">Scope</h4>
+                <h4 className="text-xs font-semibold text-slate-600 uppercase mb-1">Scope</h4>
                 <p className="text-sm text-slate-700">{selected.scope}</p>
               </div>
             )}
 
             {/* Cost Section */}
             <div className="border-t pt-4">
-              <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Cost & Pricing</h4>
+              <h4 className="text-xs font-semibold text-slate-600 uppercase mb-2">Cost & Pricing</h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-slate-500">Partner Cost:</span> <span className="font-semibold">{selected.partner_cost ? `TZS ${Number(selected.partner_cost).toLocaleString()}` : "Pending"}</span></div>
                 <div><span className="text-slate-500">Selling Price:</span> <span className="font-semibold">{selected.selling_price ? `TZS ${Number(selected.selling_price).toLocaleString()}` : "—"}</span></div>
@@ -238,7 +238,7 @@ export default function AdminServiceTasksPage() {
             {/* Delivery Details */}
             {(selected.delivery_address || selected.contact_person) && (
               <div className="border-t pt-4">
-                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Delivery Details</h4>
+                <h4 className="text-xs font-semibold text-slate-600 uppercase mb-2">Delivery Details</h4>
                 {selected.delivery_address && <p className="text-sm">{selected.delivery_address}</p>}
                 {selected.contact_person && <p className="text-sm mt-1">{selected.contact_person} {selected.contact_phone ? `(${selected.contact_phone})` : ""}</p>}
               </div>
@@ -267,7 +267,7 @@ export default function AdminServiceTasksPage() {
             {/* Timeline */}
             {selected.timeline && selected.timeline.length > 0 && (
               <div className="border-t pt-4">
-                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Timeline</h4>
+                <h4 className="text-xs font-semibold text-slate-600 uppercase mb-2">Timeline</h4>
                 <div className="space-y-2">
                   {selected.timeline.map((entry, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-xs">

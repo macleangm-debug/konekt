@@ -57,11 +57,11 @@ export default function AuditLogPageV2() {
             <table className="w-full text-sm" data-testid="audit-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Action</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Target</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Actor</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Details</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Action</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Target</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Actor</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Details</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

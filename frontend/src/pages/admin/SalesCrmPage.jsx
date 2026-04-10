@@ -232,28 +232,28 @@ export default function SalesCrmPage() {
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
                   {tab === "leads" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Type</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Assigned</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Action</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Assigned</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Action</th>
                   </>)}
                   {tab === "quotes" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Quote #</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Payment</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Action</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Quote #</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Amount</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Payment</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Action</th>
                   </>)}
                   {tab === "orders" && (<>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Order #</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Customer</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Total</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Order #</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Total</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase hidden md:table-cell">Date</th>
                   </>)}
                 </tr>
               </thead>
@@ -329,7 +329,7 @@ export default function SalesCrmPage() {
             )}
             {selected.items && selected.items.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Items ({selected.items.length})</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase mb-2">Items ({selected.items.length})</p>
                 {selected.items.map((i, idx) => (
                   <div key={idx} className="flex justify-between py-2 border-b border-slate-100 text-sm">
                     <span>{i.name || i.description || "Item"} x{i.quantity || 1}</span>
@@ -340,7 +340,7 @@ export default function SalesCrmPage() {
             )}
             {tab === "leads" && (
               <div className="pt-3 border-t space-y-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Actions</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase mb-2">Actions</p>
                 {!["quoting", "converted"].includes(selected.status) && (
                   <button onClick={() => setQuoteModal(selected)} className="w-full rounded-xl bg-[#20364D] text-white px-4 py-3 font-semibold hover:bg-[#2d4a66] flex items-center justify-center gap-2" data-testid="drawer-create-quote-btn">
                     <Plus size={16} /> Create Quote

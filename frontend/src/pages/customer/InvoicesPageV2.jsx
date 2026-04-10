@@ -210,18 +210,18 @@ function InvoiceDrawer({ invoice, onClose, bankInfo, branding, onPaymentSuccess 
       <div className="space-y-5">
         <div className="flex items-center justify-between text-sm">
           <div>
-            <div className="text-xs text-slate-400 uppercase tracking-wide">Date</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wide">Date</div>
             <div className="font-semibold text-[#20364D]">{fmtDate(invoice.created_at)}</div>
           </div>
           <div className="text-right">
-            <div className="text-xs text-slate-400 uppercase tracking-wide">Type</div>
+            <div className="text-xs text-slate-500 uppercase tracking-wide">Type</div>
             <div className="font-semibold text-[#20364D] capitalize">{invoice.type || invoice.source_type || "product"}</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-xl border border-slate-200 p-4 bg-slate-50/50">
-            <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Bill To</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500 mb-2 font-semibold">Bill To</div>
             <div className="font-semibold text-[#20364D] text-sm">{billingName}</div>
             {billingEmail && <div className="text-xs text-slate-500 mt-1">{billingEmail}</div>}
             {billingPhone && <div className="text-xs text-slate-500">{billingPhone}</div>}

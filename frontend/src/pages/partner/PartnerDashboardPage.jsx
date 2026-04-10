@@ -181,10 +181,10 @@ export default function PartnerDashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Order</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Items</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Price</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Status</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Order</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Items</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Price</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Status</th>
                 </tr>
               </thead>
               <tbody>

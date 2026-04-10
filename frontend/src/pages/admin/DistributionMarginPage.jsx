@@ -422,7 +422,7 @@ export default function DistributionMarginPage() {
 
         {/* Add new rule form */}
         <div className="rounded-xl border border-dashed border-slate-300 p-4">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Add Override Rule</p>
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Add Override Rule</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <select
               value={newRule.scope_type}

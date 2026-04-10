@@ -150,17 +150,17 @@ export default function AffiliateDashboardHomePage() {
       <div className="grid grid-cols-3 gap-3" data-testid="earnings-summary-cards">
         <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-expected">
           <DollarSign className="w-5 h-5 text-blue-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Expected</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Expected</p>
           <p className="text-lg font-bold text-blue-600 mt-0.5">{shortMoney(summary.expected)}</p>
         </div>
         <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-pending">
           <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Pending Payout</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Pending Payout</p>
           <p className="text-lg font-bold text-amber-600 mt-0.5">{shortMoney(summary.pending_payout)}</p>
         </div>
         <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-paid">
           <CheckCircle className="w-5 h-5 text-emerald-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Paid</p>
+          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Paid</p>
           <p className="text-lg font-bold text-emerald-600 mt-0.5">{shortMoney(summary.paid_out)}</p>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function AffiliateDashboardHomePage() {
           </div>
           <div className="space-y-3">
             <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">Promo Code</p>
+              <p className="text-[10px] font-semibold text-slate-600 uppercase mb-1">Promo Code</p>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-[#20364D]">{promoCode}</span>
                 <button onClick={() => copyToClipboard(promoCode, "promo2")} className="p-1.5 rounded-lg bg-[#D4A843]/10 hover:bg-[#D4A843]/20 transition" data-testid="copy-promo-2">
@@ -186,7 +186,7 @@ export default function AffiliateDashboardHomePage() {
               </div>
             </div>
             <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase mb-1">Referral Link</p>
+              <p className="text-[10px] font-semibold text-slate-600 uppercase mb-1">Referral Link</p>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-600 truncate flex-1">{referralLink}</span>
                 <button onClick={() => copyToClipboard(referralLink, "link")} className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 transition flex-shrink-0" data-testid="copy-referral-link">
@@ -276,11 +276,11 @@ export default function AffiliateDashboardHomePage() {
             <table className="w-full text-sm" data-testid="earnings-table">
               <thead>
                 <tr className="border-b text-left">
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Order</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Customer</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Commission</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Status</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Date</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Order</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Customer</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Commission</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Status</th>
+                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Date</th>
                 </tr>
               </thead>
               <tbody>

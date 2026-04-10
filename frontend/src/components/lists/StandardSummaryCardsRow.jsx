@@ -47,7 +47,7 @@ export default function StandardSummaryCardsRow({ cards = [], columns }) {
             )}
             <div>
               <div className="text-2xl font-extrabold text-[#20364D]">{card.value ?? 0}</div>
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{card.label}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{card.label}</div>
             </div>
           </button>
         );

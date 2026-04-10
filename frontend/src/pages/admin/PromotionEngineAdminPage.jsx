@@ -111,7 +111,7 @@ function SafetyPreview({ promoType, promoValue, stackingPolicy }) {
         <div className="text-slate-600 font-semibold border-t pt-1">Promo Price</div>
         <div className="font-bold text-right border-t pt-1 text-emerald-700">{fmt(preview.promo_price)}</div>
 
-        <div className="col-span-2 mt-2 mb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Margin Breakdown</div>
+        <div className="col-span-2 mt-2 mb-1 text-xs font-semibold text-slate-600 uppercase tracking-wider">Margin Breakdown</div>
 
         <div className="text-slate-500">Operational Margin</div>
         <div className="font-medium text-right">{fmt(preview.operational_margin)}</div>
@@ -124,7 +124,7 @@ function SafetyPreview({ promoType, promoValue, stackingPolicy }) {
           {fmt(preview.distributable_pool_remaining)}
         </div>
 
-        <div className="col-span-2 mt-2 mb-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">Commission Effect</div>
+        <div className="col-span-2 mt-2 mb-1 text-xs font-semibold text-slate-600 uppercase tracking-wider">Commission Effect</div>
 
         <div className="text-slate-500">Affiliate Earns</div>
         <div className="font-medium text-right">{fmt(preview.effective_affiliate_amount)}</div>

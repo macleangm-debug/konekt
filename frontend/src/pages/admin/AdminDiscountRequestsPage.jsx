@@ -408,19 +408,19 @@ export default function AdminDiscountRequestsPage() {
             <div className="space-y-3">
               {selected.reason && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Reason / Justification</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Reason / Justification</p>
                   <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.reason}</p>
                 </div>
               )}
               {selected.notes && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Notes</p>
                   <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.notes}</p>
                 </div>
               )}
               {selected.item_notes && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Item-Specific Notes</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Item-Specific Notes</p>
                   <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{selected.item_notes}</p>
                 </div>
               )}
@@ -429,7 +429,7 @@ export default function AdminDiscountRequestsPage() {
             {/* Admin Review */}
             {selected.reviewed_by && (
               <div className="rounded-xl border border-slate-200 p-4 space-y-2">
-                <p className="text-xs font-semibold text-slate-500 uppercase">Admin Review</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase">Admin Review</p>
                 <p className="text-sm"><span className="text-slate-500">By:</span> <span className="font-medium">{selected.reviewed_by}</span></p>
                 <p className="text-sm"><span className="text-slate-500">At:</span> {shortDate(selected.reviewed_at)}</p>
                 {selected.admin_note && <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3 mt-2">{selected.admin_note}</p>}

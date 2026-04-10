@@ -172,7 +172,7 @@ export default function AlertDashboardPage() {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SEV_BADGE[alert.severity] || "bg-slate-100 text-slate-600"}`}>
                         {alert.severity?.toUpperCase()}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-400 uppercase">{tc.label}</span>
+                      <span className="text-[10px] font-semibold text-slate-600 uppercase">{tc.label}</span>
                       {alert.status === "resolved" && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">RESOLVED</span>
                       )}
@@ -193,7 +193,7 @@ export default function AlertDashboardPage() {
                 {selectedAlert?.alert_id === alert.alert_id && (
                   <div className="mt-4 pt-4 border-t border-slate-100" data-testid={`alert-detail-${alert.alert_id}`}>
                     <div className="bg-slate-50 rounded-lg p-3 mb-3">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recommended Action</p>
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">Recommended Action</p>
                       <p className="text-sm text-[#20364D]">{alert.recommended_action}</p>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">

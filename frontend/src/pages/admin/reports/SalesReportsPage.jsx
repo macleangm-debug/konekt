@@ -137,12 +137,12 @@ export default function SalesReportsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead><tr className="border-b border-slate-100">
-                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Rep</th>
-                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Deals</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Revenue</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Pipeline</th>
-                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Rating</th>
-                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase">Commission</th>
+                    <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Rep</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Deals</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Revenue</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Pipeline</th>
+                    <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Rating</th>
+                    <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase">Commission</th>
                   </tr></thead>
                   <tbody>
                     {teamTable.map((r) => (

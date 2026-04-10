@@ -70,7 +70,7 @@ export default function StandardDrawerShell({
           <div className="min-w-0 flex-1">
             {subtitle && (
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{subtitle}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{subtitle}</p>
                 {badge}
               </div>
             )}

@@ -332,14 +332,14 @@ function ProductTable({ products, showInactive }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-100">
-            <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Product</th>
-            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Units</th>
-            <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Revenue</th>
-            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Orders</th>
-            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Last Sold</th>
-            {showInactive && <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Inactive</th>}
-            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Status</th>
-            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Trend</th>
+            <th className="text-left py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Product</th>
+            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Units</th>
+            <th className="text-right py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Revenue</th>
+            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Orders</th>
+            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Last Sold</th>
+            {showInactive && <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Inactive</th>}
+            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
+            <th className="text-center py-2.5 px-2 text-xs font-semibold text-slate-600 uppercase tracking-wider">Trend</th>
           </tr>
         </thead>
         <tbody>

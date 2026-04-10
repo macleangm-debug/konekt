@@ -83,12 +83,12 @@ export default function QuotesRequestsPage() {
             <table className="w-full text-sm" data-testid="quotes-table">
               <thead>
                 <tr className="text-left border-b border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Document #</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Client</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase text-right">Amount</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Document #</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Client</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase text-right">Amount</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -141,7 +141,7 @@ export default function QuotesRequestsPage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Details</p>
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Details</p>
               <div className="grid grid-cols-2 gap-y-3 text-sm">
                 <div>
                   <p className="text-xs text-slate-400">Assigned Sales</p>
@@ -170,7 +170,7 @@ export default function QuotesRequestsPage() {
 
             {detail.items && detail.items.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Items ({detail.items.length})</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Items ({detail.items.length})</p>
                 <div className="space-y-1.5">
                   {detail.items.map((item, idx) => (
                     <div key={idx} className="flex justify-between py-2 border-b border-slate-100 last:border-0 text-sm">
@@ -186,7 +186,7 @@ export default function QuotesRequestsPage() {
               <div className="rounded-2xl bg-slate-50 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <MessageSquare size={14} className="text-slate-400" />
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Notes</p>
+                  <p className="text-xs font-semibold text-slate-600 uppercase">Notes</p>
                 </div>
                 <p className="text-sm text-slate-700 whitespace-pre-wrap">{detail.notes}</p>
               </div>
@@ -194,7 +194,7 @@ export default function QuotesRequestsPage() {
 
             {detail.description && (
               <div className="rounded-2xl bg-slate-50 p-4">
-                <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Description</p>
+                <p className="text-xs font-semibold text-slate-600 uppercase mb-2">Description</p>
                 <p className="text-sm text-slate-700 whitespace-pre-wrap">{detail.description}</p>
               </div>
             )}

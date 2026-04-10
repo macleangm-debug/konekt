@@ -290,10 +290,10 @@ function RecentAssignmentsSection({ assignments }) {
           <table className="w-full text-sm" data-testid="assignments-table">
             <thead>
               <tr className="border-b text-left">
-                <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Order</th>
-                <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">Items</th>
-                <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-right">Your Price</th>
-                <th className="pb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide text-center">Status</th>
+                <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Order</th>
+                <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Items</th>
+                <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Your Price</th>
+                <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -382,7 +382,7 @@ function KpiCard({ icon, label, value, sub, color, testId, badge }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <div className={color || "text-slate-400"}>{icon}</div>
-          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</span>
         </div>
         {badge > 0 && (
           <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">{badge}</span>

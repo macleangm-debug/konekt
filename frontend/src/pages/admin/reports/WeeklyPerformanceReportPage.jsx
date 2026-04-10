@@ -269,7 +269,7 @@ export default function WeeklyPerformanceReportPage() {
             <h3 className="font-semibold text-[#20364D] text-sm">Product Intelligence</h3>
           </div>
           <div className="mb-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Top Products</p>
+            <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Top Products</p>
             {pi.top_products?.map((p, i) => (
               <div key={i} className="flex justify-between py-1.5 text-sm">
                 <span className="text-slate-700">{p.name}</span>
