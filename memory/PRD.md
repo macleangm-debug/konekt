@@ -340,6 +340,29 @@ White-label, single-business-per-deployment B2B commerce platform with dynamic b
 - **Frontend: Dashboard Cards** — Small progress indicator on both `CustomerDashboardV3` referral card and `ReferralPointsBanner`
 - **Design Principle** — Subtle, premium progress recognition. No gamification, popups, or confetti.
 
+### Phase 18 — Role-Based Onboarding Carousel (Apr 10, 2026)
+- **Trigger** — First dashboard entry when `onboarding_completed` is false on user record (backend is source of truth)
+- **Content** — 3-4 cards per role (Customer, Vendor, Partner, Affiliate, Sales, Sales Manager, Finance Manager, Admin)
+  - Each card: icon, title, single sentence — no paragraphs, no technical terms
+- **UX** — Progress dots, Back/Next navigation, Skip button, "Open Dashboard" on final card
+- **Persistence** — `POST /api/auth/onboarding-complete` sets `onboarding_completed=true`
+- **Mounting** — `OnboardingGate` wraps `<Outlet />` in CustomerPortalLayoutV2, AdminLayout, PartnerLayout
+- **Component** — `OnboardingWizard.jsx` with `ROLE_CARDS` definitions, smooth transitions
+
+### Phase 19 — Phone + PIN Login (Apr 10, 2026)
+- **Backend** — Extended `/api/auth/login` to accept `{phone, pin, country_code}` alongside `{email, password}`
+  - `normalize_phone()` utility: strips spaces/dashes/leading 0, prepends country code
+  - PIN hashed with bcrypt (same as passwords), 4-6 digits only
+  - Same rate limiting as email login
+  - `POST /api/auth/set-pin` — set/change PIN with password verification
+  - `GET /api/auth/me` — returns `has_pin` and `onboarding_completed`
+- **Frontend Login** — Email/Phone tab switcher on LoginPageV2
+  - Phone tab: country selector (TZ, KE, UG, RW, NG, ZA, GH), phone input (numeric), PIN input (masked, show/hide)
+  - Error messages: "Phone number or PIN is incorrect" (safe, non-revealing)
+- **Registration** — Optional PIN field during signup (4-6 digits)
+- **Profile Settings** — PIN management section (set/change PIN, requires current password)
+- **Existing users** — No forced migration, can add PIN later from settings
+
 ## Backlog
 
 ### P1 — Upcoming

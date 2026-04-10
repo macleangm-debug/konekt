@@ -392,6 +392,7 @@ import InvoicesPageV2 from "@/pages/customer/InvoicesPageV2";
 import ServiceRequestsPageV2 from "@/pages/customer/ServiceRequestsPageV2";
 import PointsPageV2 from "@/pages/customer/PointsPageV2";
 import ReferralsPage from "@/pages/customer/ReferralsPage";
+import ProfileSettingsPage from "@/pages/customer/ProfileSettingsPage";
 import MyStatementPageV2 from "@/pages/customer/MyStatementPageV2";
 import BusinessPricingRequestPage from "@/pages/customer/BusinessPricingRequestPage";
 import ClientProfilePage from "@/pages/customer/ClientProfilePage";
@@ -887,6 +888,7 @@ function App() {
           <Route path="business-pricing" element={<BusinessPricingRequestPage />} />
           <Route path="profile/business" element={<ClientProfilePage />} />
           <Route path="my-account" element={<MyAccountPageV2 />} />
+          <Route path="settings" element={<ProfileSettingsPage />} />
           <Route path="help" element={<HelpPageV3 />} />
           <Route path="rate-sales" element={<CustomerSalesRatingTasksPage />} />
         </Route>

@@ -1,41 +1,22 @@
 # Test Credentials
 
-## Admin
-- Email: `admin@konekt.co.tz`
-- Password: `KnktcKk_L-hw1wSyquvd!`
-- Portal: `/login` -> `/admin`
-
-## Sales Manager
-- Email: `sales.manager@konekt.co.tz`
-- Password: `Manager123!`
-- Portal: `/login` -> `/admin` (sees Team Command Center dashboard, filtered sidebar)
-
-## Finance Manager
-- Email: `finance@konekt.co.tz`
-- Password: `Finance123!`
-- Portal: `/login` -> `/admin` (sees standard dashboard, finance-filtered sidebar)
-
-## Staff / Sales
-- Email: `staff@konekt.co.tz`
-- Password: `Staff123!`
-- Portal: `/staff-login` -> `/staff`
-
-## Customer (Test)
+## Customer Account
 - Email: `test@konekt.tz`
 - Password: `TestUser123!`
-- Portal: `/login` -> `/account`
+- Phone: `+255712345678` (login with `712345678`)
+- PIN: `1234`
 
-## Customer (Demo)
-- Email: `demo.customer@konekt.com`
-- Password: `Demo123!`
-- Portal: `/login` -> `/account`
+## Admin Account
+- Email: `admin@konekt.co.tz`
+- Password: `KnktcKk_L-hw1wSyquvd!`
 
-## Vendor (Demo)
+## Sales Manager Account
+- Email: `sales.manager@konekt.co.tz`
+- Password: `Manager123!`
+
+## Vendor/Partner Account
 - Email: `demo.partner@konekt.com`
 - Password: `Partner123!`
-- Portal: `/partner`
 
 ## Test Data
-- Quote ref: `QTN-20260316-0FB116` (standard price: 100,000)
-- Invoice ID: `69b18d65a8467c2938ccfcae`
-- Rated order ID: `69b192362d4f87d8d578845e` (5 stars by test@konekt.tz)
+- Sample Product ID: `69b192362d4f87d8d578845e` (5 stars by test@konekt.tz)
