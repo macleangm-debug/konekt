@@ -409,23 +409,23 @@ export default function CRMPageV2() {
   const showLeadsView = ["all", "product", "request_converted", "pipeline"].includes(activeTab);
 
   return (
-    <div className="p-6 md:p-8 bg-slate-50 min-h-screen" data-testid="crm-page">
-      <div className="max-w-none w-full space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6" data-testid="crm-page">
+      <div className="space-y-5">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <Users className="w-8 h-8 text-[#D4A843]" />
+            <h1 className="text-xl font-bold text-[#20364D] flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#D4A843]" />
               CRM
             </h1>
-            <p className="text-slate-600 mt-1">Unified lead management, pipeline, and intelligence</p>
+            <p className="text-sm text-slate-500 mt-0.5">Unified lead management, pipeline, and intelligence</p>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="inline-flex items-center gap-2 bg-[#2D3E50] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#3d5166] transition-all"
+            className="inline-flex items-center gap-1.5 bg-[#20364D] text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#1a2d40] transition-all"
             data-testid="add-lead-btn"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             {showForm ? "Cancel" : "Add Lead"}
           </button>
         </div>

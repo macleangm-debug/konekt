@@ -124,47 +124,72 @@ async def resolve_active_promotions(db, *, product_id=None, category=None):
     """
     Find active promotions applicable to a product.
     Resolution: product-specific > category > global.
-    Returns a list (usually 0 or 1 promotions).
+    Reads from the canonical `promotions` collection (managed by Promotions Manager).
+    Returns a list (usually 0 or 1 promotions) with normalized field names.
     """
     now = datetime.now(timezone.utc)
+    now_iso = now.isoformat()
     query_base = {
         "status": "active",
         "$or": [
-            {"starts_at": {"$exists": False}},
-            {"starts_at": None},
-            {"starts_at": {"$lte": now.isoformat()}},
+            {"start_date": {"$exists": False}},
+            {"start_date": None},
+            {"start_date": ""},
+            {"start_date": {"$lte": now_iso}},
         ],
     }
+
+    def _normalize(p):
+        """Map canonical promotions fields to engine-expected fields."""
+        if not p:
+            return None
+        return {
+            "id": p.get("id", ""),
+            "title": p.get("name", ""),
+            "scope": p.get("scope", "global"),
+            "scope_target": p.get("target_product_id") or p.get("target_category_id") or p.get("target_category_name"),
+            "promo_type": p.get("discount_type", "percentage"),
+            "promo_value": float(p.get("discount_value", 0)),
+            "stacking_policy": p.get("stacking_rule", "no_stack"),
+            "starts_at": p.get("start_date"),
+            "ends_at": p.get("end_date"),
+            "status": p.get("status"),
+            "code": p.get("code", ""),
+        }
 
     promotions = []
 
     # 1. Product-specific
     if product_id:
-        p = await db.platform_promotions.find_one(
-            {**query_base, "scope": "product", "scope_target": product_id},
+        p = await db.promotions.find_one(
+            {**query_base, "scope": "product", "target_product_id": product_id},
             {"_id": 0},
         )
-        if p and _is_not_expired(p, now):
-            promotions.append(p)
-            return promotions  # most specific wins
+        n = _normalize(p)
+        if n and _is_not_expired(n, now):
+            promotions.append(n)
+            return promotions
 
     # 2. Category-level
     if category:
-        p = await db.platform_promotions.find_one(
-            {**query_base, "scope": "category", "scope_target": category},
+        p = await db.promotions.find_one(
+            {**query_base, "scope": "category",
+             "$or": [{"target_category_id": category}, {"target_category_name": category}]},
             {"_id": 0},
         )
-        if p and _is_not_expired(p, now):
-            promotions.append(p)
+        n = _normalize(p)
+        if n and _is_not_expired(n, now):
+            promotions.append(n)
             return promotions
 
     # 3. Global
-    p = await db.platform_promotions.find_one(
+    p = await db.promotions.find_one(
         {**query_base, "scope": "global"},
         {"_id": 0},
     )
-    if p and _is_not_expired(p, now):
-        promotions.append(p)
+    n = _normalize(p)
+    if n and _is_not_expired(n, now):
+        promotions.append(n)
 
     return promotions
 

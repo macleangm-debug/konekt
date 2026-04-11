@@ -340,16 +340,17 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
   const isLight = theme.key === "dark" || theme.key === "promo" ? "light" : "dark";
 
   const S = {
-    headline: v ? 72 : 56,
-    price: v ? 52 : 40,
-    badge: v ? 26 : 20,
-    category: v ? 22 : 18,
-    desc: v ? 24 : 20,
-    footer: v ? 18 : 15,
-    logoText: v ? 30 : 24,
-    tagline: v ? 15 : 12,
-    promo: v ? 22 : 18,
-    triad: v ? 60 : 48,
+    headline: v ? 84 : 64,
+    price: v ? 60 : 48,
+    badge: v ? 30 : 24,
+    category: v ? 26 : 22,
+    desc: v ? 26 : 22,
+    footer: v ? 22 : 18,
+    logoText: v ? 36 : 28,
+    tagline: v ? 18 : 14,
+    promo: v ? 26 : 22,
+    triad: v ? 80 : 64,
+    pad: v ? 60 : 48,
     pad: v ? 56 : 44,
   };
 
@@ -457,13 +458,13 @@ function LayoutMinimal({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
     <>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: S.pad, textAlign: "center", gap: v ? 28 : 20 }}>
         {showUploadedLogo ? (
-          <img src={branding.resolved_logo_url} alt="" crossOrigin="anonymous" onError={() => setLogoErr(true)} style={{ height: v ? 80 : 64, width: "auto", objectFit: "contain" }} />
+          <img src={branding.resolved_logo_url} alt="" crossOrigin="anonymous" onError={() => setLogoErr(true)} style={{ height: v ? 100 : 80, width: "auto", objectFit: "contain" }} />
         ) : (
-          <TriadSVG size={v ? 80 : 64} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
+          <TriadSVG size={v ? 100 : 80} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
         )}
-        <div style={{ fontSize: v ? 32 : 26, fontWeight: 700, color: theme.textPrimary, lineHeight: 1.2 }}>{branding.trading_name || branding.company_name || ""}</div>
+        <div style={{ fontSize: v ? 38 : 30, fontWeight: 700, color: theme.textPrimary, lineHeight: 1.2 }}>{branding.trading_name || branding.company_name || ""}</div>
         {hasImg && (
-          <div style={{ width: v ? 400 : 320, height: v ? 400 : 320, borderRadius: 20, overflow: "hidden", backgroundColor: "#f1f5f9", margin: "8px auto" }}>
+          <div style={{ width: v ? 520 : 420, height: v ? 520 : 420, borderRadius: 20, overflow: "hidden", backgroundColor: "#f1f5f9", margin: "8px auto" }}>
             <img src={item.image_url} alt="" crossOrigin="anonymous" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
         )}

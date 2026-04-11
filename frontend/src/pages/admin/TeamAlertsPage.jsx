@@ -1,101 +1,125 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import api from "@/lib/api";
-import { AlertTriangle, Clock, ShieldAlert, Users } from "lucide-react";
-import safeDisplay from "@/utils/safeDisplay";
+import { AlertTriangle, Loader2, Clock, CreditCard, UserX } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+
+const ALERT_ICONS = {
+  overdue_followup: Clock,
+  stale_lead: UserX,
+  pending_payments: CreditCard,
+};
+
+const SEVERITY_STYLES = {
+  critical: "bg-red-100 text-red-700 border-red-200",
+  warning: "bg-amber-100 text-amber-700 border-amber-200",
+  info: "bg-blue-100 text-blue-700 border-blue-200",
+};
+
+const TYPE_LABELS = {
+  overdue_followup: "Overdue Follow-Up",
+  stale_lead: "Stale Lead",
+  pending_payments: "Pending Payments",
+};
 
 export default function TeamAlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
 
-  useEffect(() => {
-    (async () => {
-      try {
-        // Pull CRM leads to find overdue follow-ups and stale deals
-        const res = await api.get("/api/admin/crm/leads");
-        const leads = res.data?.leads || res.data || [];
-        const now = new Date();
-        const generated = [];
-
-        for (const l of (Array.isArray(leads) ? leads : [])) {
-          // Overdue follow-ups
-          if (l.next_follow_up_at && new Date(l.next_follow_up_at) < now) {
-            generated.push({
-              id: `overdue-${l.id}`,
-              type: "overdue_followup",
-              severity: "high",
-              title: `Overdue follow-up: ${l.contact_name || l.name || "Unknown"}`,
-              description: `Follow-up was due ${new Date(l.next_follow_up_at).toLocaleDateString()}`,
-              lead: l,
-            });
-          }
-          // Stale leads (no update in 14+ days)
-          if (l.updated_at) {
-            const daysSince = (now - new Date(l.updated_at)) / (1000 * 60 * 60 * 24);
-            if (daysSince > 14 && l.stage !== "won" && l.stage !== "lost") {
-              generated.push({
-                id: `stale-${l.id}`,
-                type: "stale_lead",
-                severity: "medium",
-                title: `Stale lead: ${l.contact_name || l.name || "Unknown"}`,
-                description: `No activity for ${Math.floor(daysSince)} days — stage: ${l.stage || "unknown"}`,
-                lead: l,
-              });
-            }
-          }
-        }
-
-        generated.sort((a, b) => (a.severity === "high" ? -1 : 1));
-        setAlerts(generated);
-      } catch { setAlerts([]); }
-      setLoading(false);
-    })();
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/admin/team-performance/summary");
+      setAlerts(res.data?.alerts || []);
+    } catch { setAlerts([]); }
+    setLoading(false);
   }, []);
 
-  const severityStyles = {
-    high: { bg: "bg-red-50", border: "border-red-200", icon: "text-red-500", badge: "bg-red-100 text-red-700" },
-    medium: { bg: "bg-amber-50", border: "border-amber-200", icon: "text-amber-500", badge: "bg-amber-100 text-amber-700" },
-    low: { bg: "bg-blue-50", border: "border-blue-200", icon: "text-blue-500", badge: "bg-blue-100 text-blue-700" },
-  };
+  useEffect(() => { load(); }, [load]);
+
+  const types = ["all", ...new Set(alerts.map((a) => a.type))];
+  const filtered = filter === "all" ? alerts : alerts.filter((a) => a.type === filter);
+
+  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
+  const warningCount = alerts.filter((a) => a.severity === "warning").length;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6" data-testid="team-alerts-page">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="team-alerts-page">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#20364D]">Alerts</h1>
-          <p className="text-sm text-slate-500 mt-0.5">System-generated alerts for stale deals and overdue tasks</p>
+          <p className="text-sm text-slate-500 mt-0.5">Operational issues requiring attention</p>
         </div>
-        <span className="text-xs font-semibold text-slate-400">{alerts.length} alert{alerts.length !== 1 ? "s" : ""}</span>
+        <div className="flex items-center gap-2">
+          {criticalCount > 0 && (
+            <Badge className="bg-red-100 text-red-700">{criticalCount} Critical</Badge>
+          )}
+          {warningCount > 0 && (
+            <Badge className="bg-amber-100 text-amber-700">{warningCount} Warning</Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden w-fit">
+        {types.map((t) => (
+          <button key={t} onClick={() => setFilter(t)} className={`px-3 py-2 text-xs font-semibold capitalize transition-colors ${filter === t ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`filter-${t}`}>
+            {t === "all" ? `All (${alerts.length})` : `${TYPE_LABELS[t] || t} (${alerts.filter((a) => a.type === t).length})`}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="text-center py-12 text-slate-400">Scanning for alerts...</div>
-      ) : alerts.length === 0 ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-xl" data-testid="alerts-empty">
-          <ShieldAlert className="w-12 h-12 mx-auto text-emerald-200 mb-3" />
-          <p className="text-sm font-semibold text-emerald-600">All clear</p>
-          <p className="text-xs text-slate-400 mt-1">No overdue follow-ups or stale leads detected</p>
+          <AlertTriangle className="w-12 h-12 mx-auto text-slate-200 mb-3" />
+          <p className="text-sm font-semibold text-slate-500">{filter === "all" ? "No alerts this week" : `No ${TYPE_LABELS[filter] || filter} alerts`}</p>
         </div>
       ) : (
-        <div className="space-y-3" data-testid="alerts-list">
-          {alerts.map((a) => {
-            const s = severityStyles[a.severity] || severityStyles.low;
-            return (
-              <div key={a.id} className={`rounded-xl border ${s.border} ${s.bg} p-4 flex items-start gap-3`} data-testid={`alert-${a.id}`}>
-                {a.type === "overdue_followup" ? (
-                  <Clock className={`w-5 h-5 mt-0.5 shrink-0 ${s.icon}`} />
-                ) : (
-                  <AlertTriangle className={`w-5 h-5 mt-0.5 shrink-0 ${s.icon}`} />
-                )}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-slate-700">{a.title}</div>
-                  <div className="text-xs text-slate-500 mt-0.5">{a.description}</div>
-                </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${s.badge}`}>
-                  {a.severity.toUpperCase()}
-                </span>
-              </div>
-            );
-          })}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="alerts-table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/60">
+                  <th className="text-center px-3 py-3 font-semibold text-slate-600 text-xs uppercase w-12">Sev</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Type</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Message</th>
+                  <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Owner / Rep</th>
+                  <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((alert, i) => {
+                  const Icon = ALERT_ICONS[alert.type] || AlertTriangle;
+                  return (
+                    <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`alert-row-${i}`}>
+                      <td className="px-3 py-3 text-center">
+                        <span className={`inline-flex w-6 h-6 rounded-full items-center justify-center ${
+                          alert.severity === "critical" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+                        }`}>
+                          <Icon className="w-3 h-3" />
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={`text-[10px] ${SEVERITY_STYLES[alert.severity] || "bg-slate-100 text-slate-600"}`}>
+                          {TYPE_LABELS[alert.type] || alert.type}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">{alert.message}</td>
+                      <td className="px-3 py-3 text-slate-500 text-xs truncate max-w-[150px]">{alert.entity || "—"}</td>
+                      <td className="px-3 py-3 text-slate-400 text-xs">
+                        {alert.date ? new Date(alert.date).toLocaleDateString() : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2.5 text-xs text-slate-400 border-t border-slate-100">
+            {filtered.length} alert{filtered.length !== 1 ? "s" : ""}
+          </div>
         </div>
       )}
     </div>

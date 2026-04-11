@@ -1,0 +1,123 @@
+{
+  "summary": "Konekt B2B Platform Critical Stabilization Pass - All features tested and working. StandardDrawerShell with React Portal, Team Performance pages, Promotions wiring fix, Affiliate form cleanup, CRM width containment, and Content Studio hierarchy refinement verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Content Studio",
+        "issues": ["Console warnings about duplicate React keys - minor code quality issue, doesn't affect functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_stabilization_pass_v270.py",
+    "/app/test_reports/pytest/pytest_results_stabilization_v270.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Content Studio has duplicate key warnings in console - consider adding unique keys to mapped elements"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_stabilization_pass_v270.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Critical Stabilization Pass features verified. Admin auth uses localStorage key 'konekt_admin_token'. Team Performance pages at /admin/team/overview, /admin/team/leaderboard, /admin/team/alerts all working with real data from /api/admin/team-performance/summary endpoint.",
+  "features_tested": {
+    "standard_drawer_shell": {
+      "status": "PASS",
+      "details": [
+        "Drawer renders with React Portal at document.body level",
+        "Full-viewport height with overlay covering sidebar",
+        "Backdrop with blur effect (z-index 9998)",
+        "Panel with sticky header and footer (z-index 9999)",
+        "Scrollable body content",
+        "Tested on: Affiliates (New Affiliate), CRM (lead detail), Promotions Manager (New Promotion)"
+      ]
+    },
+    "team_overview_page": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/team/overview",
+        "6 KPI cards: Total Revenue, Deals Closed, Active Leads, Conversion Rate, Avg Rating, Overdue Follow-Ups",
+        "9-column performance table: Rep, Leads, Quotes, Deals Won, Revenue, Conv %, Rating, Overdue, Status",
+        "Status badges: Top Performer, Strong, Improving, Needs Attention",
+        "Real data from /api/admin/team-performance/summary endpoint"
+      ]
+    },
+    "team_leaderboard_page": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/team/leaderboard",
+        "Top 3 podium cards with rank badges (1, 2, 3)",
+        "Full ranking table with Score column",
+        "Weighted scoring formula working (deals 30%, commission 30%, rating 25%, revenue 15%)"
+      ]
+    },
+    "team_alerts_page": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/team/alerts",
+        "Alert table with columns: Sev, Type, Message, Owner/Rep, Date",
+        "Severity icons (critical=red, warning=amber)",
+        "Filter tabs: All, Overdue Follow-Up",
+        "28 critical alerts displayed"
+      ]
+    },
+    "promotions_wiring_fix": {
+      "status": "PASS",
+      "details": [
+        "platform_promotion_engine.py queries canonical 'promotions' collection",
+        "All products show has_promotion=false (all promotions inactive)",
+        "Promotions Manager shows 2 promotions, 0 active"
+      ]
+    },
+    "affiliate_form_cleanup": {
+      "status": "PASS",
+      "details": [
+        "Creation form shows identity fields only: Name, Email, Code, Notes, Active",
+        "NO Commission Type/Value selects in form",
+        "Commission Policy shown as read-only from Settings (10% per closed deal)",
+        "Reference to Settings Hub for changing defaults"
+      ]
+    },
+    "crm_width_containment": {
+      "status": "PASS",
+      "details": [
+        "CRM page contained to max-w-7xl",
+        "Smaller heading text (text-xl)",
+        "Not stretching edge-to-edge"
+      ]
+    },
+    "content_studio_hierarchy": {
+      "status": "PASS",
+      "details": [
+        "4 templates: Product Focus, Promo Focus, Service Focus, Minimal Brand",
+        "4 themes: Light, Dark, Promo, Minimal",
+        "2 formats: Square, Vertical",
+        "Minimal layout shows larger logo and image area",
+        "WYSIWYG preview with Download, Save Draft, Publish buttons"
+      ]
+    },
+    "team_performance_api": {
+      "status": "PASS",
+      "details": [
+        "/api/admin/team-performance/summary returns kpis, reps, alerts",
+        "KPIs: total_revenue, deals_closed, active_leads, conversion_rate, avg_rating, overdue_followups",
+        "Reps: ranked by weighted score with labels",
+        "Alerts: sorted by severity (critical first)"
+      ]
+    }
+  }
+}

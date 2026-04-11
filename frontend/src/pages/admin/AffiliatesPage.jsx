@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Users, Plus, Trash2, Loader2, RefreshCw, Link as LinkIcon,
-  Mail, Percent, DollarSign, Copy, Search,
+  Copy, Search,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -9,7 +9,6 @@ import { Label } from "../../components/ui/label";
 import { Switch } from "../../components/ui/switch";
 import { Textarea } from "../../components/ui/textarea";
 import { Badge } from "../../components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { toast } from "sonner";
 import { affiliateApi } from "../../lib/affiliateApi";
 import { useConfirmModal } from "../../contexts/ConfirmModalContext";
@@ -198,21 +197,13 @@ export default function AffiliatesPage() {
             <Input value={form.affiliate_code} onChange={(e) => update("affiliate_code", e.target.value.toUpperCase())} placeholder="e.g., PARTNER10" className="mt-1 font-mono" data-testid="affiliate-code-input" />
             <p className="text-[10px] text-slate-400 mt-1">Used in promo codes and tracking links</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-xs">Commission Type</Label>
-              <Select value={form.commission_type} onValueChange={(v) => update("commission_type", v)}>
-                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="percentage">Percentage</SelectItem>
-                  <SelectItem value="fixed">Fixed Amount</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Commission defaults from Settings — shown as info, not editable */}
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Commission Policy (from Settings)</div>
+            <div className="text-sm text-[#20364D] font-medium">
+              {form.commission_type === "percentage" ? `${form.commission_value}%` : `TZS ${form.commission_value}`} per closed deal
             </div>
-            <div>
-              <Label className="text-xs">Commission Value</Label>
-              <Input type="number" value={form.commission_value} onChange={(e) => update("commission_value", Number(e.target.value))} className="mt-1" data-testid="affiliate-commission-input" />
-            </div>
+            <p className="text-[10px] text-slate-400 mt-1">To change defaults, update Affiliate Settings in the Settings Hub</p>
           </div>
           <div>
             <Label className="text-xs">Notes</Label>
