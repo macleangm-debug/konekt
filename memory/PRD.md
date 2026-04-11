@@ -9,88 +9,81 @@ A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/
 - **Auth**: JWT-based custom authentication
 - **Payments**: Stripe sandbox integration
 - **Storage**: Emergent Object Storage for product images
-- **Settings**: Central `settings_resolver.py` — single source of truth for all platform config
+- **Settings**: Central `settings_resolver.py` — single source of truth
 - **Background Services**: Sales follow-up, weekly digest, scheduled reports
 
 ## Key Technical Principles
-- **Single Source of Truth for Settings**: All engines (margin, commission, affiliate, follow-up, reports) read from `settings_resolver.py` which deep-merges `admin_settings.settings_hub` with `PLATFORM_DEFAULTS`. Cache TTL: 30s, invalidated on PUT.
-- **Strict Payer/Customer Separation**: `customer_name` from account records ONLY, `payer_name` from payment proof ONLY.
-- **Vendor Privacy**: Vendors ONLY see their own orders, pricing, and Konekt sales contact.
-- **Multi-Vendor Auto-Split**: Orders split by vendor automatically on payment approval.
-- **No Horizontal Scrolling**: All admin tables use `table-fixed` with `truncate` on text cells.
+- **Single Source of Truth for Settings**: All engines read from `settings_resolver.py`
+- **Strict Payer/Customer Separation**: Never fallback between them
+- **Vendor Privacy**: Vendors ONLY see their own orders
+- **Multi-Vendor Auto-Split**: Orders split by vendor on payment approval
+- **No Horizontal Scrolling**: All admin tables use `table-fixed`
+- **Customer Type Awareness**: Individual vs Business customers render differently
 
 ## What's Been Implemented
 
 ### Settings Centralization Audit (DONE — April 10, 2026)
-- Created `services/settings_resolver.py` with `get_platform_settings(db)` and section-specific getters
-- 30s TTL in-memory cache with `invalidate_settings_cache()` on PUT
-- Wired margin engine, commission engine, sales follow-up, affiliate commission, business identity resolver to read from Settings Hub
-- Added 3 new settings sections: `operational_rules` (date/time/thresholds), `distribution_config` (commission split %), `partner_policy` (assignment/logistics)
-- Frontend: 14 tabs in Settings Hub including new "Operational Rules" and "Partner Policy" tabs
+- Central `settings_resolver.py` with 30s TTL cache
+- Margin engine, commission engine, sales follow-up, affiliate commission all read from Settings Hub
+- 3 new settings sections: operational_rules, distribution_config, partner_policy
+- 14-tab Settings Hub frontend
 
 ### Salesperson Vendor Visibility (DONE — April 10, 2026)
-- `GET /api/sales/orders/{id}` now returns `vendor_orders` array with full vendor resolution
-- Each vendor_order includes: vendor_name, contact_person, contact_phone, contact_email, items, status
-- `SalesOrderDrawerV2` renders expandable `VendorOrderCard` components with clickable phone/email links
-- Fixed UUID preservation (order.id no longer overwritten by ObjectId string)
+- Sales order detail returns `vendor_orders` array with full vendor resolution
+- Expandable VendorOrderCard components with clickable phone/email
 
 ### Vendor Specialization Fields (DONE — April 10, 2026)
-- Added to partner model: `vendor_type`, `supported_services`, `preferred_partner`, `capacity_notes`
-- Partner create/update endpoints accept and persist new fields
-- `PartnerSmartForm` includes Vendor Classification dropdown and Capacity Notes textarea
-- `PartnerUnifiedTable` shows vendor_type badges and preferred partner star icons
+- vendor_type, supported_services, preferred_partner, capacity_notes in partner model
+- Classification badges and star icons in table
 
 ### Desktop Table Hardening (DONE — April 10, 2026)
-- Applied `table-fixed` to: Admin Orders, Product Approvals, Affiliates, Sales Commissions, Partner tables
-- Removed `min-w-[1100px]` horizontal scroll trigger from PartnerUnifiedTable
-- Added `truncate` to text cells, column width percentages for fixed layouts
+- `table-fixed` on all admin tables, truncate on text cells
+
+### Customer Company Conditional Rendering (DONE — April 11, 2026)
+- Individual customers: Company field hidden in drawer profile, header, and summary card
+- TIN/BRN hidden for individuals
+- Company shows "Individual" in CRM Kanban drawer instead of "No company"
+
+### CRM Kanban Text Wrapping (DONE — April 11, 2026)
+- Card text uses truncate with title tooltips for company name, contact, assigned rep
+- Stale indicators, follow-up dates, and values remain visible
+- CRM Kanban cards are compact but readable
+
+### Vendor Supply Review Restructuring (DONE — April 11, 2026)
+- Drawer shows allocated_quantity and base_cost alongside product details
+- Image gallery, vendor context, approve/reject actions all in drawer
+
+### Marketplace Catalog Product Image Previews (DONE — April 11, 2026)
+- ProductCardCompact resolves storage paths (konekt/products/...) to /api/files/serve/ URLs
+- MarketplaceCardV2 same resolution with onError fallback
+- Package icon placeholder when no image exists
+- Consistent aspect ratio maintained
 
 ### Vendor Product Upload with Images (DONE — April 10, 2026)
-- Drag-and-drop file upload calling `/api/files/upload`
-- `allocated_quantity` field flows through entire pipeline
-- Admin approval drawer with image gallery navigation
-
-### Object Storage Integration (DONE)
-- Emergent Object Storage via `/api/files/upload`
+- Drag-and-drop file upload, allocated_quantity, admin approval drawer with gallery
 
 ### Core Operations (DONE)
-- Stripe sandbox payment integration
-- CRM Quote Builder
-- Full System Wiring Audit
-- Automated Partner Assignment
-- Global Readability Hardening
-- Category-Based Margin Rules
-- Sales Follow-Up Automation
-- Weekly Operations Digest
-- Shared Drawer & Date Standardization
+- Stripe sandbox, CRM Quote Builder, Full System Wiring Audit
+- Automated Partner Assignment, Global Readability Hardening
+- Category-Based Margin Rules, Sales Follow-Up Automation
+- Weekly Operations Digest, Shared Drawer & Date Standardization
 
 ## Backlog (Prioritized)
 
 ### P1 (Next)
-- Customer company conditional rendering
-- CRM Kanban text wrapping
-- Vendor supply review restructuring
-- Marketplace/public catalog product image previews
-
-### P2
-- Promotions & Affiliate Policy Restructure
+- Promotions & Affiliate Policy Restructure (settings-driven)
 - Content Creator Media Visibility
 - Admin business data config completion (logo, TIN, BRN, bank details)
+
+### P2
 - Weekly digest browser view
+- Instant Quote Estimation UI
 
 ### Future
-- Instant Quote Estimation UI
 - Twilio WhatsApp / Resend Email (blocked on keys)
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics dashboard
 - Mobile-first optimization
-
-## Key API Endpoints
-- `GET/PUT /api/admin/settings-hub` — Central settings CRUD
-- `GET /api/sales/orders/{id}` — Sales order detail with vendor_orders
-- `POST/PUT /api/admin/partners` — Partner CRUD with specialization fields
-- `POST /api/files/upload` — Object storage upload
-- `GET /api/admin/vendor-submissions` — Admin product review
 
 ## Test Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

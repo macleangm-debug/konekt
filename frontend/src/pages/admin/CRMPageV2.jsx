@@ -773,9 +773,9 @@ export default function CRMPageV2() {
                             onClick={() => openDrawer(lead)}
                             data-testid={`kanban-card-${lead.id}`}
                           >
-                            <div className="font-medium text-sm">{lead.company_name || lead.contact_name}</div>
-                            <div className="text-xs text-slate-600 mt-1">{lead.contact_name}</div>
-                            {lead.assigned_to && <div className="text-[11px] text-slate-400 mt-1">{lead.assigned_to}</div>}
+                            <div className="font-medium text-sm truncate" title={lead.company_name || lead.contact_name}>{lead.company_name || lead.contact_name}</div>
+                            <div className="text-xs text-slate-600 mt-1 truncate">{lead.contact_name}</div>
+                            {lead.assigned_to && <div className="text-[11px] text-slate-400 mt-1 truncate" title={lead.assigned_to}>{lead.assigned_to}</div>}
                             {(() => {
                               const thresholds = { new_lead: 3, contacted: 5, qualified: 5, meeting_demo: 5, quote_sent: 3, negotiation: 5 };
                               const threshold = thresholds[lead.stage || lead.status];
