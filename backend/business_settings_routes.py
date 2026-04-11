@@ -43,6 +43,7 @@ DEFAULT_SETTINGS = {
     "brn": "",
     "vrn": "",
     "company_logo_path": "",
+    "stamp_path": "",
 
     # Contact
     "address": "",
@@ -159,4 +160,5 @@ async def get_public_business_info():
         "bank_branch": doc.get("bank_branch") or "",
         "swift_code": doc.get("bank_swift_code") or "",
         "logo_url": doc.get("company_logo_path") or "",
+        "stamp_url": doc.get("stamp_path") or "",
     }
