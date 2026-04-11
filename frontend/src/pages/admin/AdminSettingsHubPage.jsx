@@ -12,6 +12,8 @@ import SettingsPreviewPanel from "../../components/admin/settings/SettingsPrevie
 import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 import ReportScheduleSection from "../../components/admin/settings/ReportScheduleSection";
 
+import { toast } from "sonner";
+
 const TABS = [
   { key: "profile", label: "Business Profile", icon: Building2 },
   { key: "payment", label: "Payment Details", icon: CreditCard },
@@ -29,6 +31,24 @@ const TABS = [
   { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
   { key: "launch", label: "Launch Controls", icon: Rocket },
 ];
+
+const TAB_DESCRIPTIONS = {
+  profile: "Legal identity, contact details, and numbering rules",
+  payment: "Bank accounts and payment method configuration",
+  branding: "Invoice and document branding assets",
+  preview: "Preview how documents look with current settings",
+  pricing_policy: "Margin tiers and distribution rules",
+  commercial: "Core margins, VAT, wallet, and referral limits",
+  operations: "Date formats, timezone, and follow-up thresholds",
+  sales: "Commission rates and assignment rules",
+  affiliate: "Affiliate program configuration and attribution",
+  payout: "Payout cycles, minimums, and approval rules",
+  workflows: "Order workflows and vendor visibility rules",
+  partners: "Partner assignment and logistics policies",
+  notifications: "Notification channels and preferences",
+  report_delivery: "Scheduled report delivery settings",
+  launch: "System mode and go-live controls",
+};
 
 const defaultState = {
   commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, protected_company_margin_percent: 8, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18, referral_pct: 10, max_wallet_usage_pct: 30, referral_min_order_amount: 0, referral_max_reward_per_order: 0, welcome_bonus_enabled: false, welcome_bonus_type: "fixed", welcome_bonus_value: 5000, welcome_bonus_max_cap: 10000, welcome_bonus_first_purchase_only: true, welcome_bonus_trigger_event: "payment_verified", welcome_bonus_stack_with_referral: false, welcome_bonus_stack_with_wallet: true },
@@ -80,26 +100,43 @@ export default function AdminSettingsHubPage() {
     setSaving(true);
     try {
       await api.put("/api/admin/settings-hub", state);
-      alert("Settings saved successfully.");
-    } catch { alert("Error saving settings."); }
+      toast.success("Settings saved successfully");
+    } catch { toast.error("Error saving settings"); }
     setSaving(false);
   };
 
   return (
-    <div className="space-y-0" data-testid="settings-hub-page">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 pb-5">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#20364D]">Business Settings</h1>
-          <p className="mt-1 text-sm text-slate-500">Manage all company, branding, and go-live defaults.</p>
+    <div className="flex min-h-[calc(100vh-80px)]" data-testid="settings-hub-page">
+      {/* ─── Sidebar ─── */}
+      <aside className="w-56 shrink-0 border-r border-slate-200 bg-white py-5 pr-2 overflow-y-auto hidden lg:block">
+        <div className="px-4 mb-4">
+          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</h2>
         </div>
-        <button onClick={save} disabled={saving} data-testid="save-all-settings" className="rounded-xl bg-[#20364D] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors">
-          {saving ? "Saving..." : "Save All Settings"}
-        </button>
-      </div>
+        <nav className="space-y-0.5 px-2" data-testid="settings-sidebar">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                data-testid={`settings-tab-${t.key}`}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all text-left ${
+                  active
+                    ? "bg-[#20364D] text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {t.label}
+              </button>
+            );
+          })}
+        </nav>
+      </aside>
 
-      {/* Tab Bar */}
-      <div className="flex gap-1 overflow-x-auto border-b border-slate-200 pb-px mb-6" data-testid="settings-tabs">
+      {/* ─── Mobile Tab Bar (shown only on small screens) ─── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-2 py-1.5 overflow-x-auto flex gap-1">
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.key;
@@ -107,42 +144,59 @@ export default function AdminSettingsHubPage() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              data-testid={`settings-tab-${t.key}`}
-              className={`flex items-center gap-1.5 whitespace-nowrap rounded-t-lg px-4 py-2.5 text-xs font-semibold transition-all ${
-                active
-                  ? "border-b-2 border-[#20364D] text-[#20364D] bg-slate-50/70"
-                  : "text-slate-400 hover:text-slate-600 hover:bg-slate-50/50"
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded text-[9px] font-semibold shrink-0 transition-colors ${
+                active ? "text-[#20364D] bg-slate-100" : "text-slate-400"
               }`}
             >
               <Icon className="h-3.5 w-3.5" />
-              {t.label}
+              {t.label.split(" ")[0]}
             </button>
           );
         })}
       </div>
 
-      {/* Tab Content */}
-      <div className="space-y-6">
-        {tab === "profile" && <ProfileTab state={state} setState={setState} />}
-        {tab === "payment" && <PaymentTab state={state} setState={setState} />}
-        {tab === "branding" && <BrandingTab />}
-        {tab === "preview" && (
-          <div className="max-w-xl mx-auto">
-            <SettingsPreviewPanel state={state} />
+      {/* ─── Content Panel ─── */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-[#20364D]">
+                {TABS.find((t) => t.key === tab)?.label || "Settings"}
+              </h1>
+              <p className="text-sm text-slate-400 mt-0.5">
+                {TAB_DESCRIPTIONS[tab] || "Configure system settings"}
+              </p>
+            </div>
+            <button onClick={save} disabled={saving} data-testid="save-all-settings" className="rounded-xl bg-[#20364D] text-white px-5 py-2.5 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors">
+              {saving ? "Saving..." : "Save Settings"}
+            </button>
           </div>
-        )}
-        {tab === "pricing_policy" && <PricingPolicyTab />}
-        {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
-        {tab === "operations" && <OperationsTab state={state} setState={setState} />}
-        {tab === "sales" && <SalesTab state={state} setState={setState} />}
-        {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}
-        {tab === "payout" && <PayoutTab state={state} setState={setState} />}
-        {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
-        {tab === "partners" && <PartnersTab state={state} setState={setState} />}
-        {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
-        {tab === "report_delivery" && <ReportScheduleSection />}
-        {tab === "launch" && <LaunchTab state={state} setState={setState} />}
-      </div>
+
+          {/* Active Section */}
+          <div className="space-y-6">
+            {tab === "profile" && <ProfileTab state={state} setState={setState} />}
+            {tab === "payment" && <PaymentTab state={state} setState={setState} />}
+            {tab === "branding" && <BrandingTab />}
+            {tab === "preview" && (
+              <div className="max-w-xl mx-auto">
+                <SettingsPreviewPanel state={state} />
+              </div>
+            )}
+            {tab === "pricing_policy" && <PricingPolicyTab />}
+            {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
+            {tab === "operations" && <OperationsTab state={state} setState={setState} />}
+            {tab === "sales" && <SalesTab state={state} setState={setState} />}
+            {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}
+            {tab === "payout" && <PayoutTab state={state} setState={setState} />}
+            {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
+            {tab === "partners" && <PartnersTab state={state} setState={setState} />}
+            {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
+            {tab === "report_delivery" && <ReportScheduleSection />}
+            {tab === "launch" && <LaunchTab state={state} setState={setState} />}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
