@@ -1,0 +1,97 @@
+{
+  "summary": "Canonical UI Consolidation Pass - All features tested and working. Content Studio WYSIWYG with dynamic branding, route redirects, Affiliates/Payouts data tables, and drawer migrations verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_canonical_ui_consolidation_v269.py",
+    "/app/test_reports/pytest/pytest_results_v269.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_canonical_ui_consolidation_v269.py"
+  ],
+  "success_rate": {
+    "backend": "90% (9/10 passed, 1 skipped)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Canonical UI Consolidation features verified: Content Studio with 4 templates/4 themes/2 formats, dynamic branding from Settings Hub, route redirects working, Affiliates and Affiliate Payouts converted to data tables, CRM lead detail drawer working. Admin auth uses localStorage key 'konekt_admin_token'.",
+  "features_tested": {
+    "content_studio": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/content-studio with 4 templates (Product Focus, Promo Focus, Service Focus, Minimal Brand)",
+        "4 themes available (Light, Dark, Promo, Minimal)",
+        "2 formats available (Square, Vertical)",
+        "Creative preview drawer opens with TriadSVG logo and branding from settings",
+        "Download, Save Draft, and Publish buttons visible and clickable",
+        "Ready-to-use captions section with dynamic branding data"
+      ]
+    },
+    "route_redirects": {
+      "status": "PASS",
+      "details": [
+        "/admin/content-center redirects to /admin/content-studio",
+        "/admin/promotion-engine redirects to /admin/promotions-manager"
+      ]
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "details": [
+        "Growth & Affiliates section shows: Affiliates, Affiliate Payouts, Promotions Manager, Content Studio",
+        "Content Center removed from sidebar",
+        "Promotions Engine removed from sidebar"
+      ]
+    },
+    "affiliates_page": {
+      "status": "PASS",
+      "details": [
+        "Page renders as data table (not cards)",
+        "New Affiliate button opens drawer with create form",
+        "Search functionality available"
+      ]
+    },
+    "affiliate_payouts_page": {
+      "status": "PASS",
+      "details": [
+        "Page renders as data table with columns: AFFILIATE, EMAIL, AMOUNT, STATUS, REQUESTED, ACTIONS",
+        "Filter tabs: All, Pending, Approved, Paid, Rejected",
+        "Detail drawer opens when clicking a row with payout details and action buttons"
+      ]
+    },
+    "promotions_manager": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/promotions-manager",
+        "Data table with promotions",
+        "New Promotion button available"
+      ]
+    },
+    "crm_page": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /admin/crm",
+        "Lead detail drawer opens with full lead information",
+        "Timeline, Create Quote button, and Related Documents visible"
+      ]
+    },
+    "branding_api": {
+      "status": "PASS",
+      "details": [
+        "/api/content-engine/template-data/branding returns dynamic data from settings",
+        "Fields: company_name, trading_name, tagline, logo_url, phone, email"
+      ]
+    }
+  }
+}

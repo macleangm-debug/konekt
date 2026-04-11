@@ -747,9 +747,9 @@ function App() {
           <Route path="service-partner-capabilities" element={<ServicePartnerCapabilitiesPage />} />
           {/* Growth Engine Admin Pages */}
           <Route path="commission-engine" element={<CommissionEngineAdminPage />} />
-          <Route path="promotion-engine" element={<PromotionEngineAdminPage />} />
+          <Route path="promotion-engine" element={<Navigate to="/admin/promotions-manager" replace />} />
           <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
-          <Route path="content-center" element={<AdminContentCenterPage />} />
+          <Route path="content-center" element={<Navigate to="/admin/content-studio" replace />} />
           <Route path="content-studio" element={<AdminContentStudioPage />} />
           {/* Affiliate Performance Governance */}
           <Route path="affiliate-performance-governance" element={<AffiliatePerformanceGovernancePage />} />

@@ -144,13 +144,14 @@ async def get_template_branding(request: Request):
     return {
         "ok": True,
         "branding": {
-            "company_name": settings.get("company_name") or settings.get("trading_name") or "Konekt",
-            "trading_name": settings.get("trading_name") or "Konekt",
-            "tagline": hub.get("business_profile", {}).get("tagline", "Business Procurement Simplified"),
+            "company_name": settings.get("company_name") or settings.get("trading_name") or "",
+            "trading_name": settings.get("trading_name") or "",
+            "tagline": hub.get("business_profile", {}).get("tagline", ""),
             "logo_url": settings.get("company_logo_path") or branding.get("primary_logo_url", ""),
             "phone": settings.get("phone", ""),
             "email": settings.get("email", ""),
             "website": settings.get("website", ""),
+            "address": settings.get("address", ""),
             "primary_color": branding.get("primary_color", "#20364D"),
             "accent_color": branding.get("accent_color", "#D4A843"),
         }

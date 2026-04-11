@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import { Package, Layers, Tag, FolderTree, Clock, CheckCircle2, XCircle, Plus, Eye, Search, ChevronRight } from "lucide-react";
 
 const API = process.env.REACT_APP_BACKEND_URL;
@@ -360,19 +360,16 @@ export default function AdminProductsServicesPage() {
       </div>
 
       {/* Submission Review Drawer */}
-      <Sheet open={drawerOpen} onOpenChange={(open) => { if (!open) setDrawerOpen(false); }}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0" data-testid="submission-review-drawer">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b">
-            <SheetTitle className="text-lg font-bold">
-              {drawerType === "submission" ? "Review Submission" : "Details"}
-            </SheetTitle>
-            <SheetDescription className="text-sm text-slate-500">
-              {drawerItem?.product_name || ""}
-            </SheetDescription>
-          </SheetHeader>
-
+      <StandardDrawerShell
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title={drawerType === "submission" ? "Review Submission" : "Details"}
+        subtitle={drawerItem?.product_name || ""}
+        width="xl"
+        testId="submission-review-drawer"
+      >
           {drawerItem && drawerType === "submission" && (
-            <div className="p-6 space-y-5">
+            <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3">
                 <InfoCard label="Product Name" value={drawerItem.product_name} />
                 <InfoCard label="Base Cost" value={`${drawerItem.currency_code} ${Number(drawerItem.base_cost).toLocaleString()}`} />
@@ -456,8 +453,7 @@ export default function AdminProductsServicesPage() {
               )}
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+      </StandardDrawerShell>
     </div>
   );
 }

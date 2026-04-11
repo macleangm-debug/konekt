@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Plus, Search, Tag, Percent, DollarSign, Calendar, Users, Layers, Trash2, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, X, Loader2, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
 import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 
 const SCOPE_OPTIONS = [
   { value: "global", label: "All Products" },
@@ -228,14 +228,13 @@ export default function AdminPromotionsPage() {
       </div>
 
       {/* Create/Edit Drawer */}
-      <Sheet open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditPromo(null); } }}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{editPromo ? "Edit Promotion" : "New Promotion"}</SheetTitle>
-            <SheetDescription>
-              {editPromo ? "Update promotion settings" : "Create a new promotional discount code"}
-            </SheetDescription>
-          </SheetHeader>
+      <StandardDrawerShell
+        open={showForm}
+        onClose={() => { setShowForm(false); setEditPromo(null); }}
+        title={editPromo ? "Edit Promotion" : "New Promotion"}
+        subtitle={editPromo ? "Update promotion settings" : "Create a new promotional discount code"}
+        testId="promotion-drawer"
+      >
           <PromotionForm
             initial={editPromo}
             categories={categories}
@@ -243,8 +242,7 @@ export default function AdminPromotionsPage() {
             onSaved={handleSaved}
             onCancel={() => { setShowForm(false); setEditPromo(null); }}
           />
-        </SheetContent>
-      </Sheet>
+      </StandardDrawerShell>
     </div>
   );
 }

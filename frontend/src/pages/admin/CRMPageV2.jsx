@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Users, Plus, Search, Phone, Mail, Building2, DollarSign, ArrowRight, X, Eye, Calendar, UserCheck, Tag, Clock, ExternalLink, TrendingUp, BarChart3, FileText } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
 import api from "@/lib/api";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 import QuoteBuilderDrawer from "@/components/crm/QuoteBuilderDrawer";
@@ -822,21 +822,18 @@ export default function CRMPageV2() {
       </div>
 
       {/* Lead Detail Drawer */}
-      <Sheet open={drawerOpen} onOpenChange={(open) => { if (!open) closeDrawer(); }}>
-        <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto p-0" data-testid="lead-detail-drawer">
-          <SheetHeader className="px-6 pt-6 pb-4 border-b bg-white sticky top-0 z-10">
-            <SheetTitle className="text-lg font-bold">
-              {drawerLead?.contact_name || drawerLead?.name || "Lead Detail"}
-            </SheetTitle>
-            <SheetDescription className="text-sm text-slate-500">
-              {drawerLead?.company_name || "\u2014"} &bull; {drawerLead?.email || "\u2014"}
-            </SheetDescription>
-          </SheetHeader>
-
+      <StandardDrawerShell
+        open={drawerOpen}
+        onClose={closeDrawer}
+        title={drawerLead?.contact_name || drawerLead?.name || "Lead Detail"}
+        subtitle={[drawerLead?.company_name, drawerLead?.email].filter(Boolean).join(" \u2022 ") || "\u2014"}
+        width="xl"
+        testId="lead-detail-drawer"
+      >
           {drawerLoading ? (
-            <div className="p-6 text-center text-slate-400">Loading lead details...</div>
+            <div className="text-center text-slate-400">Loading lead details...</div>
           ) : drawerLead ? (
-            <div className="p-6 space-y-6">
+            <div className="space-y-6">
               {/* Lead Info Summary */}
               <div className="grid grid-cols-2 gap-3" data-testid="lead-info-grid">
                 <InfoCard label="Stage" value={drawerLead.stage || drawerLead.status || "\u2014"} />
@@ -999,8 +996,7 @@ export default function CRMPageV2() {
               </div>
             </div>
           ) : null}
-        </SheetContent>
-      </Sheet>
+      </StandardDrawerShell>
       {showQuoteBuilder && drawerLead && (
         <QuoteBuilderDrawer
           lead={drawerLead}

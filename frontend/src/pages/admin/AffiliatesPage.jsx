@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { 
+import React, { useEffect, useState, useCallback } from "react";
+import {
   Users, Plus, Trash2, Loader2, RefreshCw, Link as LinkIcon,
-  Mail, Percent, DollarSign, CheckCircle, XCircle, Copy
+  Mail, Percent, DollarSign, Copy, Search,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -14,309 +13,217 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { toast } from "sonner";
 import { affiliateApi } from "../../lib/affiliateApi";
 import { useConfirmModal } from "../../contexts/ConfirmModalContext";
+import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const initialForm = {
-  name: "",
-  email: "",
-  affiliate_code: "",
-  affiliate_link: "",
-  is_active: true,
-  commission_type: "percentage",
-  commission_value: 10,
-  notes: "",
+  name: "", email: "", affiliate_code: "", affiliate_link: "",
+  is_active: true, commission_type: "percentage", commission_value: 10, notes: "",
 };
 
 export default function AffiliatesPage() {
   const [affiliates, setAffiliates] = useState([]);
   const { confirmAction } = useConfirmModal();
-  const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const res = await affiliateApi.getAffiliates();
       setAffiliates(res.data?.affiliates || []);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load affiliates");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
+    } catch { toast.error("Failed to load affiliates"); }
+    setLoading(false);
   }, []);
 
-  const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  useEffect(() => { load(); }, [load]);
 
-  const resetForm = () => setForm(initialForm);
+  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const save = async (e) => {
     e.preventDefault();
-    
     if (!form.name || !form.email || !form.affiliate_code) {
       toast.error("Name, email, and affiliate code are required");
       return;
     }
-
     setSaving(true);
     try {
       await affiliateApi.createAffiliate(form);
       toast.success("Affiliate created");
-      resetForm();
+      setForm(initialForm);
+      setDrawerOpen(false);
       load();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.detail || "Failed to create affiliate");
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to create affiliate");
     }
+    setSaving(false);
   };
 
-  const deleteAffiliate = async (affiliateId) => {
+  const deleteAffiliate = (id) => {
     confirmAction({
       title: "Delete Affiliate?",
       message: "This affiliate will be permanently deleted.",
       confirmLabel: "Delete",
       tone: "danger",
       onConfirm: async () => {
-        try {
-          await affiliateApi.deleteAffiliate(affiliateId);
-          toast.success("Affiliate deleted");
-          load();
-        } catch (error) {
-          console.error(error);
-          toast.error("Failed to delete affiliate");
-        }
+        try { await affiliateApi.deleteAffiliate(id); toast.success("Deleted"); load(); }
+        catch { toast.error("Failed to delete"); }
       },
     });
   };
 
-  const copyLink = async (affiliate) => {
-    const link = `${window.location.origin}/a/${affiliate.affiliate_code}`;
-    try {
-      await navigator.clipboard.writeText(link);
-      toast.success("Affiliate link copied");
-    } catch {
-      toast.error("Failed to copy link");
-    }
+  const copyLink = async (aff) => {
+    const link = `${window.location.origin}/a/${aff.affiliate_code}`;
+    try { await navigator.clipboard.writeText(link); toast.success("Affiliate link copied"); }
+    catch { toast.error("Failed to copy"); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const filtered = affiliates.filter((a) =>
+    !search || [a.name, a.email, a.affiliate_code].some((f) => (f || "").toLowerCase().includes(search.toLowerCase()))
+  );
 
   return (
-    <div className="space-y-6" data-testid="affiliates-page">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="affiliates-page">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Affiliates</h1>
-          <p className="text-muted-foreground">Manage affiliate partners and their commission settings</p>
+          <h1 className="text-xl font-bold text-[#20364D]">Affiliates</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Manage affiliate partners and commission settings</p>
         </div>
-        <Button onClick={load} variant="outline" className="rounded-full">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={load} data-testid="refresh-affiliates-btn">
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
+          </Button>
+          <Button size="sm" onClick={() => { setForm(initialForm); setDrawerOpen(true); }} data-testid="add-affiliate-btn">
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> New Affiliate
+          </Button>
+        </div>
       </div>
 
-      <div className="grid xl:grid-cols-[460px_1fr] gap-6">
-        {/* Create Form */}
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          onSubmit={save}
-          className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4 h-fit"
-        >
-          <h2 className="text-lg font-bold text-primary">Create New Affiliate</h2>
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input placeholder="Search affiliates..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" data-testid="search-affiliates" />
+      </div>
 
-          <div>
-            <Label>Name *</Label>
-            <Input
-              value={form.name}
-              onChange={(e) => update("name", e.target.value)}
-              placeholder="Partner name"
-              className="mt-1"
-            />
+      {/* Table */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-xl" data-testid="affiliates-empty">
+          <Users className="w-12 h-12 mx-auto text-slate-200 mb-3" />
+          <p className="text-sm font-semibold text-slate-500">{search ? "No matches" : "No affiliates yet"}</p>
+          {!search && <p className="text-xs text-slate-400 mt-1">Create your first affiliate partner</p>}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="affiliates-table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/60">
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Name</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Email</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Code</th>
+                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Commission</th>
+                  <th className="text-center px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Status</th>
+                  <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((aff) => (
+                  <tr key={aff.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`affiliate-row-${aff.id}`}>
+                    <td className="px-4 py-3 font-medium text-[#20364D]">{aff.name}</td>
+                    <td className="px-4 py-3 text-slate-500">{aff.email}</td>
+                    <td className="px-4 py-3">
+                      <code className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{aff.affiliate_code}</code>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {aff.commission_value}{aff.commission_type === "percentage" ? "%" : " TZS"}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge className={aff.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-100"}>
+                        {aff.is_active ? "Active" : "Inactive"}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => copyLink(aff)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-[#20364D]" title="Copy Link" data-testid={`copy-link-${aff.id}`}>
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => deleteAffiliate(aff.id)} className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600" title="Delete" data-testid={`delete-affiliate-${aff.id}`}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-
-          <div>
-            <Label>Email *</Label>
-            <Input
-              type="email"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              placeholder="partner@email.com"
-              className="mt-1"
-            />
+          <div className="px-4 py-2.5 text-xs text-slate-400 border-t border-slate-100">
+            {filtered.length} affiliate{filtered.length !== 1 ? "s" : ""}
           </div>
+        </div>
+      )}
 
-          <div>
-            <Label>Affiliate Code *</Label>
-            <Input
-              value={form.affiliate_code}
-              onChange={(e) => update("affiliate_code", e.target.value.toUpperCase())}
-              placeholder="e.g., PARTNER10"
-              className="mt-1 font-mono"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This will be used in promo codes and tracking links
-            </p>
+      {/* Create Drawer */}
+      <StandardDrawerShell
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        title="New Affiliate"
+        subtitle="Create affiliate partner"
+        testId="create-affiliate-drawer"
+        footer={
+          <div className="flex items-center gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => setDrawerOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={save} disabled={saving} data-testid="save-affiliate-btn">
+              {saving ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1.5" />}
+              {saving ? "Creating..." : "Create Affiliate"}
+            </Button>
           </div>
-
+        }
+      >
+        <form onSubmit={save} className="space-y-4">
+          <div>
+            <Label className="text-xs">Name *</Label>
+            <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Partner name" className="mt-1" data-testid="affiliate-name-input" />
+          </div>
+          <div>
+            <Label className="text-xs">Email *</Label>
+            <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="partner@email.com" className="mt-1" data-testid="affiliate-email-input" />
+          </div>
+          <div>
+            <Label className="text-xs">Affiliate Code *</Label>
+            <Input value={form.affiliate_code} onChange={(e) => update("affiliate_code", e.target.value.toUpperCase())} placeholder="e.g., PARTNER10" className="mt-1 font-mono" data-testid="affiliate-code-input" />
+            <p className="text-[10px] text-slate-400 mt-1">Used in promo codes and tracking links</p>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Commission Type</Label>
+              <Label className="text-xs">Commission Type</Label>
               <Select value={form.commission_type} onValueChange={(v) => update("commission_type", v)}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Percentage</SelectItem>
                   <SelectItem value="fixed">Fixed Amount</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
-              <Label>Commission Value</Label>
-              <Input
-                type="number"
-                value={form.commission_value}
-                onChange={(e) => update("commission_value", Number(e.target.value))}
-                className="mt-1"
-              />
+              <Label className="text-xs">Commission Value</Label>
+              <Input type="number" value={form.commission_value} onChange={(e) => update("commission_value", Number(e.target.value))} className="mt-1" data-testid="affiliate-commission-input" />
             </div>
           </div>
-
           <div>
-            <Label>Notes</Label>
-            <Textarea
-              value={form.notes}
-              onChange={(e) => update("notes", e.target.value)}
-              placeholder="Internal notes about this affiliate..."
-              className="mt-1 min-h-[80px]"
-            />
+            <Label className="text-xs">Notes</Label>
+            <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Internal notes..." className="mt-1 min-h-[80px]" />
           </div>
-
           <label className="flex items-center gap-3 cursor-pointer">
-            <Switch
-              checked={form.is_active}
-              onCheckedChange={(checked) => update("is_active", checked)}
-            />
+            <Switch checked={form.is_active} onCheckedChange={(c) => update("is_active", c)} />
             <span className="text-sm font-medium">Active</span>
           </label>
-
-          <Button type="submit" className="w-full" disabled={saving}>
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Affiliate
-              </>
-            )}
-          </Button>
-        </motion.form>
-
-        {/* Affiliates List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl border border-slate-100 p-6"
-        >
-          <h2 className="text-lg font-bold text-primary mb-6">
-            Affiliate Partners ({affiliates.length})
-          </h2>
-
-          {affiliates.length === 0 ? (
-            <div className="text-center py-12">
-              <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium">No affiliates yet</h3>
-              <p className="text-muted-foreground">Create your first affiliate partner</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {affiliates.map((affiliate, idx) => (
-                <motion.div
-                  key={affiliate.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border p-4 ${
-                    affiliate.is_active ? 'border-slate-200' : 'border-slate-100 bg-slate-50 opacity-70'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-primary">{affiliate.name}</h3>
-                        <Badge className={affiliate.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}>
-                          {affiliate.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </div>
-                      
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                        <Mail className="w-3.5 h-3.5" />
-                        {affiliate.email}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-4 mt-3">
-                        <div className="flex items-center gap-1 text-sm">
-                          <LinkIcon className="w-4 h-4 text-primary" />
-                          <code className="font-mono bg-slate-100 px-2 py-0.5 rounded">
-                            {affiliate.affiliate_code}
-                          </code>
-                        </div>
-
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          {affiliate.commission_type === 'percentage' ? (
-                            <Percent className="w-4 h-4" />
-                          ) : (
-                            <DollarSign className="w-4 h-4" />
-                          )}
-                          {affiliate.commission_value}
-                          {affiliate.commission_type === 'percentage' ? '%' : ' TZS'}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyLink(affiliate)}
-                      >
-                        <Copy className="w-4 h-4 mr-1" />
-                        Copy Link
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deleteAffiliate(affiliate.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </motion.div>
-      </div>
+        </form>
+      </StandardDrawerShell>
     </div>
   );
 }

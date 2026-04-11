@@ -3,7 +3,7 @@ import {
   Columns3, Truck, CheckSquare, Contact, Target,
   Network, Megaphone, Wallet, Percent,
   Route, Inbox, BarChart3, ClipboardList, Package,
-  Settings, Users, TrendingUp, MessageSquare, BadgePercent, PieChart,
+  Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign, Landmark,
   Activity, Star, Gauge, CalendarDays, Bell, Palette,
 } from "lucide-react";
@@ -78,8 +78,6 @@ export const adminNavigation = [
       { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Promotions Manager", href: "/admin/promotions-manager", icon: BadgePercent },
-      { label: "Promotions Engine", href: "/admin/promotion-engine", icon: TrendingUp },
-      { label: "Content Center", href: "/admin/content-center", icon: MessageSquare },
       { label: "Content Studio", href: "/admin/content-studio", icon: Palette },
     ],
   },
