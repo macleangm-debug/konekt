@@ -8,7 +8,7 @@ import {
 import {
   Loader2, Download, Copy, Check, Image as ImageIcon, Tag,
   Square, RectangleVertical, MessageSquare, Send, Smartphone,
-  Palette, RefreshCw, ChevronDown, Sparkles, Eye,
+  Palette, RefreshCw, ChevronDown, Sparkles, Eye, Save, Upload, FileCheck,
 } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
@@ -292,31 +292,72 @@ function ItemCard({ item, theme, format, branding, onSelect }) {
 function CreativePreviewDrawer({ item, theme, format, branding, open, onClose, onThemeChange, onFormatChange }) {
   const canvasRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [copiedKey, setCopiedKey] = useState("");
 
   const captions = generateCaptions(item, branding);
 
+  const renderCanvas = async () => {
+    if (!canvasRef.current) return null;
+    return html2canvas(canvasRef.current, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      width: canvasRef.current.offsetWidth,
+      height: canvasRef.current.offsetHeight,
+    });
+  };
+
   const handleDownload = async () => {
-    if (!canvasRef.current) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(canvasRef.current, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        width: canvasRef.current.offsetWidth,
-        height: canvasRef.current.offsetHeight,
-      });
+      const canvas = await renderCanvas();
+      if (!canvas) throw new Error();
       const link = document.createElement("a");
       link.download = `${item.name.replace(/\s+/g, "_")}-${format.key}-${theme.key}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
       toast.success("Creative downloaded");
-    } catch (err) {
+    } catch {
       toast.error("Download failed — try again");
     }
     setDownloading(false);
+  };
+
+  const handlePublish = async (status) => {
+    setPublishing(true);
+    try {
+      const canvas = await renderCanvas();
+      if (!canvas) throw new Error("Render failed");
+      const imageData = canvas.toDataURL("image/png");
+      const res = await api.post("/api/admin/content-center/publish", {
+        image_data: imageData,
+        item_name: item.name,
+        item_id: item.id,
+        item_type: item.type,
+        format: format.key,
+        theme: theme.key,
+        category: item.category || "",
+        headline: item.name,
+        selling_price: item.selling_price || 0,
+        final_price: item.final_price || 0,
+        discount_amount: item.discount_amount || 0,
+        promo_code: item.promo_code || "",
+        promotion_name: item.promo_name || "",
+        captions: captions,
+        status: status,
+      });
+      if (res.data?.ok) {
+        toast.success(status === "draft" ? "Saved as draft" : "Published to Content Center");
+        onClose();
+      } else {
+        toast.error(res.data?.error || "Failed to publish");
+      }
+    } catch {
+      toast.error("Publish failed — try again");
+    }
+    setPublishing(false);
   };
 
   const handleCopy = (key, text) => {
@@ -393,16 +434,36 @@ function CreativePreviewDrawer({ item, theme, format, branding, open, onClose, o
             </div>
           </div>
 
-          {/* Download Button */}
-          <button
-            onClick={handleDownload}
-            disabled={downloading}
-            className="w-full flex items-center justify-center gap-2 bg-[#20364D] text-white rounded-lg py-3 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors mb-5"
-            data-testid="download-creative-btn"
-          >
-            {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            Download {format.label} ({format.w}x{format.h})
-          </button>
+          {/* Action Buttons */}
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            <button
+              onClick={handleDownload}
+              disabled={downloading || publishing}
+              className="flex items-center justify-center gap-1.5 bg-[#20364D] text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors"
+              data-testid="download-creative-btn"
+            >
+              {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              Download
+            </button>
+            <button
+              onClick={() => handlePublish("draft")}
+              disabled={downloading || publishing}
+              className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white text-slate-700 rounded-lg py-2.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50 transition-colors"
+              data-testid="save-draft-btn"
+            >
+              {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              Save Draft
+            </button>
+            <button
+              onClick={() => handlePublish("active")}
+              disabled={downloading || publishing}
+              className="flex items-center justify-center gap-1.5 bg-emerald-600 text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+              data-testid="save-publish-btn"
+            >
+              {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileCheck className="w-3.5 h-3.5" />}
+              Publish
+            </button>
+          </div>
 
           {/* Captions */}
           {captionEntries.length > 0 && (

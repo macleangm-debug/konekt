@@ -181,6 +181,91 @@ async def archive_content(content_id: str, request: Request):
     return {"ok": True}
 
 
+class PublishCreativeIn(BaseModel):
+    image_data: str  # base64 PNG
+    item_name: str
+    item_id: str
+    item_type: str  # "product" or "service"
+    format: str  # "square" or "vertical"
+    theme: str
+    category: Optional[str] = ""
+    headline: Optional[str] = ""
+    selling_price: Optional[float] = 0
+    final_price: Optional[float] = 0
+    discount_amount: Optional[float] = 0
+    promo_code: Optional[str] = ""
+    promotion_name: Optional[str] = ""
+    captions: Optional[dict] = None
+    status: Optional[str] = "active"  # "draft" or "active"
+
+
+@router.post("/api/admin/content-center/publish")
+async def publish_creative(payload: PublishCreativeIn, request: Request):
+    """Save a rendered branded creative to content center."""
+    import base64
+    import uuid
+    db = request.app.mongodb
+
+    # Decode base64 image
+    try:
+        img_bytes = base64.b64decode(payload.image_data.split(",")[-1])
+    except Exception:
+        return {"ok": False, "error": "Invalid image data"}
+
+    # Upload to storage
+    storage_path = ""
+    try:
+        from services.file_storage import upload_file
+        result = upload_file(img_bytes, f"creative-{content_id}.png", "image/png", folder="content-studio")
+        storage_path = result.get("storage_path", "")
+    except Exception:
+        # Fallback: save locally
+        import os
+        local_dir = "/app/backend/static/content-studio"
+        os.makedirs(local_dir, exist_ok=True)
+        fname = f"{uuid.uuid4().hex[:12]}.png"
+        fpath = os.path.join(local_dir, fname)
+        with open(fpath, "wb") as f:
+            f.write(img_bytes)
+        storage_path = f"content-studio/{fname}"
+
+    # Build the content_center entry
+    content_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+
+    entry = {
+        "id": content_id,
+        "campaign_id": "",
+        "target_id": payload.item_id,
+        "target_type": payload.item_type,
+        "target_name": payload.item_name,
+        "headline": payload.headline or payload.item_name,
+        "category": payload.category or "",
+        "image_url": storage_path,
+        "format": payload.format,
+        "theme": payload.theme,
+        "original_price": payload.selling_price,
+        "final_price": payload.final_price,
+        "discount_amount": payload.discount_amount,
+        "has_promotion": bool(payload.promo_code),
+        "promotion_code": payload.promo_code,
+        "promotion_name": payload.promotion_name,
+        "captions": payload.captions or {},
+        "cta": "Order Now",
+        "status": payload.status,
+        "role": "sales",
+        "source": "content_studio",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    await db.content_center.insert_one(entry)
+    entry.pop("_id", None)
+
+    return {"ok": True, "item": entry, "storage_path": storage_path}
+
+
+
 # ═══ ROLE-SPECIFIC FEEDS ═══
 
 @router.get("/api/staff/content-feed")

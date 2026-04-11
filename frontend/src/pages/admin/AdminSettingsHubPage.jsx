@@ -108,7 +108,7 @@ export default function AdminSettingsHubPage() {
   return (
     <div className="flex min-h-[calc(100vh-80px)]" data-testid="settings-hub-page">
       {/* ─── Sidebar ─── */}
-      <aside className="w-56 shrink-0 border-r border-slate-200 bg-white py-5 pr-2 overflow-y-auto hidden lg:block">
+      <aside className="w-[240px] shrink-0 border-r border-slate-200 bg-white py-5 overflow-y-auto hidden lg:block">
         <div className="px-4 mb-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</h2>
         </div>
@@ -157,7 +157,7 @@ export default function AdminSettingsHubPage() {
 
       {/* ─── Content Panel ─── */}
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+        <div className="max-w-[960px] pl-8 pr-6 py-6 space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>

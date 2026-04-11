@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -72,6 +73,7 @@ const STATUS_TABS = [
 ];
 
 export default function AdminContentCenterPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -169,13 +171,23 @@ export default function AdminContentCenterPage() {
             Ready-to-share campaign content for your team
           </p>
         </div>
-        <button
-          onClick={load}
-          className="p-2 hover:bg-slate-100 rounded-lg transition"
-          data-testid="refresh-content-btn"
-        >
-          <RefreshCw className="w-4 h-4 text-slate-400" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate("/admin/content-studio")}
+            className="flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#1a2d40] transition-colors"
+            data-testid="create-branded-post-btn"
+          >
+            <Sparkles className="w-4 h-4" />
+            Create Branded Post
+          </button>
+          <button
+            onClick={load}
+            className="p-2 hover:bg-slate-100 rounded-lg transition"
+            data-testid="refresh-content-btn"
+          >
+            <RefreshCw className="w-4 h-4 text-slate-400" />
+          </button>
+        </div>
       </div>
 
       {/* ─── Smart Suggestions ─── */}

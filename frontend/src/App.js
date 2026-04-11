@@ -428,6 +428,9 @@ import SuppliersPage from "@/pages/admin/SuppliersPage";
 import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
 import AdminProductsServicesPage from "@/pages/admin/AdminProductsServicesPage";
 import AdminProductApprovalPage from "@/pages/admin/AdminProductApprovalPage";
+import TeamOverviewPage from "@/pages/admin/TeamOverviewPage";
+import TeamLeaderboardPage from "@/pages/admin/TeamLeaderboardPage";
+import TeamAlertsPage from "@/pages/admin/TeamAlertsPage";
 
 // Partnership Placeholder
 import PartnershipComingSoonPage from "@/pages/admin/PartnershipComingSoonPage";
@@ -603,6 +606,9 @@ function App() {
           <Route path="orders" element={<OrdersPage />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="product-approvals" element={<AdminProductApprovalPage />} />
+          <Route path="team/overview" element={<TeamOverviewPage />} />
+          <Route path="team/leaderboard" element={<TeamLeaderboardPage />} />
+          <Route path="team/alerts" element={<TeamAlertsPage />} />
           <Route path="stock" element={<AdminStock />} />
           <Route path="maintenance" element={<AdminMaintenance />} />
           <Route path="offers" element={<AdminOffers />} />

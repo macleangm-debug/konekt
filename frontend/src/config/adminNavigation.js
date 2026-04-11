@@ -77,7 +77,6 @@ export const adminNavigation = [
     children: [
       { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
-      { label: "Margin & Distribution", href: "/admin/distribution-margin", icon: Percent },
       { label: "Promotions Manager", href: "/admin/promotions-manager", icon: BadgePercent },
       { label: "Promotions Engine", href: "/admin/promotion-engine", icon: TrendingUp },
       { label: "Content Center", href: "/admin/content-center", icon: MessageSquare },
