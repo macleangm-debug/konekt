@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import AppLoader from "../../components/branding/AppLoader";
 import ServicePageTemplate from "../../components/services/ServicePageTemplate";
 import PageHeader from "../../components/ui/PageHeader";
+import InstantQuoteEstimator from "@/components/commerce/InstantQuoteEstimator";
 import { Loader2, ArrowLeft } from "lucide-react";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -64,6 +65,7 @@ const FALLBACK_SERVICES = {
 
 export default function AccountServiceDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -169,6 +171,30 @@ export default function AccountServiceDetailPage() {
         isLoggedIn={true}
         accountMode={true}
       />
+
+      {/* Instant Quote Estimator — Price Range for services */}
+      <div className="max-w-md">
+        <InstantQuoteEstimator
+          baseCost={service.base_cost || service.starting_price || 0}
+          productName={service.name}
+          showRange={!service.base_cost && !service.starting_price}
+          minBaseCost={service.min_price || 50000}
+          maxBaseCost={service.max_price || 200000}
+          onRequestQuote={({ quantity, estimatedTotal, promoCode }) => {
+            navigate("/account/assisted-cart", {
+              state: {
+                prefill: {
+                  service_name: service.name,
+                  service_slug: service.slug || service.key,
+                  quantity,
+                  estimated_total: estimatedTotal,
+                  promo_code: promoCode,
+                },
+              },
+            });
+          }}
+        />
+      </div>
     </div>
   );
 }

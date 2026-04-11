@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShoppingCart, Loader2, Package, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
+import InstantQuoteEstimator from "@/components/commerce/InstantQuoteEstimator";
 
 export default function AccountProductDetailPage() {
   const { productId } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [addingToCart, setAddingToCart] = useState(false);
@@ -176,6 +178,27 @@ export default function AccountProductDetailPage() {
               Let Sales Assist Me
             </Link>
           </div>
+
+          {/* Instant Quote Estimator */}
+          <InstantQuoteEstimator
+            baseCost={product.base_cost || product.partner_cost || displayPrice}
+            productName={product.name}
+            categoryId={product.category_id}
+            productId={product.id}
+            onRequestQuote={({ quantity, estimatedTotal, promoCode }) => {
+              navigate("/account/assisted-cart", {
+                state: {
+                  prefill: {
+                    product_id: product.id,
+                    product_name: product.name,
+                    quantity,
+                    estimated_total: estimatedTotal,
+                    promo_code: promoCode,
+                  },
+                },
+              });
+            }}
+          />
         </div>
       </div>
     </div>

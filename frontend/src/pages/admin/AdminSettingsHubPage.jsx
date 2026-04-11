@@ -744,7 +744,164 @@ function PricingPolicyTab() {
           <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Reserve buffer:</strong> Always maintained per tier to protect against edge cases.</span></div>
         </div>
       </SettingsSectionCard>
+
+      {/* Margin Simulator */}
+      <MarginSimulator />
     </>
+  );
+}
+
+function MarginSimulator() {
+  const [inputs, setInputs] = React.useState({
+    order_value: "",
+    items: 1,
+    has_affiliate: false,
+    has_referral: false,
+    has_sales: true,
+    wallet_amount: "",
+    promo_code: "",
+  });
+  const [result, setResult] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+
+  const update = (k, v) => setInputs((p) => ({ ...p, [k]: v }));
+
+  // Live recalculation with debounce
+  const timerRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!inputs.order_value) { setResult(null); return; }
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const baseCost = parseFloat(inputs.order_value) / Math.max(inputs.items, 1);
+        const lineItems = [];
+        for (let i = 0; i < inputs.items; i++) {
+          lineItems.push({ sku: `SIM-${i+1}`, name: `Item ${i+1}`, base_cost: baseCost, quantity: 1 });
+        }
+        const res = await api.post("/api/commission-engine/calculate-order", {
+          order_id: "SIM-PREVIEW",
+          line_items: lineItems,
+          source_type: inputs.has_affiliate ? "affiliate" : "website",
+          affiliate_user_id: inputs.has_affiliate ? "sim-aff" : null,
+          assigned_sales_id: inputs.has_sales ? "sim-sales" : null,
+          referral_user_id: inputs.has_referral ? "sim-ref" : null,
+          wallet_amount: parseFloat(inputs.wallet_amount) || 0,
+        });
+        setResult(res.data);
+      } catch (e) {
+        setResult({ error: e?.response?.data?.detail || "Calculation error" });
+      }
+      setLoading(false);
+    }, 400);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [inputs]);
+
+  const money = (v) => `TZS ${Number(v || 0).toLocaleString()}`;
+  const t = result?.totals;
+
+  return (
+    <SettingsSectionCard
+      title="Margin Simulator"
+      description="Simulate order economics. See full breakdown before making changes. Numbers update live as you type."
+    >
+      <div className="grid md:grid-cols-[1fr_1.4fr] gap-6">
+        {/* Inputs */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Total Order Value (TZS)</label>
+            <input type="number" value={inputs.order_value} onChange={(e) => update("order_value", e.target.value)} placeholder="e.g. 3000000" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-1 focus:ring-[#20364D] focus:border-[#20364D] outline-none" data-testid="sim-order-value" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Number of Items</label>
+            <input type="number" min={1} value={inputs.items} onChange={(e) => update("items", Math.max(1, parseInt(e.target.value) || 1))} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-1 focus:ring-[#20364D] focus:border-[#20364D] outline-none" data-testid="sim-items" />
+          </div>
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Wallet Usage (TZS)</label>
+            <input type="number" value={inputs.wallet_amount} onChange={(e) => update("wallet_amount", e.target.value)} placeholder="0" className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-1 focus:ring-[#20364D] focus:border-[#20364D] outline-none" data-testid="sim-wallet" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold block">Toggles</label>
+            <SimToggle label="Affiliate" checked={inputs.has_affiliate} onChange={(v) => update("has_affiliate", v)} testId="sim-affiliate" />
+            <SimToggle label="Referral" checked={inputs.has_referral} onChange={(v) => update("has_referral", v)} testId="sim-referral" />
+            <SimToggle label="Sales" checked={inputs.has_sales} onChange={(v) => update("has_sales", v)} testId="sim-sales" />
+          </div>
+        </div>
+
+        {/* Results */}
+        <div>
+          {loading && <div className="text-center py-8 text-slate-400 text-sm">Calculating...</div>}
+          {!loading && result?.error && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{typeof result.error === "string" ? result.error : JSON.stringify(result.error)}</div>
+          )}
+          {!loading && t && (
+            <div className="space-y-3" data-testid="sim-results">
+              {/* Main breakdown */}
+              <div className="rounded-xl bg-[#20364D]/5 p-4 space-y-2">
+                <SimRow label="Vendor Base Cost" value={money(t.base_cost)} bold />
+                <SimRow label="Selling Price" value={money(t.selling_price)} bold />
+                <div className="border-t border-slate-200 my-2" />
+                <SimRow label="Total Margin" value={money(t.total_margin)} />
+                <SimRow label="Protected Platform Margin" value={money(t.protected_platform_margin)} accent="emerald" />
+                <SimRow label="Distributable Pool" value={money(t.distributable_pool)} accent="blue" />
+              </div>
+
+              {/* Allocation breakdown */}
+              <div className="rounded-xl border border-slate-200 p-4 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Allocations (from distributable pool)</div>
+                <SimRow label="Affiliate Commission" value={money(t.affiliate_commission)} active={t.affiliate_commission > 0} />
+                <SimRow label="Promotion Budget" value={money(t.promotion_budget)} active={t.promotion_budget > 0} />
+                <SimRow label="Sales Commission" value={money(t.sales_commission)} active={t.sales_commission > 0} />
+                <SimRow label="Referral Reward" value={money(t.referral_reward)} active={t.referral_reward > 0} />
+                <SimRow label="Reserve Buffer" value={money(t.reserve)} active={t.reserve > 0} />
+              </div>
+
+              {/* Platform net */}
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                <SimRow label="Platform Net (Protected + Reserve)" value={money((t.protected_platform_margin || 0) + (t.reserve || 0))} bold accent="emerald" />
+              </div>
+
+              {/* Wallet validation */}
+              {result.wallet_validation && (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-700">
+                  <div><strong>Wallet:</strong> Requested {money(result.wallet_validation.requested_wallet_amount)} → Allowed {money(result.wallet_validation.allowed_wallet_amount)}</div>
+                  {result.wallet_validation.was_reduced && <div className="mt-1 text-amber-600">Capped at distributable pool ({money(result.wallet_validation.cap_by_distributable)})</div>}
+                </div>
+              )}
+
+              {/* Priority rules */}
+              {result.priority_rules && (
+                <div className="text-[10px] text-slate-400 space-y-0.5 pt-1">
+                  {result.priority_rules.referral_overrides_affiliate && <div>Referral active — affiliate allocation disabled</div>}
+                  {result.priority_rules.affiliate_active && <div>Affiliate active</div>}
+                  {result.priority_rules.sales_active && <div>Sales commission active</div>}
+                </div>
+              )}
+            </div>
+          )}
+          {!loading && !result && <div className="text-center py-12 text-slate-400 text-sm">Enter an order value to simulate</div>}
+        </div>
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+function SimRow({ label, value, bold, accent, active }) {
+  const textColor = accent === "emerald" ? "text-emerald-700" : accent === "blue" ? "text-blue-700" : "text-slate-700";
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className={`${active === false ? "text-slate-300" : "text-slate-500"}`}>{label}</span>
+      <span className={`${bold ? "font-bold" : "font-semibold"} ${active === false ? "text-slate-300" : textColor}`}>{value}</span>
+    </div>
+  );
+}
+
+function SimToggle({ label, checked, onChange, testId }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="rounded border-slate-300 text-[#20364D] focus:ring-[#20364D]" data-testid={testId} />
+      <span className="text-xs font-medium text-slate-600">{label}</span>
+    </label>
   );
 }
 

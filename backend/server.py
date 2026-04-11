@@ -3121,6 +3121,9 @@ from routes.promotions_routes import router as promotions_admin_router, customer
 app.include_router(promotions_admin_router)
 app.include_router(customer_promo_router)
 
+from routes.quote_estimation_routes import router as quote_estimation_router
+app.include_router(quote_estimation_router)
+
 
 
 
