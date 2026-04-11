@@ -73,6 +73,13 @@ PLATFORM_DEFAULTS = {
         "allow_service_group_margin_override": True,
         "allow_service_margin_override": True,
         "pricing_below_minimum_margin_requires_admin_override": True,
+        "global_tiers": [
+            {"min": 0, "max": 100000, "type": "percentage", "value": 35, "label": "Micro (0 – 100K)"},
+            {"min": 100001, "max": 500000, "type": "percentage", "value": 30, "label": "Small (100K – 500K)"},
+            {"min": 500001, "max": 2000000, "type": "percentage", "value": 25, "label": "Medium (500K – 2M)"},
+            {"min": 2000001, "max": 10000000, "type": "percentage", "value": 20, "label": "Large (2M – 10M)"},
+            {"min": 10000001, "max": 999999999, "type": "percentage", "value": 15, "label": "Enterprise (10M+)"},
+        ],
     },
     "distribution_config": {
         "protected_company_margin_percent": 8,
@@ -364,3 +371,10 @@ async def get_bank_details(db) -> dict:
         "branch_name": pa.get("branch_name", ""),
         "show_on_invoice": pa.get("show_on_invoice", True),
     }
+
+
+async def get_margin_tiers(db) -> list:
+    """Returns the global margin tiers from Settings Hub."""
+    s = await get_platform_settings(db)
+    mr = s.get("margin_rules", {})
+    return mr.get("global_tiers", PLATFORM_DEFAULTS["margin_rules"]["global_tiers"])

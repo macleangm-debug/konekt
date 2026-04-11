@@ -31,18 +31,27 @@ def resolve_service_sell_price(vendor_cost, service_group_margin_percent):
     return round(vendor_cost * (1 + service_group_margin_percent / 100.0), 2)
 
 
-# Default global tiers
+# Default global tiers — ONLY used if Settings Hub is unavailable.
+# The canonical source is Settings Hub → margin_rules.global_tiers
 DEFAULT_GLOBAL_TIERS = [
-    {"min": 0, "max": 10000, "type": "percentage", "value": 50, "label": "Micro"},
-    {"min": 10001, "max": 50000, "type": "percentage", "value": 35, "label": "Small"},
-    {"min": 50001, "max": 200000, "type": "percentage", "value": 25, "label": "Medium"},
-    {"min": 200001, "max": 1000000, "type": "percentage", "value": 18, "label": "Large"},
-    {"min": 1000001, "max": 999999999, "type": "percentage", "value": 12, "label": "Enterprise"},
+    {"min": 0, "max": 100000, "type": "percentage", "value": 35, "label": "Micro (0 – 100K)"},
+    {"min": 100001, "max": 500000, "type": "percentage", "value": 30, "label": "Small (100K – 500K)"},
+    {"min": 500001, "max": 2000000, "type": "percentage", "value": 25, "label": "Medium (500K – 2M)"},
+    {"min": 2000001, "max": 10000000, "type": "percentage", "value": 20, "label": "Large (2M – 10M)"},
+    {"min": 10000001, "max": 999999999, "type": "percentage", "value": 15, "label": "Enterprise (10M+)"},
 ]
 
 
 async def get_global_tiers(db):
-    """Get global tiers from DB or return defaults."""
+    """Get global tiers from Settings Hub (single source of truth)."""
+    try:
+        from services.settings_resolver import get_margin_tiers
+        tiers = await get_margin_tiers(db)
+        if tiers and len(tiers) > 0:
+            return tiers
+    except Exception:
+        pass
+    # Fallback: check legacy margin_config collection
     doc = await db.margin_config.find_one({"scope": "global"}, {"_id": 0})
     if doc:
         return doc.get("tiers", DEFAULT_GLOBAL_TIERS)
@@ -50,8 +59,24 @@ async def get_global_tiers(db):
 
 
 async def save_global_tiers(db, tiers):
-    """Save global tiers (upsert)."""
+    """Save global tiers to Settings Hub (primary) and legacy collection (compat)."""
     from datetime import datetime, timezone
+    from services.settings_resolver import invalidate_settings_cache
+
+    # Save to Settings Hub
+    hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
+    if hub and hub.get("value"):
+        value = hub["value"]
+        if "margin_rules" not in value:
+            value["margin_rules"] = {}
+        value["margin_rules"]["global_tiers"] = tiers
+        await db.admin_settings.update_one(
+            {"key": "settings_hub"},
+            {"$set": {"value": value}},
+        )
+    invalidate_settings_cache()
+
+    # Also save to legacy collection for backward compat
     await db.margin_config.update_one(
         {"scope": "global"},
         {"$set": {"tiers": tiers, "updated_at": datetime.now(timezone.utc)}},
