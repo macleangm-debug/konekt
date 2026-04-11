@@ -2601,6 +2601,8 @@ app.include_router(staff_dashboard_router)
 app.include_router(supervisor_team_router)
 from routes.team_performance_routes import router as team_performance_router
 app.include_router(team_performance_router)
+from routes.partner_ecosystem_routes import router as partner_ecosystem_router
+app.include_router(partner_ecosystem_router)
 app.include_router(delivery_note_router)
 app.include_router(goods_receiving_router)
 app.include_router(supplier_router)
