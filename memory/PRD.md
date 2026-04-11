@@ -1,86 +1,97 @@
 # Konekt B2B E-Commerce Platform — PRD
 
 ## Original Problem Statement
-Build a full-featured B2B e-commerce platform for Tanzania. Features include multi-role portals (Admin, Customer, Vendor/Partner, Sales), product/service catalog, order management, payment proofs, invoicing, CRM, affiliate/referral system, and pricing engine.
+Build a B2B e-commerce platform (Konekt) with unified login, role-based portals (Admin, Customer, Vendor, Sales), payment processing, product/service catalog, order management, and a growth/conversion engine.
 
-## Architecture
-- **Frontend:** React + Tailwind CSS + Shadcn/UI
-- **Backend:** FastAPI (Python)
-- **Database:** MongoDB
-- **Integrations:** Stripe (Sandbox Payments), Object Storage (Emergent), Resend (pending), Twilio WhatsApp (pending)
+## Core Architecture
+- **Frontend**: React (CRA) + TailwindCSS + Shadcn/UI
+- **Backend**: FastAPI + MongoDB (Motor async driver)
+- **Payments**: Stripe (sandbox mode)
+- **Storage**: Object storage via Emergent integrations
+- **Auth**: JWT-based with role routing
 
-## Core Roles
-- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals, promotions, margin simulation.
-- **Customer:** Browse catalog, orders, invoices, payment uploads, apply promo codes, see instant price estimates.
-- **Vendor/Partner:** Product management, vendor orders, delivery status.
-- **Sales:** CRM leads, assigned orders, delivery overrides.
-
-## Key Technical Concepts
-- **Single Source of Truth (Settings Hub):** All rules come from Settings Hub via `settings_resolver.py`.
-- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits.
-- **Promotion Allocation Rule:** Promotions consume ONLY from the promotion share of distributable pool.
-- **Strict Payer/Customer Separation:** Never fallback between payer_name and customer_name.
-- **Vendor Privacy:** Vendors see only their base_cost, work details, and Konekt Sales Contact.
+## User Personas
+- **Admin**: Full platform management, settings, pricing, content
+- **Customer**: Browse, order, track, pay
+- **Vendor/Partner**: Fulfill orders, update delivery status
+- **Sales/Staff**: Dispatch, logistics, content sharing
 
 ## What's Been Implemented
 
 ### Core Platform (Complete)
-- Multi-role auth (JWT), role-based routing
-- Product/Service catalog, Marketplace
-- Order lifecycle, Invoice generation, Payment proofs
-- CRM with Kanban board, Affiliate & referral system
-- Vendor order management & delivery tracking
-- Stripe sandbox payments, Settings Hub, Object storage
+- Unified `/login` with role-based routing
+- Admin portal with dashboard, orders, payments, catalog management
+- Customer portal with orders, invoices, account management
+- Vendor/Partner portal with filtered order views
+- Sales/Staff portal with dispatch and CRM tools
 
-### Unified Pricing Policy Engine (2026-04-11)
-- Canonical `pricing_policy_tiers` table: 5 Tanzania-default tiers
-- Distribution split per tier (affiliate, promotion, sales, referral, reserve)
-- Referral overrides affiliate, hard validation, wallet protection
+### Commerce Engine (Complete)
+- Product & Service catalog with categories
+- Cart, Checkout, Order creation flow
+- Stripe sandbox payment gateway
+- Bank transfer with payment proof upload
+- Payment queue with admin approval workflow
+- Vendor order auto-generation on payment approval
 
-### Promotions CRUD Admin UI (2026-04-11)
-- Full CRUD: create/list/update/deactivate/activate/delete
-- Backend validation: dates, usage limits, stacking rules, allocation caps
-- 3 scopes: global, category, product
-- 4 stacking rules: no_stack, stack_with_cap, reduce_when_affiliate, referral_priority
-- Customer-facing /api/promotions/apply returns safe output only
-- Admin UI at /admin/promotions-manager
+### Growth & Conversion Layer (Complete)
+- **Unified Pricing Policy Engine** — Merged margin tiers + distribution splits
+- **safeDisplay.js** — System-wide empty cell fallback for all tables
+- **Promotions CRUD** — Admin UI with backend tier-cap validation
+- **Instant Quote Estimation** — Customer-facing price range on product/service pages
+- **Live Margin Simulator** — Admin tool in Settings Hub Pricing Policy tab
+- **Content Creator Campaign System** — Campaign-driven content generation with multi-format assets (square/vertical), multiple caption types (short/social/whatsapp/story), smart suggestions, media-first sharing workspace
 
-### Instant Quote Estimation UI (2026-04-11)
-- Public API: POST /api/quote-estimate, POST /api/quote-estimate/range
-- Customer-safe: shows estimated price/range, promo-aware, tier-aware
-- NEVER exposes margins, distributable pool, or allocation math
-- InstantQuoteEstimator component integrated into product & service detail pages
-- Pre-fills quote requests with estimated values
+### Admin Configuration (Complete)
+- **Business Settings** — Company identity (TIN, BRN, VRN), contact details, banking details, document/tax settings
+- **Logo Upload** — File upload with preview for company branding
+- **Company Stamp/Seal Upload** — File upload for invoices/compliance documents
 
-### Margin Simulator (2026-04-11)
-- Inside Settings Hub → Pricing Policy tab
-- Multi-item simulation with affiliate/referral/sales toggles + wallet
-- Full breakdown: margins, distributable pool, all allocations, platform net
-- Live recalculation (400ms debounce) as admin types
-- Wallet validation shows cap at distributable pool
+### Data Integrity
+- Strict payer/customer name separation
+- Vendor privacy (no customer identity, no margins visible)
+- Real admin name resolution in approval flows
+- MongoDB _id exclusion from all API responses
 
-### safeDisplay Global Utility (2026-04-11)
-- Applied to Orders, Payments, Invoices, Quotes, CRM, Customer Invoices, Vendor Import
+## Key Technical Concepts
+- **Canonical Pricing Policy**: Margin tiers and distribution splits merged. Promotions/affiliates/referrals only consume from distributable_margin pool
+- **Instant Quote**: Shows price range without exposing internal margins
+- **Campaign-Driven Content**: All content linked to promotion/product/service. Multiple formats and caption variants per campaign
+- **safeDisplay**: Every table cell uses context-aware fallback (text, company, phone, etc.)
 
-## Backlog (Prioritized)
+## Key API Endpoints
+- `POST /api/admin/payments/{id}/approve` — Payment approval (LiveCommerceService)
+- `GET /api/admin/orders-ops` — Admin orders
+- `GET /api/vendor/orders` — Vendor filtered orders
+- `GET/POST /api/admin/content-center/campaigns` — Content campaigns
+- `GET /api/content-engine/suggestions` — Smart suggestions
+- `GET/PUT /api/admin/business-settings` — Business config
+- `POST /api/files/upload` — File upload
 
-### P1 (Important)
-- Content Creator Media Visibility & Dynamic Campaign System
-- Admin Business Config (Logo, TIN/BRN, bank details, stamp)
-- Weekly Digest Browser View
-- Continue applying safeDisplay to remaining admin pages
+## DB Collections
+- `orders`, `vendor_orders`, `users`, `payment_proofs`
+- `products`, `services`, `promotions`
+- `content_center` — Campaign content assets
+- `business_settings` — Company configuration
+- `uploaded_files` — File storage references
 
-### P2 (Backlog)
-- Twilio WhatsApp (blocked on API key)
-- Resend email (blocked on API key)
-- One-click reorder / Saved Carts
+## Upcoming Tasks (P1)
+- Weekly Digest Browser View — Turn weekly digest into shareable operational web report
+
+## Future/Backlog (P2)
+- Twilio WhatsApp Integration (blocked on API keys)
+- Resend Email Integration (blocked on API key)
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics Dashboard
 - Mobile-first optimization
+- Sales-facing Content Feed page
 
-## Test Credentials
+## 3rd Party Integrations
+- Stripe (Payments) — Test key from environment
+- Object Storage (Images) — Emergent integrations
+- Resend (Emails) — Requires user API key
+- Twilio (WhatsApp) — Requires user API key
+
+## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
-- Partner: `demo.partner@konekt.com` / `Partner123!`
-
-## Test Reports
-- Iterations 257-263: All 100% pass
+- Customer: `demo.customer@konekt.com` / `Demo123!`
+- Vendor: `demo.partner@konekt.com` / `Partner123!`
