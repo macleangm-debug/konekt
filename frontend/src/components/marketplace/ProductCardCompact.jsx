@@ -2,8 +2,16 @@ import React from "react";
 import { Package, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const API_BASE = process.env.REACT_APP_BACKEND_URL || "";
+
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString()}`;
+}
+
+function resolveImageUrl(src) {
+  if (!src) return "";
+  if (src.startsWith("http")) return src;
+  return `${API_BASE}/api/files/serve/${src}`;
 }
 
 /**
@@ -52,13 +60,15 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
         >
           {(product?.image_url || product?.images?.[0] || product?.hero_image || product?.primary_image) ? (
             <img
-              src={product.image_url || product.images?.[0] || product.hero_image || product.primary_image}
+              src={resolveImageUrl(product.image_url || product.images?.[0] || product.hero_image || product.primary_image)}
               alt={product?.name || "Product"}
               className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
+              onError={(e) => { e.target.style.display = "none"; e.target.nextSibling && (e.target.nextSibling.style.display = "flex"); }}
             />
-          ) : (
+          ) : null}
+          <div className={`w-full h-full flex items-center justify-center ${(product?.image_url || product?.images?.[0] || product?.hero_image || product?.primary_image) ? "hidden" : ""}`}>
             <Package className="w-10 h-10 text-gray-300" />
-          )}
+          </div>
         </button>
         {promo && (
           <span

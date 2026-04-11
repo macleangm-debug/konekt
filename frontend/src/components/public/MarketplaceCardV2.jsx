@@ -3,25 +3,34 @@ import { Link } from "react-router-dom";
 import BrandBadge from "../ui/BrandBadge";
 import { Package } from "lucide-react";
 
+const API_BASE = process.env.REACT_APP_BACKEND_URL || "";
+
+function resolveImageUrl(src) {
+  if (!src) return "";
+  if (src.startsWith("http")) return src;
+  return `${API_BASE}/api/files/serve/${src}`;
+}
+
 export default function MarketplaceCardV2({ item }) {
+  const imgSrc = item.image_url || item.images?.[0] || item.hero_image || item.primary_image;
   return (
     <Link
       to={`/marketplace/${item.slug}`}
       className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
       data-testid={`marketplace-card-${item.id}`}
     >
-      <div className="h-44 bg-[#f8fafc] overflow-hidden">
-        {item.images?.[0] || item.hero_image ? (
+      <div className="h-44 bg-[#f8fafc] overflow-hidden flex items-center justify-center">
+        {imgSrc ? (
           <img
-            src={item.images?.[0] || item.hero_image}
+            src={resolveImageUrl(imgSrc)}
             alt={item.name || "Marketplace listing"}
             className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
+            onError={(e) => { e.target.style.display = "none"; e.target.nextSibling && (e.target.nextSibling.style.display = "flex"); }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300">
-            <Package className="w-10 h-10" />
-          </div>
-        )}
+        ) : null}
+        <div className={`w-full h-full flex items-center justify-center text-gray-300 ${imgSrc ? "hidden" : ""}`}>
+          <Package className="w-10 h-10" />
+        </div>
       </div>
 
       <div className="p-4">

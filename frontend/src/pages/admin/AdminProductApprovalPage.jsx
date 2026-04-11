@@ -266,6 +266,10 @@ export default function AdminProductApprovalPage() {
                 <div><p className="text-xs text-slate-500 font-semibold mb-0.5">Vendor</p><p className="text-sm text-slate-800 font-medium">{selected.vendor_name || "—"}</p></div>
                 <div><p className="text-xs text-slate-500 font-semibold mb-0.5">Category</p><p className="text-sm text-slate-800 font-medium">{selected.group_name || selected.category_name || "—"}</p></div>
                 <div><p className="text-xs text-slate-500 font-semibold mb-0.5">Status</p><span className={`inline-flex text-xs px-2.5 py-1 rounded-full font-semibold ${cfg.color}`}>{cfg.label}</span></div>
+                {selected.allocated_quantity > 0 && (
+                  <div><p className="text-xs text-slate-500 font-semibold mb-0.5">Allocated Qty</p><p className="text-sm text-slate-800 font-bold">{selected.allocated_quantity}</p></div>
+                )}
+                <div><p className="text-xs text-slate-500 font-semibold mb-0.5">Base Cost</p><p className="text-sm text-slate-800 font-bold">{money(selected.base_cost)}</p></div>
               </div>
 
               {/* Section 2: Images */}

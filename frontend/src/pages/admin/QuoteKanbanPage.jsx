@@ -96,34 +96,42 @@ function QuoteCard({ quote, onOpen }) {
       className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition cursor-grab active:cursor-grabbing"
       data-testid={`quote-card-${quote.id}`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-semibold text-sm">{quote.quote_number}</div>
-          <div className="text-sm text-slate-600 mt-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-sm truncate">{quote.quote_number}</div>
+          <div className="text-sm text-slate-600 mt-1 break-words line-clamp-2">
             {quote.customer_name || "Unknown customer"}
           </div>
-          <div className="text-xs text-slate-500 mt-1">
-            {quote.customer_company || "No company"}
-          </div>
+          {quote.customer_company && (
+            <div className="text-xs text-slate-400 mt-0.5 truncate">
+              {quote.customer_company}
+            </div>
+          )}
         </div>
-        <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${statusBadgeClass(quote.status)}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0 ${statusBadgeClass(quote.status)}`}>
           {quote.status}
         </span>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+      <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div>
-          <div className="text-slate-500">Total</div>
-          <div className="font-semibold">{formatMoney(quote.total, quote.currency)}</div>
+          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Total</div>
+          <div className="font-semibold text-[#20364D] truncate">{formatMoney(quote.total, quote.currency)}</div>
         </div>
         <div>
-          <div className="text-slate-500">Valid until</div>
-          <div className="font-medium">{formatDate(quote.valid_until)}</div>
+          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Valid until</div>
+          <div className="font-medium text-slate-600">{formatDate(quote.valid_until)}</div>
         </div>
       </div>
 
-      <div className="mt-4 text-xs text-slate-500">
-        Created: {formatDate(quote.created_at)}
+      {/* Assigned rep / follow-up indicator */}
+      <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
+        <span>Created: {formatDate(quote.created_at)}</span>
+        {quote.assigned_sales_name && (
+          <span className="truncate max-w-[50%] text-right" title={quote.assigned_sales_name}>
+            {quote.assigned_sales_name}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -187,8 +195,9 @@ function QuoteDetailsDrawer({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-bold">{quote.quote_number}</h2>
-              <p className="text-slate-600 mt-1">
-                {quote.customer_name} - {quote.customer_company || "No company"}
+              <p className="text-slate-600 mt-1 break-words">
+                {quote.customer_name}
+                {quote.customer_company && <span className="text-slate-400"> | {quote.customer_company}</span>}
               </p>
             </div>
             <button
@@ -215,7 +224,7 @@ function QuoteDetailsDrawer({
               </div>
               <div>
                 <div className="text-slate-500">Company</div>
-                <div className="font-medium">{quote.customer_company || "-"}</div>
+                <div className="font-medium break-words">{quote.customer_company || <span className="text-slate-300 italic">Individual</span>}</div>
               </div>
               <div>
                 <div className="text-slate-500">Phone</div>

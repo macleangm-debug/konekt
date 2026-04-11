@@ -82,6 +82,7 @@ function TransactionTable({ items, columns }) {
 function OverviewTab({ c }) {
   const kpis = c.profile_kpis || {};
   const summary = c.summary || {};
+  const isIndividual = (c.type || "").toLowerCase() === "individual" || (!c.company && !c.company_name);
   return (
     <div className="space-y-4">
       {/* Revenue KPIs */}
@@ -107,13 +108,13 @@ function OverviewTab({ c }) {
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Profile</h3>
           <dl className="mt-3 space-y-2 text-sm">
             {[
-              ["Company", c.company],
-              ["Type", c.type],
+              !isIndividual && ["Company", c.company || c.company_name],
+              ["Type", c.type ? (c.type.charAt(0).toUpperCase() + c.type.slice(1)) : "-"],
               ["Email", c.email],
               ["Phone", c.phone],
               ["Joined", fmtDate(c.created_at)],
               ["Points", c.points],
-            ].map(([label, val]) => (
+            ].filter(Boolean).map(([label, val]) => (
               <div key={label} className="flex justify-between gap-3">
                 <dt className="text-slate-400 whitespace-nowrap text-xs">{label}</dt>
                 <dd className="text-right font-medium text-[#20364D] truncate max-w-[180px] text-xs">{val || "-"}</dd>
@@ -189,7 +190,9 @@ export default function CustomerDrawer360({ customer }) {
             <h2 className="mt-1 text-2xl font-extrabold text-[#20364D]">{customer.name}</h2>
             <p className="mt-0.5 text-sm text-slate-500">
               {customer.email}
-              {customer.company && customer.company !== "-" && <span className="ml-2 text-slate-400">| {customer.company}</span>}
+              {customer.company && customer.company !== "-" && (customer.type || "").toLowerCase() !== "individual" && (
+                <span className="ml-2 text-slate-400">| {customer.company}</span>
+              )}
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
