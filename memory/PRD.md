@@ -1,90 +1,81 @@
-# Konekt B2B E-Commerce Platform — Product Requirements
+# Konekt B2B E-Commerce Platform — PRD
 
-## Core Vision
-A B2B e-commerce platform with strict role-based views (Customer, Admin, Vendor/Partner, Sales) featuring quote management, payment processing, service task execution, and full operational data integrity.
+## Original Problem Statement
+Build a full-featured B2B e-commerce platform for Tanzania. Features include multi-role portals (Admin, Customer, Vendor/Partner, Sales), product/service catalog, order management, payment proofs, invoicing, CRM, affiliate/referral system, and pricing engine.
 
 ## Architecture
-- **Frontend**: React + Tailwind CSS + Shadcn/UI
-- **Backend**: FastAPI + MongoDB (Motor async)
-- **Auth**: JWT-based custom authentication
-- **Payments**: Stripe sandbox integration
-- **Storage**: Emergent Object Storage for product images
-- **Settings**: Central `settings_resolver.py` — single source of truth
-- **Background Services**: Sales follow-up, weekly digest, scheduled reports
+- **Frontend:** React + Tailwind CSS + Shadcn/UI
+- **Backend:** FastAPI (Python)
+- **Database:** MongoDB
+- **Integrations:** Stripe (Sandbox Payments), Object Storage (Emergent), Resend (pending), Twilio WhatsApp (pending)
 
-## Key Technical Principles
-- **Single Source of Truth for Settings**: All engines read from `settings_resolver.py`
-- **Strict Payer/Customer Separation**: Never fallback between them
-- **Vendor Privacy**: Vendors ONLY see their own orders
-- **Multi-Vendor Auto-Split**: Orders split by vendor on payment approval
-- **No Horizontal Scrolling**: All admin tables use `table-fixed`
-- **Customer Type Awareness**: Individual vs Business customers render differently
+## Core Roles
+- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals.
+- **Customer:** Browse catalog, orders, invoices, payment uploads.
+- **Vendor/Partner:** Product management, vendor orders, delivery status.
+- **Sales:** CRM leads, assigned orders, delivery overrides.
+
+## Key Technical Concepts
+- **Single Source of Truth (Settings Hub):** All rules (margins, affiliates, follow-ups) come from Settings Hub via `settings_resolver.py`.
+- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits.
+- **Strict Payer/Customer Separation:** `customer_name` from account, `payer_name` from payment proof. Never fallback.
+- **Vendor Privacy:** Vendors see only their base_cost, work details, and Konekt Sales Contact.
 
 ## What's Been Implemented
 
-### Settings Centralization Audit (DONE — April 10, 2026)
-- Central `settings_resolver.py` with 30s TTL cache
-- Margin engine, commission engine, sales follow-up, affiliate commission all read from Settings Hub
-- 3 new settings sections: operational_rules, distribution_config, partner_policy
-- 14-tab Settings Hub frontend
+### Core Platform (Complete)
+- Multi-role auth (JWT), role-based routing, login/logout
+- Product/Service catalog, Marketplace
+- Order lifecycle (create → pay → fulfill)
+- Invoice generation & management
+- Payment proof upload, review, approval/rejection
+- CRM with lead management, Kanban board
+- Affiliate & referral system
+- Vendor order management & delivery tracking
+- Stripe sandbox payments
+- Settings Hub (centralized configuration)
+- Object storage for vendor images
 
-### Salesperson Vendor Visibility (DONE — April 10, 2026)
-- Sales order detail returns `vendor_orders` array with full vendor resolution
-- Expandable VendorOrderCard components with clickable phone/email
+### Unified Pricing Policy Engine (Implemented 2026-04-11)
+- **One canonical table** in Settings Hub: `pricing_policy_tiers`
+- Each tier: min_amount, max_amount, total_margin_pct, protected_platform_margin_pct, distributable_margin_pct
+- Distribution split per tier: affiliate_pct, promotion_pct, sales_pct, referral_pct, reserve_pct (all % of distributable pool)
+- **Referral overrides affiliate** rule enforced
+- **Hard validation** — rejects if split > 100% or allocation > distributable pool
+- **Wallet protection** — capped at distributable pool, never consumes base_cost or protected margin
+- Tanzania market defaults (5 tiers: Small, Lower-Medium, Medium, Large, Enterprise)
+- Settings Hub UI: editable tier table, live preview calculator, policy rules display
+- API: GET/PUT /api/commission-engine/pricing-policy-tiers, POST /api/commission-engine/preview, POST /api/commission-engine/calculate-order, POST /api/commission-engine/validate-wallet
 
-### Vendor Specialization Fields (DONE — April 10, 2026)
-- vendor_type, supported_services, preferred_partner, capacity_notes in partner model
-- Classification badges and star icons in table
-
-### Desktop Table Hardening (DONE — April 10, 2026)
-- `table-fixed` on all admin tables, truncate on text cells
-
-### Customer Company Conditional Rendering (DONE — April 11, 2026)
-- Individual customers: Company field hidden in drawer profile, header, and summary card
-- TIN/BRN hidden for individuals
-- Company shows "Individual" in CRM Kanban drawer instead of "No company"
-
-### CRM Kanban Text Wrapping (DONE — April 11, 2026)
-- Card text uses truncate with title tooltips for company name, contact, assigned rep
-- Stale indicators, follow-up dates, and values remain visible
-- CRM Kanban cards are compact but readable
-
-### Vendor Supply Review Restructuring (DONE — April 11, 2026)
-- Drawer shows allocated_quantity and base_cost alongside product details
-- Image gallery, vendor context, approve/reject actions all in drawer
-
-### Marketplace Catalog Product Image Previews (DONE — April 11, 2026)
-- ProductCardCompact resolves storage paths (konekt/products/...) to /api/files/serve/ URLs
-- MarketplaceCardV2 same resolution with onError fallback
-- Package icon placeholder when no image exists
-- Consistent aspect ratio maintained
-
-### Vendor Product Upload with Images (DONE — April 10, 2026)
-- Drag-and-drop file upload, allocated_quantity, admin approval drawer with gallery
-
-### Core Operations (DONE)
-- Stripe sandbox, CRM Quote Builder, Full System Wiring Audit
-- Automated Partner Assignment, Global Readability Hardening
-- Category-Based Margin Rules, Sales Follow-Up Automation
-- Weekly Operations Digest, Shared Drawer & Date Standardization
+### safeDisplay Global Utility (Implemented 2026-04-11)
+- Created `/app/frontend/src/utils/safeDisplay.js` — context-aware empty cell handler
+- Applied to: OrdersPage, PaymentsQueuePage, InvoicesPage, QuotesPage, CRMPageV2, Customer InvoicesPageV2, VendorBulkImportPage
+- Functions: `safeDisplay(value, type)`, `safeMoney(value)`, `cellClass(value)`
 
 ## Backlog (Prioritized)
 
-### P1 (Next)
-- Promotions & Affiliate Policy Restructure (settings-driven)
-- Content Creator Media Visibility
-- Admin business data config completion (logo, TIN, BRN, bank details)
+### P0 (Critical)
+- Promotions CRUD Admin UI (MUST build ONLY after backend pricing policy is locked — NOW READY)
+- Instant Quote Estimation UI (expose safe pricing to customers)
 
-### P2
-- Weekly digest browser view
-- Instant Quote Estimation UI
+### P1 (Important)
+- Content Creator Media Visibility & Dynamic Campaign System
+- Admin Business Config (Logo, TIN/BRN, bank details, stamp)
+- Weekly Digest Browser View
+- End-to-end Stripe test with real test cards
+- Continue applying safeDisplay to remaining 250+ admin pages
 
-### Future
-- Twilio WhatsApp / Resend Email (blocked on keys)
+### P2 (Backlog)
+- Twilio WhatsApp (blocked on API key)
+- Resend email (blocked on API key)
+- One-click reorder / Saved Carts
 - AI-assisted Auto Quote Suggestions
-- Advanced Analytics dashboard
+- Advanced Analytics Dashboard
 - Mobile-first optimization
 
 ## Test Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Partner: `demo.partner@konekt.com` / `Partner123!`
+
+## Test Reports
+- Iterations 257-261: All 100% pass
