@@ -10,60 +10,64 @@ Build a full-featured B2B e-commerce platform for Tanzania. Features include mul
 - **Integrations:** Stripe (Sandbox Payments), Object Storage (Emergent), Resend (pending), Twilio WhatsApp (pending)
 
 ## Core Roles
-- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals.
-- **Customer:** Browse catalog, orders, invoices, payment uploads.
+- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals, promotions.
+- **Customer:** Browse catalog, orders, invoices, payment uploads, apply promo codes.
 - **Vendor/Partner:** Product management, vendor orders, delivery status.
 - **Sales:** CRM leads, assigned orders, delivery overrides.
 
 ## Key Technical Concepts
 - **Single Source of Truth (Settings Hub):** All rules (margins, affiliates, follow-ups) come from Settings Hub via `settings_resolver.py`.
-- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits.
-- **Strict Payer/Customer Separation:** `customer_name` from account, `payer_name` from payment proof. Never fallback.
+- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits. Source of truth for margins, promotions, affiliate, referral, sales, and wallet rules.
+- **Strict Payer/Customer Separation:** `customer_name` from account, `payer_name` from payment proof.
 - **Vendor Privacy:** Vendors see only their base_cost, work details, and Konekt Sales Contact.
+- **Promotion Allocation Rule:** Promotions consume ONLY from the promotion share of the distributable pool. Never touches vendor base cost or protected platform margin.
 
 ## What's Been Implemented
 
 ### Core Platform (Complete)
-- Multi-role auth (JWT), role-based routing, login/logout
+- Multi-role auth (JWT), role-based routing
 - Product/Service catalog, Marketplace
-- Order lifecycle (create → pay → fulfill)
-- Invoice generation & management
-- Payment proof upload, review, approval/rejection
-- CRM with lead management, Kanban board
+- Order lifecycle, Invoice generation, Payment proofs
+- CRM with Kanban board
 - Affiliate & referral system
 - Vendor order management & delivery tracking
 - Stripe sandbox payments
-- Settings Hub (centralized configuration)
+- Settings Hub (centralized)
 - Object storage for vendor images
 
-### Unified Pricing Policy Engine (Implemented 2026-04-11)
-- **One canonical table** in Settings Hub: `pricing_policy_tiers`
-- Each tier: min_amount, max_amount, total_margin_pct, protected_platform_margin_pct, distributable_margin_pct
-- Distribution split per tier: affiliate_pct, promotion_pct, sales_pct, referral_pct, reserve_pct (all % of distributable pool)
-- **Referral overrides affiliate** rule enforced
-- **Hard validation** — rejects if split > 100% or allocation > distributable pool
-- **Wallet protection** — capped at distributable pool, never consumes base_cost or protected margin
-- Tanzania market defaults (5 tiers: Small, Lower-Medium, Medium, Large, Enterprise)
-- Settings Hub UI: editable tier table, live preview calculator, policy rules display
-- API: GET/PUT /api/commission-engine/pricing-policy-tiers, POST /api/commission-engine/preview, POST /api/commission-engine/calculate-order, POST /api/commission-engine/validate-wallet
+### Unified Pricing Policy Engine (2026-04-11)
+- Canonical `pricing_policy_tiers` table in Settings Hub
+- 5 Tanzania-default tiers (35% → 15% margin scaling)
+- Distribution split per tier: affiliate, promotion, sales, referral, reserve
+- Referral overrides affiliate rule
+- Hard validation (no silent scaling)
+- Wallet protection (capped at distributable pool)
+- Settings Hub UI with editable tiers + live preview calculator
 
-### safeDisplay Global Utility (Implemented 2026-04-11)
-- Created `/app/frontend/src/utils/safeDisplay.js` — context-aware empty cell handler
-- Applied to: OrdersPage, PaymentsQueuePage, InvoicesPage, QuotesPage, CRMPageV2, Customer InvoicesPageV2, VendorBulkImportPage
-- Functions: `safeDisplay(value, type)`, `safeMoney(value)`, `cellClass(value)`
+### Promotions CRUD Admin UI (2026-04-11)
+- Backend: Full CRUD (create/list/update/deactivate/activate/delete)
+- Backend validation: dates, usage limits, stacking rules, allocation caps
+- Scope support: global, category, product
+- Stacking rules: no_stack, stack_with_cap, reduce_when_affiliate, referral_priority
+- Customer-facing /api/promotions/apply returns ONLY safe output (no internal margins)
+- Discount automatically capped at tier's promotion allocation at order time
+- Admin UI at /admin/promotions-manager with table, stats, filters, search, create/edit drawer
+- Sidebar: Under Growth & Affiliates
+
+### safeDisplay Global Utility (2026-04-11)
+- Applied to: Orders, Payments, Invoices, Quotes, CRM, Customer Invoices, Vendor Import
 
 ## Backlog (Prioritized)
 
 ### P0 (Critical)
-- Promotions CRUD Admin UI (MUST build ONLY after backend pricing policy is locked — NOW READY)
 - Instant Quote Estimation UI (expose safe pricing to customers)
+- Margin Simulator (inside Pricing Policy tab — admin decision support)
 
 ### P1 (Important)
 - Content Creator Media Visibility & Dynamic Campaign System
 - Admin Business Config (Logo, TIN/BRN, bank details, stamp)
 - Weekly Digest Browser View
-- End-to-end Stripe test with real test cards
-- Continue applying safeDisplay to remaining 250+ admin pages
+- Continue applying safeDisplay to remaining admin pages
 
 ### P2 (Backlog)
 - Twilio WhatsApp (blocked on API key)
@@ -78,4 +82,4 @@ Build a full-featured B2B e-commerce platform for Tanzania. Features include mul
 - Partner: `demo.partner@konekt.com` / `Partner123!`
 
 ## Test Reports
-- Iterations 257-261: All 100% pass
+- Iterations 257-262: All 100% pass
