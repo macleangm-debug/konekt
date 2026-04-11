@@ -1,0 +1,67 @@
+{
+  "summary": "Bug Fix Pass - Promotion and Affiliate creation bugs verified fixed. All 10 backend tests passed. Frontend UI tests passed for both Promotions Manager and Affiliates page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "AffiliatesPage",
+        "issues": ["Console warning: Each child in a list should have a unique 'key' prop - minor code quality issue"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_promotion_affiliate_bugfix_v272.py",
+    "/app/test_reports/pytest/pytest_results_promotion_affiliate_bugfix_v272.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_promotion_affiliate_bugfix_v272.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - test data cleaned up after tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Bug fixes verified: 1) Promotion creation without discount_type/discount_value works - defaults to policy_driven/0. 2) Affiliate CRUD endpoints (GET/POST/DELETE) all working. 3) Commission auto-fetched from affiliate_settings (12% percentage). Admin auth uses localStorage key 'konekt_admin_token'. Login endpoint is /api/admin/auth/login.",
+  "features_tested": {
+    "promotion_creation_without_discount": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/promotions with {name, code, scope, stacking_rule} succeeds",
+        "discount_type defaults to 'policy_driven'",
+        "discount_value defaults to 0",
+        "Frontend form shows 'Discount is automatically calculated based on pricing policy settings'",
+        "No discount_type or discount_value input fields in form"
+      ]
+    },
+    "affiliate_crud_endpoints": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/affiliates returns list of affiliates",
+        "POST /api/admin/affiliates creates affiliate with auto commission from settings",
+        "DELETE /api/admin/affiliates/{id} deletes affiliate",
+        "Commission auto-fetched: commission_type='percentage', commission_value=12.0"
+      ]
+    },
+    "affiliate_frontend_form": {
+      "status": "PASS",
+      "details": [
+        "Form shows Identity section: Name, Phone, Email, Affiliate Code",
+        "Payout Setup section with Mobile Money / Bank Transfer toggle",
+        "Mobile Money selected: shows Mobile Money Number + Provider fields",
+        "Commission section shows 'Automatically managed by system settings' (read-only)",
+        "No commission_type or commission_value inputs in form",
+        "Success toast appears after creation"
+      ]
+    }
+  }
+}

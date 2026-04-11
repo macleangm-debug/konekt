@@ -36,6 +36,7 @@ def validate_promotion(promo: dict, pricing_tiers: list = None) -> list:
     """
     Validate a promotion dict against business rules.
     Returns list of error strings. Empty list = valid.
+    Discount values are no longer required — calculated at runtime from pricing policy.
     """
     errors = []
 
@@ -46,18 +47,8 @@ def validate_promotion(promo: dict, pricing_tiers: list = None) -> list:
         errors.append("Promotion code is required")
     if promo.get("scope") not in VALID_SCOPES:
         errors.append(f"Scope must be one of: {', '.join(VALID_SCOPES)}")
-    if promo.get("discount_type") not in VALID_DISCOUNT_TYPES:
-        errors.append(f"Discount type must be one of: {', '.join(VALID_DISCOUNT_TYPES)}")
-    if promo.get("stacking_rule") not in VALID_STACKING_RULES:
+    if promo.get("stacking_rule") and promo["stacking_rule"] not in VALID_STACKING_RULES:
         errors.append(f"Stacking rule must be one of: {', '.join(VALID_STACKING_RULES)}")
-
-    # Discount value
-    discount_value = float(promo.get("discount_value") or 0)
-    if discount_value <= 0:
-        errors.append("Discount value must be greater than 0")
-
-    if promo.get("discount_type") == "percentage" and discount_value > 100:
-        errors.append("Percentage discount cannot exceed 100%")
 
     # Date validation
     start_date = promo.get("start_date")
@@ -154,7 +145,7 @@ def calculate_effective_discount(
 
 
 async def create_promotion(db, promo_data: dict, pricing_tiers: list = None) -> dict:
-    """Create a new promotion with validation."""
+    """Create a new promotion with validation. Discount is policy-driven, not manual."""
     errors = validate_promotion(promo_data, pricing_tiers)
     if errors:
         return {"success": False, "errors": errors}
@@ -170,9 +161,9 @@ async def create_promotion(db, promo_data: dict, pricing_tiers: list = None) -> 
         "target_category_name": promo_data.get("target_category_name"),
         "target_product_id": promo_data.get("target_product_id"),
         "target_product_name": promo_data.get("target_product_name"),
-        "discount_type": promo_data["discount_type"],
-        "discount_value": float(promo_data["discount_value"]),
-        "stacking_rule": promo_data["stacking_rule"],
+        "discount_type": promo_data.get("discount_type", "policy_driven"),
+        "discount_value": float(promo_data.get("discount_value", 0)),
+        "stacking_rule": promo_data.get("stacking_rule", "no_stack"),
         "start_date": promo_data.get("start_date"),
         "end_date": promo_data.get("end_date"),
         "max_total_uses": promo_data.get("max_total_uses"),
@@ -192,20 +183,7 @@ async def create_promotion(db, promo_data: dict, pricing_tiers: list = None) -> 
     await db.promotions.insert_one(promo)
     promo.pop("_id", None)
 
-    # Generate warnings if discount may be capped at some tiers
-    warnings = []
-    if pricing_tiers and promo["discount_type"] == "percentage":
-        for tier in pricing_tiers:
-            dist_pct = float(tier.get("distributable_margin_pct", 0))
-            split = tier.get("distribution_split", {})
-            promo_pct_of_dist = float(split.get("promotion_pct", 0))
-            safe_ceiling = dist_pct * (promo_pct_of_dist / 100.0)
-            if promo["discount_value"] > safe_ceiling:
-                warnings.append(
-                    f"Discount will be capped at {safe_ceiling:.2f}% for tier '{tier.get('label', '')}'"
-                )
-
-    return {"success": True, "promotion": promo, "warnings": warnings}
+    return {"success": True, "promotion": promo, "warnings": []}
 
 
 async def update_promotion(db, promo_id: str, updates: dict, pricing_tiers: list = None) -> dict:
