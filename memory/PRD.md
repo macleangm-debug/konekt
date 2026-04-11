@@ -28,20 +28,27 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - Live Margin Simulator in Settings Hub
 
 ### Content & Distribution Layer (Complete)
-- **Content Creator Campaign System** — Media-first sharing workspace at `/admin/content-center` with "Create Branded Post" button linking to Studio
-- **Dynamic Branded Graphics Generator (Content Studio)** — Template engine at `/admin/content-studio` with 4 themes (Light/Dark/Promo/Minimal), 2 formats (Square/Vertical). Uses html2canvas. Auto-generates captions.
-- **Save & Publish to Content Center** — Renders branded creative, uploads to storage, creates content_center entry. Supports Save Draft (status=draft) and Publish (status=active).
-- **Sales Content Hub** — Mobile-first page at `/staff/content-hub` with always-visible Download/Copy Caption buttons. WhatsApp caption as DEFAULT.
+- **Dynamic Branded Graphics Generator (Content Studio)** — Template engine at `/admin/content-studio` with 4 layouts (Product Focus, Promo Focus, Service Focus, Minimal Brand), 4 themes (Light/Dark/Promo/Minimal), 2 formats (Square/Vertical). Uses html2canvas for WYSIWYG export. Auto-generates captions. ALL branding (logo, phone, email, brand name) pulled dynamically from Settings Hub.
+- **Save & Publish to Content Center** — Renders branded creative, uploads to storage, creates content_center entry. Supports Save Draft and Publish.
+- **Sales Content Hub** — Mobile-first page at `/staff/content-hub` with always-visible Download/Copy Caption buttons.
 
 ### Admin Configuration (Complete)
 - **Business Settings** — Company identity, contact, banking, tax with logo + stamp upload
 - **Settings Hub** — Sidebar-based layout (240px sidebar, 960px content). 15 sections. Consistent typography.
-- **Settings Centralization** — Removed duplicate "Margin & Distribution" from Growth section. Settings Hub is single source of truth.
+- **Settings Centralization** — Settings Hub is single source of truth. No scattered settings.
 
 ### Team Performance (Complete)
 - **Team Overview** at `/admin/team/overview` — KPI cards + sales team table
 - **Leaderboard** at `/admin/team/leaderboard` — Ranked sales staff by revenue
-- **Alerts** at `/admin/team/alerts` — Real overdue follow-up alerts from CRM data (31 active alerts)
+- **Alerts** at `/admin/team/alerts` — Real overdue follow-up alerts from CRM data
+
+### Canonical UI Consolidation Pass (Complete — Feb 2026)
+- **Content Creator merged into Content Studio** — Single canonical concept. Old `/admin/content-center` route redirects to `/admin/content-studio`.
+- **Duplicate Promotions Engine removed** — Single canonical Promotions Manager. Old `/admin/promotion-engine` route redirects to `/admin/promotions-manager`.
+- **Affiliates page converted to data table** — Desktop-first table layout with StandardDrawerShell for creation.
+- **Affiliate Payouts page converted to data table** — Filter tabs, row-click detail drawer with action buttons in sticky footer.
+- **Standard Drawer Migration** — AdminPromotionsPage, AdminProductsServicesPage, CRMPageV2 all migrated from Sheet to StandardDrawerShell (fixed header, scrollable body, sticky footer).
+- **Dynamic Branding Rule enforced** — All branding/contact data in Content Studio comes from Settings Hub. No hardcoded values. Logo resolves from uploaded image path, falls back to TriadSVG.
 
 ### Data Integrity
 - Strict payer/customer name separation
@@ -52,17 +59,15 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 ## Key API Endpoints
 - `POST /api/admin/content-center/publish` — Save & Publish branded creative
 - `GET /api/content-engine/template-data/products` — Template-ready product data
-- `GET /api/content-engine/template-data/branding` — Branding data
+- `GET /api/content-engine/template-data/branding` — Dynamic branding from Settings Hub
 - `GET /api/supervisor-team/staff-list` — Staff list for team pages
 - `GET/PUT /api/admin/settings-hub` — Settings Hub
 - `GET/PUT /api/admin/business-settings` — Business config
 
 ## Upcoming Tasks (P1)
-- Global Drawer Standardization — Migrate remaining 6 drawers to StandardDrawerShell
 - Weekly Digest Browser View — Shareable operational web report
 
 ## Backlog (P2)
-- Convert card-based pages to tables (desktop rule)
 - Twilio WhatsApp Integration (blocked on API keys)
 - Resend Email Integration (blocked on API key)
 - Backend-side creative rendering for bulk generation
