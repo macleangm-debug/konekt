@@ -18,62 +18,59 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - Product & Service catalog with categories
 - Cart, Checkout, Order creation flow
 - Stripe sandbox + bank transfer with payment proof upload
-- Payment queue with admin approval, vendor order auto-generation
+- Payment queue with admin approval
 
 ### Growth & Conversion Layer (Complete)
 - Unified Pricing Policy Engine (margin tiers + distribution splits)
-- safeDisplay.js system-wide for empty table cells
-- Promotions CRUD with backend tier-cap validation
-- Instant Quote Estimation on product/service pages
+- Promotions CRUD with canonical wiring (single `promotions` collection for all surfaces)
+- Instant Quote Estimation
 - Live Margin Simulator in Settings Hub
 
 ### Content & Distribution Layer (Complete)
-- **Dynamic Branded Graphics Generator (Content Studio)** — Template engine at `/admin/content-studio` with 4 layouts (Product Focus, Promo Focus, Service Focus, Minimal Brand), 4 themes (Light/Dark/Promo/Minimal), 2 formats (Square/Vertical). Uses html2canvas for WYSIWYG export. Auto-generates captions. ALL branding (logo, phone, email, brand name) pulled dynamically from Settings Hub.
-- **Save & Publish to Content Center** — Renders branded creative, uploads to storage, creates content_center entry. Supports Save Draft and Publish.
-- **Sales Content Hub** — Mobile-first page at `/staff/content-hub` with always-visible Download/Copy Caption buttons.
+- **Content Studio** — 4 layouts, 4 themes, 2 formats. WYSIWYG html2canvas export. ALL branding from Settings Hub.
+- **Save & Publish** pipeline
+- **Sales Content Hub** — Mobile-first share feed
 
 ### Admin Configuration (Complete)
-- **Business Settings** — Company identity, contact, banking, tax with logo + stamp upload
-- **Settings Hub** — Sidebar-based layout (240px sidebar, 960px content). 15 sections. Consistent typography.
-- **Settings Centralization** — Settings Hub is single source of truth. No scattered settings.
+- **Settings Hub** — Sidebar layout, 15 sections, single source of truth
+- **Business Settings** — Company identity, contact, banking, tax
 
-### Team Performance (Complete)
-- **Team Overview** at `/admin/team/overview` — KPI cards + sales team table
-- **Leaderboard** at `/admin/team/leaderboard` — Ranked sales staff by revenue
-- **Alerts** at `/admin/team/alerts` — Real overdue follow-up alerts from CRM data
+### Team Performance (Redesigned — Feb 2026)
+- **Backend endpoint** `/api/admin/team-performance/summary` — aggregates orders, leads, quotes, commissions, ratings
+- **Team Overview** — 6 KPI cards + 9-column performance table with weighted scoring
+- **Leaderboard** — Top 3 podium + full ranking table with Score
+- **Alerts** — Actionable table with severity icons, type filters, real CRM data
 
 ### Canonical UI Consolidation Pass (Complete — Feb 2026)
-- **Content Creator merged into Content Studio** — Single canonical concept. Old `/admin/content-center` route redirects to `/admin/content-studio`.
-- **Duplicate Promotions Engine removed** — Single canonical Promotions Manager. Old `/admin/promotion-engine` route redirects to `/admin/promotions-manager`.
-- **Affiliates page converted to data table** — Desktop-first table layout with StandardDrawerShell for creation.
-- **Affiliate Payouts page converted to data table** — Filter tabs, row-click detail drawer with action buttons in sticky footer.
-- **Standard Drawer Migration** — AdminPromotionsPage, AdminProductsServicesPage, CRMPageV2 all migrated from Sheet to StandardDrawerShell (fixed header, scrollable body, sticky footer).
-- **Dynamic Branding Rule enforced** — All branding/contact data in Content Studio comes from Settings Hub. No hardcoded values. Logo resolves from uploaded image path, falls back to TriadSVG.
+- Content Creator merged into Content Studio
+- Duplicate Promotions Engine removed
+- Affiliates & Affiliate Payouts converted to data tables
+- Standard Drawer Migration (Promotions, Products, CRM, Affiliates, Payouts)
 
-### Data Integrity
-- Strict payer/customer name separation
-- Vendor privacy
-- Real admin name resolution
-- MongoDB _id exclusion
+### Critical Stabilization Pass (Complete — Feb 2026)
+- **StandardDrawerShell** — Rewritten with React Portal for true full-viewport coverage (full height, full overlay, scrollable body, sticky footer)
+- **Promotions wiring audit** — Fixed `platform_promotion_engine.py` to query canonical `promotions` collection. Inactive promos disappear everywhere.
+- **Affiliate form cleanup** — Removed Commission Type/Value from creation (shows Settings defaults as read-only)
+- **CRM width fix** — Contained to `max-w-7xl`, consistent heading typography
+- **Content Studio hierarchy** — Increased font sizes, logo size, Minimal layout image area
 
 ## Key API Endpoints
 - `POST /api/admin/content-center/publish` — Save & Publish branded creative
 - `GET /api/content-engine/template-data/products` — Template-ready product data
 - `GET /api/content-engine/template-data/branding` — Dynamic branding from Settings Hub
-- `GET /api/supervisor-team/staff-list` — Staff list for team pages
+- `GET /api/admin/team-performance/summary` — Comprehensive team performance data
 - `GET/PUT /api/admin/settings-hub` — Settings Hub
 - `GET/PUT /api/admin/business-settings` — Business config
 
 ## Upcoming Tasks (P1)
-- Weekly Digest Browser View — Shareable operational web report
+1. Partner Ecosystem page redesign — clear management table
+2. Weekly Digest Browser View — shareable executive report
 
 ## Backlog (P2)
 - Twilio WhatsApp Integration (blocked on API keys)
 - Resend Email Integration (blocked on API key)
 - Backend-side creative rendering for bulk generation
-- AI-assisted Auto Quote Suggestions
 - Advanced Analytics Dashboard
-- Mobile-first optimization
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
