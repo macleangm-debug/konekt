@@ -76,6 +76,7 @@ export const adminNavigation = [
     roles: ["admin", "marketing"],
     children: [
       { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
+      { label: "Applications", href: "/admin/affiliate-applications", icon: ClipboardList },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Promotions Manager", href: "/admin/promotions-manager", icon: BadgePercent },
       { label: "Content Studio", href: "/admin/content-studio", icon: Palette },

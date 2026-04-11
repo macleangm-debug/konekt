@@ -1,104 +1,57 @@
 import React, { useState } from "react";
+import { Users, CheckCircle, Loader2, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Users, CheckCircle2, ArrowRight, Sparkles, DollarSign, Target, TrendingUp } from "lucide-react";
-import api from "@/lib/api";
-import PhoneNumberField from "@/components/forms/PhoneNumberField";
-import { combinePhone } from "@/utils/phoneUtils";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { toast } from "sonner";
+import api from "../lib/api";
 
-const industries = [
-  "Retail", "Healthcare", "Education", "NGO", "Technology", "Construction",
-  "Manufacturing", "Hospitality", "Media", "Finance", "Real Estate", "Other"
-];
+const initialForm = {
+  full_name: "", email: "", phone: "",
+  company_name: "", region: "", notes: "",
+};
 
 export default function AffiliateApplyPage() {
-  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    phone_prefix: "+255",
-    phone: "",
-    company_name: "",
-    website: "",
-    social_links: [""],
-    audience_size: "",
-    industries: [],
-    region: "",
-    country: "Tanzania",
-    why_partner: "",
-    how_promote: "",
-    portfolio_link: "",
-    notes: "",
-  });
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  const submit = async (e) => {
     e.preventDefault();
-    setError("");
-    
     if (!form.full_name || !form.email) {
-      setError("Please fill in your name and email");
+      toast.error("Name and email are required");
       return;
     }
-    
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      await api.post("/api/affiliate-applications", {
-        ...form,
-        phone: combinePhone(form.phone_prefix, form.phone),
-        phone_prefix: undefined,
-        social_links: form.social_links.filter(Boolean),
-      });
-      setSubmitted(true);
+      await api.post("/api/affiliate-applications", form);
+      setSuccess(true);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to submit application. Please try again.");
-    } finally {
-      setSubmitting(false);
+      toast.error(err.response?.data?.detail || "Failed to submit application");
     }
+    setSubmitting(false);
   };
 
-  const toggleIndustry = (industry) => {
-    setForm(prev => ({
-      ...prev,
-      industries: prev.industries.includes(industry)
-        ? prev.industries.filter(i => i !== industry)
-        : [...prev.industries, industry]
-    }));
-  };
-
-  const addSocialLink = () => {
-    setForm(prev => ({ ...prev, social_links: [...prev.social_links, ""] }));
-  };
-
-  const updateSocialLink = (index, value) => {
-    setForm(prev => {
-      const links = [...prev.social_links];
-      links[index] = value;
-      return { ...prev, social_links: links };
-    });
-  };
-
-  if (submitted) {
+  if (success) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6" data-testid="affiliate-apply-success">
-        <div className="max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-8 h-8 text-green-600" />
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center" data-testid="apply-success">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 mx-auto flex items-center justify-center mb-6">
+            <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Application Submitted!</h2>
-          <p className="text-slate-600 mb-6">
-            Thank you for applying to become a partner. Our team will review your application 
-            and get back to you within 3-5 business days.
+          <h1 className="text-2xl font-bold text-[#20364D] mb-2">Application Submitted</h1>
+          <p className="text-slate-500 mb-6">
+            Thank you for your interest in becoming an affiliate partner.
+            Our team will review your application and get back to you shortly.
           </p>
-          <p className="text-sm text-slate-500 mb-6">
-            A confirmation has been sent to {form.email}
-          </p>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 bg-[#2D3E50] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#3d5166]"
-          >
-            Return Home
+          <Link to="/">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back to Home
+            </Button>
           </Link>
         </div>
       </div>
@@ -106,220 +59,57 @@ export default function AffiliateApplyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50" data-testid="affiliate-apply-page">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#22364d] to-[#1b2f44] text-white py-16">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-4 py-2 text-sm font-medium mb-6">
-            <Sparkles className="w-4 h-4 text-[#D4A843]" />
-            Partner Program
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white" data-testid="affiliate-apply-page">
+      <div className="max-w-lg mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-[#20364D] mx-auto flex items-center justify-center mb-4">
+            <Users className="w-7 h-7 text-[#D4A843]" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-            Become a Partner
-          </h1>
-          <p className="text-slate-200 text-lg mt-4 max-w-2xl mx-auto">
-            Join our affiliate network and earn commissions by referring businesses to Konekt's 
-            professional branding and merchandise services.
+          <h1 className="text-2xl font-bold text-[#20364D]">Become an Affiliate Partner</h1>
+          <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
+            Join our affiliate program and earn commissions by referring businesses to our platform.
           </p>
         </div>
-      </section>
 
-      {/* Benefits */}
-      <div className="max-w-4xl mx-auto px-6 -mt-8">
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="rounded-2xl bg-white border shadow-sm p-6 text-center">
-            <div className="w-12 h-12 bg-[#D4A843]/10 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <DollarSign className="w-6 h-6 text-[#D4A843]" />
-            </div>
-            <h3 className="font-bold">Up to 15% Commission</h3>
-            <p className="text-sm text-slate-600 mt-1">Earn on every successful referral</p>
+        <form onSubmit={submit} className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4 shadow-sm">
+          <div>
+            <Label className="text-xs font-semibold">Full Name *</Label>
+            <Input value={form.full_name} onChange={(e) => update("full_name", e.target.value)} placeholder="Your full name" className="mt-1" data-testid="apply-name" />
           </div>
-          <div className="rounded-2xl bg-white border shadow-sm p-6 text-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Target className="w-6 h-6 text-purple-600" />
-            </div>
-            <h3 className="font-bold">Dedicated Support</h3>
-            <p className="text-sm text-slate-600 mt-1">Partner resources & marketing assets</p>
+          <div>
+            <Label className="text-xs font-semibold">Email *</Label>
+            <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" className="mt-1" data-testid="apply-email" />
           </div>
-          <div className="rounded-2xl bg-white border shadow-sm p-6 text-center">
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="font-bold">Real-time Tracking</h3>
-            <p className="text-sm text-slate-600 mt-1">Monitor your conversions live</p>
+          <div>
+            <Label className="text-xs font-semibold">Phone</Label>
+            <Input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+255 7XX XXX XXX" className="mt-1" data-testid="apply-phone" />
           </div>
-        </div>
-      </div>
+          <div>
+            <Label className="text-xs font-semibold">Business Name</Label>
+            <Input value={form.company_name} onChange={(e) => update("company_name", e.target.value)} placeholder="Your company (optional)" className="mt-1" data-testid="apply-company" />
+          </div>
+          <div>
+            <Label className="text-xs font-semibold">Region</Label>
+            <Input value={form.region} onChange={(e) => update("region", e.target.value)} placeholder="e.g., Dar es Salaam, Arusha" className="mt-1" data-testid="apply-region" />
+          </div>
+          <div>
+            <Label className="text-xs font-semibold">Why do you want to be an affiliate?</Label>
+            <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Tell us about yourself and how you plan to promote..." className="mt-1 min-h-[80px]" data-testid="apply-notes" />
+          </div>
 
-      {/* Application Form */}
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        <div className="rounded-2xl border bg-white p-8 shadow-sm">
-          <h2 className="text-2xl font-bold mb-6">Partner Application</h2>
-          
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700">
-              {error}
-            </div>
-          )}
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Info */}
-            <div>
-              <h3 className="font-semibold mb-3">Personal Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="Full Name *"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  required
-                />
-                <input
-                  type="email"
-                  className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="Email Address *"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-                <PhoneNumberField
-                  label=""
-                  prefix={form.phone_prefix}
-                  number={form.phone}
-                  onPrefixChange={(v) => setForm({ ...form, phone_prefix: v })}
-                  onNumberChange={(v) => setForm({ ...form, phone: v })}
-                  testIdPrefix="affiliate-phone"
-                />
-                <input
-                  type="text"
-                  className="border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="Company / Brand Name"
-                  value={form.company_name}
-                  onChange={(e) => setForm({ ...form, company_name: e.target.value })}
-                />
-              </div>
-            </div>
+          <Button type="submit" disabled={submitting} className="w-full bg-[#20364D] hover:bg-[#1a2d40]" data-testid="apply-submit">
+            {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            {submitting ? "Submitting..." : "Submit Application"}
+          </Button>
 
-            {/* Online Presence */}
-            <div>
-              <h3 className="font-semibold mb-3">Online Presence</h3>
-              <input
-                type="url"
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 mb-3 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                placeholder="Website URL"
-                value={form.website}
-                onChange={(e) => setForm({ ...form, website: e.target.value })}
-              />
-              <p className="text-sm text-slate-500 mb-2">Social Media Links</p>
-              {form.social_links.map((link, idx) => (
-                <input
-                  key={idx}
-                  type="url"
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 mb-2 focus:ring-2 focus:ring-[#D4A843] focus:border-transparent outline-none"
-                  placeholder="https://instagram.com/yourprofile"
-                  value={link}
-                  onChange={(e) => updateSocialLink(idx, e.target.value)}
-                />
-              ))}
-              <button
-                type="button"
-                onClick={addSocialLink}
-                className="text-sm text-[#D4A843] font-medium hover:underline"
-              >
-                + Add another link
-              </button>
-            </div>
+          <p className="text-[10px] text-slate-400 text-center">
+            By submitting, you agree to our affiliate program terms.
+            Commission rates are managed by system policy.
+          </p>
+        </form>
 
-            {/* Audience */}
-            <div>
-              <h3 className="font-semibold mb-3">Your Audience</h3>
-              <select
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-white mb-3"
-                value={form.audience_size}
-                onChange={(e) => setForm({ ...form, audience_size: e.target.value })}
-              >
-                <option value="">Audience Size</option>
-                <option value="1-500">1 - 500 followers/contacts</option>
-                <option value="500-2000">500 - 2,000</option>
-                <option value="2000-10000">2,000 - 10,000</option>
-                <option value="10000-50000">10,000 - 50,000</option>
-                <option value="50000+">50,000+</option>
-              </select>
-              
-              <p className="text-sm text-slate-500 mb-2">Industries you influence (select all that apply)</p>
-              <div className="flex flex-wrap gap-2">
-                {industries.map(industry => (
-                  <button
-                    key={industry}
-                    type="button"
-                    onClick={() => toggleIndustry(industry)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      form.industries.includes(industry)
-                        ? "bg-[#2D3E50] text-white"
-                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    {industry}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Location */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                className="border border-slate-300 rounded-xl px-4 py-3"
-                placeholder="Region / City"
-                value={form.region}
-                onChange={(e) => setForm({ ...form, region: e.target.value })}
-              />
-              <input
-                type="text"
-                className="border border-slate-300 rounded-xl px-4 py-3"
-                placeholder="Country"
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-              />
-            </div>
-
-            {/* Why Partner */}
-            <div>
-              <h3 className="font-semibold mb-3">Partnership Details</h3>
-              <textarea
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 mb-3"
-                placeholder="Why do you want to partner with Konekt?"
-                rows={3}
-                value={form.why_partner}
-                onChange={(e) => setForm({ ...form, why_partner: e.target.value })}
-              />
-              <textarea
-                className="w-full border border-slate-300 rounded-xl px-4 py-3"
-                placeholder="How do you plan to promote Konekt?"
-                rows={3}
-                value={form.how_promote}
-                onChange={(e) => setForm({ ...form, how_promote: e.target.value })}
-              />
-            </div>
-
-            {/* Portfolio */}
-            <input
-              type="url"
-              className="w-full border border-slate-300 rounded-xl px-4 py-3"
-              placeholder="Portfolio or proof of reach (optional)"
-              value={form.portfolio_link}
-              onChange={(e) => setForm({ ...form, portfolio_link: e.target.value })}
-            />
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-[#D4A843] text-[#2D3E50] px-6 py-4 rounded-xl font-semibold hover:bg-[#c49933] disabled:opacity-50"
-            >
-              {submitting ? "Submitting..." : "Submit Application"}
-            </button>
-          </form>
+        <div className="text-center mt-6">
+          <Link to="/" className="text-xs text-slate-400 hover:text-slate-600">Back to Home</Link>
         </div>
       </div>
     </div>

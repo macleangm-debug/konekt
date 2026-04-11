@@ -1,0 +1,114 @@
+{
+  "summary": "Affiliate Application Flow - All features verified working. Backend: 12/12 tests passed. Frontend: All UI elements and flows verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_affiliate_application_flow_v274.py",
+    "/app/test_reports/pytest/pytest_results_affiliate_application_v274.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_affiliate_application_flow_v274.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Test applications created during testing with TEST_ prefix",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Affiliate Application Flow fully verified: 1) Public page at /partners/apply renders with all form fields (Full Name, Email, Phone, Business Name, Region, Notes, Submit button). 2) POST /api/affiliate-applications creates application with status 'pending' - no auth required. 3) Duplicate email correctly rejected with 400 error. 4) GET /api/affiliate-applications returns list of applications. 5) Admin page at /admin/affiliate-applications shows table with Applicant, Phone, Business, Region, Applied, Status columns. 6) 'Applications' sidebar entry visible under 'Growth & Affiliates'. 7) Clicking row opens StandardDrawerShell with applicant details, notes, approve/reject buttons in footer. 8) POST /api/affiliate-applications/{id}/approve creates affiliate with auto-commission from settings (12%). 9) POST /api/affiliate-applications/{id}/reject updates status to rejected. 10) After approval, application status shows as 'approved' with green badge.",
+  "features_tested": {
+    "public_apply_page": {
+      "status": "PASS",
+      "details": [
+        "Page renders at /partners/apply with data-testid='affiliate-apply-page'",
+        "Form fields: Full Name, Email, Phone, Business Name, Region, Notes",
+        "Submit button with data-testid='apply-submit'",
+        "Success state shows after submission with data-testid='apply-success'"
+      ]
+    },
+    "public_application_submission": {
+      "status": "PASS",
+      "details": [
+        "POST /api/affiliate-applications creates application with status 'pending'",
+        "No auth required for public submission",
+        "Returns application object with id, created_at, status='pending'"
+      ]
+    },
+    "duplicate_email_rejection": {
+      "status": "PASS",
+      "details": [
+        "POST /api/affiliate-applications with duplicate email returns 400",
+        "Error message: 'An application with this email already exists'"
+      ]
+    },
+    "admin_list_applications": {
+      "status": "PASS",
+      "details": [
+        "GET /api/affiliate-applications returns list of applications",
+        "Filter by status works: ?status=pending, ?status=approved, ?status=rejected"
+      ]
+    },
+    "admin_applications_page": {
+      "status": "PASS",
+      "details": [
+        "Page renders at /admin/affiliate-applications",
+        "Table columns: Applicant, Phone, Business, Region, Applied, Status",
+        "'Applications' visible in sidebar under 'Growth & Affiliates'",
+        "Filter buttons: All, Pending, Approved, Rejected",
+        "Search input available"
+      ]
+    },
+    "application_detail_drawer": {
+      "status": "PASS",
+      "details": [
+        "Clicking row opens StandardDrawerShell",
+        "Shows: Full Name, Email, Phone, Business, Region, Applied date",
+        "Shows Notes from Applicant section",
+        "Shows Commission info: 'Automatically assigned from system settings upon approval'",
+        "Approve and Reject buttons in footer for pending applications"
+      ]
+    },
+    "approve_application": {
+      "status": "PASS",
+      "details": [
+        "POST /api/affiliate-applications/{id}/approve creates affiliate",
+        "Affiliate gets auto-commission from settings (12%)",
+        "Application status updated to 'approved'",
+        "Success toast: 'Approved — affiliate created'"
+      ]
+    },
+    "reject_application": {
+      "status": "PASS",
+      "details": [
+        "POST /api/affiliate-applications/{id}/reject updates status to 'rejected'",
+        "Optional rejection note can be provided"
+      ]
+    },
+    "status_badges": {
+      "status": "PASS",
+      "details": [
+        "Pending: amber/yellow badge",
+        "Approved: green (emerald) badge",
+        "Rejected: red badge"
+      ]
+    },
+    "check_status_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/affiliate-applications/check/{email} returns status for existing",
+        "Returns exists=False for non-existent email"
+      ]
+    }
+  }
+}
