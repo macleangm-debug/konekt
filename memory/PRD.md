@@ -10,72 +10,55 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - **Storage**: Object storage via Emergent integrations
 - **Auth**: JWT-based with role routing
 
-## User Personas
-- **Admin**: Full platform management, settings, pricing, content
-- **Customer**: Browse, order, track, pay
-- **Vendor/Partner**: Fulfill orders, update delivery status
-- **Sales/Staff**: Dispatch, logistics, content sharing
-
 ## What's Been Implemented
 
 ### Core Platform (Complete)
 - Unified `/login` with role-based routing
-- Admin portal with dashboard, orders, payments, catalog management
-- Customer portal with orders, invoices, account management
-- Vendor/Partner portal with filtered order views
-- Sales/Staff portal with dispatch and CRM tools
-
-### Commerce Engine (Complete)
+- Admin, Customer, Vendor/Partner, Sales/Staff portals
 - Product & Service catalog with categories
 - Cart, Checkout, Order creation flow
-- Stripe sandbox payment gateway
-- Bank transfer with payment proof upload
-- Payment queue with admin approval workflow
-- Vendor order auto-generation on payment approval
+- Stripe sandbox + bank transfer with payment proof upload
+- Payment queue with admin approval, vendor order auto-generation
 
 ### Growth & Conversion Layer (Complete)
-- **Unified Pricing Policy Engine** — Merged margin tiers + distribution splits
-- **safeDisplay.js** — System-wide empty cell fallback for all tables
-- **Promotions CRUD** — Admin UI with backend tier-cap validation
-- **Instant Quote Estimation** — Customer-facing price range on product/service pages
-- **Live Margin Simulator** — Admin tool in Settings Hub Pricing Policy tab
-- **Content Creator Campaign System** — Campaign-driven content generation with multi-format assets (square/vertical), multiple caption types (short/social/whatsapp/story), smart suggestions, media-first sharing workspace
+- Unified Pricing Policy Engine (margin tiers + distribution splits)
+- safeDisplay.js system-wide for empty table cells
+- Promotions CRUD with backend tier-cap validation
+- Instant Quote Estimation on product/service pages
+- Live Margin Simulator in Settings Hub
+
+### Content & Distribution Layer (Complete)
+- **Content Creator Campaign System** — Campaign-driven content generation with multi-format assets, smart suggestions, media-first sharing workspace at `/admin/content-center`
+- **Dynamic Branded Graphics Generator (Content Studio)** — Template-based social media creative generator at `/admin/content-studio`. Supports 4 themes (Light, Dark Premium, Promotional, Clean Minimal), 2 formats (Square 1080x1080, Vertical 1080x1920). Generates branded creatives with logo, product/service name, pricing, promo badges, CTA, contact details. Uses html2canvas for client-side rendering. Auto-generates 4 caption types (Short, Social, WhatsApp/Sales, Story).
+- **Sales Content Hub** — Mobile-first content sharing page at `/staff/content-hub`. Shows products with images, always-visible Download and Copy Caption buttons. WhatsApp/Sales caption is the DEFAULT. Preview drawer with all caption types and copy buttons.
 
 ### Admin Configuration (Complete)
-- **Business Settings** — Company identity (TIN, BRN, VRN), contact details, banking details, document/tax settings
-- **Logo Upload** — File upload with preview for company branding
-- **Company Stamp/Seal Upload** — File upload for invoices/compliance documents
+- **Business Settings** — Company identity, contact, banking, tax settings with logo and stamp upload
+- **Settings Hub** — Redesigned from top tabs to sidebar-based layout with 15 sections. Left sidebar navigation, focused content panel (max-w-3xl), consistent typography.
 
 ### Data Integrity
 - Strict payer/customer name separation
 - Vendor privacy (no customer identity, no margins visible)
 - Real admin name resolution in approval flows
-- MongoDB _id exclusion from all API responses
 
 ## Key Technical Concepts
-- **Canonical Pricing Policy**: Margin tiers and distribution splits merged. Promotions/affiliates/referrals only consume from distributable_margin pool
-- **Instant Quote**: Shows price range without exposing internal margins
-- **Campaign-Driven Content**: All content linked to promotion/product/service. Multiple formats and caption variants per campaign
-- **safeDisplay**: Every table cell uses context-aware fallback (text, company, phone, etc.)
+- **Canonical Pricing Policy**: Margin tiers and distribution splits merged
+- **Campaign-Driven Content**: All content linked to promotion/product/service
+- **Template-Based Graphics**: Frontend canvas rendering with html2canvas
+- **Settings Hub**: Single source of truth for all system configuration
 
 ## Key API Endpoints
-- `POST /api/admin/payments/{id}/approve` — Payment approval (LiveCommerceService)
-- `GET /api/admin/orders-ops` — Admin orders
-- `GET /api/vendor/orders` — Vendor filtered orders
-- `GET/POST /api/admin/content-center/campaigns` — Content campaigns
-- `GET /api/content-engine/suggestions` — Smart suggestions
+- `GET /api/content-engine/template-data/products` — Enriched product data for templates
+- `GET /api/content-engine/template-data/services` — Service data for templates
+- `GET /api/content-engine/template-data/branding` — Branding data for templates
+- `GET/PUT /api/admin/settings-hub` — Settings Hub
 - `GET/PUT /api/admin/business-settings` — Business config
 - `POST /api/files/upload` — File upload
-
-## DB Collections
-- `orders`, `vendor_orders`, `users`, `payment_proofs`
-- `products`, `services`, `promotions`
-- `content_center` — Campaign content assets
-- `business_settings` — Company configuration
-- `uploaded_files` — File storage references
+- `POST /api/admin/payments/{id}/approve` — Payment approval
 
 ## Upcoming Tasks (P1)
-- Weekly Digest Browser View — Turn weekly digest into shareable operational web report
+- Settings Cleanup & Lockdown — Audit all settings, remove unused ones, enforce canonical usage
+- Weekly Digest Browser View — Shareable operational web report
 
 ## Future/Backlog (P2)
 - Twilio WhatsApp Integration (blocked on API keys)
@@ -83,15 +66,15 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics Dashboard
 - Mobile-first optimization
-- Sales-facing Content Feed page
+- Backend-side creative rendering for scheduled/bulk generation
 
 ## 3rd Party Integrations
 - Stripe (Payments) — Test key from environment
 - Object Storage (Images) — Emergent integrations
-- Resend (Emails) — Requires user API key
-- Twilio (WhatsApp) — Requires user API key
+- html2canvas — Client-side image rendering
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
-- Customer: `demo.customer@konekt.com` / `Demo123!`
+- Customer: `test@konekt.tz` / `TestUser123!`
 - Vendor: `demo.partner@konekt.com` / `Partner123!`
+- Staff/Sales: `staff@konekt.co.tz` / `Staff123!`

@@ -16,3 +16,8 @@
 - Email: demo.partner@konekt.com
 - Password: Partner123!
 - Portal: /partner
+
+## Staff/Sales
+- Email: staff@konekt.co.tz
+- Password: Staff123!
+- Portal: /staff (login at /staff-login)
