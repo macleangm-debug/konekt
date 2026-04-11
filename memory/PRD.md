@@ -28,50 +28,47 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - Live Margin Simulator in Settings Hub
 
 ### Content & Distribution Layer (Complete)
-- **Content Creator Campaign System** — Campaign-driven content generation with multi-format assets, smart suggestions, media-first sharing workspace at `/admin/content-center`
-- **Dynamic Branded Graphics Generator (Content Studio)** — Template-based social media creative generator at `/admin/content-studio`. Supports 4 themes (Light, Dark Premium, Promotional, Clean Minimal), 2 formats (Square 1080x1080, Vertical 1080x1920). Generates branded creatives with logo, product/service name, pricing, promo badges, CTA, contact details. Uses html2canvas for client-side rendering. Auto-generates 4 caption types (Short, Social, WhatsApp/Sales, Story).
-- **Sales Content Hub** — Mobile-first content sharing page at `/staff/content-hub`. Shows products with images, always-visible Download and Copy Caption buttons. WhatsApp/Sales caption is the DEFAULT. Preview drawer with all caption types and copy buttons.
+- **Content Creator Campaign System** — Media-first sharing workspace at `/admin/content-center` with "Create Branded Post" button linking to Studio
+- **Dynamic Branded Graphics Generator (Content Studio)** — Template engine at `/admin/content-studio` with 4 themes (Light/Dark/Promo/Minimal), 2 formats (Square/Vertical). Uses html2canvas. Auto-generates captions.
+- **Save & Publish to Content Center** — Renders branded creative, uploads to storage, creates content_center entry. Supports Save Draft (status=draft) and Publish (status=active).
+- **Sales Content Hub** — Mobile-first page at `/staff/content-hub` with always-visible Download/Copy Caption buttons. WhatsApp caption as DEFAULT.
 
 ### Admin Configuration (Complete)
-- **Business Settings** — Company identity, contact, banking, tax settings with logo and stamp upload
-- **Settings Hub** — Redesigned from top tabs to sidebar-based layout with 15 sections. Left sidebar navigation, focused content panel (max-w-3xl), consistent typography.
+- **Business Settings** — Company identity, contact, banking, tax with logo + stamp upload
+- **Settings Hub** — Sidebar-based layout (240px sidebar, 960px content). 15 sections. Consistent typography.
+- **Settings Centralization** — Removed duplicate "Margin & Distribution" from Growth section. Settings Hub is single source of truth.
+
+### Team Performance (Complete)
+- **Team Overview** at `/admin/team/overview` — KPI cards + sales team table
+- **Leaderboard** at `/admin/team/leaderboard` — Ranked sales staff by revenue
+- **Alerts** at `/admin/team/alerts` — Real overdue follow-up alerts from CRM data (31 active alerts)
 
 ### Data Integrity
 - Strict payer/customer name separation
-- Vendor privacy (no customer identity, no margins visible)
-- Real admin name resolution in approval flows
-
-## Key Technical Concepts
-- **Canonical Pricing Policy**: Margin tiers and distribution splits merged
-- **Campaign-Driven Content**: All content linked to promotion/product/service
-- **Template-Based Graphics**: Frontend canvas rendering with html2canvas
-- **Settings Hub**: Single source of truth for all system configuration
+- Vendor privacy
+- Real admin name resolution
+- MongoDB _id exclusion
 
 ## Key API Endpoints
-- `GET /api/content-engine/template-data/products` — Enriched product data for templates
-- `GET /api/content-engine/template-data/services` — Service data for templates
-- `GET /api/content-engine/template-data/branding` — Branding data for templates
+- `POST /api/admin/content-center/publish` — Save & Publish branded creative
+- `GET /api/content-engine/template-data/products` — Template-ready product data
+- `GET /api/content-engine/template-data/branding` — Branding data
+- `GET /api/supervisor-team/staff-list` — Staff list for team pages
 - `GET/PUT /api/admin/settings-hub` — Settings Hub
 - `GET/PUT /api/admin/business-settings` — Business config
-- `POST /api/files/upload` — File upload
-- `POST /api/admin/payments/{id}/approve` — Payment approval
 
 ## Upcoming Tasks (P1)
-- Settings Cleanup & Lockdown — Audit all settings, remove unused ones, enforce canonical usage
+- Global Drawer Standardization — Migrate remaining 6 drawers to StandardDrawerShell
 - Weekly Digest Browser View — Shareable operational web report
 
-## Future/Backlog (P2)
+## Backlog (P2)
+- Convert card-based pages to tables (desktop rule)
 - Twilio WhatsApp Integration (blocked on API keys)
 - Resend Email Integration (blocked on API key)
+- Backend-side creative rendering for bulk generation
 - AI-assisted Auto Quote Suggestions
 - Advanced Analytics Dashboard
 - Mobile-first optimization
-- Backend-side creative rendering for scheduled/bulk generation
-
-## 3rd Party Integrations
-- Stripe (Payments) — Test key from environment
-- Object Storage (Images) — Emergent integrations
-- html2canvas — Client-side image rendering
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
