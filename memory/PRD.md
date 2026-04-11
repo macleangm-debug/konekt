@@ -10,6 +10,13 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - **Storage**: Object storage via Emergent integrations
 - **Auth**: JWT-based with role routing
 
+## System Principles
+- No manual economics in forms — all pricing/commission from Settings
+- No scattered settings — Settings Hub is single source of truth
+- No custom drawers — StandardDrawerShell via Portal everywhere
+- Desktop lists = tables, cards only for mobile/media
+- Promotions are policy-driven: admin defines name/scope/dates, system calculates discount from pricing policy tiers
+
 ## What's Been Implemented
 
 ### Core Platform (Complete)
@@ -18,71 +25,52 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - Product & Service catalog with categories
 - Cart, Checkout, Order creation flow
 - Stripe sandbox + bank transfer with payment proof upload
-- Payment queue with admin approval
 
 ### Growth & Conversion Layer (Complete)
 - Unified Pricing Policy Engine (margin tiers + distribution splits)
-- Promotions simplified — admin defines name/scope/dates only, discount auto-calculated from pricing policy
-- Instant Quote Estimation
-- Live Margin Simulator in Settings Hub
+- Promotions: policy-driven (no manual discount). Admin defines name/scope/dates/stacking. Runtime calculates safe discount.
+- Affiliates: identity + payout details form. Commission auto from affiliate_settings (12%).
+- Instant Quote Estimation, Live Margin Simulator
 
 ### Content & Distribution Layer (Complete)
-- **Content Studio** — 4 layouts, 4 themes, 2 formats. WYSIWYG html2canvas export. ALL branding from Settings Hub.
-- **Save & Publish** pipeline
-- **Sales Content Hub** — Mobile-first share feed (drawer migrated to StandardDrawerShell)
+- Content Studio: 4 layouts, 4 themes, 2 formats. WYSIWYG. Dynamic branding from Settings Hub.
+- Save & Publish pipeline, Sales Content Hub
 
 ### Admin Configuration (Complete)
-- **Settings Hub** — Sidebar layout, 15 sections, single source of truth
-- **Business Settings** — Company identity, contact, banking, tax
+- Settings Hub: 15 sections, sidebar layout, single source of truth
+- Business Settings: Company identity, contact, banking, tax
 
-### Team Performance (Redesigned)
-- **Backend endpoint** `/api/admin/team-performance/summary` — aggregates orders, leads, quotes, commissions, ratings
-- **Team Overview** — 6 KPI cards + 9-column performance table with weighted scoring
-- **Leaderboard** — Top 3 podium + full ranking table with Score
-- **Alerts** — Actionable table with Reference, Owner/Rep (resolved names), severity filters, contextual CTAs
+### Team Performance (Complete)
+- `/api/admin/team-performance/summary` aggregates orders, leads, quotes, commissions, ratings
+- Team Overview: 6 KPIs + 9-column table
+- Leaderboard: Top 3 podium + ranked table with Score
+- Alerts: Actionable table with Reference, Owner/Rep (resolved names), severity filters, CTAs
 
-### Canonical UI Consolidation (Complete)
-- Content Creator merged into Content Studio
-- Duplicate Promotions Engine removed
-- Affiliates & Affiliate Payouts converted to data tables
-- Standard Drawer Migration complete system-wide
-
-### Critical Stabilization Pass (Complete)
-- **StandardDrawerShell** — React Portal, full-viewport, z-index 9998/9999
-- **Promotions wiring** — canonical `promotions` collection only (orphaned `platform_promotions` bypassed)
-- **Affiliate form** — Identity + Payout details only. Commission from settings. No manual override.
-- **CRM width** — Contained to `max-w-7xl`
-- **Content Studio hierarchy** — Increased font/logo/image sizes
-
-### Correction Pass (Complete)
-- **Global drawer enforcement** — PaymentProofsAdminPage, SalesContentHubPage migrated to StandardDrawerShell
-- **Affiliate form completion** — Phone, payout method (mobile money/bank), conditional fields
-- **Promotions simplification** — Removed discount_type/discount_value inputs entirely. Runtime-calculated only.
-- **Alerts redesign** — Reference column, resolved owner names, contextual CTA buttons
-
-## System Principles
-- No manual economics in forms — all pricing/commission from Settings
-- No scattered settings — Settings Hub is single source of truth
-- No custom drawers — StandardDrawerShell via Portal everywhere
-- Desktop lists = tables, cards only for mobile/media
+### Stabilization & Correction Passes (Complete)
+- StandardDrawerShell: React Portal, full-viewport, system-wide (Payment Proofs, Sales Hub, CRM, Promotions, Products, Affiliates, Payouts)
+- Promotions wiring: canonical `promotions` collection only. Removed legacy discount validation.
+- Affiliate CRUD: GET/POST/DELETE /api/admin/affiliates. Auto-commission from settings.
+- CRM width: max-w-7xl, proper typography
+- Content Studio: increased font/logo/image sizes
 
 ## Key API Endpoints
-- `POST /api/admin/content-center/publish` — Save & Publish branded creative
-- `GET /api/content-engine/template-data/products` — Template-ready product data
-- `GET /api/content-engine/template-data/branding` — Dynamic branding from Settings Hub
+- `POST /api/admin/content-center/publish` — Save & Publish
+- `GET /api/content-engine/template-data/products` — Template product data
+- `GET /api/content-engine/template-data/branding` — Dynamic branding
 - `GET /api/admin/team-performance/summary` — Team KPIs, reps, alerts
+- `GET/POST/DELETE /api/admin/affiliates` — Affiliate CRUD
+- `POST /api/admin/promotions` — Policy-driven promotion creation
 - `GET/PUT /api/admin/settings-hub` — Settings Hub
-- `GET/PUT /api/admin/business-settings` — Business config
 
 ## Upcoming Tasks (in order)
 1. Affiliate Application Flow (public apply → admin review → approve/reject)
-2. Partner Ecosystem Page Redesign (KPI row + management table + coverage)
-3. Weekly Digest Browser View (shareable executive report)
+2. Partner Ecosystem Page Redesign
+3. Weekly Digest Browser View
 
 ## Backlog (P2)
-- Twilio WhatsApp Integration (blocked on API keys)
-- Resend Email Integration (blocked on API key)
-- Backend-side creative rendering for bulk generation
+- Global phone number format standardization
+- Twilio WhatsApp / Resend Email (blocked on keys)
+- Backend creative rendering for scale
 - Advanced Analytics Dashboard
 
 ## Credentials
