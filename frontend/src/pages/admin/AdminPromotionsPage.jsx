@@ -188,7 +188,13 @@ export default function AdminPromotionsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-sm font-semibold text-[#20364D]">
-                      {p.discount_type === "percentage" ? `${p.discount_value}%` : `TZS ${Number(p.discount_value || 0).toLocaleString()}`}
+                      {p.discount_type === "policy_driven" ? (
+                        <span className="text-xs text-slate-500 italic">Auto (policy)</span>
+                      ) : p.discount_type === "percentage" ? (
+                        `${p.discount_value}%`
+                      ) : (
+                        `TZS ${Number(p.discount_value || 0).toLocaleString()}`
+                      )}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -273,7 +279,6 @@ function PromotionForm({ initial, categories, products, onSaved, onCancel }) {
     name: "", code: "", description: "", scope: "global",
     target_category_id: "", target_category_name: "",
     target_product_id: "", target_product_name: "",
-    discount_type: "percentage", discount_value: "",
     stacking_rule: "no_stack",
     start_date: "", end_date: "",
     max_total_uses: "", max_uses_per_customer: "",

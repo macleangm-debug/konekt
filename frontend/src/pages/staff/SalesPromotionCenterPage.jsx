@@ -44,7 +44,7 @@ function SalesPromoCard({ product }) {
         <div className="py-3 px-2">
           <div className="text-xs text-slate-500">Client Saves</div>
           <div className="text-base font-bold text-amber-700 mt-0.5">{money(product.discount_amount)}</div>
-          <div className="text-[10px] text-slate-400">{product.discount_pct}% of pool</div>
+          <div className="text-[10px] text-slate-400">From pricing policy</div>
         </div>
       </div>
 

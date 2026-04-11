@@ -1,0 +1,97 @@
+{
+  "summary": "Promotion Display + Affiliate Attribution Correctness - All features verified working. Backend: 8/8 tests passed. Frontend: All UI elements verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_promotion_display_affiliate_attribution_v273.py",
+    "/app/test_reports/pytest/pytest_results_promotion_display_v273.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_promotion_display_affiliate_attribution_v273.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - test data cleaned up after tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All promotion display and affiliate attribution features verified: 1) POST /api/admin/promotions without discount fields creates promotion with discount_type='policy_driven', discount_value=0. 2) POST /api/admin/affiliates creates affiliate with auto-commission from settings. 3) Promotions Manager table shows 'Auto (policy)' for policy-driven promotions. 4) Affiliates table shows 'From settings' in commission column. 5) Promotion form has no discount_type/discount_value inputs - shows 'Discount is automatically calculated based on pricing policy settings'. 6) Affiliate form has no commission inputs - shows 'Automatically managed by system settings'. 7) Attribution helper captures ?aff=, ?affiliate=, ?ref= URL parameters and persists to localStorage.",
+  "features_tested": {
+    "promotion_creation_without_discount_fields": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/promotions with {name, code, scope, stacking_rule} succeeds",
+        "discount_type defaults to 'policy_driven'",
+        "discount_value defaults to 0",
+        "Backend validation passes without discount fields"
+      ]
+    },
+    "promotions_manager_table_display": {
+      "status": "PASS",
+      "details": [
+        "Policy-driven promotions show 'Auto (policy)' in discount column",
+        "Percentage promotions show 'X%'",
+        "Fixed amount promotions show 'TZS X'"
+      ]
+    },
+    "promotions_form_no_discount_inputs": {
+      "status": "PASS",
+      "details": [
+        "No discount_type input field in form",
+        "No discount_value input field in form",
+        "Form shows 'Discount is automatically calculated based on pricing policy settings'"
+      ]
+    },
+    "affiliate_creation_without_commission": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/affiliates with identity + payout fields only succeeds",
+        "Commission auto-fetched from affiliate_settings",
+        "commission_type and commission_value set by backend"
+      ]
+    },
+    "affiliates_table_display": {
+      "status": "PASS",
+      "details": [
+        "Commission column shows 'From settings' for all affiliates",
+        "No percentage values displayed in commission column"
+      ]
+    },
+    "affiliate_form_no_commission_inputs": {
+      "status": "PASS",
+      "details": [
+        "No commission_type input field in form",
+        "No commission_value input field in form",
+        "Form shows 'Automatically managed by system settings'"
+      ]
+    },
+    "attribution_helper_aff_param": {
+      "status": "PASS",
+      "details": [
+        "?aff= URL parameter captured and persisted to localStorage",
+        "?affiliate= URL parameter captured",
+        "?ref= URL parameter captured",
+        "bootstrapAffiliateAttribution() works on app load"
+      ]
+    },
+    "checkout_affiliate_banner": {
+      "status": "PASS",
+      "details": [
+        "CheckoutPage.jsx has 'Affiliate offer applied' banner with emerald (green) styling",
+        "Banner shows when detectedAffiliate.has_attribution is true",
+        "Banner displays affiliate name or code"
+      ]
+    }
+  }
+}

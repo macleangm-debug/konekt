@@ -281,9 +281,7 @@ export default function CreativeServiceCheckoutPage() {
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-emerald-600">
-                        {campaign.reward_type === "percentage_discount"
-                          ? `${campaign.reward_value}% off`
-                          : `TZS ${Number(campaign.discount_amount).toLocaleString()} off`}
+                        TZS {Number(campaign.discount_amount || 0).toLocaleString()} off
                       </div>
                       {appliedCampaign?.campaign_id === campaign.campaign_id && (
                         <button

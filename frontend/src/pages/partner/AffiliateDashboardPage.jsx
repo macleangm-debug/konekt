@@ -165,17 +165,12 @@ export default function AffiliateDashboardPage() {
                       {item.scope_type} • {item.scope_value || "All Products"}
                     </div>
 
-                    <div className="text-sm mt-3">
-                      {item.promotion_type === "display_uplift"
-                        ? `Customers see ${item.uplift_percent}% display discount`
-                        : `Customers get ${item.real_discount_percent}% real discount`}
+                    <div className="text-sm mt-3 text-slate-600">
+                      Discount automatically calculated from pricing policy
                     </div>
 
                     <div className="text-sm mt-2 font-medium text-[#D4A843]">
-                      You earn:{" "}
-                      {item.affiliate_payout_type === "fixed"
-                        ? `${item.currency} ${Number(item.affiliate_payout_value || 0).toLocaleString()} per sale`
-                        : `${item.affiliate_payout_value}% ${item.affiliate_payout_type === "percent_margin" ? "of margin" : "of sale"}`}
+                      Commission managed by system settings
                     </div>
 
                     <div className="text-xs text-slate-500 mt-2">

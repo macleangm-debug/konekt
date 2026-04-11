@@ -236,16 +236,16 @@ export default function CheckoutPage() {
         )}
 
         {/* Detected Affiliate Banner */}
-        {detectedAffiliate?.has_attribution && !affiliatePerk && (
-          <div className="mb-6 rounded-xl bg-amber-50 border border-amber-200 p-4" data-testid="affiliate-detected-banner">
-            <div className="flex items-center gap-2 text-amber-800">
+        {detectedAffiliate?.has_attribution && (
+          <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4" data-testid="affiliate-detected-banner">
+            <div className="flex items-center gap-2 text-emerald-800">
               <Tag className="w-5 h-5" />
               <span className="font-medium">
-                You were referred by {detectedAffiliate.affiliate_name || detectedAffiliate.affiliate_code}
+                Affiliate offer applied
               </span>
             </div>
-            <p className="text-sm text-amber-700 mt-1">
-              Special perks may apply to your order. Enter the code below to unlock your discount.
+            <p className="text-sm text-emerald-700 mt-1">
+              Referred by {detectedAffiliate.affiliate_name || detectedAffiliate.affiliate_code}. Eligible perks will be applied automatically.
             </p>
           </div>
         )}
@@ -375,9 +375,7 @@ export default function CheckoutPage() {
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-emerald-600">
-                            {campaign.reward_type === "percentage_discount"
-                              ? `${campaign.reward_value}% off`
-                              : `TZS ${Number(campaign.discount_amount).toLocaleString()} off`}
+                            TZS {Number(campaign.discount_amount || 0).toLocaleString()} off
                           </div>
                           {appliedCampaign?.campaign_id === campaign.campaign_id && (
                             <button

@@ -21,7 +21,7 @@ export function clearStoredAffiliateCode() {
 export function getAffiliateCodeFromUrl() {
   if (typeof window === 'undefined') return "";
   const params = new URLSearchParams(window.location.search);
-  return params.get("affiliate") || params.get("ref") || params.get("partner") || "";
+  return params.get("aff") || params.get("affiliate") || params.get("ref") || params.get("partner") || "";
 }
 
 export function bootstrapAffiliateAttribution() {

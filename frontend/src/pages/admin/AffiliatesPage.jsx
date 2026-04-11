@@ -140,8 +140,8 @@ export default function AffiliatesPage() {
                     <td className="px-4 py-3">
                       <code className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{aff.affiliate_code}</code>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {aff.commission_value}{aff.commission_type === "percentage" ? "%" : " TZS"}
+                    <td className="px-4 py-3 text-slate-500 text-xs italic">
+                      From settings
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Badge className={aff.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-100"}>
