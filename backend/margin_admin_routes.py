@@ -7,7 +7,7 @@ from typing import Optional
 
 from services.tiered_margin_engine import (
     get_global_tiers, save_global_tiers, resolve_price,
-    resolve_service_sell_price, DEFAULT_GLOBAL_TIERS,
+    resolve_service_sell_price,
 )
 
 router = APIRouter(prefix="/api/admin/margins", tags=["Margin Engine"])
@@ -45,7 +45,7 @@ async def get_global_margin_tiers(request: Request):
     """View current global margin tiers."""
     db = request.app.mongodb
     tiers = await get_global_tiers(db)
-    return {"scope": "global", "tiers": tiers, "defaults": DEFAULT_GLOBAL_TIERS}
+    return {"scope": "global", "tiers": tiers}
 
 
 @router.put("/global")

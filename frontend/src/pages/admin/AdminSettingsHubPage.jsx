@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -17,6 +17,7 @@ const TABS = [
   { key: "payment", label: "Payment Details", icon: CreditCard },
   { key: "branding", label: "Document Branding", icon: FileText },
   { key: "preview", label: "Preview", icon: Eye },
+  { key: "pricing_policy", label: "Pricing Policy", icon: BarChart3 },
   { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
   { key: "operations", label: "Operational Rules", icon: Settings },
   { key: "sales", label: "Sales & Commissions", icon: Users },
@@ -130,6 +131,7 @@ export default function AdminSettingsHubPage() {
             <SettingsPreviewPanel state={state} />
           </div>
         )}
+        {tab === "pricing_policy" && <PricingPolicyTab />}
         {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
         {tab === "operations" && <OperationsTab state={state} setState={setState} />}
         {tab === "sales" && <SalesTab state={state} setState={setState} />}
@@ -458,7 +460,6 @@ function LaunchTab({ state, setState }) {
 
 function OperationsTab({ state, setState }) {
   const o = state.operational_rules || {};
-  const dc = state.distribution_config || {};
   return (
     <>
       <SettingsSectionCard title="Date & Time" description="Global formatting and timezone used across the platform.">
@@ -480,17 +481,9 @@ function OperationsTab({ state, setState }) {
           These thresholds are used by the background sales follow-up automation. Changes take effect within 30 seconds.
         </div>
       </SettingsSectionCard>
-      <SettingsSectionCard title="Commission Distribution Defaults" description="Default percentages for distributing the distributable margin pool across stakeholders.">
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-          <SettingsNumberField label="Protected Company Margin %" value={dc.protected_company_margin_percent} onChange={(v) => setState(U(state, "distribution_config", "protected_company_margin_percent", v))} />
-          <SettingsNumberField label="Affiliate % of distributable" value={dc.affiliate_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "affiliate_percent_of_distributable", v))} />
-          <SettingsNumberField label="Sales % of distributable" value={dc.sales_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "sales_percent_of_distributable", v))} />
-          <SettingsNumberField label="Promo % of distributable" value={dc.promo_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "promo_percent_of_distributable", v))} />
-          <SettingsNumberField label="Referral % of distributable" value={dc.referral_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "referral_percent_of_distributable", v))} />
-          <SettingsNumberField label="Country Bonus % of distributable" value={dc.country_bonus_percent_of_distributable} onChange={(v) => setState(U(state, "distribution_config", "country_bonus_percent_of_distributable", v))} />
-        </div>
-        <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-          Total allocations (affiliate + sales + promo + referral + country) should not exceed 100% of the distributable margin. The system auto-scales if exceeded.
+      <SettingsSectionCard title="Commission Distribution" description="Distribution percentages are now managed in the Pricing Policy tab as part of each tier's distribution split.">
+        <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700">
+          Distribution percentages (affiliate, sales, promo, referral, reserve) are now tier-specific and managed under the <strong>Pricing Policy</strong> tab. Each tier defines its own distribution split, giving you precise control over how margins are shared at every order value range.
         </div>
       </SettingsSectionCard>
     </>
@@ -512,3 +505,269 @@ function PartnersTab({ state, setState }) {
   );
 }
 
+
+
+function PricingPolicyTab() {
+  const [tiers, setTiers] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [previewCost, setPreviewCost] = React.useState("");
+  const [previewResult, setPreviewResult] = React.useState(null);
+  const [validationErrors, setValidationErrors] = React.useState([]);
+
+  React.useEffect(() => {
+    api.get("/api/commission-engine/pricing-policy-tiers").then((res) => {
+      setTiers(res.data?.tiers || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const updateTier = (idx, field, value) => {
+    setTiers((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  };
+
+  const updateSplit = (idx, field, value) => {
+    setTiers((prev) => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], distribution_split: { ...next[idx].distribution_split, [field]: value } };
+      return next;
+    });
+  };
+
+  const addTier = () => {
+    const lastTier = tiers[tiers.length - 1];
+    const newMin = lastTier ? lastTier.max_amount + 1 : 0;
+    setTiers([...tiers, {
+      label: "New Tier",
+      min_amount: newMin,
+      max_amount: newMin + 100000,
+      total_margin_pct: 20,
+      protected_platform_margin_pct: 14,
+      distributable_margin_pct: 6,
+      distribution_split: { affiliate_pct: 25, promotion_pct: 20, sales_pct: 20, referral_pct: 20, reserve_pct: 15 },
+    }]);
+  };
+
+  const removeTier = (idx) => {
+    setTiers((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const validate = () => {
+    const errs = [];
+    tiers.forEach((t, i) => {
+      const s = t.distribution_split || {};
+      const splitTotal = (s.affiliate_pct || 0) + (s.promotion_pct || 0) + (s.sales_pct || 0) + (s.referral_pct || 0) + (s.reserve_pct || 0);
+      if (splitTotal > 100) errs.push(`Tier ${i + 1}: split total is ${splitTotal}%, exceeds 100%`);
+      const marginSum = (t.protected_platform_margin_pct || 0) + (t.distributable_margin_pct || 0);
+      if (marginSum > (t.total_margin_pct || 0) + 0.01) errs.push(`Tier ${i + 1}: protected(${t.protected_platform_margin_pct}%) + distributable(${t.distributable_margin_pct}%) exceeds total margin(${t.total_margin_pct}%)`);
+    });
+    setValidationErrors(errs);
+    return errs.length === 0;
+  };
+
+  const saveTiers = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      await api.put("/api/commission-engine/pricing-policy-tiers", { tiers });
+      alert("Pricing policy tiers saved.");
+    } catch (e) {
+      const detail = e?.response?.data?.detail;
+      if (detail?.errors) {
+        setValidationErrors(detail.errors);
+      } else {
+        alert("Error saving tiers.");
+      }
+    }
+    setSaving(false);
+  };
+
+  const runPreview = async () => {
+    if (!previewCost) return;
+    try {
+      const res = await api.post("/api/commission-engine/preview", {
+        base_cost: parseFloat(previewCost),
+        has_affiliate: true,
+        has_referral: false,
+        has_sales: true,
+      });
+      setPreviewResult(res.data);
+    } catch { setPreviewResult(null); }
+  };
+
+  if (loading) return <div className="text-sm text-slate-400 py-8 text-center">Loading pricing policy...</div>;
+
+  const money = (v) => `TZS ${Number(v || 0).toLocaleString()}`;
+
+  return (
+    <>
+      <SettingsSectionCard
+        title="Margin & Distribution Tiers"
+        description="Unified pricing policy. Each tier defines margin percentages and how the distributable pool is split. This is the single source of truth for margins, promotions, affiliate, referral, sales, and wallet rules."
+      >
+        {validationErrors.length > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 space-y-1" data-testid="pricing-validation-errors">
+            <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="w-3.5 h-3.5" /> Validation Errors</div>
+            {validationErrors.map((e, i) => <div key={i}>- {e}</div>)}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {tiers.map((tier, idx) => {
+            const s = tier.distribution_split || {};
+            const splitTotal = (s.affiliate_pct || 0) + (s.promotion_pct || 0) + (s.sales_pct || 0) + (s.referral_pct || 0) + (s.reserve_pct || 0);
+            const marginSum = (tier.protected_platform_margin_pct || 0) + (tier.distributable_margin_pct || 0);
+            const splitValid = splitTotal <= 100;
+            const marginValid = marginSum <= (tier.total_margin_pct || 0) + 0.01;
+
+            return (
+              <div key={idx} className="rounded-xl border border-slate-200 p-4 space-y-3" data-testid={`pricing-tier-${idx}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#20364D] bg-slate-100 px-2 py-0.5 rounded-md">Tier {idx + 1}</span>
+                    <input
+                      type="text"
+                      value={tier.label || ""}
+                      onChange={(e) => updateTier(idx, "label", e.target.value)}
+                      className="text-sm font-semibold text-slate-700 border-b border-transparent hover:border-slate-300 focus:border-[#20364D] focus:outline-none bg-transparent px-1"
+                      data-testid={`tier-label-${idx}`}
+                    />
+                  </div>
+                  <button onClick={() => removeTier(idx)} className="text-red-400 hover:text-red-600 transition-colors" data-testid={`remove-tier-${idx}`}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Amount Range */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <TierNumberField label="Min Amount (TZS)" value={tier.min_amount} onChange={(v) => updateTier(idx, "min_amount", v)} testId={`tier-min-${idx}`} />
+                  <TierNumberField label="Max Amount (TZS)" value={tier.max_amount} onChange={(v) => updateTier(idx, "max_amount", v)} testId={`tier-max-${idx}`} />
+                </div>
+
+                {/* Margin Percentages */}
+                <div className="grid grid-cols-3 gap-3">
+                  <TierNumberField label="Total Margin %" value={tier.total_margin_pct} onChange={(v) => updateTier(idx, "total_margin_pct", v)} testId={`tier-total-margin-${idx}`} />
+                  <TierNumberField label="Protected/Platform %" value={tier.protected_platform_margin_pct} onChange={(v) => updateTier(idx, "protected_platform_margin_pct", v)} testId={`tier-protected-${idx}`} />
+                  <TierNumberField label="Distributable %" value={tier.distributable_margin_pct} onChange={(v) => updateTier(idx, "distributable_margin_pct", v)} testId={`tier-distributable-${idx}`} />
+                </div>
+                {!marginValid && (
+                  <div className="text-xs text-red-500 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3" /> Protected + Distributable ({marginSum}%) exceeds Total Margin ({tier.total_margin_pct}%)
+                  </div>
+                )}
+
+                {/* Distribution Split */}
+                <div className="rounded-lg bg-slate-50 p-3 space-y-2">
+                  <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Distribution Split (% of distributable pool)</div>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <TierNumberField label="Affiliate" value={s.affiliate_pct} onChange={(v) => updateSplit(idx, "affiliate_pct", v)} testId={`tier-split-affiliate-${idx}`} />
+                    <TierNumberField label="Promotion" value={s.promotion_pct} onChange={(v) => updateSplit(idx, "promotion_pct", v)} testId={`tier-split-promotion-${idx}`} />
+                    <TierNumberField label="Sales" value={s.sales_pct} onChange={(v) => updateSplit(idx, "sales_pct", v)} testId={`tier-split-sales-${idx}`} />
+                    <TierNumberField label="Referral" value={s.referral_pct} onChange={(v) => updateSplit(idx, "referral_pct", v)} testId={`tier-split-referral-${idx}`} />
+                    <TierNumberField label="Reserve" value={s.reserve_pct} onChange={(v) => updateSplit(idx, "reserve_pct", v)} testId={`tier-split-reserve-${idx}`} />
+                  </div>
+                  <div className={`text-xs flex items-center gap-1 ${splitValid ? "text-emerald-600" : "text-red-500"}`}>
+                    {splitValid ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                    Split total: {splitTotal}%{splitTotal < 100 ? ` (${(100 - splitTotal).toFixed(1)}% unallocated)` : ""}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          <button onClick={addTier} className="flex items-center gap-1.5 text-xs font-semibold text-[#20364D] hover:text-[#D4A843] transition-colors" data-testid="add-tier-btn">
+            <Plus className="w-3.5 h-3.5" /> Add Tier
+          </button>
+          <button onClick={saveTiers} disabled={saving} className="rounded-xl bg-[#20364D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors" data-testid="save-pricing-tiers-btn">
+            {saving ? "Saving..." : "Save Pricing Policy"}
+          </button>
+        </div>
+      </SettingsSectionCard>
+
+      {/* Live Preview */}
+      <SettingsSectionCard title="Pricing Preview" description="Test how a specific base cost resolves through the pricing policy.">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
+            <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1 block">Base Cost (TZS)</label>
+            <input
+              type="number"
+              value={previewCost}
+              onChange={(e) => setPreviewCost(e.target.value)}
+              placeholder="e.g. 3000000"
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:ring-1 focus:ring-[#20364D] focus:border-[#20364D] outline-none"
+              data-testid="pricing-preview-input"
+            />
+          </div>
+          <button onClick={runPreview} className="rounded-lg bg-slate-100 hover:bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors" data-testid="pricing-preview-btn">
+            Preview
+          </button>
+        </div>
+        {previewResult && (
+          <div className="mt-4 rounded-xl border border-slate-200 p-4 space-y-2 text-sm" data-testid="pricing-preview-result">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <PreviewField label="Tier" value={previewResult.tier_label} />
+              <PreviewField label="Base Cost" value={money(previewResult.base_cost)} />
+              <PreviewField label="Selling Price" value={money(previewResult.selling_price)} />
+              <PreviewField label="Total Margin" value={`${previewResult.total_margin_pct}% → ${money(previewResult.total_margin_amount)}`} />
+              <PreviewField label="Protected" value={`${previewResult.protected_platform_margin_pct}% → ${money(previewResult.protected_platform_margin_amount)}`} />
+              <PreviewField label="Distributable Pool" value={`${previewResult.distributable_margin_pct}% → ${money(previewResult.distributable_pool)}`} />
+            </div>
+            {previewResult.allocations && (
+              <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Allocations (from distributable pool)</div>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <PreviewField label="Affiliate" value={`${previewResult.allocations.affiliate_pct_applied}% → ${money(previewResult.allocations.affiliate_amount)}`} />
+                  <PreviewField label="Promotion" value={`${previewResult.allocations.promotion_pct_applied}% → ${money(previewResult.allocations.promotion_amount)}`} />
+                  <PreviewField label="Sales" value={`${previewResult.allocations.sales_pct_applied}% → ${money(previewResult.allocations.sales_amount)}`} />
+                  <PreviewField label="Referral" value={`${previewResult.allocations.referral_pct_applied}% → ${money(previewResult.allocations.referral_amount)}`} />
+                  <PreviewField label="Reserve" value={`${previewResult.allocations.reserve_pct_applied}% → ${money(previewResult.allocations.reserve_amount)}`} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </SettingsSectionCard>
+
+      {/* Rules Info */}
+      <SettingsSectionCard title="Policy Rules" description="Enforced automatically by the pricing engine.">
+        <div className="space-y-2 text-xs text-slate-600">
+          <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Referral overrides Affiliate:</strong> If referral exists, affiliate allocation = 0 for that order.</span></div>
+          <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Hard validation:</strong> If total split exceeds 100%, the order is rejected (no silent scaling).</span></div>
+          <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Wallet protection:</strong> Wallet usage can never consume vendor base cost or protected platform margin. Only distributable pool.</span></div>
+          <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Tier resolution by base cost:</strong> Each line item resolves to its own tier independently.</span></div>
+          <div className="flex items-start gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0" /> <span><strong>Reserve buffer:</strong> Always maintained per tier to protect against edge cases.</span></div>
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+function TierNumberField({ label, value, onChange, testId }) {
+  return (
+    <div>
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1 block">{label}</label>
+      <input
+        type="number"
+        value={value ?? ""}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm focus:ring-1 focus:ring-[#20364D] focus:border-[#20364D] outline-none"
+        data-testid={testId}
+      />
+    </div>
+  );
+}
+
+function PreviewField({ label, value }) {
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">{label}</div>
+      <div className="text-sm font-semibold text-slate-700">{value}</div>
+    </div>
+  );
+}

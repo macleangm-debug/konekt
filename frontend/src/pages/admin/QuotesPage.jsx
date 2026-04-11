@@ -7,6 +7,7 @@ import PaymentTermsCard from "@/components/admin/PaymentTermsCard";
 import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
+import { safeDisplay } from "@/utils/safeDisplay";
 
 const quoteStatuses = ["draft", "sent", "approved", "rejected", "expired", "converted"];
 const statusColors = {
@@ -463,7 +464,7 @@ export default function QuotesPage() {
                           <tr key={quote.id} className="border-b last:border-b-0 hover:bg-slate-50" data-testid={`quote-row-${quote.id}`}>
                             <td className="px-5 py-3.5 font-semibold text-sm text-[#20364D]">{quote.quote_number}</td>
                             <td className="px-5 py-3.5">
-                              <div className="text-sm font-medium">{quote.customer_company || quote.customer_name || "—"}</div>
+                              <div className="text-sm font-medium">{safeDisplay(quote.customer_company || quote.customer_name, "person")}</div>
                               {quote.customer_company && quote.customer_name && (
                                 <div className="text-xs text-slate-500">{quote.customer_name}</div>
                               )}
@@ -533,7 +534,7 @@ export default function QuotesPage() {
                         </span>
                       </div>
                       <p className="font-medium">{quote.customer_name}</p>
-                      <p className="text-sm text-slate-500">{quote.customer_company || "—"}</p>
+                      <p className="text-sm text-slate-500">{safeDisplay(quote.customer_company, "text")}</p>
                       <p className="text-lg font-bold mt-3">{formatMoney(quote.total, quote.currency)}</p>
                       {quote.payment_term_label && (
                         <p className="text-xs text-[#D4A843] mt-1 font-medium">{quote.payment_term_label}</p>

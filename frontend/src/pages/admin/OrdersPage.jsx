@@ -10,6 +10,7 @@ import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow"
 import AssignmentReasonBadge from "../../components/assignment/AssignmentReasonBadge";
 import AssignmentDecisionDrawer from "../../components/assignment/AssignmentDecisionDrawer";
 import { ShoppingCart, Truck, CheckCircle, Clock, Package, ClipboardList, Eye, Download, Activity, ArrowRight, User, MessageSquare } from "lucide-react";
+import { safeDisplay, safeMoney, cellClass } from "../../utils/safeDisplay";
 
 import { formatDate, formatDateShort } from "../../utils/dateFormat";
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -265,15 +266,15 @@ export default function OrdersPage() {
               <tbody className="divide-y divide-slate-100">
                 {[...rows].sort((a,b)=> new Date(b.created_at||0)-new Date(a.created_at||0)).map((row) => (
                   <tr key={row.id} onClick={() => openDetail(row)} className="hover:bg-slate-50 transition-colors cursor-pointer" data-testid={`order-row-${row.id}`}>
-                    <td className="px-3 py-3 text-xs text-slate-500">{formatDateShort(row.created_at)}</td>
-                    <td className="px-3 py-3 font-semibold text-[#20364D] truncate">{row.order_number || "-"}</td>
+                    <td className="px-3 py-3 text-xs text-slate-500">{safeDisplay(formatDateShort(row.created_at), "date")}</td>
+                    <td className="px-3 py-3 font-semibold text-[#20364D] truncate">{safeDisplay(row.order_number, "code")}</td>
                     <td className="px-3 py-3">
                       <CustomerLinkCell customerId={row.customer_id} customerName={row.customer_name} />
                     </td>
-                    <td className="px-3 py-3 text-slate-600 hidden md:table-cell truncate">{row.payer_name || "-"}</td>
-                    <td className="px-3 py-3 text-right font-semibold text-[#20364D]">{money(row.total_amount || row.total)}</td>
-                    <td className="px-3 py-3"><StatusBadge status={row.payment_status || row.payment_state || "paid"} /></td>
-                    <td className="px-3 py-3"><StatusBadge status={row.status || row.fulfillment_state} /></td>
+                    <td className={`px-3 py-3 hidden md:table-cell truncate ${cellClass(row.payer_name)}`}>{safeDisplay(row.payer_name, "person")}</td>
+                    <td className="px-3 py-3 text-right font-semibold text-[#20364D]">{safeMoney(row.total_amount || row.total)}</td>
+                    <td className="px-3 py-3"><StatusBadge status={safeDisplay(row.payment_status || row.payment_state, "payment")} /></td>
+                    <td className="px-3 py-3"><StatusBadge status={safeDisplay(row.status || row.fulfillment_state, "status")} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -293,13 +294,13 @@ export default function OrdersPage() {
             <section className="rounded-2xl border p-4" data-testid="drawer-order-summary">
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Summary</p>
               <div className="grid gap-2 text-sm text-slate-700">
-                <div><strong>Order No:</strong> {detail.order?.order_number || "-"}</div>
-                <div><strong>Date:</strong> {formatDateShort(detail.order?.created_at)}</div>
-                <div><strong>Source Type:</strong> <span className="capitalize">{detail.order?.source_type || detail.order?.type || "-"}</span></div>
-                <div><strong>Linked Invoice:</strong> {detail.invoice?.invoice_number || "-"}</div>
-                {detail.quote && <div><strong>Linked Quote:</strong> {detail.quote.quote_number || "-"}</div>}
-                <div><strong>Amount:</strong> <span className="font-semibold text-[#20364D]">{money(detail.order?.total_amount || detail.order?.total)}</span></div>
-                <div><strong>Approved By:</strong> {detail.payment_proof?.approved_by || detail.order?.approved_by || "-"}</div>
+                <div><strong>Order No:</strong> {safeDisplay(detail.order?.order_number, "code")}</div>
+                <div><strong>Date:</strong> {safeDisplay(formatDateShort(detail.order?.created_at), "date")}</div>
+                <div><strong>Source Type:</strong> <span className="capitalize">{safeDisplay(detail.order?.source_type || detail.order?.type, "text")}</span></div>
+                <div><strong>Linked Invoice:</strong> {safeDisplay(detail.invoice?.invoice_number, "code")}</div>
+                {detail.quote && <div><strong>Linked Quote:</strong> {safeDisplay(detail.quote.quote_number, "code")}</div>}
+                <div><strong>Amount:</strong> <span className="font-semibold text-[#20364D]">{safeMoney(detail.order?.total_amount || detail.order?.total)}</span></div>
+                <div><strong>Approved By:</strong> {safeDisplay(detail.payment_proof?.approved_by || detail.order?.approved_by, "person")}</div>
               </div>
             </section>
 
@@ -307,9 +308,9 @@ export default function OrdersPage() {
             <section className="rounded-2xl border p-4" data-testid="drawer-customer">
               <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">Customer</p>
               <div className="grid gap-2 text-sm text-slate-700">
-                <div><strong>Name:</strong> {detail.customer?.full_name || detail.order?.customer_name || "-"}</div>
-                <div><strong>Email:</strong> {detail.customer?.email || detail.order?.customer_email || "-"}</div>
-                <div><strong>Phone:</strong> {detail.customer?.phone || detail.order?.customer_phone || "-"}</div>
+                <div><strong>Name:</strong> {safeDisplay(detail.customer?.full_name || detail.order?.customer_name, "person")}</div>
+                <div><strong>Email:</strong> {safeDisplay(detail.customer?.email || detail.order?.customer_email, "email")}</div>
+                <div><strong>Phone:</strong> {safeDisplay(detail.customer?.phone || detail.order?.customer_phone, "phone")}</div>
               </div>
             </section>
 

@@ -5,6 +5,7 @@ import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
 import BrandLogo from "../../components/branding/BrandLogo";
 import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
+import { safeDisplay } from "../../utils/safeDisplay";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -435,7 +436,7 @@ export default function InvoicesPageV2() {
                 <tr><td colSpan="6" className="px-6 py-10 text-center text-slate-400">No invoices found.</td></tr>
               ) : filteredInvoices.map((invoice) => {
                 const st = statusMeta(invoice);
-                const payerName = invoice.payer_name || (invoice.billing || {}).invoice_client_name || invoice.customer_name || "-";
+                const payerName = safeDisplay(invoice.payer_name || (invoice.billing || {}).invoice_client_name || invoice.customer_name, "person");
                 return (
                   <tr key={invoice.id || invoice._id} className="hover:bg-slate-50/70 cursor-pointer transition-colors" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-row-${invoice.id}`}>
                     <td className="px-6 py-4 text-[#20364D]">{fmtDate(invoice.created_at)}</td>

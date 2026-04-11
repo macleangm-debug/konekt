@@ -1,14 +1,22 @@
 """
-Tiered Margin Engine — Percentage, fixed, hybrid margin resolution.
-Override hierarchy: product > subcategory > category > group > global.
+Tiered Margin Engine — Pricing resolution using unified pricing policy tiers.
+
+Override hierarchy: product > subcategory > category > group > global (Settings Hub).
+Global tiers now come from the unified pricing_policy_tiers in Settings Hub.
 """
 
 
 def resolve_tier(base_price, tiers):
-    """Find the matching tier for a base_price."""
+    """Find the matching tier for a base_price. Supports both legacy and unified format."""
     for tier in tiers:
-        if tier["min"] <= base_price <= tier["max"]:
-            return tier
+        # Unified format
+        if "min_amount" in tier:
+            if tier["min_amount"] <= base_price <= tier["max_amount"]:
+                return tier
+        # Legacy format
+        elif "min" in tier:
+            if tier["min"] <= base_price <= tier["max"]:
+                return tier
     return None
 
 
@@ -16,6 +24,12 @@ def apply_margin(base_price, tier):
     """Apply margin from a tier to produce sell_price."""
     if tier is None:
         return base_price
+
+    # Unified format: use total_margin_pct
+    if "total_margin_pct" in tier:
+        return round(base_price * (1 + tier["total_margin_pct"] / 100.0), 2)
+
+    # Legacy format
     t = tier.get("type", "percentage")
     if t == "percentage":
         return round(base_price * (1 + tier["value"] / 100.0), 2)
@@ -27,49 +41,43 @@ def apply_margin(base_price, tier):
 
 
 def resolve_service_sell_price(vendor_cost, service_group_margin_percent):
-    """Simple service margin: vendor_cost × (1 + margin%)."""
+    """Simple service margin: vendor_cost * (1 + margin%)."""
     return round(vendor_cost * (1 + service_group_margin_percent / 100.0), 2)
 
 
-# Default global tiers — ONLY used if Settings Hub is unavailable.
-# The canonical source is Settings Hub → margin_rules.global_tiers
-DEFAULT_GLOBAL_TIERS = [
-    {"min": 0, "max": 100000, "type": "percentage", "value": 35, "label": "Micro (0 – 100K)"},
-    {"min": 100001, "max": 500000, "type": "percentage", "value": 30, "label": "Small (100K – 500K)"},
-    {"min": 500001, "max": 2000000, "type": "percentage", "value": 25, "label": "Medium (500K – 2M)"},
-    {"min": 2000001, "max": 10000000, "type": "percentage", "value": 20, "label": "Large (2M – 10M)"},
-    {"min": 10000001, "max": 999999999, "type": "percentage", "value": 15, "label": "Enterprise (10M+)"},
-]
-
-
 async def get_global_tiers(db):
-    """Get global tiers from Settings Hub (single source of truth)."""
+    """Get global tiers from Settings Hub (unified pricing policy tiers)."""
     try:
-        from services.settings_resolver import get_margin_tiers
-        tiers = await get_margin_tiers(db)
+        from services.settings_resolver import get_pricing_policy_tiers
+        tiers = await get_pricing_policy_tiers(db)
         if tiers and len(tiers) > 0:
             return tiers
     except Exception:
         pass
     # Fallback: check legacy margin_config collection
     doc = await db.margin_config.find_one({"scope": "global"}, {"_id": 0})
-    if doc:
-        return doc.get("tiers", DEFAULT_GLOBAL_TIERS)
-    return DEFAULT_GLOBAL_TIERS
+    if doc and doc.get("tiers"):
+        return doc["tiers"]
+    # Hardcoded fallback (should never be reached if Settings Hub is working)
+    return [
+        {"min_amount": 0, "max_amount": 100000, "total_margin_pct": 35, "label": "Small (0 – 100K)"},
+        {"min_amount": 100001, "max_amount": 500000, "total_margin_pct": 30, "label": "Lower-Medium (100K – 500K)"},
+        {"min_amount": 500001, "max_amount": 2000000, "total_margin_pct": 25, "label": "Medium (500K – 2M)"},
+        {"min_amount": 2000001, "max_amount": 10000000, "total_margin_pct": 20, "label": "Large (2M – 10M)"},
+        {"min_amount": 10000001, "max_amount": 999999999, "total_margin_pct": 15, "label": "Enterprise (10M+)"},
+    ]
 
 
 async def save_global_tiers(db, tiers):
-    """Save global tiers to Settings Hub (primary) and legacy collection (compat)."""
+    """Save global tiers to Settings Hub (primary)."""
     from datetime import datetime, timezone
     from services.settings_resolver import invalidate_settings_cache
 
-    # Save to Settings Hub
+    # Save to Settings Hub as pricing_policy_tiers
     hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
     if hub and hub.get("value"):
         value = hub["value"]
-        if "margin_rules" not in value:
-            value["margin_rules"] = {}
-        value["margin_rules"]["global_tiers"] = tiers
+        value["pricing_policy_tiers"] = tiers
         await db.admin_settings.update_one(
             {"key": "settings_hub"},
             {"$set": {"value": value}},
@@ -77,9 +85,22 @@ async def save_global_tiers(db, tiers):
     invalidate_settings_cache()
 
     # Also save to legacy collection for backward compat
+    legacy_tiers = []
+    for t in tiers:
+        if "min_amount" in t:
+            legacy_tiers.append({
+                "min": t["min_amount"],
+                "max": t["max_amount"],
+                "type": "percentage",
+                "value": t.get("total_margin_pct", 0),
+                "label": t.get("label", ""),
+            })
+        else:
+            legacy_tiers.append(t)
+
     await db.margin_config.update_one(
         {"scope": "global"},
-        {"$set": {"tiers": tiers, "updated_at": datetime.now(timezone.utc)}},
+        {"$set": {"tiers": legacy_tiers, "updated_at": datetime.now(timezone.utc)}},
         upsert=True,
     )
 
@@ -121,7 +142,7 @@ async def resolve_price(db, base_price, product_id=None, subcategory_id=None, ca
             if tier:
                 return {"base_price": base_price, "final_price": apply_margin(base_price, tier), "resolved_from": "group", "tier": tier}
 
-    # 5. Global fallback
+    # 5. Global fallback — unified pricing policy tiers
     global_tiers = await get_global_tiers(db)
     tier = resolve_tier(base_price, global_tiers)
     return {"base_price": base_price, "final_price": apply_margin(base_price, tier), "resolved_from": "global", "tier": tier}

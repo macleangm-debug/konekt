@@ -1,133 +1,228 @@
 """
-Commission + Margin Distribution Engine Routes
-API endpoints for calculating and previewing commission distributions.
+Unified Pricing Policy & Commission Engine Routes
+
+API endpoints for previewing and calculating commission distributions
+using the unified pricing_policy_tiers from Settings Hub.
 """
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from commission_margin_engine_service import (
-    calculate_distribution, 
+    resolve_tier,
+    calculate_order_economics,
     calculate_order_commission,
-    DEFAULT_DISTRIBUTION_CONFIG
+    validate_wallet_usage,
+    PricingPolicyError,
 )
 
 router = APIRouter(prefix="/api/commission-engine", tags=["Commission Engine"])
 
 
 @router.post("/preview")
-async def preview_distribution(payload: dict):
+async def preview_distribution(payload: dict, request: Request):
     """
-    Preview commission distribution for a single line item.
-    Does not persist anything - just calculates and returns.
-    
+    Preview pricing economics for a single item using unified pricing policy tiers.
+
     Body:
     {
-        "selling_price": 100000,
         "base_cost": 60000,
-        "protected_company_margin_percent": 8,
-        "affiliate_percent_of_distributable": 10,
-        "sales_percent_of_distributable": 15,
-        "promo_percent_of_distributable": 10,
-        "referral_percent_of_distributable": 5,
-        "country_bonus_percent_of_distributable": 5,
-        "non_margin_touching_promo_amount": 0
+        "has_affiliate": true,
+        "has_referral": false,
+        "has_sales": true
     }
     """
-    return calculate_distribution(
-        selling_price=payload.get("selling_price", 0),
-        base_cost=payload.get("base_cost", 0),
-        protected_company_margin_percent=payload.get("protected_company_margin_percent", 8),
-        affiliate_percent_of_distributable=payload.get("affiliate_percent_of_distributable", 0),
-        sales_percent_of_distributable=payload.get("sales_percent_of_distributable", 0),
-        promo_percent_of_distributable=payload.get("promo_percent_of_distributable", 0),
-        referral_percent_of_distributable=payload.get("referral_percent_of_distributable", 0),
-        country_bonus_percent_of_distributable=payload.get("country_bonus_percent_of_distributable", 0),
-        non_margin_touching_promo_amount=payload.get("non_margin_touching_promo_amount", 0),
-    )
+    db = request.app.mongodb
+    from services.settings_resolver import get_pricing_policy_tiers
+    tiers = await get_pricing_policy_tiers(db)
+
+    base_cost = float(payload.get("base_cost", 0))
+    tier = resolve_tier(base_cost, tiers)
+
+    try:
+        economics = calculate_order_economics(
+            base_cost=base_cost,
+            tier=tier,
+            has_affiliate=payload.get("has_affiliate", False),
+            has_referral=payload.get("has_referral", False),
+            has_sales=payload.get("has_sales", False),
+        )
+        return economics
+    except PricingPolicyError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.post("/calculate-order")
 async def calculate_order(payload: dict, request: Request):
     """
     Calculate commission distribution for an entire order.
-    
+
     Body:
     {
         "order_id": "order123",
         "line_items": [
-            {"sku": "SKU001", "name": "Product 1", "selling_price": 50000, "base_cost": 30000, "quantity": 2},
-            {"sku": "SKU002", "name": "Product 2", "selling_price": 75000, "base_cost": 45000, "quantity": 1}
+            {"sku": "SKU001", "name": "Product 1", "base_cost": 30000, "quantity": 2},
+            {"sku": "SKU002", "name": "Product 2", "base_cost": 45000, "quantity": 1}
         ],
         "source_type": "affiliate",
         "affiliate_user_id": "aff123",
         "assigned_sales_id": "sales456",
         "referral_user_id": null,
-        "country_code": "TZ"
+        "wallet_amount": 0
     }
     """
     db = request.app.mongodb
-    return await calculate_order_commission(
-        db,
-        order_id=payload.get("order_id", ""),
-        line_items=payload.get("line_items", []),
-        source_type=payload.get("source_type", "website"),
-        affiliate_user_id=payload.get("affiliate_user_id"),
-        assigned_sales_id=payload.get("assigned_sales_id"),
-        referral_user_id=payload.get("referral_user_id"),
-        country_code=payload.get("country_code"),
-        config=payload.get("config"),
-    )
+    try:
+        return await calculate_order_commission(
+            db,
+            order_id=payload.get("order_id", ""),
+            line_items=payload.get("line_items", []),
+            source_type=payload.get("source_type", "website"),
+            affiliate_user_id=payload.get("affiliate_user_id"),
+            assigned_sales_id=payload.get("assigned_sales_id"),
+            referral_user_id=payload.get("referral_user_id"),
+            wallet_amount=float(payload.get("wallet_amount", 0)),
+            config=payload.get("config"),
+        )
+    except PricingPolicyError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
-@router.get("/default-config")
-async def get_default_config():
-    """Get the default distribution configuration."""
-    return {
-        "config": DEFAULT_DISTRIBUTION_CONFIG,
-        "explanation": {
-            "protected_company_margin_percent": "Minimum company margin as % of selling price (protected, never distributed)",
-            "affiliate_percent_of_distributable": "Affiliate commission as % of distributable margin",
-            "sales_percent_of_distributable": "Sales commission as % of distributable margin",
-            "promo_percent_of_distributable": "Promotional discount as % of distributable margin",
-            "referral_percent_of_distributable": "Customer referral bonus as % of distributable margin",
-            "country_bonus_percent_of_distributable": "Country director bonus as % of distributable margin",
-        },
-        "notes": [
-            "Distributable margin = Gross margin - Protected company margin",
-            "Total distribution is auto-scaled if it exceeds distributable margin",
-            "Non-margin-touching promos are tracked separately and don't reduce company margin",
+@router.get("/pricing-policy-tiers")
+async def get_pricing_policy_tiers_endpoint(request: Request):
+    """Get the current unified pricing policy tiers from Settings Hub."""
+    db = request.app.mongodb
+    from services.settings_resolver import get_pricing_policy_tiers
+    tiers = await get_pricing_policy_tiers(db)
+    return {"tiers": tiers}
+
+
+@router.put("/pricing-policy-tiers")
+async def update_pricing_policy_tiers(payload: dict, request: Request):
+    """
+    Update pricing policy tiers. Validates split percentages before saving.
+
+    Body:
+    {
+        "tiers": [
+            {
+                "label": "Small (0 – 100K)",
+                "min_amount": 0,
+                "max_amount": 100000,
+                "total_margin_pct": 35,
+                "protected_platform_margin_pct": 23,
+                "distributable_margin_pct": 12,
+                "distribution_split": {
+                    "affiliate_pct": 25,
+                    "promotion_pct": 20,
+                    "sales_pct": 20,
+                    "referral_pct": 20,
+                    "reserve_pct": 15
+                }
+            }
         ]
     }
+    """
+    db = request.app.mongodb
+    tiers = payload.get("tiers", [])
+
+    # Validate each tier
+    errors = []
+    for i, tier in enumerate(tiers):
+        split = tier.get("distribution_split", {})
+        total_split = (
+            float(split.get("affiliate_pct", 0)) +
+            float(split.get("promotion_pct", 0)) +
+            float(split.get("sales_pct", 0)) +
+            float(split.get("referral_pct", 0)) +
+            float(split.get("reserve_pct", 0))
+        )
+        if total_split > 100:
+            errors.append(f"Tier {i+1} ({tier.get('label', '')}): split total is {total_split}%, exceeds 100%")
+
+        total_margin = float(tier.get("total_margin_pct", 0))
+        protected = float(tier.get("protected_platform_margin_pct", 0))
+        distributable = float(tier.get("distributable_margin_pct", 0))
+
+        if protected + distributable > total_margin + 0.01:
+            errors.append(
+                f"Tier {i+1} ({tier.get('label', '')}): protected({protected}%) + distributable({distributable}%) "
+                f"= {protected + distributable}% exceeds total_margin({total_margin}%)"
+            )
+
+    if errors:
+        raise HTTPException(status_code=422, detail={"errors": errors})
+
+    from services.tiered_margin_engine import save_global_tiers
+    await save_global_tiers(db, tiers)
+
+    return {"status": "ok", "tiers_saved": len(tiers)}
 
 
-@router.post("/validate-config")
-async def validate_config(payload: dict):
+@router.post("/validate-wallet")
+async def validate_wallet_endpoint(payload: dict, request: Request):
     """
-    Validate a commission distribution configuration.
-    Returns warnings if total allocation might exceed distributable margin.
+    Validate wallet usage against pricing policy rules.
+
+    Body:
+    {
+        "wallet_amount": 50000,
+        "base_cost": 500000,
+        "selling_price": 625000,
+        "distributable_pool": 40000,
+        "promotion_amount": 8000,
+        "max_wallet_usage_pct": 30
+    }
     """
-    total_percent = (
-        float(payload.get("affiliate_percent_of_distributable", 0)) +
-        float(payload.get("sales_percent_of_distributable", 0)) +
-        float(payload.get("promo_percent_of_distributable", 0)) +
-        float(payload.get("referral_percent_of_distributable", 0)) +
-        float(payload.get("country_bonus_percent_of_distributable", 0))
+    return validate_wallet_usage(
+        wallet_amount=float(payload.get("wallet_amount", 0)),
+        base_cost=float(payload.get("base_cost", 0)),
+        selling_price=float(payload.get("selling_price", 0)),
+        distributable_pool=float(payload.get("distributable_pool", 0)),
+        promotion_amount=float(payload.get("promotion_amount", 0)),
+        max_wallet_usage_pct=float(payload.get("max_wallet_usage_pct", 30)),
     )
-    
-    valid = total_percent <= 100
+
+
+@router.post("/validate-tier-config")
+async def validate_tier_config(payload: dict):
+    """
+    Validate a single tier's configuration.
+    Returns warnings and errors.
+    """
+    total_margin = float(payload.get("total_margin_pct", 0))
+    protected = float(payload.get("protected_platform_margin_pct", 0))
+    distributable = float(payload.get("distributable_margin_pct", 0))
+
+    split = payload.get("distribution_split", {})
+    total_split = (
+        float(split.get("affiliate_pct", 0)) +
+        float(split.get("promotion_pct", 0)) +
+        float(split.get("sales_pct", 0)) +
+        float(split.get("referral_pct", 0)) +
+        float(split.get("reserve_pct", 0))
+    )
+
+    errors = []
     warnings = []
-    
-    if total_percent > 100:
-        warnings.append(f"Total allocation ({total_percent}%) exceeds 100% - will be auto-scaled down")
-    if total_percent > 80:
-        warnings.append(f"High allocation ({total_percent}%) leaves little retained margin")
-    
-    protected = float(payload.get("protected_company_margin_percent", 8))
+
+    if protected + distributable > total_margin + 0.01:
+        errors.append(f"protected({protected}%) + distributable({distributable}%) exceeds total_margin({total_margin}%)")
+
+    if total_split > 100:
+        errors.append(f"Distribution split total ({total_split}%) exceeds 100%")
+
+    if total_split < 100 and total_split > 0:
+        warnings.append(f"Distribution split is {total_split}% — {round(100 - total_split, 1)}% is unallocated")
+
     if protected < 5:
-        warnings.append(f"Protected margin ({protected}%) is quite low - consider at least 5-8%")
-    
+        warnings.append(f"Protected margin ({protected}%) is low — recommend at least 8-10%")
+
+    if float(split.get("reserve_pct", 0)) < 5:
+        warnings.append("Reserve is below 5% — recommend keeping at least 10% as buffer")
+
     return {
-        "valid": valid,
-        "total_allocation_percent": total_percent,
-        "protected_company_margin_percent": protected,
+        "valid": len(errors) == 0,
+        "errors": errors,
         "warnings": warnings,
-        "recommendation": "Total allocation should ideally be 40-60% of distributable margin"
+        "total_margin_pct": total_margin,
+        "margin_sum": protected + distributable,
+        "split_total": total_split,
     }

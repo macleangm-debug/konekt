@@ -73,14 +73,84 @@ PLATFORM_DEFAULTS = {
         "allow_service_group_margin_override": True,
         "allow_service_margin_override": True,
         "pricing_below_minimum_margin_requires_admin_override": True,
-        "global_tiers": [
-            {"min": 0, "max": 100000, "type": "percentage", "value": 35, "label": "Micro (0 – 100K)"},
-            {"min": 100001, "max": 500000, "type": "percentage", "value": 30, "label": "Small (100K – 500K)"},
-            {"min": 500001, "max": 2000000, "type": "percentage", "value": 25, "label": "Medium (500K – 2M)"},
-            {"min": 2000001, "max": 10000000, "type": "percentage", "value": 20, "label": "Large (2M – 10M)"},
-            {"min": 10000001, "max": 999999999, "type": "percentage", "value": 15, "label": "Enterprise (10M+)"},
-        ],
     },
+    "pricing_policy_tiers": [
+        {
+            "label": "Small (0 – 100K)",
+            "min_amount": 0,
+            "max_amount": 100000,
+            "total_margin_pct": 35,
+            "protected_platform_margin_pct": 23,
+            "distributable_margin_pct": 12,
+            "distribution_split": {
+                "affiliate_pct": 25,
+                "promotion_pct": 20,
+                "sales_pct": 20,
+                "referral_pct": 20,
+                "reserve_pct": 15,
+            },
+        },
+        {
+            "label": "Lower-Medium (100K – 500K)",
+            "min_amount": 100001,
+            "max_amount": 500000,
+            "total_margin_pct": 30,
+            "protected_platform_margin_pct": 20,
+            "distributable_margin_pct": 10,
+            "distribution_split": {
+                "affiliate_pct": 25,
+                "promotion_pct": 20,
+                "sales_pct": 20,
+                "referral_pct": 20,
+                "reserve_pct": 15,
+            },
+        },
+        {
+            "label": "Medium (500K – 2M)",
+            "min_amount": 500001,
+            "max_amount": 2000000,
+            "total_margin_pct": 25,
+            "protected_platform_margin_pct": 17,
+            "distributable_margin_pct": 8,
+            "distribution_split": {
+                "affiliate_pct": 25,
+                "promotion_pct": 20,
+                "sales_pct": 20,
+                "referral_pct": 20,
+                "reserve_pct": 15,
+            },
+        },
+        {
+            "label": "Large (2M – 10M)",
+            "min_amount": 2000001,
+            "max_amount": 10000000,
+            "total_margin_pct": 20,
+            "protected_platform_margin_pct": 14,
+            "distributable_margin_pct": 6,
+            "distribution_split": {
+                "affiliate_pct": 30,
+                "promotion_pct": 20,
+                "sales_pct": 20,
+                "referral_pct": 20,
+                "reserve_pct": 10,
+            },
+        },
+        {
+            "label": "Enterprise (10M+)",
+            "min_amount": 10000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 15,
+            "protected_platform_margin_pct": 11,
+            "distributable_margin_pct": 4,
+            "distribution_split": {
+                "affiliate_pct": 30,
+                "promotion_pct": 15,
+                "sales_pct": 20,
+                "referral_pct": 20,
+                "reserve_pct": 15,
+            },
+        },
+    ],
     "distribution_config": {
         "protected_company_margin_percent": 8,
         "affiliate_percent_of_distributable": 10,
@@ -374,7 +444,22 @@ async def get_bank_details(db) -> dict:
 
 
 async def get_margin_tiers(db) -> list:
-    """Returns the global margin tiers from Settings Hub."""
+    """Returns the global margin tiers from Settings Hub (legacy compat)."""
+    tiers = await get_pricing_policy_tiers(db)
+    # Convert unified tiers to legacy format for backward compat
+    legacy = []
+    for t in tiers:
+        legacy.append({
+            "min": t["min_amount"],
+            "max": t["max_amount"],
+            "type": "percentage",
+            "value": t["total_margin_pct"],
+            "label": t.get("label", ""),
+        })
+    return legacy
+
+
+async def get_pricing_policy_tiers(db) -> list:
+    """Returns the unified pricing policy tiers (canonical source of truth)."""
     s = await get_platform_settings(db)
-    mr = s.get("margin_rules", {})
-    return mr.get("global_tiers", PLATFORM_DEFAULTS["margin_rules"]["global_tiers"])
+    return s.get("pricing_policy_tiers", PLATFORM_DEFAULTS["pricing_policy_tiers"])

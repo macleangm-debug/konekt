@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet, CheckCircle2, XCircle, AlertTriangle, Loader2, ArrowRight, RotateCcw, Download } from "lucide-react";
 import api from "@/lib/api";
+import { safeDisplay } from "@/utils/safeDisplay";
 
 function authHeaders() {
   const token = localStorage.getItem("partner_token") || localStorage.getItem("konekt_token") || localStorage.getItem("token");
@@ -316,11 +317,11 @@ export default function VendorBulkImportPage() {
                       <tr key={r.row_number} className="hover:bg-slate-50">
                         <td className="px-3 py-2 font-mono text-slate-400">{r.row_number}</td>
                         <td className="px-3 py-2 font-medium text-slate-800">{r.data.product.product_name}</td>
-                        <td className="px-3 py-2 text-slate-600">{r.data.product.brand || "-"}</td>
+                        <td className="px-3 py-2 text-slate-600">{safeDisplay(r.data.product.brand, "text")}</td>
                         <td className="px-3 py-2 text-slate-600">{r.data.product.category_name}</td>
                         <td className="px-3 py-2 text-right text-slate-800">{Number(r.data.supply.base_price_vat_inclusive).toLocaleString()}</td>
                         <td className="px-3 py-2 text-slate-500">
-                          {[r.data.variant?.size, r.data.variant?.color, r.data.variant?.model].filter(Boolean).join(" / ") || "-"}
+                          {safeDisplay([r.data.variant?.size, r.data.variant?.color, r.data.variant?.model].filter(Boolean).join(" / "), "text")}
                         </td>
                       </tr>
                     ))}

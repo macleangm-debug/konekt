@@ -8,6 +8,7 @@ import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
 import BrandLogo from "@/components/branding/BrandLogo";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
+import { safeDisplay } from "@/utils/safeDisplay";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 
@@ -65,7 +66,7 @@ function InvoiceDrawer({ invoice, onClose, onStatusChange, onSend }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl border p-4 bg-slate-50/50">
               <div className="text-xs uppercase tracking-wide text-slate-400 mb-2 font-semibold">Customer</div>
-              <div className="font-semibold text-[#20364D] text-sm">{invoice.customer_name || "—"}</div>
+              <div className="font-semibold text-[#20364D] text-sm">{safeDisplay(invoice.customer_name, "person")}</div>
               <div className="text-xs text-slate-500">{invoice.customer_company || ""}</div>
               <div className="text-xs text-slate-500">{invoice.customer_email || ""}</div>
             </div>
@@ -276,12 +277,12 @@ export default function InvoicesPage() {
                   <td className="px-5 py-4">
                     <CustomerLinkCell customerId={invoice.customer_id} customerName={invoice.customer_name || invoice.customer_company} />
                   </td>
-                  <td className="px-5 py-4 text-slate-600 capitalize">{invoice.source_type || invoice.type || "-"}</td>
+                  <td className="px-5 py-4 text-slate-600 capitalize">{safeDisplay(invoice.source_type || invoice.type, "text")}</td>
                   <td className="px-5 py-4 text-right font-semibold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</td>
-                  <td className="px-5 py-4 text-slate-600">{invoice.payer_name || "-"}</td>
+                  <td className="px-5 py-4 text-slate-600">{safeDisplay(invoice.payer_name, "person")}</td>
                   <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.payment_state || invoice.payment_status] || statusColors[invoice.status] || "bg-slate-100 text-slate-700"}`}>{invoice.payment_status_label || (invoice.payment_state || invoice.payment_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
                   <td className="px-5 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium capitalize ${statusColors[invoice.invoice_status || invoice.status] || "bg-slate-100 text-slate-700"}`}>{(invoice.invoice_status || invoice.status || "draft").replace(/_/g, " ")}</span></td>
-                  <td className="px-5 py-4 text-xs text-slate-500">{invoice.linked_ref || "-"}</td>
+                  <td className="px-5 py-4 text-xs text-slate-500">{safeDisplay(invoice.linked_ref, "code")}</td>
                 </tr>
               ))}
             </tbody>

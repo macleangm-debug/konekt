@@ -5,6 +5,7 @@ import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 import { useConfirmModal } from "../../contexts/ConfirmModalContext";
+import { safeDisplay, safeMoney, cellClass } from "../../utils/safeDisplay";
 import {
   CreditCard, CheckCircle2, XCircle, Clock, FileText, Eye,
   User, Building2, Mail, Phone, Receipt, Calendar, ChevronRight, Loader2,
@@ -156,12 +157,12 @@ export default function PaymentsQueuePage() {
             ) : proofs.map((p) => (
               <tr key={p.payment_proof_id} className="border-b last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDrawer(p)} data-testid={`payment-row-${p.payment_proof_id}`}>
                 <td className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">{p.created_at ? new Date(p.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—"}</td>
-                <td className="px-4 py-3 font-semibold text-sm text-[#20364D]">{p.invoice_number || p.order_number || p.payment_reference || "—"}</td>
+                <td className="px-4 py-3 font-semibold text-sm text-[#20364D]">{safeDisplay(p.invoice_number || p.order_number || p.payment_reference, "code")}</td>
                 <td className="px-4 py-3">
                   <CustomerLinkCell customerId={p.customer_id} customerName={p.customer_name} />
                 </td>
                 <td className="px-4 py-3">
-                  <div className="text-sm font-medium text-slate-700">{p.payer_name || "—"}</div>
+                  <div className={`text-sm font-medium ${cellClass(p.payer_name)}`}>{safeDisplay(p.payer_name, "person")}</div>
                   {p.payer_phone && <div className="text-xs text-slate-500">{p.payer_phone}</div>}
                 </td>
                 <td className="px-4 py-3">
@@ -207,15 +208,15 @@ export default function PaymentsQueuePage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">Payer Name</span>
-                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-payer-name">{selected.payer_name || "—"}</span>
+                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-payer-name">{safeDisplay(selected.payer_name, "person")}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">Payer Phone</span>
-                  <span className="text-sm font-medium text-[#20364D]" data-testid="drawer-payer-phone">{selected.payer_phone || selected.contact_phone || "—"}</span>
+                  <span className="text-sm font-medium text-[#20364D]" data-testid="drawer-payer-phone">{safeDisplay(selected.payer_phone || selected.contact_phone, "phone")}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">Payer Email</span>
-                  <span className="text-sm font-medium text-[#20364D]">{selected.payer_email || selected.customer_email || "—"}</span>
+                  <span className="text-sm font-medium text-[#20364D]">{safeDisplay(selected.payer_email || selected.customer_email, "email")}</span>
                 </div>
                 {selected.payment_reference && (
                   <div className="flex items-center justify-between">
@@ -232,7 +233,7 @@ export default function PaymentsQueuePage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-500">Customer</span>
-                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-customer-name">{selected.customer_name || "—"}</span>
+                  <span className="text-sm font-semibold text-[#20364D]" data-testid="drawer-customer-name">{safeDisplay(selected.customer_name, "person")}</span>
                 </div>
                 {selected.company_name && (
                   <div className="flex items-center justify-between">
@@ -249,7 +250,7 @@ export default function PaymentsQueuePage() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div>
                   <span className="text-slate-500 text-xs">Invoice No.</span>
-                  <p className="font-semibold text-[#20364D]">{selected.invoice_number || selected.order_number || "N/A"}</p>
+                  <p className="font-semibold text-[#20364D]">{safeDisplay(selected.invoice_number || selected.order_number, "code")}</p>
                 </div>
                 <div>
                   <span className="text-slate-500 text-xs">Expected Amount</span>

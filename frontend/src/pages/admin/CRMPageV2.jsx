@@ -8,6 +8,7 @@ import CustomerLinkCell from "@/components/customers/CustomerLinkCell";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 import QuoteBuilderDrawer from "@/components/crm/QuoteBuilderDrawer";
 import { combinePhone } from "@/utils/phoneUtils";
+import { safeDisplay } from "@/utils/safeDisplay";
 
 const CRM_TABS = [
   { key: "all", label: "All Leads" },
@@ -626,7 +627,7 @@ export default function CRMPageV2() {
                             <td className="px-4 py-3 text-sm text-slate-600">{lead.assigned_to || <span className="text-slate-300 italic text-xs">Unassigned</span>}</td>
                             <td className="px-4 py-3">
                               <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${statusColors[lead.stage] || statusColors[lead.status] || "bg-slate-100"}`}>
-                                {(lead.stage || lead.status || "—").replace(/_/g, " ")}
+                                {safeDisplay((lead.stage || lead.status || "").replace(/_/g, " "), "status")}
                               </span>
                             </td>
                             <td className="px-4 py-3">
@@ -1115,7 +1116,7 @@ function IntelligenceTabContent({ data, sales, marketing, pipelineMetrics, stale
         <IntelStatCard label="Won" value={pipelineMetrics?.won_count || data?.summary?.won || 0} />
         <IntelStatCard label="Lost" value={pipelineMetrics?.lost_count || data?.summary?.lost || 0} />
         <IntelStatCard label="Win Rate" value={`${pipelineMetrics?.win_rate || 0}%`} />
-        <IntelStatCard label="Avg Days to Close" value={pipelineMetrics?.avg_days_to_close || "—"} />
+        <IntelStatCard label="Avg Days to Close" value={safeDisplay(pipelineMetrics?.avg_days_to_close, "number")} />
         <IntelStatCard label="Stale Deals" value={staleDeals?.length || 0} highlight={staleDeals?.length > 0} />
       </div>
 
