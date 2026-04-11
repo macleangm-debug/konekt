@@ -1,9 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from "@/components/ui/sheet";
+import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import {
   Download, Copy, Check, Image as ImageIcon, Tag,
   MessageSquare, Send, Smartphone, Square, RectangleVertical,
@@ -285,14 +283,13 @@ function SalesPreviewDrawer({ item, branding, onClose }) {
   };
 
   return (
-    <Sheet open={!!item} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto p-0">
-        <div className="p-5" data-testid="sales-preview-drawer">
-          <SheetHeader className="mb-4">
-            <SheetTitle className="text-lg font-bold text-[#20364D]">{item.name}</SheetTitle>
-            <SheetDescription className="text-xs text-slate-500">{item.category || item.type}</SheetDescription>
-          </SheetHeader>
-
+    <StandardDrawerShell
+      open={!!item}
+      onClose={onClose}
+      title={item.name}
+      subtitle={item.category || item.type}
+      testId="sales-preview-drawer"
+    >
           {/* Large Image */}
           <div className="rounded-xl overflow-hidden bg-slate-100 mb-4">
             {item.image_url ? (
@@ -375,8 +372,6 @@ function SalesPreviewDrawer({ item, branding, onClose }) {
               </div>
             </div>
           )}
-        </div>
-      </SheetContent>
-    </Sheet>
+    </StandardDrawerShell>
   );
 }

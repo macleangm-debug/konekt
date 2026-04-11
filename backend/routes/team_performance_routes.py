@@ -164,6 +164,15 @@ async def get_team_performance_summary(request: Request):
     # Alerts: overdue follow-ups, stale leads (no contact in 7+ days), payment issues
     alerts = []
 
+    # Build user ID → name lookup
+    all_users_lookup = {}
+    for u in sales_users:
+        all_users_lookup[u.get("id", "")] = u.get("full_name", u.get("email", ""))
+        all_users_lookup[u.get("email", "")] = u.get("full_name", u.get("email", ""))
+
+    def _resolve_name(uid):
+        return all_users_lookup.get(uid, uid[:20] if uid and len(uid) > 20 else uid or "Unassigned")
+
     # Overdue follow-ups
     for l in all_leads:
         nf = l.get("next_follow_up_at")
@@ -178,8 +187,10 @@ async def get_team_performance_summary(request: Request):
                         "type": "overdue_followup",
                         "severity": "critical" if days_overdue > 3 else "warning",
                         "message": f"Follow-up overdue by {days_overdue} day{'s' if days_overdue != 1 else ''}",
-                        "entity": l.get("assigned_to", "Unassigned"),
+                        "entity": _resolve_name(l.get("assigned_to", "")),
+                        "reference": l.get("contact_name") or l.get("company_name") or "",
                         "date": nf_dt.isoformat(),
+                        "lead_id": l.get("id", ""),
                     })
             except Exception:
                 pass
@@ -200,8 +211,10 @@ async def get_team_performance_summary(request: Request):
                         "type": "stale_lead",
                         "severity": "warning",
                         "message": f"Lead not contacted in {days_stale} days",
-                        "entity": l.get("assigned_to", "Unassigned"),
+                        "entity": _resolve_name(l.get("assigned_to", "")),
+                        "reference": l.get("contact_name") or l.get("company_name") or "",
                         "date": lc_dt.isoformat(),
+                        "lead_id": l.get("id", ""),
                     })
             except Exception:
                 pass

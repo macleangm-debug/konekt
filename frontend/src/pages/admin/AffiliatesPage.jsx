@@ -15,8 +15,11 @@ import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const initialForm = {
-  name: "", email: "", affiliate_code: "", affiliate_link: "",
-  is_active: true, commission_type: "percentage", commission_value: 10, notes: "",
+  name: "", phone: "", email: "", affiliate_code: "",
+  is_active: true, notes: "",
+  payout_method: "mobile_money",
+  mobile_money_number: "", mobile_money_provider: "",
+  bank_name: "", bank_account_name: "", bank_account_number: "",
 };
 
 export default function AffiliatesPage() {
@@ -184,9 +187,15 @@ export default function AffiliatesPage() {
         }
       >
         <form onSubmit={save} className="space-y-4">
+          {/* Section 1 — Identity */}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Identity</div>
           <div>
             <Label className="text-xs">Name *</Label>
-            <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Partner name" className="mt-1" data-testid="affiliate-name-input" />
+            <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Full name or business name" className="mt-1" data-testid="affiliate-name-input" />
+          </div>
+          <div>
+            <Label className="text-xs">Phone *</Label>
+            <Input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+255 7XX XXX XXX" className="mt-1" data-testid="affiliate-phone-input" />
           </div>
           <div>
             <Label className="text-xs">Email *</Label>
@@ -197,17 +206,59 @@ export default function AffiliatesPage() {
             <Input value={form.affiliate_code} onChange={(e) => update("affiliate_code", e.target.value.toUpperCase())} placeholder="e.g., PARTNER10" className="mt-1 font-mono" data-testid="affiliate-code-input" />
             <p className="text-[10px] text-slate-400 mt-1">Used in promo codes and tracking links</p>
           </div>
-          {/* Commission defaults from Settings — shown as info, not editable */}
-          <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Commission Policy (from Settings)</div>
-            <div className="text-sm text-[#20364D] font-medium">
-              {form.commission_type === "percentage" ? `${form.commission_value}%` : `TZS ${form.commission_value}`} per closed deal
+
+          {/* Section 2 — Payout Setup */}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 pt-2">Payout Setup</div>
+          <div>
+            <Label className="text-xs">Payout Method</Label>
+            <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden mt-1">
+              {[{ key: "mobile_money", label: "Mobile Money" }, { key: "bank", label: "Bank Transfer" }].map((m) => (
+                <button type="button" key={m.key} onClick={() => update("payout_method", m.key)} className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${form.payout_method === m.key ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`payout-${m.key}`}>
+                  {m.label}
+                </button>
+              ))}
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">To change defaults, update Affiliate Settings in the Settings Hub</p>
           </div>
+          {form.payout_method === "mobile_money" && (
+            <>
+              <div>
+                <Label className="text-xs">Mobile Money Number</Label>
+                <Input type="tel" value={form.mobile_money_number} onChange={(e) => update("mobile_money_number", e.target.value)} placeholder="07XX XXX XXX" className="mt-1" data-testid="mm-number-input" />
+              </div>
+              <div>
+                <Label className="text-xs">Provider</Label>
+                <Input value={form.mobile_money_provider} onChange={(e) => update("mobile_money_provider", e.target.value)} placeholder="e.g., M-Pesa, Tigo Pesa, Airtel Money" className="mt-1" data-testid="mm-provider-input" />
+              </div>
+            </>
+          )}
+          {form.payout_method === "bank" && (
+            <>
+              <div>
+                <Label className="text-xs">Bank Name</Label>
+                <Input value={form.bank_name} onChange={(e) => update("bank_name", e.target.value)} placeholder="e.g., CRDB, NMB, Equity" className="mt-1" data-testid="bank-name-input" />
+              </div>
+              <div>
+                <Label className="text-xs">Account Name</Label>
+                <Input value={form.bank_account_name} onChange={(e) => update("bank_account_name", e.target.value)} placeholder="Account holder name" className="mt-1" data-testid="bank-acct-name-input" />
+              </div>
+              <div>
+                <Label className="text-xs">Account Number</Label>
+                <Input value={form.bank_account_number} onChange={(e) => update("bank_account_number", e.target.value)} placeholder="Account number" className="mt-1 font-mono" data-testid="bank-acct-num-input" />
+              </div>
+            </>
+          )}
+
+          {/* Commission info — read-only from settings */}
+          <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Commission</div>
+            <div className="text-xs text-slate-600">Automatically managed by system settings</div>
+          </div>
+
+          {/* Section 3 — Optional */}
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 pt-2">Optional</div>
           <div>
             <Label className="text-xs">Notes</Label>
-            <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Internal notes..." className="mt-1 min-h-[80px]" />
+            <Textarea value={form.notes} onChange={(e) => update("notes", e.target.value)} placeholder="Internal notes..." className="mt-1 min-h-[60px]" />
           </div>
           <label className="flex items-center gap-3 cursor-pointer">
             <Switch checked={form.is_active} onCheckedChange={(c) => update("is_active", c)} />

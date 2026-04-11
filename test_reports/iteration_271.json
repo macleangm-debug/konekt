@@ -1,0 +1,113 @@
+{
+  "summary": "Konekt B2B Platform Correction Pass (Enforcement) - All features verified. StandardDrawerShell migration complete for PaymentProofsAdminPage and SalesContentHubPage. Affiliate form has payout method toggle with conditional fields and NO commission inputs. Promotions form simplified with NO discount_type/discount_value inputs. CRM page width contained to max-w-7xl. Team Alerts page redesigned with Reference column, Owner/Rep names, and contextual CTA buttons.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "/api/admin/team-performance/summary alerts",
+        "issue": "reference and lead_id fields are present but empty for some alerts - this is a data issue (leads missing contact_name/company_name/id), not a code issue"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "SalesContentHubPage",
+        "issues": ["Console warnings about duplicate React keys (product-) - minor code quality issue, doesn't affect functionality"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_correction_pass_v271.py",
+    "/app/test_reports/pytest/pytest_results_correction_pass_v271.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SalesContentHubPage has duplicate key warnings - consider adding unique keys to mapped elements"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_correction_pass_v271.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, staff@konekt.co.tz / Staff123!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Correction Pass features verified. Admin auth uses localStorage key 'konekt_admin_token'. Staff auth uses 'konekt_staff_token'. StandardDrawerShell uses React Portal (createPortal to document.body) with z-index 9998 backdrop and 9999 panel.",
+  "features_tested": {
+    "payment_proofs_admin_drawer": {
+      "status": "PASS",
+      "details": [
+        "PaymentProofsAdminPage uses StandardDrawerShell for proof detail drawer",
+        "Drawer has testId='proof-detail-drawer'",
+        "Footer contains approve/reject buttons for pending proofs",
+        "Page loads at /admin/finance/payment-proofs (empty state when no proofs)"
+      ]
+    },
+    "sales_content_hub_drawer": {
+      "status": "PASS",
+      "details": [
+        "SalesContentHubPage uses StandardDrawerShell for content preview",
+        "Drawer has testId='sales-preview-drawer'",
+        "Shows product image, Download Image button, price, Ready Captions (WhatsApp/Sales, Short Caption, Social Post), Promo Code",
+        "Page loads at /staff/content-hub with tabs (All, Products, Services)"
+      ]
+    },
+    "affiliate_form_completion": {
+      "status": "PASS",
+      "details": [
+        "Form shows Identity section: Name, Phone, Email, Affiliate Code",
+        "Payout Setup section with toggle: Mobile Money / Bank Transfer",
+        "Mobile Money selected: shows Mobile Money Number + Provider fields",
+        "Bank selected: shows Bank Name + Account Name + Account Number fields",
+        "Commission section shows 'Automatically managed by system settings' (read-only)",
+        "NO commission_type or commission_value inputs in form",
+        "Optional section: Notes, Active toggle"
+      ]
+    },
+    "promotions_simplification": {
+      "status": "PASS",
+      "details": [
+        "Form shows: Promotion Name, Promo Code, Description, Scope (All Products/Specific Category/Specific Product)",
+        "Stacking Rule options: No Stacking, Stack with Cap, Reduce with Affiliate, Referral Priority",
+        "Date fields: Start Date, End Date",
+        "Usage Limits: Max Total Uses, Max Per Customer",
+        "Customer Message field",
+        "NO discount_type or discount_value inputs",
+        "Info note: 'Discount is automatically calculated based on pricing policy settings (distributable margin and promotion allocation)'"
+      ]
+    },
+    "crm_page_width_containment": {
+      "status": "PASS",
+      "details": [
+        "CRM page has class 'max-w-7xl mx-auto px-4 sm:px-6 py-6'",
+        "Page is contained within max-w-7xl, not stretching edge-to-edge",
+        "Heading text is 'CRM' with text-xl size"
+      ]
+    },
+    "team_alerts_page_redesign": {
+      "status": "PASS",
+      "details": [
+        "Table columns: Sev, Type, Reference, Message, Owner/Rep, Date, Action",
+        "Reference column present (shows lead contact_name/company_name when available)",
+        "Owner/Rep column shows resolved names (not raw IDs)",
+        "Action column has contextual CTA buttons",
+        "CTA buttons: 'Open CRM' for overdue_followup/stale_lead, 'Review Payments' for pending_payments",
+        "28 critical alerts displayed with proper severity icons"
+      ]
+    },
+    "team_performance_api_alerts": {
+      "status": "PASS",
+      "details": [
+        "/api/admin/team-performance/summary returns alerts with 'reference' and 'lead_id' fields",
+        "Alerts have resolved owner names via _resolve_name() function",
+        "Alert types: overdue_followup, stale_lead, pending_payments"
+      ]
+    }
+  }
+}

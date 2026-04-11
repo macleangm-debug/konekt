@@ -10,11 +10,6 @@ const SCOPE_OPTIONS = [
   { value: "product", label: "Specific Product" },
 ];
 
-const DISCOUNT_TYPES = [
-  { value: "percentage", label: "Percentage (%)" },
-  { value: "fixed_amount", label: "Fixed Amount (TZS)" },
-];
-
 const STACKING_RULES = [
   { value: "no_stack", label: "No Stacking", desc: "Cannot combine with other promotions" },
   { value: "stack_with_cap", label: "Stack with Cap", desc: "Can combine, capped at promotion allocation" },
@@ -426,16 +421,10 @@ function PromotionForm({ initial, categories, products, onSaved, onCancel }) {
         </FormField>
       )}
 
-      {/* Discount */}
-      <div className="grid grid-cols-2 gap-3">
-        <FormField label="Discount Type" required>
-          <select value={form.discount_type} onChange={e => update("discount_type", e.target.value)} className="form-input" data-testid="promo-discount-type">
-            {DISCOUNT_TYPES.map(dt => <option key={dt.value} value={dt.value}>{dt.label}</option>)}
-          </select>
-        </FormField>
-        <FormField label={form.discount_type === "percentage" ? "Discount (%)" : "Discount (TZS)"} required>
-          <input type="number" value={form.discount_value} onChange={e => update("discount_value", e.target.value)} placeholder="e.g. 5" className="form-input" step="0.1" data-testid="promo-discount-value" />
-        </FormField>
+      {/* Discount — Automatically from pricing policy */}
+      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Discount Calculation</div>
+        <div className="text-xs text-slate-600">Discount is automatically calculated based on pricing policy settings (distributable margin and promotion allocation).</div>
       </div>
 
       {/* Stacking Rule */}

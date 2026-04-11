@@ -4,6 +4,7 @@ import {
   Eye, Download, Image, DollarSign, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
 
 const API = process.env.REACT_APP_BACKEND_URL;
 
@@ -301,25 +302,45 @@ export default function PaymentProofsAdminPage() {
         </div>
       )}
 
-      {/* Detail Modal */}
-      {selectedProof && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" data-testid="proof-detail-modal">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Payment Proof Details</h2>
-              <button onClick={() => setSelectedProof(null)} className="p-2 hover:bg-slate-100 rounded-lg">
-                <XCircle className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-4 space-y-4">
+      {/* Detail Drawer */}
+      <StandardDrawerShell
+        open={!!selectedProof}
+        onClose={() => setSelectedProof(null)}
+        title="Payment Proof Details"
+        subtitle={selectedProof?.customer_name || ""}
+        testId="proof-detail-drawer"
+        footer={selectedProof?.status === "pending" ? (
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => {
+                const reason = window.prompt("Enter rejection reason:");
+                if (reason) handleReject(selectedProof.id, reason);
+              }}
+              className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm font-semibold"
+              data-testid="drawer-reject-btn"
+            >
+              Reject
+            </button>
+            <button
+              onClick={() => handleApprove(selectedProof.id)}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold"
+              data-testid="drawer-approve-btn"
+            >
+              Approve & Allocate
+            </button>
+          </div>
+        ) : null}
+      >
+        {selectedProof && (
+          <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-slate-500">Customer</div>
-                  <div className="font-medium">{selectedProof.customer_name}</div>
-                  <div className="text-sm text-slate-600">{selectedProof.customer_email}</div>
+                  <div className="text-xs text-slate-500">Customer</div>
+                  <div className="font-medium text-sm">{selectedProof.customer_name}</div>
+                  <div className="text-xs text-slate-600">{selectedProof.customer_email}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-500">Amount</div>
+                  <div className="text-xs text-slate-500">Amount</div>
                   <div className="text-xl font-bold text-green-600">
                     {selectedProof.currency} {Number(selectedProof.amount_paid || 0).toLocaleString()}
                   </div>
@@ -328,35 +349,35 @@ export default function PaymentProofsAdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-sm text-slate-500">Payment Method</div>
-                  <div className="font-medium capitalize">{selectedProof.payment_method?.replace("_", " ")}</div>
+                  <div className="text-xs text-slate-500">Payment Method</div>
+                  <div className="font-medium text-sm capitalize">{selectedProof.payment_method?.replace("_", " ")}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-slate-500">Payment Date</div>
-                  <div className="font-medium">{selectedProof.payment_date || "-"}</div>
+                  <div className="text-xs text-slate-500">Payment Date</div>
+                  <div className="font-medium text-sm">{selectedProof.payment_date || "-"}</div>
                 </div>
               </div>
 
               <div>
-                <div className="text-sm text-slate-500">Bank Reference</div>
-                <div className="font-medium font-mono">{selectedProof.bank_reference || "-"}</div>
+                <div className="text-xs text-slate-500">Bank Reference</div>
+                <div className="font-medium text-sm font-mono">{selectedProof.bank_reference || "-"}</div>
               </div>
 
               {selectedProof.notes && (
                 <div>
-                  <div className="text-sm text-slate-500">Customer Notes</div>
-                  <div className="text-slate-700">{selectedProof.notes}</div>
+                  <div className="text-xs text-slate-500">Customer Notes</div>
+                  <div className="text-sm text-slate-700">{selectedProof.notes}</div>
                 </div>
               )}
 
               {selectedProof.proof_file_url && (
                 <div>
-                  <div className="text-sm text-slate-500 mb-2">Proof Document</div>
+                  <div className="text-xs text-slate-500 mb-2">Proof Document</div>
                   <a
                     href={selectedProof.proof_file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:underline"
+                    className="flex items-center gap-2 text-blue-600 hover:underline text-sm"
                   >
                     <Image className="w-4 h-4" />
                     {selectedProof.proof_file_name || "View Document"}
@@ -365,7 +386,7 @@ export default function PaymentProofsAdminPage() {
               )}
 
               <div>
-                <div className="text-sm text-slate-500">Status</div>
+                <div className="text-xs text-slate-500">Status</div>
                 <div className="mt-1">{getStatusBadge(selectedProof.status)}</div>
               </div>
 
@@ -388,32 +409,9 @@ export default function PaymentProofsAdminPage() {
                   </div>
                 </div>
               )}
-            </div>
-
-            {selectedProof.status === "pending" && (
-              <div className="p-4 border-t flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    const reason = window.prompt("Enter rejection reason:");
-                    if (reason) handleReject(selectedProof.id, reason);
-                  }}
-                  className="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50"
-                  data-testid="modal-reject-btn"
-                >
-                  Reject
-                </button>
-                <button
-                  onClick={() => handleApprove(selectedProof.id)}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
-                  data-testid="modal-approve-btn"
-                >
-                  Approve & Allocate
-                </button>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
+      </StandardDrawerShell>
     </div>
   );
 }

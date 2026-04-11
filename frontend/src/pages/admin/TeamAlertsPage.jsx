@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
-import { AlertTriangle, Loader2, Clock, CreditCard, UserX } from "lucide-react";
+import { AlertTriangle, Loader2, Clock, CreditCard, UserX, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const ALERT_ICONS = {
   overdue_followup: Clock,
@@ -10,9 +12,9 @@ const ALERT_ICONS = {
 };
 
 const SEVERITY_STYLES = {
-  critical: "bg-red-100 text-red-700 border-red-200",
-  warning: "bg-amber-100 text-amber-700 border-amber-200",
-  info: "bg-blue-100 text-blue-700 border-blue-200",
+  critical: "bg-red-100 text-red-700",
+  warning: "bg-amber-100 text-amber-700",
+  info: "bg-blue-100 text-blue-700",
 };
 
 const TYPE_LABELS = {
@@ -21,10 +23,17 @@ const TYPE_LABELS = {
   pending_payments: "Pending Payments",
 };
 
+const CTA_CONFIG = {
+  overdue_followup: { label: "Open CRM", path: "/admin/crm" },
+  stale_lead: { label: "Open CRM", path: "/admin/crm" },
+  pending_payments: { label: "Review Payments", path: "/admin/finance/payments-queue" },
+};
+
 export default function TeamAlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const navigate = useNavigate();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,12 +60,8 @@ export default function TeamAlertsPage() {
           <p className="text-sm text-slate-500 mt-0.5">Operational issues requiring attention</p>
         </div>
         <div className="flex items-center gap-2">
-          {criticalCount > 0 && (
-            <Badge className="bg-red-100 text-red-700">{criticalCount} Critical</Badge>
-          )}
-          {warningCount > 0 && (
-            <Badge className="bg-amber-100 text-amber-700">{warningCount} Warning</Badge>
-          )}
+          {criticalCount > 0 && <Badge className="bg-red-100 text-red-700">{criticalCount} Critical</Badge>}
+          {warningCount > 0 && <Badge className="bg-amber-100 text-amber-700">{warningCount} Warning</Badge>}
         </div>
       </div>
 
@@ -83,15 +88,18 @@ export default function TeamAlertsPage() {
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/60">
                   <th className="text-center px-3 py-3 font-semibold text-slate-600 text-xs uppercase w-12">Sev</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Type</th>
+                  <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Type</th>
+                  <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Reference</th>
                   <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase">Message</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Owner / Rep</th>
                   <th className="text-left px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Date</th>
+                  <th className="text-right px-3 py-3 font-semibold text-slate-600 text-xs uppercase">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((alert, i) => {
                   const Icon = ALERT_ICONS[alert.type] || AlertTriangle;
+                  const cta = CTA_CONFIG[alert.type];
                   return (
                     <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`alert-row-${i}`}>
                       <td className="px-3 py-3 text-center">
@@ -101,15 +109,31 @@ export default function TeamAlertsPage() {
                           <Icon className="w-3 h-3" />
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Badge className={`text-[10px] ${SEVERITY_STYLES[alert.severity] || "bg-slate-100 text-slate-600"}`}>
                           {TYPE_LABELS[alert.type] || alert.type}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-slate-700">{alert.message}</td>
-                      <td className="px-3 py-3 text-slate-500 text-xs truncate max-w-[150px]">{alert.entity || "—"}</td>
-                      <td className="px-3 py-3 text-slate-400 text-xs">
+                      <td className="px-3 py-3 text-xs text-[#20364D] font-medium truncate max-w-[140px]">
+                        {alert.reference || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-slate-700 text-xs">{alert.message}</td>
+                      <td className="px-3 py-3 text-slate-600 text-xs truncate max-w-[140px]">{alert.entity || "Unassigned"}</td>
+                      <td className="px-3 py-3 text-slate-400 text-xs whitespace-nowrap">
                         {alert.date ? new Date(alert.date).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        {cta && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-[#20364D] hover:bg-slate-100"
+                            onClick={() => navigate(cta.path)}
+                            data-testid={`alert-cta-${i}`}
+                          >
+                            {cta.label} <ExternalLink className="w-3 h-3 ml-1" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );
