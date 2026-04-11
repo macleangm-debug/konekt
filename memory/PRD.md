@@ -10,17 +10,17 @@ Build a full-featured B2B e-commerce platform for Tanzania. Features include mul
 - **Integrations:** Stripe (Sandbox Payments), Object Storage (Emergent), Resend (pending), Twilio WhatsApp (pending)
 
 ## Core Roles
-- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals, promotions.
-- **Customer:** Browse catalog, orders, invoices, payment uploads, apply promo codes.
+- **Admin:** Full system access. Pricing, orders, CRM, settings, approvals, promotions, margin simulation.
+- **Customer:** Browse catalog, orders, invoices, payment uploads, apply promo codes, see instant price estimates.
 - **Vendor/Partner:** Product management, vendor orders, delivery status.
 - **Sales:** CRM leads, assigned orders, delivery overrides.
 
 ## Key Technical Concepts
-- **Single Source of Truth (Settings Hub):** All rules (margins, affiliates, follow-ups) come from Settings Hub via `settings_resolver.py`.
-- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits. Source of truth for margins, promotions, affiliate, referral, sales, and wallet rules.
-- **Strict Payer/Customer Separation:** `customer_name` from account, `payer_name` from payment proof.
+- **Single Source of Truth (Settings Hub):** All rules come from Settings Hub via `settings_resolver.py`.
+- **Unified Pricing Policy Tiers:** One canonical table per tier defining margins AND distribution splits.
+- **Promotion Allocation Rule:** Promotions consume ONLY from the promotion share of distributable pool.
+- **Strict Payer/Customer Separation:** Never fallback between payer_name and customer_name.
 - **Vendor Privacy:** Vendors see only their base_cost, work details, and Konekt Sales Contact.
-- **Promotion Allocation Rule:** Promotions consume ONLY from the promotion share of the distributable pool. Never touches vendor base cost or protected platform margin.
 
 ## What's Been Implemented
 
@@ -28,40 +28,41 @@ Build a full-featured B2B e-commerce platform for Tanzania. Features include mul
 - Multi-role auth (JWT), role-based routing
 - Product/Service catalog, Marketplace
 - Order lifecycle, Invoice generation, Payment proofs
-- CRM with Kanban board
-- Affiliate & referral system
+- CRM with Kanban board, Affiliate & referral system
 - Vendor order management & delivery tracking
-- Stripe sandbox payments
-- Settings Hub (centralized)
-- Object storage for vendor images
+- Stripe sandbox payments, Settings Hub, Object storage
 
 ### Unified Pricing Policy Engine (2026-04-11)
-- Canonical `pricing_policy_tiers` table in Settings Hub
-- 5 Tanzania-default tiers (35% → 15% margin scaling)
-- Distribution split per tier: affiliate, promotion, sales, referral, reserve
-- Referral overrides affiliate rule
-- Hard validation (no silent scaling)
-- Wallet protection (capped at distributable pool)
-- Settings Hub UI with editable tiers + live preview calculator
+- Canonical `pricing_policy_tiers` table: 5 Tanzania-default tiers
+- Distribution split per tier (affiliate, promotion, sales, referral, reserve)
+- Referral overrides affiliate, hard validation, wallet protection
 
 ### Promotions CRUD Admin UI (2026-04-11)
-- Backend: Full CRUD (create/list/update/deactivate/activate/delete)
+- Full CRUD: create/list/update/deactivate/activate/delete
 - Backend validation: dates, usage limits, stacking rules, allocation caps
-- Scope support: global, category, product
-- Stacking rules: no_stack, stack_with_cap, reduce_when_affiliate, referral_priority
-- Customer-facing /api/promotions/apply returns ONLY safe output (no internal margins)
-- Discount automatically capped at tier's promotion allocation at order time
-- Admin UI at /admin/promotions-manager with table, stats, filters, search, create/edit drawer
-- Sidebar: Under Growth & Affiliates
+- 3 scopes: global, category, product
+- 4 stacking rules: no_stack, stack_with_cap, reduce_when_affiliate, referral_priority
+- Customer-facing /api/promotions/apply returns safe output only
+- Admin UI at /admin/promotions-manager
+
+### Instant Quote Estimation UI (2026-04-11)
+- Public API: POST /api/quote-estimate, POST /api/quote-estimate/range
+- Customer-safe: shows estimated price/range, promo-aware, tier-aware
+- NEVER exposes margins, distributable pool, or allocation math
+- InstantQuoteEstimator component integrated into product & service detail pages
+- Pre-fills quote requests with estimated values
+
+### Margin Simulator (2026-04-11)
+- Inside Settings Hub → Pricing Policy tab
+- Multi-item simulation with affiliate/referral/sales toggles + wallet
+- Full breakdown: margins, distributable pool, all allocations, platform net
+- Live recalculation (400ms debounce) as admin types
+- Wallet validation shows cap at distributable pool
 
 ### safeDisplay Global Utility (2026-04-11)
-- Applied to: Orders, Payments, Invoices, Quotes, CRM, Customer Invoices, Vendor Import
+- Applied to Orders, Payments, Invoices, Quotes, CRM, Customer Invoices, Vendor Import
 
 ## Backlog (Prioritized)
-
-### P0 (Critical)
-- Instant Quote Estimation UI (expose safe pricing to customers)
-- Margin Simulator (inside Pricing Policy tab — admin decision support)
 
 ### P1 (Important)
 - Content Creator Media Visibility & Dynamic Campaign System
@@ -82,4 +83,4 @@ Build a full-featured B2B e-commerce platform for Tanzania. Features include mul
 - Partner: `demo.partner@konekt.com` / `Partner123!`
 
 ## Test Reports
-- Iterations 257-262: All 100% pass
+- Iterations 257-263: All 100% pass

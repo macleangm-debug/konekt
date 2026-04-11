@@ -181,7 +181,7 @@ export default function AccountProductDetailPage() {
 
           {/* Instant Quote Estimator */}
           <InstantQuoteEstimator
-            baseCost={product.base_cost || product.partner_cost || displayPrice}
+            baseCost={product.base_cost || product.partner_cost || product.base_price || displayPrice}
             productName={product.name}
             categoryId={product.category_id}
             productId={product.id}
