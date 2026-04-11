@@ -3117,6 +3117,11 @@ app.include_router(sales_status_router)
 from service_task_routes import router as service_task_router
 app.include_router(service_task_router)
 
+from routes.promotions_routes import router as promotions_admin_router, customer_promo_router
+app.include_router(promotions_admin_router)
+app.include_router(customer_promo_router)
+
+
 
 
 

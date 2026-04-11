@@ -1,0 +1,74 @@
+{
+  "summary": "Promotions CRUD Admin UI testing complete. All 16 backend API tests passed (100%). Frontend Promotions Manager page verified with table, stats, form drawer with all required fields, filter tabs, and search functionality. Sidebar navigation confirmed under Growth & Affiliates section.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_promotions_crud_v262.py",
+    "/app/test_reports/pytest/pytest_results_promotions_crud_v262.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "promotions_service.py: Correctly validates all required fields (name, code, scope, discount_type, discount_value, stacking_rule)",
+    "promotions_service.py: calculate_effective_discount() properly caps discount at tier's promotion allocation (lines 96-153)",
+    "promotions_service.py: referral_priority stacking rule correctly blocks promo when has_referral=true (line 117-118)",
+    "promotions_routes.py: Customer-facing /api/promotions/apply returns ONLY customer-safe output (no internal pool math exposed)",
+    "AdminPromotionsPage.jsx: All form fields have proper data-testid attributes for testing",
+    "adminNavigation.js: Promotions Manager correctly placed under Growth & Affiliates section (line 81)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_promotions_crud_v262.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (All UI elements verified)"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Test promotions created and cleaned up during testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Promotions CRUD fully tested. Backend APIs at /api/admin/promotions/* all working: POST (create), GET (list with filters), PUT (update), POST /{id}/deactivate, POST /{id}/activate, DELETE (soft delete). Customer-facing /api/promotions/apply returns customer-safe output only. Frontend at /admin/promotions-manager displays table with LAUNCH2026 and HOLIDAY5K promos, stats cards, filter tabs, search, and New Promotion form drawer with all fields.",
+  "verified_features": {
+    "backend_apis": {
+      "POST /api/admin/promotions (valid)": "Creates global promotion with all fields, returns 200 with promotion object",
+      "POST /api/admin/promotions (missing fields)": "Returns 422 with validation errors",
+      "POST /api/admin/promotions (duplicate code)": "Returns 422 with 'already exists' error",
+      "GET /api/admin/promotions": "Lists all promotions with total count",
+      "GET /api/admin/promotions?status=active": "Filters by status correctly",
+      "PUT /api/admin/promotions/{id}": "Updates promotion name and discount value",
+      "POST /api/admin/promotions/{id}/deactivate": "Sets status to inactive",
+      "POST /api/admin/promotions/{id}/activate": "Sets status back to active",
+      "DELETE /api/admin/promotions/{id}": "Soft deletes (status=deleted), promo no longer in list",
+      "POST /api/promotions/apply (valid code)": "Returns customer-safe output (discount_amount, message, no internal margins)",
+      "POST /api/promotions/apply (invalid code)": "Returns {valid: false, reason: ...}",
+      "POST /api/promotions/apply (referral_priority + has_referral)": "Returns blocked with referral priority reason",
+      "POST /api/promotions/apply (discount capping)": "Discount capped at tier's promotion allocation",
+      "GET /api/admin/promotions/stats/summary": "Returns total, active, inactive, total_uses counts",
+      "POST /api/admin/promotions (percentage > 100)": "Returns 422 validation error",
+      "POST /api/admin/promotions (negative discount)": "Returns 422 validation error"
+    },
+    "frontend_ui": {
+      "Promotions Manager page": "Loads at /admin/promotions-manager with table and stats",
+      "Sidebar navigation": "Promotions Manager visible under Growth & Affiliates section",
+      "Stats cards": "Shows Total Promotions (2), Active (2), Total Redemptions (0)",
+      "Promotions table": "Displays LAUNCH2026 and HOLIDAY5K with code, name, scope, discount, stacking, uses, status, actions",
+      "Filter tabs": "All, Active, Inactive, Expired tabs work correctly",
+      "Search functionality": "Filters promotions by code or name",
+      "New Promotion form": "Opens drawer with all required fields: name, code, description, scope (global/category/product), discount_type, discount_value, stacking_rule (4 options), start/end date, max uses, customer message",
+      "Form validation": "Shows error messages for invalid input",
+      "Info box": "Displays promotion allocation rules (consumes only from promotion allocation, vendor base cost protected)"
+    },
+    "stacking_rules_tested": {
+      "no_stack": "Cannot combine with other promotions",
+      "stack_with_cap": "Can combine, capped at promotion allocation",
+      "reduce_when_affiliate": "Value reduced 50% when affiliate is active",
+      "referral_priority": "Blocked when referral is used (tested with has_referral=true)"
+    }
+  }
+}
