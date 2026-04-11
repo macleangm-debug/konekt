@@ -217,6 +217,7 @@ import CommissionEngineAdminPage from "@/pages/admin/CommissionEngineAdminPage";
 import PromotionEngineAdminPage from "@/pages/admin/PromotionEngineAdminPage";
 import PayoutEngineAdminPage from "@/pages/admin/PayoutEngineAdminPage";
 import AdminContentCenterPage from "@/pages/admin/AdminContentCenterPage";
+import AdminContentStudioPage from "@/pages/admin/AdminContentStudioPage";
 
 // Sales Commission Dashboard
 import SalesCommissionDashboardPage from "@/pages/staff/SalesCommissionDashboardPage";
@@ -451,6 +452,7 @@ import SalesDashboardV2 from "@/pages/staff/SalesDashboardV2";
 import ProductionJobsPage from "@/pages/staff/ProductionJobsPage";
 import OpportunityDetailPage from "@/pages/staff/OpportunityDetailPage";
 import SalesDiscountRequestsPage from "@/pages/staff/SalesDiscountRequestsPage";
+import SalesContentHubPage from "@/pages/staff/SalesContentHubPage";
 
 // Dashboard pages (customer) - New Portal
 import CustomerDashboardHome from "@/pages/dashboard/CustomerDashboardHome";
@@ -742,6 +744,7 @@ function App() {
           <Route path="promotion-engine" element={<PromotionEngineAdminPage />} />
           <Route path="payout-engine" element={<PayoutEngineAdminPage />} />
           <Route path="content-center" element={<AdminContentCenterPage />} />
+          <Route path="content-studio" element={<AdminContentStudioPage />} />
           {/* Affiliate Performance Governance */}
           <Route path="affiliate-performance-governance" element={<AffiliatePerformanceGovernancePage />} />
           {/* GTM + Partner Management */}
@@ -923,6 +926,7 @@ function App() {
           <Route path="portfolio" element={<PortfolioDashboardPage />} />
           <Route path="orders" element={<SalesOrdersPageV2 />} />
           <Route path="discount-requests" element={<SalesDiscountRequestsPage />} />
+          <Route path="content-hub" element={<SalesContentHubPage />} />
           <Route path="production-jobs" element={<ProductionJobsPage />} />
           <Route path="command-center" element={<SalesCommandCenterV4 />} />
           <Route path="opportunities/:id" element={<OpportunityDetailPage />} />

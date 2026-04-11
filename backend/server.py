@@ -3098,6 +3098,8 @@ app.include_router(sales_dashboard_v2_router)
 
 from routes.content_engine_routes import router as content_engine_router
 app.include_router(content_engine_router)
+from routes.content_template_routes import router as content_template_router
+app.include_router(content_template_router)
 
 # Discount Request Workflow — Phase E
 from routes.discount_request_routes import router as discount_request_router
