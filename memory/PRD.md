@@ -14,26 +14,28 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - No manual economics in forms — all pricing/commission from Settings
 - No scattered settings — Settings Hub is single source of truth
 - No custom drawers — StandardDrawerShell via Portal everywhere
-- Desktop lists = tables, cards only for mobile/media
-- Promotions are policy-driven: admin defines name/scope/dates, system calculates discount from pricing policy tiers
+- Desktop lists = tables, not cards
+- Promotions: policy-driven. Admin defines name/scope/dates. System calculates discount from pricing policy tiers at runtime.
+- All discounts display as TZS amounts, never percentages
+- Affiliate attribution auto-carried from URL to checkout — no manual re-entry
 
 ## What's Been Implemented
 
 ### Core Platform (Complete)
 - Unified `/login` with role-based routing
 - Admin, Customer, Vendor/Partner, Sales/Staff portals
-- Product & Service catalog with categories
-- Cart, Checkout, Order creation flow
+- Product & Service catalog, Cart, Checkout, Order creation
 - Stripe sandbox + bank transfer with payment proof upload
 
-### Growth & Conversion Layer (Complete)
-- Unified Pricing Policy Engine (margin tiers + distribution splits)
-- Promotions: policy-driven (no manual discount). Admin defines name/scope/dates/stacking. Runtime calculates safe discount.
-- Affiliates: identity + payout details form. Commission auto from affiliate_settings (12%).
+### Growth & Conversion (Complete)
+- Pricing Policy Engine (margin tiers + distribution splits)
+- Promotions: policy-driven creation, runtime discount calculation
+- Affiliates: identity + payout form, auto-commission from settings
+- Affiliate attribution: auto-captures ?aff=, ?affiliate=, ?ref= URL params, persists in localStorage, auto-applied at checkout
 - Instant Quote Estimation, Live Margin Simulator
 
-### Content & Distribution Layer (Complete)
-- Content Studio: 4 layouts, 4 themes, 2 formats. WYSIWYG. Dynamic branding from Settings Hub.
+### Content & Distribution (Complete)
+- Content Studio: 4 layouts, 4 themes, 2 formats. WYSIWYG. Dynamic branding.
 - Save & Publish pipeline, Sales Content Hub
 
 ### Admin Configuration (Complete)
@@ -41,34 +43,25 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 - Business Settings: Company identity, contact, banking, tax
 
 ### Team Performance (Complete)
-- `/api/admin/team-performance/summary` aggregates orders, leads, quotes, commissions, ratings
+- `/api/admin/team-performance/summary` — aggregated data
 - Team Overview: 6 KPIs + 9-column table
-- Leaderboard: Top 3 podium + ranked table with Score
-- Alerts: Actionable table with Reference, Owner/Rep (resolved names), severity filters, CTAs
+- Leaderboard: Top 3 podium + ranked table
+- Alerts: actionable table with Reference, Owner/Rep, CTAs
 
-### Stabilization & Correction Passes (Complete)
-- StandardDrawerShell: React Portal, full-viewport, system-wide (Payment Proofs, Sales Hub, CRM, Promotions, Products, Affiliates, Payouts)
-- Promotions wiring: canonical `promotions` collection only. Removed legacy discount validation.
-- Affiliate CRUD: GET/POST/DELETE /api/admin/affiliates. Auto-commission from settings.
-- CRM width: max-w-7xl, proper typography
+### UI/UX Stabilization (Complete)
+- StandardDrawerShell: React Portal, full-viewport, system-wide
+- Promotions: removed ALL legacy discount validation + display
+- CRM: max-w-7xl contained
 - Content Studio: increased font/logo/image sizes
-
-## Key API Endpoints
-- `POST /api/admin/content-center/publish` — Save & Publish
-- `GET /api/content-engine/template-data/products` — Template product data
-- `GET /api/content-engine/template-data/branding` — Dynamic branding
-- `GET /api/admin/team-performance/summary` — Team KPIs, reps, alerts
-- `GET/POST/DELETE /api/admin/affiliates` — Affiliate CRUD
-- `POST /api/admin/promotions` — Policy-driven promotion creation
-- `GET/PUT /api/admin/settings-hub` — Settings Hub
+- All percentage display removed: "Auto (policy)", "From settings", "TZS X off"
 
 ## Upcoming Tasks (in order)
 1. Affiliate Application Flow (public apply → admin review → approve/reject)
 2. Partner Ecosystem Page Redesign
 3. Weekly Digest Browser View
+4. Global phone number format standardization
 
 ## Backlog (P2)
-- Global phone number format standardization
 - Twilio WhatsApp / Resend Email (blocked on keys)
 - Backend creative rendering for scale
 - Advanced Analytics Dashboard
