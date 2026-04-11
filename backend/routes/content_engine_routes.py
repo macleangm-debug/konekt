@@ -1,14 +1,17 @@
 """
-Content Engine Routes — Phase D
-POST /api/content-engine/generate — single product
-POST /api/content-engine/generate-bulk — multiple products
-GET  /api/content-engine/{content_id} — get single content
-GET  /api/content-engine/{content_id}/share-data — shareable bundle
-GET  /api/admin/content-center — admin list with filters
-PUT  /api/admin/content-center/{content_id} — admin edit
-POST /api/admin/content-center/{content_id}/archive — archive
-GET  /api/staff/content-feed — sales feed
-GET  /api/partner/affiliate-content-feed — affiliate feed
+Campaign Content Engine Routes
+
+POST /api/content-engine/generate-campaign  — Generate content from promotion
+POST /api/content-engine/generate-product   — Generate content for product
+GET  /api/content-engine/campaigns          — List active campaigns
+GET  /api/content-engine/suggestions        — Smart content suggestions
+GET  /api/content-engine/{content_id}       — Get single content item
+GET  /api/content-engine/{content_id}/share-data — Shareable bundle
+GET  /api/admin/content-center              — Admin list with filters
+PUT  /api/admin/content-center/{content_id} — Admin edit
+POST /api/admin/content-center/{content_id}/archive — Archive
+GET  /api/staff/content-feed                — Sales feed
+GET  /api/partner/affiliate-content-feed    — Affiliate feed
 """
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request
@@ -18,17 +21,14 @@ from typing import Optional, List
 router = APIRouter(tags=["content-engine"])
 
 
-class GenerateIn(BaseModel):
-    role: str = "sales"
-    target_id: str
-    campaign_id: Optional[str] = None
-    promotion_id: Optional[str] = None
+class GenerateCampaignIn(BaseModel):
+    promotion_id: str
+    roles: Optional[List[str]] = None
 
 
-class BulkGenerateIn(BaseModel):
-    role: str = "sales"
-    campaign_id: Optional[str] = None
-    target_ids: Optional[List[str]] = None
+class GenerateProductIn(BaseModel):
+    product_id: str
+    roles: Optional[List[str]] = None
 
 
 class UpdateContentIn(BaseModel):
@@ -38,40 +38,53 @@ class UpdateContentIn(BaseModel):
     cta: Optional[str] = None
 
 
-# ═══ CONTENT GENERATION ═══
+# ═══ CAMPAIGN CONTENT GENERATION ═══
 
-@router.post("/api/content-engine/generate")
-async def generate_content(payload: GenerateIn, request: Request):
+@router.post("/api/content-engine/generate-campaign")
+async def generate_from_campaign(payload: GenerateCampaignIn, request: Request):
+    """Generate a full content asset pack from a promotion/campaign."""
     db = request.app.mongodb
-    from services.content_engine_service import generate_content_for_product
-    item = await generate_content_for_product(
+    from services.content_engine_service import generate_campaign_from_promotion
+    assets = await generate_campaign_from_promotion(
         db,
-        product_id=payload.target_id,
-        role=payload.role,
-        campaign_id=payload.campaign_id,
         promotion_id=payload.promotion_id,
+        roles=payload.roles,
     )
-    if not item:
-        return {"ok": False, "error": "Product not found"}
-
-    await db.content_center.update_one({"id": item["id"]}, {"$set": item}, upsert=True)
-    return {"ok": True, "item": item}
+    return {"ok": True, "count": len(assets), "assets": assets}
 
 
-@router.post("/api/content-engine/generate-bulk")
-async def generate_bulk(payload: BulkGenerateIn, request: Request):
+@router.post("/api/content-engine/generate-product")
+async def generate_from_product(payload: GenerateProductIn, request: Request):
+    """Generate a content asset pack for a specific product."""
     db = request.app.mongodb
-    from services.content_engine_service import generate_content_bulk
-    items = await generate_content_bulk(
+    from services.content_engine_service import generate_product_content
+    assets = await generate_product_content(
         db,
-        role=payload.role,
-        campaign_id=payload.campaign_id,
-        product_ids=payload.target_ids,
+        product_id=payload.product_id,
+        roles=payload.roles,
     )
-    for item in items:
-        await db.content_center.update_one({"id": item["id"]}, {"$set": item}, upsert=True)
-    return {"ok": True, "count": len(items), "items": items}
+    return {"ok": True, "count": len(assets), "assets": assets}
 
+
+@router.get("/api/content-engine/campaigns")
+async def list_campaigns(request: Request):
+    """List active campaigns (promotions) with content counts."""
+    db = request.app.mongodb
+    from services.content_engine_service import get_active_campaigns
+    campaigns = await get_active_campaigns(db)
+    return {"ok": True, "campaigns": campaigns}
+
+
+@router.get("/api/content-engine/suggestions")
+async def content_suggestions(request: Request):
+    """Get smart content suggestions."""
+    db = request.app.mongodb
+    from services.content_engine_service import get_content_suggestions
+    suggestions = await get_content_suggestions(db)
+    return {"ok": True, "suggestions": suggestions}
+
+
+# ═══ CONTENT ITEM ACCESS ═══
 
 @router.get("/api/content-engine/{content_id}")
 async def get_content_item(content_id: str, request: Request):
@@ -90,20 +103,20 @@ async def get_share_data(content_id: str, request: Request):
         return {"ok": False, "error": "Content not found"}
     return {
         "ok": True,
-        "short_link": item.get("short_link", ""),
-        "promo_code": item.get("promo_code", ""),
+        "promotion_code": item.get("promotion_code", ""),
         "image_url": item.get("image_url", ""),
         "captions": item.get("captions", {}),
         "headline": item.get("headline", ""),
         "final_price": item.get("final_price", 0),
         "cta": item.get("cta", ""),
+        "format": item.get("format", "square"),
     }
 
 
 # ═══ ADMIN CONTENT CENTER ═══
 
 @router.get("/api/admin/content-center")
-async def list_content_center(request: Request, role: str = None, status: str = None, campaign_id: str = None):
+async def list_content_center(request: Request, role: str = None, status: str = None, campaign_id: str = None, format: str = None):
     db = request.app.mongodb
     query = {}
     if role:
@@ -112,13 +125,13 @@ async def list_content_center(request: Request, role: str = None, status: str = 
         query["status"] = status
     if campaign_id:
         query["campaign_id"] = campaign_id
+    if format:
+        query["format"] = format
 
     items = await db.content_center.find(query, {"_id": 0}).sort("updated_at", -1).to_list(200)
 
-    # KPI counts
     total = await db.content_center.count_documents({"status": "active"})
     sales_count = await db.content_center.count_documents({"status": "active", "role": "sales"})
-    affiliate_count = await db.content_center.count_documents({"status": "active", "role": "affiliate"})
     campaigns = await db.content_center.distinct("campaign_id", {"status": "active"})
 
     return {
@@ -128,7 +141,10 @@ async def list_content_center(request: Request, role: str = None, status: str = 
             "active_campaigns": len([c for c in campaigns if c]),
             "total_content": total,
             "sales_content": sales_count,
-            "affiliate_content": affiliate_count,
+            "formats": {
+                "square": await db.content_center.count_documents({"status": "active", "format": "square"}),
+                "vertical": await db.content_center.count_documents({"status": "active", "format": "vertical"}),
+            },
         }
     }
 

@@ -1,393 +1,383 @@
-import React, { useEffect, useState } from "react";
-import api from "../../lib/api";
-import { Loader2, Plus, RefreshCw, Archive, Eye, Edit3, Megaphone, Users, ShoppingCart, ChevronRight } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import api from "@/lib/api";
 import { toast } from "sonner";
-import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
+import { safeDisplay } from "@/utils/safeDisplay";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import {
+  Megaphone, Loader2, RefreshCw, Plus, Eye, Archive, Copy, ChevronRight,
+  Image, LayoutGrid, Sparkles, AlertTriangle, CheckCircle2, Tag, MessageSquare,
+  Smartphone, Square, RectangleVertical, Send,
+} from "lucide-react";
 
-function money(v) {
-  return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
+function authH() {
+  const t = localStorage.getItem("konekt_token") || localStorage.getItem("token");
+  return { Authorization: `Bearer ${t}` };
 }
 
-const ROLE_BADGE = {
-  sales: "bg-blue-100 text-blue-700",
-  affiliate: "bg-purple-100 text-purple-700",
-  admin: "bg-slate-100 text-slate-700",
-};
-
-const STATUS_BADGE = {
-  active: "bg-green-100 text-green-700",
-  archived: "bg-slate-100 text-slate-500",
-  draft: "bg-yellow-100 text-yellow-700",
-};
+const ROLE_COLORS = { sales: "bg-blue-100 text-blue-700", affiliate: "bg-purple-100 text-purple-700", admin: "bg-slate-100 text-slate-700" };
+const FORMAT_ICONS = { square: Square, vertical: RectangleVertical };
+const FORMAT_LABELS = { square: "Square", vertical: "Vertical" };
 
 export default function AdminContentCenterPage() {
   const [items, setItems] = useState([]);
+  const [campaigns, setCampaigns] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
   const [kpis, setKpis] = useState({});
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [generating, setGenerating] = useState(null);
   const [filterRole, setFilterRole] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterFormat, setFilterFormat] = useState("");
+  const [filterCampaign, setFilterCampaign] = useState("");
   const [selected, setSelected] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState({});
 
-  useEffect(() => { loadContent(); }, [filterRole, filterStatus]);
-
-  const loadContent = async () => {
+  const load = async () => {
     try {
       const params = new URLSearchParams();
       if (filterRole) params.set("role", filterRole);
-      if (filterStatus) params.set("status", filterStatus);
-      const res = await api.get(`/api/admin/content-center?${params.toString()}`);
-      setItems(res.data.items || []);
-      setKpis(res.data.kpis || {});
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+      if (filterFormat) params.set("format", filterFormat);
+      if (filterCampaign) params.set("campaign_id", filterCampaign);
+      if (filterRole || filterFormat || filterCampaign) params.set("status", "active");
+
+      const [contentRes, campRes, sugRes] = await Promise.all([
+        api.get(`/api/admin/content-center?${params.toString()}`, { headers: authH() }),
+        api.get("/api/content-engine/campaigns", { headers: authH() }),
+        api.get("/api/content-engine/suggestions", { headers: authH() }),
+      ]);
+      setItems(contentRes.data?.items || []);
+      setKpis(contentRes.data?.kpis || {});
+      setCampaigns(campRes.data?.campaigns || []);
+      setSuggestions(sugRes.data?.suggestions || []);
+    } catch { }
+    setLoading(false);
   };
 
-  const handleBulkGenerate = async (role) => {
-    setGenerating(true);
+  useEffect(() => { load(); }, [filterRole, filterFormat, filterCampaign]);
+
+  const handleGenerate = async (type, actionId) => {
+    setGenerating(actionId || type);
     try {
-      const res = await api.post("/api/content-engine/generate-bulk", { role });
-      toast.success(`Generated ${res.data.count} ${role} content items`);
-      loadContent();
-    } catch (err) {
-      toast.error("Generation failed");
-    } finally {
-      setGenerating(false);
-    }
+      const endpoint = type === "promotion"
+        ? "/api/content-engine/generate-campaign"
+        : "/api/content-engine/generate-product";
+      const body = type === "promotion"
+        ? { promotion_id: actionId }
+        : { product_id: actionId };
+      const res = await api.post(endpoint, body, { headers: authH() });
+      toast.success(`Generated ${res.data?.count || 0} content assets`);
+      load();
+    } catch { toast.error("Generation failed"); }
+    setGenerating(null);
   };
 
   const handleArchive = async (id) => {
     try {
-      await api.post(`/api/admin/content-center/${id}/archive`);
-      toast.success("Content archived");
-      loadContent();
+      await api.post(`/api/admin/content-center/${id}/archive`, {}, { headers: authH() });
+      toast.success("Archived");
+      load();
       if (selected?.id === id) setSelected(null);
-    } catch (err) {
-      toast.error("Archive failed");
-    }
-  };
-
-  const handleSave = async () => {
-    if (!selected) return;
-    try {
-      await api.put(`/api/admin/content-center/${selected.id}`, editData);
-      toast.success("Content updated");
-      setEditMode(false);
-      loadContent();
-      setSelected(null);
-    } catch (err) {
-      toast.error("Update failed");
-    }
+    } catch { toast.error("Archive failed"); }
   };
 
   return (
-    <div className="space-y-6" data-testid="admin-content-center">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6" data-testid="admin-content-center">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0f172a]">Content Center</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Generate and manage promotional content for sales and affiliates</p>
+          <h1 className="text-xl font-bold text-[#20364D]">Content Center</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Campaign-driven content for sales and marketing</p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => handleBulkGenerate("sales")}
-            disabled={generating}
-            className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50"
-            data-testid="generate-sales-btn"
-          >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Sales Content
-          </button>
-          <button
-            onClick={() => handleBulkGenerate("affiliate")}
-            disabled={generating}
-            className="flex items-center gap-1.5 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition disabled:opacity-50"
-            data-testid="generate-affiliate-btn"
-          >
-            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Affiliate Content
-          </button>
-        </div>
+        <button onClick={load} className="p-2 hover:bg-slate-100 rounded-lg transition" data-testid="refresh-content-btn">
+          <RefreshCw className="w-4 h-4 text-slate-400" />
+        </button>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="content-kpi-row">
-        <KpiCard icon={<Megaphone className="w-5 h-5" />} label="Active Campaigns" value={kpis.active_campaigns || 0} accent="text-orange-600" />
-        <KpiCard icon={<ShoppingCart className="w-5 h-5" />} label="Total Content" value={kpis.total_content || 0} accent="text-blue-600" />
-        <KpiCard icon={<Users className="w-5 h-5" />} label="Sales Content" value={kpis.sales_content || 0} accent="text-emerald-600" />
-        <KpiCard icon={<Users className="w-5 h-5" />} label="Affiliate Content" value={kpis.affiliate_content || 0} accent="text-purple-600" />
+      {/* Smart Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3" data-testid="content-suggestions">
+          <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+            <Sparkles className="w-4 h-4" /> Smart Suggestions
+          </div>
+          <div className="space-y-2">
+            {suggestions.map((s, i) => (
+              <div key={i} className="flex items-center justify-between bg-white rounded-lg border border-amber-100 p-3">
+                <div>
+                  <div className="text-sm font-medium text-slate-700">{s.title}</div>
+                  <div className="text-xs text-slate-500">{s.description}</div>
+                </div>
+                <button
+                  onClick={() => handleGenerate(
+                    s.action_type === "generate_from_promotion" ? "promotion" : "product",
+                    s.action_id
+                  )}
+                  disabled={generating === s.action_id}
+                  className="flex items-center gap-1.5 rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 disabled:opacity-50 transition-colors shrink-0"
+                  data-testid={`generate-suggestion-${i}`}
+                >
+                  {generating === s.action_id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                  Generate
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active Campaigns */}
+      <div data-testid="campaigns-section">
+        <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider mb-3">Active Campaigns</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          {campaigns.map(c => (
+            <div
+              key={c.id}
+              onClick={() => setFilterCampaign(filterCampaign === c.id ? "" : c.id)}
+              className={`rounded-xl border p-4 cursor-pointer transition-all ${filterCampaign === c.id ? "border-[#20364D] bg-[#20364D]/5 shadow-sm" : "border-slate-200 hover:border-slate-300 bg-white"}`}
+              data-testid={`campaign-card-${c.id}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-mono text-xs font-bold text-[#20364D]">{c.code}</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Active</span>
+              </div>
+              <div className="text-sm font-semibold text-slate-700 truncate">{c.name}</div>
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-slate-500">
+                  {c.discount_type === "percentage" ? `${c.discount_value}% off` : `${money(c.discount_value)} off`}
+                </span>
+                <span className="text-xs font-semibold text-[#20364D]">{c.content_count} assets</span>
+              </div>
+              {c.content_count === 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleGenerate("promotion", c.id); }}
+                  disabled={generating === c.id}
+                  className="w-full mt-3 flex items-center justify-center gap-1.5 rounded-lg bg-[#20364D] text-white py-1.5 text-xs font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors"
+                  data-testid={`generate-campaign-${c.id}`}
+                >
+                  {generating === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                  Generate Content
+                </button>
+              )}
+            </div>
+          ))}
+          {campaigns.length === 0 && !loading && (
+            <div className="col-span-full text-center py-8 text-slate-400 text-sm">
+              No active campaigns. Create a promotion first.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 bg-white border rounded-xl p-3" data-testid="content-filters">
-        <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="text-sm border rounded-lg px-3 py-2 bg-white">
+      <div className="flex items-center gap-3 flex-wrap" data-testid="content-filters">
+        <select value={filterRole} onChange={e => setFilterRole(e.target.value)} className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:ring-1 focus:ring-[#20364D] outline-none" data-testid="filter-role">
           <option value="">All Roles</option>
           <option value="sales">Sales</option>
-          <option value="affiliate">Affiliate</option>
           <option value="admin">Admin</option>
+          <option value="affiliate">Affiliate</option>
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="text-sm border rounded-lg px-3 py-2 bg-white">
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="archived">Archived</option>
+        <select value={filterFormat} onChange={e => setFilterFormat(e.target.value)} className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white text-slate-600 focus:ring-1 focus:ring-[#20364D] outline-none" data-testid="filter-format">
+          <option value="">All Formats</option>
+          <option value="square">Square</option>
+          <option value="vertical">Vertical</option>
         </select>
-        <button onClick={loadContent} className="p-2 hover:bg-slate-100 rounded-lg transition" data-testid="refresh-content-btn">
-          <RefreshCw className="w-4 h-4 text-slate-400" />
-        </button>
+        {filterCampaign && (
+          <button onClick={() => setFilterCampaign("")} className="text-xs text-red-500 hover:text-red-700 font-semibold" data-testid="clear-campaign-filter">
+            Clear Campaign Filter
+          </button>
+        )}
         <span className="text-xs text-slate-400 ml-auto">{items.length} items</span>
       </div>
 
-      {/* Content Table */}
-      <div className="bg-white border rounded-xl overflow-hidden" data-testid="content-table-section">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-slate-300" />
-          </div>
-        ) : items.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <Megaphone className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-            <p className="text-sm font-medium">No content yet</p>
-            <p className="text-xs mt-1">Click "Sales Content" or "Affiliate Content" to generate</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-slate-50 text-left">
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase">Title</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase">Role</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Price</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Discount</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-right">Earning</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Promo</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Status</th>
-                  <th className="p-3 text-xs font-semibold text-slate-600 uppercase text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map(item => (
-                  <tr key={item.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition" data-testid={`content-row-${item.id}`}>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2.5">
-                        {item.image_url ? (
-                          <img src={item.image_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-slate-100 flex-shrink-0" />
-                        )}
-                        <div className="min-w-0">
-                          <div className="font-medium text-slate-800 truncate max-w-[200px]">{item.title}</div>
-                          <div className="text-[11px] text-slate-400 truncate max-w-[200px]">{item.category}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[item.role] || ROLE_BADGE.admin}`}>
-                        {item.role}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right font-medium text-slate-700">{money(item.final_price)}</td>
-                    <td className="p-3 text-right text-slate-500">{item.discount_amount > 0 ? money(item.discount_amount) : "—"}</td>
-                    <td className="p-3 text-right font-medium text-[#D4A843]">{item.earning_amount > 0 ? money(item.earning_amount) : "—"}</td>
-                    <td className="p-3 text-center">
-                      {item.has_promotion ? (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">PROMO</span>
-                      ) : (
-                        <span className="text-xs text-slate-300">—</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_BADGE[item.status] || STATUS_BADGE.active}`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center gap-1 justify-center">
-                        <button onClick={() => { setSelected(item); setEditMode(false); }} className="p-1.5 hover:bg-blue-50 rounded transition" data-testid={`preview-${item.id}`}>
-                          <Eye className="w-3.5 h-3.5 text-blue-500" />
-                        </button>
-                        <button onClick={() => handleArchive(item.id)} className="p-1.5 hover:bg-red-50 rounded transition" data-testid={`archive-${item.id}`}>
-                          <Archive className="w-3.5 h-3.5 text-slate-400" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {/* Content Grid — Visual-First */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
+      ) : items.length === 0 ? (
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl" data-testid="content-empty">
+          <Image className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+          <p className="text-sm font-semibold text-slate-600">No content assets yet</p>
+          <p className="text-xs text-slate-400 mt-1">Generate content from a campaign above</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" data-testid="content-grid">
+          {items.map(item => (
+            <ContentCard key={item.id} item={item} onPreview={() => setSelected(item)} onArchive={() => handleArchive(item.id)} />
+          ))}
+        </div>
+      )}
 
-      {/* Preview/Edit Drawer */}
-      <ContentDrawer
-        item={selected}
-        editMode={editMode}
-        editData={editData}
-        onClose={() => { setSelected(null); setEditMode(false); }}
-        onEdit={() => {
-          setEditMode(true);
-          setEditData({
-            headline: selected.headline,
-            captions: { ...selected.captions },
-            cta: selected.cta,
-          });
-        }}
-        onSave={handleSave}
-        setEditData={setEditData}
-      />
+      {/* Preview Drawer */}
+      <ContentPreviewDrawer item={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
-function ContentDrawer({ item, editMode, editData, onClose, onEdit, onSave, setEditData }) {
-  const copy = (text) => {
+function ContentCard({ item, onPreview, onArchive }) {
+  const FmtIcon = FORMAT_ICONS[item.format] || Square;
+  return (
+    <div
+      className="group rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition-all cursor-pointer"
+      onClick={onPreview}
+      data-testid={`content-card-${item.id}`}
+    >
+      {/* Image area */}
+      <div className={`relative bg-slate-100 ${item.format === "vertical" ? "aspect-[9/16] max-h-[200px]" : "aspect-square"} overflow-hidden`}>
+        {item.image_url ? (
+          <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Image className="w-8 h-8 text-slate-300" />
+          </div>
+        )}
+        {/* Overlay badges */}
+        <div className="absolute top-2 left-2 flex gap-1">
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-black/60 text-white flex items-center gap-1`}>
+            <FmtIcon className="w-2.5 h-2.5" /> {FORMAT_LABELS[item.format] || item.format}
+          </span>
+        </div>
+        <div className="absolute top-2 right-2">
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${ROLE_COLORS[item.role] || ROLE_COLORS.admin}`}>
+            {item.role}
+          </span>
+        </div>
+        {item.has_promotion && (
+          <div className="absolute bottom-2 left-2">
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-red-500 text-white flex items-center gap-1">
+              <Tag className="w-2.5 h-2.5" /> {item.promotion_code || "PROMO"}
+            </span>
+          </div>
+        )}
+        {/* Hover actions */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+          <button onClick={(e) => { e.stopPropagation(); onPreview(); }} className="bg-white rounded-full p-2 shadow-lg mr-2">
+            <Eye className="w-4 h-4 text-[#20364D]" />
+          </button>
+          <button onClick={(e) => { e.stopPropagation(); onArchive(); }} className="bg-white rounded-full p-2 shadow-lg">
+            <Archive className="w-4 h-4 text-slate-500" />
+          </button>
+        </div>
+      </div>
+      {/* Info */}
+      <div className="p-3">
+        <div className="text-xs font-semibold text-slate-700 truncate">{item.headline || item.target_name}</div>
+        <div className="text-[10px] text-slate-400 truncate mt-0.5">{item.category || item.promotion_name || "General"}</div>
+        {item.final_price > 0 && (
+          <div className="text-xs font-bold text-[#20364D] mt-1">{money(item.final_price)}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ContentPreviewDrawer({ item, onClose }) {
+  const copyText = (text) => {
     navigator.clipboard.writeText(text);
     toast.success("Copied to clipboard");
   };
 
-  const roleBadge = item ? (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${ROLE_BADGE[item.role] || ROLE_BADGE.admin}`}>
-      {item.role}
-    </span>
-  ) : null;
+  if (!item) return null;
 
-  const footer = editMode ? (
-    <div className="flex gap-2">
-      <button onClick={onSave} className="flex-1 bg-[#0f172a] text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-[#1e293b] transition" data-testid="save-content-btn">Save Changes</button>
-      <button onClick={() => { setEditData({}); }} className="px-4 py-2.5 border rounded-lg text-sm text-slate-600 hover:bg-slate-50 transition">Cancel</button>
-    </div>
-  ) : null;
+  const captions = item.captions || {};
+  const captionEntries = [
+    { key: "short", label: "Short (Social)", icon: MessageSquare },
+    { key: "medium", label: "Medium (Post)", icon: MessageSquare },
+    { key: "whatsapp_sales", label: "WhatsApp / Sales", icon: Send },
+    { key: "story", label: "Story Text", icon: Smartphone },
+  ];
 
   return (
-    <StandardDrawerShell
-      open={!!item}
-      onClose={onClose}
-      title={item?.title || "Content Preview"}
-      subtitle="Content"
-      badge={roleBadge}
-      width="lg"
-      testId="content-drawer"
-      footer={footer}
-    >
-      {item && (
-        <div className="space-y-5">
-          {/* Actions */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_BADGE[item.status] || STATUS_BADGE.active}`}>
-                {item.status}
-              </span>
-            </div>
-            {!editMode && (
-              <button onClick={onEdit} className="p-2 hover:bg-slate-100 rounded-lg transition">
-                <Edit3 className="w-4 h-4 text-slate-500" />
-              </button>
-            )}
-          </div>
+    <Sheet open={!!item} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            {item.target_name || item.headline}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_COLORS[item.role] || ROLE_COLORS.admin}`}>
+              {item.role}
+            </span>
+          </SheetTitle>
+          <SheetDescription>
+            {FORMAT_LABELS[item.format] || item.format} format — {item.promotion_code ? `Campaign: ${item.promotion_code}` : "General content"}
+          </SheetDescription>
+        </SheetHeader>
 
+        <div className="space-y-5 mt-4" data-testid="content-preview-drawer">
           {/* Image */}
-          {item.image_url && (
-            <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover rounded-xl" />
+          {item.image_url ? (
+            <img src={item.image_url} alt="" className="w-full rounded-xl object-cover max-h-[300px]" />
+          ) : (
+            <div className="w-full h-48 rounded-xl bg-slate-100 flex items-center justify-center">
+              <Image className="w-10 h-10 text-slate-300" />
+            </div>
           )}
-
-          {/* Pricing */}
-          <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Final Price</span>
-              <span className="font-bold text-[#0f172a]">{money(item.final_price)}</span>
-            </div>
-            {item.discount_amount > 0 && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Original Price</span>
-                  <span className="text-slate-400 line-through">{money(item.original_price)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Discount</span>
-                  <span className="text-emerald-600 font-medium">{money(item.discount_amount)} ({item.discount_pct}%)</span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Earning</span>
-              <span className="font-bold text-[#D4A843]">{money(item.earning_amount)}</span>
-            </div>
-          </div>
 
           {/* Headline */}
           <div>
-            <label className="text-xs font-semibold text-slate-600 uppercase mb-1 block">Headline</label>
-            {editMode ? (
-              <input
-                value={editData.headline || ""}
-                onChange={e => setEditData(d => ({ ...d, headline: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            ) : (
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-[#0f172a]">{item.headline}</p>
-                <button onClick={() => copy(item.headline)} className="text-[10px] text-blue-500 hover:underline">Copy</button>
-              </div>
-            )}
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Headline</label>
+              <button onClick={() => copyText(item.headline)} className="text-[10px] text-blue-500 hover:underline flex items-center gap-1" data-testid="copy-headline">
+                <Copy className="w-3 h-3" /> Copy
+              </button>
+            </div>
+            <div className="text-sm font-semibold text-[#20364D]">{item.headline}</div>
           </div>
 
-          {/* Captions */}
-          {["short_social", "professional", "closing_script"].map(key => (
-            <div key={key}>
-              <label className="text-xs font-semibold text-slate-600 uppercase mb-1 block">
-                {key.replace(/_/g, " ")}
-              </label>
-              {editMode ? (
-                <textarea
-                  value={(editData.captions || {})[key] || ""}
-                  onChange={e => setEditData(d => ({ ...d, captions: { ...d.captions, [key]: e.target.value } }))}
-                  rows={3}
-                  className="w-full border rounded-lg px-3 py-2 text-sm resize-none"
-                />
-              ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm text-slate-600">{(item.captions || {})[key] || "—"}</p>
-                  <button onClick={() => copy((item.captions || {})[key] || "")} className="text-[10px] text-blue-500 hover:underline flex-shrink-0 mt-0.5">Copy</button>
+          {/* Pricing */}
+          {item.final_price > 0 && (
+            <div className="rounded-xl bg-slate-50 p-3 space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Price</span>
+                <span className="font-bold text-[#20364D]">{money(item.final_price)}</span>
+              </div>
+              {item.discount_amount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Savings</span>
+                  <span className="font-semibold text-emerald-600">{money(item.discount_amount)}</span>
                 </div>
               )}
             </div>
-          ))}
+          )}
+
+          {/* Captions */}
+          <div className="space-y-4">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Captions</div>
+            {captionEntries.map(({ key, label, icon: Icon }) => {
+              const text = captions[key];
+              if (!text) return null;
+              return (
+                <div key={key} className="rounded-lg border border-slate-200 p-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                      <Icon className="w-3.5 h-3.5 text-slate-400" /> {label}
+                    </div>
+                    <button onClick={() => copyText(text)} className="text-[10px] text-blue-500 hover:underline flex items-center gap-1" data-testid={`copy-${key}`}>
+                      <Copy className="w-3 h-3" /> Copy
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap">{text}</p>
+                </div>
+              );
+            })}
+          </div>
 
           {/* Share Data */}
-          {(item.promo_code || item.short_link) && (
-            <div className="bg-slate-50 rounded-xl p-4 space-y-2">
-              {item.promo_code && (
+          {(item.promotion_code || item.cta) && (
+            <div className="rounded-xl bg-[#20364D]/5 p-3 space-y-2">
+              {item.promotion_code && (
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">Promo Code</span>
-                  <button onClick={() => copy(item.promo_code)} className="font-mono text-sm font-bold text-[#0f172a] hover:text-blue-600">{item.promo_code}</button>
+                  <button onClick={() => copyText(item.promotion_code)} className="font-mono text-sm font-bold text-[#20364D] hover:text-[#D4A843] transition-colors" data-testid="copy-promo-code">
+                    {item.promotion_code}
+                  </button>
                 </div>
               )}
-              {item.short_link && (
+              {item.cta && (
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">Short Link</span>
-                  <button onClick={() => copy(item.short_link)} className="text-sm text-blue-600 hover:underline">{item.short_link}</button>
+                  <span className="text-xs text-slate-500">CTA</span>
+                  <span className="text-sm font-semibold text-[#20364D]">{item.cta}</span>
                 </div>
               )}
             </div>
           )}
         </div>
-      )}
-    </StandardDrawerShell>
-  );
-}
-
-function KpiCard({ icon, label, value, accent }) {
-  return (
-    <div className="bg-white border rounded-xl p-4" data-testid={`kpi-${label.toLowerCase().replace(/\s/g, "-")}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <div className={accent || "text-slate-400"}>{icon}</div>
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
-      </div>
-      <div className="text-xl font-bold text-[#0f172a]">{value}</div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
