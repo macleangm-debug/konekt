@@ -6,37 +6,51 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals,
 ## Core Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Principles (Enforced)
-- Settings Hub = single source of truth
+## System Principles (All Enforced)
+- Settings Hub = single source of truth (3 groups: Business, Pricing Policy, Partner Policy)
 - Promotions: policy-driven, no manual discount
 - StandardDrawerShell via Portal everywhere
-- Categories: canonical dropdowns from /api/categories — no free text
-- Phone: normalized +XXXXXXXXXXXXX via PhoneNumberField (58 countries) everywhere
+- Categories: canonical dropdowns from /api/categories
+- Phone: normalized +XXXXXXXXXXXXX via PhoneNumberField (58 countries)
 - Discounts display as TZS amounts, never percentages
-- Affiliate attribution: auto-captured, auto-applied
+- Country → Currency auto-mapping in settings
 
-## Completed Features (All Tested — 10+ iterations, 100% pass)
+## Settings Hub Structure (Canonical)
+### Business (8 tabs)
+- Profile (country→currency mapping)
+- Payment Details
+- Document Branding (logo, signature+color, stamp shape+color)
+- Document Numbering (Quote/Invoice/Order/DN/PO/SKU: prefix, type, digits, start)
+- Document Footer (address/email/phone/registration toggles + custom text)
+- Document Template (Classic/Modern/Compact/Premium — placeholder for Phase B)
+- Notifications
+- Report Delivery
 
-### Core: Auth, catalog, checkout, orders, Stripe + bank payments, payment proofs
-### Growth: Pricing engine, policy-driven promotions, affiliates (identity + payout), affiliate application flow, attribution
-### Content: Content Studio (WYSIWYG, 4 layouts, dynamic branding), Sales Content Hub
-### Admin: Settings Hub (15 sections), Business Settings, Branding Settings (phone standardized)
-### Team: Overview (6 KPIs + table), Leaderboard, Alerts (actionable table with CTAs)
-### Partner Ecosystem: KPI row (7 metrics), coverage/gap analysis, management table, drawer
-### Weekly Digest: Executive report with KPIs, revenue by canonical category, operations, sales, ecosystem, alerts, actions
-### Categories: /api/categories (25 cats + subcats), canonical dropdowns on product/service/inventory/vendor forms
-### Phone: PhoneNumberField (58 countries, flag+name+dial, search, keyboard nav, mobile bottom sheet) — applied to affiliates, applications, branding
-### UI/UX: StandardDrawerShell (Portal), CRM contained, all % display removed, no duplicate sidebar entries, all retired routes redirect
+### Pricing Policy (5 tabs)
+- Pricing Tiers, Distribution Rules, Sales & Commission, Payout Settings, Launch Controls
 
-## Sidebar Structure (Clean — verified)
-Dashboard | Commerce (Orders, Quotes, Payments, Invoices, Discounts) | Catalog (Catalog, Approvals, Vendors, Supply Review) | Customers (Customers, CRM) | Partners (Ecosystem) | Growth (Affiliates, Applications, Payouts, Promotions, Content Studio) | Finance (Cash Flow, Commissions) | Team (Overview, Leaderboard, Alerts) | Operations (Deliveries, Notes, POs, Requests) | Reports (Business Health, Financial, Sales, CX, Risk, Product Insights, Inventory, Weekly Performance, Weekly Digest, Action Center) | Settings (Hub, Users)
+### Partner Policy (4 tabs)
+- Affiliate Policy, Vendor Policy, Partner Config, Operational Rules
+
+## Completed Features (All Tested)
+- Core Platform, Growth & Conversion, Content Studio, Team Performance
+- Partner Ecosystem (KPI + management table + gaps)
+- Weekly Digest (executive report)
+- Categories (canonical), Phone (global), UI/UX Stabilization
+- Settings Hub Phase A Restructure (3 groups + document controls)
+
+## Upcoming (Phase B)
+- Document rendering hardening (WYSIWYG, canonical design system)
+- Document templates implementation
+- Delivery Note / Service Handover closure workflow
+- Stamp generation from business profile fields
+
+## Backlog
+- Twilio WhatsApp / Resend Email (blocked on keys)
+- Backend creative rendering, Advanced Analytics, Data Integrity Dashboard
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Customer: `test@konekt.tz` / `TestUser123!`
 - Vendor: `demo.partner@konekt.com` / `Partner123!`
 - Staff/Sales: `staff@konekt.co.tz` / `Staff123!`
-
-## Backlog
-- Twilio WhatsApp / Resend Email (blocked on keys)
-- Backend creative rendering, Advanced Analytics Dashboard, Data Integrity Dashboard
