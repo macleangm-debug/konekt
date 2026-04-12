@@ -8,69 +8,76 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## System Principles (All Enforced)
 - Settings Hub = single source of truth (3 groups: Business, Pricing Policy, Partner Policy)
-- Pricing Tiers = SOLE source of truth for all economic logic (margins, distribution, commissions)
-- Sales/Affiliate/Distribution tabs READ from Pricing Tiers — no independent override percentages
-- Stamp fields auto-pull from Business Profile (no manual re-entry)
-- Canonical Document Renderer for all document types (settings-driven, template-aware, WYSIWYG)
-- ONE closure engine for admin + public (dual-mode: signed + confirmed)
-- Phone number = primary identity for order lookup (account-optional)
-- No unnecessary routes — reuse existing canonical pages/drawers/engines
-
-## Settings Hub Structure (Canonical — Typography Unified)
-### Business (8 tabs)
-- Profile, Payment Details, Document Branding (stamp auto-pull, signature persistence)
-- Document Numbering, Document Footer (LIVE PREVIEW), Document Template (4 VISUAL PREVIEW CARDS)
-- Notifications, Report Delivery
-
-### Pricing Policy (5 tabs)
-- Pricing Tiers (SOLE source of truth), Distribution Rules, Sales & Commission (reads from tiers)
-- Payout Settings, Launch Controls
-
-### Partner Policy (4 tabs)
-- Affiliate Policy (reads from tiers), Vendor Policy, Partner Config, Operational Rules
+- Pricing Tiers = SOLE source of truth for all economic logic
+- Canonical Document Renderer: settings-driven, template-aware, WYSIWYG
+- ONE closure engine: admin + public, dual-mode (signed + confirmed)
+- Business client validation: VRN + BRN required, blocks compliance workflows if missing
+- EFD receipts: internal-only, on-demand, not auto-generated
+- No unnecessary routes — reuse canonical pages/drawers/engines
+- Phone number = primary identity for order lookup
 
 ## Document System (Complete)
 - Canonical Renderer: Quote, Invoice, Delivery Note, Service Handover
 - Templates: Classic Corporate, Modern Clean, Compact Commercial, Premium Branded
 - WYSIWYG PDF: html2canvas + jsPDF
 - Client-type-aware: Individual vs Business blocks
-- Unified settings: `/api/documents/render-settings`
 
 ## Delivery Closure System (Complete)
-- Dual-mode: Signed (signature) + Confirmed (staff on behalf)
-- Records LOCKED after completion
-- Full audit trail: method, receiver, designation, timestamp, authorization source
+- Dual-mode: Signed + Confirmed (staff on behalf)
+- Records LOCKED after completion, full audit trail
+- Public Completion System: Token link + Phone lookup + Order #
 
-## Public Completion System (Complete)
-- 3 access modes: Token link, Phone lookup, Order # lookup
-- Mobile-first 3-screen flow: Find → Review → Confirm
-- Reuses same closure engine (no duplication)
+## Business Client Validation (Complete)
+- PATCH /api/admin/customers-360/{id} validates VRN + BRN when client_type=business
+- Blocks save with clear error message listing missing fields
+- CustomerDrawer360 shows Business/Individual type badge, VRN/BRN fields
+- Missing fields alert for incomplete business profiles
+- Applies on create, edit, individual→business conversion
 
-## Track Order (Full Lifecycle — Complete)
+## Client Detail Display (Complete)
+- Individual: Full Name, City, Country
+- Business: Business Name, BRN, VRN, City, Country
+- Renderer auto-detects client type from toBlock.client_type
+
+## EFD Receipt On-Demand Workflow (Complete)
+- Internal-only trigger: POST /api/admin/efd/request/{invoice_id}
+- Validates VRN + BRN for business clients before issuing
+- Status flow: pending → uploaded
+- EFD section on InvoicePreviewPage: Request button → Status → Download
+- Not visible to customers unless uploaded and attached
+- API: GET /api/admin/efd/invoice/{id}, GET /api/admin/efd, PATCH /api/admin/efd/{id}
+
+## Settings Hub (Complete — Unified)
+- Typography: Unified text-[11px] uppercase labels across all 17 tabs
+- Stamp: Auto-pull from Business Profile (no re-entry)
+- Signature: Persistent preview after save
+- Sales/Affiliate: Source-of-truth banners → Pricing Tiers
+- Template: 4 visual preview cards
+- Footer: Live preview with toggle states
+
+## Track Order (Complete — Full Lifecycle)
 - 6-step timeline: Placed → Confirmed → In Progress → Ready/Dispatched → Awaiting Confirmation → Completed
 - Fulfillment-aware CTA: Confirm Delivery / Pickup / Service Handover
-- Completion summary after closure (receiver, method, timestamp)
-- Current step highlighted in gold (#D4A843)
+- Completion summary after closure
 
-## Settings Hub Final Alignment (Complete)
-- Typography: Unified text-[11px] font-semibold uppercase tracking-wider labels across ALL tabs
-- Stamp: Auto-pull from Business Profile (company name, location, BRN, TIN) — read-only display
-- Stamp: Field visibility toggles (show company, location, registration, TIN)
-- Signature: Persistent preview after save
-- Sales & Commission: Source-of-truth banner → Pricing Tiers
-- Affiliate Policy: Source-of-truth banner → Pricing Tiers
-- Document Template: 4 visual preview cards with mini document mockups
-- Document Footer: Live preview reflecting toggle states
+## All Completed Features
+- Core Platform, Growth & Conversion, Content Studio, Team Performance
+- Partner Ecosystem, Weekly Digest, Categories, Phone, UI/UX Stabilization
+- Settings Hub Phase A + Final Alignment
+- Phase B: Canonical Document Renderer + Templates + Footer Preview
+- P0: Dual-Mode Delivery Closure + Public Completion System
+- Business Client Validation (VRN + BRN enforcement)
+- Client Detail Display Configuration
+- EFD Receipt On-Demand Workflow
+- Track Order Full Lifecycle
 
 ## Upcoming
-1. Business Client Validation (VRN + BRN required for business type)
-2. Client Detail Display Configuration (Individual vs Business in documents)
-3. EFD Receipt On-Demand Workflow
-4. Customer Self-Service Portal
+- Customer Self-Service Portal (view/download quotes, invoices, delivery notes)
+- Advanced Analytics Dashboard
+- Data Integrity Dashboard
 
 ## Backlog
 - Twilio WhatsApp / Resend Email (blocked on keys)
-- Advanced Analytics, Data Integrity Dashboard
 - Account mapping (phone→orders on account creation)
 
 ## Credentials
