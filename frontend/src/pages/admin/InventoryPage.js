@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Package, Plus, AlertTriangle, ArrowUpDown, Search } from "lucide-react";
 import { adminApi } from "@/lib/adminApi";
+import { useCanonicalCategories } from "@/lib/useCanonicalCategories";
 
 export default function InventoryPage() {
   const [items, setItems] = useState([]);
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { categories: canonicalCats } = useCanonicalCategories();
   const [showItemForm, setShowItemForm] = useState(false);
   const [showMovementForm, setShowMovementForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -193,7 +195,10 @@ export default function InventoryPage() {
                 <input className="w-full border border-slate-300 rounded-xl px-4 py-3" placeholder="SKU *" value={itemForm.sku} onChange={(e) => setItemForm({ ...itemForm, sku: e.target.value })} required />
                 <input className="w-full border border-slate-300 rounded-xl px-4 py-3" placeholder="Product slug" value={itemForm.product_slug} onChange={(e) => setItemForm({ ...itemForm, product_slug: e.target.value })} />
                 <div className="grid grid-cols-2 gap-3">
-                  <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Category" value={itemForm.category} onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })} />
+                  <select className="border border-slate-300 rounded-xl px-4 py-3" value={itemForm.category} onChange={(e) => setItemForm({ ...itemForm, category: e.target.value })}>
+                    <option value="">Select Category</option>
+                    {canonicalCats.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                  </select>
                   <input className="border border-slate-300 rounded-xl px-4 py-3" placeholder="Branch" value={itemForm.branch} onChange={(e) => setItemForm({ ...itemForm, branch: e.target.value })} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">

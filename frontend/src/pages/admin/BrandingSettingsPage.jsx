@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Settings, Save, Loader2 } from "lucide-react";
 import axios from "axios";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -10,7 +11,8 @@ export default function BrandingSettingsPage() {
     logo_url: "/branding/konekt-logo-full.png",
     icon_url: "/branding/konekt-icon.png",
     company_email: "",
-    company_phone: "",
+    company_phone_prefix: "+255",
+    company_phone_number: "",
     company_address: "",
     company_tin: "",
     company_vat_number: "",
@@ -34,7 +36,13 @@ export default function BrandingSettingsPage() {
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.put(`${API_URL}/api/admin/branding-settings`, form, {
+      const payload = {
+        ...form,
+        company_phone: form.company_phone_number ? `${form.company_phone_prefix}${form.company_phone_number}` : "",
+      };
+      delete payload.company_phone_prefix;
+      delete payload.company_phone_number;
+      await axios.put(`${API_URL}/api/admin/branding-settings`, payload, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       alert("Branding settings saved successfully!");
@@ -109,12 +117,13 @@ export default function BrandingSettingsPage() {
             />
           </div>
           <div>
-            <label className="text-sm text-slate-500 mb-2 block">Company Phone</label>
-            <input 
-              className="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-              placeholder="Company Phone" 
-              value={form.company_phone} 
-              onChange={(e) => setForm({ ...form, company_phone: e.target.value })} 
+            <PhoneNumberField
+              label="Company Phone"
+              prefix={form.company_phone_prefix}
+              number={form.company_phone_number}
+              onPrefixChange={(v) => setForm({ ...form, company_phone_prefix: v })}
+              onNumberChange={(v) => setForm({ ...form, company_phone_number: v })}
+              testIdPrefix="company-phone"
             />
           </div>
           <div>

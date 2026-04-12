@@ -5,6 +5,7 @@ import {
   Package, Wrench, AlertCircle, Check 
 } from "lucide-react";
 import partnerApi from "../../lib/partnerApi";
+import { useCanonicalCategories } from "../../lib/useCanonicalCategories";
 
 const LISTING_TYPES = [
   { value: "product", label: "Product", icon: Package },
@@ -37,6 +38,7 @@ export default function PartnerListingEditorPage() {
   const navigate = useNavigate();
   const { listingId } = useParams();
   const isEditing = !!listingId;
+  const { categories: canonicalCats, subcategoriesFor } = useCanonicalCategories();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -432,26 +434,32 @@ export default function PartnerListingEditorPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Category <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={form.category}
-                  onChange={(e) => handleChange("category", e.target.value)}
-                  placeholder="e.g., mugs"
+                  onChange={(e) => { handleChange("category", e.target.value); handleChange("subcategory", ""); }}
                   className={`w-full border rounded-xl px-4 py-3 ${errors.category ? "border-red-500" : ""}`}
                   data-testid="category-input"
-                />
+                >
+                  <option value="">Select category</option>
+                  {canonicalCats.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
                 {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Subcategory</label>
-                <input
-                  type="text"
+                <select
                   value={form.subcategory}
                   onChange={(e) => handleChange("subcategory", e.target.value)}
-                  placeholder="e.g., ceramic"
                   className="w-full border rounded-xl px-4 py-3"
                   data-testid="subcategory-input"
-                />
+                >
+                  <option value="">Select subcategory</option>
+                  {subcategoriesFor(form.category).map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">Brand</label>
