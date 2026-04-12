@@ -8,70 +8,70 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## System Principles (All Enforced)
 - Settings Hub = single source of truth (3 groups: Business, Pricing Policy, Partner Policy)
-- Promotions: policy-driven, no manual discount
-- StandardDrawerShell via Portal everywhere
-- Categories: canonical dropdowns from /api/categories
-- Phone: normalized +XXXXXXXXXXXXX via PhoneNumberField (58 countries)
-- Pricing Tiers = single source of truth for all economic logic
-- Delivery closure = ONE canonical closure engine (admin + public reuse same logic)
+- Pricing Tiers = SOLE source of truth for all economic logic (margins, distribution, commissions)
+- Sales/Affiliate/Distribution tabs READ from Pricing Tiers — no independent override percentages
+- Stamp fields auto-pull from Business Profile (no manual re-entry)
+- Canonical Document Renderer for all document types (settings-driven, template-aware, WYSIWYG)
+- ONE closure engine for admin + public (dual-mode: signed + confirmed)
 - Phone number = primary identity for order lookup (account-optional)
+- No unnecessary routes — reuse existing canonical pages/drawers/engines
 
-## Document System (Phase B — Complete)
-- Canonical Document Renderer: Quote, Invoice, Delivery Note, Service Handover
-- Template-aware: Classic Corporate, Modern Clean, Compact Commercial, Premium Branded
-- WYSIWYG PDF export: html2canvas + jsPDF
-- Unified settings via `/api/documents/render-settings`
+## Settings Hub Structure (Canonical — Typography Unified)
+### Business (8 tabs)
+- Profile, Payment Details, Document Branding (stamp auto-pull, signature persistence)
+- Document Numbering, Document Footer (LIVE PREVIEW), Document Template (4 VISUAL PREVIEW CARDS)
+- Notifications, Report Delivery
 
-## Delivery Closure System (P0 — Complete)
-### Dual-Mode Completion Engine
-- **Signed mode**: receiver_name + receiver_signature → `completed_signed`
-- **Confirmed mode**: receiver_name + completion_note + authorization_source → `completed_confirmed`
-- Records LOCKED after completion. Full audit trail.
-- Same engine used by admin AND public interfaces.
+### Pricing Policy (5 tabs)
+- Pricing Tiers (SOLE source of truth), Distribution Rules, Sales & Commission (reads from tiers)
+- Payout Settings, Launch Controls
 
-### Status Flow
-issued → in_transit → pending_confirmation → completed_signed/completed_confirmed
+### Partner Policy (4 tabs)
+- Affiliate Policy (reads from tiers), Vendor Policy, Partner Config, Operational Rules
+
+## Document System (Complete)
+- Canonical Renderer: Quote, Invoice, Delivery Note, Service Handover
+- Templates: Classic Corporate, Modern Clean, Compact Commercial, Premium Branded
+- WYSIWYG PDF: html2canvas + jsPDF
+- Client-type-aware: Individual vs Business blocks
+- Unified settings: `/api/documents/render-settings`
+
+## Delivery Closure System (Complete)
+- Dual-mode: Signed (signature) + Confirmed (staff on behalf)
+- Records LOCKED after completion
+- Full audit trail: method, receiver, designation, timestamp, authorization source
 
 ## Public Completion System (Complete)
-### 3 Access Modes
-1. **Token link** (primary): `/confirm-completion?token=xyz` — auto-resolves
-2. **Phone lookup**: Enter phone → find pending deliveries → select → confirm
-3. **Order number**: Enter order # → find linked delivery notes → confirm
+- 3 access modes: Token link, Phone lookup, Order # lookup
+- Mobile-first 3-screen flow: Find → Review → Confirm
+- Reuses same closure engine (no duplication)
 
-### Mobile-First 3-Screen Flow
-1. Find Order (phone/order # toggle)
-2. Review (delivery details card)
-3. Confirm (sign or confirm mode → Complete & Lock)
+## Track Order (Full Lifecycle — Complete)
+- 6-step timeline: Placed → Confirmed → In Progress → Ready/Dispatched → Awaiting Confirmation → Completed
+- Fulfillment-aware CTA: Confirm Delivery / Pickup / Service Handover
+- Completion summary after closure (receiver, method, timestamp)
+- Current step highlighted in gold (#D4A843)
 
-### Track Order Integration
-- Track Order page shows "Confirm Delivery" CTA when status = dispatched/in_transit/awaiting_confirmation
-- Links to `/confirm-completion?order={order_number}`
+## Settings Hub Final Alignment (Complete)
+- Typography: Unified text-[11px] font-semibold uppercase tracking-wider labels across ALL tabs
+- Stamp: Auto-pull from Business Profile (company name, location, BRN, TIN) — read-only display
+- Stamp: Field visibility toggles (show company, location, registration, TIN)
+- Signature: Persistent preview after save
+- Sales & Commission: Source-of-truth banner → Pricing Tiers
+- Affiliate Policy: Source-of-truth banner → Pricing Tiers
+- Document Template: 4 visual preview cards with mini document mockups
+- Document Footer: Live preview reflecting toggle states
 
-### API Endpoints
-- `GET /api/public/completion/token/{token}` — resolve by token
-- `GET /api/public/completion/phone/{phone}` — phone lookup (pending only)
-- `GET /api/public/completion/order/{order_number}` — order lookup
-- `POST /api/public/completion/close/{dn_id}` — public close (same validation as admin)
-
-## Completed Features (All Tested)
-- Core Platform, Growth & Conversion, Content Studio, Team Performance
-- Partner Ecosystem, Weekly Digest, Categories, Phone, UI/UX Stabilization
-- Settings Hub Phase A Restructure
-- Phase B: Canonical Document Renderer + Template Support + Footer Live Preview
-- P0: Enhanced Dual-Mode Delivery Closure (signed + confirmed, locking, audit trail)
-- Public Completion System (token + phone + order lookup, mobile-first flow)
-
-## Upcoming (Priority Order)
-1. Settings Hub Final Alignment Pass (typography, stamp auto-pull, pricing source-of-truth)
-2. Business Client Validation (VRN + BRN required for business type)
-3. Client Detail Display Configuration (Individual vs Business in documents)
-4. EFD Receipt On-Demand Workflow
-5. Customer Self-Service Portal
+## Upcoming
+1. Business Client Validation (VRN + BRN required for business type)
+2. Client Detail Display Configuration (Individual vs Business in documents)
+3. EFD Receipt On-Demand Workflow
+4. Customer Self-Service Portal
 
 ## Backlog
 - Twilio WhatsApp / Resend Email (blocked on keys)
 - Advanced Analytics, Data Integrity Dashboard
-- Account mapping (phone-based: when user creates account, link previous orders)
+- Account mapping (phone→orders on account creation)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
