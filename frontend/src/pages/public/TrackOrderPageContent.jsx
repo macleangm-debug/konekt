@@ -211,21 +211,25 @@ export default function TrackOrderPageContent() {
                 </div>
               )}
 
-              {/* Confirm Completion CTA */}
-              {(order.fulfillment_status === "dispatched" || order.status === "shipped" || order.status === "in_transit" || order.status === "awaiting_confirmation") && (
-                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center" data-testid="confirm-delivery-cta">
-                  <Clock className="w-8 h-8 text-amber-600 mx-auto mb-2" />
-                  <h3 className="text-lg font-bold text-[#20364D] mb-1">Awaiting Your Confirmation</h3>
-                  <p className="text-sm text-slate-600 mb-4">Your order has been delivered. Please confirm completion.</p>
-                  <Link
-                    to={`/confirm-completion?order=${order.order_number || order.id}`}
-                    className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition text-base"
-                    data-testid="confirm-delivery-btn"
-                  >
-                    <Check className="w-5 h-5" /> Confirm Delivery
-                  </Link>
-                </div>
-              )}
+              {/* Confirm Completion CTA — fulfillment-aware */}
+              {(order.fulfillment_status === "dispatched" || order.status === "shipped" || order.status === "in_transit" || order.status === "awaiting_confirmation") && !["delivered","completed","completed_signed","completed_confirmed","cancelled"].includes(order.status) && (() => {
+                const ft = order.fulfillment_type || order.order_type || "delivery";
+                const ctaLabel = ft === "pickup" ? "Confirm Pickup" : ft === "service" ? "Confirm Service Handover" : "Confirm Delivery";
+                return (
+                  <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center" data-testid="confirm-delivery-cta">
+                    <Clock className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                    <h3 className="text-lg font-bold text-[#20364D] mb-1">Awaiting Your Confirmation</h3>
+                    <p className="text-sm text-slate-600 mb-4">Your order is ready. Please confirm completion.</p>
+                    <Link
+                      to={`/confirm-completion?order=${order.order_number || order.id}`}
+                      className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition text-base"
+                      data-testid="confirm-delivery-btn"
+                    >
+                      <Check className="w-5 h-5" /> {ctaLabel}
+                    </Link>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -236,36 +240,59 @@ export default function TrackOrderPageContent() {
             <div className="rounded-2xl border bg-white p-6 sticky top-24">
               <h3 className="text-lg font-bold text-[#20364D] mb-5">Order Progress</h3>
               <div className="space-y-0">
-                {[
-                  { key: "confirmed", label: "Order Placed", time: order.created_at },
-                  { key: "payment_verified", label: "Payment Verified", time: order.approved_at || (order.payment_status === "approved" ? order.updated_at : null) },
-                  { key: "processing", label: "Processing", time: order.status === "processing" || order.status === "in_production" ? order.updated_at : null },
-                  { key: "ready", label: "Ready for Delivery", time: order.status === "ready" ? order.updated_at : null },
-                  { key: "delivered", label: "Delivered", time: order.status === "delivered" || order.status === "completed" ? order.updated_at : null },
-                ].map((step, idx, arr) => {
-                  const done = !!step.time;
-                  const isLast = idx === arr.length - 1;
-                  return (
-                    <div key={step.key} className="flex gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                          ${done ? "bg-[#20364D]" : "bg-slate-200"}`}>
-                          {done ? <CheckCircle className="w-4 h-4 text-white" /> : <div className="w-2 h-2 rounded-full bg-slate-400" />}
+                {(() => {
+                  const fulfillment = order.fulfillment_type || order.order_type || "delivery";
+                  const isComplete = ["delivered", "completed", "completed_signed", "completed_confirmed"].includes(order.status);
+                  const readyLabel = fulfillment === "pickup" ? "Ready for Pickup" : fulfillment === "service" ? "Service Ready" : "Ready / Dispatched";
+                  const awaitLabel = "Awaiting Confirmation";
+                  const completeLabel = "Completed";
+
+                  const steps = [
+                    { key: "placed", label: "Order Placed", time: order.created_at },
+                    { key: "confirmed", label: "Confirmed", time: order.payment_status === "approved" || order.status !== "pending" ? (order.approved_at || order.updated_at) : null },
+                    { key: "processing", label: "In Progress", time: ["processing", "in_production"].includes(order.status) || ["ready", "shipped", "in_transit", "delivered", "completed", "completed_signed", "completed_confirmed", "awaiting_confirmation"].includes(order.status) ? order.updated_at : null },
+                    { key: "ready", label: readyLabel, time: ["ready", "shipped", "in_transit", "delivered", "completed", "completed_signed", "completed_confirmed", "awaiting_confirmation"].includes(order.status) || order.fulfillment_status === "dispatched" ? order.updated_at : null },
+                    { key: "awaiting", label: awaitLabel, time: ["awaiting_confirmation"].includes(order.status) || (order.fulfillment_status === "dispatched" && !isComplete) ? order.updated_at : (isComplete ? order.updated_at : null) },
+                    { key: "completed", label: completeLabel, time: isComplete ? order.updated_at : null },
+                  ];
+
+                  return steps.map((step, idx, arr) => {
+                    const done = !!step.time;
+                    const isCurrent = done && (idx === arr.length - 1 || !arr[idx + 1].time);
+                    const isLast = idx === arr.length - 1;
+                    return (
+                      <div key={step.key} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${done ? (isCurrent ? "bg-[#D4A843]" : "bg-[#20364D]") : "bg-slate-200"}`}>
+                            {done ? <CheckCircle className="w-4 h-4 text-white" /> : <div className="w-2 h-2 rounded-full bg-slate-400" />}
+                          </div>
+                          {!isLast && <div className={`w-0.5 h-8 ${done ? "bg-[#20364D]" : "bg-slate-200"}`} />}
                         </div>
-                        {!isLast && <div className={`w-0.5 h-8 ${done ? "bg-[#20364D]" : "bg-slate-200"}`} />}
+                        <div className="pb-6">
+                          <p className={`font-medium text-sm ${done ? (isCurrent ? "text-[#D4A843]" : "text-[#20364D]") : "text-slate-400"}`}>{step.label}</p>
+                          {step.time && (
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              {new Date(step.time).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="pb-6">
-                        <p className={`font-medium text-sm ${done ? "text-[#20364D]" : "text-slate-400"}`}>{step.label}</p>
-                        {step.time && (
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {new Date(step.time).toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
+
+              {/* Completion Summary (after closure) */}
+              {["completed", "completed_signed", "completed_confirmed", "delivered"].includes(order.status) && order.receiver_name && (
+                <div className="mt-4 pt-4 border-t border-slate-100" data-testid="completion-summary">
+                  <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2">Completion Details</div>
+                  <div className="text-sm space-y-1">
+                    <div><span className="text-slate-500">Receiver:</span> <span className="font-medium">{order.receiver_name}</span></div>
+                    {order.closure_method && <div><span className="text-slate-500">Method:</span> <span className="font-medium capitalize">{order.closure_method.replace(/_/g, " ")}</span></div>}
+                    {order.completed_at && <div><span className="text-slate-500">Completed:</span> <span className="font-medium">{new Date(order.completed_at).toLocaleDateString("en-GB")}</span></div>}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

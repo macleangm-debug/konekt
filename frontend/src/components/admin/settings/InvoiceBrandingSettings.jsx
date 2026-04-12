@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import adminApi from "../../../lib/adminApi";
+import api from "../../../lib/api";
 import { Save, CheckCircle, RefreshCw, Upload, Trash2 } from "lucide-react";
 import SignaturePad from "./SignaturePad";
 import GeneratedStampBuilder from "./GeneratedStampBuilder";
@@ -102,23 +103,27 @@ export default function InvoiceBrandingSettings() {
   const [saved, setSaved] = useState(false);
   const [stampSvg, setStampSvg] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [businessProfile, setBusinessProfile] = useState({});
 
   const up = (key, val) => setForm(p => ({ ...p, [key]: val }));
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await adminApi.getInvoiceBranding();
-      if (r.data) {
-        setForm(p => ({ ...p, ...r.data }));
-        // Auto-generate stamp preview if settings have generated mode
-        if (r.data.show_stamp && r.data.stamp_mode === "generated") {
+      const [brandingRes, hubRes] = await Promise.all([
+        adminApi.getInvoiceBranding(),
+        api.get("/api/admin/settings-hub").catch(() => ({ data: {} })),
+      ]);
+      if (brandingRes.data) {
+        setForm(p => ({ ...p, ...brandingRes.data }));
+        if (brandingRes.data.show_stamp && brandingRes.data.stamp_mode === "generated") {
           try {
-            const sr = await adminApi.generateStamp({ stamp_shape: r.data.stamp_shape || "circle", stamp_color: r.data.stamp_color || "blue", stamp_text_primary: r.data.stamp_text_primary || "", stamp_text_secondary: r.data.stamp_text_secondary || "", stamp_registration_number: r.data.stamp_registration_number || "", stamp_tax_number: r.data.stamp_tax_number || "", stamp_phrase: r.data.stamp_phrase || "Official Company Stamp" });
+            const sr = await adminApi.generateStamp({ stamp_shape: brandingRes.data.stamp_shape || "circle", stamp_color: brandingRes.data.stamp_color || "blue", stamp_text_primary: brandingRes.data.stamp_text_primary || "", stamp_text_secondary: brandingRes.data.stamp_text_secondary || "", stamp_registration_number: brandingRes.data.stamp_registration_number || "", stamp_tax_number: brandingRes.data.stamp_tax_number || "", stamp_phrase: brandingRes.data.stamp_phrase || "Official Company Stamp" });
             setStampSvg(sr.data.svg || "");
           } catch {}
         }
       }
+      setBusinessProfile(hubRes.data?.business_profile || {});
     } catch {}
     setLoading(false);
   }, []);
@@ -248,9 +253,14 @@ export default function InvoiceBrandingSettings() {
                   stamp_registration_number: form.stamp_registration_number,
                   stamp_tax_number: form.stamp_tax_number,
                   stamp_phrase: form.stamp_phrase,
+                  stamp_show_company: form.stamp_show_company,
+                  stamp_show_location: form.stamp_show_location,
+                  stamp_show_reg: form.stamp_show_reg,
+                  stamp_show_tin: form.stamp_show_tin,
                 }}
                 onChange={(stampValues) => setForm((p) => ({ ...p, ...stampValues }))}
                 svgPreview={stampSvg}
+                businessProfile={businessProfile}
               />
               <div className="flex items-center gap-6 mt-2">
                 <button onClick={generateStamp} disabled={generating} data-testid="generate-stamp-btn"

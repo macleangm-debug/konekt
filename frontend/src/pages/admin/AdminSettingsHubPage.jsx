@@ -456,10 +456,13 @@ function CommercialTab({ state, setState }) {
 function SalesTab({ state, setState }) {
   const s = state.sales || {};
   return (
-    <SettingsSectionCard title="Sales Settings" description="Default sales commission and assignment behavior.">
+    <SettingsSectionCard title="Sales & Commission" description="Commission behavior and assignment rules. Actual commission percentages are defined per tier in Pricing Tiers.">
+      <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
+        Commission percentages below are <strong>default values</strong>. The actual rates are calculated per order based on the matching <strong>Pricing Tier</strong> distribution split. Edit tier-specific rates in Pricing Tiers.
+      </div>
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <SettingsNumberField label="Commission % (Self-Generated)" value={s.default_sales_commission_self_generated} onChange={(v) => setState(U(state, "sales", "default_sales_commission_self_generated", v))} />
-        <SettingsNumberField label="Commission % (Affiliate Lead)" value={s.default_sales_commission_affiliate_generated} onChange={(v) => setState(U(state, "sales", "default_sales_commission_affiliate_generated", v))} />
+        <SettingsNumberField label="Default Commission % (Self-Generated)" value={s.default_sales_commission_self_generated} onChange={(v) => setState(U(state, "sales", "default_sales_commission_self_generated", v))} />
+        <SettingsNumberField label="Default Commission % (Affiliate Lead)" value={s.default_sales_commission_affiliate_generated} onChange={(v) => setState(U(state, "sales", "default_sales_commission_affiliate_generated", v))} />
         <SettingsSelectField label="Assignment Mode" value={s.assignment_mode} onChange={(v) => setState(U(state, "sales", "assignment_mode", v))} options={[{ value: "auto", label: "Auto" }, { value: "manual", label: "Manual" }]} />
         <SettingsToggleField label="Smart assignment" checked={s.smart_assignment_enabled} onChange={(v) => setState(U(state, "sales", "smart_assignment_enabled", v))} />
         <SettingsToggleField label="Lead source visibility" checked={s.lead_source_visibility} onChange={(v) => setState(U(state, "sales", "lead_source_visibility", v))} />
@@ -473,9 +476,12 @@ function SalesTab({ state, setState }) {
 function AffiliateTab({ state, setState }) {
   const a = state.affiliate || {};
   return (
-    <SettingsSectionCard title="Affiliate Program" description="Default affiliate economics, approval, and governance.">
+    <SettingsSectionCard title="Affiliate Program" description="Approval, attribution, and governance rules. Commission rates are defined per tier in Pricing Tiers.">
+      <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
+        The default commission % below is a <strong>fallback</strong>. Actual affiliate earnings are calculated from the matching <strong>Pricing Tier</strong> distribution split per order.
+      </div>
       <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <SettingsNumberField label="Default Commission %" value={a.default_affiliate_commission_percent} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_commission_percent", v))} />
+        <SettingsNumberField label="Default Commission % (fallback)" value={a.default_affiliate_commission_percent} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_commission_percent", v))} />
         <SettingsSelectField label="Default Status" value={a.default_affiliate_status} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_status", v))} options={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }]} />
         <SettingsSelectField label="Commission Trigger" value={a.commission_trigger} onChange={(v) => setState(U(state, "affiliate", "commission_trigger", v))} options={[{ value: "payment_approved", label: "Payment Approved" }, { value: "order_completed", label: "Order Completed" }]} />
         <SettingsSelectField label="Commission Duration" value={a.commission_duration} onChange={(v) => setState(U(state, "affiliate", "commission_duration", v))} options={[{ value: "per_successful_sale", label: "Per Sale" }, { value: "first_order_only", label: "First Order Only" }]} />
