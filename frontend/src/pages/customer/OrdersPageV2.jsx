@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { X, Phone, Mail, MessageCircle, CheckCircle2, Circle, Clock, Package, Truck, MapPin, RotateCcw, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { X, Phone, Mail, MessageCircle, CheckCircle2, Circle, Clock, Package, Truck, MapPin, RotateCcw, Loader2, Check } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import FilterBar from "../../components/ui/FilterBar";
 import PageHeader from "../../components/ui/PageHeader";
@@ -366,19 +366,31 @@ export default function OrdersPageV2() {
                     <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${pSt.cls}`}>{pSt.label}</span></td>
                     <td className="px-6 py-4"><span className={`text-xs px-3 py-1 rounded-full font-medium ${fSt.cls}`}>{fSt.label}</span></td>
                     <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={(e) => handleReorder(e, oid)}
-                        disabled={reorderingId === oid}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#20364D] text-white text-xs font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition"
-                        data-testid={`reorder-btn-${order.id}`}
-                      >
-                        {reorderingId === oid ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <RotateCcw className="w-3 h-3" />
-                        )}
-                        Reorder
-                      </button>
+                      {["dispatched", "shipped", "in_transit", "awaiting_confirmation"].includes((order.status || "").toLowerCase()) ||
+                       ["dispatched"].includes((order.fulfillment_status || "").toLowerCase()) ? (
+                        <Link
+                          to={`/confirm-completion?order=${order.order_number || order.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition"
+                          data-testid={`confirm-btn-${order.id}`}
+                        >
+                          <Check className="w-3 h-3" /> Confirm
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={(e) => handleReorder(e, oid)}
+                          disabled={reorderingId === oid}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#20364D] text-white text-xs font-semibold hover:bg-[#2a4a66] disabled:opacity-50 transition"
+                          data-testid={`reorder-btn-${order.id}`}
+                        >
+                          {reorderingId === oid ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <RotateCcw className="w-3 h-3" />
+                          )}
+                          Reorder
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );
