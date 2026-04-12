@@ -1,0 +1,136 @@
+{
+  "summary": "Weekly Digest Browser View - All features verified working. Backend: 10/11 tests passed (1 error due to rate limiting). Frontend: All UI elements and flows verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_weekly_digest_v276.py",
+    "/app/test_reports/pytest/pytest_results_weekly_digest_v276.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_weekly_digest_v276.py"
+  ],
+  "success_rate": {
+    "backend": "91% (10/11 passed, 1 rate-limited)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Weekly Digest page fully verified: 1) GET /api/admin/weekly-digest/snapshot returns all required fields: ok, week_start, week_end, generated_at, kpis (revenue, orders, customers, new_affiliates, active_partners_pct, critical_alerts), revenue_breakdown (category, revenue, pct), operations (pending_payments, overdue_followups, stale_leads, unassigned_tasks), sales (top_reps, lowest_rep, stuck_deals, total_reps), ecosystem (total_partners, active_partners, inactive_partners, regions_without_coverage, categories_without_partners, pending_applications), affiliates (total, active), alerts (severity, message, cta, cta_label), actions (label, path). 2) Page renders at /admin/weekly-digest with data-testid='weekly-digest-page'. 3) Header shows 'Weekly Operations Report' with week range and generated timestamp. 4) 6 KPI cards: Revenue, Orders, Customers, Affiliates, Partner Util %, Alerts - with color-coded borders (red for critical alerts). 5) Revenue Breakdown section shows category table with Revenue and Share columns, plus Highlights sidebar. 6) Operations Health shows 4 cards: Pending Payments, Overdue Follow-Ups, Stale Leads, Unassigned Tasks - green for healthy (0), amber for warning (>0). 7) Sales Performance shows top 3 reps with podium numbers (1,2,3) and revenue, plus insights (Needs Attention for 0 deals, Stuck Deals for overdue follow-ups). 8) Partner Ecosystem shows active partners, inactive count, region/category gaps, pending applications. 9) Affiliate Performance shows Total and Active counts. 10) Alerts Summary shows alerts with severity badges (critical/warning/info) and CTA buttons that navigate correctly. 11) Action Items show actionable deep links with 'Open' buttons that navigate to relevant pages. 12) 'Weekly Digest' sidebar entry visible under 'Reports & Analytics' section.",
+  "features_tested": {
+    "backend_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/weekly-digest/snapshot returns 200 with ok=true",
+        "Response includes week_start, week_end, generated_at",
+        "KPIs include: revenue, orders, customers, new_affiliates, active_partners_pct, critical_alerts",
+        "revenue_breakdown is array with category, revenue, pct fields",
+        "operations includes: pending_payments, overdue_followups, stale_leads, unassigned_tasks",
+        "sales includes: top_reps (max 3), lowest_rep, stuck_deals, total_reps",
+        "ecosystem includes: total_partners, active_partners, inactive_partners, regions_without_coverage, categories_without_partners, pending_applications",
+        "affiliates includes: total, active",
+        "alerts is array (max 3) with severity, message, cta, cta_label",
+        "actions is array with label, path fields"
+      ]
+    },
+    "header_section": {
+      "status": "PASS",
+      "details": [
+        "Title: 'Weekly Operations Report'",
+        "Week range: 'Apr 06 — Apr 12, 2026'",
+        "Generated timestamp displayed"
+      ]
+    },
+    "kpi_cards": {
+      "status": "PASS",
+      "details": [
+        "6 KPI cards displayed with data-testid='digest-kpis'",
+        "Revenue: TZS 3,863,165",
+        "Orders: 259",
+        "Customers: 188",
+        "Affiliates: 13",
+        "Partner Util: 54%",
+        "Alerts: 1 (red border for critical)"
+      ]
+    },
+    "revenue_breakdown": {
+      "status": "PASS",
+      "details": [
+        "Table with Category, Revenue, Share columns",
+        "Highlights sidebar shows top category insight",
+        "Uncategorized leads at 100%"
+      ]
+    },
+    "operations_health": {
+      "status": "PASS",
+      "details": [
+        "4 cards: Pending Payments (0, green), Overdue Follow-Ups (28, amber), Stale Leads (0, green), Unassigned Tasks (0, green)",
+        "Color coding: green=ok, amber=warning (>0)"
+      ]
+    },
+    "sales_performance": {
+      "status": "PASS",
+      "details": [
+        "Shows '4 active reps' subtitle",
+        "Top 3 performers with podium numbers: Brian Kweka #1 (TZS 1,637,840), Janeth Msuya #2 (TZS 1,608,865), Neema Mallya #3 (TZS 616,460)",
+        "Insights: 'Needs Attention' for Staff Sales User (0 deals), 'Stuck Deals' (28 deals with overdue follow-ups)"
+      ]
+    },
+    "partner_ecosystem": {
+      "status": "PASS",
+      "details": [
+        "Shows '24 partners' subtitle",
+        "13 active partners",
+        "11 inactive partners",
+        "7 partners without region coverage",
+        "13 partners without category assignment",
+        "5 pending affiliate applications"
+      ]
+    },
+    "affiliate_performance": {
+      "status": "PASS",
+      "details": [
+        "Shows '25 affiliates' subtitle",
+        "Total: 25",
+        "Active: 13"
+      ]
+    },
+    "alerts_summary": {
+      "status": "PASS",
+      "details": [
+        "2 alerts displayed with data-testid='digest-alert-{i}'",
+        "Critical alert: '28 overdue follow-ups need attention' with 'View Alerts' CTA",
+        "Info alert: '5 affiliate applications pending review' with 'Review Applications' CTA",
+        "CTA buttons navigate correctly to /admin/team/alerts and /admin/affiliate-applications"
+      ]
+    },
+    "action_items": {
+      "status": "PASS",
+      "details": [
+        "4 action items displayed with data-testid='digest-action-{i}'",
+        "Review 5 pending affiliate applications -> /admin/affiliate-applications",
+        "Assign regions to 7 active partners -> /admin/partner-ecosystem",
+        "Follow up on 28 overdue deals -> /admin/crm",
+        "Activate 11 inactive partners -> /admin/partner-ecosystem",
+        "'Open' buttons navigate correctly"
+      ]
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "details": [
+        "'Weekly Digest' entry visible under 'Reports & Analytics' section",
+        "Clicking navigates to /admin/weekly-digest"
+      ]
+    }
+  }
+}

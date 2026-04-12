@@ -125,6 +125,7 @@ export const adminNavigation = [
       { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
       { label: "Inventory Intelligence", href: "/admin/reports/inventory", icon: Package, roles: ["admin", "sales_manager", "finance_manager"] },
       { label: "Weekly Performance", href: "/admin/reports/weekly-performance", icon: CalendarDays, roles: ["admin", "sales_manager", "finance_manager"] },
+      { label: "Weekly Digest", href: "/admin/weekly-digest", icon: FileText, roles: ["admin"] },
       { label: "Action Center", href: "/admin/reports/alerts", icon: Bell, roles: ["admin", "sales_manager", "finance_manager"] },
     ],
   },
