@@ -1,0 +1,68 @@
+{
+  "summary": "Data Integrity & Compliance Layer testing complete. All 16 backend tests pass (100%). Frontend verified: CustomerDrawer360 shows Business/Individual type badge, VRN, BRN, City, Country fields. Invoice Preview shows EFD Receipt section with 'Internal Only' label and Pending Upload status. Business client validation correctly blocks PATCH when VRN/BRN missing.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_data_integrity_compliance_v286.py",
+    "/app/test_reports/pytest/pytest_results_data_integrity_v286.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_data_integrity_compliance_v286.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Data Integrity & Compliance Layer verified. Key features: (1) Business Client Validation - PATCH /api/admin/customers-360/{id} validates VRN/BRN/company_name when client_type=business, returns 400 with clear error message if missing. (2) Customer Detail Display - GET returns vrn, brn, client_type, company_name, city, country fields. CustomerDrawer360 shows Business/Individual type badge, VRN/BRN fields with 'Missing' alert for business clients without them. (3) EFD Receipt Workflow - POST /api/admin/efd/request/{invoice_id} creates pending EFD, validates VRN/BRN for business clients. GET /api/admin/efd/invoice/{invoice_id} returns linked receipt. InvoicePreviewPage shows EFD section with 'Internal Only' label. Known test customers: 76b1d069-3d5e-4669-ac1c-c226de4e171d (business with VRN/BRN), 5fe27982-4716-4420-9685-58fd869dd2b7 (individual). Known invoice: 71c2fa9c-1eff-4cf2-a481-95df7f0b764e.",
+  "features_tested": {
+    "business_client_validation": {
+      "status": "PASS",
+      "details": [
+        "PATCH with client_type=business and missing VRN returns 400",
+        "PATCH with client_type=business and all required fields succeeds",
+        "PATCH with client_type=individual does not require VRN/BRN",
+        "Error message clearly lists missing fields"
+      ]
+    },
+    "customer_detail_display": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/customers-360/{id} returns vrn, brn, client_type, company_name, city, country",
+        "CustomerDrawer360 shows Business/Individual type badge",
+        "CustomerDrawer360 shows VRN and BRN fields for business clients",
+        "Missing fields alert shows when business client lacks VRN/BRN"
+      ]
+    },
+    "efd_receipt_workflow": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/efd/request/{invoice_id} creates pending EFD receipt",
+        "POST validates VRN/BRN for business clients before creating EFD",
+        "POST for nonexistent invoice returns 404",
+        "GET /api/admin/efd/invoice/{invoice_id} returns linked EFD or null",
+        "GET /api/admin/efd returns list of all EFD receipts",
+        "InvoicePreviewPage shows EFD section with 'Internal Only' label",
+        "EFD section shows 'Pending Upload' status after request"
+      ]
+    },
+    "customer_stats_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/customers-360/stats returns total, active, at_risk, inactive counts"
+      ]
+    }
+  }
+}

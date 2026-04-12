@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Download, ArrowLeft, CreditCard, Check, AlertCircle, DollarSign } from "lucide-react";
+import { Download, ArrowLeft, CreditCard, Check, AlertCircle, DollarSign, FileText, Upload } from "lucide-react";
 import api from "@/lib/api";
 import { formatMoney } from "@/utils/finance";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,70 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import CanonicalDocumentRenderer from "@/components/documents/CanonicalDocumentRenderer";
+
+/* ─── EFD Receipt Section (internal-only, on-demand) ─── */
+function EfdSection({ invoiceId }) {
+  const [efd, setEfd] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [requesting, setRequesting] = useState(false);
+
+  useEffect(() => {
+    api.get(`/api/admin/efd/invoice/${invoiceId}`)
+      .then((r) => setEfd(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [invoiceId]);
+
+  const requestEfd = async () => {
+    setRequesting(true);
+    try {
+      const r = await api.post(`/api/admin/efd/request/${invoiceId}`, {});
+      setEfd(r.data);
+      toast.success("EFD receipt requested");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to request EFD");
+    } finally {
+      setRequesting(false);
+    }
+  };
+
+  if (loading) return null;
+
+  return (
+    <div className="mt-6 bg-white rounded-2xl border p-6" data-testid="efd-section">
+      <h3 className="font-semibold mb-3 flex items-center gap-2">
+        <FileText className="w-5 h-5 text-[#20364D]" />
+        EFD Receipt
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 ml-1">Internal Only</span>
+      </h3>
+      {!efd ? (
+        <div>
+          <p className="text-sm text-slate-500 mb-3">No EFD receipt has been requested for this invoice. EFD is only issued on demand.</p>
+          <Button onClick={requestEfd} disabled={requesting} variant="outline" data-testid="request-efd-btn">
+            {requesting ? "Requesting..." : "Request EFD Receipt"}
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Badge className={efd.status === "uploaded" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}>
+              {efd.status === "uploaded" ? "Available" : "Pending Upload"}
+            </Badge>
+            {efd.efd_number && <span className="text-sm text-slate-600">EFD #: {efd.efd_number}</span>}
+          </div>
+          {efd.status === "uploaded" && efd.efd_file && (
+            <a href={efd.efd_file} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline">
+              <Download className="w-4 h-4" /> Download EFD Receipt
+            </a>
+          )}
+          {efd.status === "pending" && (
+            <p className="text-sm text-amber-600">EFD receipt has been requested. Upload the receipt once it's available.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const statusColors = {
   draft: "bg-slate-100 text-slate-700",
@@ -334,6 +398,9 @@ export default function InvoicePreviewPage() {
             )}
           </div>
         </div>
+
+        {/* ═══ EFD RECEIPT (internal-only, on-demand) ═══ */}
+        <EfdSection invoiceId={id} />
       </div>
 
       {/* ═══ PAYMENT MODAL ═══ */}

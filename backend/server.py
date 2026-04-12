@@ -3063,6 +3063,9 @@ app.include_router(document_render_settings_router)
 from public_completion_routes import router as public_completion_router
 app.include_router(public_completion_router)
 
+from efd_receipt_routes import router as efd_receipt_router
+app.include_router(efd_receipt_router)
+
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)

@@ -79,7 +79,6 @@ async def _get_last_activity(db, uid):
 async def customers_stats(request: Request):
     """Return aggregate stats for the stats cards."""
     db = request.app.mongodb
-    now = datetime.now(timezone.utc)
 
     total = await db.users.count_documents({"role": "customer"})
 
@@ -266,10 +265,16 @@ async def customer_detail_360(customer_id: str, request: Request):
         "id": uid,
         "name": user.get("full_name") or user.get("email", ""),
         "email": user.get("email", ""),
-        "company": user.get("company") or "-",
-        "type": "business" if user.get("company") else "individual",
+        "company": user.get("company") or user.get("company_name") or "-",
+        "company_name": user.get("company_name") or user.get("company") or "",
+        "type": user.get("client_type") or ("business" if user.get("company") else "individual"),
+        "client_type": user.get("client_type") or ("business" if user.get("company") else "individual"),
+        "vrn": user.get("vrn") or "",
+        "brn": user.get("brn") or "",
+        "city": user.get("city") or "",
+        "country": user.get("country") or "",
         "phone": user.get("phone") or "-",
-        "address": "-",
+        "address": user.get("address") or "-",
         "referral_code": user.get("referral_code") or "-",
         "total_referrals": user.get("total_referrals", 0),
         "status": computed_status,
@@ -300,6 +305,50 @@ async def customer_detail_360(customer_id: str, request: Request):
         "recent_orders": [fmt_order(o) for o in recent_orders_raw],
         "notes": "",
     }
+
+
+
+@router.patch("/{customer_id}")
+async def update_customer_profile(customer_id: str, payload: dict, request: Request):
+    """Update customer business fields (client_type, company_name, vrn, brn, city, country)."""
+    db = request.app.mongodb
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        user = await db.users.find_one({"email": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    new_type = payload.get("client_type", user.get("client_type", "individual"))
+
+    # Business validation
+    if new_type == "business":
+        missing = []
+        company_name = payload.get("company_name") or payload.get("company") or user.get("company_name") or user.get("company")
+        vrn = payload.get("vrn") or user.get("vrn")
+        brn = payload.get("brn") or user.get("brn")
+        if not company_name:
+            missing.append("Business Name")
+        if not vrn:
+            missing.append("VRN (VAT Registration Number)")
+        if not brn:
+            missing.append("BRN (Business Registration Number)")
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Business clients must have: {', '.join(missing)}. Complete these fields to continue."
+            )
+
+    allowed = {"client_type", "company_name", "company", "vrn", "brn", "city", "country", "full_name", "phone", "address"}
+    update_fields = {}
+    for key in allowed:
+        if key in payload:
+            update_fields[key] = payload[key]
+    update_fields["updated_at"] = datetime.now(timezone.utc)
+
+    uid = user.get("id") or str(user.get("_id", ""))
+    await db.users.update_one({"id": uid}, {"$set": update_fields})
+
+    return {"status": "success", "message": "Customer profile updated"}
 
 
 # ─── Statement of Account ───────────────────────────────────────────

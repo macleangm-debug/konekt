@@ -82,7 +82,7 @@ function TransactionTable({ items, columns }) {
 function OverviewTab({ c }) {
   const kpis = c.profile_kpis || {};
   const summary = c.summary || {};
-  const isIndividual = (c.type || "").toLowerCase() === "individual" || (!c.company && !c.company_name);
+  const isBusiness = (c.client_type || c.type || "").toLowerCase() === "business" || (c.company && c.company !== "-");
   return (
     <div className="space-y-4">
       {/* Revenue KPIs */}
@@ -102,18 +102,22 @@ function OverviewTab({ c }) {
         <KpiCard label="Payments" value={summary.total_payments} accent="teal" />
       </div>
 
-      {/* Profile + Sales */}
+      {/* Profile + Business Info */}
       <div className="grid gap-4 md:grid-cols-2">
         <section className="rounded-xl border border-slate-200 p-4">
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Profile</h3>
           <dl className="mt-3 space-y-2 text-sm">
             {[
-              !isIndividual && ["Company", c.company || c.company_name],
-              ["Type", c.type ? (c.type.charAt(0).toUpperCase() + c.type.slice(1)) : "-"],
+              ["Type", <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${isBusiness ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>{isBusiness ? "Business" : "Individual"}</span>],
+              isBusiness && ["Business Name", c.company_name || c.company],
+              !isBusiness && ["Full Name", c.name],
               ["Email", c.email],
               ["Phone", c.phone],
+              isBusiness && ["VRN", c.vrn || <span className="text-red-500 text-[10px]">Missing</span>],
+              isBusiness && ["BRN", c.brn || <span className="text-red-500 text-[10px]">Missing</span>],
+              ["City", c.city],
+              ["Country", c.country],
               ["Joined", fmtDate(c.created_at)],
-              ["Points", c.points],
             ].filter(Boolean).map(([label, val]) => (
               <div key={label} className="flex justify-between gap-3">
                 <dt className="text-slate-400 whitespace-nowrap text-xs">{label}</dt>
@@ -121,6 +125,11 @@ function OverviewTab({ c }) {
               </div>
             ))}
           </dl>
+          {isBusiness && (!c.vrn || !c.brn) && (
+            <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-700" data-testid="missing-business-fields-alert">
+              Business clients must have VRN and BRN. Update profile to enable compliance workflows.
+            </div>
+          )}
         </section>
         <section className="rounded-xl border border-slate-200 p-4">
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Sales Ownership</h3>
