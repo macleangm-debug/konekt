@@ -1,23 +1,19 @@
-# Test Credentials
+# Test Credentials — Konekt B2B Platform
 
-## Admin
-- Email: admin@konekt.co.tz
-- Password: KnktcKk_L-hw1wSyquvd!
-- Portal: /admin
+## Admin Account
+- Email: `admin@konekt.co.tz`
+- Password: `KnktcKk_L-hw1wSyquvd!`
+- Portal: `/admin`
 
-## Customer
-- Email: test@konekt.tz
-- Phone: +255 712345678
-- PIN: 1234
-- Password: TestUser123!
-- Portal: /account
+## Staff / Sales Account
+- Email: `staff@konekt.co.tz`
+- Password: `Staff123!`
+- Portal: `/staff-workspace`
 
-## Partner/Vendor
-- Email: demo.partner@konekt.com
-- Password: Partner123!
-- Portal: /partner
+## Customer Account
+- Email: `test@konekt.tz`
+- Password: `TestUser123!`
 
-## Staff/Sales
-- Email: staff@konekt.co.tz
-- Password: Staff123!
-- Portal: /staff (login at /staff-login)
+## Vendor Account
+- Email: `demo.partner@konekt.com`
+- Password: `Partner123!`
