@@ -3095,6 +3095,9 @@ app.include_router(data_integrity_router)
 from walkin_sale_routes import router as walkin_sale_router
 app.include_router(walkin_sale_router)
 
+from analytics_dashboard_routes import router as analytics_dashboard_router
+app.include_router(analytics_dashboard_router)
+
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)

@@ -1,0 +1,87 @@
+{
+  "summary": "Analytics Dashboard & Walk-in Sale Layout testing complete. All 11 backend tests pass (100%). Frontend verified: Analytics Dashboard at /admin/analytics shows KPI strip (8 cards), revenue trend chart, key insights panel, channel performance (Structured 69%/Walk-in 7%/Affiliate 24%), conversion funnel, operations health, top performers. Period selector (7d/30d/90d) works. Walk-in Sale page uses 7/5 grid layout. Data Integrity and Track Order regressions pass.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_analytics_dashboard_v289.py",
+    "/app/test_reports/pytest/pytest_results_analytics_dashboard_v289.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_analytics_dashboard_v289.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None - used existing data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Analytics Dashboard & Walk-in Sale Layout verified. Key features: (1) GET /api/admin/analytics/dashboard?days={7|30|90} returns kpis, channels, revenue_trend, funnel, operations, top_customers, top_sales. (2) KPIs include: total_revenue, revenue_change_pct, total_orders, completion_rate, avg_order_value, pending_confirmations, walkin_revenue_pct, affiliate_revenue_pct. (3) Channels: Structured, Walk-in, Affiliate with revenue, orders, pct. (4) Funnel: quotes, invoices, orders, completed. (5) Operations: stale_orders, overdue_invoices, pending_confirmations. (6) Analytics Dashboard UI at /admin/analytics shows all components with period selector. (7) Analytics link in sidebar under REPORTS & ANALYTICS. (8) Walk-in Sale page at /admin/walk-in-sale uses 7/5 grid (lg:col-span-7 for cart, lg:col-span-5 for customer/payment/summary). (9) Data Integrity at /admin/data-integrity shows health_score, compliance, order health, fulfillment. (10) Track Order at /track-order works.",
+  "features_tested": {
+    "analytics_dashboard_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/analytics/dashboard returns all required fields",
+        "Default period is 30 days",
+        "Period selector works: 7d, 30d, 90d",
+        "KPIs: total_revenue=2.8M, total_orders=36, completion_rate=19%, avg_order_value=78K",
+        "Channels: Structured 69%, Walk-in 7%, Affiliate 24%",
+        "Funnel: Quotes 0 → Invoices 12 → Orders 36 → Completed 7",
+        "Operations: stale_orders=39, overdue_invoices=5, pending_confirmations=0",
+        "Top customers and top sales returned"
+      ]
+    },
+    "analytics_dashboard_ui": {
+      "status": "PASS",
+      "details": [
+        "Analytics Dashboard page loads at /admin/analytics",
+        "KPI strip with 8 cards visible",
+        "Period selector (7d, 30d, 90d) visible and functional",
+        "Revenue Trend chart visible",
+        "Key Insights panel visible",
+        "Channel Performance section visible",
+        "Conversion Funnel section visible",
+        "Operations Health section visible",
+        "Top Customers and Top Sales sections visible",
+        "Analytics link in sidebar under REPORTS & ANALYTICS"
+      ]
+    },
+    "walkin_sale_layout": {
+      "status": "PASS",
+      "details": [
+        "Walk-in Sale page loads at /admin/walk-in-sale",
+        "7/5 grid layout confirmed (lg:col-span-7 and lg:col-span-5)",
+        "Cart section on left (7/12)",
+        "Customer/Payment/Summary sections on right (5/12)",
+        "Product search input visible",
+        "Complete Sale button visible"
+      ]
+    },
+    "data_integrity_regression": {
+      "status": "PASS",
+      "details": [
+        "Data Integrity page loads at /admin/data-integrity",
+        "Health Score displayed (69)",
+        "Compliance, Order Health, Fulfillment sections visible"
+      ]
+    },
+    "track_order_regression": {
+      "status": "PASS",
+      "details": [
+        "Track Order page loads at /track-order",
+        "Order number input field visible",
+        "Email/Phone verification options visible"
+      ]
+    }
+  }
+}

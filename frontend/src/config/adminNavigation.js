@@ -128,6 +128,7 @@ export const adminNavigation = [
       { label: "Weekly Performance", href: "/admin/reports/weekly-performance", icon: CalendarDays, roles: ["admin", "sales_manager", "finance_manager"] },
       { label: "Weekly Digest", href: "/admin/weekly-digest", icon: FileText, roles: ["admin"] },
       { label: "Data Integrity", href: "/admin/data-integrity", icon: Shield, roles: ["admin"] },
+      { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["admin", "finance_manager"] },
       { label: "Action Center", href: "/admin/reports/alerts", icon: Bell, roles: ["admin", "sales_manager", "finance_manager"] },
     ],
   },

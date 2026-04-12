@@ -144,44 +144,35 @@ export default function WalkInSalePage() {
   }
 
   return (
-    <div className="p-6 min-h-screen" data-testid="walkin-sale-page">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+    <div className="p-6" data-testid="walkin-sale-page">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="text-2xl font-bold text-[#20364D]">Walk-in Sale</h1>
+            <h1 className="text-xl font-bold text-[#20364D]">Walk-in Sale</h1>
             <p className="text-sm text-slate-500">Quick in-shop transaction</p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/admin/orders")} data-testid="back-to-orders">Back to Orders</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/orders")} data-testid="back-to-orders">Back to Orders</Button>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-6">
-          {/* ═══ LEFT: Product Search + Cart (3 cols) ═══ */}
-          <div className="lg:col-span-3 space-y-4">
+        <div className="grid grid-cols-12 gap-5">
+          {/* ═══ LEFT: Search + Cart (7/12) ═══ */}
+          <div className="col-span-12 lg:col-span-7 space-y-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <Input
-                placeholder="Search products by name or SKU..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-                data-testid="product-search"
-              />
+              <Input placeholder="Search products by name or SKU..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" data-testid="product-search" />
             </div>
 
-            {/* Product Grid */}
+            {/* Search Results */}
             {searchQuery && (
               <div className="bg-white rounded-xl border max-h-48 overflow-y-auto" data-testid="product-results">
                 {filteredProducts.length === 0 ? (
                   <div className="p-4 text-sm text-slate-500">No products found</div>
                 ) : (
                   filteredProducts.slice(0, 12).map((p) => (
-                    <button
-                      key={p.id || p.sku}
-                      onClick={() => { addToCart(p); setSearchQuery(""); }}
-                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 border-b last:border-b-0 text-left"
-                      data-testid={`product-${p.id || p.sku}`}
-                    >
+                    <button key={p.id || p.sku} onClick={() => { addToCart(p); setSearchQuery(""); }}
+                      className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 border-b last:border-b-0 text-left" data-testid={`product-${p.id || p.sku}`}>
                       <div>
                         <div className="text-sm font-medium text-[#20364D]">{p.name || p.title}</div>
                         <div className="text-xs text-slate-400">{p.sku || ""}</div>
@@ -194,114 +185,92 @@ export default function WalkInSalePage() {
             )}
 
             {/* Cart */}
-            <div className="bg-white rounded-2xl border" data-testid="cart-section">
+            <div className="bg-white rounded-2xl border min-h-[280px]" data-testid="cart-section">
               <div className="px-5 py-3 border-b flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-[#20364D]" />
-                <span className="font-bold text-[#20364D]">Cart</span>
-                <span className="text-xs text-slate-400 ml-1">({cart.length} items)</span>
+                <ShoppingCart className="w-4 h-4 text-[#20364D]" />
+                <span className="font-bold text-sm text-[#20364D]">Cart</span>
+                <span className="text-xs text-slate-400">({cart.length} items)</span>
               </div>
               {cart.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-sm">Search and add products to begin</div>
+                <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                  <ShoppingCart className="w-8 h-8 mb-2 opacity-30" />
+                  <span className="text-sm">Search and add products to begin</span>
+                </div>
               ) : (
                 <div>
                   {cart.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between px-5 py-3 border-b last:border-b-0">
-                      <div className="flex-1 min-w-0">
+                    <div key={item.id} className="flex items-center justify-between px-5 py-2.5 border-b last:border-b-0">
+                      <div className="flex-1 min-w-0 mr-3">
                         <div className="text-sm font-medium text-[#20364D] truncate">{item.name}</div>
                         <div className="text-xs text-slate-400">{fmt(item.unit_price)} each</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-slate-50" data-testid={`qty-minus-${item.id}`}>
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 rounded-lg border flex items-center justify-center hover:bg-slate-50" data-testid={`qty-plus-${item.id}`}>
-                          <Plus className="w-3 h-3" />
-                        </button>
-                        <div className="w-24 text-right text-sm font-bold text-[#20364D]">{fmt(item.quantity * item.unit_price)}</div>
-                        <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-600 ml-1" data-testid={`remove-${item.id}`}>
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 rounded-md border flex items-center justify-center hover:bg-slate-50" data-testid={`qty-minus-${item.id}`}><Minus className="w-3 h-3" /></button>
+                        <span className="w-7 text-center text-sm font-bold">{item.quantity}</span>
+                        <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 rounded-md border flex items-center justify-center hover:bg-slate-50" data-testid={`qty-plus-${item.id}`}><Plus className="w-3 h-3" /></button>
+                        <div className="w-20 text-right text-sm font-bold text-[#20364D] ml-2">{fmt(item.quantity * item.unit_price)}</div>
+                        <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-600 ml-1" data-testid={`remove-${item.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
                   ))}
-                  <div className="px-5 py-3 bg-slate-50 flex justify-between items-center">
-                    <span className="font-bold text-[#20364D]">Total</span>
-                    <span className="text-xl font-extrabold text-[#20364D]">{fmt(total)}</span>
+                  <div className="px-5 py-3 bg-slate-50 flex justify-between items-center rounded-b-2xl">
+                    <span className="font-bold text-sm text-[#20364D]">Subtotal</span>
+                    <span className="text-lg font-extrabold text-[#20364D]">{fmt(subtotal)}</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ═══ RIGHT: Customer + Payment + Finalize (2 cols) ═══ */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* ═══ RIGHT: Customer + Payment + Summary (5/12) ═══ */}
+          <div className="col-span-12 lg:col-span-5 space-y-4">
             {/* Customer */}
-            <div className="bg-white rounded-2xl border p-5 space-y-3" data-testid="customer-section">
-              <div className="flex items-center gap-2 mb-1">
-                <User className="w-5 h-5 text-[#20364D]" />
-                <span className="font-bold text-[#20364D]">Customer</span>
-              </div>
-              <div className="flex gap-2">
+            <div className="bg-white rounded-2xl border p-4 space-y-3" data-testid="customer-section">
+              <div className="flex items-center gap-2"><User className="w-4 h-4 text-[#20364D]" /><span className="font-bold text-sm text-[#20364D]">Customer</span></div>
+              <div className="flex gap-1.5">
                 {["individual", "business"].map((t) => (
                   <button key={t} onClick={() => setCustomerForm((p) => ({ ...p, client_type: t }))}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${customerForm.client_type === t ? "bg-[#20364D] text-white" : "bg-slate-100 text-slate-600"}`}
+                    className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${customerForm.client_type === t ? "bg-[#20364D] text-white" : "bg-slate-100 text-slate-600"}`}
                     data-testid={`client-type-${t}`}>
                     {t.charAt(0).toUpperCase() + t.slice(1)}
                   </button>
                 ))}
               </div>
-              <div>
-                <Label className="text-xs">Name</Label>
-                <Input value={customerForm.customer_name} onChange={(e) => setCustomerForm((p) => ({ ...p, customer_name: e.target.value }))} placeholder="Customer name" data-testid="input-customer-name" />
-              </div>
-              <div>
-                <Label className="text-xs">Phone (recommended)</Label>
-                <Input value={customerForm.customer_phone} onChange={(e) => setCustomerForm((p) => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." data-testid="input-customer-phone" />
-              </div>
+              <div><Label className="text-[11px]">Name</Label><Input value={customerForm.customer_name} onChange={(e) => setCustomerForm((p) => ({ ...p, customer_name: e.target.value }))} placeholder="Customer name" className="h-9 text-sm" data-testid="input-customer-name" /></div>
+              <div><Label className="text-[11px]">Phone</Label><Input value={customerForm.customer_phone} onChange={(e) => setCustomerForm((p) => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." className="h-9 text-sm" data-testid="input-customer-phone" /></div>
               {customerForm.client_type === "business" && (
                 <>
-                  <div><Label className="text-xs">Business Name *</Label><Input value={customerForm.business_name} onChange={(e) => setCustomerForm((p) => ({ ...p, business_name: e.target.value }))} placeholder="Business name" required data-testid="input-business-name" /></div>
-                  <div><Label className="text-xs">VRN *</Label><Input value={customerForm.vrn} onChange={(e) => setCustomerForm((p) => ({ ...p, vrn: e.target.value }))} placeholder="VAT Reg Number" required data-testid="input-vrn" /></div>
-                  <div><Label className="text-xs">BRN *</Label><Input value={customerForm.brn} onChange={(e) => setCustomerForm((p) => ({ ...p, brn: e.target.value }))} placeholder="Business Reg Number" required data-testid="input-brn" /></div>
+                  <div><Label className="text-[11px]">Business Name *</Label><Input value={customerForm.business_name} onChange={(e) => setCustomerForm((p) => ({ ...p, business_name: e.target.value }))} className="h-9 text-sm" data-testid="input-business-name" /></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div><Label className="text-[11px]">VRN *</Label><Input value={customerForm.vrn} onChange={(e) => setCustomerForm((p) => ({ ...p, vrn: e.target.value }))} className="h-9 text-sm" data-testid="input-vrn" /></div>
+                    <div><Label className="text-[11px]">BRN *</Label><Input value={customerForm.brn} onChange={(e) => setCustomerForm((p) => ({ ...p, brn: e.target.value }))} className="h-9 text-sm" data-testid="input-brn" /></div>
+                  </div>
                 </>
               )}
             </div>
 
             {/* Payment */}
-            <div className="bg-white rounded-2xl border p-5 space-y-3" data-testid="payment-section">
-              <div className="flex items-center gap-2 mb-1">
-                <CreditCard className="w-5 h-5 text-[#20364D]" />
-                <span className="font-bold text-[#20364D]">Payment</span>
-              </div>
-              <div>
-                <Label className="text-xs">Method</Label>
-                <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={paymentForm.payment_method}
+            <div className="bg-white rounded-2xl border p-4 space-y-3" data-testid="payment-section">
+              <div className="flex items-center gap-2"><CreditCard className="w-4 h-4 text-[#20364D]" /><span className="font-bold text-sm text-[#20364D]">Payment</span></div>
+              <div><Label className="text-[11px]">Method</Label>
+                <select className="w-full border rounded-xl px-3 py-2 text-sm bg-white h-9" value={paymentForm.payment_method}
                   onChange={(e) => setPaymentForm((p) => ({ ...p, payment_method: e.target.value }))} data-testid="select-payment-method">
                   {PAYMENT_METHODS.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                 </select>
               </div>
-              <div>
-                <Label className="text-xs">Amount Received</Label>
-                <Input type="number" value={paymentForm.amount_received} onChange={(e) => setPaymentForm((p) => ({ ...p, amount_received: e.target.value }))} placeholder={String(total)} data-testid="input-amount-received" />
+              <div className="grid grid-cols-2 gap-2">
+                <div><Label className="text-[11px]">Received</Label><Input type="number" value={paymentForm.amount_received} onChange={(e) => setPaymentForm((p) => ({ ...p, amount_received: e.target.value }))} placeholder={String(total)} className="h-9 text-sm" data-testid="input-amount-received" /></div>
+                <div><Label className="text-[11px]">Reference</Label><Input value={paymentForm.payment_reference} onChange={(e) => setPaymentForm((p) => ({ ...p, payment_reference: e.target.value }))} placeholder="Txn ID" className="h-9 text-sm" data-testid="input-payment-ref" /></div>
               </div>
-              {change > 0 && (
-                <div className="p-3 bg-green-50 rounded-xl text-sm text-green-700 font-semibold">
-                  Change: {fmt(change)}
-                </div>
-              )}
-              <div>
-                <Label className="text-xs">Reference (optional)</Label>
-                <Input value={paymentForm.payment_reference} onChange={(e) => setPaymentForm((p) => ({ ...p, payment_reference: e.target.value }))} placeholder="Transaction ID" data-testid="input-payment-ref" />
-              </div>
+              {change > 0 && <div className="p-2 bg-green-50 rounded-lg text-xs text-green-700 font-semibold">Change: {fmt(change)}</div>}
             </div>
 
-            {/* Summary + Complete */}
-            <div className="bg-[#20364D] rounded-2xl p-5 text-white space-y-3" data-testid="summary-section">
-              <div className="flex justify-between text-sm"><span className="text-white/70">Subtotal</span><span>{fmt(subtotal)}</span></div>
-              <div className="flex justify-between text-lg font-extrabold border-t border-white/20 pt-3"><span>Total</span><span>{fmt(total)}</span></div>
+            {/* Summary + Action */}
+            <div className="bg-[#20364D] rounded-2xl p-4 text-white space-y-2" data-testid="summary-section">
+              <div className="flex justify-between text-sm"><span className="text-white/60">Subtotal</span><span>{fmt(subtotal)}</span></div>
+              <div className="flex justify-between text-base font-extrabold border-t border-white/20 pt-2"><span>Total</span><span>{fmt(total)}</span></div>
               <Button onClick={handleSubmit} disabled={submitting || cart.length === 0}
-                className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-3 text-base" data-testid="complete-sale-btn">
+                className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-2.5 text-sm mt-1" data-testid="complete-sale-btn">
                 {submitting ? "Processing..." : "Complete Sale"}
               </Button>
             </div>
