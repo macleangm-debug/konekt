@@ -424,6 +424,7 @@ import PartnerListingEditorPage from "@/pages/partner/PartnerListingEditorPage";
 // Inventory Operations Pages
 import InventoryOperationsPage from "@/pages/admin/InventoryOperationsPage";
 import DeliveryNotesPage from "@/pages/admin/DeliveryNotesPage";
+import DeliveryNotePreviewPage from "@/pages/admin/DeliveryNotePreviewPage";
 import GoodsReceivingPage from "@/pages/admin/GoodsReceivingPage";
 import SuppliersPage from "@/pages/admin/SuppliersPage";
 import PurchaseOrdersPage from "@/pages/admin/PurchaseOrdersPage";
@@ -664,6 +665,7 @@ function App() {
           <Route path="staff-performance" element={<StaffPerformancePage />} />
           <Route path="inventory-operations" element={<InventoryOperationsPage />} />
           <Route path="delivery-notes" element={<DeliveryNotesPage />} />
+          <Route path="delivery-notes/:id" element={<DeliveryNotePreviewPage />} />
           <Route path="service-tasks" element={<AdminServiceTasksPage />} />
           <Route path="goods-receiving" element={<GoodsReceivingPage />} />
           <Route path="suppliers" element={<SuppliersPage />} />

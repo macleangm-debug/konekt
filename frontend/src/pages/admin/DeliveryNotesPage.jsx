@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Truck, Plus, Check, Package, Clock, CheckCircle, XCircle, Download } from "lucide-react";
+import { Truck, Plus, Check, Package, Clock, CheckCircle, XCircle, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import StandardSummaryCardsRow from "@/components/lists/StandardSummaryCardsRow";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || "";
-
 export default function DeliveryNotesPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -283,15 +283,15 @@ export default function DeliveryNotesPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
-                        <a
-                          href={`${API_URL}/api/pdf/delivery-notes/${item.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#2a4a66] transition-colors"
-                          data-testid={`download-dn-pdf-${item.id}`}
-                        >
-                          <Download className="w-3.5 h-3.5" /> PDF
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => navigate(`/admin/delivery-notes/${item.id}`)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#20364D] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#2a4a66] transition-colors"
+                            data-testid={`view-dn-${item.id}`}
+                          >
+                            <Eye className="w-3.5 h-3.5" /> View
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

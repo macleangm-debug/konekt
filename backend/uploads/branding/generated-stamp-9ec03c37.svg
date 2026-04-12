@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <rect x="6" y="6" width="228" height="228" rx="5" fill="none" stroke="#1a365d" stroke-width="4.5"/>
+  <rect x="13" y="13" width="214" height="214" rx="3" fill="none" stroke="#1a365d" stroke-width="1.5"/>
+  <text x="120" y="46" text-anchor="middle" fill="#1a365d" font-family="Arial,Helvetica,sans-serif" font-size="11" font-weight="700" letter-spacing="3.5">TEST COMPANY LTD</text>
+  <line x1="32" y1="56" x2="208" y2="56" stroke="#1a365d" stroke-width="0.7" opacity="0.35"/>
+  <g transform="translate(93,66)"><line x1="31.3" y1="7.0" x2="6.5" y2="44.3" stroke="#1a365d" stroke-width="3.3" stroke-linecap="round" opacity="0.45"/><path d="M31.3,7.0 Q43.2,20.8 48.6,38.9" stroke="#1a365d" stroke-width="3.3" stroke-linecap="round" fill="none" opacity="0.45"/><line x1="6.5" y1="44.3" x2="48.6" y2="38.9" stroke="#1a365d" stroke-width="3.3" stroke-linecap="round" opacity="0.45"/><circle cx="31.3" cy="7.0" r="7.6" fill="#1a365d"/><circle cx="6.5" cy="44.3" r="5.8" fill="#1a365d"/><circle cx="48.6" cy="38.9" r="5.8" fill="#1a365d"/></g>
+  <text x="120" y="140" text-anchor="middle" fill="#1a365d" font-family="Arial,Helvetica,sans-serif" font-size="8.5" font-weight="700" letter-spacing="3.5">KONEKT</text>
+  <line x1="32" y1="150" x2="208" y2="150" stroke="#1a365d" stroke-width="0.7" opacity="0.35"/>
+  <text x="120" y="180" text-anchor="middle" fill="#1a365d" font-family="Arial,sans-serif" font-size="7.5" opacity="0.65">REG-123456</text><text x="120" y="193" text-anchor="middle" fill="#1a365d" font-family="Arial,sans-serif" font-size="7.5" opacity="0.65">TIN-789012</text>
+  <text x="120" y="214" text-anchor="middle" fill="#1a365d" font-family="Arial,sans-serif" font-size="8.5" letter-spacing="2">TEST CITY, COUNTRY</text>
+</svg>

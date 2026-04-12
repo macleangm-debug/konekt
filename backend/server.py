@@ -3057,6 +3057,9 @@ app.include_router(public_payment_info_router)
 from invoice_branding_routes import router as invoice_branding_router
 app.include_router(invoice_branding_router)
 
+from document_render_settings_routes import router as document_render_settings_router
+app.include_router(document_render_settings_router)
+
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)

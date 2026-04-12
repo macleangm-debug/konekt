@@ -1,62 +1,92 @@
 import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from "react";
-import { Building, Mail, Phone, MapPin, Landmark } from "lucide-react";
 import api from "@/lib/api";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
 /**
  * CanonicalDocumentRenderer — Single shared renderer for all business documents.
- * 
+ *
  * Props:
- *   docType: "invoice" | "quote" | "delivery_note" | "purchase_order" | "statement"
+ *   docType: "invoice" | "quote" | "delivery_note" | "purchase_order" | "service_handover"
  *   docNumber: string
- *   docDate: string
- *   dueDate?: string
+ *   docDate: string (formatted)
+ *   dueDate?: string (formatted)
  *   status?: string
- *   fromOverrides?: {} — overrides for company info (optional)
- *   toBlock: { name, address, email, phone, tin? }
+ *   toBlock: { name, company, address, city, country, email, phone, tin, brn, client_type }
  *   lineItems: [{ description, quantity, unit_price, total }]
  *   subtotal: number
+ *   taxRate?: number
  *   tax?: number
  *   discount?: number
  *   total: number
  *   currency: string
  *   notes?: string
- *   children?: ReactNode — extra content between items and footer
- *   ref: exposes { exportAsImage }
+ *   terms?: string
+ *   paymentTermLabel?: string
+ *   children?: ReactNode
+ *   ref: exposes { exportAsPDF, exportAsImage }
  */
-const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer({
-  docType = "invoice",
-  docNumber = "",
-  docDate = "",
-  dueDate = "",
-  status = "",
-  toBlock = {},
-  lineItems = [],
-  subtotal = 0,
-  tax = 0,
-  discount = 0,
-  total = 0,
-  currency = "TZS",
-  notes = "",
-  children,
-}, ref) {
+const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
+  {
+    docType = "invoice",
+    docNumber = "",
+    docDate = "",
+    dueDate = "",
+    status = "",
+    toBlock = {},
+    lineItems = [],
+    subtotal = 0,
+    taxRate,
+    tax = 0,
+    discount = 0,
+    total = 0,
+    currency = "TZS",
+    notes = "",
+    terms = "",
+    paymentTermLabel = "",
+    children,
+  },
+  ref
+) {
   const [settings, setSettings] = useState(null);
-  const [hubSettings, setHubSettings] = useState(null);
   const docRef = useRef(null);
 
   useEffect(() => {
-    Promise.all([
-      api.get("/api/admin/business-settings/public").then(r => r.data).catch(() => ({})),
-      api.get("/api/admin/settings-hub").then(r => r.data).catch(() => ({})),
-    ]).then(([bs, hub]) => {
-      setSettings(bs);
-      setHubSettings(hub);
-    });
+    api
+      .get("/api/documents/render-settings")
+      .then((r) => setSettings(r.data))
+      .catch(() => setSettings({}));
   }, []);
 
   useImperativeHandle(ref, () => ({
+    async exportAsPDF(filename) {
+      if (!docRef.current) return;
+      const el = docRef.current;
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pxW = canvas.width;
+      const pxH = canvas.height;
+      // A4 in mm
+      const pageW = 210;
+      const pageH = 297;
+      const ratio = pageW / pxW;
+      const imgH = pxH * ratio;
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      let yOff = 0;
+      while (yOff < imgH) {
+        if (yOff > 0) pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, -yOff, pageW, imgH);
+        yOff += pageH;
+      }
+      pdf.save(filename || `${docNumber || docType}.pdf`);
+    },
     async exportAsImage(filename) {
       if (!docRef.current) return;
       const canvas = await html2canvas(docRef.current, {
@@ -72,60 +102,123 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
     },
   }));
 
-  if (!settings) return null;
+  if (!settings) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "#94a3b8", fontSize: 14 }}>
+        Loading document...
+      </div>
+    );
+  }
 
-  const fmt = (v) => `${currency} ${Number(v || 0).toLocaleString()}`;
-  const companyName = settings.company_name || settings.trading_name || "";
-  const logoUrl = settings.logo_url ? (settings.logo_url.startsWith("http") ? settings.logo_url : `${API_URL}/api/files/serve/${settings.logo_url}`) : "";
-  const stampUrl = settings.stamp_url ? (settings.stamp_url.startsWith("http") ? settings.stamp_url : `${API_URL}/api/files/serve/${settings.stamp_url}`) : "";
+  const fmt = (v) => {
+    const num = Number(v || 0);
+    return `${currency} ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  };
 
-  // Document footer settings
-  const df = hubSettings?.doc_footer || {};
+  const companyName = settings.company_name || settings.trading_name || "Company";
+  const resolveUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("data:")) return url;
+    if (url.startsWith("http")) return url;
+    return `${API_URL}/api/files/serve/${url}`;
+  };
+  const logoUrl = resolveUrl(settings.logo_url);
+  const signatureUrl = resolveUrl(settings.cfo_signature_url);
+  const stampUrl = resolveUrl(settings.stamp_uploaded_url || settings.stamp_preview_url);
+
+  const df = settings.doc_footer || {};
   const showAddress = df.show_address !== false;
   const showEmail = df.show_email !== false;
   const showPhone = df.show_phone !== false;
   const showReg = df.show_registration || false;
   const customFooter = df.custom_footer_text || "";
 
-  const docTypeLabels = {
+  const DOC_LABELS = {
     invoice: "INVOICE",
     quote: "QUOTATION",
     delivery_note: "DELIVERY NOTE",
     purchase_order: "PURCHASE ORDER",
-    statement: "STATEMENT OF ACCOUNT",
     service_handover: "SERVICE HANDOVER",
+    statement: "STATEMENT OF ACCOUNT",
   };
 
   const address = [settings.address, settings.city, settings.country].filter(Boolean).join(", ");
 
+  // Client type awareness
+  const isBusiness = toBlock.client_type === "business";
+  const toLabel = docType === "quote" ? "PREPARED FOR" : "BILL TO";
+
+  const S = {
+    // Shared inline styles for WYSIWYG
+    header: { backgroundColor: "#20364D", color: "#fff", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
+    label: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 },
+    companyName: { fontSize: 15, fontWeight: 700, color: "#20364D" },
+    detail: { fontSize: 12, color: "#64748b", lineHeight: 1.6, marginTop: 4 },
+  };
+
   return (
-    <div ref={docRef} className="bg-white" style={{ fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 794, margin: "0 auto" }} data-testid="canonical-document">
-      {/* Header */}
-      <div style={{ backgroundColor: "#20364D", color: "#fff", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+    <div
+      ref={docRef}
+      className="bg-white"
+      style={{ fontFamily: "'Inter', system-ui, sans-serif", maxWidth: 794, margin: "0 auto" }}
+      data-testid="canonical-document"
+    >
+      {/* ═══ HEADER ═══ */}
+      <div style={S.header}>
         <div>
           {logoUrl ? (
-            <img src={logoUrl} alt="" crossOrigin="anonymous" style={{ height: 48, width: "auto", objectFit: "contain", marginBottom: 12 }} onError={(e) => { e.target.style.display = "none"; }} />
+            <img
+              src={logoUrl}
+              alt=""
+              crossOrigin="anonymous"
+              style={{ height: 48, width: "auto", objectFit: "contain", marginBottom: 12 }}
+              onError={(e) => { e.target.style.display = "none"; }}
+            />
           ) : (
             <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{companyName}</div>
           )}
-          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 2, marginTop: 4 }}>{docTypeLabels[docType] || docType.toUpperCase()}</div>
+          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 2, marginTop: 4 }}>
+            {DOC_LABELS[docType] || docType.toUpperCase()}
+          </div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{docNumber}</div>
           {status && (
-            <span style={{ display: "inline-block", padding: "3px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700, textTransform: "uppercase", backgroundColor: status === "paid" ? "#dcfce7" : status === "overdue" ? "#fef2f2" : "#f1f5f9", color: status === "paid" ? "#15803d" : status === "overdue" ? "#dc2626" : "#475569" }}>
+            <span
+              style={{
+                display: "inline-block",
+                padding: "3px 12px",
+                borderRadius: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                backgroundColor:
+                  status === "paid" || status === "approved" || status === "delivered"
+                    ? "#dcfce7"
+                    : status === "overdue" || status === "rejected" || status === "cancelled"
+                    ? "#fef2f2"
+                    : "#f1f5f9",
+                color:
+                  status === "paid" || status === "approved" || status === "delivered"
+                    ? "#15803d"
+                    : status === "overdue" || status === "rejected" || status === "cancelled"
+                    ? "#dc2626"
+                    : "#475569",
+              }}
+            >
               {status}
             </span>
           )}
         </div>
       </div>
 
-      {/* Company/Client Row */}
+      {/* ═══ COMPANY / CLIENT / DETAILS ROW ═══ */}
       <div style={{ padding: "28px 40px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
+        {/* FROM */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>From</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#20364D" }}>{companyName}</div>
-          <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6, marginTop: 4 }}>
+          <div style={S.label}>From</div>
+          <div style={S.companyName}>{companyName}</div>
+          <div style={S.detail}>
             {settings.address && <div>{settings.address}</div>}
             {settings.city && <div>{settings.city}, {settings.country}</div>}
             {settings.email && <div>{settings.email}</div>}
@@ -133,134 +226,360 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
             {settings.tin && <div>TIN: {settings.tin}</div>}
           </div>
         </div>
+
+        {/* TO — client-type aware */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>To</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#20364D" }}>{toBlock.name || ""}</div>
-          <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.6, marginTop: 4 }}>
-            {toBlock.address && <div>{toBlock.address}</div>}
-            {toBlock.email && <div>{toBlock.email}</div>}
-            {toBlock.phone && <div>{toBlock.phone}</div>}
-            {toBlock.tin && <div>TIN: {toBlock.tin}</div>}
-          </div>
+          <div style={S.label}>{toLabel}</div>
+          {isBusiness ? (
+            <>
+              <div style={S.companyName}>{toBlock.company || toBlock.name || ""}</div>
+              <div style={S.detail}>
+                {toBlock.brn && <div>BRN: {toBlock.brn}</div>}
+                {toBlock.tin && <div>VRN: {toBlock.tin}</div>}
+                {toBlock.city && <div>{[toBlock.city, toBlock.country].filter(Boolean).join(", ")}</div>}
+                {toBlock.email && <div>{toBlock.email}</div>}
+                {toBlock.phone && <div>{toBlock.phone}</div>}
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={S.companyName}>{toBlock.name || ""}</div>
+              <div style={S.detail}>
+                {toBlock.company && <div>{toBlock.company}</div>}
+                {toBlock.address && <div>{toBlock.address}</div>}
+                {(toBlock.city || toBlock.country) && (
+                  <div>{[toBlock.city, toBlock.country].filter(Boolean).join(", ")}</div>
+                )}
+                {toBlock.email && <div>{toBlock.email}</div>}
+                {toBlock.phone && <div>{toBlock.phone}</div>}
+                {toBlock.tin && <div>TIN: {toBlock.tin}</div>}
+              </div>
+            </>
+          )}
         </div>
+
+        {/* DETAILS */}
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>Details</div>
+          <div style={S.label}>Details</div>
           <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.8 }}>
-            <div><span style={{ display: "inline-block", width: 80, fontWeight: 600, color: "#475569" }}>Date:</span> {docDate}</div>
-            {dueDate && <div><span style={{ display: "inline-block", width: 80, fontWeight: 600, color: "#475569" }}>Due:</span> {dueDate}</div>}
-            <div><span style={{ display: "inline-block", width: 80, fontWeight: 600, color: "#475569" }}>Ref:</span> {docNumber}</div>
+            <div>
+              <span style={{ display: "inline-block", width: 90, fontWeight: 600, color: "#475569" }}>Date:</span>
+              {docDate}
+            </div>
+            {dueDate && (
+              <div>
+                <span style={{ display: "inline-block", width: 90, fontWeight: 600, color: "#475569" }}>
+                  {docType === "quote" ? "Valid Until:" : "Due:"}
+                </span>
+                {dueDate}
+              </div>
+            )}
+            {paymentTermLabel && (
+              <div>
+                <span style={{ display: "inline-block", width: 90, fontWeight: 600, color: "#475569" }}>Terms:</span>
+                {paymentTermLabel}
+              </div>
+            )}
+            <div>
+              <span style={{ display: "inline-block", width: 90, fontWeight: 600, color: "#475569" }}>Ref:</span>
+              {docNumber}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Line Items Table */}
+      {/* ═══ LINE ITEMS TABLE ═══ */}
       <div style={{ padding: "0 40px 24px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
             <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
-              <th style={{ textAlign: "left", padding: "10px 0", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>#</th>
-              <th style={{ textAlign: "left", padding: "10px 8px", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>Description</th>
-              <th style={{ textAlign: "right", padding: "10px 8px", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>Qty</th>
-              <th style={{ textAlign: "right", padding: "10px 8px", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>Unit Price</th>
-              <th style={{ textAlign: "right", padding: "10px 0", fontWeight: 700, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#64748b" }}>Total</th>
+              {["#", "Description", "Qty", "Unit Price", "Total"].map((h, i) => (
+                <th
+                  key={h}
+                  style={{
+                    textAlign: i < 2 ? "left" : "right",
+                    padding: i === 0 ? "10px 0" : "10px 8px",
+                    fontWeight: 700,
+                    fontSize: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    color: "#64748b",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {lineItems.map((item, i) => (
               <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
                 <td style={{ padding: "10px 0", color: "#94a3b8", fontSize: 12 }}>{i + 1}</td>
-                <td style={{ padding: "10px 8px", color: "#20364D", fontWeight: 500 }}>{item.description || item.name || ""}</td>
-                <td style={{ padding: "10px 8px", textAlign: "right", color: "#475569" }}>{item.quantity || 1}</td>
-                <td style={{ padding: "10px 8px", textAlign: "right", color: "#475569" }}>{fmt(item.unit_price)}</td>
-                <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 600, color: "#20364D" }}>{fmt(item.total || (item.quantity || 1) * (item.unit_price || 0))}</td>
+                <td style={{ padding: "10px 8px", color: "#20364D", fontWeight: 500 }}>
+                  {item.description || item.name || ""}
+                </td>
+                <td style={{ padding: "10px 8px", textAlign: "right", color: "#475569" }}>
+                  {item.quantity || 1}
+                </td>
+                <td style={{ padding: "10px 8px", textAlign: "right", color: "#475569" }}>
+                  {fmt(item.unit_price)}
+                </td>
+                <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 600, color: "#20364D" }}>
+                  {fmt(item.total || (item.quantity || 1) * (item.unit_price || 0))}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Totals */}
+        {/* TOTALS */}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 16 }}>
           <div style={{ width: 280 }}>
             <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, color: "#64748b" }}>
-              <span>Subtotal</span><span style={{ fontWeight: 600 }}>{fmt(subtotal)}</span>
+              <span>Subtotal</span>
+              <span style={{ fontWeight: 600 }}>{fmt(subtotal)}</span>
             </div>
             {discount > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, color: "#dc2626" }}>
-                <span>Discount</span><span style={{ fontWeight: 600 }}>-{fmt(discount)}</span>
+                <span>Discount</span>
+                <span style={{ fontWeight: 600 }}>-{fmt(discount)}</span>
               </div>
             )}
             {tax > 0 && (
               <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, color: "#64748b" }}>
-                <span>Tax</span><span style={{ fontWeight: 600 }}>{fmt(tax)}</span>
+                <span>VAT{taxRate ? ` (${taxRate}%)` : ""}</span>
+                <span style={{ fontWeight: 600 }}>{fmt(tax)}</span>
               </div>
             )}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: 16, fontWeight: 800, color: "#20364D", borderTop: "2px solid #20364D", marginTop: 4 }}>
-              <span>Total</span><span>{fmt(total)}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "10px 0",
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#20364D",
+                borderTop: "2px solid #20364D",
+                marginTop: 4,
+              }}
+            >
+              <span>Total</span>
+              <span>{fmt(total)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Notes */}
+      {/* ═══ NOTES / TERMS ═══ */}
       {notes && (
-        <div style={{ padding: "0 40px 20px" }}>
-          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: 4 }}>Notes</div>
+        <div style={{ padding: "0 40px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: 4 }}>
+            Notes
+          </div>
           <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>{notes}</div>
         </div>
       )}
+      {terms && (
+        <div style={{ padding: "0 40px 16px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#94a3b8", marginBottom: 4 }}>
+            Terms & Conditions
+          </div>
+          <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>{terms}</div>
+        </div>
+      )}
 
-      {/* Extra content (children) */}
-      {children && <div style={{ padding: "0 40px 20px" }}>{children}</div>}
+      {/* ═══ CHILDREN (extra content) ═══ */}
+      {children && <div style={{ padding: "0 40px 16px" }}>{children}</div>}
 
-      {/* Bank + Signature + Stamp Row */}
-      <div style={{ padding: "16px 40px", display: "grid", gridTemplateColumns: settings.bank_name && settings.bank_account_number ? "1fr 240px" : "1fr", gap: 20 }}>
+      {/* ═══ BANK + SIGNATURE + STAMP ROW ═══ */}
+      <div
+        style={{
+          padding: "16px 40px",
+          display: "grid",
+          gridTemplateColumns:
+            settings.bank_name && settings.bank_account_number ? "1fr 240px" : "1fr",
+          gap: 20,
+        }}
+      >
+        {/* Bank Transfer Details */}
         {settings.bank_name && settings.bank_account_number && (
-          <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 16, backgroundColor: "#f8fafc" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              padding: 16,
+              backgroundColor: "#f8fafc",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#94a3b8",
+                marginBottom: 8,
+              }}
+            >
               Bank Transfer Details
             </div>
             <div style={{ fontSize: 12, color: "#20364D", lineHeight: 1.8 }}>
-              <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Bank:</span> {settings.bank_name}</div>
-              <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Account:</span> {settings.bank_account_name}</div>
-              <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Account No:</span> <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{settings.bank_account_number}</span></div>
-              {settings.bank_branch && <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Branch:</span> {settings.bank_branch}</div>}
-              {settings.swift_code && <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>SWIFT:</span> {settings.swift_code}</div>}
-              <div><span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Reference:</span> <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#D4A843" }}>{docNumber}</span></div>
+              <div>
+                <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Bank:</span>{" "}
+                {settings.bank_name}
+              </div>
+              <div>
+                <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Account:</span>{" "}
+                {settings.bank_account_name}
+              </div>
+              <div>
+                <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Account No:</span>{" "}
+                <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{settings.bank_account_number}</span>
+              </div>
+              {settings.bank_branch && (
+                <div>
+                  <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Branch:</span>{" "}
+                  {settings.bank_branch}
+                </div>
+              )}
+              {settings.swift_code && (
+                <div>
+                  <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>SWIFT:</span>{" "}
+                  {settings.swift_code}
+                </div>
+              )}
+              <div>
+                <span style={{ display: "inline-block", width: 110, color: "#64748b", fontWeight: 500 }}>Reference:</span>{" "}
+                <span style={{ fontFamily: "monospace", fontWeight: 700, color: "#D4A843" }}>{docNumber}</span>
+              </div>
             </div>
           </div>
         )}
 
+        {/* Signature + Stamp Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Signature */}
-          <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 6 }}>Authorized By</div>
-            <div style={{ height: 32, borderBottom: "2px solid #e2e8f0", marginBottom: 6 }} />
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#20364D" }}>Chief Finance Officer</div>
-            <div style={{ fontSize: 10, color: "#94a3b8" }}>{companyName}</div>
-          </div>
-          {/* Stamp */}
-          <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 12, textAlign: "center" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 6 }}>Company Stamp</div>
-            {stampUrl ? (
-              <img src={stampUrl} alt="stamp" crossOrigin="anonymous" style={{ height: 72, width: "auto", margin: "0 auto" }} onError={(e) => { e.target.style.display = "none"; }} />
+          {/* Signature Block */}
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              padding: 12,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#94a3b8",
+                marginBottom: 6,
+              }}
+            >
+              Authorized By
+            </div>
+            {settings.show_signature && signatureUrl ? (
+              <img
+                src={signatureUrl}
+                alt="signature"
+                crossOrigin="anonymous"
+                style={{ height: 40, objectFit: "contain", margin: "0 auto 4px", display: "block", opacity: 0.75 }}
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
             ) : (
-              <div style={{ width: 72, height: 72, margin: "0 auto", borderRadius: "50%", border: "2px dashed #cbd5e1", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 8, color: "#94a3b8", fontWeight: 600, textAlign: "center", lineHeight: 1.2, padding: 4 }}>{companyName.toUpperCase()}</span>
+              <div style={{ height: 32, borderBottom: "2px solid #e2e8f0", marginBottom: 6 }} />
+            )}
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#20364D" }}>
+              {settings.cfo_name || settings.cfo_title || "Chief Finance Officer"}
+            </div>
+            <div style={{ fontSize: 10, color: "#94a3b8" }}>
+              {settings.cfo_name ? settings.cfo_title : companyName}
+            </div>
+          </div>
+
+          {/* Stamp Block */}
+          <div
+            style={{
+              border: "1px solid #e2e8f0",
+              borderRadius: 12,
+              padding: 12,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "#94a3b8",
+                marginBottom: 6,
+              }}
+            >
+              Company Stamp
+            </div>
+            {settings.show_stamp && stampUrl ? (
+              <img
+                src={stampUrl}
+                alt="stamp"
+                crossOrigin="anonymous"
+                style={{ height: 72, width: "auto", margin: "0 auto" }}
+                onError={(e) => { e.target.style.display = "none"; }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 72,
+                  height: 72,
+                  margin: "0 auto",
+                  borderRadius: "50%",
+                  border: "2px dashed #cbd5e1",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 8,
+                    color: "#94a3b8",
+                    fontWeight: 600,
+                    textAlign: "center",
+                    lineHeight: 1.2,
+                    padding: 4,
+                  }}
+                >
+                  {companyName.toUpperCase()}
+                </span>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
+      {/* ═══ FOOTER ═══ */}
       <div style={{ borderTop: "1px solid #e2e8f0", padding: "16px 40px", textAlign: "center" }}>
         <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 4 }}>
           Thank you for your business. Please include the document number as payment reference.
         </div>
-        <div style={{ display: "flex", justifyContent: "center", gap: 16, fontSize: 10, color: "#cbd5e1", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 16,
+            fontSize: 10,
+            color: "#cbd5e1",
+            flexWrap: "wrap",
+          }}
+        >
           {showAddress && address && <span>{address}</span>}
-          {showEmail && settings.email && <span>{settings.email}</span>}
-          {showPhone && settings.phone && <span>{settings.phone}</span>}
+          {showEmail && (settings.contact_email || settings.email) && (
+            <span>{settings.contact_email || settings.email}</span>
+          )}
+          {showPhone && (settings.contact_phone || settings.phone) && (
+            <span>{settings.contact_phone || settings.phone}</span>
+          )}
         </div>
         {showReg && (settings.tin || settings.brn) && (
           <div style={{ fontSize: 9, color: "#cbd5e1", marginTop: 4 }}>
@@ -269,7 +588,9 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
             {settings.brn && <>BRN: {settings.brn}</>}
           </div>
         )}
-        {customFooter && <div style={{ fontSize: 9, color: "#cbd5e1", marginTop: 4 }}>{customFooter}</div>}
+        {customFooter && (
+          <div style={{ fontSize: 9, color: "#cbd5e1", marginTop: 4 }}>{customFooter}</div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Receipt, Download, ArrowLeft, Building, Mail, Phone, CreditCard, Check, AlertCircle, Plus, X, DollarSign } from "lucide-react";
+import { Download, ArrowLeft, CreditCard, Check, AlertCircle, DollarSign } from "lucide-react";
 import api from "@/lib/api";
 import { formatMoney } from "@/utils/finance";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import BrandLogo from "@/components/branding/BrandLogo";
-import DocumentFooterSection from "@/components/documents/DocumentFooterSection";
-import { useBranding } from "@/contexts/BrandingContext";
 import { toast } from "sonner";
+import CanonicalDocumentRenderer from "@/components/documents/CanonicalDocumentRenderer";
 
 const statusColors = {
   draft: "bg-slate-100 text-slate-700",
@@ -35,11 +33,9 @@ const paymentMethods = [
 export default function InvoicePreviewPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const branding = useBranding();
   const [invoice, setInvoice] = useState(null);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState({});
   const [downloading, setDownloading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({
@@ -50,11 +46,11 @@ export default function InvoicePreviewPage() {
     notes: "",
   });
   const [submittingPayment, setSubmittingPayment] = useState(false);
+  const rendererRef = useRef(null);
 
   useEffect(() => {
     loadInvoice();
     loadPayments();
-    loadSettings();
   }, [id]);
 
   const loadInvoice = async () => {
@@ -79,28 +75,14 @@ export default function InvoicePreviewPage() {
     }
   };
 
-  const loadSettings = async () => {
-    try {
-      const res = await api.get("/api/admin/business-settings/public");
-      setSettings(res.data || {});
-    } catch (error) {
-      console.error("Failed to load settings:", error);
-    }
-  };
-
   const downloadPDF = async () => {
+    if (!rendererRef.current) {
+      toast.error("Document not ready");
+      return;
+    }
     try {
       setDownloading(true);
-      const response = await api.get(`/api/admin/pdf/invoice/${id}`, {
-        responseType: "blob",
-      });
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `${invoice?.invoice_number || "invoice"}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      await rendererRef.current.exportAsPDF(`${invoice?.invoice_number || "invoice"}.pdf`);
       toast.success("PDF downloaded");
     } catch (error) {
       console.error("Failed to download PDF:", error);
@@ -116,7 +98,6 @@ export default function InvoicePreviewPage() {
       toast.error("Please enter a valid amount");
       return;
     }
-
     try {
       setSubmittingPayment(true);
       await api.post(`/api/admin/invoices/${id}/payments`, paymentForm);
@@ -177,7 +158,7 @@ export default function InvoicePreviewPage() {
   return (
     <div className="p-6 md:p-8 bg-slate-50 min-h-screen" data-testid="invoice-preview-page">
       <div className="max-w-5xl mx-auto">
-        {/* Header Actions */}
+        {/* ═══ ACTION BAR (outside renderer) ═══ */}
         <div className="flex items-center justify-between mb-6">
           <button
             onClick={() => navigate("/admin/invoices")}
@@ -187,8 +168,11 @@ export default function InvoicePreviewPage() {
             <ArrowLeft className="w-4 h-4" />
             Back to Invoices
           </button>
-          
+
           <div className="flex items-center gap-3">
+            <Badge className={`${statusColors[invoice.status]} text-sm px-3 py-1`} data-testid="invoice-status-badge">
+              {invoice.status?.toUpperCase()}
+            </Badge>
             <Button
               variant="outline"
               onClick={downloadPDF}
@@ -196,12 +180,12 @@ export default function InvoicePreviewPage() {
               data-testid="download-pdf-btn"
             >
               <Download className="w-4 h-4 mr-2" />
-              {downloading ? "Downloading..." : "Download PDF"}
+              {downloading ? "Generating..." : "Download PDF"}
             </Button>
             {balanceDue > 0 && (
               <Button
                 onClick={() => {
-                  setPaymentForm(prev => ({ ...prev, amount: balanceDue }));
+                  setPaymentForm((prev) => ({ ...prev, amount: balanceDue }));
                   setShowPaymentModal(true);
                 }}
                 className="bg-[#D4A843] hover:bg-[#c49933] text-[#2D3E50]"
@@ -214,9 +198,12 @@ export default function InvoicePreviewPage() {
           </div>
         </div>
 
-        {/* Payment Summary Card */}
+        {/* ═══ PAYMENT SUMMARY CARD (outside renderer) ═══ */}
         {(paidAmount > 0 || balanceDue > 0) && (
-          <div className={`rounded-2xl border p-4 mb-6 ${isOverdue ? "bg-red-50 border-red-200" : "bg-white"}`} data-testid="payment-summary">
+          <div
+            className={`rounded-2xl border p-4 mb-6 ${isOverdue ? "bg-red-50 border-red-200" : "bg-white"}`}
+            data-testid="payment-summary"
+          >
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-6">
                 <div>
@@ -238,7 +225,6 @@ export default function InvoicePreviewPage() {
                   </div>
                 </div>
               </div>
-              
               {isOverdue && (
                 <div className="flex items-center gap-2 text-red-600">
                   <AlertCircle className="w-5 h-5" />
@@ -246,8 +232,6 @@ export default function InvoicePreviewPage() {
                 </div>
               )}
             </div>
-
-            {/* Payment Progress Bar */}
             <div className="mt-4">
               <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div
@@ -262,147 +246,40 @@ export default function InvoicePreviewPage() {
           </div>
         )}
 
-        {/* Document Preview Card */}
-        <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
-          {/* Navy Header */}
-          <div className="bg-[#2D3E50] text-white p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <BrandLogo size="md" variant="light" className="mb-4" />
-                <h1 className="text-3xl font-bold">INVOICE</h1>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold mb-2">{invoice.invoice_number}</div>
-                <Badge className={`${statusColors[invoice.status]} text-sm px-3 py-1`}>
-                  {invoice.status?.toUpperCase()}
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="p-8">
-            {/* Company & Customer Info */}
-            <div className="grid md:grid-cols-3 gap-8 mb-8">
-              {/* From */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-500 mb-3">FROM</h3>
-                <div className="font-bold text-lg">{settings.company_name || branding.brand_name || "Company"}</div>
-                <div className="text-slate-600 text-sm space-y-1 mt-2">
-                  {settings.address_line_1 && <div>{settings.address_line_1}</div>}
-                  {settings.city && <div>{settings.city}, {settings.country}</div>}
-                  {settings.email && <div className="flex items-center gap-2"><Mail className="w-3 h-3" />{settings.email}</div>}
-                  {settings.phone && <div className="flex items-center gap-2"><Phone className="w-3 h-3" />{settings.phone}</div>}
-                  {settings.tin_number && <div>TIN: {settings.tin_number}</div>}
-                </div>
-              </div>
-
-              {/* Bill To */}
-              <div>
-                <h3 className="text-sm font-semibold text-slate-500 mb-3">BILL TO</h3>
-                <div className="font-bold text-lg">{invoice.customer_name}</div>
-                <div className="text-slate-600 text-sm space-y-1 mt-2">
-                  {invoice.customer_company && <div className="flex items-center gap-2"><Building className="w-3 h-3" />{invoice.customer_company}</div>}
-                  {invoice.customer_email && <div className="flex items-center gap-2"><Mail className="w-3 h-3" />{invoice.customer_email}</div>}
-                  {invoice.customer_phone && <div className="flex items-center gap-2"><Phone className="w-3 h-3" />{invoice.customer_phone}</div>}
-                  {invoice.customer_address && <div>{invoice.customer_address}</div>}
-                  {invoice.customer_tin && <div>TIN: {invoice.customer_tin}</div>}
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="bg-slate-50 rounded-2xl p-4">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 text-sm">Issue Date</span>
-                    <span className="font-medium">{invoice.created_at?.split("T")[0]}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500 text-sm">Due Date</span>
-                    <span className={`font-medium ${isOverdue ? "text-red-600" : ""}`}>
-                      {invoice.due_date?.split("T")[0] || "—"}
-                    </span>
-                  </div>
-                  {invoice.payment_term_label && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500 text-sm">Payment Terms</span>
-                      <span className="font-medium">{invoice.payment_term_label}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Line Items Table */}
-            <div className="border rounded-2xl overflow-hidden mb-8">
-              <table className="w-full">
-                <thead className="bg-[#2D3E50] text-white">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold">Description</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Qty</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Unit Price</th>
-                    <th className="px-4 py-3 text-right text-sm font-semibold">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(invoice.line_items || []).map((item, idx) => (
-                    <tr key={idx} className={idx % 2 === 0 ? "bg-slate-50" : "bg-white"}>
-                      <td className="px-4 py-3 text-sm">{item.description}</td>
-                      <td className="px-4 py-3 text-sm text-right">{item.quantity}</td>
-                      <td className="px-4 py-3 text-sm text-right">{formatMoney(item.unit_price, currency)}</td>
-                      <td className="px-4 py-3 text-sm text-right font-medium">{formatMoney(item.total, currency)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Totals */}
-            <div className="flex justify-end">
-              <div className="w-72 bg-white border rounded-2xl p-4 space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Subtotal</span>
-                  <span>{formatMoney(invoice.subtotal, currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">VAT ({invoice.tax_rate || 18}%)</span>
-                  <span>{formatMoney(invoice.tax, currency)}</span>
-                </div>
-                {invoice.discount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Discount</span>
-                    <span className="text-red-600">-{formatMoney(invoice.discount, currency)}</span>
-                  </div>
-                )}
-                <div className="border-t pt-3 flex justify-between font-bold text-lg">
-                  <span>Total</span>
-                  <span>{formatMoney(invoice.total, currency)}</span>
-                </div>
-                {paidAmount > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Paid</span>
-                      <span>-{formatMoney(paidAmount, currency)}</span>
-                    </div>
-                    <div className="border-t pt-3 flex justify-between font-bold text-lg">
-                      <span>Balance Due</span>
-                      <span className="text-[#D4A843]">{formatMoney(balanceDue, currency)}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Document Footer — Bank, Signature, Stamp, Contact */}
-            <DocumentFooterSection
-              settings={settings}
-              documentNumber={invoice.invoice_number}
-              brandName={branding.brand_name || settings.trading_name || "Konekt"}
-            />
-          </div>
+        {/* ═══ CANONICAL DOCUMENT RENDERER ═══ */}
+        <div className="bg-white rounded-3xl border shadow-sm overflow-hidden" data-testid="invoice-document-preview">
+          <CanonicalDocumentRenderer
+            ref={rendererRef}
+            docType="invoice"
+            docNumber={invoice.invoice_number || ""}
+            docDate={invoice.created_at?.split("T")[0] || ""}
+            dueDate={invoice.due_date?.split("T")[0] || ""}
+            status={invoice.status || "draft"}
+            toBlock={{
+              name: invoice.customer_name || "",
+              company: invoice.customer_company || "",
+              address: invoice.customer_address || "",
+              city: invoice.customer_city || "",
+              country: invoice.customer_country || "",
+              email: invoice.customer_email || "",
+              phone: invoice.customer_phone || "",
+              tin: invoice.customer_tin || "",
+              brn: invoice.customer_brn || "",
+              client_type: invoice.customer_type || "individual",
+            }}
+            lineItems={invoice.line_items || []}
+            subtotal={invoice.subtotal || 0}
+            taxRate={invoice.tax_rate}
+            tax={invoice.tax || 0}
+            discount={invoice.discount || 0}
+            total={invoice.total || 0}
+            currency={currency}
+            notes={invoice.notes || ""}
+            paymentTermLabel={invoice.payment_term_label || ""}
+          />
         </div>
 
-        {/* Payment History */}
+        {/* ═══ PAYMENT HISTORY (outside renderer) ═══ */}
         {payments.length > 0 && (
           <div className="mt-6 bg-white rounded-2xl border p-6" data-testid="payment-history">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
@@ -419,14 +296,12 @@ export default function InvoicePreviewPage() {
                     <div>
                       <div className="font-medium">{formatMoney(payment.amount, currency)}</div>
                       <div className="text-sm text-slate-500">
-                        {payment.payment_method?.replace("_", " ")} • {payment.payment_date?.split("T")[0]}
+                        {payment.payment_method?.replace("_", " ")} &bull; {payment.payment_date?.split("T")[0]}
                       </div>
                     </div>
                   </div>
                   {payment.reference && (
-                    <div className="text-sm text-slate-500">
-                      Ref: {payment.reference}
-                    </div>
+                    <div className="text-sm text-slate-500">Ref: {payment.reference}</div>
                   )}
                 </div>
               ))}
@@ -434,14 +309,14 @@ export default function InvoicePreviewPage() {
           </div>
         )}
 
-        {/* Quick Actions */}
+        {/* ═══ QUICK ACTIONS (outside renderer) ═══ */}
         <div className="mt-6 bg-white rounded-2xl border p-6">
           <h3 className="font-semibold mb-4">Quick Actions</h3>
           <div className="flex flex-wrap gap-3">
             {balanceDue > 0 && (
               <Button
                 onClick={() => {
-                  setPaymentForm(prev => ({ ...prev, amount: balanceDue }));
+                  setPaymentForm((prev) => ({ ...prev, amount: balanceDue }));
                   setShowPaymentModal(true);
                 }}
                 className="bg-[#D4A843] hover:bg-[#c49933] text-[#2D3E50]"
@@ -461,13 +336,12 @@ export default function InvoicePreviewPage() {
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* ═══ PAYMENT MODAL ═══ */}
       <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Record Payment</DialogTitle>
           </DialogHeader>
-
           <form onSubmit={recordPayment} className="space-y-4 pt-4" data-testid="payment-form">
             <div className="p-4 bg-slate-50 rounded-xl">
               <div className="flex justify-between text-sm">
@@ -475,7 +349,6 @@ export default function InvoicePreviewPage() {
                 <span className="font-bold">{formatMoney(balanceDue, currency)}</span>
               </div>
             </div>
-
             <div className="space-y-2">
               <Label>Amount *</Label>
               <Input
@@ -484,64 +357,56 @@ export default function InvoicePreviewPage() {
                 max={balanceDue}
                 step="0.01"
                 value={paymentForm.amount}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                onChange={(e) => setPaymentForm((prev) => ({ ...prev, amount: Number(e.target.value) }))}
                 required
                 data-testid="input-payment-amount"
               />
             </div>
-
             <div className="space-y-2">
               <Label>Payment Method</Label>
               <select
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 bg-white"
                 value={paymentForm.payment_method}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_method: e.target.value }))}
+                onChange={(e) => setPaymentForm((prev) => ({ ...prev, payment_method: e.target.value }))}
                 data-testid="select-payment-method"
               >
-                {paymentMethods.map(m => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
+                {paymentMethods.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
                 ))}
               </select>
             </div>
-
             <div className="space-y-2">
               <Label>Payment Date</Label>
               <Input
                 type="date"
                 value={paymentForm.payment_date}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, payment_date: e.target.value }))}
+                onChange={(e) => setPaymentForm((prev) => ({ ...prev, payment_date: e.target.value }))}
                 data-testid="input-payment-date"
               />
             </div>
-
             <div className="space-y-2">
               <Label>Reference Number</Label>
               <Input
                 placeholder="e.g., Transaction ID, Cheque #"
                 value={paymentForm.reference}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, reference: e.target.value }))}
+                onChange={(e) => setPaymentForm((prev) => ({ ...prev, reference: e.target.value }))}
                 data-testid="input-payment-reference"
               />
             </div>
-
             <div className="space-y-2">
               <Label>Notes</Label>
               <textarea
                 className="w-full border border-slate-300 rounded-xl px-4 py-3 min-h-[80px]"
                 placeholder="Optional notes"
                 value={paymentForm.notes}
-                onChange={(e) => setPaymentForm(prev => ({ ...prev, notes: e.target.value }))}
+                onChange={(e) => setPaymentForm((prev) => ({ ...prev, notes: e.target.value }))}
                 data-testid="input-payment-notes"
               />
             </div>
-
             <div className="flex gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowPaymentModal(false)}
-                className="flex-1"
-              >
+              <Button type="button" variant="outline" onClick={() => setShowPaymentModal(false)} className="flex-1">
                 Cancel
               </Button>
               <Button
