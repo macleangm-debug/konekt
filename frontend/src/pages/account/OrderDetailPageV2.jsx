@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package, Wrench, Calendar, CreditCard, Loader2, Star } from "lucide-react";
+import { ArrowLeft, Package, Wrench, Calendar, CreditCard, Loader2, Star, Download, Check, Clock, FileText } from "lucide-react";
 import OrderDetailTimelineSection from "../../components/orders/OrderDetailTimelineSection";
 import CustomerAssignedSalesCard from "../../components/orders/CustomerAssignedSalesCard";
 import axios from "axios";
@@ -148,6 +148,69 @@ export default function OrderDetailPageV2() {
           </div>
         </div>
       )}
+
+      {/* Completion CTA — only when awaiting confirmation */}
+      {["dispatched", "shipped", "in_transit", "awaiting_confirmation"].includes((order.status || "").toLowerCase()) ||
+       ["dispatched", "shipped", "in_transit", "awaiting_confirmation"].includes((order.fulfillment_status || "").toLowerCase()) ? (
+        <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center" data-testid="order-completion-cta">
+          <Clock className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+          <div className="text-lg font-bold text-[#20364D] mb-1">Awaiting Your Confirmation</div>
+          <p className="text-sm text-slate-600 mb-4">Your order is ready. Please confirm completion.</p>
+          <Link
+            to={`/confirm-completion?order=${order.order_number || order.id}`}
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition text-base"
+            data-testid="confirm-completion-btn"
+          >
+            <Check className="w-5 h-5" />
+            {order.type === "service" ? "Confirm Service Handover" : "Confirm Delivery"}
+          </Link>
+        </div>
+      ) : null}
+
+      {/* Completion Summary — after closure */}
+      {["completed", "delivered", "completed_signed", "completed_confirmed"].includes((order.status || "").toLowerCase()) && order.receiver_name && (
+        <div className="rounded-2xl border border-green-200 bg-green-50 p-6" data-testid="order-completion-summary">
+          <div className="flex items-center gap-2 mb-3">
+            <Check className="w-5 h-5 text-green-600" />
+            <span className="font-bold text-green-800">Completed</span>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3 text-sm">
+            <div><span className="text-green-600">Receiver:</span> <span className="font-medium">{order.receiver_name}</span></div>
+            {order.closure_method && <div><span className="text-green-600">Method:</span> <span className="font-medium capitalize">{order.closure_method.replace(/_/g, " ")}</span></div>}
+            {order.completed_at && <div><span className="text-green-600">Date:</span> <span className="font-medium">{new Date(order.completed_at).toLocaleDateString("en-GB")}</span></div>}
+          </div>
+        </div>
+      )}
+
+      {/* Documents Section */}
+      <div className="rounded-[2rem] border bg-white p-6" data-testid="order-documents">
+        <div className="text-lg font-bold text-[#20364D] mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5" /> Documents
+        </div>
+        <div className="space-y-3">
+          {order.quote_id && (
+            <Link to={`/account/quotes/${order.quote_id}`} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition" data-testid="doc-link-quote">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <div><div className="text-sm font-medium text-[#20364D]">Quote</div><div className="text-xs text-slate-500">{order.quote_number || "View quote"}</div></div>
+              </div>
+              <ArrowLeft className="w-4 h-4 text-slate-400 rotate-180" />
+            </Link>
+          )}
+          {order.invoice_id && (
+            <Link to={`/account/invoices/${order.invoice_id}`} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition" data-testid="doc-link-invoice">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-green-600" />
+                <div><div className="text-sm font-medium text-[#20364D]">Invoice</div><div className="text-xs text-slate-500">{order.invoice_number || "View invoice"}</div></div>
+              </div>
+              <ArrowLeft className="w-4 h-4 text-slate-400 rotate-180" />
+            </Link>
+          )}
+          {!order.quote_id && !order.invoice_id && (
+            <p className="text-sm text-slate-500">No documents linked to this order yet.</p>
+          )}
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="rounded-[2rem] border bg-white p-6">

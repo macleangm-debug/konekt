@@ -1,0 +1,93 @@
+{
+  "summary": "Data Integrity Dashboard & Customer Portal Enhancements testing complete. All 16 backend tests pass (100%). Frontend verified: Data Integrity Dashboard shows health score gauge (70), compliance cards (Missing VRN/BRN, Pending EFD), order health cards (Stuck Orders, Overdue Invoices, Orphan Orders), fulfillment cards. View buttons load detail records. Data Integrity accessible from sidebar under Reports & Analytics. Customer portal OrderDetailPageV2 shows Documents section with Quote and Invoice links.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_data_integrity_dashboard_v287.py",
+    "/app/test_reports/pytest/pytest_results_data_integrity_dashboard_v287.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_data_integrity_dashboard_v287.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, test@konekt.tz / TestUser123!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Data Integrity Dashboard & Customer Portal Enhancements verified. Key features: (1) Data Integrity Summary API - GET /api/admin/data-integrity/summary returns health_score (0-100), total_issues, categories (compliance, orders, fulfillment) with counts for missing_vrn, missing_brn, pending_efd, stuck_orders, orphan_orders, overdue_invoices, unconfirmed_deliveries. (2) Data Integrity Details API - GET /api/admin/data-integrity/details/{category} returns list of records for stuck_orders, overdue_invoices, pending_efd, missing_vrn, unconfirmed_deliveries. (3) Data Integrity Dashboard UI - Shows health score gauge, compliance/order health/fulfillment cards with View buttons that load detail records. (4) Sidebar Navigation - Data Integrity link added under Reports & Analytics section. (5) Customer Portal OrderDetailPageV2 - Shows Documents section with links to Quote and Invoice. Completion CTA shows for dispatched/shipped/in_transit orders. Completion summary shows for completed orders with receiver_name. Test order: 69b192362d4f87d8d578845e (completed, has quote QTN-20260311-B95327 and invoice INV-20260311-11459A).",
+  "features_tested": {
+    "data_integrity_summary_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/data-integrity/summary returns 200",
+        "Response contains health_score (0-100)",
+        "Response contains total_issues count",
+        "Response contains categories: compliance, orders, fulfillment",
+        "Compliance has missing_vrn, missing_brn, pending_efd",
+        "Orders has stuck_orders, orphan_orders, overdue_invoices",
+        "Fulfillment has unconfirmed_deliveries"
+      ]
+    },
+    "data_integrity_details_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/data-integrity/details/stuck_orders returns list",
+        "GET /api/admin/data-integrity/details/overdue_invoices returns list",
+        "GET /api/admin/data-integrity/details/pending_efd returns list",
+        "GET /api/admin/data-integrity/details/missing_vrn returns list",
+        "GET /api/admin/data-integrity/details/unconfirmed_deliveries returns list",
+        "Unknown category returns empty list"
+      ]
+    },
+    "data_integrity_dashboard_ui": {
+      "status": "PASS",
+      "details": [
+        "Dashboard loads at /admin/data-integrity",
+        "Health score gauge displays (showing 70)",
+        "Compliance section shows Missing VRN (0), Missing BRN (0), Pending EFD (2)",
+        "Order Health section shows Stuck Orders (39), Overdue Invoices (5), Orphan Orders (190)",
+        "Fulfillment section shows Unconfirmed Deliveries (0), Total Delivery Notes (37)",
+        "View buttons load detail records in expandable list",
+        "Close button dismisses detail list"
+      ]
+    },
+    "sidebar_navigation": {
+      "status": "PASS",
+      "details": [
+        "Data Integrity link visible under Reports & Analytics",
+        "Clicking link navigates to /admin/data-integrity"
+      ]
+    },
+    "customer_portal_order_detail": {
+      "status": "PASS",
+      "details": [
+        "OrderDetailPageV2 loads with data-testid='order-detail-page'",
+        "Documents section shows with data-testid='order-documents'",
+        "Quote link shows with data-testid='doc-link-quote'",
+        "Invoice link shows with data-testid='doc-link-invoice'",
+        "Completion CTA not shown for completed orders (correct behavior)",
+        "Order progress timeline displays correctly"
+      ]
+    },
+    "customer_portal_dashboard": {
+      "status": "PASS",
+      "details": [
+        "Customer dashboard loads at /account",
+        "Orders, Quotes, Invoices links present",
+        "Customer orders endpoint returns data"
+      ]
+    }
+  }
+}

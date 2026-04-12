@@ -5,7 +5,7 @@ import {
   Route, Inbox, BarChart3, ClipboardList, Package,
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign, Landmark,
-  Activity, Star, Gauge, CalendarDays, Bell, Palette,
+  Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield,
 } from "lucide-react";
 
 /**
@@ -126,6 +126,7 @@ export const adminNavigation = [
       { label: "Inventory Intelligence", href: "/admin/reports/inventory", icon: Package, roles: ["admin", "sales_manager", "finance_manager"] },
       { label: "Weekly Performance", href: "/admin/reports/weekly-performance", icon: CalendarDays, roles: ["admin", "sales_manager", "finance_manager"] },
       { label: "Weekly Digest", href: "/admin/weekly-digest", icon: FileText, roles: ["admin"] },
+      { label: "Data Integrity", href: "/admin/data-integrity", icon: Shield, roles: ["admin"] },
       { label: "Action Center", href: "/admin/reports/alerts", icon: Bell, roles: ["admin", "sales_manager", "finance_manager"] },
     ],
   },

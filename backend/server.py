@@ -3066,6 +3066,9 @@ app.include_router(public_completion_router)
 from efd_receipt_routes import router as efd_receipt_router
 app.include_router(efd_receipt_router)
 
+from data_integrity_routes import router as data_integrity_router
+app.include_router(data_integrity_router)
+
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)
