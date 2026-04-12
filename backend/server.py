@@ -917,7 +917,30 @@ async def register(request: Request, data: UserCreate):
     if data.pin and len(data.pin) >= 4 and len(data.pin) <= 6 and data.pin.isdigit():
         user_doc["pin_hash"] = hash_password(data.pin)
     await db.users.insert_one(user_doc)
-    
+
+    # Account mapping: link historical orders/invoices/quotes by phone number
+    if normalized_phone and len(normalized_phone) >= 9:
+        phone_suffix = normalized_phone[-9:]  # Match last 9 digits
+        # Link orders
+        await db.orders.update_many(
+            {"customer_phone": {"$regex": phone_suffix}, "customer_id": {"$exists": False}},
+            {"$set": {"customer_id": user_id, "account_mapped_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        await db.orders.update_many(
+            {"customer_phone": {"$regex": phone_suffix}, "customer_id": None},
+            {"$set": {"customer_id": user_id, "account_mapped_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        # Link invoices
+        await db.invoices.update_many(
+            {"customer_phone": {"$regex": phone_suffix}, "customer_id": {"$exists": False}},
+            {"$set": {"customer_id": user_id, "account_mapped_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        # Link delivery notes
+        await db.delivery_notes.update_many(
+            {"customer_phone": {"$regex": phone_suffix}, "customer_id": {"$exists": False}},
+            {"$set": {"customer_id": user_id, "account_mapped_at": datetime.now(timezone.utc).isoformat()}}
+        )
+
     # Send welcome email (fire and forget)
     asyncio.create_task(EmailService.send_welcome_email(data.email, data.full_name, referral_code))
     
@@ -3068,6 +3091,9 @@ app.include_router(efd_receipt_router)
 
 from data_integrity_routes import router as data_integrity_router
 app.include_router(data_integrity_router)
+
+from walkin_sale_routes import router as walkin_sale_router
+app.include_router(walkin_sale_router)
 
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)

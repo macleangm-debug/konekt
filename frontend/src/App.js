@@ -161,6 +161,7 @@ import WeeklyPerformanceReportPage from "@/pages/admin/reports/WeeklyPerformance
 import AlertDashboardPage from "@/pages/admin/reports/AlertDashboardPage";
 import WeeklyDigestPage from "@/pages/admin/WeeklyDigestPage";
 import DataIntegrityDashboardPage from "@/pages/admin/DataIntegrityDashboardPage";
+import WalkInSalePage from "@/pages/admin/WalkInSalePage";
 
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
@@ -719,6 +720,7 @@ function App() {
           <Route path="reports/weekly-performance" element={<WeeklyPerformanceReportPage />} />
           <Route path="weekly-digest" element={<WeeklyDigestPage />} />
           <Route path="data-integrity" element={<DataIntegrityDashboardPage />} />
+          <Route path="walk-in-sale" element={<WalkInSalePage />} />
           <Route path="reports/alerts" element={<AlertDashboardPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />

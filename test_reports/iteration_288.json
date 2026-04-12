@@ -1,0 +1,80 @@
+{
+  "summary": "Walk-in Sale & Account Mapping testing complete. All 11 backend tests pass (100%). Frontend verified: Walk-in Sale page at /admin/walk-in-sale renders with cart, customer (Individual/Business toggle), payment sections. Walk-in Sale shows in admin sidebar under COMMERCE. Track Order page shows 6-step lifecycle (regression verified).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_walkin_sale_account_mapping_v288.py",
+    "/app/test_reports/pytest/pytest_results_walkin_sale_v288.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_walkin_sale_account_mapping_v288.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created test walk-in orders: WLK-20260412-7C6D05 (30000 TZS), plus additional test orders during pytest",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Walk-in Sale & Account Mapping verified. Key features: (1) POST /api/admin/walk-in-sale creates order+invoice+payment in one step, returns order_number (WLK-*), invoice_number, total. (2) Walk-in orders have status=completed, closure_locked=true, sales_channel=walk_in, is_walk_in=true, closure_method=confirmed_in_person, sales_contribution_type=assisted. (3) Business validation: client_type=business requires business_name, vrn, brn. (4) Empty items returns 400. (5) Walk-in Sale page at /admin/walk-in-sale has product search, cart, customer section (Individual/Business toggle with VRN/BRN fields for business), payment section (method dropdown, amount received, reference). (6) Walk-in Sale link in sidebar under COMMERCE with CreditCard icon. (7) Account mapping in /api/auth/register links historical orders/invoices/delivery_notes by phone_normalized last 9 digits. (8) Track Order page shows 6-step lifecycle: Order Placed → Confirmed → In Progress → Ready/Dispatched → Awaiting Confirmation → Completed.",
+  "features_tested": {
+    "walkin_sale_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/walk-in-sale creates order, invoice, payment in one step",
+        "Response includes order_number (WLK-*), invoice_number, total, currency, status",
+        "Order has status=completed, closure_locked=true, sales_channel=walk_in",
+        "Order has is_walk_in=true, closure_method=confirmed_in_person, sales_contribution_type=assisted",
+        "Empty items returns 400 with 'At least one item is required'",
+        "Business client without VRN/BRN returns 400 with validation error",
+        "Business client with all fields (business_name, vrn, brn) succeeds"
+      ]
+    },
+    "walkin_sale_ui": {
+      "status": "PASS",
+      "details": [
+        "Walk-in Sale page loads at /admin/walk-in-sale",
+        "Product search input present (data-testid='product-search')",
+        "Cart section present (data-testid='cart-section')",
+        "Customer section present with Individual/Business toggle",
+        "Business toggle shows VRN, BRN, Business Name fields",
+        "Payment section present with method dropdown, amount received, reference",
+        "Complete Sale button present (data-testid='complete-sale-btn')",
+        "Walk-in Sale link in sidebar under COMMERCE"
+      ]
+    },
+    "account_mapping": {
+      "status": "PASS",
+      "details": [
+        "Registration endpoint /api/auth/register exists",
+        "Registration with phone creates user successfully",
+        "Account mapping logic in server.py links orders/invoices/delivery_notes by phone_normalized last 9 digits"
+      ]
+    },
+    "track_order_lifecycle": {
+      "status": "PASS",
+      "details": [
+        "Track Order page loads at /track-order",
+        "6-step lifecycle displayed: Order Placed → Confirmed → In Progress → Ready/Dispatched → Awaiting Confirmation → Completed",
+        "Completion details shown: Receiver, Method (Confirmed In Person), Completed date",
+        "Walk-in orders trackable by WLK-* order number"
+      ]
+    },
+    "catalog_products_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/catalog/products returns products list for walk-in sale product search"
+      ]
+    }
+  }
+}
