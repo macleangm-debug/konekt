@@ -12,32 +12,58 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals 
 
 ## System Principles
 - No manual economics in forms — all pricing/commission from Settings
-- No scattered settings — Settings Hub is single source of truth
-- No custom drawers — StandardDrawerShell via Portal everywhere
-- Desktop lists = tables. Promotions: policy-driven. Discounts display as TZS amounts.
-- Affiliate attribution auto-carried from URL to checkout.
+- Settings Hub = single source of truth. No scattered settings.
+- StandardDrawerShell via Portal everywhere. Desktop = tables.
+- Promotions: policy-driven. Discounts = TZS amounts, never %.
+- Affiliate attribution: auto-captured from URL, auto-applied at checkout.
 
-## What's Been Implemented (Summary)
+## Completed Features (All Tested & Verified)
 
-### Core Platform: Auth, catalog, checkout, orders, payments (Stripe + bank), payment proofs
-### Growth: Pricing engine, policy-driven promotions, affiliates (identity + payout), affiliate application flow (public → admin review → auto-create), attribution system
-### Content: Content Studio (WYSIWYG, 4 layouts, dynamic branding), Sales Content Hub
-### Admin Config: Settings Hub (15 sections, sidebar), Business Settings
-### Team Performance: Overview (6 KPIs + table), Leaderboard (top 3 + ranking), Alerts (actionable table with CTAs)
-### Partner Ecosystem: KPI row (7 metrics), coverage summary (regions/categories/gaps), management table (6 columns), detail drawer
-### UI/UX Stabilization: StandardDrawerShell (Portal, full-viewport), CRM contained, all percentage display removed
+### Core Platform
+Auth, catalog, checkout, orders, payments (Stripe + bank), payment proofs
+
+### Growth & Conversion
+- Pricing Policy Engine, policy-driven promotions (no manual discount)
+- Affiliates: identity + payout form, auto-commission from settings
+- Affiliate Application Flow: public `/partners/apply` → admin review → auto-create affiliate
+- Attribution: ?aff=, ?affiliate=, ?ref= → localStorage → auto-applied at checkout
+
+### Content & Distribution
+Content Studio (WYSIWYG, 4 layouts, dynamic branding), Sales Content Hub
+
+### Admin Config
+Settings Hub (15 sections, sidebar), Business Settings
+
+### Team Performance
+Overview (6 KPIs + 9-col table), Leaderboard (top 3 + ranking), Alerts (actionable table with CTAs)
+
+### Partner Ecosystem
+KPI row (7 metrics), coverage summary (regions/categories/gaps), management table, detail drawer
+
+### Weekly Digest Browser View
+Executive operations report at `/admin/weekly-digest`:
+- Header (week range + timestamp)
+- 6 KPI cards (Revenue, Orders, Customers, Affiliates, Partner Util %, Alerts)
+- Revenue Breakdown (table + highlights)
+- Operations Health (4 color-coded cards)
+- Sales Performance (top 3 reps + insights)
+- Partner Ecosystem insights + Affiliate Performance
+- Alerts Summary (top 3 with CTAs)
+- Action Items (deep links to relevant pages)
+
+### UI/UX Stabilization
+StandardDrawerShell (Portal, full-viewport), CRM contained, all % display removed
 
 ## Key API Endpoints
-- `GET /api/admin/partner-ecosystem/summary` — Partner KPIs, coverage, partners list
+- `GET /api/admin/weekly-digest/snapshot` — Executive digest data
+- `GET /api/admin/partner-ecosystem/summary` — Partner KPIs + coverage
+- `GET /api/admin/team-performance/summary` — Team performance data
 - `POST /api/affiliate-applications` — Public application
-- `POST /api/affiliate-applications/{id}/approve` — Admin approve
 - `GET/POST/DELETE /api/admin/affiliates` — Affiliate CRUD
-- `GET /api/admin/team-performance/summary` — Team data
 - `POST /api/admin/promotions` — Policy-driven promotion
 
 ## Upcoming Tasks
-1. Weekly Digest Browser View — shareable executive report
-2. Global phone number format standardization
+1. Global phone number format standardization
 
 ## Backlog (P2)
 - Twilio WhatsApp / Resend Email (blocked on keys)
