@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Search, Package, Truck, CheckCircle, Clock, AlertCircle,
-  ArrowLeft, CreditCard, MapPin, ShoppingBag, ArrowRight, Mail, Phone, Copy,
+  ArrowLeft, CreditCard, MapPin, ShoppingBag, ArrowRight, Mail, Phone, Copy, Check,
 } from "lucide-react";
 import api from "../../lib/api";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
@@ -21,8 +21,11 @@ const STATUS_MAP = {
   ready: { label: "Ready", color: "bg-indigo-100 text-indigo-700", icon: Package },
   shipped: { label: "Shipped", color: "bg-purple-100 text-purple-700", icon: Truck },
   in_transit: { label: "In Transit", color: "bg-purple-100 text-purple-700", icon: Truck },
+  awaiting_confirmation: { label: "Awaiting Confirmation", color: "bg-amber-100 text-amber-700", icon: Clock },
   delivered: { label: "Delivered", color: "bg-green-100 text-green-700", icon: CheckCircle },
   completed: { label: "Completed", color: "bg-green-100 text-green-700", icon: CheckCircle },
+  completed_signed: { label: "Completed (Signed)", color: "bg-green-100 text-green-700", icon: CheckCircle },
+  completed_confirmed: { label: "Completed (Confirmed)", color: "bg-emerald-100 text-emerald-700", icon: CheckCircle },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700", icon: AlertCircle },
 };
 
@@ -205,6 +208,22 @@ export default function TrackOrderPageContent() {
                       {order.city && <p>{order.city}{order.country ? `, ${order.country}` : ""}</p>}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Confirm Completion CTA */}
+              {(order.fulfillment_status === "dispatched" || order.status === "shipped" || order.status === "in_transit" || order.status === "awaiting_confirmation") && (
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-center" data-testid="confirm-delivery-cta">
+                  <Clock className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+                  <h3 className="text-lg font-bold text-[#20364D] mb-1">Awaiting Your Confirmation</h3>
+                  <p className="text-sm text-slate-600 mb-4">Your order has been delivered. Please confirm completion.</p>
+                  <Link
+                    to={`/confirm-completion?order=${order.order_number || order.id}`}
+                    className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition text-base"
+                    data-testid="confirm-delivery-btn"
+                  >
+                    <Check className="w-5 h-5" /> Confirm Delivery
+                  </Link>
                 </div>
               )}
             </div>

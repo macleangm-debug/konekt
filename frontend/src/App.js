@@ -385,6 +385,7 @@ import ServicesPageContent from "@/pages/public/ServicesPageContent";
 import ServiceGroupDetailContent from "@/pages/public/ServiceGroupDetailContent";
 import ServiceDetailContent from "@/pages/public/ServiceDetailContent";
 import TrackOrderPageContent from "@/pages/public/TrackOrderPageContent";
+import ConfirmCompletionPage from "@/pages/public/ConfirmCompletionPage";
 import AboutPageContent from "@/pages/public/AboutPageContent";
 import ContactPageContent from "@/pages/public/ContactPageContent";
 import PrivacyPolicyPage from "@/pages/public/PrivacyPolicyPage";
@@ -864,6 +865,7 @@ function App() {
           <Route path="services/:groupSlug" element={<ServiceGroupDetailContent />} />
           <Route path="services/:groupSlug/:serviceSlug" element={<ServiceDetailContent />} />
           <Route path="track-order" element={<TrackOrderPageContent />} />
+          <Route path="confirm-completion" element={<ConfirmCompletionPage />} />
           <Route path="about" element={<AboutPageContent />} />
           <Route path="contact" element={<ContactPageContent />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />
