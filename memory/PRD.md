@@ -6,54 +6,72 @@ Build a B2B e-commerce platform (Konekt) with unified login, role-based portals,
 ## Core Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Principles
-- Settings Hub = single source of truth | Pricing Tiers = SOLE source for economic logic
-- ONE canonical document renderer | ONE closure engine | ONE Track Order route
-- Business client validation: VRN + BRN required
-- No duplicate routes or parallel logic
-- Phone number = primary identity for order lookup + account mapping
+## System Status: Production-Grade (All Systems Complete)
 
-## 3 Sales Modes (All Same Engine)
+## 3 Sales Modes (Same Engine)
 | Mode | Flow |
 |---|---|
 | Structured | Quote → Invoice → Order → Delivery → Completion |
 | Remote | Order → Delivery → Public Confirmation |
-| Walk-in/POS | Order → Payment → Auto Completion (confirmed_in_person) |
+| Walk-in/POS | Order → Payment → Auto Completion |
 
-## Walk-in / POS Sale (/admin/walk-in-sale)
-- One-screen POS UI: Cart (left) + Customer/Payment (right)
-- Reuses catalog, pricing tiers, order system, closure engine
-- sales_channel=walk_in, sales_contribution_type=assisted
-- Auto-completes: closure_method=confirmed_in_person, closure_locked=true
-- Business validation: VRN + BRN required for business walk-ins
-- Generates invoice/receipt, no delivery note needed
-- Sidebar: under COMMERCE group
+## Completed Systems (100% Tested)
 
-## Account Mapping
-- On registration: phone_normalized last 9 digits → match orders/invoices/delivery_notes
-- Links historical records to new account automatically
-- Primary: exact normalized phone | Secondary: email (unambiguous only)
+### Core Platform
+- Multi-role auth (Admin, Staff, Customer, Vendor, Affiliate)
+- Catalog (products + services), Canonical categories
+- Order management, Payment processing (Stripe)
 
-## All Completed Systems
-- Document System (Canonical Renderer, 4 Templates, WYSIWYG PDF)
-- Delivery Closure (Dual-mode, locked records, audit trail)
-- Public Completion (Token/Phone/Order # → 3-screen mobile flow)
-- Track Order (6-step lifecycle, fulfillment-aware CTA, completion summary)
-- Customer Portal (/account — enhanced with completion CTA, documents section)
-- Settings Hub (unified typography, stamp auto-pull, pricing tiers enforcement)
-- Business Client Validation (VRN + BRN, blocks compliance workflows)
-- EFD Receipt Workflow (internal-only, on-demand)
-- Data Integrity Dashboard (health score, compliance/order/fulfillment monitoring)
-- Walk-in Sale (POS-style, auto-completion, assisted commission)
-- Account Mapping (phone → historical orders on registration)
+### Document System
+- Canonical Renderer: Quote, Invoice, Delivery Note, Service Handover
+- 4 Templates (Classic/Modern/Compact/Premium), WYSIWYG PDF
+- Client-type-aware, Settings-driven branding
 
-## Upcoming
-1. Advanced Analytics Dashboard (revenue, volume, fulfillment, conversion funnel)
-2. Data Integrity Dashboard refinement (deep links, action guidance)
-3. Messaging Integration Hooks (prep only — event definitions, payload structure)
+### Delivery Closure
+- Dual-mode: Signed + Confirmed, records LOCKED
+- Public Completion: Token/Phone/Order # → 3-screen mobile flow
 
-## Backlog
-- Twilio WhatsApp / Resend Email (blocked on keys)
+### Walk-in / POS Sale (/admin/walk-in-sale)
+- One-screen POS: Cart (7/12) + Customer/Payment (5/12)
+- Auto-completion: confirmed_in_person, assisted commission
+- Business validation, invoice/receipt generation
+
+### Advanced Analytics (/admin/analytics)
+- KPI strip: Revenue, Orders, Completion %, Avg Order, Channel %
+- Revenue trend chart with period selector (7d/30d/90d)
+- Key Insights panel (dark, executive-grade)
+- Channel Performance: Structured/Walk-in/Affiliate breakdown
+- Conversion Funnel: Quotes → Invoices → Orders → Completed
+- Operations Health: Stale orders, Overdue invoices, Pending confirmations
+- Top Performers: Customers, Sales staff
+
+### Data Integrity Dashboard (/admin/data-integrity)
+- Health score gauge (0-100)
+- Compliance, Order Health, Fulfillment categories with drill-down
+
+### Settings Hub (Unified)
+- 17 tabs across 3 groups, consistent typography
+- Stamp auto-pull, signature persistence, template previews, footer live preview
+- Pricing Tiers = sole source of truth
+
+### Business Client Validation
+- VRN + BRN required for business clients
+
+### EFD Receipt Workflow
+- Internal-only, on-demand, VRN/BRN gate
+
+### Customer Portal (/account)
+- Dashboard, Orders (with Confirm CTA), Quotes, Invoices, Documents
+
+### Account Mapping
+- Phone → historical orders on registration
+
+### Track Order (/track-order)
+- 6-step lifecycle, fulfillment-aware CTA, completion summary
+
+## Upcoming / Backlog
+- Messaging Integration Hooks (Twilio/Resend — blocked on keys)
+- Customer portal refinement (mobile-first cards)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
