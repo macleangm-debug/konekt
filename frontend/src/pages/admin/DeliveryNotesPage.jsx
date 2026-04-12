@@ -76,7 +76,10 @@ export default function DeliveryNotesPage() {
     switch (status) {
       case "issued": return "bg-blue-100 text-blue-700";
       case "in_transit": return "bg-amber-100 text-amber-700";
+      case "pending_confirmation": return "bg-purple-100 text-purple-700";
       case "delivered": return "bg-green-100 text-green-700";
+      case "completed_signed": return "bg-green-100 text-green-700";
+      case "completed_confirmed": return "bg-emerald-100 text-emerald-700";
       case "cancelled": return "bg-red-100 text-red-700";
       default: return "bg-slate-100 text-slate-700";
     }
@@ -86,9 +89,10 @@ export default function DeliveryNotesPage() {
     const total = items.length;
     const issued = items.filter(i => i.status === "issued").length;
     const inTransit = items.filter(i => i.status === "in_transit").length;
-    const delivered = items.filter(i => i.status === "delivered").length;
+    const completed = items.filter(i => i.status === "delivered" || i.status?.startsWith("completed_")).length;
     const cancelled = items.filter(i => i.status === "cancelled").length;
-    return { total, issued, inTransit, delivered, cancelled };
+    const pending = items.filter(i => i.status === "pending_confirmation").length;
+    return { total, issued, inTransit, completed, cancelled, pending };
   }, [items]);
 
   return (
@@ -115,7 +119,7 @@ export default function DeliveryNotesPage() {
           { label: "Total", value: deliveryStats.total, icon: Truck, accent: "slate" },
           { label: "Issued", value: deliveryStats.issued, icon: Package, accent: "blue" },
           { label: "In Transit", value: deliveryStats.inTransit, icon: Clock, accent: "amber" },
-          { label: "Delivered", value: deliveryStats.delivered, icon: CheckCircle, accent: "emerald" },
+          { label: "Completed", value: deliveryStats.completed, icon: CheckCircle, accent: "emerald" },
           { label: "Cancelled", value: deliveryStats.cancelled, icon: XCircle, accent: "red" },
         ]}
       />
