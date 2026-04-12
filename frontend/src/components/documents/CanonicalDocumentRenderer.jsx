@@ -5,6 +5,74 @@ import jsPDF from "jspdf";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
+// ─── Template Style Definitions ───
+const TEMPLATES = {
+  classic: {
+    headerBg: "#20364D",
+    headerPad: "32px 40px",
+    docTitleSize: 28,
+    bodyPad: "28px 40px",
+    tablePad: "0 40px 24px",
+    labelSize: 10,
+    companySize: 15,
+    detailSize: 12,
+    tableHeaderBg: "transparent",
+    tableHeaderBorder: "2px solid #e2e8f0",
+    rowBorder: "1px solid #f1f5f9",
+    totalsBorder: "2px solid #20364D",
+    accentColor: "#20364D",
+    footerDivider: true,
+  },
+  modern: {
+    headerBg: "#0f172a",
+    headerPad: "28px 36px",
+    docTitleSize: 24,
+    bodyPad: "24px 36px",
+    tablePad: "0 36px 20px",
+    labelSize: 9,
+    companySize: 14,
+    detailSize: 11,
+    tableHeaderBg: "transparent",
+    tableHeaderBorder: "1px solid #e2e8f0",
+    rowBorder: "1px solid #f8fafc",
+    totalsBorder: "1px solid #0f172a",
+    accentColor: "#0f172a",
+    footerDivider: true,
+  },
+  compact: {
+    headerBg: "#1e293b",
+    headerPad: "20px 32px",
+    docTitleSize: 22,
+    bodyPad: "16px 32px",
+    tablePad: "0 32px 16px",
+    labelSize: 9,
+    companySize: 13,
+    detailSize: 11,
+    tableHeaderBg: "transparent",
+    tableHeaderBorder: "2px solid #e2e8f0",
+    rowBorder: "1px solid #f1f5f9",
+    totalsBorder: "2px solid #1e293b",
+    accentColor: "#1e293b",
+    footerDivider: true,
+  },
+  premium: {
+    headerBg: "linear-gradient(135deg, #20364D 0%, #1a365d 100%)",
+    headerPad: "36px 44px",
+    docTitleSize: 30,
+    bodyPad: "32px 44px",
+    tablePad: "0 44px 28px",
+    labelSize: 10,
+    companySize: 16,
+    detailSize: 12,
+    tableHeaderBg: "transparent",
+    tableHeaderBorder: "2px solid #D4A843",
+    rowBorder: "1px solid #f1f5f9",
+    totalsBorder: "2px solid #D4A843",
+    accentColor: "#D4A843",
+    footerDivider: true,
+  },
+};
+
 /**
  * CanonicalDocumentRenderer — Single shared renderer for all business documents.
  *
@@ -148,13 +216,9 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
   const isBusiness = toBlock.client_type === "business";
   const toLabel = docType === "quote" ? "PREPARED FOR" : "BILL TO";
 
-  const S = {
-    // Shared inline styles for WYSIWYG
-    header: { backgroundColor: "#20364D", color: "#fff", padding: "32px 40px", display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-    label: { fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 },
-    companyName: { fontSize: 15, fontWeight: 700, color: "#20364D" },
-    detail: { fontSize: 12, color: "#64748b", lineHeight: 1.6, marginTop: 4 },
-  };
+  // Template-driven styling
+  const template = settings.doc_template?.selected_template || "classic";
+  const T = TEMPLATES[template] || TEMPLATES.classic;
 
   return (
     <div
@@ -164,7 +228,14 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
       data-testid="canonical-document"
     >
       {/* ═══ HEADER ═══ */}
-      <div style={S.header}>
+      <div style={{
+        background: T.headerBg,
+        color: "#fff",
+        padding: T.headerPad,
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+      }}>
         <div>
           {logoUrl ? (
             <img
@@ -177,7 +248,7 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
           ) : (
             <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{companyName}</div>
           )}
-          <div style={{ fontSize: 28, fontWeight: 800, letterSpacing: 2, marginTop: 4 }}>
+          <div style={{ fontSize: T.docTitleSize, fontWeight: 800, letterSpacing: 2, marginTop: 4 }}>
             {DOC_LABELS[docType] || docType.toUpperCase()}
           </div>
         </div>
@@ -213,12 +284,12 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
       </div>
 
       {/* ═══ COMPANY / CLIENT / DETAILS ROW ═══ */}
-      <div style={{ padding: "28px 40px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
+      <div style={{ padding: T.bodyPad, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
         {/* FROM */}
         <div>
-          <div style={S.label}>From</div>
-          <div style={S.companyName}>{companyName}</div>
-          <div style={S.detail}>
+          <div style={{ fontSize: T.labelSize, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>From</div>
+          <div style={{ fontSize: T.companySize, fontWeight: 700, color: T.accentColor }}>{companyName}</div>
+          <div style={{ fontSize: T.detailSize, color: "#64748b", lineHeight: 1.6, marginTop: 4 }}>
             {settings.address && <div>{settings.address}</div>}
             {settings.city && <div>{settings.city}, {settings.country}</div>}
             {settings.email && <div>{settings.email}</div>}
@@ -229,11 +300,11 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
 
         {/* TO — client-type aware */}
         <div>
-          <div style={S.label}>{toLabel}</div>
+          <div style={{ fontSize: T.labelSize, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>{toLabel}</div>
           {isBusiness ? (
             <>
-              <div style={S.companyName}>{toBlock.company || toBlock.name || ""}</div>
-              <div style={S.detail}>
+              <div style={{ fontSize: T.companySize, fontWeight: 700, color: T.accentColor }}>{toBlock.company || toBlock.name || ""}</div>
+              <div style={{ fontSize: T.detailSize, color: "#64748b", lineHeight: 1.6, marginTop: 4 }}>
                 {toBlock.brn && <div>BRN: {toBlock.brn}</div>}
                 {toBlock.tin && <div>VRN: {toBlock.tin}</div>}
                 {toBlock.city && <div>{[toBlock.city, toBlock.country].filter(Boolean).join(", ")}</div>}
@@ -243,8 +314,8 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
             </>
           ) : (
             <>
-              <div style={S.companyName}>{toBlock.name || ""}</div>
-              <div style={S.detail}>
+              <div style={{ fontSize: T.companySize, fontWeight: 700, color: T.accentColor }}>{toBlock.name || ""}</div>
+              <div style={{ fontSize: T.detailSize, color: "#64748b", lineHeight: 1.6, marginTop: 4 }}>
                 {toBlock.company && <div>{toBlock.company}</div>}
                 {toBlock.address && <div>{toBlock.address}</div>}
                 {(toBlock.city || toBlock.country) && (
@@ -260,8 +331,8 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
 
         {/* DETAILS */}
         <div>
-          <div style={S.label}>Details</div>
-          <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.8 }}>
+          <div style={{ fontSize: T.labelSize, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 8 }}>Details</div>
+          <div style={{ fontSize: T.detailSize, color: "#64748b", lineHeight: 1.8 }}>
             <div>
               <span style={{ display: "inline-block", width: 90, fontWeight: 600, color: "#475569" }}>Date:</span>
               {docDate}
@@ -289,10 +360,10 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
       </div>
 
       {/* ═══ LINE ITEMS TABLE ═══ */}
-      <div style={{ padding: "0 40px 24px" }}>
+      <div style={{ padding: T.tablePad }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>
-            <tr style={{ borderBottom: "2px solid #e2e8f0" }}>
+            <tr style={{ borderBottom: T.tableHeaderBorder }}>
               {["#", "Description", "Qty", "Unit Price", "Total"].map((h, i) => (
                 <th
                   key={h}
@@ -313,7 +384,7 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
           </thead>
           <tbody>
             {lineItems.map((item, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #f1f5f9" }}>
+              <tr key={i} style={{ borderBottom: T.rowBorder }}>
                 <td style={{ padding: "10px 0", color: "#94a3b8", fontSize: 12 }}>{i + 1}</td>
                 <td style={{ padding: "10px 8px", color: "#20364D", fontWeight: 500 }}>
                   {item.description || item.name || ""}
@@ -324,7 +395,7 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
                 <td style={{ padding: "10px 8px", textAlign: "right", color: "#475569" }}>
                   {fmt(item.unit_price)}
                 </td>
-                <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 600, color: "#20364D" }}>
+                <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 600, color: T.accentColor }}>
                   {fmt(item.total || (item.quantity || 1) * (item.unit_price || 0))}
                 </td>
               </tr>
@@ -359,7 +430,7 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
                 fontSize: 16,
                 fontWeight: 800,
                 color: "#20364D",
-                borderTop: "2px solid #20364D",
+                borderTop: T.totalsBorder,
                 marginTop: 4,
               }}
             >

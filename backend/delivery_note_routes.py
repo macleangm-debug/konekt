@@ -59,7 +59,7 @@ async def create_delivery_note(payload: dict):
         collection = db.orders if source_type == "order" else db.invoices
         try:
             source_doc = await collection.find_one({"_id": ObjectId(source_id)})
-        except:
+        except Exception:
             pass
         if not source_doc:
             raise HTTPException(status_code=404, detail=f"Source {source_type} not found")
@@ -149,9 +149,21 @@ async def update_delivery_note_status(note_id: str, payload: dict):
     if status not in ["issued", "in_transit", "delivered", "cancelled"]:
         raise HTTPException(status_code=400, detail="Invalid status")
 
+    update_fields = {"status": status, "updated_at": datetime.now(timezone.utc)}
+
+    # If marking as delivered, capture closure data
+    if status == "delivered":
+        if payload.get("receiver_name"):
+            update_fields["receiver_name"] = payload["receiver_name"]
+        if payload.get("receiver_designation"):
+            update_fields["receiver_designation"] = payload["receiver_designation"]
+        if payload.get("receiver_signature"):
+            update_fields["receiver_signature"] = payload["receiver_signature"]
+        update_fields["received_at"] = datetime.now(timezone.utc)
+
     result = await db.delivery_notes.update_one(
         {"_id": ObjectId(note_id)},
-        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}}
+        {"$set": update_fields}
     )
     
     if result.modified_count == 0:

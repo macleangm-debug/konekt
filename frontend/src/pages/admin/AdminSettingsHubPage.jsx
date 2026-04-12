@@ -1083,6 +1083,13 @@ function DocNumberingTab({ state, setState }) {
 /* ─── Document Footer Tab ─── */
 function DocFooterTab({ state, setState }) {
   const df = state.doc_footer || {};
+  const bp = state.business_profile || {};
+  const pa = state.payment_accounts || {};
+  const previewAddress = bp.business_address || "Business Address";
+  const previewEmail = bp.support_email || "email@company.com";
+  const previewPhone = bp.support_phone || "+255 XXX XXX XXX";
+  const previewTin = bp.tax_id || "TIN-XXXXX";
+  const previewBrn = bp.vat_number || "BRN-XXXXX";
   return (
     <SettingsSectionCard title="Document Footer" description="Control what information appears in the footer of all business documents.">
       <div className="space-y-3">
@@ -1095,6 +1102,34 @@ function DocFooterTab({ state, setState }) {
           <p className="text-[10px] text-slate-400 mt-1">Optional text shown below all documents (e.g., terms, legal notice)</p>
         </div>
       </div>
+
+      {/* Live Footer Preview */}
+      <div className="mt-5 border border-slate-200 rounded-xl overflow-hidden" data-testid="footer-live-preview">
+        <div className="bg-slate-50 px-4 py-2 border-b border-slate-200">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Live Footer Preview</div>
+        </div>
+        <div className="bg-white px-6 py-4 text-center">
+          <div className="text-xs text-slate-500 mb-2">
+            Thank you for your business. Please include the document number as payment reference.
+          </div>
+          <div className="flex items-center justify-center gap-4 text-[11px] text-slate-400 flex-wrap">
+            {df.show_address !== false && <span>{previewAddress}</span>}
+            {df.show_email !== false && <span>{previewEmail}</span>}
+            {df.show_phone !== false && <span>{previewPhone}</span>}
+          </div>
+          {(df.show_registration || false) && (
+            <div className="text-[10px] text-slate-400 mt-1">
+              TIN: {previewTin} &bull; BRN: {previewBrn}
+            </div>
+          )}
+          {df.custom_footer_text && (
+            <div className="text-[10px] text-slate-400 mt-1">{df.custom_footer_text}</div>
+          )}
+          {!df.show_address && df.show_email === false && df.show_phone === false && !df.show_registration && !df.custom_footer_text && (
+            <div className="text-[10px] text-slate-300 italic">All footer fields are hidden</div>
+          )}
+        </div>
+      </div>
     </SettingsSectionCard>
   );
 }
@@ -1103,34 +1138,100 @@ function DocFooterTab({ state, setState }) {
 function DocTemplateTab({ state, setState }) {
   const dt = state.doc_template || {};
   const TEMPLATES = [
-    { value: "classic", label: "Classic Corporate", desc: "Formal layout with strong header and structured sections" },
-    { value: "modern", label: "Modern Clean", desc: "Lighter spacing, modern typography, minimalist" },
-    { value: "compact", label: "Compact Commercial", desc: "Tighter layout, optimized for longer item lists" },
-    { value: "premium", label: "Premium Branded", desc: "Stronger brand presence, polished client-facing design" },
+    {
+      value: "classic",
+      label: "Classic Corporate",
+      desc: "Formal layout with strong header and structured sections",
+      headerBg: "#20364D",
+      accentColor: "#20364D",
+      borderColor: "#e2e8f0",
+    },
+    {
+      value: "modern",
+      label: "Modern Clean",
+      desc: "Lighter spacing, modern typography, minimalist feel",
+      headerBg: "#0f172a",
+      accentColor: "#0f172a",
+      borderColor: "#e2e8f0",
+    },
+    {
+      value: "compact",
+      label: "Compact Commercial",
+      desc: "Tighter layout, optimized for longer item lists",
+      headerBg: "#1e293b",
+      accentColor: "#1e293b",
+      borderColor: "#e2e8f0",
+    },
+    {
+      value: "premium",
+      label: "Premium Branded",
+      desc: "Stronger brand presence with gold accents",
+      headerBg: "#20364D",
+      accentColor: "#D4A843",
+      borderColor: "#D4A843",
+    },
   ];
   return (
-    <SettingsSectionCard title="Document Template" description="Select the layout style used for all business documents.">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <SettingsSectionCard title="Document Template" description="Select the layout style used for all business documents. Changes apply to all document previews and PDF exports.">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {TEMPLATES.map((t) => {
           const active = (dt.selected_template || "classic") === t.value;
           return (
             <button
               key={t.value}
               onClick={() => setState(U(state, "doc_template", "selected_template", t.value))}
-              className={`text-left rounded-xl border-2 p-4 transition-all ${active ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}
+              className={`text-left rounded-xl border-2 overflow-hidden transition-all ${active ? "border-[#20364D] shadow-md" : "border-slate-200 hover:border-slate-300"}`}
               data-testid={`template-${t.value}`}
             >
-              <div className="flex items-center justify-between">
-                <span className={`text-sm font-semibold ${active ? "text-[#20364D]" : "text-slate-700"}`}>{t.label}</span>
-                {active && <span className="text-[10px] font-bold text-[#D4A843] uppercase">Selected</span>}
+              {/* Mini template preview */}
+              <div className="relative">
+                <div style={{ background: t.headerBg, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ width: 40, height: 6, background: "rgba(255,255,255,0.3)", borderRadius: 3, marginBottom: 4 }} />
+                    <div style={{ fontSize: 10, fontWeight: 800, color: "#fff", letterSpacing: 1 }}>INVOICE</div>
+                  </div>
+                  <div style={{ fontSize: 8, color: "rgba(255,255,255,0.6)", textAlign: "right" }}>
+                    <div>INV-2026-001</div>
+                    <div style={{ display: "inline-block", padding: "1px 6px", borderRadius: 3, fontSize: 7, background: "rgba(255,255,255,0.2)", marginTop: 2 }}>DRAFT</div>
+                  </div>
+                </div>
+                <div style={{ padding: "8px 14px", display: "flex", gap: 12, fontSize: 7, color: "#64748b" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#94a3b8", fontSize: 6, textTransform: "uppercase", marginBottom: 2 }}>From</div>
+                    <div style={{ fontWeight: 600, color: t.accentColor, fontSize: 8 }}>Company Ltd</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#94a3b8", fontSize: 6, textTransform: "uppercase", marginBottom: 2 }}>Bill To</div>
+                    <div style={{ fontWeight: 600, color: t.accentColor, fontSize: 8 }}>Client Corp</div>
+                  </div>
+                </div>
+                {/* Mini table */}
+                <div style={{ padding: "0 14px 6px" }}>
+                  <div style={{ borderTop: `1px solid ${t.borderColor}`, borderBottom: `1px solid ${t.borderColor}`, padding: "3px 0", display: "flex", justifyContent: "space-between", fontSize: 6, color: "#94a3b8" }}>
+                    <span>Description</span><span>Total</span>
+                  </div>
+                  {[1, 2].map((r) => (
+                    <div key={r} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0", fontSize: 6, color: "#475569" }}>
+                      <div style={{ width: 50, height: 3, background: "#e2e8f0", borderRadius: 2, marginTop: 2 }} />
+                      <div style={{ width: 20, height: 3, background: "#e2e8f0", borderRadius: 2, marginTop: 2 }} />
+                    </div>
+                  ))}
+                  <div style={{ borderTop: `1px solid ${t.accentColor}`, marginTop: 3, paddingTop: 3, display: "flex", justifyContent: "space-between", fontSize: 7, fontWeight: 700, color: t.accentColor }}>
+                    <span>Total</span><span>TZS 250,000</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-1">{t.desc}</p>
+              {/* Label area */}
+              <div className="p-3 border-t border-slate-100">
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm font-semibold ${active ? "text-[#20364D]" : "text-slate-700"}`}>{t.label}</span>
+                  {active && <span className="text-[10px] font-bold text-[#D4A843] uppercase">Active</span>}
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">{t.desc}</p>
+              </div>
             </button>
           );
         })}
-      </div>
-      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-        Template selection will be applied when document rendering is fully implemented. Saving now prepares your preference.
       </div>
     </SettingsSectionCard>
   );
