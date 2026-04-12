@@ -14,40 +14,68 @@ import ReportScheduleSection from "../../components/admin/settings/ReportSchedul
 
 import { toast } from "sonner";
 
-const TABS = [
-  { key: "profile", label: "Business Profile", icon: Building2 },
-  { key: "payment", label: "Payment Details", icon: CreditCard },
-  { key: "branding", label: "Document Branding", icon: FileText },
-  { key: "preview", label: "Preview", icon: Eye },
-  { key: "pricing_policy", label: "Pricing Policy", icon: BarChart3 },
-  { key: "commercial", label: "Commercial Rules", icon: BarChart3 },
-  { key: "operations", label: "Operational Rules", icon: Settings },
-  { key: "sales", label: "Sales & Commissions", icon: Users },
-  { key: "affiliate", label: "Affiliate & Referrals", icon: Globe },
-  { key: "payout", label: "Payout Settings", icon: Wallet },
-  { key: "workflows", label: "Workflows & Vendors", icon: Shield },
-  { key: "partners", label: "Partner Policy", icon: Truck },
-  { key: "notifications", label: "Notifications", icon: Bell },
-  { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
-  { key: "launch", label: "Launch Controls", icon: Rocket },
+const GROUPS = [
+  {
+    key: "business",
+    label: "Business",
+    icon: Building2,
+    tabs: [
+      { key: "profile", label: "Profile", icon: Building2 },
+      { key: "payment", label: "Payment Details", icon: CreditCard },
+      { key: "branding", label: "Document Branding", icon: FileText },
+      { key: "doc_numbering", label: "Document Numbering", icon: FileText },
+      { key: "doc_footer", label: "Document Footer", icon: FileText },
+      { key: "doc_template", label: "Document Template", icon: Eye },
+      { key: "notifications", label: "Notifications", icon: Bell },
+      { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
+    ],
+  },
+  {
+    key: "pricing",
+    label: "Pricing Policy",
+    icon: BarChart3,
+    tabs: [
+      { key: "pricing_policy", label: "Pricing Tiers", icon: BarChart3 },
+      { key: "commercial", label: "Distribution Rules", icon: BarChart3 },
+      { key: "sales", label: "Sales & Commission", icon: Users },
+      { key: "payout", label: "Payout Settings", icon: Wallet },
+      { key: "launch", label: "Launch Controls", icon: Rocket },
+    ],
+  },
+  {
+    key: "partner",
+    label: "Partner Policy",
+    icon: Truck,
+    tabs: [
+      { key: "affiliate", label: "Affiliate Policy", icon: Globe },
+      { key: "workflows", label: "Vendor Policy", icon: Shield },
+      { key: "partners", label: "Partner Config", icon: Truck },
+      { key: "operations", label: "Operational Rules", icon: Settings },
+    ],
+  },
 ];
 
+const TABS = GROUPS.flatMap((g) => g.tabs);
+
 const TAB_DESCRIPTIONS = {
-  profile: "Legal identity, contact details, and numbering rules",
+  profile: "Legal identity, contact details, country, and currency",
   payment: "Bank accounts and payment method configuration",
-  branding: "Invoice and document branding assets",
-  preview: "Preview how documents look with current settings",
-  pricing_policy: "Margin tiers and distribution rules",
-  commercial: "Core margins, VAT, wallet, and referral limits",
+  branding: "Logo, signature, stamp, and document branding assets",
+  doc_numbering: "Quote, Invoice, Order, Delivery Note, PO, and SKU numbering",
+  doc_footer: "Footer content displayed on all business documents",
+  doc_template: "Select document layout template",
+  pricing_policy: "Margin tiers and pricing tier configuration",
+  commercial: "Distribution rules, margins, VAT, and referral limits",
   operations: "Date formats, timezone, and follow-up thresholds",
-  sales: "Commission rates and assignment rules",
-  affiliate: "Affiliate program configuration and attribution",
+  sales: "Commission structure and assignment rules",
+  affiliate: "Affiliate program, attribution, and commission policy",
   payout: "Payout cycles, minimums, and approval rules",
   workflows: "Order workflows and vendor visibility rules",
   partners: "Partner assignment and logistics policies",
   notifications: "Notification channels and preferences",
   report_delivery: "Scheduled report delivery settings",
   launch: "System mode and go-live controls",
+  preview: "Preview how documents look with current settings",
 };
 
 const defaultState = {
@@ -64,6 +92,18 @@ const defaultState = {
   notifications: { customer_notifications_enabled: true, sales_notifications_enabled: true, affiliate_notifications_enabled: true, admin_notifications_enabled: true, vendor_notifications_enabled: true },
   vendors: { vendor_can_update_internal_progress: true, vendor_sees_only_assigned_jobs: true, vendor_cannot_see_customer_financials: true, vendor_cannot_see_commissions: true },
   numbering_rules: { sku_auto_numbering_enabled: true, quote_format: "KON-QT-[YY]-[SEQ]", invoice_format: "KON-IN-[YY]-[SEQ]", order_format: "KON-OR-[YY]-[SEQ]" },
+  doc_numbering: {
+    quote_prefix: "KON-QT", quote_digits: 5, quote_start: 1, quote_type: "sequential",
+    invoice_prefix: "KON-IN", invoice_digits: 5, invoice_start: 1, invoice_type: "sequential",
+    order_prefix: "KON-OR", order_digits: 5, order_start: 1, order_type: "sequential",
+    delivery_note_prefix: "KON-DN", delivery_note_digits: 5, delivery_note_start: 1, delivery_note_type: "sequential",
+    purchase_order_prefix: "KON-PO", purchase_order_digits: 4, purchase_order_start: 1, purchase_order_type: "sequential",
+    sku_prefix: "SKU", sku_digits: 6, sku_start: 1, sku_type: "sequential",
+  },
+  doc_footer: {
+    show_address: true, show_email: true, show_phone: true, show_registration: false, custom_footer_text: "",
+  },
+  doc_template: { selected_template: "classic" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
   business_profile: { legal_name: "", brand_name: "", tagline: "", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "" },
   branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
@@ -112,24 +152,33 @@ export default function AdminSettingsHubPage() {
         <div className="px-4 mb-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Settings</h2>
         </div>
-        <nav className="space-y-0.5 px-2" data-testid="settings-sidebar">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.key;
+        <nav className="space-y-4 px-2" data-testid="settings-sidebar">
+          {GROUPS.map((group) => {
+            const GIcon = group.icon;
             return (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                data-testid={`settings-tab-${t.key}`}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all text-left ${
-                  active
-                    ? "bg-[#20364D] text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {t.label}
-              </button>
+              <div key={group.key}>
+                <div className="flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <GIcon className="w-3 h-3" />
+                  {group.label}
+                </div>
+                <div className="space-y-0.5 mt-1">
+                  {group.tabs.map((t) => {
+                    const Icon = t.icon;
+                    const active = tab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setTab(t.key)}
+                        data-testid={`settings-tab-${t.key}`}
+                        className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all text-left ${active ? "bg-[#20364D] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"}`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </nav>
@@ -194,6 +243,9 @@ export default function AdminSettingsHubPage() {
             {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
             {tab === "report_delivery" && <ReportScheduleSection />}
             {tab === "launch" && <LaunchTab state={state} setState={setState} />}
+            {tab === "doc_numbering" && <DocNumberingTab state={state} setState={setState} />}
+            {tab === "doc_footer" && <DocFooterTab state={state} setState={setState} />}
+            {tab === "doc_template" && <DocTemplateTab state={state} setState={setState} />}
           </div>
         </div>
       </main>
@@ -220,8 +272,20 @@ function ProfileTab({ state, setState }) {
           <SettingsTextField label="Website" value={s.website} onChange={(v) => setState(U(state, "business_profile", "website", v))} />
           <SettingsTextField label="Business Address" value={s.business_address} onChange={(v) => setState(U(state, "business_profile", "business_address", v))} />
           <SettingsTextField label="Tax/VAT ID" value={s.tax_id} onChange={(v) => setState(U(state, "business_profile", "tax_id", v))} />
-          <SettingsTextField label="Default Country" value={state.payment_accounts?.default_country} onChange={(v) => setState(U(state, "payment_accounts", "default_country", v))} />
-          <SettingsTextField label="Default Currency" value={state.payment_accounts?.currency} onChange={(v) => setState(U(state, "payment_accounts", "currency", v))} />
+          <SettingsSelectField label="Country" value={state.payment_accounts?.default_country || "TZ"} onChange={(v) => {
+            const currMap = { TZ: "TZS", KE: "KES", UG: "UGX", RW: "RWF", BI: "BIF", ET: "ETB", ZA: "ZAR", NG: "NGN", GH: "GHS", EG: "EGP", US: "USD", GB: "GBP", IN: "INR", AE: "AED", SA: "SAR", CN: "CNY", JP: "JPY", AU: "AUD", BR: "BRL", CA: "CAD", DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR", NL: "EUR" };
+            const newState = U(state, "payment_accounts", "default_country", v);
+            if (currMap[v]) { newState.payment_accounts = { ...newState.payment_accounts, currency: currMap[v] }; }
+            setState(newState);
+          }} options={[
+            { value: "TZ", label: "Tanzania" }, { value: "KE", label: "Kenya" }, { value: "UG", label: "Uganda" },
+            { value: "RW", label: "Rwanda" }, { value: "BI", label: "Burundi" }, { value: "ET", label: "Ethiopia" },
+            { value: "ZA", label: "South Africa" }, { value: "NG", label: "Nigeria" }, { value: "GH", label: "Ghana" },
+            { value: "EG", label: "Egypt" }, { value: "US", label: "United States" }, { value: "GB", label: "United Kingdom" },
+            { value: "IN", label: "India" }, { value: "AE", label: "UAE" }, { value: "SA", label: "Saudi Arabia" },
+            { value: "CN", label: "China" }, { value: "AU", label: "Australia" },
+          ]} />
+          <SettingsTextField label="Currency" value={state.payment_accounts?.currency || "TZS"} onChange={(v) => setState(U(state, "payment_accounts", "currency", v))} />
         </div>
       </SettingsSectionCard>
       <SettingsSectionCard title="Branding" description="Logo, colors, and visual identity. Used across frontend, emails, and documents.">
@@ -982,3 +1046,93 @@ function PreviewField({ label, value }) {
     </div>
   );
 }
+
+/* ─── Document Numbering Tab ─── */
+function DocNumberingTab({ state, setState }) {
+  const dn = state.doc_numbering || {};
+  const DOC_TYPES = [
+    { key: "quote", label: "Quote" },
+    { key: "invoice", label: "Invoice" },
+    { key: "order", label: "Order" },
+    { key: "delivery_note", label: "Delivery Note" },
+    { key: "purchase_order", label: "Purchase Order" },
+    { key: "sku", label: "SKU" },
+  ];
+  return (
+    <SettingsSectionCard title="Document Numbering" description="Configure numbering for all business documents. Changes apply to new documents only.">
+      <div className="space-y-4">
+        {DOC_TYPES.map(({ key, label }) => (
+          <div key={key} className="grid grid-cols-4 gap-3 items-end p-3 bg-slate-50 rounded-lg">
+            <div>
+              <div className="text-[10px] text-slate-500 uppercase font-bold mb-1">{label}</div>
+              <SettingsTextField label="Prefix" value={dn[`${key}_prefix`] || ""} onChange={(v) => setState(U(state, "doc_numbering", `${key}_prefix`, v))} />
+            </div>
+            <SettingsSelectField label="Type" value={dn[`${key}_type`] || "sequential"} onChange={(v) => setState(U(state, "doc_numbering", `${key}_type`, v))} options={[{ value: "sequential", label: "Sequential" }, { value: "alphanumeric", label: "Alphanumeric" }]} />
+            <SettingsNumberField label="Digits" value={dn[`${key}_digits`] || 5} onChange={(v) => setState(U(state, "doc_numbering", `${key}_digits`, v))} />
+            <SettingsNumberField label="Start From" value={dn[`${key}_start`] || 1} onChange={(v) => setState(U(state, "doc_numbering", `${key}_start`, v))} />
+          </div>
+        ))}
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700">
+          Example: Prefix <strong>KON-QT</strong> + 5 digits from 1 = <strong>KON-QT-00001</strong>
+        </div>
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+/* ─── Document Footer Tab ─── */
+function DocFooterTab({ state, setState }) {
+  const df = state.doc_footer || {};
+  return (
+    <SettingsSectionCard title="Document Footer" description="Control what information appears in the footer of all business documents.">
+      <div className="space-y-3">
+        <SettingsToggleField label="Show company address" checked={df.show_address !== false} onChange={(v) => setState(U(state, "doc_footer", "show_address", v))} />
+        <SettingsToggleField label="Show email" checked={df.show_email !== false} onChange={(v) => setState(U(state, "doc_footer", "show_email", v))} />
+        <SettingsToggleField label="Show phone" checked={df.show_phone !== false} onChange={(v) => setState(U(state, "doc_footer", "show_phone", v))} />
+        <SettingsToggleField label="Show registration info (TIN/BRN)" checked={df.show_registration || false} onChange={(v) => setState(U(state, "doc_footer", "show_registration", v))} />
+        <div className="pt-2">
+          <SettingsTextField label="Custom Footer Text" value={df.custom_footer_text || ""} onChange={(v) => setState(U(state, "doc_footer", "custom_footer_text", v))} />
+          <p className="text-[10px] text-slate-400 mt-1">Optional text shown below all documents (e.g., terms, legal notice)</p>
+        </div>
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+/* ─── Document Template Tab ─── */
+function DocTemplateTab({ state, setState }) {
+  const dt = state.doc_template || {};
+  const TEMPLATES = [
+    { value: "classic", label: "Classic Corporate", desc: "Formal layout with strong header and structured sections" },
+    { value: "modern", label: "Modern Clean", desc: "Lighter spacing, modern typography, minimalist" },
+    { value: "compact", label: "Compact Commercial", desc: "Tighter layout, optimized for longer item lists" },
+    { value: "premium", label: "Premium Branded", desc: "Stronger brand presence, polished client-facing design" },
+  ];
+  return (
+    <SettingsSectionCard title="Document Template" description="Select the layout style used for all business documents.">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {TEMPLATES.map((t) => {
+          const active = (dt.selected_template || "classic") === t.value;
+          return (
+            <button
+              key={t.value}
+              onClick={() => setState(U(state, "doc_template", "selected_template", t.value))}
+              className={`text-left rounded-xl border-2 p-4 transition-all ${active ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}
+              data-testid={`template-${t.value}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className={`text-sm font-semibold ${active ? "text-[#20364D]" : "text-slate-700"}`}>{t.label}</span>
+                {active && <span className="text-[10px] font-bold text-[#D4A843] uppercase">Selected</span>}
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{t.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+      <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
+        Template selection will be applied when document rendering is fully implemented. Saving now prepares your preference.
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
