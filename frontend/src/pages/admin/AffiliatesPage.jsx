@@ -13,9 +13,10 @@ import { toast } from "sonner";
 import { affiliateApi } from "../../lib/affiliateApi";
 import { useConfirmModal } from "../../contexts/ConfirmModalContext";
 import StandardDrawerShell from "../../components/ui/StandardDrawerShell";
+import PhoneNumberField from "../../components/forms/PhoneNumberField";
 
 const initialForm = {
-  name: "", phone: "", email: "", affiliate_code: "",
+  name: "", phone_prefix: "+255", phone_number: "", email: "", affiliate_code: "",
   is_active: true, notes: "",
   payout_method: "mobile_money",
   mobile_money_number: "", mobile_money_provider: "",
@@ -52,7 +53,13 @@ export default function AffiliatesPage() {
     }
     setSaving(true);
     try {
-      await affiliateApi.createAffiliate(form);
+      const payload = {
+        ...form,
+        phone: form.phone_number ? `${form.phone_prefix}${form.phone_number}` : "",
+      };
+      delete payload.phone_prefix;
+      delete payload.phone_number;
+      await affiliateApi.createAffiliate(payload);
       toast.success("Affiliate created");
       setForm(initialForm);
       setDrawerOpen(false);
@@ -194,8 +201,15 @@ export default function AffiliatesPage() {
             <Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="Full name or business name" className="mt-1" data-testid="affiliate-name-input" />
           </div>
           <div>
-            <Label className="text-xs">Phone *</Label>
-            <Input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+255 7XX XXX XXX" className="mt-1" data-testid="affiliate-phone-input" />
+            <PhoneNumberField
+              label="Phone"
+              prefix={form.phone_prefix}
+              number={form.phone_number}
+              onPrefixChange={(v) => update("phone_prefix", v)}
+              onNumberChange={(v) => update("phone_number", v)}
+              required
+              testIdPrefix="affiliate-phone"
+            />
           </div>
           <div>
             <Label className="text-xs">Email *</Label>
@@ -223,7 +237,7 @@ export default function AffiliatesPage() {
             <>
               <div>
                 <Label className="text-xs">Mobile Money Number</Label>
-                <Input type="tel" value={form.mobile_money_number} onChange={(e) => update("mobile_money_number", e.target.value)} placeholder="07XX XXX XXX" className="mt-1" data-testid="mm-number-input" />
+                <Input type="tel" value={form.mobile_money_number} onChange={(e) => update("mobile_money_number", e.target.value.replace(/\D/g, ""))} placeholder="712345678" className="mt-1" data-testid="mm-number-input" />
               </div>
               <div>
                 <Label className="text-xs">Provider</Label>

@@ -28,16 +28,71 @@ async def get_weekly_digest(request: Request):
     total_revenue = sum(float(o.get("total_amount") or o.get("total") or 0) for o in paid_orders)
     total_orders = len(all_orders)
 
-    # Revenue by category (from order items)
+    # Build product name → category lookup
+    all_products = await db.products.find({}, {"_id": 0, "name": 1, "category": 1}).to_list(1000)
+    product_cat_map = {}
+    for p in all_products:
+        name = (p.get("name") or "").lower().strip()
+        cat = p.get("category") or ""
+        if name and cat:
+            product_cat_map[name] = cat
+
+    # Build UUID → category name lookup
+    cat_docs = await db.catalog_categories.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(100)
+    cat_id_map = {c["id"]: c["name"] for c in cat_docs if c.get("id") and c.get("name")}
+
+    # Build keyword → category mapping for fuzzy matching
+    keyword_cat = {}
+    for pname, pcat in product_cat_map.items():
+        for word in pname.split():
+            if len(word) > 3:
+                keyword_cat[word] = pcat
+
+    # Revenue by category
     rev_by_cat = {}
     for o in paid_orders:
         amt = float(o.get("total_amount") or o.get("total") or 0)
-        cat = o.get("category") or "Uncategorized"
-        if not cat or cat == "Uncategorized":
-            items = o.get("items", [])
-            if items and isinstance(items, list):
-                cat = items[0].get("category", "Uncategorized") if isinstance(items[0], dict) else "Uncategorized"
-        rev_by_cat[cat] = rev_by_cat.get(cat, 0) + amt
+        order_cat = None
+
+        # Try to resolve from line_items
+        line_items = o.get("line_items") or o.get("items") or []
+        if line_items and isinstance(line_items, list):
+            for li in line_items:
+                if isinstance(li, dict):
+                    desc = (li.get("description") or li.get("name") or "").lower().strip()
+                    # Exact product match
+                    for pname, pcat in product_cat_map.items():
+                        if pname in desc or desc in pname:
+                            order_cat = pcat
+                            break
+                    # Keyword match
+                    if not order_cat:
+                        for word in desc.split():
+                            if len(word) > 3 and word in keyword_cat:
+                                order_cat = keyword_cat[word]
+                                break
+                    if order_cat:
+                        break
+
+        # Fallback to order-level category
+        if not order_cat:
+            order_cat = o.get("category") or ""
+
+        # Resolve UUID category to name
+        if order_cat and order_cat in cat_id_map:
+            order_cat = cat_id_map[order_cat]
+
+        # Classify based on order type if still unknown
+        if not order_cat:
+            order_type = o.get("order_type", "")
+            if order_type == "service":
+                order_cat = "Services"
+            elif order_type == "quote":
+                order_cat = "Custom Orders"
+            else:
+                order_cat = "General"
+
+        rev_by_cat[order_cat] = rev_by_cat.get(order_cat, 0) + amt
 
     rev_breakdown = sorted(
         [{"category": k, "revenue": round(v), "pct": 0} for k, v in rev_by_cat.items()],

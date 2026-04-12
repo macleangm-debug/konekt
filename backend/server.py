@@ -2605,6 +2605,8 @@ from routes.partner_ecosystem_routes import router as partner_ecosystem_router
 app.include_router(partner_ecosystem_router)
 from routes.weekly_digest_routes import router as weekly_digest_view_router
 app.include_router(weekly_digest_view_router)
+from routes.canonical_category_routes import router as canonical_category_router
+app.include_router(canonical_category_router)
 app.include_router(delivery_note_router)
 app.include_router(goods_receiving_router)
 app.include_router(supplier_router)

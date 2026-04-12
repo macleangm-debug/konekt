@@ -7,9 +7,10 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { toast } from "sonner";
 import api from "../lib/api";
+import PhoneNumberField from "../components/forms/PhoneNumberField";
 
 const initialForm = {
-  full_name: "", email: "", phone: "",
+  full_name: "", email: "", phone_prefix: "+255", phone_number: "",
   company_name: "", region: "", notes: "",
 };
 
@@ -28,7 +29,13 @@ export default function AffiliateApplyPage() {
     }
     setSubmitting(true);
     try {
-      await api.post("/api/affiliate-applications", form);
+      const payload = {
+        ...form,
+        phone: form.phone_number ? `${form.phone_prefix}${form.phone_number}` : "",
+      };
+      delete payload.phone_prefix;
+      delete payload.phone_number;
+      await api.post("/api/affiliate-applications", payload);
       setSuccess(true);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to submit application");
@@ -81,8 +88,14 @@ export default function AffiliateApplyPage() {
             <Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" className="mt-1" data-testid="apply-email" />
           </div>
           <div>
-            <Label className="text-xs font-semibold">Phone</Label>
-            <Input type="tel" value={form.phone} onChange={(e) => update("phone", e.target.value)} placeholder="+255 7XX XXX XXX" className="mt-1" data-testid="apply-phone" />
+            <PhoneNumberField
+              label="Phone"
+              prefix={form.phone_prefix}
+              number={form.phone_number}
+              onPrefixChange={(v) => update("phone_prefix", v)}
+              onNumberChange={(v) => update("phone_number", v)}
+              testIdPrefix="apply-phone"
+            />
           </div>
           <div>
             <Label className="text-xs font-semibold">Business Name</Label>
