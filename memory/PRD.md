@@ -3,37 +3,49 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Status: DEPLOYMENT READY — Track Order Fixed
+## System Status: DEPLOYMENT READY — Full KPI System Active
 
-## Track Order = Universal Status Page (VERIFIED ON LIVE PAGE)
-- `/track-order` supports: normal orders, GDC references, phone-only search
-- Full-width group deal result cards (lg:col-span-2)
-- All 6 group deal states: pending_payment, payment_submitted, committed, order_created, refund_pending, refunded
-- Campaign progress bar with units, buyers, days left
-- Normal order: timeline, fulfillment-aware CTA, completion summary
+## Performance & KPI System (Batch 2 — COMPLETE)
+
+### Settings Hub: Performance Targets
+- Monthly Revenue Target (TZS)
+- Target Margin %
+- Channel Allocation (Sales/Affiliate/Direct/Group Deals — must sum to 100%)
+- Team sizes (sales staff count, affiliate count)
+- Minimum KPI thresholds (sales min %, affiliate min %)
+- Auto-calculated per-person targets
+
+### KPI Engine Backend
+- Per-channel: revenue, profit, target, achievement_pct, contribution_pct, deal count
+- Per-sales: profit (PRIMARY), revenue, deals, target_profit, achievement_pct, status
+- Per-affiliate: earnings ONLY (no revenue/margin), deals, conversions, status
+- Channels: Sales, Affiliate, Direct, Group Deals
+- Smart recommendations: staffing needs, underperformer alerts, channel gap analysis
+
+### Performance Dashboard (/admin/performance)
+- KPI Strip: total profit, achievement %, revenue, active sales, active affiliates
+- Channel Split bar + channel cards with progress bars
+- Sales leaderboard: profit-first, revenue secondary, status badges
+- Affiliate leaderboard: earnings-only (no revenue/profit/margin)
+- Action panel: warnings + insights ("You need +X sales staff", "Channel below target by X%")
+- Month/year filter
+- Mobile card layouts for leaderboards
 
 ## Group Deal Checkout (Canonical — No Popup)
-- Detail → `/group-deals/checkout?campaign_id=X` → Details → Payment & Proof (bank details) → Confirmation
-- Bank details identical to normal checkout (CRDB BANK)
-- Payment: pending_payment → payment_submitted → admin approve → committed (count increments)
+- Detail → /group-deals/checkout → Details → Payment & Proof (bank details) → Confirmation
+- Payment: pending_payment → payment_submitted → admin approve → committed
+- Admin payment queue with one-click Approve
 
-## Key API Endpoints
-- `/api/admin/group-deals/campaigns/{id}/join` — pending_payment + commitment_ref
-- `/api/public/group-deals/submit-payment` — payment proof
-- `/api/admin/group-deals/commitments/{ref}/approve-payment` — admin approve
-- `/api/admin/group-deals/commitments/pending-payments` — queue
-- `/api/public/group-deals/track` — track by phone or ref
-- `/api/public/payment-info` — bank details
+## Track Order = Universal Status Page
+- Normal orders + GDC references + phone-only search
+- All 6 group deal states with full-width layout
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 
-## Next: Batch 2 — KPI & Performance System
-1. Settings Hub: Performance & Growth Targets
-2. KPI Engine: profit/user, earnings/affiliate, channel aggregation
-3. Performance Dashboard (/admin/performance)
-
 ## Backlog
 - Twilio WhatsApp + Resend Email dispatch
 - Commission alignment with distributable margin
+- Super Agent operational dashboard
+- Country-based payment method display
