@@ -167,6 +167,7 @@ import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
 import GroupDealDetailPage, { GroupDealsListPage } from "@/pages/public/GroupDealsPages";
 import GroupDealCheckoutPage from "@/pages/public/GroupDealCheckoutPage";
 import AccountGroupDealsPage from "@/pages/customer/AccountGroupDealsPage";
+import PerformanceDashboardPage from "@/pages/admin/PerformanceDashboardPage";
 
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
@@ -727,6 +728,7 @@ function App() {
           <Route path="data-integrity" element={<DataIntegrityDashboardPage />} />
           <Route path="walk-in-sale" element={<WalkInSalePage />} />
           <Route path="analytics" element={<AdvancedAnalyticsDashboard />} />
+          <Route path="performance" element={<PerformanceDashboardPage />} />
           <Route path="group-deals" element={<GroupDealsAdminPage />} />
           <Route path="reports/alerts" element={<AlertDashboardPage />} />
           {/* Super Admin Ecosystem Dashboard */}

@@ -307,6 +307,20 @@ PLATFORM_DEFAULTS = {
         "rolling_window_days": 7,
         "dedup_window_hours": 24,
     },
+    "performance_targets": {
+        "monthly_revenue_target": 500000000,
+        "target_margin_pct": 20,
+        "channel_allocation": {
+            "sales_pct": 50,
+            "affiliate_pct": 30,
+            "direct_pct": 10,
+            "group_deals_pct": 10,
+        },
+        "sales_staff_count": 10,
+        "affiliate_count": 10,
+        "sales_min_kpi_pct": 70,
+        "affiliate_min_kpi_pct": 60,
+    },
 }
 
 

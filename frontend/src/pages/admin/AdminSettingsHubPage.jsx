@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -51,6 +51,7 @@ const GROUPS = [
       { key: "workflows", label: "Vendor Policy", icon: Shield },
       { key: "partners", label: "Partner Config", icon: Truck },
       { key: "operations", label: "Operational Rules", icon: Settings },
+      { key: "performance_targets", label: "Performance Targets", icon: Target },
     ],
   },
 ];
@@ -76,6 +77,7 @@ const TAB_DESCRIPTIONS = {
   report_delivery: "Scheduled report delivery settings",
   launch: "System mode and go-live controls",
   preview: "Preview how documents look with current settings",
+  performance_targets: "Monthly revenue targets, team sizes, and KPI thresholds",
 };
 
 const defaultState = {
@@ -113,6 +115,7 @@ const defaultState = {
   operational_rules: { date_format: "DD MMM YYYY", time_format: "HH:mm", timezone: "Africa/Dar_es_Salaam", default_country: "TZ", follow_up_threshold_days: 3, stale_deal_threshold_days: 7, quote_response_threshold_days: 5, payment_overdue_threshold_days: 7 },
   distribution_config: { protected_company_margin_percent: 8, affiliate_percent_of_distributable: 10, sales_percent_of_distributable: 15, promo_percent_of_distributable: 10, referral_percent_of_distributable: 5, country_bonus_percent_of_distributable: 5 },
   partner_policy: { auto_assignment_mode: "capability_match", logistics_handling_default: "konekt_managed", vendor_types: ["product_supplier", "service_provider", "logistics_partner"] },
+  performance_targets: { monthly_revenue_target: 500000000, target_margin_pct: 20, channel_allocation: { sales_pct: 50, affiliate_pct: 30, direct_pct: 10, group_deals_pct: 10 }, sales_staff_count: 10, affiliate_count: 10, sales_min_kpi_pct: 70, affiliate_min_kpi_pct: 60 },
 };
 
 function U(state, section, field, value) {
@@ -240,6 +243,7 @@ export default function AdminSettingsHubPage() {
             {tab === "payout" && <PayoutTab state={state} setState={setState} />}
             {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
             {tab === "partners" && <PartnersTab state={state} setState={setState} />}
+            {tab === "performance_targets" && <PerformanceTargetsTab state={state} setState={setState} />}
             {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
             {tab === "report_delivery" && <ReportScheduleSection />}
             {tab === "launch" && <LaunchTab state={state} setState={setState} />}
@@ -626,6 +630,50 @@ function PartnersTab({ state, setState }) {
         <strong>Supported vendor types:</strong> Product Supplier, Service Provider, Logistics Partner. These types are used for partner classification and assignment matching.
       </div>
     </SettingsSectionCard>
+  );
+}
+
+function PerformanceTargetsTab({ state, setState }) {
+  const pt = state.performance_targets || {};
+  const ca = pt.channel_allocation || {};
+  const updatePT = (field, value) => setState({ ...state, performance_targets: { ...pt, [field]: value } });
+  const updateCA = (field, value) => setState({ ...state, performance_targets: { ...pt, channel_allocation: { ...ca, [field]: value } } });
+  const totalAlloc = (ca.sales_pct || 0) + (ca.affiliate_pct || 0) + (ca.direct_pct || 0) + (ca.group_deals_pct || 0);
+
+  return (
+    <>
+      <SettingsSectionCard title="Monthly Targets" description="Set your monthly revenue and margin goals.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SettingsNumberField label="Monthly Revenue Target (TZS)" value={pt.monthly_revenue_target} onChange={(v) => updatePT("monthly_revenue_target", v)} min={0} />
+          <SettingsNumberField label="Target Margin %" value={pt.target_margin_pct} onChange={(v) => updatePT("target_margin_pct", v)} min={1} max={100} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-green-50 text-xs text-green-700">
+          <strong>Target Profit:</strong> TZS {((pt.monthly_revenue_target || 0) * (pt.target_margin_pct || 0) / 100).toLocaleString("en-US")}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Channel Allocation (%)" description="How revenue target is split across channels. Must sum to 100%.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Sales %" value={ca.sales_pct} onChange={(v) => updateCA("sales_pct", v)} min={0} max={100} />
+          <SettingsNumberField label="Affiliate %" value={ca.affiliate_pct} onChange={(v) => updateCA("affiliate_pct", v)} min={0} max={100} />
+          <SettingsNumberField label="Direct %" value={ca.direct_pct} onChange={(v) => updateCA("direct_pct", v)} min={0} max={100} />
+          <SettingsNumberField label="Group Deals %" value={ca.group_deals_pct} onChange={(v) => updateCA("group_deals_pct", v)} min={0} max={100} />
+        </div>
+        <div className={`mt-3 p-3 rounded-xl text-xs ${totalAlloc === 100 ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+          <strong>Total:</strong> {totalAlloc}% {totalAlloc !== 100 && "(must equal 100%)"}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Team Size & KPI Thresholds" description="Number of team members and minimum performance thresholds.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Sales Staff Count" value={pt.sales_staff_count} onChange={(v) => updatePT("sales_staff_count", v)} min={1} />
+          <SettingsNumberField label="Affiliate Count" value={pt.affiliate_count} onChange={(v) => updatePT("affiliate_count", v)} min={1} />
+          <SettingsNumberField label="Sales Min KPI %" value={pt.sales_min_kpi_pct} onChange={(v) => updatePT("sales_min_kpi_pct", v)} min={0} max={100} />
+          <SettingsNumberField label="Affiliate Min KPI %" value={pt.affiliate_min_kpi_pct} onChange={(v) => updatePT("affiliate_min_kpi_pct", v)} min={0} max={100} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+          <strong>Per-person targets (auto-calculated):</strong> Sales target = TZS {((pt.monthly_revenue_target || 0) * (ca.sales_pct || 0) / 100 / Math.max(pt.sales_staff_count || 1, 1)).toLocaleString("en-US")} | Affiliate target = TZS {((pt.monthly_revenue_target || 0) * (ca.affiliate_pct || 0) / 100 / Math.max(pt.affiliate_count || 1, 1)).toLocaleString("en-US")}
+        </div>
+      </SettingsSectionCard>
+    </>
   );
 }
 
