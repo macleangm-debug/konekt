@@ -102,6 +102,41 @@ async def create_campaign(payload: dict):
     return _s(created)
 
 
+@router.get("/products/search")
+async def search_products_for_deal(q: str = ""):
+    """Search products from marketplace listings for group deal creation."""
+    query = {"is_active": True}
+    if q:
+        query["$or"] = [
+            {"slug": {"$regex": q, "$options": "i"}},
+            {"description": {"$regex": q, "$options": "i"}},
+            {"category": {"$regex": q, "$options": "i"}},
+            {"tags": {"$regex": q, "$options": "i"}},
+        ]
+    docs = await db.marketplace_listings.find(
+        query,
+        {"_id": 1, "slug": 1, "description": 1, "short_description": 1, "category": 1,
+         "customer_price": 1, "base_partner_price": 1, "images": 1, "hero_image": 1,
+         "listing_type": 1, "tags": 1}
+    ).sort("slug", 1).to_list(50)
+
+    results = []
+    for d in docs:
+        name = (d.get("slug") or "").replace("-", " ").title()
+        img = d.get("hero_image") or (d.get("images") or [None])[0] if d.get("images") else None
+        results.append({
+            "id": str(d["_id"]),
+            "name": name,
+            "slug": d.get("slug", ""),
+            "description": (d.get("short_description") or d.get("description") or "")[:120],
+            "category": d.get("category", ""),
+            "base_price": float(d.get("customer_price") or 0),
+            "image": img or "",
+            "listing_type": d.get("listing_type", "product"),
+        })
+    return results
+
+
 @router.get("/campaigns")
 async def list_campaigns(status: str = None):
     query = {}

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { Plus, Clock, Check, X, Users, AlertTriangle, Package, RefreshCw, Star } from "lucide-react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import { Plus, Clock, Check, X, Users, Package, RefreshCw, Star, Search } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,37 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-const fmt = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
+// ─── Number formatting ───
+const fmtNum = (v) => Number(v || 0).toLocaleString("en-US");
+const fmt = (v) => `TZS ${fmtNum(v)}`;
+
+// Format input on blur, strip on focus
+function CurrencyInput({ value, onChange, ...props }) {
+  const [display, setDisplay] = useState(value || "");
+  const [focused, setFocused] = useState(false);
+
+  useEffect(() => {
+    if (!focused) {
+      const n = Number(String(value).replace(/,/g, "") || 0);
+      setDisplay(n > 0 ? fmtNum(n) : "");
+    }
+  }, [value, focused]);
+
+  return (
+    <Input
+      {...props}
+      type="text"
+      inputMode="numeric"
+      value={focused ? value : display}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const raw = e.target.value.replace(/,/g, "");
+        if (raw === "" || /^\d*\.?\d*$/.test(raw)) onChange(raw);
+      }}
+    />
+  );
+}
 
 const statusConfig = {
   active: { color: "bg-blue-100 text-blue-700", label: "Active" },
@@ -16,34 +46,94 @@ const statusConfig = {
   failed: { color: "bg-red-100 text-red-700", label: "Failed" },
 };
 
-function ProfitCalculator({ form }) {
-  const vc = Number(form.vendor_cost || 0);
-  const dp = Number(form.discounted_price || 0);
-  const op = Number(form.original_price || 0);
-  const target = Number(form.display_target || 0);
+function ProfitCalculator({ basePrice, vendorCost, dealPrice, target }) {
+  const bp = Number(basePrice || 0);
+  const vc = Number(vendorCost || 0);
+  const dp = Number(dealPrice || 0);
+  const t = Number(target || 0);
   const margin = dp - vc;
   const marginPct = dp > 0 ? ((margin / dp) * 100).toFixed(1) : 0;
-  const totalMargin = margin * target;
-  const discountPct = op > 0 ? (((op - dp) / op) * 100).toFixed(0) : 0;
+  const totalMargin = margin * t;
+  const discountPct = bp > 0 ? (((bp - dp) / bp) * 100).toFixed(0) : 0;
   const safe = margin > 0 && marginPct >= 5;
 
   return (
     <div className={`rounded-xl border p-4 space-y-2 ${safe ? "bg-green-50 border-green-200" : margin <= 0 ? "bg-red-50 border-red-200" : "bg-amber-50 border-amber-200"}`} data-testid="profit-calculator">
       <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Live Profit Calculator</div>
       <div className="grid grid-cols-2 gap-2 text-sm">
+        <div><span className="text-slate-500">Base Price:</span> <span className="font-bold">{fmt(bp)}</span></div>
         <div><span className="text-slate-500">Vendor Cost:</span> <span className="font-bold">{fmt(vc)}</span></div>
-        <div><span className="text-slate-500">Final Price:</span> <span className="font-bold">{fmt(dp)}</span></div>
+        <div><span className="text-slate-500">Deal Price:</span> <span className="font-bold">{fmt(dp)}</span></div>
         <div><span className="text-slate-500">Margin/Unit:</span> <span className="font-bold">{fmt(margin)}</span></div>
         <div><span className="text-slate-500">Margin %:</span> <span className="font-bold">{marginPct}%</span></div>
-        <div><span className="text-slate-500">Discount:</span> <span className="font-bold">{discountPct}% off</span></div>
-        <div><span className="text-slate-500">Target:</span> <span className="font-bold">{target} units</span></div>
+        <div><span className="text-slate-500">Discount:</span> <span className="font-bold">{discountPct}% off base</span></div>
       </div>
       <div className="pt-2 border-t flex justify-between items-center">
-        <span className="text-sm font-bold">Total Margin ({target} units):</span>
+        <span className="text-sm font-bold">Total Margin ({fmtNum(t)} units):</span>
         <span className="text-lg font-extrabold">{fmt(totalMargin)}</span>
       </div>
       <div className={`text-xs font-bold ${safe ? "text-green-700" : margin <= 0 ? "text-red-700" : "text-amber-700"}`}>
-        {margin <= 0 ? "BLOCKED — Price below vendor cost" : marginPct < 5 ? "WARNING — Margin below 5% threshold" : "SAFE — Campaign is profitable"}
+        {margin <= 0 ? "BLOCKED — Deal price at or below vendor cost" : marginPct < 5 ? "WARNING — Margin below 5% threshold" : "SAFE — Campaign is profitable"}
+      </div>
+    </div>
+  );
+}
+
+function ProductSelector({ onSelect, selected }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  const search = useCallback(async (q) => {
+    setSearching(true);
+    try {
+      const r = await api.get(`/api/admin/group-deals/products/search?q=${encodeURIComponent(q)}`);
+      setResults(r.data || []);
+    } catch { setResults([]); }
+    finally { setSearching(false); }
+  }, []);
+
+  useEffect(() => { search(""); }, [search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => search(query), 300);
+    return () => clearTimeout(t);
+  }, [query, search]);
+
+  if (selected) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border" data-testid="selected-product">
+        {selected.image && <img src={selected.image} alt="" className="w-12 h-12 rounded-lg object-cover" />}
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-[#20364D] truncate">{selected.name}</div>
+          <div className="text-xs text-slate-500">{selected.category} {selected.base_price > 0 ? `\u2022 Base: ${fmt(selected.base_price)}` : ""}</div>
+        </div>
+        <button onClick={() => onSelect(null)} className="text-xs text-red-500 hover:text-red-700 font-semibold" data-testid="change-product-btn">Change</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2" data-testid="product-selector">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Input className="pl-9" placeholder="Search products..." value={query} onChange={(e) => setQuery(e.target.value)} data-testid="product-search-input" />
+      </div>
+      <div className="max-h-48 overflow-y-auto border rounded-xl divide-y">
+        {searching ? <div className="p-3 text-xs text-slate-400 text-center">Searching...</div> :
+          results.length === 0 ? <div className="p-3 text-xs text-slate-400 text-center">No products found</div> :
+          results.map((p) => (
+            <button key={p.id} onClick={() => onSelect(p)}
+              className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 text-left transition" data-testid={`product-option-${p.id}`}>
+              {p.image && <img src={p.image} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />}
+              {!p.image && <div className="w-10 h-10 rounded-lg bg-slate-100 flex-shrink-0" />}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-[#20364D] truncate">{p.name}</div>
+                <div className="text-xs text-slate-500 truncate">{p.category} {p.base_price > 0 ? `\u2022 ${fmt(p.base_price)}` : ""}</div>
+              </div>
+            </button>
+          ))
+        }
       </div>
     </div>
   );
@@ -53,9 +143,11 @@ export default function GroupDealsAdminPage() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [form, setForm] = useState({
-    product_name: "", description: "", vendor_cost: "", original_price: "", discounted_price: "",
-    display_target: "50", vendor_threshold: "30", duration_days: "14", commission_mode: "none", affiliate_share_pct: "0",
+    vendor_cost: "", original_price: "", discounted_price: "",
+    display_target: "50", vendor_threshold: "30", duration_days: "14",
+    commission_mode: "none", affiliate_share_pct: "0", description: "",
   });
   const [creating, setCreating] = useState(false);
 
@@ -69,14 +161,42 @@ export default function GroupDealsAdminPage() {
     finally { setLoading(false); }
   };
 
+  const handleProductSelect = (product) => {
+    setSelectedProduct(product);
+    if (product) {
+      setForm(p => ({
+        ...p,
+        original_price: String(product.base_price || ""),
+        description: product.description || "",
+      }));
+    }
+  };
+
   const createCampaign = async (e) => {
     e.preventDefault();
+    if (!selectedProduct) { toast.error("Please select a product"); return; }
     setCreating(true);
     try {
-      await api.post("/api/admin/group-deals/campaigns", form);
+      const payload = {
+        product_name: selectedProduct.name,
+        product_id: selectedProduct.id,
+        product_image: selectedProduct.image || "",
+        category: selectedProduct.category || "",
+        description: form.description,
+        vendor_cost: form.vendor_cost,
+        original_price: form.original_price || String(Number(form.discounted_price) * 1.25),
+        discounted_price: form.discounted_price,
+        display_target: form.display_target,
+        vendor_threshold: form.vendor_threshold,
+        duration_days: form.duration_days,
+        commission_mode: form.commission_mode,
+        affiliate_share_pct: form.affiliate_share_pct,
+      };
+      await api.post("/api/admin/group-deals/campaigns", payload);
       toast.success("Campaign created");
       setShowCreate(false);
-      setForm({ product_name: "", description: "", vendor_cost: "", original_price: "", discounted_price: "", display_target: "50", vendor_threshold: "30", duration_days: "14", commission_mode: "none", affiliate_share_pct: "0" });
+      setSelectedProduct(null);
+      setForm({ vendor_cost: "", original_price: "", discounted_price: "", display_target: "50", vendor_threshold: "30", duration_days: "14", commission_mode: "none", affiliate_share_pct: "0", description: "" });
       loadCampaigns();
     } catch (err) { toast.error(err.response?.data?.detail || "Failed to create campaign"); }
     finally { setCreating(false); }
@@ -143,13 +263,13 @@ export default function GroupDealsAdminPage() {
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-blue-600">{stats.active}</div><div className="text-xs text-slate-500">Active</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-amber-600">{stats.threshold_ready}</div><div className="text-xs text-slate-500">Ready to Finalize</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-emerald-600">{stats.finalized}</div><div className="text-xs text-slate-500">Finalized</div></div>
-        <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-[#20364D]">{stats.total_committed}</div><div className="text-xs text-slate-500">Total Commits</div></div>
+        <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-[#20364D]">{fmtNum(stats.total_committed)}</div><div className="text-xs text-slate-500">Total Units</div></div>
       </div>
 
       {/* Campaign List */}
       <div className="space-y-3">
         {loading ? <div className="text-slate-500 p-8 text-center">Loading...</div> :
-          campaigns.length === 0 ? <div className="text-slate-400 p-8 text-center bg-white rounded-xl border">No campaigns yet. Create your first group deal.</div> :
+          campaigns.length === 0 ? <div className="text-slate-400 p-8 text-center bg-white rounded-xl border">No campaigns yet.</div> :
           campaigns.map((c) => {
             const sc = statusConfig[c.status] || statusConfig.active;
             const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
@@ -166,6 +286,7 @@ export default function GroupDealsAdminPage() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge className={sc.color}>{sc.label}</Badge>
                     {thresholdReady && <Badge className="bg-amber-100 text-amber-700 animate-pulse">Threshold Met</Badge>}
+                    {c.is_featured && <Badge className="bg-yellow-100 text-yellow-700">Featured</Badge>}
                     {c.status === "active" && <span className="text-xs text-slate-400">{daysLeft}d left</span>}
                   </div>
                 </div>
@@ -173,7 +294,7 @@ export default function GroupDealsAdminPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-sm">
                   <div><span className="text-slate-400 text-xs">Price</span><div className="font-bold text-[#D4A843]">{fmt(c.discounted_price)} <span className="text-xs text-slate-400 line-through ml-1">{fmt(c.original_price)}</span></div></div>
                   <div><span className="text-slate-400 text-xs">Margin</span><div className="font-bold">{fmt(c.margin_per_unit)} <span className="text-xs text-slate-400">({c.margin_pct}%)</span></div></div>
-                  <div><span className="text-slate-400 text-xs">Units / Buyers</span><div className="font-bold">{c.current_committed}/{c.display_target} units <span className="text-xs text-slate-400">({c.buyer_count || 0} buyers)</span></div></div>
+                  <div><span className="text-slate-400 text-xs">Units / Buyers</span><div className="font-bold">{fmtNum(c.current_committed)}/{fmtNum(c.display_target)} <span className="text-xs text-slate-400">({c.buyer_count || 0} buyers)</span></div></div>
                   <div><span className="text-slate-400 text-xs">Revenue</span><div className="font-bold">{fmt(c.current_committed * c.discounted_price)}</div></div>
                 </div>
 
@@ -181,11 +302,10 @@ export default function GroupDealsAdminPage() {
                   <div className={`h-full rounded-full transition-all ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-blue-500" : "bg-amber-400"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
                 </div>
 
-                {/* VBO info for finalized campaigns */}
                 {c.status === "finalized" && c.vbo_number && (
                   <div className="mt-2 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg">
                     <Package className="w-3.5 h-3.5" />
-                    <span>Vendor Back Order: <span className="font-bold">{c.vbo_number}</span> — {c.orders_created} buyer orders, {c.total_units_ordered} units</span>
+                    <span>VBO: <span className="font-bold">{c.vbo_number}</span> — {c.orders_created} orders, {fmtNum(c.total_units_ordered)} units</span>
                   </div>
                 )}
 
@@ -219,44 +339,81 @@ export default function GroupDealsAdminPage() {
       </div>
 
       {/* Create Campaign Dialog */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+      <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) setSelectedProduct(null); }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create Group Deal Campaign</DialogTitle>
-            <DialogDescription>Set up a volume-based deal with live profit calculation.</DialogDescription>
+            <DialogDescription>Select a product, set pricing, and launch a volume-based deal.</DialogDescription>
           </DialogHeader>
           <form onSubmit={createCampaign} className="space-y-4 pt-2" data-testid="create-campaign-form">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="md:col-span-2"><Label>Product Name *</Label><Input value={form.product_name} onChange={(e) => setForm(p => ({ ...p, product_name: e.target.value }))} required data-testid="input-product-name" /></div>
-              <div className="md:col-span-2"><Label>Description</Label><textarea className="w-full border rounded-xl px-3 py-2.5 text-sm min-h-[60px]" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} data-testid="input-description" /></div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div><Label>Vendor Cost *</Label><Input type="number" value={form.vendor_cost} onChange={(e) => setForm(p => ({ ...p, vendor_cost: e.target.value }))} required data-testid="input-vendor-cost" /></div>
-              <div><Label>Original Price</Label><Input type="number" value={form.original_price} onChange={(e) => setForm(p => ({ ...p, original_price: e.target.value }))} data-testid="input-original-price" /></div>
-              <div><Label>Deal Price *</Label><Input type="number" value={form.discounted_price} onChange={(e) => setForm(p => ({ ...p, discounted_price: e.target.value }))} required data-testid="input-deal-price" /></div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div><Label>Display Target *</Label><Input type="number" value={form.display_target} onChange={(e) => setForm(p => ({ ...p, display_target: e.target.value }))} required data-testid="input-display-target" /></div>
-              <div><Label>Vendor Threshold</Label><Input type="number" value={form.vendor_threshold} onChange={(e) => setForm(p => ({ ...p, vendor_threshold: e.target.value }))} data-testid="input-vendor-threshold" /></div>
-              <div><Label>Duration (days) *</Label><Input type="number" value={form.duration_days} onChange={(e) => setForm(p => ({ ...p, duration_days: e.target.value }))} required data-testid="input-duration" /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Commission Mode</Label>
-                <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={form.commission_mode} onChange={(e) => setForm(p => ({ ...p, commission_mode: e.target.value }))} data-testid="select-commission-mode">
-                  <option value="none">None</option>
-                  <option value="reduced_percentage">Reduced %</option>
-                  <option value="fixed_bounty">Fixed Bounty</option>
-                </select>
-              </div>
-              {form.commission_mode !== "none" && <div><Label>Affiliate Share %</Label><Input type="number" value={form.affiliate_share_pct} onChange={(e) => setForm(p => ({ ...p, affiliate_share_pct: e.target.value }))} data-testid="input-affiliate-share" /></div>}
+            {/* Step 1: Product Selection */}
+            <div>
+              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">1. Select Product</Label>
+              <ProductSelector selected={selectedProduct} onSelect={handleProductSelect} />
             </div>
 
-            <ProfitCalculator form={form} />
+            {selectedProduct && (
+              <>
+                {/* Step 2: Description */}
+                <div><Label>Description</Label><textarea className="w-full border rounded-xl px-3 py-2.5 text-sm min-h-[60px]" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} data-testid="input-description" /></div>
 
-            <div className="flex gap-3 pt-3 border-t">
-              <Button type="button" variant="outline" onClick={() => setShowCreate(false)} className="flex-1">Cancel</Button>
-              <Button type="submit" disabled={creating} className="flex-1 bg-[#20364D]" data-testid="submit-campaign-btn">{creating ? "Creating..." : "Create Campaign"}</Button>
-            </div>
+                {/* Step 3: Pricing — Structured */}
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">2. Pricing</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Base Price (from product)</Label>
+                      <div className="px-3 py-2.5 bg-slate-50 border rounded-xl text-sm font-semibold text-slate-600" data-testid="base-price-display">
+                        {fmt(form.original_price || 0)}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Vendor Best Price *</Label>
+                      <CurrencyInput value={form.vendor_cost} onChange={(v) => setForm(p => ({ ...p, vendor_cost: v }))} required data-testid="input-vendor-cost" placeholder="e.g. 800,000" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Group Deal Price *</Label>
+                      <CurrencyInput value={form.discounted_price} onChange={(v) => setForm(p => ({ ...p, discounted_price: v }))} required data-testid="input-deal-price" placeholder="e.g. 960,000" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 4: Targets */}
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">3. Target & Duration</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div><Label className="text-xs">Display Target (units) *</Label><Input type="number" value={form.display_target} onChange={(e) => setForm(p => ({ ...p, display_target: e.target.value }))} required data-testid="input-display-target" /></div>
+                    <div><Label className="text-xs">Vendor Threshold</Label><Input type="number" value={form.vendor_threshold} onChange={(e) => setForm(p => ({ ...p, vendor_threshold: e.target.value }))} data-testid="input-vendor-threshold" /></div>
+                    <div><Label className="text-xs">Duration (days) *</Label><Input type="number" value={form.duration_days} onChange={(e) => setForm(p => ({ ...p, duration_days: e.target.value }))} required data-testid="input-duration" /></div>
+                  </div>
+                </div>
+
+                {/* Commission */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div><Label className="text-xs">Commission Mode</Label>
+                    <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={form.commission_mode} onChange={(e) => setForm(p => ({ ...p, commission_mode: e.target.value }))} data-testid="select-commission-mode">
+                      <option value="none">None</option>
+                      <option value="reduced_percentage">Reduced %</option>
+                      <option value="fixed_bounty">Fixed Bounty</option>
+                    </select>
+                  </div>
+                  {form.commission_mode !== "none" && <div><Label className="text-xs">Affiliate Share %</Label><Input type="number" value={form.affiliate_share_pct} onChange={(e) => setForm(p => ({ ...p, affiliate_share_pct: e.target.value }))} data-testid="input-affiliate-share" /></div>}
+                </div>
+
+                {/* Live Calculator */}
+                <ProfitCalculator
+                  basePrice={form.original_price}
+                  vendorCost={form.vendor_cost}
+                  dealPrice={form.discounted_price}
+                  target={form.display_target}
+                />
+
+                <div className="flex gap-3 pt-3 border-t">
+                  <Button type="button" variant="outline" onClick={() => { setShowCreate(false); setSelectedProduct(null); }} className="flex-1">Cancel</Button>
+                  <Button type="submit" disabled={creating} className="flex-1 bg-[#20364D]" data-testid="submit-campaign-btn">{creating ? "Creating..." : "Create Campaign"}</Button>
+                </div>
+              </>
+            )}
           </form>
         </DialogContent>
       </Dialog>

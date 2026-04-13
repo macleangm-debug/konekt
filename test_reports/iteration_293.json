@@ -1,0 +1,104 @@
+{
+  "summary": "Batch 1 Pre-Deployment Fixes testing complete. All 19 backend tests pass (100%). Frontend verified: (1) Product selector for campaign creation with search from marketplace_listings. (2) Structured pricing: Base Price (read-only from product), Vendor Best Price (input), Group Deal Price (input). (3) Live Profit Calculator with margin, %, total margin, and status indicator (SAFE/WARNING/BLOCKED). (4) Global number formatting with thousand separators on all currency displays (TZS X,XXX,XXX format).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_batch1_v293.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_batch1_v293.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_group_deals_batch1_v293.py"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created TEST_ prefixed campaigns for margin validation testing (low margin, negative margin, minimum margin)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Batch 1 Pre-Deployment Fixes verified. Key features: (1) GET /api/admin/group-deals/products/search returns products from marketplace_listings with id, name (derived from slug), category, base_price, image. Search query filters by slug, description, category, tags. (2) POST /api/admin/group-deals/campaigns accepts product_id from catalog. (3) Structured pricing: original_price (Base Price from product), vendor_cost (Vendor Best Price), discounted_price (Group Deal Price). (4) Margin validation: rejects campaigns with margin < 5% or deal price < vendor cost. (5) Number formatting: fmtNum() and fmt() functions format all currency displays with thousand separators (TZS X,XXX,XXX). (6) CurrencyInput component strips commas on focus and formats on blur. (7) Live Profit Calculator shows Base Price, Vendor Cost, Deal Price, Margin/Unit, Margin %, Discount, Total Margin with status indicator (SAFE green, WARNING amber, BLOCKED red).",
+  "features_tested": {
+    "product_search_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/group-deals/products/search returns list from marketplace_listings",
+        "Products have id, name, slug, description, category, base_price, image, listing_type",
+        "Name derived from slug (e.g., 'company-stamps' -> 'Company Stamps')",
+        "Search query filters by slug, description, category, tags",
+        "Empty query returns all active products"
+      ]
+    },
+    "campaign_creation_with_product": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns accepts product_id",
+        "product_id stored in campaign document",
+        "Product name, image, category auto-filled from selection"
+      ]
+    },
+    "structured_pricing": {
+      "status": "PASS",
+      "details": [
+        "Base Price (from product) displayed as read-only",
+        "Vendor Best Price input field",
+        "Group Deal Price input field",
+        "Margin = deal_price - vendor_cost",
+        "Margin % = (margin / deal_price) * 100"
+      ]
+    },
+    "live_profit_calculator": {
+      "status": "PASS",
+      "details": [
+        "Shows Base Price, Vendor Cost, Deal Price",
+        "Shows Margin/Unit, Margin %, Discount % off base",
+        "Shows Total Margin (units x margin)",
+        "Status indicator: SAFE (green), WARNING (amber), BLOCKED (red)"
+      ]
+    },
+    "margin_validation": {
+      "status": "PASS",
+      "details": [
+        "Rejects campaigns with margin < 5% threshold",
+        "Rejects campaigns with deal price < vendor cost",
+        "Accepts campaigns at exactly 5% margin"
+      ]
+    },
+    "number_formatting_admin": {
+      "status": "PASS",
+      "details": [
+        "Campaign list shows TZS X,XXX,XXX format",
+        "Stats cards show formatted numbers",
+        "Margin values formatted with commas",
+        "Revenue values formatted with commas",
+        "VBO info shows formatted unit counts"
+      ]
+    },
+    "number_formatting_public": {
+      "status": "PASS",
+      "details": [
+        "Deal cards show TZS X,XXX format",
+        "Deal detail page shows formatted prices",
+        "Join button shows formatted price",
+        "Homepage group deals section shows formatted prices"
+      ]
+    },
+    "currency_input_component": {
+      "status": "PASS",
+      "details": [
+        "Strips commas on focus for editing",
+        "Formats with commas on blur",
+        "Accepts numeric input only"
+      ]
+    }
+  }
+}
