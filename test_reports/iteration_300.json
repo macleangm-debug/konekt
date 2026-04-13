@@ -1,0 +1,97 @@
+{
+  "summary": "Sales Dashboard Ratings Integration & Promotion Display Changes testing complete. All 17 backend API tests passed (100%). Frontend verified: Group Deals pages show 'Save TZS X' format, Staff Dashboard has all commission/rating sections, Referral Landing Page shows 'Save TZS 5,000' in benefits section.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Referral Landing Page",
+        "issues": ["Hero section still shows '10% off' text alongside 'Save TZS 5,000' in benefits - minor inconsistency but benefits section correctly shows amount format"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sales_dashboard_promotion_display_v300.py",
+    "/app/test_reports/pytest/pytest_results_sales_dashboard_promotion_v300.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ReferralLandingPage.jsx line 90 still uses discount_percent for hero text while line 59 correctly uses discount_amount for benefits - consider updating hero text to use amount format for consistency"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sales_dashboard_promotion_display_v300.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, staff@konekt.co.tz / Staff123!",
+  "seed_data_creation": "None - used existing test data",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sales Dashboard V2 at /staff/home has: KPI cards (including avg_rating), commission_summary section, recent_ratings section, leaderboard with rating column, commission_table. Group Deals pages (/group-deals, /group-deals/:id) show 'Save TZS X' format. Homepage Group Deals section and Deal of the Day hero show 'Save TZS X'. Referral Landing Page at /r/:code shows 'Save TZS 5,000' in benefits. Admin profit calculator at /admin/group-deals shows both amount and percentage.",
+  "features_tested": {
+    "sales_dashboard_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/staff/sales-dashboard returns 200",
+        "Response includes commission_summary with expected, pending, paid, total",
+        "Response includes avg_rating (numeric)",
+        "Response includes total_ratings (integer)",
+        "Response includes recent_ratings (array)",
+        "Response includes kpis with all expected fields",
+        "Response includes recent_orders with commission_amount and commission_status"
+      ]
+    },
+    "group_deals_public_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/public/group-deals returns 200 with price fields",
+        "GET /api/public/group-deals/featured returns 200",
+        "GET /api/public/group-deals/deal-of-the-day returns 200 or 404",
+        "Deal detail endpoint returns original_price and discounted_price"
+      ]
+    },
+    "promotion_display_frontend": {
+      "status": "PASS",
+      "details": [
+        "Group Deals list page shows 'Save TZS 1,000' format",
+        "Group Deal detail page shows 'Save TZS X' format",
+        "Homepage Group Deals section shows 'Save TZS X' format",
+        "Deal of the Day hero shows 'Save TZS X' format",
+        "No percentage format found on customer-facing group deal pages"
+      ]
+    },
+    "staff_dashboard_ui": {
+      "status": "PASS",
+      "details": [
+        "Sales Dashboard V2 loads at /staff/home",
+        "KPI cards include Avg Rating",
+        "Commission summary section present (Expected, Pending Payout, Paid)",
+        "Recent Ratings section present",
+        "Sales Leaderboard with Rating column present",
+        "Commission per Order table present"
+      ]
+    },
+    "referral_landing_page": {
+      "status": "PASS",
+      "details": [
+        "Page loads at /r/:code",
+        "Benefits section shows 'Save TZS 5,000 on your first order'",
+        "Referral code displayed correctly",
+        "Referrer name displayed"
+      ]
+    },
+    "admin_profit_calculator": {
+      "status": "PASS",
+      "details": [
+        "Admin Group Deals page loads",
+        "Profit calculator shows both amount saved and percentage (code verified: line 69)"
+      ]
+    }
+  }
+}

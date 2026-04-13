@@ -24,7 +24,7 @@ function DealCard({ deal }) {
         <div className="flex items-baseline gap-2">
           <span className="text-xl font-extrabold text-[#D4A843]">{fmt(deal.discounted_price)}</span>
           {deal.original_price > deal.discounted_price && <span className="text-sm text-slate-400 line-through">{fmt(deal.original_price)}</span>}
-          {deal.discount_pct > 0 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">{deal.discount_pct}% off</span>}
+          {deal.original_price > deal.discounted_price && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">Save {fmt(deal.original_price - deal.discounted_price)}</span>}
         </div>
         <div>
           <div className="flex justify-between text-xs text-slate-500 mb-1">
@@ -145,7 +145,7 @@ export default function GroupDealDetailPage() {
                 <span className="text-2xl font-extrabold text-[#D4A843]">{fmt(deal.discounted_price)}</span>
                 {deal.original_price > deal.discounted_price && <span className="text-base text-slate-400 line-through">{fmt(deal.original_price)}</span>}
               </div>
-              {deal.discount_pct > 0 && <div className="inline-block text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-lg">Save {deal.discount_pct}%</div>}
+              {deal.original_price > deal.discounted_price && <div className="inline-block text-sm font-bold text-green-700 bg-green-50 px-3 py-1 rounded-lg">Save {fmt(deal.original_price - deal.discounted_price)}</div>}
 
               <div>
                 <div className="flex justify-between text-sm mb-1">

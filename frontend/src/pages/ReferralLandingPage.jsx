@@ -56,7 +56,7 @@ export default function ReferralLandingPage() {
   }
 
   const benefits = [
-    { icon: <Gift className="w-5 h-5" />, text: `${data.discount_percent || 10}% off your first order` },
+    { icon: <Gift className="w-5 h-5" />, text: `Save TZS ${Number(data.discount_amount || 5000).toLocaleString("en-US")} on your first order` },
     { icon: <ShoppingBag className="w-5 h-5" />, text: "Access to premium branded products" },
     { icon: <Users className="w-5 h-5" />, text: "Join 500+ happy businesses" },
   ];

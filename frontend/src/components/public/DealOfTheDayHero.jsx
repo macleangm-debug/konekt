@@ -51,8 +51,8 @@ export default function DealOfTheDayHero() {
               {deal.original_price > deal.discounted_price && (
                 <span className="text-sm text-slate-400 line-through">{fmt(deal.original_price)}</span>
               )}
-              {deal.discount_pct > 0 && (
-                <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded">{deal.discount_pct}% OFF</span>
+              {deal.original_price > deal.discounted_price && (
+                <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-0.5 rounded">Save {fmt(deal.original_price - deal.discounted_price)}</span>
               )}
             </div>
 

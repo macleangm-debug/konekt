@@ -30,8 +30,8 @@ function FeaturedDealCard({ deal }) {
           {deal.original_price > deal.discounted_price && (
             <span className="text-xs text-slate-400 line-through">{fmt(deal.original_price)}</span>
           )}
-          {deal.discount_pct > 0 && (
-            <span className="text-[10px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">{deal.discount_pct}% off</span>
+          {deal.original_price > deal.discounted_price && (
+            <span className="text-[10px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded">Save {fmt(deal.original_price - deal.discounted_price)}</span>
           )}
         </div>
         {/* Progress bar */}

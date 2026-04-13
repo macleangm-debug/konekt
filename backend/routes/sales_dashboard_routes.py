@@ -315,24 +315,50 @@ async def get_sales_dashboard(request: Request):
             "last_contact": str(c.get("last_contact_at", "")),
         })
 
-    # ═══ RATINGS ═══
+    # ═══ RATINGS (from customer_ratings collection + legacy orders.rating) ═══
+    # New rating system
+    rating_filter = {}
+    if user_id:
+        rating_filter["staff_id"] = user_id
+    elif user_email:
+        rating_filter["$or"] = [{"staff_id": user_email}, {"staff_name": user_name}]
+    
+    new_ratings = await db.customer_ratings.find(
+        rating_filter,
+        {"_id": 0, "order_number": 1, "customer_name": 1, "rating": 1, "comment": 1, "created_at": 1}
+    ).sort("created_at", -1).to_list(100)
+
+    # Legacy ratings from orders
     rated_orders = await db.orders.find(
         {**sales_filter, "rating": {"$exists": True}},
         {"_id": 0, "order_number": 1, "customer_name": 1, "rating": 1, "created_at": 1}
     ).sort("rating.rated_at", -1).to_list(100)
 
-    ratings_stars = [o["rating"]["stars"] for o in rated_orders if o.get("rating", {}).get("stars")]
-    avg_rating = round(sum(ratings_stars) / max(len(ratings_stars), 1), 1) if ratings_stars else 0
+    # Combine rating scores
+    all_stars = [r["rating"] for r in new_ratings if r.get("rating")]
+    all_stars += [o["rating"]["stars"] for o in rated_orders if o.get("rating", {}).get("stars")]
+    avg_rating = round(sum(all_stars) / max(len(all_stars), 1), 1) if all_stars else 0
+
     recent_ratings = []
-    for o in rated_orders[:5]:
-        r = o.get("rating", {})
+    for r in new_ratings[:5]:
         recent_ratings.append({
-            "order_number": o.get("order_number", ""),
-            "customer_name": o.get("customer_name", ""),
-            "stars": r.get("stars", 0),
+            "order_number": r.get("order_number", ""),
+            "customer_name": r.get("customer_name", ""),
+            "stars": r.get("rating", 0),
             "comment": r.get("comment", ""),
-            "rated_at": r.get("rated_at", ""),
+            "rated_at": str(r.get("created_at", "")),
         })
+    # Fill with legacy if not enough
+    if len(recent_ratings) < 5:
+        for o in rated_orders[:5 - len(recent_ratings)]:
+            r = o.get("rating", {})
+            recent_ratings.append({
+                "order_number": o.get("order_number", ""),
+                "customer_name": o.get("customer_name", ""),
+                "stars": r.get("stars", 0),
+                "comment": r.get("comment", ""),
+                "rated_at": r.get("rated_at", ""),
+            })
 
     # ═══ LEADERBOARD ═══
     leaderboard = await _build_leaderboard(db, now, hide_revenue=True)
@@ -348,7 +374,7 @@ async def get_sales_dashboard(request: Request):
         "assigned_customers": assigned_customers,
         "charts": charts,
         "avg_rating": avg_rating,
-        "total_ratings": len(ratings_stars),
+        "total_ratings": len(all_stars),
         "recent_ratings": recent_ratings,
         "leaderboard": leaderboard,
     }

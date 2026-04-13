@@ -66,7 +66,7 @@ function ProfitCalculator({ basePrice, vendorCost, dealPrice, target }) {
         <div><span className="text-slate-500">Deal Price:</span> <span className="font-bold">{fmt(dp)}</span></div>
         <div><span className="text-slate-500">Margin/Unit:</span> <span className="font-bold">{fmt(margin)}</span></div>
         <div><span className="text-slate-500">Margin %:</span> <span className="font-bold">{marginPct}%</span></div>
-        <div><span className="text-slate-500">Discount:</span> <span className="font-bold">{discountPct}% off base</span></div>
+        <div><span className="text-slate-500">Discount:</span> <span className="font-bold">{fmt(bp - dp)} off ({discountPct}%)</span></div>
       </div>
       <div className="pt-2 border-t flex justify-between items-center">
         <span className="text-sm font-bold">Total Margin ({fmtNum(t)} units):</span>
