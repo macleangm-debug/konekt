@@ -141,6 +141,7 @@ function ProductSelector({ onSelect, selected }) {
 
 export default function GroupDealsAdminPage() {
   const [campaigns, setCampaigns] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -151,7 +152,7 @@ export default function GroupDealsAdminPage() {
   });
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => { loadCampaigns(); }, []);
+  useEffect(() => { loadCampaigns(); loadPendingPayments(); }, []);
 
   const loadCampaigns = async () => {
     try {
@@ -159,6 +160,22 @@ export default function GroupDealsAdminPage() {
       setCampaigns(r.data || []);
     } catch { toast.error("Failed to load campaigns"); }
     finally { setLoading(false); }
+  };
+
+  const loadPendingPayments = async () => {
+    try {
+      const r = await api.get("/api/admin/group-deals/commitments/pending-payments");
+      setPendingPayments(r.data || []);
+    } catch { /* silent */ }
+  };
+
+  const approvePayment = async (ref) => {
+    try {
+      await api.post(`/api/admin/group-deals/commitments/${ref}/approve-payment`);
+      toast.success("Payment approved");
+      loadPendingPayments();
+      loadCampaigns();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to approve"); }
   };
 
   const handleProductSelect = (product) => {
@@ -265,6 +282,27 @@ export default function GroupDealsAdminPage() {
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-emerald-600">{stats.finalized}</div><div className="text-xs text-slate-500">Finalized</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-[#20364D]">{fmtNum(stats.total_committed)}</div><div className="text-xs text-slate-500">Total Units</div></div>
       </div>
+
+      {/* Pending Payments */}
+      {pendingPayments.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5" data-testid="pending-payments-section">
+          <div className="text-sm font-bold text-amber-800 mb-3">Payments Awaiting Approval ({pendingPayments.length})</div>
+          <div className="space-y-2">
+            {pendingPayments.map((p) => (
+              <div key={p.commitment_ref} className="flex items-center justify-between bg-white rounded-xl border p-3" data-testid={`pending-${p.commitment_ref}`}>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-[#20364D]">{p.customer_name} <span className="text-xs text-slate-400">{p.customer_phone}</span></div>
+                  <div className="text-xs text-slate-500">{p.campaign_name} &middot; {p.quantity} units &middot; {fmt(p.amount)}</div>
+                  {p.payment_proof?.bank_reference && <div className="text-xs text-slate-400 font-mono">Ref: {p.payment_proof.bank_reference}</div>}
+                </div>
+                <Button size="sm" onClick={() => approvePayment(p.commitment_ref)} className="bg-green-600 hover:bg-green-700 flex-shrink-0" data-testid={`approve-${p.commitment_ref}`}>
+                  <Check className="w-3 h-3 mr-1" /> Approve
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Campaign List */}
       <div className="space-y-3">

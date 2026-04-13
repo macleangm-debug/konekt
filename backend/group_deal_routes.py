@@ -20,6 +20,9 @@ db_name = os.environ.get('DB_NAME')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
+# Public router (defined early so it can be used throughout)
+public_router = APIRouter(prefix="/api/public/group-deals", tags=["Public Group Deals"])
+
 
 def _s(doc):
     if not doc:
@@ -259,7 +262,7 @@ async def join_campaign(campaign_id: str, payload: dict):
         existing = await db.group_deal_commitments.find_one({
             "campaign_id": str(doc["_id"]),
             "customer_phone": customer_phone,
-            "status": {"$in": ["committed", "order_created"]},
+            "status": {"$in": ["pending_payment", "payment_submitted", "committed", "order_created"]},
         })
         if existing:
             raise HTTPException(status_code=400, detail="You have already joined this deal.")
@@ -269,7 +272,9 @@ async def join_campaign(campaign_id: str, payload: dict):
     payment_method = payload.get("payment_method", "cash")
 
     now = datetime.now(timezone.utc)
+    commitment_ref = f"GDC-{doc['campaign_id']}-{uuid4().hex[:6].upper()}"
     commitment = {
+        "commitment_ref": commitment_ref,
         "campaign_id": str(doc["_id"]),
         "campaign_name": doc["product_name"],
         "customer_name": customer_name,
@@ -280,23 +285,16 @@ async def join_campaign(campaign_id: str, payload: dict):
         "unit_price": amount,
         "payment_method": payment_method,
         "payment_reference": payload.get("payment_reference", ""),
+        "payment_status": "pending_payment",
         "referral_code": payload.get("referral_code", ""),
-        "status": "committed",
+        "status": "pending_payment",
         "quantity": qty,
         "created_at": now,
     }
     await db.group_deal_commitments.insert_one(commitment)
 
-    # Update committed unit count + buyer count — NO status change
-    new_count = doc.get("current_committed", 0) + qty
-    new_buyers = doc.get("buyer_count", 0) + 1
-    update_fields = {"current_committed": new_count, "buyer_count": new_buyers, "updated_at": now}
-
-    # Set threshold_met flag for admin visibility, but do NOT change status
-    if new_count >= doc.get("vendor_threshold", doc["display_target"]):
-        update_fields["threshold_met"] = True
-
-    await db.group_deal_campaigns.update_one({"_id": doc["_id"]}, {"$set": update_fields})
+    # Do NOT increment count yet — count only after payment approval
+    # Just record the commitment as pending_payment
 
     await trigger_event(
         EventType.GROUP_DEAL_JOINED,
@@ -307,14 +305,170 @@ async def join_campaign(campaign_id: str, payload: dict):
     )
 
     return {
-        "status": "committed",
+        "status": "pending_payment",
+        "commitment_ref": commitment_ref,
         "amount": amount * qty,
         "quantity": qty,
-        "current_committed": new_count,
-        "buyer_count": new_buyers,
+        "current_committed": doc.get("current_committed", 0),
+        "buyer_count": doc.get("buyer_count", 0),
         "target": doc["display_target"],
         "campaign_status": "active",
     }
+
+
+
+# ─── PAYMENT FLOW ───
+
+@public_router.post("/submit-payment")
+async def submit_group_deal_payment(payload: dict):
+    """
+    Public: Submit payment proof for a group deal commitment.
+    Reuses the same concept as normal checkout payment proof.
+    """
+    commitment_ref = payload.get("commitment_ref", "")
+    if not commitment_ref:
+        raise HTTPException(status_code=400, detail="commitment_ref is required.")
+
+    commitment = await db.group_deal_commitments.find_one({"commitment_ref": commitment_ref})
+    if not commitment:
+        raise HTTPException(status_code=404, detail="Commitment not found.")
+    if commitment.get("payment_status") not in ("pending_payment",):
+        raise HTTPException(status_code=400, detail="Payment already submitted or processed.")
+
+    now = datetime.now(timezone.utc)
+    payment_data = {
+        "payer_name": payload.get("payer_name", commitment.get("customer_name", "")),
+        "amount_paid": float(payload.get("amount_paid", commitment.get("amount", 0))),
+        "bank_reference": payload.get("bank_reference", ""),
+        "payment_method": payload.get("payment_method", "bank_transfer"),
+        "payment_date": payload.get("payment_date", now.isoformat()),
+        "notes": payload.get("notes", ""),
+    }
+    await db.group_deal_commitments.update_one(
+        {"_id": commitment["_id"]},
+        {"$set": {
+            "status": "payment_submitted",
+            "payment_status": "payment_submitted",
+            "payment_proof": payment_data,
+            "payment_submitted_at": now,
+        }}
+    )
+    return {
+        "status": "payment_submitted",
+        "commitment_ref": commitment_ref,
+        "message": "Payment proof submitted. We will verify and confirm your participation.",
+    }
+
+
+@router.post("/commitments/{commitment_ref}/approve-payment")
+async def approve_commitment_payment(commitment_ref: str):
+    """Admin approves payment for a group deal commitment — counts towards campaign."""
+    commitment = await db.group_deal_commitments.find_one({"commitment_ref": commitment_ref})
+    if not commitment:
+        raise HTTPException(status_code=404, detail="Commitment not found.")
+    if commitment.get("payment_status") not in ("payment_submitted",):
+        raise HTTPException(status_code=400, detail=f"Cannot approve: status is '{commitment.get('payment_status')}'.")
+
+    now = datetime.now(timezone.utc)
+    await db.group_deal_commitments.update_one(
+        {"_id": commitment["_id"]},
+        {"$set": {
+            "status": "committed",
+            "payment_status": "approved",
+            "payment_approved_at": now,
+        }}
+    )
+
+    # NOW increment the campaign count
+    campaign = await db.group_deal_campaigns.find_one({"_id": ObjectId(commitment["campaign_id"])})
+    if campaign:
+        qty = commitment.get("quantity", 1)
+        new_count = campaign.get("current_committed", 0) + qty
+        new_buyers = campaign.get("buyer_count", 0) + 1
+        update_fields = {"current_committed": new_count, "buyer_count": new_buyers, "updated_at": now}
+        if new_count >= campaign.get("vendor_threshold", campaign.get("display_target", 1)):
+            update_fields["threshold_met"] = True
+        await db.group_deal_campaigns.update_one({"_id": campaign["_id"]}, {"$set": update_fields})
+
+    return {"status": "approved", "commitment_ref": commitment_ref}
+
+
+@router.get("/commitments/pending-payments")
+async def list_pending_payments():
+    """Admin: list all commitments with payment_submitted status awaiting approval."""
+    docs = await db.group_deal_commitments.find(
+        {"payment_status": "payment_submitted"},
+    ).sort("payment_submitted_at", -1).to_list(100)
+    results = []
+    for d in docs:
+        r = {
+            "commitment_ref": d.get("commitment_ref", ""),
+            "campaign_id": d.get("campaign_id", ""),
+            "campaign_name": d.get("campaign_name", ""),
+            "customer_name": d.get("customer_name", ""),
+            "customer_phone": d.get("customer_phone", ""),
+            "amount": d.get("amount", 0),
+            "quantity": d.get("quantity", 1),
+            "payment_proof": d.get("payment_proof", {}),
+            "payment_submitted_at": d.get("payment_submitted_at", ""),
+        }
+        for k, v in r.items():
+            if isinstance(v, datetime):
+                r[k] = v.isoformat()
+        results.append(r)
+    return results
+
+
+# ─── PUBLIC TRACK GROUP DEAL ───
+
+@public_router.get("/track")
+async def track_group_deal(phone: str = None, ref: str = None):
+    """Public: Track group deal commitment by phone or commitment ref."""
+    if ref:
+        commitment = await db.group_deal_commitments.find_one({"commitment_ref": ref})
+        if not commitment:
+            raise HTTPException(status_code=404, detail="Commitment not found.")
+        commitments = [commitment]
+    elif phone:
+        commitments = await db.group_deal_commitments.find(
+            {"customer_phone": phone}
+        ).sort("created_at", -1).to_list(20)
+    else:
+        raise HTTPException(status_code=400, detail="Phone or commitment ref required.")
+
+    results = []
+    for c in commitments:
+        campaign = await db.group_deal_campaigns.find_one(
+            {"_id": ObjectId(c["campaign_id"])},
+            {"vendor_cost": 0, "vendor_threshold": 0, "margin_per_unit": 0, "margin_pct": 0,
+             "commission_mode": 0, "affiliate_share_pct": 0, "created_by": 0, "threshold_met": 0}
+        )
+        cs = _s(campaign) if campaign else {}
+        r = {
+            "type": "group_deal",
+            "commitment_ref": c.get("commitment_ref", ""),
+            "campaign_name": c.get("campaign_name", ""),
+            "customer_name": c.get("customer_name", ""),
+            "quantity": c.get("quantity", 1),
+            "amount": c.get("amount", 0),
+            "status": c.get("status", ""),
+            "payment_status": c.get("payment_status", ""),
+            "order_number": c.get("order_number"),
+            "created_at": c["created_at"].isoformat() if isinstance(c.get("created_at"), datetime) else str(c.get("created_at", "")),
+            "campaign": {
+                "id": cs.get("id", ""),
+                "product_name": cs.get("product_name", ""),
+                "product_image": cs.get("product_image", ""),
+                "display_target": cs.get("display_target", 0),
+                "current_committed": cs.get("current_committed", 0),
+                "buyer_count": cs.get("buyer_count", 0),
+                "deadline": cs.get("deadline", ""),
+                "status": cs.get("status", ""),
+            } if cs else {},
+        }
+        results.append(r)
+    return results
+
 
 
 # ─── CAMPAIGN LIFECYCLE ───
@@ -454,11 +608,11 @@ async def cancel_campaign(campaign_id: str):
         {"$set": {"status": "failed", "failed_at": now, "is_featured": False, "updated_at": now}}
     )
     committed_buyers = await db.group_deal_commitments.find(
-        {"campaign_id": str(doc["_id"]), "status": "committed"}
+        {"campaign_id": str(doc["_id"]), "status": {"$in": ["committed", "pending_payment", "payment_submitted"]}}
     ).to_list(1000)
 
     await db.group_deal_commitments.update_many(
-        {"campaign_id": str(doc["_id"]), "status": "committed"},
+        {"campaign_id": str(doc["_id"]), "status": {"$in": ["committed", "pending_payment", "payment_submitted"]}},
         {"$set": {"status": "refund_pending", "refund_marked_at": now}}
     )
     refund_count = len(committed_buyers)
@@ -519,8 +673,6 @@ async def update_vendor_back_order(vbo_number: str, payload: dict):
 
 
 # ─── PUBLIC ENDPOINTS ───
-
-public_router = APIRouter(prefix="/api/public/group-deals", tags=["Public Group Deals"])
 
 HIDDEN_FIELDS = {
     "vendor_cost": 0, "vendor_threshold": 0, "margin_per_unit": 0, "margin_pct": 0,
@@ -640,7 +792,7 @@ async def customer_list_commitments(phone: str = None, email: str = None):
     if not phone and not email:
         return []
 
-    query = {"status": {"$in": ["committed", "order_created", "refund_pending", "refunded"]}}
+    query = {"status": {"$in": ["pending_payment", "payment_submitted", "committed", "order_created", "refund_pending", "refunded"]}}
     if phone:
         query["customer_phone"] = phone
     elif email:
@@ -684,7 +836,7 @@ async def customer_list_commitments(phone: str = None, email: str = None):
         results.append(c_data)
 
     # Sort: active first, then order_created, then refund_pending, then refunded
-    status_order = {"committed": 0, "order_created": 1, "refund_pending": 2, "refunded": 3}
+    status_order = {"pending_payment": 0, "payment_submitted": 1, "committed": 2, "order_created": 3, "refund_pending": 4, "refunded": 5}
     results.sort(key=lambda x: status_order.get(x["status"], 99))
 
     return results

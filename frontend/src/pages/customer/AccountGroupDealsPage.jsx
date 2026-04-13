@@ -8,9 +8,11 @@ const fmt = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
 function fmtDate(v) { if (!v) return "-"; try { return new Date(v).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); } catch { return "-"; } }
 
 const statusConfig = {
-  committed: { label: "Active", cls: "bg-blue-100 text-blue-700", desc: "Waiting for more buyers" },
-  order_created: { label: "Successful", cls: "bg-green-100 text-green-700", desc: "Your order is being prepared" },
-  refund_pending: { label: "Refund Pending", cls: "bg-amber-100 text-amber-700", desc: "Refund is being processed" },
+  pending_payment: { label: "Awaiting Payment", cls: "bg-amber-100 text-amber-700", desc: "Submit your payment to secure your spot" },
+  payment_submitted: { label: "Under Review", cls: "bg-blue-100 text-blue-700", desc: "Payment submitted — being verified" },
+  committed: { label: "Active", cls: "bg-green-100 text-green-700", desc: "Payment approved — waiting for target" },
+  order_created: { label: "Successful", cls: "bg-emerald-100 text-emerald-700", desc: "Your order is being prepared" },
+  refund_pending: { label: "Refund Pending", cls: "bg-orange-100 text-orange-700", desc: "Refund is being processed" },
   refunded: { label: "Refunded", cls: "bg-slate-100 text-slate-600", desc: "Refund completed" },
 };
 

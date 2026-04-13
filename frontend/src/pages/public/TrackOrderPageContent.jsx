@@ -35,6 +35,7 @@ export default function TrackOrderPageContent() {
   const [phonePrefix, setPhonePrefix] = useState("+255");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [order, setOrder] = useState(null);
+  const [groupDeals, setGroupDeals] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,20 +46,52 @@ export default function TrackOrderPageContent() {
     setLoading(true);
     setError("");
     setOrder(null);
+    setGroupDeals([]);
+
+    const query = orderNumber.trim();
+    const isGroupDealRef = query.startsWith("GDC-");
 
     try {
-      const res = await api.get(`/api/orders/track/${orderNumber.trim()}`);
-      const data = res.data;
-
-      // Basic email verification for guest privacy
-      if (email && data.customer_email && data.customer_email.toLowerCase() !== email.toLowerCase()) {
-        setError("The email address doesn't match this order. Please check and try again.");
-        return;
+      if (isGroupDealRef) {
+        // Search group deal by commitment ref
+        try {
+          const res = await api.get(`/api/public/group-deals/track?ref=${encodeURIComponent(query)}`);
+          setGroupDeals(res.data || []);
+          if (!res.data || res.data.length === 0) {
+            setError("Commitment not found. Please check the reference and try again.");
+          }
+        } catch {
+          setError("Commitment not found. Please check the reference and try again.");
+        }
+      } else {
+        // Search normal order first
+        try {
+          const res = await api.get(`/api/orders/track/${query}`);
+          const data = res.data;
+          if (email && data.customer_email && data.customer_email.toLowerCase() !== email.toLowerCase()) {
+            setError("The email address doesn't match this order. Please check and try again.");
+            return;
+          }
+          setOrder(data);
+        } catch {
+          // Also try by phone if provided
+          const fullPhone = combinePhone(phonePrefix, phoneNumber);
+          if (fullPhone && fullPhone.length > 5) {
+            try {
+              const gdRes = await api.get(`/api/public/group-deals/track?phone=${encodeURIComponent(fullPhone)}`);
+              if (gdRes.data && gdRes.data.length > 0) {
+                setGroupDeals(gdRes.data);
+              } else {
+                setError("Order not found. Please check the order number and try again.");
+              }
+            } catch {
+              setError("Order not found. Please check the order number and try again.");
+            }
+          } else {
+            setError("Order not found. Please check the order number and try again.");
+          }
+        }
       }
-
-      setOrder(data);
-    } catch (err) {
-      setError("Order not found. Please check the order number and try again.");
     } finally {
       setLoading(false);
     }
@@ -297,7 +330,64 @@ export default function TrackOrderPageContent() {
           )}
 
           {/* Help section — always visible */}
-          <div className={`rounded-2xl bg-slate-50 border p-6 text-center ${order ? "mt-6" : ""}`}>
+          <div className={`rounded-2xl bg-slate-50 border p-6 text-center ${order || groupDeals.length > 0 ? "mt-6" : ""}`}>
+
+          {/* Group Deal Results */}
+          {groupDeals.length > 0 && !order && (
+            <div className="rounded-2xl border bg-white p-6 mb-6" data-testid="group-deal-track-results">
+              <h3 className="text-lg font-bold text-[#20364D] mb-4">Group Deal Status</h3>
+              <div className="space-y-4">
+                {groupDeals.map((gd) => {
+                  const campaign = gd.campaign || {};
+                  const progress = campaign.display_target > 0 ? Math.round((campaign.current_committed / campaign.display_target) * 100) : 0;
+                  const daysLeft = campaign.deadline ? Math.max(0, Math.ceil((new Date(campaign.deadline) - new Date()) / 86400000)) : 0;
+
+                  const statusMap = {
+                    pending_payment: { label: "Awaiting Payment", cls: "bg-amber-100 text-amber-700", desc: "Please submit your payment to secure your spot." },
+                    payment_submitted: { label: "Payment Under Review", cls: "bg-blue-100 text-blue-700", desc: "We are verifying your payment. This may take a short time." },
+                    committed: { label: "Payment Approved", cls: "bg-green-100 text-green-700", desc: "You are part of the deal. Waiting for the target to be reached." },
+                    order_created: { label: "Deal Successful", cls: "bg-emerald-100 text-emerald-700", desc: "Your order is being prepared." },
+                    refund_pending: { label: "Refund Pending", cls: "bg-orange-100 text-orange-700", desc: "The deal did not complete. Your refund is being processed." },
+                    refunded: { label: "Refunded", cls: "bg-slate-100 text-slate-600", desc: "Your refund has been completed." },
+                  };
+                  const st = statusMap[gd.status] || statusMap.pending_payment;
+
+                  return (
+                    <div key={gd.commitment_ref} className="border rounded-2xl p-4" data-testid={`gd-track-${gd.commitment_ref}`}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="text-base font-bold text-[#20364D]">{gd.campaign_name}</div>
+                          <div className="text-xs text-slate-500 font-mono">{gd.commitment_ref}</div>
+                        </div>
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${st.cls}`}>{st.label}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 mb-3">{st.desc}</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                        <div><span className="text-slate-400">Quantity</span><div className="font-bold">{gd.quantity} units</div></div>
+                        <div><span className="text-slate-400">Amount</span><div className="font-bold">{money(gd.amount)}</div></div>
+                      </div>
+                      {campaign.status === "active" && gd.status === "committed" && (
+                        <div>
+                          <div className="flex justify-between text-xs text-slate-500 mb-1">
+                            <span>{campaign.current_committed}/{campaign.display_target} units</span>
+                            <span>{daysLeft}d left</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${progress >= 100 ? "bg-green-500" : "bg-[#D4A843]"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                          </div>
+                        </div>
+                      )}
+                      {gd.status === "order_created" && gd.order_number && (
+                        <Link to={`/track-order`} className="inline-flex items-center gap-1 text-sm font-semibold text-[#20364D] mt-2" data-testid="view-order-link">
+                          View Order: {gd.order_number} <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
             <h3 className="font-bold text-[#20364D] mb-2">Need help with your order?</h3>
             <p className="text-slate-600 text-sm mb-4">Contact our team for assistance.</p>
             <div className="flex flex-col gap-3">

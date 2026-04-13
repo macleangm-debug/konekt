@@ -1,0 +1,141 @@
+{
+  "summary": "Group Deal Payment Flow Refactor v294 testing complete. All 19 backend tests pass (100%). Frontend verified: (1) Join returns status='pending_payment' with commitment_ref, count does NOT increment. (2) Submit payment endpoint changes status to 'payment_submitted'. (3) Admin pending payments section shows commitments awaiting approval with Approve buttons. (4) Admin approve payment changes status to 'committed' and NOW increments campaign count + buyer_count. (5) Track Order page handles GDC-refs with proper error handling. (6) Full UI flow: Join modal → Payment proof form → Payment submitted state with Track CTA.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_payment_flow_v294.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_payment_flow_v294.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_group_deals_payment_flow_v294.py",
+    "/app/frontend/src/pages/public/TrackOrderPageContent.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created TEST_ prefixed campaigns and commitments for payment flow testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Payment flow refactor v294 verified. Key changes: (1) POST /api/admin/group-deals/campaigns/{id}/join returns status='pending_payment' with commitment_ref (like GDC-XXXX-YYYYYY). Count does NOT increment on join. (2) POST /api/public/group-deals/submit-payment accepts commitment_ref and payment details, changes status to 'payment_submitted'. (3) GET /api/admin/group-deals/commitments/pending-payments lists commitments awaiting admin approval. (4) POST /api/admin/group-deals/commitments/{ref}/approve-payment changes to 'committed' and NOW increments campaign count + buyer_count. (5) GET /api/public/group-deals/track?ref=GDC-XXXX returns commitment + campaign status. (6) GET /api/public/group-deals/track?phone=+255XXX returns all commitments for phone. (7) Finalize only picks 'committed' (approved) commitments, not pending ones. (8) Cancel handles all states (committed + pending_payment + payment_submitted → refund_pending). (9) Duplicate join prevention still works (same phone blocked). (10) Track Order page now handles GDC-refs with proper error handling for 404s.",
+  "features_tested": {
+    "join_returns_pending_payment": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns/{id}/join returns status='pending_payment'",
+        "Returns commitment_ref like GDC-XXXX-YYYYYY",
+        "Count does NOT increment on join",
+        "Buyer count does NOT increment on join"
+      ]
+    },
+    "submit_payment_endpoint": {
+      "status": "PASS",
+      "details": [
+        "POST /api/public/group-deals/submit-payment is public (no auth required)",
+        "Accepts commitment_ref and payment details",
+        "Changes status to 'payment_submitted'",
+        "Requires commitment_ref parameter",
+        "Rejects invalid commitment_ref with 404"
+      ]
+    },
+    "pending_payments_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/group-deals/commitments/pending-payments lists commitments with payment_submitted status",
+        "Returns customer_name, customer_phone, amount, payment_proof, payment_submitted_at"
+      ]
+    },
+    "approve_payment_endpoint": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/commitments/{ref}/approve-payment changes status to 'committed'",
+        "NOW increments campaign count by quantity",
+        "NOW increments buyer_count by 1",
+        "Rejects commitments in pending_payment status (must submit payment first)"
+      ]
+    },
+    "full_payment_flow": {
+      "status": "PASS",
+      "details": [
+        "Join → status=pending_payment, count unchanged",
+        "Submit payment → status=payment_submitted, count unchanged",
+        "Admin approve → status=committed, count incremented"
+      ]
+    },
+    "duplicate_join_prevention": {
+      "status": "PASS",
+      "details": [
+        "Same phone blocked from joining same campaign twice",
+        "Returns 400 with 'already joined' message"
+      ]
+    },
+    "track_endpoint": {
+      "status": "PASS",
+      "details": [
+        "GET /api/public/group-deals/track?ref=GDC-XXXX returns commitment + campaign status",
+        "GET /api/public/group-deals/track?phone=+255XXX returns all commitments for phone",
+        "Requires ref or phone parameter"
+      ]
+    },
+    "finalize_only_committed": {
+      "status": "PASS",
+      "details": [
+        "Finalize only includes commitments with status='committed'",
+        "Ignores pending_payment and payment_submitted commitments"
+      ]
+    },
+    "cancel_handles_all_states": {
+      "status": "PASS",
+      "details": [
+        "Cancel marks committed, pending_payment, and payment_submitted for refund",
+        "All states → refund_pending"
+      ]
+    },
+    "track_order_page_gdc_support": {
+      "status": "PASS",
+      "details": [
+        "Track Order page detects GDC- prefix",
+        "Calls /api/public/group-deals/track?ref=...",
+        "Displays group deal status with campaign progress",
+        "Proper error handling for 404 (commitment not found)"
+      ]
+    },
+    "deal_detail_page_flow": {
+      "status": "PASS",
+      "details": [
+        "Join modal with name, phone, quantity",
+        "'Continue to Payment' button",
+        "Payment proof form with payer name, amount, bank reference, payment method, date",
+        "'Submit Payment Proof' button",
+        "Payment submitted state with commitment ref, amount, status",
+        "'Invite friends to unlock faster' CTA with WhatsApp and Copy Link",
+        "'Track Status' and 'Browse More Deals' links"
+      ]
+    },
+    "admin_pending_payments_section": {
+      "status": "PASS",
+      "details": [
+        "Shows 'Payments Awaiting Approval (N)' header",
+        "Lists customer name, phone, campaign, units, amount, bank reference",
+        "Approve button for each pending payment"
+      ]
+    }
+  },
+  "fixes_applied": [
+    {
+      "file": "/app/frontend/src/pages/public/TrackOrderPageContent.jsx",
+      "issue": "Track Order page showed runtime error overlay when searching for invalid GDC reference",
+      "fix": "Added try-catch around the GDC track API call to properly handle 404 errors and display user-friendly error message"
+    }
+  ]
+}
