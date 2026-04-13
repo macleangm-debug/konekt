@@ -115,7 +115,9 @@ const defaultState = {
   operational_rules: { date_format: "DD MMM YYYY", time_format: "HH:mm", timezone: "Africa/Dar_es_Salaam", default_country: "TZ", follow_up_threshold_days: 3, stale_deal_threshold_days: 7, quote_response_threshold_days: 5, payment_overdue_threshold_days: 7 },
   distribution_config: { protected_company_margin_percent: 8, affiliate_percent_of_distributable: 10, sales_percent_of_distributable: 15, promo_percent_of_distributable: 10, referral_percent_of_distributable: 5, country_bonus_percent_of_distributable: 5 },
   partner_policy: { auto_assignment_mode: "capability_match", logistics_handling_default: "konekt_managed", vendor_types: ["product_supplier", "service_provider", "logistics_partner"] },
-  performance_targets: { monthly_revenue_target: 500000000, target_margin_pct: 20, channel_allocation: { sales_pct: 50, affiliate_pct: 30, direct_pct: 10, group_deals_pct: 10 }, sales_staff_count: 10, affiliate_count: 10, sales_min_kpi_pct: 70, affiliate_min_kpi_pct: 60 },
+  performance_targets: { monthly_revenue_target: 500000000, target_margin_pct: 20, channel_allocation: { sales_pct: 50, affiliate_pct: 30, direct_pct: 10, group_deals_pct: 10 }, sales_staff_count: 10, affiliate_count: 10, sales_min_kpi_pct: 70, affiliate_min_kpi_pct: 60, min_rating_threshold: 3, rating_weight_in_kpi_pct: 20 },
+  ratings: { enabled: true, trigger: "delivery_confirmed", scale: 5, allow_comment: true },
+  sales_visibility: { show_total_commission: true, show_monthly_commission: true, show_pending_commission: true, show_paid_commission: true, show_revenue: false, show_profit_breakdown: false },
 };
 
 function U(state, section, field, value) {
@@ -389,10 +391,15 @@ function CommercialTab({ state, setState }) {
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
           <SettingsNumberField label="Referral Reward % (of dist. margin)" value={c.referral_pct} onChange={(v) => setState(U(state, "commercial", "referral_pct", v))} />
           <SettingsNumberField label="Max Wallet Usage % per Order" value={c.max_wallet_usage_pct} onChange={(v) => setState(U(state, "commercial", "max_wallet_usage_pct", v))} />
-          <SettingsNumberField label="Min Order for Referral Reward" value={c.referral_min_order_amount} onChange={(v) => setState(U(state, "commercial", "referral_min_order_amount", v))} />
-          <SettingsNumberField label="Max Reward per Order (0=no cap)" value={c.referral_max_reward_per_order} onChange={(v) => setState(U(state, "commercial", "referral_max_reward_per_order", v))} />
+          <SettingsNumberField label="Max Wallet Per Order (TZS, 0=no cap)" value={c.max_wallet_per_order} onChange={(v) => setState(U(state, "commercial", "max_wallet_per_order", v))} />
+          <SettingsToggleField label="Enable Wallet Usage" checked={c.wallet_enabled !== false} onChange={(v) => setState(U(state, "commercial", "wallet_enabled", v))} />
         </div>
-        <p className="text-xs text-slate-400 mt-3">Referral rewards are funded from the distribution margin pool. Ensure total allocations (affiliate + sales + discount + referral) do not exceed 100%.</p>
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
+          <SettingsToggleField label="Protect Stakeholder Allocations" checked={c.protect_allocations !== false} onChange={(v) => setState(U(state, "commercial", "protect_allocations", v))} />
+          <SettingsToggleField label="Enforce Single Channel per Order" checked={c.enforce_single_channel !== false} onChange={(v) => setState(U(state, "commercial", "enforce_single_channel", v))} />
+          <SettingsNumberField label="Min Order for Referral Reward" value={c.referral_min_order_amount} onChange={(v) => setState(U(state, "commercial", "referral_min_order_amount", v))} />
+        </div>
+        <p className="text-xs text-slate-400 mt-3">Wallet usage is limited to promotion reserve + remaining margin after all protected allocations (sales, affiliate, referral, company core) are reserved. No overlap between channels.</p>
       </SettingsSectionCard>
       <SettingsSectionCard title="Welcome Bonus Campaign" description="One-time bonus for referred users on their first verified purchase. Funded strictly from the distribution margin.">
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -671,6 +678,15 @@ function PerformanceTargetsTab({ state, setState }) {
         </div>
         <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
           <strong>Per-person targets (auto-calculated):</strong> Sales target = TZS {((pt.monthly_revenue_target || 0) * (ca.sales_pct || 0) / 100 / Math.max(pt.sales_staff_count || 1, 1)).toLocaleString("en-US")} | Affiliate target = TZS {((pt.monthly_revenue_target || 0) * (ca.affiliate_pct || 0) / 100 / Math.max(pt.affiliate_count || 1, 1)).toLocaleString("en-US")}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Rating & Quality Metrics" description="Configure rating thresholds and their weight in KPI calculations.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Min Rating Threshold" value={pt.min_rating_threshold} onChange={(v) => updatePT("min_rating_threshold", v)} min={1} max={5} />
+          <SettingsNumberField label="Rating Weight in KPI %" value={pt.rating_weight_in_kpi_pct} onChange={(v) => updatePT("rating_weight_in_kpi_pct", v)} min={0} max={100} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+          Staff with ratings below <strong>{pt.min_rating_threshold || 3}</strong> will be flagged. Ratings contribute <strong>{pt.rating_weight_in_kpi_pct || 20}%</strong> to overall KPI score.
         </div>
       </SettingsSectionCard>
     </>

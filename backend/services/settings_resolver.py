@@ -56,6 +56,10 @@ PLATFORM_DEFAULTS = {
         "vat_percent": 18.0,
         "referral_pct": 10.0,
         "max_wallet_usage_pct": 30.0,
+        "max_wallet_per_order": 0,
+        "wallet_enabled": True,
+        "protect_allocations": True,
+        "enforce_single_channel": True,
         "referral_min_order_amount": 0,
         "referral_max_reward_per_order": 0,
         "welcome_bonus_enabled": False,
@@ -320,6 +324,22 @@ PLATFORM_DEFAULTS = {
         "affiliate_count": 10,
         "sales_min_kpi_pct": 70,
         "affiliate_min_kpi_pct": 60,
+        "min_rating_threshold": 3.0,
+        "rating_weight_in_kpi_pct": 20,
+    },
+    "ratings": {
+        "enabled": True,
+        "trigger": "delivery_confirmed",
+        "scale": 5,
+        "allow_comment": True,
+    },
+    "sales_visibility": {
+        "show_total_commission": True,
+        "show_monthly_commission": True,
+        "show_pending_commission": True,
+        "show_paid_commission": True,
+        "show_revenue": False,
+        "show_profit_breakdown": False,
     },
 }
 

@@ -34,6 +34,7 @@ export default function TrackOrderPageContent() {
   const [email, setEmail] = useState("");
   const [phonePrefix, setPhonePrefix] = useState("+255");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [trackMethod, setTrackMethod] = useState("phone");
   const [order, setOrder] = useState(null);
   const [groupDeals, setGroupDeals] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,48 +42,16 @@ export default function TrackOrderPageContent() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    const query = orderNumber.trim();
-    const fullPhone = combinePhone(phonePrefix, phoneNumber);
-    
-    if (!query && (!fullPhone || fullPhone.length < 6)) {
-      toast.error("Enter an order number, GDC reference, or phone number.");
-      return;
-    }
-
     setLoading(true);
     setError("");
     setOrder(null);
     setGroupDeals([]);
 
-    const isGroupDealRef = query.startsWith("GDC-");
-
     try {
-      if (isGroupDealRef) {
-        // Search group deal by commitment ref
-        try {
-          const res = await api.get(`/api/public/group-deals/track?ref=${encodeURIComponent(query)}`);
-          setGroupDeals(res.data || []);
-          if (!res.data || res.data.length === 0) {
-            setError("Commitment not found. Please check the reference and try again.");
-          }
-        } catch {
-          setError("Commitment not found. Please check the reference and try again.");
-        }
-      } else if (query) {
-        // Search normal order first
-        try {
-          const res = await api.get(`/api/orders/track/${query}`);
-          const data = res.data;
-          if (email && data.customer_email && data.customer_email.toLowerCase() !== email.toLowerCase()) {
-            setError("The email address doesn't match this order. Please check and try again.");
-            return;
-          }
-          setOrder(data);
-        } catch {
-          setError("Order not found. Please check the order number and try again.");
-        }
-      } else if (fullPhone && fullPhone.length >= 6) {
-        // Phone-only search — look up group deals by phone
+      if (trackMethod === "phone") {
+        const fullPhone = combinePhone(phonePrefix, phoneNumber);
+        if (!fullPhone || fullPhone.length < 6) { setError("Please enter a valid phone number."); return; }
+        // Search group deals by phone
         try {
           const gdRes = await api.get(`/api/public/group-deals/track?phone=${encodeURIComponent(fullPhone)}`);
           if (gdRes.data && gdRes.data.length > 0) {
@@ -90,13 +59,29 @@ export default function TrackOrderPageContent() {
           } else {
             setError("No records found for this phone number.");
           }
-        } catch {
-          setError("No records found. Please check and try again.");
+        } catch { setError("No records found. Please check and try again."); }
+
+      } else if (trackMethod === "reference") {
+        const query = orderNumber.trim();
+        if (!query) { setError("Please enter an order or deal reference."); return; }
+        if (query.startsWith("GDC-")) {
+          try {
+            const res = await api.get(`/api/public/group-deals/track?ref=${encodeURIComponent(query)}`);
+            setGroupDeals(res.data || []);
+            if (!res.data || res.data.length === 0) setError("Commitment not found.");
+          } catch { setError("Commitment not found. Please check the reference."); }
+        } else {
+          try {
+            const res = await api.get(`/api/orders/track/${query}`);
+            setOrder(res.data);
+          } catch { setError("Order not found. Please check the reference."); }
         }
+
+      } else if (trackMethod === "email") {
+        if (!email.trim()) { setError("Please enter an email address."); return; }
+        setError("Email lookup is coming soon. Please use phone number or order reference.");
       }
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const statusInfo = order ? (STATUS_MAP[order.status] || STATUS_MAP.pending) : null;
@@ -117,49 +102,73 @@ export default function TrackOrderPageContent() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Left: Search + result */}
         <div className="space-y-6">
-          {/* Search Form */}
+          {/* Search Form — Single Input Selector */}
           <div className="rounded-2xl border bg-white p-6" data-testid="track-search-form">
             <form onSubmit={handleSearch} className="space-y-4">
+              {/* Identifier type selector */}
               <div>
-                <label className="block text-base font-semibold text-[#20364D] mb-1.5">Order Number *</label>
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={orderNumber}
-                    onChange={(e) => setOrderNumber(e.target.value)}
-                    placeholder="e.g. ORD-20260406-XXXXX or GDC-XXXX-XXXXX"
-                    className="w-full border-2 border-[#20364D]/20 rounded-xl pl-11 pr-4 py-3.5 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D]"
-                    data-testid="order-number-input"
-                  />
+                <label className="block text-sm font-semibold text-[#20364D] mb-2">How would you like to track?</label>
+                <div className="flex gap-2 flex-wrap" data-testid="track-method-selector">
+                  {[
+                    { key: "phone", label: "Phone Number" },
+                    { key: "reference", label: "Order / Deal Reference" },
+                    { key: "email", label: "Email" },
+                  ].map(({ key, label }) => (
+                    <button key={key} type="button" onClick={() => setTrackMethod(key)}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-medium transition border ${
+                        trackMethod === key ? "bg-[#20364D] text-white border-[#20364D]" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                      }`} data-testid={`track-method-${key}`}>
+                      {label}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">Enter an order number (ORD-...) or group deal reference (GDC-...).</p>
               </div>
 
-              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-                <p className="text-xs font-medium text-slate-600 mb-3">Verify with your email or phone number:</p>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  <Mail className="w-3.5 h-3.5 inline mr-1" />Email
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email used when placing the order"
-                  className="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                  data-testid="order-email-input"
+              {/* Conditional single input */}
+              {trackMethod === "phone" && (
+                <PhoneNumberField
+                  label="Phone Number"
+                  prefix={phonePrefix}
+                  number={phoneNumber}
+                  onPrefixChange={setPhonePrefix}
+                  onNumberChange={setPhoneNumber}
+                  testIdPrefix="track-phone"
                 />
-              </div>
-              <PhoneNumberField
-                label="Phone"
-                prefix={phonePrefix}
-                number={phoneNumber}
-                onPrefixChange={setPhonePrefix}
-                onNumberChange={setPhoneNumber}
-                testIdPrefix="track-phone"
-              />
-              </div>
+              )}
+              {trackMethod === "reference" && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Order / Deal Reference</label>
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={orderNumber}
+                      onChange={(e) => setOrderNumber(e.target.value)}
+                      placeholder="e.g. ORD-20260406-XXXXX or GDC-XXXX-XXXXX"
+                      className="w-full border-2 border-[#20364D]/20 rounded-xl pl-11 pr-4 py-3.5 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D]"
+                      data-testid="order-number-input"
+                    />
+                  </div>
+                </div>
+              )}
+              {trackMethod === "email" && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <Mail className="w-3.5 h-3.5 inline mr-1" />Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email used when placing the order"
+                    className="w-full border-2 border-[#20364D]/20 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20 focus:border-[#20364D]"
+                    data-testid="order-email-input"
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-slate-500">Use your phone number, order number (ORD-...), or group deal reference (GDC-...).</p>
+
               <button
                 type="submit"
                 disabled={loading}

@@ -3106,6 +3106,10 @@ app.include_router(group_deal_customer_router)
 from performance_kpi_routes import router as performance_kpi_router
 app.include_router(performance_kpi_router)
 
+from commission_routes import router as commission_router
+app.include_router(commission_router)
+
+
 
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
