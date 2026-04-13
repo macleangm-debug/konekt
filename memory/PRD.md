@@ -3,7 +3,7 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Status: DEPLOYMENT READY — Payment Flow Corrected
+## System Status: DEPLOYMENT READY — Canonical Checkout Flow
 
 ## 4 Sales Modes (Same Canonical Engine)
 | Mode | Flow |
@@ -11,50 +11,47 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 | Structured | Quote → Invoice → Order → Delivery → Completion |
 | Remote | Order → Delivery → Public Confirmation |
 | Walk-in/POS | Order → Payment → Auto Completion |
-| Group Deal | Join(pending_payment) → Submit Payment → Admin Approve → Committed → Finalize → Orders + VBO |
+| Group Deal | Detail → Full-page Checkout (bank details + proof) → Admin Approve → Finalize → Orders + VBO |
 
-## Group Deal Payment Flow (CORRECTED — Feb 2026)
+## Group Deal Checkout Flow (CANONICAL — Feb 2026)
 
-### Payment Lifecycle (Admin-verified)
-1. **Join Deal** → `pending_payment` (commitment created, NO count increment)
-2. **Submit Payment Proof** → `payment_submitted` (bank ref, amount, method recorded)
-3. **Admin Approves** → `committed` + `payment_status: approved` (NOW count increments)
-4. **Campaign Finalize** → `order_created` (buyer orders + VBO created)
+### Full-Page Checkout (NO POPUP)
+- `/group-deals/:id` → "Join Deal" redirects to → `/group-deals/checkout?campaign_id=X`
+- **Step 1 (Details)**: Name, phone, email, quantity selector (+/- buttons), Deal Summary sidebar
+- **Step 2 (Payment & Proof)**: Bank details block (CRDB BANK, account name/number, SWIFT, branch — identical to normal checkout), payment reference (GDC-XXXX), amount to transfer, payment proof form
+- **Step 3 (Confirmation)**: "Payment Submitted" + "Under Review" + commitment ref + share CTAs + Track Status link
 
-### Track Order = Universal Status Page
-- Supports both normal orders AND group deal commitments
-- Enter order number OR GDC-reference
-- Shows: payment under review / approved / deal progress / order created / refund status
+### Payment Lifecycle
+1. Join → `pending_payment` (NO count increment)
+2. Submit proof → `payment_submitted` (admin sees in queue)
+3. Admin approve → `committed` (NOW count increments)
+4. Finalize → `order_created` (buyer orders + VBO)
 
 ### Admin Payment Queue
-- Pending payments listed with customer details, bank reference
-- One-click "Approve" per commitment
-- Count only increments after approval
+- Pending payments with customer details + bank reference
+- One-click Approve per commitment
 
-### Campaign Creation (Catalog-linked)
-- Products from marketplace catalog only (no free text)
+### Campaign Creation
+- Products from catalog only (product selector)
 - Structured pricing: Base Price (read-only) → Vendor Best Price → Deal Price
-- Live Profit Calculator with SAFE/WARNING/BLOCKED
-- Margin ≥ 5% enforced
+- Live Profit Calculator, margin ≥ 5% enforced
 
 ### Safety
-- Duplicate join prevention (same phone)
-- Campaign locked after finalize
+- Duplicate join prevention, campaign lock after finalize
 - Count only on approved payments
-- Cancel handles all states → refund_pending
+- Cancel handles all states
 
-## Customer Portal (Mobile-Optimized)
-- Orders, Invoices, Quotes, Group Deals: Cards on mobile, table on desktop
-- Account Group Deals shows all commitment statuses including payment_submitted
+## Track Order = Universal Status Page
+- Normal orders AND GDC-references
+- Payment under review / approved / deal progress / order created / refund
 
 ## Key API Endpoints
 - `/api/admin/group-deals/campaigns/{id}/join` — pending_payment + commitment_ref
-- `/api/public/group-deals/submit-payment` — payment proof submission
+- `/api/public/group-deals/submit-payment` — payment proof
 - `/api/admin/group-deals/commitments/{ref}/approve-payment` — admin approve
 - `/api/admin/group-deals/commitments/pending-payments` — queue
 - `/api/public/group-deals/track` — track by phone or ref
-- `/api/admin/group-deals/campaigns/{id}/finalize` — orders + VBO
-- `/api/admin/group-deals/products/search` — catalog search
+- `/api/public/payment-info` — bank details (shared with normal checkout)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
@@ -66,6 +63,6 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 3. Performance Dashboard (/admin/performance)
 
 ## Backlog
-- Twilio WhatsApp Integration (hooks ready)
+- Twilio WhatsApp Integration
 - Resend Email dispatch
 - Commission alignment with distributable margin
