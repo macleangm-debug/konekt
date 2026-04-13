@@ -36,6 +36,7 @@ export const adminNavigation = [
     children: [
       { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badgeKey: "orders" },
       { label: "Walk-in Sale", href: "/admin/walk-in-sale", icon: CreditCard, roles: ["admin", "sales_manager", "sales_rep"] },
+      { label: "Group Deals", href: "/admin/group-deals", icon: Users, roles: ["admin", "sales_manager"] },
       { label: "Quotes", href: "/admin/quotes", icon: FileText },
       { label: "Payments", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
       { label: "Invoices", href: "/admin/invoices", icon: Receipt },

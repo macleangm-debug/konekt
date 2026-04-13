@@ -163,6 +163,8 @@ import WeeklyDigestPage from "@/pages/admin/WeeklyDigestPage";
 import DataIntegrityDashboardPage from "@/pages/admin/DataIntegrityDashboardPage";
 import WalkInSalePage from "@/pages/admin/WalkInSalePage";
 import AdvancedAnalyticsDashboard from "@/pages/admin/AdvancedAnalyticsDashboard";
+import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
+import GroupDealDetailPage, { GroupDealsListPage } from "@/pages/public/GroupDealsPages";
 
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
@@ -723,6 +725,7 @@ function App() {
           <Route path="data-integrity" element={<DataIntegrityDashboardPage />} />
           <Route path="walk-in-sale" element={<WalkInSalePage />} />
           <Route path="analytics" element={<AdvancedAnalyticsDashboard />} />
+          <Route path="group-deals" element={<GroupDealsAdminPage />} />
           <Route path="reports/alerts" element={<AlertDashboardPage />} />
           {/* Super Admin Ecosystem Dashboard */}
           <Route path="ecosystem-dashboard" element={<SuperAdminEcosystemDashboard />} />
@@ -872,6 +875,8 @@ function App() {
           <Route path="services/:groupSlug/:serviceSlug" element={<ServiceDetailContent />} />
           <Route path="track-order" element={<TrackOrderPageContent />} />
           <Route path="confirm-completion" element={<ConfirmCompletionPage />} />
+          <Route path="group-deals" element={<GroupDealsListPage />} />
+          <Route path="group-deals/:id" element={<GroupDealDetailPage />} />
           <Route path="about" element={<AboutPageContent />} />
           <Route path="contact" element={<ContactPageContent />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />

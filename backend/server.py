@@ -3098,6 +3098,10 @@ app.include_router(walkin_sale_router)
 from analytics_dashboard_routes import router as analytics_dashboard_router
 app.include_router(analytics_dashboard_router)
 
+from group_deal_routes import router as group_deal_admin_router, public_router as group_deal_public_router
+app.include_router(group_deal_admin_router)
+app.include_router(group_deal_public_router)
+
 from public_request_routes import router as public_request_router
 app.include_router(public_request_router)
 app.include_router(marketplace_taxonomy_router)
