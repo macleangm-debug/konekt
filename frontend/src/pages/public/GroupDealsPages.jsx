@@ -30,8 +30,8 @@ function DealCard({ deal }) {
         </div>
         <div>
           <div className="flex justify-between text-xs text-slate-500 mb-1">
-            <span>{deal.current_committed} joined</span>
-            <span>{spotsLeft} spots left</span>
+            <span>{deal.current_committed}/{deal.display_target} units</span>
+            <span>{spotsLeft} left</span>
           </div>
           <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-[#D4A843]" : "bg-blue-500"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
@@ -39,7 +39,7 @@ function DealCard({ deal }) {
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="flex items-center gap-1 text-slate-500"><Clock className="w-3 h-3" /> {daysLeft}d left</span>
-          <span className="flex items-center gap-1 text-slate-500"><Users className="w-3 h-3" /> {deal.current_committed}/{deal.display_target}</span>
+          <span className="flex items-center gap-1 text-slate-500"><Users className="w-3 h-3" /> {deal.buyer_count || deal.current_committed} buyers</span>
         </div>
       </div>
     </Link>
@@ -110,7 +110,7 @@ export default function GroupDealDetailPage() {
   const [deal, setDeal] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showJoin, setShowJoin] = useState(false);
-  const [joinForm, setJoinForm] = useState({ customer_name: "", customer_phone: "", payment_method: "cash" });
+  const [joinForm, setJoinForm] = useState({ customer_name: "", customer_phone: "", payment_method: "cash", quantity: 1 });
   const [joining, setJoining] = useState(false);
   const [joined, setJoined] = useState(false);
 
@@ -124,9 +124,10 @@ export default function GroupDealDetailPage() {
   const handleJoin = async (e) => {
     e.preventDefault();
     if (!joinForm.customer_name && !joinForm.customer_phone) { toast.error("Name or phone required"); return; }
+    if (joining) return; // prevent double-click
     setJoining(true);
     try {
-      await api.post(`/api/admin/group-deals/campaigns/${id}/join`, joinForm);
+      await api.post(`/api/admin/group-deals/campaigns/${id}/join`, { ...joinForm, quantity: Math.max(1, joinForm.quantity) });
       setJoined(true);
       toast.success("You've joined the deal!");
       const r = await api.get(`/api/public/group-deals/${id}`);
@@ -239,12 +240,13 @@ export default function GroupDealDetailPage() {
               {/* Progress */}
               <div>
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="font-semibold text-[#20364D]">{deal.current_committed} joined</span>
-                  <span className="text-slate-500">{spotsLeft} spots left</span>
+                  <span className="font-semibold text-[#20364D]">{deal.current_committed}/{deal.display_target} units</span>
+                  <span className="text-slate-500">{spotsLeft} left</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${progress >= 100 ? "bg-green-500" : "bg-[#D4A843]"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
                 </div>
+                <div className="text-xs text-slate-500 mt-1">{deal.buyer_count || 0} buyers joined</div>
               </div>
 
               {/* Timer */}
@@ -298,13 +300,28 @@ export default function GroupDealDetailPage() {
             <form onSubmit={handleJoin} className="space-y-3">
               <div><Label>Name</Label><Input value={joinForm.customer_name} onChange={(e) => setJoinForm(p => ({ ...p, customer_name: e.target.value }))} placeholder="Your name" data-testid="join-input-name" /></div>
               <div><Label>Phone</Label><Input value={joinForm.customer_phone} onChange={(e) => setJoinForm(p => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." data-testid="join-input-phone" /></div>
+              <div><Label>Quantity</Label>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => setJoinForm(p => ({ ...p, quantity: Math.max(1, (p.quantity || 1) - 1) }))}
+                    className="w-10 h-10 rounded-xl border flex items-center justify-center text-lg font-bold text-slate-600 hover:bg-slate-50" data-testid="qty-minus">-</button>
+                  <Input type="number" min="1" value={joinForm.quantity || 1}
+                    onChange={(e) => setJoinForm(p => ({ ...p, quantity: Math.max(1, parseInt(e.target.value) || 1) }))}
+                    className="text-center w-20" data-testid="join-input-quantity" />
+                  <button type="button" onClick={() => setJoinForm(p => ({ ...p, quantity: (p.quantity || 1) + 1 }))}
+                    className="w-10 h-10 rounded-xl border flex items-center justify-center text-lg font-bold text-slate-600 hover:bg-slate-50" data-testid="qty-plus">+</button>
+                  <span className="text-sm text-slate-500">units</span>
+                </div>
+              </div>
               <div><Label>Payment</Label>
                 <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={joinForm.payment_method}
                   onChange={(e) => setJoinForm(p => ({ ...p, payment_method: e.target.value }))} data-testid="join-select-payment">
                   <option value="cash">Cash</option><option value="mobile_money">Mobile Money</option><option value="bank_transfer">Bank Transfer</option>
                 </select>
               </div>
-              <div className="p-3 bg-slate-50 rounded-xl text-sm font-semibold text-center">Total: {fmt(deal.discounted_price)}</div>
+              <div className="p-3 bg-slate-50 rounded-xl text-sm font-semibold text-center">
+                Total: {fmt(deal.discounted_price * (joinForm.quantity || 1))}
+                {(joinForm.quantity || 1) > 1 && <span className="text-xs text-slate-500 block">{joinForm.quantity} x {fmt(deal.discounted_price)}</span>}
+              </div>
               <div className="flex items-center gap-2 text-xs text-slate-500 px-1">
                 <Shield className="w-3 h-3 text-green-500 flex-shrink-0" />
                 <span>Full refund if the deal doesn't reach its minimum</span>

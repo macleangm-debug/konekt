@@ -1,0 +1,144 @@
+{
+  "summary": "Group Deals Multi-Unit & Deal of the Day testing complete. All 37 backend tests pass (100%). Frontend verified: (1) Homepage Deal of the Day Hero with featured deal, progress, join button. (2) Homepage Group Deals section with 6 featured deal cards. (3) Group Deals list page showing X/Y units and Z buyers separately. (4) Deal detail page with units/buyers display, share buttons. (5) Join modal with quantity selector (+/- buttons, dynamic total). (6) Admin Group Deals page with Units/Buyers column, Set Featured/Featured toggle buttons. (7) Account Group Deals page with sidebar link added.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_multiunit_v292.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_multiunit_v292.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_group_deals_multiunit_v292.py",
+    "/app/frontend/src/layouts/CustomerPortalLayoutV2.jsx"
+  ],
+  "success_rate": {
+    "backend": "100% (37/37 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, test@konekt.tz / TestUser123!",
+  "seed_data_creation": "Created TEST_ prefixed campaigns for testing scenarios A, B, E, duplicate prevention, lock after finalize, Deal of the Day, and customer endpoint",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Group Deals Multi-Unit & Deal of the Day features verified. Key tests: (1) SCENARIO A SUCCESS: Create campaign, join 3 buyers with multi-unit (5+3+5=13 units), finalize creates 3 orders + VBO with total_quantity=13. (2) SCENARIO B FAILURE: Create campaign, partial join, cancel marks 'failed', process-refunds marks 'refunded'. (3) SCENARIO E MULTI-UNIT: 1 buyer 10 units + 1 buyer 5 units = 15 total, VBO total_quantity=15, buyer_count=2. (4) DUPLICATE JOIN PREVENTION: Same phone on same campaign returns 400 'already joined'. (5) CAMPAIGN LOCK AFTER FINALIZE: Finalized campaign rejects new joins with 400 'no longer accepting'. (6) DEAL OF THE DAY: set-featured (only 1 at a time), unset-featured, /api/public/group-deals/deal-of-the-day returns featured deal or null. (7) CUSTOMER ENDPOINT: /api/customer/group-deals?phone=X returns commitments with campaign data. (8) PUBLIC ENDPOINTS: /api/public/group-deals, /featured, /{id} hide internal fields (vendor_cost, margin_per_unit, etc) but show buyer_count. Frontend: Homepage shows Deal of the Day Hero + Group Deals section. Deal cards show 'X/Y units' and 'Z buyers' separately. Join modal has quantity selector with +/- buttons and dynamic total. Admin shows Units/Buyers column and Featured toggle. Customer sidebar now has Group Deals link.",
+  "features_tested": {
+    "scenario_a_success": {
+      "status": "PASS",
+      "details": [
+        "Create campaign with margin validation",
+        "Join 3 buyers with multi-unit quantities (5+3+5=13)",
+        "Threshold met flag set when threshold reached",
+        "Finalize creates 3 buyer orders + 1 VBO",
+        "VBO total_quantity=13, buyer_count=3",
+        "All commitments status=order_created"
+      ]
+    },
+    "scenario_b_failure": {
+      "status": "PASS",
+      "details": [
+        "Create campaign, partial join (3 units)",
+        "Cancel marks campaign 'failed'",
+        "Commitments marked 'refund_pending'",
+        "Process-refunds marks 'refunded'"
+      ]
+    },
+    "scenario_e_multiunit": {
+      "status": "PASS",
+      "details": [
+        "Buyer 1 commits 10 units",
+        "Buyer 2 commits 5 units = 15 total",
+        "Progress tracks units not buyers",
+        "VBO total_quantity=15, buyer_count=2"
+      ]
+    },
+    "duplicate_join_prevention": {
+      "status": "PASS",
+      "details": [
+        "First join with phone succeeds",
+        "Second join with same phone returns 400",
+        "Error message: 'already joined'"
+      ]
+    },
+    "campaign_lock_after_finalize": {
+      "status": "PASS",
+      "details": [
+        "Finalized campaign rejects new joins",
+        "Returns 400 'no longer accepting'"
+      ]
+    },
+    "deal_of_the_day": {
+      "status": "PASS",
+      "details": [
+        "set-featured sets is_featured=true",
+        "Only 1 featured at a time (unfeatured others)",
+        "unset-featured removes featured status",
+        "/api/public/group-deals/deal-of-the-day returns featured deal",
+        "Internal fields hidden in public response"
+      ]
+    },
+    "customer_group_deals_endpoint": {
+      "status": "PASS",
+      "details": [
+        "/api/customer/group-deals?phone=X returns commitments",
+        "Includes campaign data (product_name, progress, etc)",
+        "Empty phone returns empty list"
+      ]
+    },
+    "homepage_deal_of_the_day_hero": {
+      "status": "PASS",
+      "details": [
+        "Hero section visible when featured deal exists",
+        "Shows product name, price, discount, progress",
+        "Shows buyers count and time remaining",
+        "Join Deal Now button visible"
+      ]
+    },
+    "homepage_group_deals_section": {
+      "status": "PASS",
+      "details": [
+        "Section shows 6 featured deal cards",
+        "Cards show X/Y units and Z buyers separately",
+        "View All button navigates to /group-deals"
+      ]
+    },
+    "join_modal_quantity_selector": {
+      "status": "PASS",
+      "details": [
+        "Modal has +/- buttons for quantity",
+        "Quantity increments/decrements correctly",
+        "Total updates dynamically (qty x unit_price)"
+      ]
+    },
+    "admin_units_buyers_column": {
+      "status": "PASS",
+      "details": [
+        "Admin shows 'Units / Buyers' column",
+        "Format: 'X/Y units (Z buyers)'"
+      ]
+    },
+    "admin_featured_toggle": {
+      "status": "PASS",
+      "details": [
+        "Set Featured button for non-featured campaigns",
+        "Featured button (highlighted) for featured campaign",
+        "Toggle works correctly"
+      ]
+    },
+    "account_group_deals_page": {
+      "status": "PASS",
+      "details": [
+        "/account/group-deals route works",
+        "Shows 'My Group Deals' heading",
+        "Empty state with 'Browse Group Deals' link",
+        "Sidebar link added to customer portal"
+      ]
+    }
+  }
+}

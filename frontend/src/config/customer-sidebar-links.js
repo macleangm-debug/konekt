@@ -3,6 +3,7 @@ export const customerSidebarLinks = [
   { label: "Marketplace", href: "/account/marketplace" },
   { label: "Services", href: "/account/services" },
   { label: "Orders", href: "/account/orders" },
+  { label: "Group Deals", href: "/account/group-deals" },
   { label: "Quotes", href: "/account/quotes" },
   { label: "Invoices", href: "/account/invoices" },
   { label: "Business Profile", href: "/account/profile/business" },

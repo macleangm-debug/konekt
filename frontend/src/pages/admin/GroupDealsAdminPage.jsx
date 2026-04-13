@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Plus, Clock, Check, X, Users, AlertTriangle, Package, RefreshCw } from "lucide-react";
+import { Plus, Clock, Check, X, Users, AlertTriangle, Package, RefreshCw, Star } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +106,19 @@ export default function GroupDealsAdminPage() {
     } catch (err) { toast.error(err.response?.data?.detail || "Failed to process refunds"); }
   };
 
+  const toggleFeatured = async (id, currentlyFeatured) => {
+    try {
+      if (currentlyFeatured) {
+        await api.post(`/api/admin/group-deals/campaigns/${id}/unset-featured`);
+        toast.success("Removed from Deal of the Day");
+      } else {
+        await api.post(`/api/admin/group-deals/campaigns/${id}/set-featured`);
+        toast.success("Set as Deal of the Day");
+      }
+      loadCampaigns();
+    } catch (err) { toast.error(err.response?.data?.detail || "Failed to update featured status"); }
+  };
+
   const stats = useMemo(() => ({
     active: campaigns.filter(c => c.status === "active").length,
     threshold_ready: campaigns.filter(c => c.status === "active" && c.threshold_met).length,
@@ -160,7 +173,7 @@ export default function GroupDealsAdminPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-sm">
                   <div><span className="text-slate-400 text-xs">Price</span><div className="font-bold text-[#D4A843]">{fmt(c.discounted_price)} <span className="text-xs text-slate-400 line-through ml-1">{fmt(c.original_price)}</span></div></div>
                   <div><span className="text-slate-400 text-xs">Margin</span><div className="font-bold">{fmt(c.margin_per_unit)} <span className="text-xs text-slate-400">({c.margin_pct}%)</span></div></div>
-                  <div><span className="text-slate-400 text-xs">Committed</span><div className="font-bold">{c.current_committed}/{c.display_target}</div></div>
+                  <div><span className="text-slate-400 text-xs">Units / Buyers</span><div className="font-bold">{c.current_committed}/{c.display_target} units <span className="text-xs text-slate-400">({c.buyer_count || 0} buyers)</span></div></div>
                   <div><span className="text-slate-400 text-xs">Revenue</span><div className="font-bold">{fmt(c.current_committed * c.discounted_price)}</div></div>
                 </div>
 
@@ -180,6 +193,12 @@ export default function GroupDealsAdminPage() {
                   {thresholdReady && (
                     <Button size="sm" onClick={() => finalizeCampaign(c.id)} className="bg-green-600 hover:bg-green-700" data-testid={`finalize-${c.id}`}>
                       <Check className="w-3 h-3 mr-1" /> Finalize Orders
+                    </Button>
+                  )}
+                  {c.status === "active" && (
+                    <Button size="sm" variant="outline" onClick={() => toggleFeatured(c.id, c.is_featured)}
+                      className={c.is_featured ? "text-amber-600 border-amber-300 bg-amber-50" : "text-slate-600"} data-testid={`featured-${c.id}`}>
+                      <Star className={`w-3 h-3 mr-1 ${c.is_featured ? "fill-amber-500" : ""}`} /> {c.is_featured ? "Featured" : "Set Featured"}
                     </Button>
                   )}
                   {c.status === "active" && (

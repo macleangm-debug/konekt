@@ -8,6 +8,7 @@ import {
 import api from "../lib/api";
 import { getStoredCountryCode, getStoredRegion } from "../lib/countryPreference";
 import HomepageGroupDealsSection from "../components/public/HomepageGroupDealsSection";
+import DealOfTheDayHero from "../components/public/DealOfTheDayHero";
 
 // ═══════════════════════════════════════════════════════
 // 1. HERO
@@ -362,6 +363,7 @@ export default function HomepageV2Content() {
   return (
     <div data-testid="homepage-v2-content">
       <HeroSection />
+      <DealOfTheDayHero />
       <HowItWorksSection />
       <HomepageGroupDealsSection />
       <TrustSignalsSection />

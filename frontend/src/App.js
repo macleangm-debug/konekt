@@ -165,6 +165,7 @@ import WalkInSalePage from "@/pages/admin/WalkInSalePage";
 import AdvancedAnalyticsDashboard from "@/pages/admin/AdvancedAnalyticsDashboard";
 import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
 import GroupDealDetailPage, { GroupDealsListPage } from "@/pages/public/GroupDealsPages";
+import AccountGroupDealsPage from "@/pages/customer/AccountGroupDealsPage";
 
 // Super Admin Ecosystem Dashboard
 import SuperAdminEcosystemDashboard from "@/pages/admin/SuperAdminEcosystemDashboard";
@@ -913,6 +914,7 @@ function App() {
           <Route path="assisted-cart" element={<AssistedSalesRequestFromCartPage />} />
           <Route path="orders" element={<OrdersPageV2 />} />
           <Route path="orders/:orderId" element={<OrderDetailPageV2 />} />
+          <Route path="group-deals" element={<AccountGroupDealsPage />} />
           <Route path="quotes" element={<QuotesPageV2 />} />
           <Route path="quotes/:quoteId" element={<QuoteDetailWithPayment />} />
           <Route path="invoices" element={<InvoicesPageV2 />} />

@@ -2,6 +2,8 @@
 Group Deal Campaign System — Demand aggregation engine.
 Campaigns collect commitments; orders are created ONLY after admin finalizes.
 Join = commitment only. Finalize = buyer orders + aggregated vendor back order.
+
+Safety: duplicate join prevention, campaign lock after finalize, overflow allowed.
 """
 from datetime import datetime, timezone, timedelta
 from uuid import uuid4
@@ -55,7 +57,6 @@ async def create_campaign(payload: dict):
 
     margin_pct = round((margin_per_unit / discounted_price) * 100, 1)
 
-    # Check minimum margin from settings
     settings = await db.admin_settings.find_one({"key": "settings_hub"})
     min_margin = 5
     if settings:
@@ -83,12 +84,14 @@ async def create_campaign(payload: dict):
         "display_target": display_target,
         "vendor_threshold": vendor_threshold,
         "current_committed": 0,
+        "buyer_count": 0,
         "duration_days": duration_days,
         "deadline": deadline,
         "commission_mode": payload.get("commission_mode", "none"),
         "affiliate_share_pct": float(payload.get("affiliate_share_pct", 0)),
         "status": "active",
         "threshold_met": False,
+        "is_featured": False,
         "created_by": payload.get("created_by", ""),
         "created_at": now,
         "updated_at": now,
@@ -124,7 +127,6 @@ async def get_campaign(campaign_id: str):
         {**c, "created_at": c["created_at"].isoformat() if isinstance(c.get("created_at"), datetime) else str(c.get("created_at", ""))}
         for c in commitments
     ]
-    # Include vendor back order if finalized
     vbo = await db.vendor_back_orders.find_one(
         {"campaign_id": str(doc["_id"])}, {"_id": 0}
     )
@@ -152,6 +154,43 @@ async def update_campaign(campaign_id: str, payload: dict):
     return _s(updated)
 
 
+# ─── DEAL OF THE DAY ───
+
+@router.post("/campaigns/{campaign_id}/set-featured")
+async def set_featured_deal(campaign_id: str):
+    """Set a campaign as Deal of the Day. Only 1 at a time."""
+    doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    if doc.get("status") != "active":
+        raise HTTPException(status_code=400, detail="Only active campaigns can be featured.")
+
+    progress = (doc.get("current_committed", 0) / max(doc.get("display_target", 1), 1)) * 100
+    if progress < 30 and doc.get("current_committed", 0) > 0:
+        raise HTTPException(status_code=400, detail="Campaign needs ≥30% progress to be featured.")
+
+    # Unfeature all others first
+    await db.group_deal_campaigns.update_many(
+        {"is_featured": True},
+        {"$set": {"is_featured": False}}
+    )
+    await db.group_deal_campaigns.update_one(
+        {"_id": ObjectId(campaign_id)},
+        {"$set": {"is_featured": True, "updated_at": datetime.now(timezone.utc)}}
+    )
+    return {"status": "featured", "campaign_id": campaign_id}
+
+
+@router.post("/campaigns/{campaign_id}/unset-featured")
+async def unset_featured_deal(campaign_id: str):
+    """Remove featured status from a campaign."""
+    await db.group_deal_campaigns.update_one(
+        {"_id": ObjectId(campaign_id)},
+        {"$set": {"is_featured": False, "updated_at": datetime.now(timezone.utc)}}
+    )
+    return {"status": "unfeatured"}
+
+
 # ─── COMMITMENTS ───
 
 @router.post("/campaigns/{campaign_id}/join")
@@ -160,6 +199,7 @@ async def join_campaign(campaign_id: str, payload: dict):
     Customer commits to a group deal (full payment upfront).
     Does NOT create orders. Does NOT auto-mark campaign as successful.
     Only creates a commitment record and updates the committed count.
+    Prevents duplicate joins from same phone number.
     """
     doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
     if not doc:
@@ -179,8 +219,18 @@ async def join_campaign(campaign_id: str, payload: dict):
     if not customer_name and not customer_phone:
         raise HTTPException(status_code=400, detail="Customer name or phone is required.")
 
+    # Duplicate join prevention — same phone on same campaign
+    if customer_phone:
+        existing = await db.group_deal_commitments.find_one({
+            "campaign_id": str(doc["_id"]),
+            "customer_phone": customer_phone,
+            "status": {"$in": ["committed", "order_created"]},
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="You have already joined this deal.")
+
     amount = doc["discounted_price"]
-    qty = int(payload.get("quantity", 1))
+    qty = max(1, int(payload.get("quantity", 1)))
     payment_method = payload.get("payment_method", "cash")
 
     now = datetime.now(timezone.utc)
@@ -202,9 +252,10 @@ async def join_campaign(campaign_id: str, payload: dict):
     }
     await db.group_deal_commitments.insert_one(commitment)
 
-    # Update committed count — NO status change
+    # Update committed unit count + buyer count — NO status change
     new_count = doc.get("current_committed", 0) + qty
-    update_fields = {"current_committed": new_count, "updated_at": now}
+    new_buyers = doc.get("buyer_count", 0) + 1
+    update_fields = {"current_committed": new_count, "buyer_count": new_buyers, "updated_at": now}
 
     # Set threshold_met flag for admin visibility, but do NOT change status
     if new_count >= doc.get("vendor_threshold", doc["display_target"]):
@@ -212,19 +263,20 @@ async def join_campaign(campaign_id: str, payload: dict):
 
     await db.group_deal_campaigns.update_one({"_id": doc["_id"]}, {"$set": update_fields})
 
-    # Fire messaging event
     await trigger_event(
         EventType.GROUP_DEAL_JOINED,
         recipient_phone=customer_phone, recipient_email=customer_email,
         recipient_name=customer_name, entity_id=str(doc["_id"]),
         entity_number=doc["campaign_id"], entity_type="group_deal",
-        amount=amount * qty, extra={"product_name": doc["product_name"]},
+        amount=amount * qty, extra={"product_name": doc["product_name"], "quantity": qty},
     )
 
     return {
         "status": "committed",
         "amount": amount * qty,
+        "quantity": qty,
         "current_committed": new_count,
+        "buyer_count": new_buyers,
         "target": doc["display_target"],
         "campaign_status": "active",
     }
@@ -243,7 +295,7 @@ async def finalize_campaign(campaign_id: str):
     doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Campaign not found")
-    if doc.get("status") not in ("active",):
+    if doc.get("status") != "active":
         raise HTTPException(status_code=400, detail=f"Campaign in '{doc.get('status')}' state cannot be finalized.")
     if doc.get("current_committed", 0) < doc.get("vendor_threshold", 1):
         raise HTTPException(status_code=400, detail="Campaign has not reached vendor threshold yet.")
@@ -320,7 +372,7 @@ async def finalize_campaign(campaign_id: str):
     }
     await db.vendor_back_orders.insert_one(vendor_back_order)
 
-    # 3. Update campaign status
+    # 3. Update campaign status — LOCKED after finalize
     await db.group_deal_campaigns.update_one(
         {"_id": doc["_id"]},
         {"$set": {
@@ -329,11 +381,11 @@ async def finalize_campaign(campaign_id: str):
             "orders_created": orders_created,
             "total_units_ordered": total_units,
             "vbo_number": vbo_number,
+            "is_featured": False,
             "updated_at": now,
         }}
     )
 
-    # Fire messaging events for all committed buyers
     for c in commitments:
         await trigger_event(
             EventType.GROUP_DEAL_FINALIZED,
@@ -364,9 +416,8 @@ async def cancel_campaign(campaign_id: str):
     now = datetime.now(timezone.utc)
     await db.group_deal_campaigns.update_one(
         {"_id": doc["_id"]},
-        {"$set": {"status": "failed", "failed_at": now, "updated_at": now}}
+        {"$set": {"status": "failed", "failed_at": now, "is_featured": False, "updated_at": now}}
     )
-    # Get commitments before updating for event dispatch
     committed_buyers = await db.group_deal_commitments.find(
         {"campaign_id": str(doc["_id"]), "status": "committed"}
     ).to_list(1000)
@@ -377,7 +428,6 @@ async def cancel_campaign(campaign_id: str):
     )
     refund_count = len(committed_buyers)
 
-    # Fire messaging events for all affected buyers
     for c in committed_buyers:
         await trigger_event(
             EventType.GROUP_DEAL_FAILED,
@@ -443,19 +493,23 @@ HIDDEN_FIELDS = {
 }
 
 
+def _add_buyer_count(doc, serialized):
+    """Add buyer_count to serialized output for public display."""
+    serialized["buyer_count"] = doc.get("buyer_count", 0)
+    return serialized
+
+
 @public_router.get("")
 async def public_list_deals():
     """Public: list active campaigns, ranked by progress %, urgency, popularity."""
     docs = await db.group_deal_campaigns.find(
-        {"status": "active"},
-        HIDDEN_FIELDS,
+        {"status": "active"}, HIDDEN_FIELDS,
     ).sort("created_at", -1).to_list(50)
 
     now = datetime.now(timezone.utc)
     results = []
     for d in docs:
-        s = _s(d)
-        # Compute ranking signals
+        s = _add_buyer_count(d, _s(d))
         progress = (d.get("current_committed", 0) / max(d.get("display_target", 1), 1)) * 100
         deadline = d.get("deadline")
         if deadline:
@@ -469,10 +523,8 @@ async def public_list_deals():
         s["_popularity"] = d.get("current_committed", 0)
         results.append(s)
 
-    # Rank: highest progress first, then lowest time left, then most popular
     results.sort(key=lambda x: (-x["_progress"], x["_hours_left"], -x["_popularity"]))
 
-    # Strip ranking signals from response
     for r in results:
         r.pop("_progress", None)
         r.pop("_hours_left", None)
@@ -485,14 +537,13 @@ async def public_list_deals():
 async def public_featured_deals():
     """Public: top 6 active deals for homepage integration, ranked by progress/urgency."""
     docs = await db.group_deal_campaigns.find(
-        {"status": "active"},
-        HIDDEN_FIELDS,
+        {"status": "active"}, HIDDEN_FIELDS,
     ).sort("created_at", -1).to_list(20)
 
     now = datetime.now(timezone.utc)
     results = []
     for d in docs:
-        s = _s(d)
+        s = _add_buyer_count(d, _s(d))
         progress = (d.get("current_committed", 0) / max(d.get("display_target", 1), 1)) * 100
         deadline = d.get("deadline")
         if deadline:
@@ -516,6 +567,17 @@ async def public_featured_deals():
     return results[:6]
 
 
+@public_router.get("/deal-of-the-day")
+async def public_deal_of_the_day():
+    """Public: get the single featured deal (Deal of the Day)."""
+    doc = await db.group_deal_campaigns.find_one(
+        {"status": "active", "is_featured": True}, HIDDEN_FIELDS,
+    )
+    if not doc:
+        return None
+    return _add_buyer_count(doc, _s(doc))
+
+
 @public_router.get("/{campaign_id}")
 async def public_get_deal(campaign_id: str):
     """Public: get campaign detail (hides internal pricing data)."""
@@ -525,7 +587,69 @@ async def public_get_deal(campaign_id: str):
     if not doc:
         raise HTTPException(status_code=404, detail="Deal not found")
     result = _s(doc)
+    result["buyer_count"] = doc.get("buyer_count", 0)
     for k in ["vendor_cost", "vendor_threshold", "margin_per_unit", "margin_pct",
               "commission_mode", "affiliate_share_pct", "created_by", "threshold_met"]:
         result.pop(k, None)
     return result
+
+
+# ─── CUSTOMER ENDPOINTS (authenticated user's commitments) ───
+
+customer_router = APIRouter(prefix="/api/customer/group-deals", tags=["Customer Group Deals"])
+
+
+@customer_router.get("")
+async def customer_list_commitments(phone: str = None, email: str = None):
+    """List all group deal commitments for a customer (by phone or email)."""
+    if not phone and not email:
+        return []
+
+    query = {"status": {"$in": ["committed", "order_created", "refund_pending", "refunded"]}}
+    if phone:
+        query["customer_phone"] = phone
+    elif email:
+        query["customer_email"] = email
+
+    commitments = await db.group_deal_commitments.find(query).sort("created_at", -1).to_list(100)
+
+    results = []
+    for c in commitments:
+        campaign = await db.group_deal_campaigns.find_one(
+            {"_id": ObjectId(c["campaign_id"])},
+            {"vendor_cost": 0, "vendor_threshold": 0, "margin_per_unit": 0, "margin_pct": 0,
+             "commission_mode": 0, "affiliate_share_pct": 0, "created_by": 0, "threshold_met": 0}
+        )
+        c_data = {
+            "commitment_id": str(c["_id"]),
+            "campaign_id": c["campaign_id"],
+            "campaign_name": c.get("campaign_name", ""),
+            "quantity": c.get("quantity", 1),
+            "amount": c.get("amount", 0),
+            "unit_price": c.get("unit_price", 0),
+            "status": c["status"],
+            "order_number": c.get("order_number"),
+            "created_at": c["created_at"].isoformat() if isinstance(c.get("created_at"), datetime) else str(c.get("created_at", "")),
+        }
+        if campaign:
+            cs = _s(campaign)
+            c_data["campaign"] = {
+                "id": cs["id"],
+                "product_name": cs.get("product_name", ""),
+                "product_image": cs.get("product_image", ""),
+                "discounted_price": cs.get("discounted_price", 0),
+                "original_price": cs.get("original_price", 0),
+                "discount_pct": cs.get("discount_pct", 0),
+                "display_target": cs.get("display_target", 0),
+                "current_committed": cs.get("current_committed", 0),
+                "buyer_count": cs.get("buyer_count", 0),
+                "deadline": cs.get("deadline", ""),
+                "status": cs.get("status", ""),
+            }
+        results.append(c_data)
+
+    # Sort: active first, then order_created, then refund_pending, then refunded
+    status_order = {"committed": 0, "order_created": 1, "refund_pending": 2, "refunded": 3}
+    results.sort(key=lambda x: status_order.get(x["status"], 99))
+
+    return results
