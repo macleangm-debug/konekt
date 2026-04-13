@@ -1,0 +1,135 @@
+{
+  "summary": "Group Deals System Refinement testing complete. All 18 backend tests pass (100%). Frontend verified: (1) Homepage Group Deals section with featured deal cards, progress bars, View All button. (2) Deal detail page with mobile sticky CTA (visible on mobile, hidden on desktop). (3) Post-join success screen with live progress, spots remaining, time left, WhatsApp + Copy Link share buttons, invite friends CTA, trust messaging. (4) Admin Group Deals page with campaign list, stats cards, Create Campaign dialog with Live Profit Calculator. (5) Customer portal pages (Orders, Invoices, Quotes) show mobile card layouts on mobile and tables on desktop.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_refinement_v291.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_v291.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_group_deals_refinement_v291.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18 tests passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!, test@konekt.tz / TestUser123!",
+  "seed_data_creation": "Created TEST_ prefixed campaigns for testing, cleaned up after tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Group Deals System Refinement verified. Key features tested: (1) POST /api/admin/group-deals/campaigns creates campaign with margin validation (5% minimum). (2) POST /api/admin/group-deals/campaigns/{id}/join creates commitment ONLY — does NOT change campaign status to 'successful', sets threshold_met flag when threshold reached but status stays 'active'. (3) GET /api/admin/group-deals/campaigns/{id} returns campaign with commitments array and threshold_met flag. (4) POST /api/admin/group-deals/campaigns/{id}/finalize creates buyer orders + ONE aggregated vendor back order (VBO-{campaign_id}-{date}), campaign becomes 'finalized'. (5) POST /api/admin/group-deals/campaigns/{id}/cancel marks campaign 'failed', commitments to 'refund_pending'. (6) POST /api/admin/group-deals/campaigns/{id}/process-refunds marks refund_pending as 'refunded'. (7) GET /api/public/group-deals returns active deals ranked by progress/urgency, hides internal fields (vendor_cost, margin_per_unit, etc). (8) GET /api/public/group-deals/featured returns top 6 active deals for homepage. (9) GET /api/admin/group-deals/vendor-back-orders lists aggregated vendor back orders. (10) Homepage has Group Deals section with featured deal cards, progress bars, timers, trust messaging. (11) Deal detail page has mobile sticky CTA bar (visible on mobile, hidden on desktop). (12) Post-join success screen shows live progress, remaining spots, share buttons (WhatsApp + Copy Link), invite friends CTA. (13) Customer portal Orders/Invoices/Quotes pages have mobile card layouts (md:hidden) alongside desktop tables.",
+  "features_tested": {
+    "campaign_creation_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns creates campaign with margin calculation",
+        "Margin below 5% threshold returns 400 error",
+        "Price below vendor cost returns 400 error"
+      ]
+    },
+    "join_campaign_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns/{id}/join creates commitment ONLY",
+        "Does NOT change campaign status to 'successful'",
+        "Sets threshold_met flag when threshold reached but status stays 'active'",
+        "Increments current_committed count",
+        "Requires customer_name or customer_phone"
+      ]
+    },
+    "get_campaign_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/group-deals/campaigns/{id} returns campaign with commitments array",
+        "Includes threshold_met flag",
+        "Includes vendor_back_order if finalized"
+      ]
+    },
+    "finalize_campaign_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns/{id}/finalize creates buyer orders",
+        "Creates ONE aggregated vendor back order (VBO-{campaign_id}-{date})",
+        "Campaign status changes to 'finalized'",
+        "Returns orders_created, total_units, vendor_back_order number"
+      ]
+    },
+    "cancel_campaign_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns/{id}/cancel marks campaign 'failed'",
+        "Commitments marked as 'refund_pending'"
+      ]
+    },
+    "process_refunds_api": {
+      "status": "PASS",
+      "details": [
+        "POST /api/admin/group-deals/campaigns/{id}/process-refunds marks refund_pending as 'refunded'",
+        "Only works for failed campaigns"
+      ]
+    },
+    "public_endpoints_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/public/group-deals returns active campaigns ranked by progress/urgency",
+        "Internal fields hidden: vendor_cost, margin_per_unit, margin_pct, vendor_threshold, commission_mode, affiliate_share_pct, created_by, threshold_met",
+        "GET /api/public/group-deals/featured returns top 6 active deals",
+        "GET /api/public/group-deals/{id} returns deal detail without internal fields"
+      ]
+    },
+    "vendor_back_orders_api": {
+      "status": "PASS",
+      "details": [
+        "GET /api/admin/group-deals/vendor-back-orders returns VBO list",
+        "VBO includes vbo_number, campaign_id, product_name, total_quantity, vendor costs, preparation_status"
+      ]
+    },
+    "homepage_group_deals_section": {
+      "status": "PASS",
+      "details": [
+        "Homepage Group Deals section visible",
+        "Featured deal cards with progress bars",
+        "View All Deals button visible"
+      ]
+    },
+    "deal_detail_mobile_sticky_cta": {
+      "status": "PASS",
+      "details": [
+        "Mobile sticky CTA bar visible on mobile viewport",
+        "Mobile sticky CTA hidden on desktop viewport",
+        "Desktop Join Deal button visible on desktop"
+      ]
+    },
+    "post_join_success_screen": {
+      "status": "PASS",
+      "details": [
+        "Post-join success screen shows after joining",
+        "Live progress with percentage",
+        "Spots remaining count",
+        "Time left countdown",
+        "WhatsApp share button",
+        "Copy Link button",
+        "Invite friends CTA",
+        "Trust messaging (full refund guarantee)",
+        "Browse More Deals link"
+      ]
+    },
+    "customer_portal_mobile_cards": {
+      "status": "PASS",
+      "details": [
+        "Orders page: mobile cards visible on mobile, table visible on desktop",
+        "Invoices page: mobile cards visible on mobile, table visible on desktop",
+        "Quotes page: mobile cards visible on mobile, table visible on desktop"
+      ]
+    }
+  }
+}

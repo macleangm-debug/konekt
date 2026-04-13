@@ -263,3 +263,8 @@ button:not([class*="k-btn"]):not([class*="mobile-nav"]):not([class*="canvas-tool
     background: linear-gradient(90deg, #D4A843, #FFD700);
     border-radius: 2px;
 }
+
+
+/* Scrollbar hide utility */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

@@ -416,7 +416,39 @@ export default function InvoicesPageV2() {
         ] }]}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* ─── MOBILE: Card Layout ─── */}
+      <div className="md:hidden space-y-3" data-testid="invoices-mobile-cards">
+        {loading ? (
+          <div className="text-center text-slate-400 py-10">Loading invoices...</div>
+        ) : filteredInvoices.length === 0 ? (
+          <div className="text-center text-slate-400 py-10 bg-white rounded-2xl border">No invoices found.</div>
+        ) : filteredInvoices.map((invoice) => {
+          const st = statusMeta(invoice);
+          const action = getActionConfig(invoice);
+          return (
+            <div key={invoice.id || invoice._id} className="bg-white rounded-2xl border p-4 active:bg-slate-50 transition" onClick={() => setSelectedInvoice(invoice)} data-testid={`invoice-card-${invoice.id}`}>
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <div className="text-sm font-bold text-[#20364D]">{invoice.invoice_number || invoice.id}</div>
+                  <div className="text-xs text-slate-500">{fmtDate(invoice.created_at)} &middot; {invoice.type || "product"}</div>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${st.cls}`}>{invoice.payment_status_label || st.label}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-base font-bold text-[#20364D]">{money(invoice.total_amount || invoice.total)}</div>
+                {action && (
+                  <button className={`text-xs px-3 py-2 rounded-xl font-semibold ${action.cls}`} onClick={(e) => e.stopPropagation()} data-testid={`invoice-action-mobile-${invoice.id}`}>
+                    {action.label}
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── DESKTOP: Table Layout ─── */}
+      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="invoices-table">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">

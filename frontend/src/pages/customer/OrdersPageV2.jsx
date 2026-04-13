@@ -334,7 +334,59 @@ export default function OrdersPageV2() {
         ] }]}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* ─── MOBILE: Card Layout ─── */}
+      <div className="md:hidden space-y-3" data-testid="orders-mobile-cards">
+        {loading ? (
+          <div className="text-center text-slate-400 py-10">Loading orders...</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-center text-slate-400 py-10 bg-white rounded-2xl border">No orders found.</div>
+        ) : filteredOrders.map((order) => {
+          const fSt = fulfillMeta(order.status || order.fulfillment_state, order);
+          const pSt = paymentMeta(order.payment_status || order.payment_state);
+          const oid = order.id || order.order_number;
+          const showConfirm = ["dispatched", "shipped", "in_transit", "awaiting_confirmation"].includes((order.status || "").toLowerCase()) ||
+            ["dispatched"].includes((order.fulfillment_status || "").toLowerCase());
+          return (
+            <div key={oid} className="bg-white rounded-2xl border p-4 active:bg-slate-50 transition" onClick={() => setSelectedOrder(order)} data-testid={`order-card-${order.id}`}>
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <div className="text-sm font-bold text-[#20364D]">{order.order_number || order.id}</div>
+                  <div className="text-xs text-slate-500">{fmtDate(order.created_at)} &middot; {sourceLabel(order)}</div>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${fSt.cls}`}>{fSt.label}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-base font-bold text-[#20364D]">{money(order.total_amount || order.total)}</div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${pSt.cls}`}>{pSt.label}</span>
+                </div>
+                {showConfirm ? (
+                  <Link
+                    to={`/confirm-completion?order=${order.order_number || order.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold"
+                    data-testid={`confirm-btn-mobile-${order.id}`}
+                  >
+                    <Check className="w-3 h-3" /> Confirm
+                  </Link>
+                ) : (
+                  <button
+                    onClick={(e) => handleReorder(e, oid)}
+                    disabled={reorderingId === oid}
+                    className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#20364D] text-white text-xs font-semibold disabled:opacity-50"
+                    data-testid={`reorder-btn-mobile-${order.id}`}
+                  >
+                    {reorderingId === oid ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} Reorder
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── DESKTOP: Table Layout ─── */}
+      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="orders-table">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">

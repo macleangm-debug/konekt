@@ -251,7 +251,43 @@ export default function QuotesPageV2() {
         ] }]}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      {/* ─── MOBILE: Card Layout ─── */}
+      <div className="md:hidden space-y-3" data-testid="quotes-mobile-cards">
+        {loading ? (
+          <div className="text-center text-slate-400 py-10">Loading quotes...</div>
+        ) : filteredQuotes.length === 0 ? (
+          <div className="text-center text-slate-400 py-10 bg-white rounded-2xl border">No quotes found.</div>
+        ) : filteredQuotes.map((quote) => {
+          const st = quoteStatusMeta(quote.status);
+          const pst = paymentStatusMeta(quote);
+          const dl = daysUntil(quote.valid_until);
+          return (
+            <div key={quote.id || quote._id} className="bg-white rounded-2xl border p-4 active:bg-slate-50 transition" onClick={() => setSelectedQuote(quote)} data-testid={`quote-card-${quote.id}`}>
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <div className="text-sm font-bold text-[#20364D]">{quote.quote_number || quote.id}</div>
+                  <div className="text-xs text-slate-500">{fmtDate(quote.created_at)} &middot; {quoteType(quote)}</div>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${st.cls}`}>{st.label}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-base font-bold text-[#20364D]">{money(quote.total || quote.total_amount)}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${pst.cls}`}>{pst.label}</span>
+                    {dl !== null && dl > 0 && <span className="text-[10px] text-slate-400">{dl}d until expiry</span>}
+                    {dl !== null && dl <= 0 && <span className="text-[10px] text-red-500">Expired</span>}
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-slate-300" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── DESKTOP: Table Layout ─── */}
+      <div className="hidden md:block rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="quotes-table">
             <thead className="bg-slate-50 text-slate-500 uppercase text-xs tracking-wide">
