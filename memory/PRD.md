@@ -3,7 +3,7 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Status: Production-Grade + Revenue Engine + Group Deals Optimized
+## System Status: DEPLOYMENT READY
 
 ## 4 Sales Modes (Same Canonical Engine)
 | Mode | Flow |
@@ -11,46 +11,83 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 | Structured | Quote → Invoice → Order → Delivery → Completion |
 | Remote | Order → Delivery → Public Confirmation |
 | Walk-in/POS | Order → Payment → Auto Completion |
-| Group Deal | Campaign → Commitments → Admin Finalize → Buyer Orders + Vendor Back Order |
+| Group Deal | Campaign → Commitments (multi-unit) → Admin Finalize → Buyer Orders + Vendor Back Order |
 
-## Group Deal Campaign System (REFINED — Feb 2026)
-- **Core rule**: Join = commitment ONLY. No auto-success. Admin-controlled finalize.
-- **Lifecycle**: active → (threshold_met flag) → finalized (by admin) / failed (by admin)
-- **Commitment states**: committed → order_created (on finalize) / refund_pending (on cancel) → refunded
-- **Finalize creates**: Individual buyer orders + ONE aggregated vendor back order (VBO)
-- **Vendor Back Order**: Single aggregated record (total qty, vendor cost, product, preparation status)
-- **Homepage integration**: Top 3-6 deals, progress bars, timers, trust messaging, ranked by progress/urgency
-- **Mobile UX**: Sticky "Join Deal" CTA on mobile, bottom-sheet join modal
-- **Post-join**: Live progress, remaining spots, "Invite friends to unlock faster", WhatsApp + Copy Link share
-- **Trust messaging**: "Activates once minimum is reached", "Full refund if campaign fails"
-- **Public API hides**: vendor_cost, vendor_threshold, margins, commission data, threshold_met
-- **Safety**: 5% minimum margin threshold, blocks below vendor cost
+## Group Deal Campaign System (COMPLETE — Feb 2026)
 
-## Customer Portal (Mobile-Optimized — Feb 2026)
-- Orders, Invoices, Quotes: Card-based layout on mobile (md:hidden), table on desktop
-- Document viewing: StandardDrawerShell (full-width on mobile, right-panel on desktop)
+### Core Rules
+- **Join = commitment ONLY** — no orders, no auto-success
+- **Admin-controlled finalize** — creates buyer orders + ONE aggregated VBO
+- **Success threshold based on UNITS, not buyer count**
+- **Overflow allowed** (112/100 is valid — better for revenue)
+- **Duplicate join prevention** (same phone blocked)
+- **Campaign locked after finalize** (no new joins)
+
+### Lifecycle
+- active → (threshold_met flag) → finalized (by admin) / failed (by admin)
+- Commitment states: `committed` → `order_created` / `refund_pending` → `refunded`
+
+### Display
+- Progress: "X/Y units committed" (primary), "Z buyers" (secondary)
+- Admin: Units / Buyers / Avg per buyer / Committed revenue
+
+### Deal of the Day
+- `is_featured` flag — only 1 active at a time
+- Requires ≥30% progress to feature
+- Shows in homepage hero with urgency messaging
+- Admin toggle: Set Featured / Unfeatured
+
+### Account Group Deals (/account/group-deals)
+- Personal view of user's commitments (not marketplace)
+- Card-based mobile layout, sorted: active → successful → failed → refunded
+- Links to orders (on success) / shows refund status (on failure)
+- Share buttons for active deals
+
+### Safety
+- 5% minimum margin threshold
+- Duplicate join prevention (same phone)
+- Campaign lock after finalize
+- Refund amount = paid amount
+
+### Trust Messaging
+- "Activates once minimum is reached"
+- "Full refund if campaign fails"
+- "Secure payment"
+
+## Customer Portal (Mobile-Optimized)
+- Orders, Invoices, Quotes, Group Deals: Card-based on mobile, table on desktop
+- Document viewing: StandardDrawerShell (full-width mobile, right-panel desktop)
 - Track Order: 6-step lifecycle, fulfillment-aware CTA
-- Confirm Completion: Accessible from mobile cards + drawer
+- Confirm Completion: Accessible on mobile
 
-## Messaging Event Hooks (Prepared — Feb 2026)
-- Backend event triggers defined: quote_created, invoice_issued, order_dispatched, awaiting_confirmation, order_completed, efd_ready, group_deal_joined, group_deal_finalized, group_deal_failed, refund_processed
-- Standard payload structures ready for Twilio/Resend integration
-- Message templates defined per event type
-- No fake UI — backend prep only
+## Messaging Event Hooks (Backend-Ready)
+- 14 event types with standard payloads
+- Templates ready for Twilio/Resend dispatch
+- Wired into group deal lifecycle (join, finalize, cancel)
+- Resend API key configured in .env
 
 ## All Complete Systems
 - Document System (Canonical Renderer, 4 Templates, WYSIWYG PDF)
 - Delivery Closure (Dual-mode, locked records, audit trail)
-- Public Completion (Token/Phone/Order# → 3-screen mobile)
-- Track Order (6-step lifecycle, fulfillment-aware CTA)
-- Walk-in POS Sale (one-screen, auto-completion, assisted commission)
-- Advanced Analytics (KPIs, revenue trends, channels, funnel, operations health)
-- Data Integrity Dashboard (health score, compliance/order/fulfillment monitoring)
+- Public Completion (Token/Phone/Order#)
+- Walk-in POS Sale + Account Mapping
+- Advanced Analytics + Data Integrity Dashboard
 - Settings Hub (unified, pricing tiers source-of-truth)
 - Business Client Validation (VRN + BRN)
-- EFD Receipt Workflow (on-demand)
-- Customer Portal (/account) with completion CTA + documents
-- Account Mapping (phone → historical orders)
+- EFD Receipt Workflow
+
+## Key API Endpoints
+- `/api/admin/group-deals/campaigns` — CRUD
+- `/api/admin/group-deals/campaigns/{id}/join` — commitment (multi-unit)
+- `/api/admin/group-deals/campaigns/{id}/finalize` — buyer orders + VBO
+- `/api/admin/group-deals/campaigns/{id}/cancel` — fail + refund_pending
+- `/api/admin/group-deals/campaigns/{id}/process-refunds` — mark refunded
+- `/api/admin/group-deals/campaigns/{id}/set-featured` — Deal of the Day
+- `/api/admin/group-deals/vendor-back-orders` — list VBOs
+- `/api/public/group-deals` — ranked active deals
+- `/api/public/group-deals/featured` — top 6 for homepage
+- `/api/public/group-deals/deal-of-the-day` — featured deal
+- `/api/customer/group-deals?phone=X` — user's commitments
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
@@ -58,17 +95,7 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 - Vendor: `demo.partner@konekt.com` / `Partner123!`
 - Staff/Sales: `staff@konekt.co.tz` / `Staff123!`
 
-## Key API Endpoints
-- `/api/admin/group-deals/campaigns` — CRUD
-- `/api/admin/group-deals/campaigns/{id}/join` — commitment only
-- `/api/admin/group-deals/campaigns/{id}/finalize` — buyer orders + VBO
-- `/api/admin/group-deals/campaigns/{id}/cancel` — fail + refund_pending
-- `/api/admin/group-deals/campaigns/{id}/process-refunds` — mark refunded
-- `/api/admin/group-deals/vendor-back-orders` — list VBOs
-- `/api/public/group-deals` — ranked active deals
-- `/api/public/group-deals/featured` — top 6 for homepage
-- `/api/public/group-deals/{id}` — deal detail (hides internals)
-
 ## Backlog
-- Twilio WhatsApp Integration (blocked on keys — hooks ready)
-- Resend Email Integration (blocked on keys — hooks ready)
+- Twilio WhatsApp Integration (hooks ready, keys needed)
+- Resend Email Integration (key configured, dispatch implementation)
+- First 3 launch campaigns (product selection + pricing)
