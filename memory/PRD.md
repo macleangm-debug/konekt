@@ -3,49 +3,55 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Status: DEPLOYMENT READY — Full Financial Control Active
+## System Status: DEPLOYMENT READY — Full Business Control System
 
-## Commission & Margin Distribution Engine (COMPLETE)
-- Commission from **distributable margin** (NOT revenue)
-- **ONE channel per order** — no mixing (enforced)
-- 5 channels: Direct, Assisted, Affiliate, Referral, Group Deal
-- **Priority order**: Vendor Cost → Stakeholder Allocations → Company Core → Promotion Reserve → Wallet
-- Wallet uses ONLY flexible margin (promotion reserve + remaining)
-- API: `/api/admin/commission/calculate` for previewing allocations
+## Customer Rating System (COMPLETE)
+- Rating triggered after order completion (5 states)
+- **Anti-manipulation**: token-based access, phone verification, one-per-order, 30-min delay
+- RatingPrompt on Track Order for completed orders (1-5 stars + optional comment)
+- Admin unrated orders follow-up queue with status tracking
+- Admin rating summary (total, average, low-rating alerts)
+- Feeds into KPI (configurable weight)
 
-### Channel Commission Rules
-| Channel | Sales | Affiliate | Referral | Company |
-|---------|-------|-----------|----------|---------|
-| Direct | 15% of margin | - | - | 8% core |
-| Assisted | 10% of margin | - | - | 8% core |
-| Affiliate | 5% support | 10% of margin | - | 8% core |
-| Referral | - | - | 10% of margin | 8% core |
-| Group Deal | Campaign-level | Campaign-level | - | Majority |
+## Commission & Margin Distribution Engine
+- Commission from distributable margin, NOT revenue
+- ONE channel per order: Direct/Assisted/Affiliate/Referral/Group Deal
+- Wallet limited to flexible margin (promotion reserve + remaining)
+- API: `/api/admin/commission/calculate`
 
-### Settings Hub — Financial Controls
-- Wallet: enabled/disabled, max per order, max % per order, protect allocations toggle
-- Channel: enforce single channel per order toggle
-- Ratings: enabled, trigger (delivery_confirmed), scale (1-5), allow comment
-- Sales visibility: commission display controls (total/monthly/pending/paid)
-
-## Track Order = Universal Status Page (UX Simplified)
-- **Radio selector**: Phone (default) / Order-Deal Reference / Email
-- Only ONE input visible at a time — zero confusion
-- Phone search → group deal commitments
-- GDC-ref search → group deal status (full-width card)
-- ORD-ref search → normal order lifecycle
+## Track Order = Universal Status Page
+- Radio selector: Phone (default) / Reference / Email — single input
+- Normal orders, GDC references, phone search
+- Rating prompt for completed orders
+- Fulfillment-aware CTAs
 
 ## Performance Dashboard (/admin/performance)
-- KPI strip, channel split, sales leaderboard (profit-first), affiliate leaderboard (earnings-only)
+- KPI strip, channel split, sales leaderboard (profit-first), affiliate (earnings-only)
 - Action panel with smart recommendations
-- Rating quality metrics in KPI settings
+- Rating integration in KPI settings
+
+## Settings Hub — All Configurable
+- Commission: sales direct/assisted %, affiliate %, referral %, company core, promo reserve
+- Wallet: enabled, max per order, protect allocations, single channel enforcement
+- Ratings: enabled, trigger, scale, comment toggle
+- Performance: targets, channel allocation, team sizes, KPI thresholds
+- Sales visibility: commission display controls
+
+## Key API Endpoints
+- `/api/ratings/check` — rating eligibility (token or order+phone)
+- `/api/ratings/submit` — submit rating (1-5, one per order)
+- `/api/admin/ratings/unrated-orders` — follow-up queue
+- `/api/admin/ratings/summary` — rating stats
+- `/api/admin/ratings/followup/{order_number}` — update follow-up
+- `/api/admin/commission/calculate` — preview margin distribution
+- `/api/admin/performance/dashboard` — KPI data
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 
 ## Backlog
-- Twilio WhatsApp + Resend Email dispatch (hooks ready)
-- Customer rating system (post-completion 1-5 stars)
-- Sales commission dashboard (personal view)
-- Vendor product image upload pipeline (WebP, thumbnails)
+- Twilio WhatsApp + Resend Email dispatch
+- Sales commission personal dashboard
+- Vendor product image upload pipeline
+- Password-gated settings lock
