@@ -5,53 +5,50 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## System Status: DEPLOYMENT READY — Full Business Control System
 
-## Customer Rating System (COMPLETE)
-- Rating triggered after order completion (5 states)
-- **Anti-manipulation**: token-based access, phone verification, one-per-order, 30-min delay
-- RatingPrompt on Track Order for completed orders (1-5 stars + optional comment)
-- Admin unrated orders follow-up queue with status tracking
-- Admin rating summary (total, average, low-rating alerts)
-- Feeds into KPI (configurable weight)
+## Sales Commission Dashboard (ENHANCED)
+- Personal "My Earnings" view at `/staff/home`
+- Commission KPIs: Expected, Pending Payout, Paid
+- Ratings integrated from `customer_ratings` collection + legacy `orders.rating`
+- Per-order commission table with status (pending/paid)
+- Average Rating + Recent Ratings section
+- Sales leaderboard with rating column
+- No revenue/vendor cost/affiliate data exposed to sales
+
+## Promotion Display (AMOUNT-BASED — System-wide)
+- ALL customer-facing promotions show "Save TZS X" (NOT "X% off")
+- Applied to: marketplace cards, group deals, homepage, deal of the day, referral page
+- Admin profit calculator shows both amount and percentage for reference
+- Original price → Current price → Amount saved
+
+## Customer Rating System
+- Token-based + phone-verified, one per order, 30-min delay
+- RatingPrompt on Track Order for completed orders
+- Admin unrated orders follow-up queue
+- Feeds into KPI + sales dashboard
 
 ## Commission & Margin Distribution Engine
-- Commission from distributable margin, NOT revenue
-- ONE channel per order: Direct/Assisted/Affiliate/Referral/Group Deal
-- Wallet limited to flexible margin (promotion reserve + remaining)
-- API: `/api/admin/commission/calculate`
+- Distributable margin (NOT revenue)
+- ONE channel per order, wallet protected
+- 5 channels: Direct/Assisted/Affiliate/Referral/Group Deal
 
 ## Track Order = Universal Status Page
-- Radio selector: Phone (default) / Reference / Email — single input
-- Normal orders, GDC references, phone search
-- Rating prompt for completed orders
-- Fulfillment-aware CTAs
+- Radio selector: Phone/Reference/Email, single input
+- Normal orders + GDC references + phone search + rating prompt
 
 ## Performance Dashboard (/admin/performance)
-- KPI strip, channel split, sales leaderboard (profit-first), affiliate (earnings-only)
+- KPI strip, channel split, profit-first sales leaderboard, earnings-only affiliate table
 - Action panel with smart recommendations
-- Rating integration in KPI settings
-
-## Settings Hub — All Configurable
-- Commission: sales direct/assisted %, affiliate %, referral %, company core, promo reserve
-- Wallet: enabled, max per order, protect allocations, single channel enforcement
-- Ratings: enabled, trigger, scale, comment toggle
-- Performance: targets, channel allocation, team sizes, KPI thresholds
-- Sales visibility: commission display controls
-
-## Key API Endpoints
-- `/api/ratings/check` — rating eligibility (token or order+phone)
-- `/api/ratings/submit` — submit rating (1-5, one per order)
-- `/api/admin/ratings/unrated-orders` — follow-up queue
-- `/api/admin/ratings/summary` — rating stats
-- `/api/admin/ratings/followup/{order_number}` — update follow-up
-- `/api/admin/commission/calculate` — preview margin distribution
-- `/api/admin/performance/dashboard` — KPI data
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 
-## Backlog
-- Twilio WhatsApp + Resend Email dispatch
-- Sales commission personal dashboard
+## Next Priority
+- Affiliate System Polish (application → approval → setup → dashboard)
+- Resend Email Activation (hooks ready)
 - Vendor product image upload pipeline
+
+## Backlog
+- Twilio WhatsApp messaging
 - Password-gated settings lock
+- Super Agent operational dashboard

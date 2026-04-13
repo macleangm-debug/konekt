@@ -88,7 +88,7 @@ export default function ReferralLandingPage() {
 
             <p className="mt-6 text-lg md:text-xl text-slate-200 max-w-2xl mx-auto">
               {data.referrer_name} shared a special invitation with you.
-              Sign up now and get <span className="font-bold text-[#D4A843]">{data.discount_percent || 10}% off</span> your first order!
+              Sign up now and <span className="font-bold text-[#D4A843]">save TZS {Number(data.discount_amount || 5000).toLocaleString("en-US")}</span> on your first order!
             </p>
           </motion.div>
         </div>
