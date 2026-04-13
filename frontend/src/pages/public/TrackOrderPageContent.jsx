@@ -8,6 +8,7 @@ import api from "../../lib/api";
 import PhoneNumberField from "../../components/forms/PhoneNumberField";
 import { combinePhone } from "../../utils/phoneUtils";
 import OrderCodeCard from "../../components/tracking/OrderCodeCard";
+import RatingPrompt from "../../components/public/RatingPrompt";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
 function money(v) { return `TZS ${Number(v || 0).toLocaleString()}`; }
@@ -274,6 +275,11 @@ export default function TrackOrderPageContent() {
                   </div>
                 );
               })()}
+
+              {/* Rating Prompt — shown for completed orders */}
+              {["completed","completed_signed","completed_confirmed","closed","delivered"].includes((order.status || "").toLowerCase()) && (
+                <RatingPrompt orderNumber={order.order_number || order.id} phone={order.customer_phone || ""} />
+              )}
             </div>
           )}
         </div>

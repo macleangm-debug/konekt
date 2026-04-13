@@ -3109,6 +3109,11 @@ app.include_router(performance_kpi_router)
 from commission_routes import router as commission_router
 app.include_router(commission_router)
 
+from customer_rating_routes import router as customer_rating_router, admin_router as admin_rating_router
+app.include_router(customer_rating_router)
+app.include_router(admin_rating_router)
+
+
 
 
 from public_request_routes import router as public_request_router
