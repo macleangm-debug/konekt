@@ -3,49 +3,49 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth
 
-## System Status: DEPLOYMENT READY — Full KPI System Active
+## System Status: DEPLOYMENT READY — Full Financial Control Active
 
-## Performance & KPI System (Batch 2 — COMPLETE)
+## Commission & Margin Distribution Engine (COMPLETE)
+- Commission from **distributable margin** (NOT revenue)
+- **ONE channel per order** — no mixing (enforced)
+- 5 channels: Direct, Assisted, Affiliate, Referral, Group Deal
+- **Priority order**: Vendor Cost → Stakeholder Allocations → Company Core → Promotion Reserve → Wallet
+- Wallet uses ONLY flexible margin (promotion reserve + remaining)
+- API: `/api/admin/commission/calculate` for previewing allocations
 
-### Settings Hub: Performance Targets
-- Monthly Revenue Target (TZS)
-- Target Margin %
-- Channel Allocation (Sales/Affiliate/Direct/Group Deals — must sum to 100%)
-- Team sizes (sales staff count, affiliate count)
-- Minimum KPI thresholds (sales min %, affiliate min %)
-- Auto-calculated per-person targets
+### Channel Commission Rules
+| Channel | Sales | Affiliate | Referral | Company |
+|---------|-------|-----------|----------|---------|
+| Direct | 15% of margin | - | - | 8% core |
+| Assisted | 10% of margin | - | - | 8% core |
+| Affiliate | 5% support | 10% of margin | - | 8% core |
+| Referral | - | - | 10% of margin | 8% core |
+| Group Deal | Campaign-level | Campaign-level | - | Majority |
 
-### KPI Engine Backend
-- Per-channel: revenue, profit, target, achievement_pct, contribution_pct, deal count
-- Per-sales: profit (PRIMARY), revenue, deals, target_profit, achievement_pct, status
-- Per-affiliate: earnings ONLY (no revenue/margin), deals, conversions, status
-- Channels: Sales, Affiliate, Direct, Group Deals
-- Smart recommendations: staffing needs, underperformer alerts, channel gap analysis
+### Settings Hub — Financial Controls
+- Wallet: enabled/disabled, max per order, max % per order, protect allocations toggle
+- Channel: enforce single channel per order toggle
+- Ratings: enabled, trigger (delivery_confirmed), scale (1-5), allow comment
+- Sales visibility: commission display controls (total/monthly/pending/paid)
 
-### Performance Dashboard (/admin/performance)
-- KPI Strip: total profit, achievement %, revenue, active sales, active affiliates
-- Channel Split bar + channel cards with progress bars
-- Sales leaderboard: profit-first, revenue secondary, status badges
-- Affiliate leaderboard: earnings-only (no revenue/profit/margin)
-- Action panel: warnings + insights ("You need +X sales staff", "Channel below target by X%")
-- Month/year filter
-- Mobile card layouts for leaderboards
+## Track Order = Universal Status Page (UX Simplified)
+- **Radio selector**: Phone (default) / Order-Deal Reference / Email
+- Only ONE input visible at a time — zero confusion
+- Phone search → group deal commitments
+- GDC-ref search → group deal status (full-width card)
+- ORD-ref search → normal order lifecycle
 
-## Group Deal Checkout (Canonical — No Popup)
-- Detail → /group-deals/checkout → Details → Payment & Proof (bank details) → Confirmation
-- Payment: pending_payment → payment_submitted → admin approve → committed
-- Admin payment queue with one-click Approve
-
-## Track Order = Universal Status Page
-- Normal orders + GDC references + phone-only search
-- All 6 group deal states with full-width layout
+## Performance Dashboard (/admin/performance)
+- KPI strip, channel split, sales leaderboard (profit-first), affiliate leaderboard (earnings-only)
+- Action panel with smart recommendations
+- Rating quality metrics in KPI settings
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 
 ## Backlog
-- Twilio WhatsApp + Resend Email dispatch
-- Commission alignment with distributable margin
-- Super Agent operational dashboard
-- Country-based payment method display
+- Twilio WhatsApp + Resend Email dispatch (hooks ready)
+- Customer rating system (post-completion 1-5 stars)
+- Sales commission dashboard (personal view)
+- Vendor product image upload pipeline (WebP, thumbnails)
