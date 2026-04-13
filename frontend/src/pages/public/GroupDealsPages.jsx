@@ -3,8 +3,6 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { Clock, Users, Check, ArrowLeft, ShoppingCart, Shield, Share2, Copy, MessageCircle } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const fmt = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
@@ -75,7 +73,6 @@ export function GroupDealsListPage() {
   );
 }
 
-
 function ShareButtons({ dealUrl, productName }) {
   const shareText = `Check out this group deal on Konekt: ${productName} — join and save!`;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + " " + dealUrl)}`;
@@ -93,65 +90,13 @@ function ShareButtons({ dealUrl, productName }) {
 }
 
 
-// ─── PAYMENT PROOF FORM (reuses bank payment pattern) ───
-function PaymentProofStep({ commitmentRef, amount, productName, onComplete }) {
-  const [form, setForm] = useState({ payer_name: "", amount_paid: String(amount || ""), bank_reference: "", payment_method: "bank_transfer", payment_date: new Date().toISOString().split("T")[0] });
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.payer_name) { toast.error("Payer name required"); return; }
-    if (!form.amount_paid) { toast.error("Amount required"); return; }
-    setSubmitting(true);
-    try {
-      await api.post("/api/public/group-deals/submit-payment", { commitment_ref: commitmentRef, ...form, amount_paid: parseFloat(form.amount_paid) });
-      onComplete();
-    } catch (err) { toast.error(err.response?.data?.detail || "Payment submission failed"); }
-    finally { setSubmitting(false); }
-  };
-
-  return (
-    <div className="space-y-4" data-testid="payment-proof-step">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="text-sm font-bold text-blue-800">Complete Your Payment</div>
-        <p className="text-xs text-blue-700 mt-1">Transfer {fmt(amount)} for "{productName}" and provide your payment details below.</p>
-      </div>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <div><Label>Payer Name *</Label><Input value={form.payer_name} onChange={(e) => setForm(p => ({ ...p, payer_name: e.target.value }))} placeholder="Name on payment" required data-testid="payment-payer-name" /></div>
-        <div><Label>Amount Paid *</Label><Input type="number" value={form.amount_paid} onChange={(e) => setForm(p => ({ ...p, amount_paid: e.target.value }))} required data-testid="payment-amount" /></div>
-        <div><Label>Bank Reference / Transaction ID</Label><Input value={form.bank_reference} onChange={(e) => setForm(p => ({ ...p, bank_reference: e.target.value }))} placeholder="e.g. TXN-12345" data-testid="payment-reference" /></div>
-        <div><Label>Payment Method</Label>
-          <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={form.payment_method} onChange={(e) => setForm(p => ({ ...p, payment_method: e.target.value }))} data-testid="payment-method-select">
-            <option value="bank_transfer">Bank Transfer</option><option value="mobile_money">Mobile Money</option><option value="cash">Cash</option>
-          </select>
-        </div>
-        <div><Label>Payment Date</Label><Input type="date" value={form.payment_date} onChange={(e) => setForm(p => ({ ...p, payment_date: e.target.value }))} data-testid="payment-date" /></div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 px-1">
-          <Shield className="w-3 h-3 text-green-500 flex-shrink-0" />
-          <span>Your payment will be verified before your spot is confirmed.</span>
-        </div>
-        <Button type="submit" disabled={submitting} className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-3" data-testid="submit-payment-btn">
-          {submitting ? "Submitting..." : "Submit Payment Proof"}
-        </Button>
-      </form>
-    </div>
-  );
-}
-
-
 // ─── DEAL DETAIL PAGE ───
 
 export default function GroupDealDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [deal, setDeal] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showJoin, setShowJoin] = useState(false);
-  const [joinForm, setJoinForm] = useState({ customer_name: "", customer_phone: "", quantity: 1 });
-  const [joining, setJoining] = useState(false);
-  // Flow states: 'browse' → 'payment' → 'submitted'
-  const [flowState, setFlowState] = useState("browse");
-  const [commitmentRef, setCommitmentRef] = useState("");
-  const [commitmentAmount, setCommitmentAmount] = useState(0);
 
   useEffect(() => {
     api.get(`/api/public/group-deals/${id}`)
@@ -159,29 +104,6 @@ export default function GroupDealDetailPage() {
       .catch(() => toast.error("Deal not found"))
       .finally(() => setLoading(false));
   }, [id]);
-
-  const handleJoin = async (e) => {
-    e.preventDefault();
-    if (!joinForm.customer_name && !joinForm.customer_phone) { toast.error("Name or phone required"); return; }
-    if (joining) return;
-    setJoining(true);
-    try {
-      const res = await api.post(`/api/admin/group-deals/campaigns/${id}/join`, { ...joinForm, quantity: Math.max(1, joinForm.quantity) });
-      const data = res.data;
-      setCommitmentRef(data.commitment_ref);
-      setCommitmentAmount(data.amount);
-      setShowJoin(false);
-      setFlowState("payment");
-      toast.success("Commitment created — now submit payment");
-    } catch (err) { toast.error(err.response?.data?.detail || "Failed to join"); }
-    finally { setJoining(false); }
-  };
-
-  const handlePaymentComplete = () => {
-    setFlowState("submitted");
-    // Refresh deal data
-    api.get(`/api/public/group-deals/${id}`).then((r) => setDeal(r.data)).catch(() => {});
-  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
   if (!deal) return <div className="min-h-screen flex items-center justify-center text-slate-500">Deal not found</div>;
@@ -192,78 +114,10 @@ export default function GroupDealDetailPage() {
   const spotsLeft = Math.max(0, deal.display_target - deal.current_committed);
   const dealUrl = `${window.location.origin}/group-deals/${id}`;
 
-  // ─── PAYMENT SUBMITTED STATE ───
-  if (flowState === "submitted") {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4" data-testid="payment-submitted-state">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-            <Check className="w-10 h-10 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-[#20364D] mb-2">Payment Submitted</h2>
-          <p className="text-slate-500 mb-1">{deal.product_name}</p>
-          <p className="text-sm text-slate-400 mb-4">We are verifying your payment. You will be notified once approved.</p>
-
-          <div className="bg-white rounded-2xl border p-5 text-left space-y-3 mb-4">
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Commitment Ref</span><span className="font-bold font-mono text-xs">{commitmentRef}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Amount</span><span className="font-bold">{fmt(commitmentAmount)}</span></div>
-            <div className="flex justify-between text-sm"><span className="text-slate-500">Status</span><span className="font-bold text-blue-600">Payment Under Review</span></div>
-          </div>
-
-          <div className="bg-slate-50 rounded-2xl border p-4 mb-4 text-left text-xs text-slate-500">
-            <p>Your order will be created once:</p>
-            <ol className="list-decimal ml-4 mt-1 space-y-0.5">
-              <li>Your payment is verified</li>
-              <li>The deal reaches its minimum target</li>
-            </ol>
-          </div>
-
-          {/* Share CTA */}
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4" data-testid="invite-friends-cta">
-            <div className="flex items-center gap-2 mb-2">
-              <Share2 className="w-4 h-4 text-amber-700" />
-              <span className="text-sm font-bold text-amber-800">Invite friends to unlock faster</span>
-            </div>
-            <ShareButtons dealUrl={dealUrl} productName={deal.product_name} />
-          </div>
-
-          <div className="flex items-center gap-2 justify-center text-xs text-slate-500 mb-4">
-            <Shield className="w-3.5 h-3.5 text-green-500" />
-            <span>Full refund if the deal doesn't reach its minimum</span>
-          </div>
-
-          <div className="flex gap-3 justify-center">
-            <Link to="/track-order" className="text-sm text-[#20364D] font-semibold hover:underline" data-testid="track-status-link">Track Status</Link>
-            <span className="text-slate-300">|</span>
-            <Link to="/group-deals" className="text-sm text-[#20364D] font-semibold hover:underline" data-testid="browse-more-deals">Browse More Deals</Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── PAYMENT PROOF STEP ───
-  if (flowState === "payment") {
-    return (
-      <div className="min-h-screen bg-slate-50" data-testid="deal-payment-step">
-        <div className="max-w-lg mx-auto p-4 md:p-8">
-          <button onClick={() => setFlowState("browse")} className="flex items-center gap-2 text-slate-500 hover:text-slate-700 text-sm mb-6">
-            <ArrowLeft className="w-4 h-4" /> Back to Deal
-          </button>
-          <div className="bg-white rounded-2xl border p-6">
-            <h2 className="text-lg font-bold text-[#20364D] mb-1">{deal.product_name}</h2>
-            <p className="text-sm text-slate-500 mb-4">Commitment Ref: <span className="font-mono">{commitmentRef}</span></p>
-            <PaymentProofStep
-              commitmentRef={commitmentRef}
-              amount={commitmentAmount}
-              productName={deal.product_name}
-              onComplete={handlePaymentComplete}
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Redirect to canonical checkout with mode=group_deal
+  const handleJoinDeal = () => {
+    navigate(`/group-deals/checkout?campaign_id=${id}`);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24 lg:pb-8" data-testid="deal-detail-page">
@@ -312,11 +166,11 @@ export default function GroupDealDetailPage() {
                 <div className="flex items-center gap-2 text-xs text-slate-500"><Shield className="w-3 h-3 text-green-500" /> Activates once minimum is reached</div>
                 <div className="flex items-center gap-2 text-xs text-slate-500"><Shield className="w-3 h-3 text-green-500" /> Full refund if campaign fails</div>
                 <div className="flex items-center gap-2 text-xs text-slate-500"><Check className="w-3 h-3 text-green-500" /> Secure payment — admin verified</div>
-                <div className="flex items-center gap-2 text-xs text-slate-500"><Users className="w-3 h-3 text-green-500" /> {deal.buyer_count || 0} buyers, {deal.current_committed} units committed</div>
+                <div className="flex items-center gap-2 text-xs text-slate-500"><Users className="w-3 h-3 text-green-500" /> {deal.buyer_count || 0} buyers, {deal.current_committed} units</div>
               </div>
 
               {deal.status === "active" ? (
-                <Button onClick={() => setShowJoin(true)} className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-3 text-base hidden lg:flex" data-testid="join-deal-btn-desktop">
+                <Button onClick={handleJoinDeal} className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-3 text-base hidden lg:flex" data-testid="join-deal-btn-desktop">
                   Join Deal — {fmt(deal.discounted_price)}/unit
                 </Button>
               ) : (
@@ -327,7 +181,7 @@ export default function GroupDealDetailPage() {
         </div>
       </div>
 
-      {/* Mobile sticky CTA */}
+      {/* Mobile sticky CTA — redirects to checkout page */}
       {deal.status === "active" && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-xl p-3 z-50 lg:hidden" data-testid="sticky-join-cta">
           <div className="flex items-center gap-3 max-w-lg mx-auto">
@@ -335,47 +189,9 @@ export default function GroupDealDetailPage() {
               <div className="text-xs text-slate-500 truncate">{deal.product_name}</div>
               <div className="text-base font-extrabold text-[#D4A843]">{fmt(deal.discounted_price)}/unit</div>
             </div>
-            <Button onClick={() => setShowJoin(true)} className="bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold px-6 py-3 flex-shrink-0" data-testid="join-deal-btn-mobile">
+            <Button onClick={handleJoinDeal} className="bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold px-6 py-3 flex-shrink-0" data-testid="join-deal-btn-mobile">
               Join Deal
             </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Join Modal (Step 1: Name + Phone + Quantity) */}
-      {showJoin && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50" onClick={() => setShowJoin(false)}>
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-md max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="join-modal">
-            <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mb-4 sm:hidden" />
-            <h3 className="text-lg font-bold text-[#20364D] mb-4">Join This Deal</h3>
-            <form onSubmit={handleJoin} className="space-y-3">
-              <div><Label>Name *</Label><Input value={joinForm.customer_name} onChange={(e) => setJoinForm(p => ({ ...p, customer_name: e.target.value }))} placeholder="Your name" data-testid="join-input-name" /></div>
-              <div><Label>Phone *</Label><Input value={joinForm.customer_phone} onChange={(e) => setJoinForm(p => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." data-testid="join-input-phone" /></div>
-              <div><Label>Quantity</Label>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => setJoinForm(p => ({ ...p, quantity: Math.max(1, (p.quantity || 1) - 1) }))}
-                    className="w-10 h-10 rounded-xl border flex items-center justify-center text-lg font-bold text-slate-600 hover:bg-slate-50" data-testid="qty-minus">-</button>
-                  <Input type="number" min="1" value={joinForm.quantity || 1}
-                    onChange={(e) => setJoinForm(p => ({ ...p, quantity: Math.max(1, parseInt(e.target.value) || 1) }))}
-                    className="text-center w-20" data-testid="join-input-quantity" />
-                  <button type="button" onClick={() => setJoinForm(p => ({ ...p, quantity: (p.quantity || 1) + 1 }))}
-                    className="w-10 h-10 rounded-xl border flex items-center justify-center text-lg font-bold text-slate-600 hover:bg-slate-50" data-testid="qty-plus">+</button>
-                  <span className="text-sm text-slate-500">units</span>
-                </div>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-xl text-sm font-semibold text-center">
-                Total: {fmt(deal.discounted_price * (joinForm.quantity || 1))}
-                {(joinForm.quantity || 1) > 1 && <span className="text-xs text-slate-500 block">{joinForm.quantity} x {fmt(deal.discounted_price)}</span>}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500 px-1">
-                <Shield className="w-3 h-3 text-green-500 flex-shrink-0" />
-                <span>You'll submit payment proof in the next step</span>
-              </div>
-              <Button type="submit" disabled={joining} className="w-full bg-[#D4A843] hover:bg-[#c49933] text-[#20364D] font-bold py-3" data-testid="confirm-join-btn">
-                {joining ? "Processing..." : "Continue to Payment"}
-              </Button>
-              <button type="button" onClick={() => setShowJoin(false)} className="w-full text-center text-sm text-slate-500 py-2">Cancel</button>
-            </form>
           </div>
         </div>
       )}

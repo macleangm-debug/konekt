@@ -165,6 +165,7 @@ import WalkInSalePage from "@/pages/admin/WalkInSalePage";
 import AdvancedAnalyticsDashboard from "@/pages/admin/AdvancedAnalyticsDashboard";
 import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
 import GroupDealDetailPage, { GroupDealsListPage } from "@/pages/public/GroupDealsPages";
+import GroupDealCheckoutPage from "@/pages/public/GroupDealCheckoutPage";
 import AccountGroupDealsPage from "@/pages/customer/AccountGroupDealsPage";
 
 // Super Admin Ecosystem Dashboard
@@ -878,6 +879,7 @@ function App() {
           <Route path="confirm-completion" element={<ConfirmCompletionPage />} />
           <Route path="group-deals" element={<GroupDealsListPage />} />
           <Route path="group-deals/:id" element={<GroupDealDetailPage />} />
+          <Route path="group-deals/checkout" element={<GroupDealCheckoutPage />} />
           <Route path="about" element={<AboutPageContent />} />
           <Route path="contact" element={<ContactPageContent />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />

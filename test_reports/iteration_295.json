@@ -1,0 +1,111 @@
+{
+  "summary": "Group Deal Canonical Full-Page Checkout v295 testing complete. All features verified: (1) Deal detail 'Join Deal' button redirects to /group-deals/checkout?campaign_id=X (NO popup/modal). (2) Checkout Step 1 has full name, phone, email, quantity +/- buttons, 'Continue to Payment' button. (3) Step 2 shows bank details block with CRDB BANK, KONEKT LIMITED, 015C8841347002, CORUTZTZ, HOLLAND HOUSE - identical to normal checkout. (4) Payment reference shows GDC-XXXX format. (5) Step 3 shows 'Payment Submitted', commitment ref, amount, 'Under Review' status, share CTAs (WhatsApp + Copy Link), Track Status and Browse More Deals links. (6) Admin pending payments section shows submitted payments with Approve buttons. (7) Mobile sticky CTA also redirects to checkout (not popup).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_payment_flow_v294.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_payment_flow_v294.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Used existing TEST_ prefixed campaigns from iteration 294",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Group Deal Canonical Full-Page Checkout v295 verified. Key changes from v294: (1) Replaced popup/modal join flow with full-page checkout at /group-deals/checkout?campaign_id=X. (2) GroupDealCheckoutPage has 3-step flow: Details → Payment & Proof → Confirmation. (3) Step 1 collects customer details (name, phone, email, quantity with +/- buttons). (4) Step 2 shows bank details block (fetched from /api/public/payment-info) with CRDB BANK, KONEKT LIMITED, 015C8841347002, CORUTZTZ, HOLLAND HOUSE. (5) Payment reference shows commitment ref (GDC-XXXX). (6) Payment proof form has payer name, amount, bank reference, payment method, date. (7) Step 3 shows confirmation with 'Payment Submitted', commitment ref, amount, 'Under Review' status. (8) Share CTAs: WhatsApp + Copy Link. (9) Track Status and Browse More Deals links. (10) Mobile sticky CTA also redirects to checkout (not popup). (11) Admin pending payments section shows submitted payments with Approve buttons. (12) No popup/modal exists anywhere in the join flow.",
+  "features_tested": {
+    "deal_detail_join_redirect": {
+      "status": "PASS",
+      "details": [
+        "'Join Deal' button (desktop) redirects to /group-deals/checkout?campaign_id=X",
+        "NO popup/modal appears",
+        "URL contains campaign_id query parameter"
+      ]
+    },
+    "checkout_step1_details": {
+      "status": "PASS",
+      "details": [
+        "Full name input field present",
+        "Phone number input field present",
+        "Email input field present (optional)",
+        "Quantity selector with +/- buttons",
+        "'Continue to Payment' button present",
+        "Deal Summary sidebar shows product info, quantity, price, total"
+      ]
+    },
+    "checkout_step2_payment": {
+      "status": "PASS",
+      "details": [
+        "Bank details block present with correct info",
+        "Bank Name: CRDB BANK",
+        "Account Name: KONEKT LIMITED",
+        "Account Number: 015C8841347002",
+        "SWIFT Code: CORUTZTZ",
+        "Branch: HOLLAND HOUSE",
+        "Payment reference shows GDC-XXXX format",
+        "Amount to transfer shows correct total",
+        "Copy buttons for reference and amount",
+        "Payment proof form with payer name, amount, bank reference, payment method, date",
+        "'Submit Payment Proof' button present"
+      ]
+    },
+    "checkout_step3_confirmation": {
+      "status": "PASS",
+      "details": [
+        "'Payment Submitted' message displayed",
+        "Commitment ref shown",
+        "Amount shown",
+        "Status shows 'Payment Under Review'",
+        "'Invite friends to unlock faster' CTA present",
+        "WhatsApp share button present",
+        "Copy Link button present",
+        "'Track Status' link present",
+        "'Browse More Deals' link present"
+      ]
+    },
+    "mobile_sticky_cta": {
+      "status": "PASS",
+      "details": [
+        "Sticky CTA visible on mobile",
+        "'Join Deal' button redirects to checkout (not popup)",
+        "Mobile checkout page loads correctly"
+      ]
+    },
+    "admin_pending_payments": {
+      "status": "PASS",
+      "details": [
+        "Pending payments section visible in admin",
+        "Shows customer name, phone, campaign, units, amount, bank reference",
+        "Approve button present for each pending payment",
+        "Found 13 pending payments awaiting approval"
+      ]
+    },
+    "no_popup_modal": {
+      "status": "PASS",
+      "details": [
+        "No popup/modal appears when clicking 'Join Deal'",
+        "Full-page checkout flow used instead"
+      ]
+    },
+    "bank_details_identical_to_normal_checkout": {
+      "status": "PASS",
+      "details": [
+        "Bank details fetched from /api/public/payment-info",
+        "Same format and styling as normal checkout",
+        "All bank details match: CRDB BANK, KONEKT LIMITED, 015C8841347002, CORUTZTZ, HOLLAND HOUSE"
+      ]
+    }
+  }
+}
