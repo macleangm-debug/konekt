@@ -1,0 +1,100 @@
+{
+  "summary": "Track Order page fix v296 testing complete. All features verified: (1) GDC-ref search shows full-width group deal status card with commitment ref, status badge, description, details grid, campaign progress bar. (2) Group deal results render in FULL WIDTH (lg:col-span-2), not in right sidebar. (3) Normal order search still works with order lifecycle, timeline, fulfillment CTA. (4) Subtitle text updated to mention 'group deal reference' and 'phone number'. (5) Placeholder text shows 'ORD-... or GDC-...' format. (6) Phone-only search returns group deal commitments. (7) Different status states render correctly: pending_payment (Awaiting Payment), payment_submitted (Payment Under Review), committed (Payment Approved). (8) Campaign progress bar shows units, buyers, days left for active commitments. (9) Admin pending payments queue with Approve buttons working. (10) Group deal checkout flow still works (redirect from deal detail to /group-deals/checkout).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_group_deals_payment_flow_v294.py",
+    "/app/test_reports/pytest/pytest_results_group_deals_payment_flow_v294.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Used existing TEST_ prefixed campaigns and commitments from previous iterations",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Track Order page v296 verified. Key changes: (1) Grid layout uses lg:grid-cols-2 with group deal section using lg:col-span-2 for full-width display. (2) Group deal results appear BELOW the search form spanning full width, NOT in the right sidebar column. (3) Subtitle updated to 'Enter your order number, group deal reference, or phone number to check your status.' (4) Placeholder shows 'e.g. ORD-20260406-XXXXX or GDC-XXXX-XXXXX'. (5) Phone-only search (no order number) returns group deal commitments. (6) Status states: pending_payment='Awaiting Payment', payment_submitted='Payment Under Review', committed='Payment Approved', order_created='Deal Successful', refund_pending='Refund Pending', refunded='Refunded'. (7) Campaign progress bar shows units/target, buyers count, days left. (8) Admin pending payments queue at /admin/group-deals shows 'Payments Awaiting Approval' section with Approve buttons.",
+  "features_tested": {
+    "gdc_ref_search": {
+      "status": "PASS",
+      "details": [
+        "GDC-ref search (e.g., GDC-FAB693A2-37B2BA) returns group deal status",
+        "Full-width card with commitment ref, status badge, description",
+        "Details grid: Quantity, Amount, Customer, Joined date",
+        "Campaign progress bar with units, buyers, days left"
+      ]
+    },
+    "full_width_layout": {
+      "status": "PASS",
+      "details": [
+        "Group deal results have lg:col-span-2 class",
+        "Results appear BELOW search form spanning full width",
+        "NOT squeezed in right sidebar column"
+      ]
+    },
+    "normal_order_search": {
+      "status": "PASS",
+      "details": [
+        "Order search (e.g., ORD-20260311-2C3D7A) returns order details",
+        "Order lifecycle timeline displayed",
+        "Status badge and payment status shown"
+      ]
+    },
+    "subtitle_and_placeholder": {
+      "status": "PASS",
+      "details": [
+        "Subtitle: 'Enter your order number, group deal reference, or phone number to check your status.'",
+        "Placeholder: 'e.g. ORD-20260406-XXXXX or GDC-XXXX-XXXXX'"
+      ]
+    },
+    "phone_only_search": {
+      "status": "PASS",
+      "details": [
+        "Phone-only search (no order number) returns group deal commitments",
+        "Tested with phone: +255700999001"
+      ]
+    },
+    "status_states": {
+      "status": "PASS",
+      "details": [
+        "pending_payment: 'Awaiting Payment' badge (amber)",
+        "payment_submitted: 'Payment Under Review' badge (blue)",
+        "committed: 'Payment Approved' badge (green)"
+      ]
+    },
+    "campaign_progress_bar": {
+      "status": "PASS",
+      "details": [
+        "Shows units committed / target",
+        "Shows buyer count",
+        "Shows days left for active commitments"
+      ]
+    },
+    "admin_pending_payments": {
+      "status": "PASS",
+      "details": [
+        "Pending payments section visible at /admin/group-deals",
+        "Shows 'Payments Awaiting Approval (13)'",
+        "Each payment has Approve button"
+      ]
+    },
+    "group_deal_checkout_flow": {
+      "status": "PASS",
+      "details": [
+        "'Join Deal' button redirects to /group-deals/checkout?campaign_id=X",
+        "Checkout page has 3-step flow: Details → Payment & Proof → Confirmation"
+      ]
+    }
+  }
+}
