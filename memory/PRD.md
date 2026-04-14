@@ -3,76 +3,55 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: DEPLOYMENT READY — Full Business Control System + Growth Engine + Email System
+## System Status: LAUNCH READY — Full Business Control + Growth Engine + Email + Activation System
 
-## Sales Promo Code System - NEW
-- **Personal promo codes** for sales staff (same validation as affiliate codes)
-- Validated uniqueness across affiliates, other sales, and promotions
+## Affiliate Application (Qualification-Based) - ENHANCED
+- **5-Section Form**: Personal Info, Online Presence (platform, audience, social links), Promotion Strategy, Commitment (expected sales, weekly activity), Agreement
+- **Admin Qualification Summary**: Audience size, primary platform, expected monthly sales, prior experience, fit score (High/Medium/Low)
+- **Token-Based Activation**: On approval, secure 48h single-use activation token generated
+- **Dual Channel**: Email auto-sent + WhatsApp button in admin drawer (prefilled message with link)
+- **Activation Page**: `/activate?token=XYZ` — password creation, then login, then setup wizard
+- **Activation Tracking**: email_sent, whatsapp_opened, activated, setup_completed — all visible in admin
+- **Application Emails**: Received (auto), Approved (with activation CTA), Rejected (with reason)
+- **SLA**: Configurable "48-72 hours" response text in Settings Hub
+
+## Sales Promo Code System
+- Personal promo codes for sales staff, validated across system
+- Content Studio on Sales Dashboard with campaign cards
 - `sales_promo_codes_enabled` toggle in Settings Hub
-- Attribution chain: `?ref=CODE` -> checkout auto-fill -> commission mapped
 
-## Unified Creative Generator - NEW  
-- **ONE shared engine** (`/app/backend/services/creative_generator_service.py`)
-- Role-based promo injection: Admin (no code), Sales (sales code), Affiliate (affiliate code)
-- Always uses amount-based promotions ("Save TZS X", never percentages)
-- Campaign cards with: Copy Caption, Copy Link, Quick Share (copies all in one tap)
-- Content Studio added to Sales Dashboard (`SalesPromoStudio` component)
+## Unified Creative Generator
+- ONE shared engine across Admin/Sales/Affiliate
+- Role-based promo injection, amount-based promotions only
 
-## Canonical Email Engine - NEW
-- **Settings-driven**, brand-consistent email templates via Resend API
-- Pulls branding from Business Settings (logo, colors, company name, footer)
-- **Email trigger toggles** in Settings Hub (9 triggers independently toggleable):
-  - Payment Submitted, Payment Approved, Order Confirmed, Order Completed
-  - Group Deal Joined, Group Deal Successful, Withdrawal Approved
-  - Affiliate Application Approved, Rating Request
-- **Order Completed Email**: Includes sales/service person name + "Rate Your Experience" CTA
-  - Rate-limited: only sent once per order via `email_sent_log` collection
-  - CTA only shown if order not already rated
-- **Email Template Preview** in Settings Hub admin
-- All emails: mobile-friendly, clean design, consistent branding
+## Canonical Email Engine (Resend)
+- Settings-driven templates, 9 trigger toggles, email preview in admin
+- Order Completed email with staff name + "Rate Your Experience" CTA (rate-limited)
 
 ## Affiliate System (Full Controlled Program)
-- **Application Gate**: Public apply page with Apply Now + Check Status tabs
-- **Admin Review**: Stats banner, approve/reject with notes, max affiliates control
-- **Setup Wizard**: Payout Details -> Custom Promo Code -> Confirmation (dashboard blocked until complete)
-- **Dashboard**: Earnings-only KPIs, target progress, wallet, content studio
-- **Contract Tiers**: Starter (1m), Growth (3m), Top Performer (6m) with configurable targets
-- **Status Engine**: active/warning/probation/suspended with auto-evaluation
+- Setup Wizard: Payout -> Promo Code -> Confirm (dashboard blocked until complete)
+- Dashboard: Earnings-only KPIs, target progress, content studio, wallet, notifications
+- Contract Tiers: Starter/Growth/Top with configurable targets
+- Status Engine: active/warning/probation/suspended
 
-## Sales Commission Dashboard
-- Personal "My Earnings" view at `/staff/home`
-- Commission KPIs + Ratings + Promo Code Studio
-
-## Promotion Display (AMOUNT-BASED — System-wide)
-- ALL customer-facing promotions show "Save TZS X" (NOT "X% off")
-
-## Customer Rating System
-- Token-based + phone-verified, one per order, 30-min delay
-
-## Commission & Margin Distribution Engine
-- Distributable margin, ONE channel per order, wallet protected, 5 channels
-
-## Track Order = Universal Status Page
-- Radio selector, normal orders + GDC + phone search + rating prompt
-
-## Performance Dashboard (/admin/performance)
-- KPI strip, channel split, profit-first sales leaderboard, earnings-only affiliate table
+## Base Public URL Setting
+- Single configurable source for all external links (affiliates, sales, referrals, activation, sharing)
+- In Settings Hub under Business Profile
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!` (promo code: STAFF2024)
-- Test Affiliate: `wizard.test@example.com` / `5cf702ec-737` (code: WIZARD2024)
-
-## Key API Endpoints (New)
-- `GET/POST /api/sales-promo/my-code|create-code|validate-code|campaigns` - Sales promo system
-- `GET /api/admin/email/preview/{template}|triggers` - Email management
-- `POST /api/admin/email/test-send` - Test email
+- Test Affiliate: `qualifier.test@example.com` / `Qualifier123!`
+- Legacy Test: `wizard.test@example.com` / `5cf702ec-737` (code: WIZARD2024)
 
 ## Next Priority
 - Vendor Product Image Pipeline
 - Super Agent Operational Dashboard
+- Group Deal WhatsApp rich share message
 
 ## Backlog
-- Twilio WhatsApp messaging
-- Password-gated settings lock
+- Twilio WhatsApp Integration
+- Password-Gated Settings Lock
 - Downloadable Creative Image Generator (Phase 2)
+- Terms of Service update (Affiliate, Promo Codes, Wallet, Group Deals, Ratings)
+- Vendor Proposal Document extension
