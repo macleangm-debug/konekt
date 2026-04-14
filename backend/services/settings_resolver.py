@@ -342,6 +342,24 @@ PLATFORM_DEFAULTS = {
         "show_revenue": False,
         "show_profit_breakdown": False,
     },
+    "business_profile": {
+        "legal_name": "",
+        "brand_name": "",
+        "tagline": "",
+        "support_email": "",
+        "support_phone": "",
+        "business_address": "",
+        "tax_id": "",
+        "vat_number": "",
+        "website": "",
+        "base_public_url": "",
+    },
+    "affiliate_emails": {
+        "send_application_received": True,
+        "send_application_approved": True,
+        "send_application_rejected": True,
+        "sla_response_text": "We will review your application within 48-72 hours.",
+    },
 }
 
 

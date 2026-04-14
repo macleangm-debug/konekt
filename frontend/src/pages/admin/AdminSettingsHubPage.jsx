@@ -109,7 +109,7 @@ const defaultState = {
   },
   doc_template: { selected_template: "classic" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
-  business_profile: { legal_name: "", brand_name: "", tagline: "", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "" },
+  business_profile: { legal_name: "", brand_name: "", tagline: "", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "", base_public_url: "" },
   branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
   notification_sender: { sender_name: "", sender_email: "", whatsapp_number: "", email_footer_text: "" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
@@ -121,6 +121,7 @@ const defaultState = {
   ratings: { enabled: true, trigger: "delivery_confirmed", scale: 5, allow_comment: true },
   sales_visibility: { show_total_commission: true, show_monthly_commission: true, show_pending_commission: true, show_paid_commission: true, show_revenue: false, show_profit_breakdown: false },
   email_triggers: { payment_submitted: true, payment_approved: true, order_confirmed: true, order_completed: true, group_deal_joined: true, group_deal_successful: true, withdrawal_approved: true, affiliate_application_approved: true, rating_request: true },
+  affiliate_emails: { send_application_received: true, send_application_approved: true, send_application_rejected: true, sla_response_text: "We will review your application within 48-72 hours." },
 };
 
 function U(state, section, field, value) {
@@ -280,6 +281,7 @@ function ProfileTab({ state, setState }) {
           <SettingsTextField label="Support Email" value={s.support_email} onChange={(v) => setState(U(state, "business_profile", "support_email", v))} />
           <SettingsTextField label="Support Phone" value={s.support_phone} onChange={(v) => setState(U(state, "business_profile", "support_phone", v))} />
           <SettingsTextField label="Website" value={s.website} onChange={(v) => setState(U(state, "business_profile", "website", v))} />
+          <SettingsTextField label="Base Public URL" value={s.base_public_url} onChange={(v) => setState(U(state, "business_profile", "base_public_url", v))} placeholder="https://connect.co.tz" />
           <SettingsTextField label="Business Address" value={s.business_address} onChange={(v) => setState(U(state, "business_profile", "business_address", v))} />
           <SettingsTextField label="Tax/VAT ID" value={s.tax_id} onChange={(v) => setState(U(state, "business_profile", "tax_id", v))} />
           <SettingsSelectField label="Country" value={state.payment_accounts?.default_country || "TZ"} onChange={(v) => {
@@ -546,6 +548,8 @@ function AffiliateTab({ state, setState }) {
           Affiliates performing below warning threshold get a warning notification. Below probation threshold triggers an "at risk" status. Statuses: <strong>Active, Warning, Probation, Suspended</strong>.
         </div>
       </SettingsSectionCard>
+
+      <AffiliateEmailSettingsSection state={state} setState={setState} />
     </>
   );
 }
@@ -680,6 +684,23 @@ function EmailTriggersTab({ state, setState }) {
         )}
       </SettingsSectionCard>
     </>
+  );
+}
+
+
+function AffiliateEmailSettingsSection({ state, setState }) {
+  const ae = state.affiliate_emails || {};
+  return (
+    <SettingsSectionCard title="Affiliate Email Settings" description="Control which emails are sent during the affiliate application and activation flow.">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <SettingsToggleField label="Send Application Received Email" checked={ae.send_application_received} onChange={(v) => setState(U(state, "affiliate_emails", "send_application_received", v))} />
+        <SettingsToggleField label="Send Application Approved Email" checked={ae.send_application_approved} onChange={(v) => setState(U(state, "affiliate_emails", "send_application_approved", v))} />
+        <SettingsToggleField label="Send Application Rejected Email" checked={ae.send_application_rejected} onChange={(v) => setState(U(state, "affiliate_emails", "send_application_rejected", v))} />
+      </div>
+      <div className="mt-4">
+        <SettingsTextField label="SLA Response Text (shown in confirmation and emails)" value={ae.sla_response_text} onChange={(v) => setState(U(state, "affiliate_emails", "sla_response_text", v))} placeholder="We will review your application within 48-72 hours." />
+      </div>
+    </SettingsSectionCard>
   );
 }
 

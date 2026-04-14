@@ -419,6 +419,7 @@ import ActivateAccountPage from "@/pages/auth/ActivateAccountPage";
 import LoginChooserPage from "@/pages/auth/LoginChooserPage";
 import CustomerLoginPage from "@/pages/auth/CustomerLoginPage";
 import AffiliateRegisterPage from "@/pages/auth/AffiliateRegisterPage";
+import AffiliateActivatePage from "@/pages/auth/AffiliateActivatePage";
 
 // Affiliate Pages
 import AffiliateProgramLandingPage from "@/pages/public/AffiliateLandingPage";
@@ -839,6 +840,7 @@ function App() {
         {/* Affiliate Public Routes */}
         <Route path="/earn" element={<AffiliateProgramLandingPage />} />
         <Route path="/register/affiliate" element={<AffiliateRegisterPage />} />
+        <Route path="/activate" element={<AffiliateActivatePage />} />
         
         {/* Public Expansion Page */}
         <Route path="/launch-country" element={<ExpansionPremiumPage />} />
