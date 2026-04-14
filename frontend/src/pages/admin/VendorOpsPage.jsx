@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Package, Users, FileText, Loader2, Search, Plus,
-  Image as ImageIcon, CheckCircle, Clock, AlertTriangle
+  Image as ImageIcon, CheckCircle, Clock, AlertTriangle,
+  Eye, EyeOff, Edit3, MoreHorizontal, MessageSquare
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -30,6 +32,7 @@ const STATUS_STYLES = {
 function money(v) { return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`; }
 
 export default function VendorOpsPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("products");
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
@@ -123,10 +126,12 @@ function VendorsTab() {
 }
 
 function ProductsTab() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [toggling, setToggling] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -144,6 +149,17 @@ function ProductsTab() {
     !search || [p.name, p.vendor_name, p.category].some((f) => (f || "").toLowerCase().includes(search.toLowerCase()))
   );
 
+  const togglePublish = async (product) => {
+    setToggling(product.id);
+    try {
+      const newStatus = product.status === "active" ? "draft" : "active";
+      await api.put(`/api/vendor-ops/products/${product.id}`, { status: newStatus });
+      toast.success(newStatus === "active" ? "Product published" : "Product unpublished");
+      load();
+    } catch { toast.error("Failed to update status"); }
+    setToggling(null);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
@@ -158,7 +174,7 @@ function ProductsTab() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" />
         </div>
-        <Button size="sm" className="bg-[#20364D] hover:bg-[#1a2d40] ml-auto" onClick={() => window.location.href = "/admin/vendor-ops/new-product"} data-testid="new-product-btn">
+        <Button size="sm" className="bg-[#20364D] hover:bg-[#1a2d40] ml-auto" onClick={() => navigate("/admin/vendor-ops/new-product")} data-testid="new-product-btn">
           <Plus className="w-3.5 h-3.5 mr-1" /> New Product
         </Button>
       </div>
@@ -175,27 +191,28 @@ function ProductsTab() {
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Stock</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Images</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-slate-400">No products</td></tr>
+                  <tr><td colSpan={7} className="text-center py-12 text-slate-400">No products</td></tr>
                 ) : filtered.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer" data-testid={`product-row-${p.id}`}>
+                  <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`product-row-${p.id}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2.5">
                         <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 text-slate-300" />}
+                          {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" loading="lazy" /> : <ImageIcon className="w-4 h-4 text-slate-300" />}
                         </div>
                         <div>
                           <div className="font-medium text-[#20364D] truncate max-w-[200px]">{p.name}</div>
-                          <div className="text-[10px] text-slate-400">{p.category || ""}</div>
+                          <div className="text-[10px] text-slate-400">{p.category || ""} {p.unit_of_measurement ? `\u2022 ${p.unit_of_measurement}` : ""}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">{p.vendor_name || "\u2014"}</td>
                     <td className="px-4 py-3 text-right text-xs font-medium">{money(p.selling_price)}</td>
-                    <td className="px-4 py-3 text-right text-xs">{p.stock || 0}{p.has_variants ? " (variants)" : ""}</td>
+                    <td className="px-4 py-3 text-right text-xs">{p.stock || 0}{p.has_variants ? " (variants)" : ""} <span className="text-slate-400">{p.unit_of_measurement || ""}</span></td>
                     <td className="px-4 py-3 text-center">
                       {(p.images || []).length > 0 ? (
                         <span className="text-[10px] font-medium text-emerald-600">{(p.images || []).length} img</span>
@@ -205,6 +222,19 @@ function ProductsTab() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <Badge className={`${STATUS_STYLES[p.status] || "bg-slate-100 text-slate-500"} capitalize`}>{p.status || "draft"}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <button
+                          onClick={() => togglePublish(p)}
+                          disabled={toggling === p.id}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-500 hover:text-[#20364D]"
+                          title={p.status === "active" ? "Unpublish" : "Publish"}
+                          data-testid={`toggle-publish-${p.id}`}
+                        >
+                          {p.status === "active" ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -221,13 +251,46 @@ function ProductsTab() {
 function PriceRequestsTab() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(null);
+  const [editForm, setEditForm] = useState({ base_price: "", lead_time: "", notes: "" });
 
-  useEffect(() => {
-    api.get("/api/vendor-ops/price-requests")
-      .then((res) => setRequests(res.data?.price_requests || []))
-      .catch(() => toast.error("Failed to load"))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/vendor-ops/price-requests");
+      setRequests(res.data?.price_requests || []);
+    } catch { toast.error("Failed to load"); }
+    setLoading(false);
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const startEdit = (r) => {
+    setEditing(r.id);
+    setEditForm({ base_price: r.base_price || "", lead_time: r.lead_time || "", notes: r.notes || "" });
+  };
+
+  const saveQuote = async (requestId) => {
+    try {
+      await api.put(`/api/vendor-ops/price-requests/${requestId}`, {
+        base_price: parseFloat(editForm.base_price) || null,
+        lead_time: editForm.lead_time,
+        notes: editForm.notes,
+        status: editForm.base_price ? "response_received" : undefined,
+      });
+      toast.success("Quote updated");
+      setEditing(null);
+      load();
+    } catch { toast.error("Failed to save"); }
+  };
+
+  const markReady = async (requestId) => {
+    try {
+      await api.put(`/api/vendor-ops/price-requests/${requestId}`, { status: "ready_for_sales" });
+      toast.success("Marked ready for sales");
+      load();
+    } catch { toast.error("Failed to update"); }
+  };
 
   if (loading) return <LoadingSpinner />;
 
@@ -241,27 +304,69 @@ function PriceRequestsTab() {
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Requested By</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Base Price</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Lead Time</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Updated By</th>
               <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
             </tr>
           </thead>
           <tbody>
             {requests.length === 0 ? (
               <tr><td colSpan={6} className="text-center py-12 text-slate-400"><FileText className="w-8 h-8 mx-auto mb-2 text-slate-200" /><p>No price requests yet</p></td></tr>
             ) : requests.map((r) => (
-              <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`request-row-${r.id}`}>
-                <td className="px-4 py-3">
-                  <div className="font-medium text-[#20364D]">{r.product_or_service || "Unnamed"}</div>
-                  <div className="text-[10px] text-slate-400">{r.id?.slice(0, 8)}</div>
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-600">{r.requested_by || "\u2014"}<br /><span className="text-[10px] text-slate-400">{r.requested_by_role || ""}</span></td>
-                <td className="px-4 py-3 text-xs font-medium">{r.base_price != null ? money(r.base_price) : "\u2014"}</td>
-                <td className="px-4 py-3 text-xs text-slate-600">{r.lead_time || "\u2014"}</td>
-                <td className="px-4 py-3 text-xs text-slate-600">{r.updated_by_role || "\u2014"}</td>
-                <td className="px-4 py-3 text-center">
-                  <Badge className={`${STATUS_STYLES[r.status] || "bg-slate-100 text-slate-500"} capitalize text-[10px]`}>{(r.status || "").replace(/_/g, " ")}</Badge>
-                </td>
-              </tr>
+              <React.Fragment key={r.id}>
+                <tr className={`border-b border-slate-50 hover:bg-slate-50/50 ${r.status === "pending_vendor_response" ? "bg-amber-50/30" : ""}`} data-testid={`request-row-${r.id}`}>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-[#20364D]">{r.product_or_service || "Unnamed"}</div>
+                    <div className="text-[10px] text-slate-400">{r.id?.slice(0, 8)}</div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-600">{r.requested_by || "\u2014"}<br /><span className="text-[10px] text-slate-400">{r.requested_by_role || ""}</span></td>
+                  <td className="px-4 py-3 text-xs font-medium">{r.base_price != null ? money(r.base_price) : "\u2014"}</td>
+                  <td className="px-4 py-3 text-xs text-slate-600">{r.lead_time || "\u2014"}</td>
+                  <td className="px-4 py-3 text-center">
+                    <Badge className={`${STATUS_STYLES[r.status] || "bg-slate-100 text-slate-500"} capitalize text-[10px]`}>{(r.status || "").replace(/_/g, " ")}</Badge>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      {r.status === "pending_vendor_response" && (
+                        <button onClick={() => startEdit(r)} className="px-2 py-1 rounded-lg bg-[#D4A843] text-white text-[10px] font-semibold hover:bg-[#c49a38] transition" data-testid={`enter-quote-${r.id}`}>
+                          Enter Quote
+                        </button>
+                      )}
+                      {r.status === "response_received" && (
+                        <button onClick={() => markReady(r.id)} className="px-2 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-semibold hover:bg-emerald-700 transition" data-testid={`mark-ready-${r.id}`}>
+                          Ready for Sales
+                        </button>
+                      )}
+                      {(r.status !== "pending_vendor_response") && (
+                        <button onClick={() => startEdit(r)} className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-400 hover:text-[#20364D]" title="Edit" data-testid={`edit-request-${r.id}`}>
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                {editing === r.id && (
+                  <tr className="bg-slate-50 border-b">
+                    <td colSpan={6} className="px-4 py-3">
+                      <div className="flex items-end gap-3 flex-wrap" data-testid={`edit-form-${r.id}`}>
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Base Price (TZS)</label>
+                          <Input type="number" value={editForm.base_price} onChange={(e) => setEditForm({ ...editForm, base_price: e.target.value })} className="h-8 w-32 text-xs" placeholder="0" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Lead Time</label>
+                          <Input value={editForm.lead_time} onChange={(e) => setEditForm({ ...editForm, lead_time: e.target.value })} className="h-8 w-28 text-xs" placeholder="e.g. 3 days" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Notes</label>
+                          <Input value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} className="h-8 w-48 text-xs" placeholder="Optional notes" />
+                        </div>
+                        <Button size="sm" className="bg-[#20364D] hover:bg-[#1a2d40] h-8 text-xs" onClick={() => saveQuote(r.id)} data-testid={`save-quote-${r.id}`}>Save</Button>
+                        <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setEditing(null)}>Cancel</Button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>

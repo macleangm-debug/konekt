@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target, Package } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -56,6 +56,17 @@ const GROUPS = [
       { key: "performance_targets", label: "Performance Targets", icon: Target },
     ],
   },
+  {
+    key: "catalog",
+    label: "Catalog",
+    icon: Package,
+    tabs: [
+      { key: "catalog_units", label: "Units of Measurement", icon: Package },
+      { key: "catalog_categories", label: "Product Categories", icon: Package },
+      { key: "catalog_variants", label: "Variant Types", icon: Package },
+      { key: "catalog_sku", label: "SKU Configuration", icon: FileText },
+    ],
+  },
 ];
 
 const TABS = GROUPS.flatMap((g) => g.tabs);
@@ -81,6 +92,10 @@ const TAB_DESCRIPTIONS = {
   launch: "System mode and go-live controls",
   preview: "Preview how documents look with current settings",
   performance_targets: "Monthly revenue targets, team sizes, and KPI thresholds",
+  catalog_units: "Configure units of measurement for products (Piece, Kg, Litre, etc.)",
+  catalog_categories: "Manage product categories available in the catalog",
+  catalog_variants: "Define variant types (Size, Color, Material) for product listings",
+  catalog_sku: "SKU format, prefix, and auto-generation configuration",
 };
 
 const defaultState = {
@@ -123,6 +138,35 @@ const defaultState = {
   sales_visibility: { show_total_commission: true, show_monthly_commission: true, show_pending_commission: true, show_paid_commission: true, show_revenue: false, show_profit_breakdown: false },
   email_triggers: { payment_submitted: true, payment_approved: true, order_confirmed: true, order_completed: true, group_deal_joined: true, group_deal_successful: true, withdrawal_approved: true, affiliate_application_approved: true, rating_request: true },
   affiliate_emails: { send_application_received: true, send_application_approved: true, send_application_rejected: true, sla_response_text: "We will review your application within 48-72 hours." },
+  catalog: {
+    units_of_measurement: [
+      { name: "Piece", abbr: "pcs", type: "count", active: true },
+      { name: "Pair", abbr: "pr", type: "count", active: true },
+      { name: "Pack", abbr: "pk", type: "count", active: true },
+      { name: "Box", abbr: "bx", type: "count", active: true },
+      { name: "Carton", abbr: "ctn", type: "count", active: true },
+      { name: "Roll", abbr: "rl", type: "count", active: true },
+      { name: "Set", abbr: "set", type: "count", active: true },
+      { name: "Dozen", abbr: "dz", type: "count", active: true },
+      { name: "Bundle", abbr: "bdl", type: "count", active: true },
+      { name: "Kg", abbr: "kg", type: "weight", active: true },
+      { name: "Gram", abbr: "g", type: "weight", active: true },
+      { name: "Litre", abbr: "L", type: "volume", active: true },
+      { name: "Millilitre", abbr: "ml", type: "volume", active: true },
+      { name: "Meter", abbr: "m", type: "length", active: true },
+      { name: "Square Meter", abbr: "sqm", type: "length", active: true },
+      { name: "Service Unit", abbr: "svc", type: "service", active: true },
+    ],
+    product_categories: [
+      "Office Equipment", "Printing & Stationery", "IT & Electronics",
+      "Furniture", "Promotional Materials", "Industrial Supplies",
+      "Cleaning & Hygiene", "Safety & PPE", "Packaging",
+      "Food & Beverages", "Fashion & Apparel", "Other"
+    ],
+    variant_types: ["Size", "Color", "Material", "Weight", "Volume"],
+    sku_prefix: "KNT",
+    sku_format: "{PREFIX}-{CATEGORY}-{RANDOM}",
+  },
 };
 
 function U(state, section, field, value) {
@@ -258,6 +302,10 @@ export default function AdminSettingsHubPage() {
             {tab === "doc_numbering" && <DocNumberingTab state={state} setState={setState} />}
             {tab === "doc_footer" && <DocFooterTab state={state} setState={setState} />}
             {tab === "doc_template" && <DocTemplateTab state={state} setState={setState} />}
+            {tab === "catalog_units" && <CatalogUnitsTab state={state} setState={setState} />}
+            {tab === "catalog_categories" && <CatalogCategoriesTab state={state} setState={setState} />}
+            {tab === "catalog_variants" && <CatalogVariantsTab state={state} setState={setState} />}
+            {tab === "catalog_sku" && <CatalogSkuTab state={state} setState={setState} />}
           </div>
         </div>
       </main>
@@ -1437,3 +1485,241 @@ function DocTemplateTab({ state, setState }) {
   );
 }
 
+
+
+/* ═══ CATALOG: UNITS OF MEASUREMENT ═══ */
+function CatalogUnitsTab({ state, setState }) {
+  const catalog = state.catalog || {};
+  const units = catalog.units_of_measurement || [];
+  const [newUnit, setNewUnit] = useState({ name: "", abbr: "", type: "count" });
+
+  const UNIT_TYPES = ["count", "weight", "volume", "length", "service", "custom"];
+
+  const addUnit = () => {
+    if (!newUnit.name.trim() || !newUnit.abbr.trim()) return;
+    if (units.some((u) => u.name.toLowerCase() === newUnit.name.trim().toLowerCase())) {
+      toast.error("Unit already exists");
+      return;
+    }
+    const updated = [...units, { ...newUnit, name: newUnit.name.trim(), abbr: newUnit.abbr.trim(), active: true }];
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, units_of_measurement: updated } }));
+    setNewUnit({ name: "", abbr: "", type: "count" });
+    toast.success("Unit added — save settings to persist");
+  };
+
+  const toggleUnit = (idx) => {
+    const updated = [...units];
+    updated[idx] = { ...updated[idx], active: !updated[idx].active };
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, units_of_measurement: updated } }));
+  };
+
+  const removeUnit = (idx) => {
+    const updated = units.filter((_, i) => i !== idx);
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, units_of_measurement: updated } }));
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Units of Measurement" description="Configure the units available for products. Used in the product wizard, stock tables, invoices, and checkout.">
+        <div className="space-y-3">
+          {units.map((u, i) => (
+            <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border transition ${u.active !== false ? "bg-white border-slate-200" : "bg-slate-50 border-slate-100 opacity-60"}`} data-testid={`unit-row-${i}`}>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-[#20364D]">{u.name}</span>
+                <span className="text-xs text-slate-400 ml-2">({u.abbr})</span>
+              </div>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded">{u.type}</span>
+              <button onClick={() => toggleUnit(i)} className={`text-xs font-semibold px-2 py-1 rounded-lg transition ${u.active !== false ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`} data-testid={`toggle-unit-${i}`}>
+                {u.active !== false ? "Active" : "Inactive"}
+              </button>
+              <button onClick={() => removeUnit(i)} className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition" data-testid={`remove-unit-${i}`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Add New Unit" description="Add a custom unit to the catalog.">
+        <div className="flex items-end gap-3 flex-wrap">
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Unit Name *</label>
+            <input type="text" value={newUnit.name} onChange={(e) => setNewUnit({ ...newUnit, name: e.target.value })} placeholder="e.g. Barrel" className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-40" data-testid="new-unit-name" />
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Abbreviation *</label>
+            <input type="text" value={newUnit.abbr} onChange={(e) => setNewUnit({ ...newUnit, abbr: e.target.value })} placeholder="e.g. bbl" className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-24" data-testid="new-unit-abbr" />
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Type</label>
+            <select value={newUnit.type} onChange={(e) => setNewUnit({ ...newUnit, type: e.target.value })} className="h-9 rounded-lg border border-slate-200 px-3 text-sm" data-testid="new-unit-type">
+              {UNIT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <button onClick={addUnit} disabled={!newUnit.name.trim() || !newUnit.abbr.trim()} className="h-9 px-4 rounded-lg bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-40 transition flex items-center gap-1.5" data-testid="add-unit-btn">
+            <Plus className="w-3.5 h-3.5" /> Add Unit
+          </button>
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+/* ═══ CATALOG: PRODUCT CATEGORIES ═══ */
+function CatalogCategoriesTab({ state, setState }) {
+  const catalog = state.catalog || {};
+  const categories = catalog.product_categories || [];
+  const [newCat, setNewCat] = useState("");
+
+  const addCategory = () => {
+    const trimmed = newCat.trim();
+    if (!trimmed) return;
+    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Category already exists");
+      return;
+    }
+    const updated = [...categories, trimmed];
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, product_categories: updated } }));
+    setNewCat("");
+    toast.success("Category added — save settings to persist");
+  };
+
+  const removeCategory = (idx) => {
+    const updated = categories.filter((_, i) => i !== idx);
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, product_categories: updated } }));
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Product Categories" description="Categories shown in the product upload wizard and catalog filters.">
+        <div className="flex flex-wrap gap-2">
+          {categories.map((cat, i) => (
+            <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm" data-testid={`category-${i}`}>
+              <span className="font-medium text-[#20364D]">{cat}</span>
+              <button onClick={() => removeCategory(i)} className="text-slate-400 hover:text-red-500 transition" data-testid={`remove-cat-${i}`}>
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {categories.length === 0 && <p className="text-sm text-slate-400">No categories configured</p>}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Add Category" description="Add a new product category.">
+        <div className="flex items-end gap-3">
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Category Name *</label>
+            <input
+              type="text"
+              value={newCat}
+              onChange={(e) => setNewCat(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") addCategory(); }}
+              placeholder="e.g. Medical Supplies"
+              className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-64"
+              data-testid="new-category-input"
+            />
+          </div>
+          <button onClick={addCategory} disabled={!newCat.trim()} className="h-9 px-4 rounded-lg bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-40 transition flex items-center gap-1.5" data-testid="add-category-btn">
+            <Plus className="w-3.5 h-3.5" /> Add Category
+          </button>
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+/* ═══ CATALOG: VARIANT TYPES ═══ */
+function CatalogVariantsTab({ state, setState }) {
+  const catalog = state.catalog || {};
+  const types = catalog.variant_types || [];
+  const [newType, setNewType] = useState("");
+
+  const addType = () => {
+    const trimmed = newType.trim();
+    if (!trimmed) return;
+    if (types.some((t) => t.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Variant type already exists");
+      return;
+    }
+    const updated = [...types, trimmed];
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, variant_types: updated } }));
+    setNewType("");
+    toast.success("Variant type added — save settings to persist");
+  };
+
+  const removeType = (idx) => {
+    const updated = types.filter((_, i) => i !== idx);
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, variant_types: updated } }));
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Variant Types" description="Variant dimensions available when creating product variants (max 2 per product).">
+        <div className="flex flex-wrap gap-2">
+          {types.map((vt, i) => (
+            <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm" data-testid={`variant-type-${i}`}>
+              <span className="font-medium text-[#20364D]">{vt}</span>
+              <button onClick={() => removeType(i)} className="text-slate-400 hover:text-red-500 transition" data-testid={`remove-vt-${i}`}>
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+          {types.length === 0 && <p className="text-sm text-slate-400">No variant types configured</p>}
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Add Variant Type" description="Add a new variant dimension.">
+        <div className="flex items-end gap-3">
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Type Name *</label>
+            <input
+              type="text"
+              value={newType}
+              onChange={(e) => setNewType(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") addType(); }}
+              placeholder="e.g. Finish, Pattern"
+              className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-48"
+              data-testid="new-variant-type-input"
+            />
+          </div>
+          <button onClick={addType} disabled={!newType.trim()} className="h-9 px-4 rounded-lg bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-40 transition flex items-center gap-1.5" data-testid="add-variant-type-btn">
+            <Plus className="w-3.5 h-3.5" /> Add Type
+          </button>
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+/* ═══ CATALOG: SKU CONFIGURATION ═══ */
+function CatalogSkuTab({ state, setState }) {
+  const catalog = state.catalog || {};
+
+  const updateCatalog = (field, value) => {
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, [field]: value } }));
+  };
+
+  const exampleSku = (catalog.sku_format || "{PREFIX}-{CATEGORY}-{RANDOM}")
+    .replace("{PREFIX}", catalog.sku_prefix || "KNT")
+    .replace("{COUNTRY}", state.payment_accounts?.default_country || "TZ")
+    .replace("{CATEGORY}", "ELC")
+    .replace("{PRODUCT}", "TV")
+    .replace("{VARIANT}", "BLK")
+    .replace("{RANDOM}", Math.floor(1000 + Math.random() * 9000).toString())
+    .replace("{DATE}", new Date().toISOString().slice(2, 10).replace(/-/g, ""));
+
+  return (
+    <>
+      <SettingsSectionCard title="SKU Format" description="Configure how product SKUs are auto-generated. Variables: {PREFIX}, {COUNTRY}, {CATEGORY}, {PRODUCT}, {VARIANT}, {RANDOM}, {DATE}">
+        <div className="grid md:grid-cols-2 gap-4">
+          <SettingsTextField label="SKU Prefix" value={catalog.sku_prefix || "KNT"} onChange={(v) => updateCatalog("sku_prefix", v)} />
+          <SettingsTextField label="SKU Format Pattern" value={catalog.sku_format || "{PREFIX}-{CATEGORY}-{RANDOM}"} onChange={(v) => updateCatalog("sku_format", v)} />
+        </div>
+        <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase mb-1">Example SKU Output</p>
+          <p className="text-sm font-mono font-bold text-[#20364D]" data-testid="sku-preview">{exampleSku}</p>
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700">
+          <strong>Available variables:</strong> {"{PREFIX}"} = SKU Prefix, {"{COUNTRY}"} = Country Code, {"{CATEGORY}"} = Category short code, {"{PRODUCT}"} = Product code, {"{VARIANT}"} = Variant code, {"{RANDOM}"} = Unique number, {"{DATE}"} = Date (YYMMDD)
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}

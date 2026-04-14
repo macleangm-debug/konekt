@@ -311,8 +311,11 @@ async def get_catalog_config(request: Request):
     from services.settings_resolver import PLATFORM_DEFAULTS
     defaults = PLATFORM_DEFAULTS.get("catalog", {})
 
+    all_units = catalog.get("units_of_measurement", defaults.get("units_of_measurement", []))
+    active_units = [u for u in all_units if u.get("active", True)]
+
     return {
-        "units": catalog.get("units_of_measurement", defaults.get("units_of_measurement", [])),
+        "units": active_units,
         "categories": catalog.get("product_categories", defaults.get("product_categories", [])),
         "variant_types": catalog.get("variant_types", defaults.get("variant_types", [])),
         "sku_prefix": catalog.get("sku_prefix", defaults.get("sku_prefix", "KNT")),
