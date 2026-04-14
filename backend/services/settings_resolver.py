@@ -360,6 +360,35 @@ PLATFORM_DEFAULTS = {
         "send_application_rejected": True,
         "sla_response_text": "We will review your application within 48-72 hours.",
     },
+    "catalog": {
+        "units_of_measurement": [
+            {"name": "Piece", "abbr": "pcs", "type": "count"},
+            {"name": "Pair", "abbr": "pr", "type": "count"},
+            {"name": "Pack", "abbr": "pk", "type": "count"},
+            {"name": "Box", "abbr": "bx", "type": "count"},
+            {"name": "Carton", "abbr": "ctn", "type": "count"},
+            {"name": "Roll", "abbr": "rl", "type": "count"},
+            {"name": "Set", "abbr": "set", "type": "count"},
+            {"name": "Dozen", "abbr": "dz", "type": "count"},
+            {"name": "Bundle", "abbr": "bdl", "type": "count"},
+            {"name": "Kg", "abbr": "kg", "type": "weight"},
+            {"name": "Gram", "abbr": "g", "type": "weight"},
+            {"name": "Litre", "abbr": "L", "type": "volume"},
+            {"name": "Millilitre", "abbr": "ml", "type": "volume"},
+            {"name": "Meter", "abbr": "m", "type": "length"},
+            {"name": "Square Meter", "abbr": "sqm", "type": "length"},
+            {"name": "Service Unit", "abbr": "svc", "type": "service"},
+        ],
+        "sku_prefix": "KNT",
+        "sku_format": "{PREFIX}-{CATEGORY}-{RANDOM}",
+        "variant_types": ["Size", "Color", "Material", "Weight", "Volume"],
+        "product_categories": [
+            "Office Equipment", "Printing & Stationery", "IT & Electronics",
+            "Furniture", "Promotional Materials", "Industrial Supplies",
+            "Cleaning & Hygiene", "Safety & PPE", "Packaging",
+            "Food & Beverages", "Fashion & Apparel", "Other"
+        ],
+    },
 }
 
 

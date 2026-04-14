@@ -296,3 +296,25 @@ async def get_dashboard_stats(request: Request):
         "draft_products": draft_products,
         "pending_price_requests": pending_requests,
     }
+
+
+# ═══ CATALOG CONFIG ═══
+
+@router.get("/catalog-config")
+async def get_catalog_config(request: Request):
+    """Get catalog configuration (units, categories, variant types, SKU format)."""
+    db = request.app.mongodb
+    settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
+    s = settings_row.get("value", {}) if settings_row else {}
+    catalog = s.get("catalog", {})
+
+    from services.settings_resolver import PLATFORM_DEFAULTS
+    defaults = PLATFORM_DEFAULTS.get("catalog", {})
+
+    return {
+        "units": catalog.get("units_of_measurement", defaults.get("units_of_measurement", [])),
+        "categories": catalog.get("product_categories", defaults.get("product_categories", [])),
+        "variant_types": catalog.get("variant_types", defaults.get("variant_types", [])),
+        "sku_prefix": catalog.get("sku_prefix", defaults.get("sku_prefix", "KNT")),
+        "sku_format": catalog.get("sku_format", defaults.get("sku_format", "{PREFIX}-{CATEGORY}-{RANDOM}")),
+    }
