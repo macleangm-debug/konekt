@@ -7,6 +7,7 @@
 ## Staff/Sales
 - Email: staff@konekt.co.tz
 - Password: Staff123!
+- Sales Promo Code: STAFF2024
 
 ## Test Affiliate (Setup Complete)
 - Email: wizard.test@example.com

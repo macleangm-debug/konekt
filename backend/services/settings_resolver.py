@@ -205,6 +205,7 @@ PLATFORM_DEFAULTS = {
         "lead_source_visibility": True,
         "commission_type_visibility": True,
         "sales_referral_link_enabled": True,
+        "sales_promo_codes_enabled": True,
     },
     "payments": {
         "bank_only_payments": True,
