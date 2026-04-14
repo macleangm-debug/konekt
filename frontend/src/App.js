@@ -999,8 +999,8 @@ function App() {
                     <Route path="/r/:code" element={<ReferralLandingPage />} />
                     <Route path="/a/:code" element={<AffiliateLandingPage />} />
                     <Route path="/partners/apply" element={<AffiliateApplyPage />} />
-                    <Route path="/affiliate/portal" element={<AffiliatePortalPage />} />
-                    <Route path="/affiliate/dashboard" element={<AffiliateDashboardV2 />} />
+                    <Route path="/affiliate/portal" element={<Navigate to="/partners/apply" replace />} />
+                    <Route path="/affiliate/dashboard" element={<Navigate to="/partner/affiliate-dashboard" replace />} />
                     <Route path="/services/maintenance" element={<EquipmentMaintenance />} />
                     <Route path="/services" element={<ServicesHubPage />} />
                     <Route path="/services/:slug/request" element={<ServiceRequestPage />} />

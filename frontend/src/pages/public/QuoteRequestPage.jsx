@@ -88,7 +88,8 @@ export default function QuoteRequestPage() {
     quantity: "",
     urgency: "flexible",
     budget_range: "",
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone_prefix: "+255",
     phone: "",
@@ -98,9 +99,11 @@ export default function QuoteRequestPage() {
   // Auto-fill when user data loads
   useEffect(() => {
     if (!user) return;
+    const fullName = user.full_name || user.name || "";
     setForm((f) => ({
       ...f,
-      full_name: f.full_name || user.full_name || user.name || "",
+      first_name: f.first_name || fullName.split(" ")[0] || "",
+      last_name: f.last_name || fullName.split(" ").slice(1).join(" ") || "",
       email: f.email || user.email || "",
       phone: f.phone || user.phone || "",
       company_name: f.company_name || user.company_name || user.business_name || "",
@@ -117,7 +120,7 @@ export default function QuoteRequestPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.full_name || !form.email) return toast.error("Please enter your name and email");
+    if (!form.first_name || !form.last_name || !form.email) return toast.error("Please enter your name and email");
 
     setSubmitting(true);
     try {
@@ -129,7 +132,9 @@ export default function QuoteRequestPage() {
       const payload = {
         request_type: requestType,
         title: `${form.primary_need.charAt(0).toUpperCase()}${form.primary_need.slice(1)} Request`,
-        guest_name: form.full_name,
+        guest_name: [form.first_name, form.last_name].filter(Boolean).join(" "),
+        first_name: form.first_name,
+        last_name: form.last_name,
         guest_email: form.email,
         phone_prefix: form.phone_prefix,
         phone: form.phone,
@@ -406,7 +411,10 @@ export default function QuoteRequestPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LABEL_CLS}><User className="w-3.5 h-3.5 inline mr-1.5 text-slate-400" />Full Name *</label>
-                  <input type="text" value={form.full_name} onChange={(e) => set("full_name", e.target.value)} className={INPUT_CLS} placeholder="John Doe" required data-testid="quote-fullname" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" value={form.first_name} onChange={(e) => set("first_name", e.target.value)} className={INPUT_CLS} placeholder="First name" required data-testid="quote-first-name" />
+                    <input type="text" value={form.last_name} onChange={(e) => set("last_name", e.target.value)} className={INPUT_CLS} placeholder="Last name" required data-testid="quote-last-name" />
+                  </div>
                 </div>
                 <div>
                   <label className={LABEL_CLS}><Mail className="w-3.5 h-3.5 inline mr-1.5 text-slate-400" />Email *</label>

@@ -39,7 +39,7 @@ export default function ExpansionPremiumPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [interestForm, setInterestForm] = useState({
-    full_name: "", email: "", phone: "", company_name: "",
+    first_name: "", last_name: "", email: "", phone: "", company_name: "",
     country_code: "KE", region: "", interest_summary: "",
   });
   const [partnerForm, setPartnerForm] = useState({
@@ -60,7 +60,7 @@ export default function ExpansionPremiumPage() {
 
   const submitInterest = async (e) => {
     e.preventDefault();
-    if (!interestForm.full_name || !interestForm.email || !interestForm.phone) {
+    if (!interestForm.first_name || !interestForm.last_name || !interestForm.email || !interestForm.phone) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -70,7 +70,7 @@ export default function ExpansionPremiumPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          full_name: interestForm.full_name, email: interestForm.email,
+          full_name: [interestForm.first_name, interestForm.last_name].filter(Boolean).join(" "), email: interestForm.email,
           phone: combinePhone(interestForm.phone_prefix, interestForm.phone), company: interestForm.company_name,
           country_code: interestForm.country_code,
           intent_type: "expansion_business_interest",
@@ -82,7 +82,7 @@ export default function ExpansionPremiumPage() {
       });
       if (!res.ok) throw new Error("Failed");
       toast.success("Business interest captured! We'll be in touch soon.");
-      setInterestForm({ full_name: "", email: "", phone_prefix: "+255", phone: "", company_name: "", country_code: selectedCountry, region: "", interest_summary: "" });
+      setInterestForm({ first_name: "", last_name: "", email: "", phone_prefix: "+255", phone: "", company_name: "", country_code: selectedCountry, region: "", interest_summary: "" });
     } catch { toast.error("Failed to submit. Please try again."); }
     finally { setSubmitting(false); }
   };
@@ -275,7 +275,10 @@ export default function ExpansionPremiumPage() {
                   <p className="text-slate-600 mt-2 mb-6">Share your business requirements to help us validate demand in this market.</p>
                   <div className="space-y-4">
                     <div className="grid sm:grid-cols-2 gap-4">
-                      <input className={inputCls} placeholder="Full name *" value={interestForm.full_name} onChange={(e) => setInterestForm({ ...interestForm, full_name: e.target.value })} data-testid="interest-name" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input className={inputCls} placeholder="First name *" value={interestForm.first_name} onChange={(e) => setInterestForm({ ...interestForm, first_name: e.target.value })} data-testid="interest-first-name" />
+                        <input className={inputCls} placeholder="Last name *" value={interestForm.last_name} onChange={(e) => setInterestForm({ ...interestForm, last_name: e.target.value })} data-testid="interest-last-name" />
+                      </div>
                       <input className={inputCls} placeholder="Company name" value={interestForm.company_name} onChange={(e) => setInterestForm({ ...interestForm, company_name: e.target.value })} data-testid="interest-company" />
                       <input className={inputCls} placeholder="Email *" type="email" value={interestForm.email} onChange={(e) => setInterestForm({ ...interestForm, email: e.target.value })} data-testid="interest-email" />
                     </div>

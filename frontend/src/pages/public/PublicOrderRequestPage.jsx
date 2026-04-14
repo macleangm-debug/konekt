@@ -22,7 +22,8 @@ export default function PublicOrderRequestPage() {
   const [submitted, setSubmitted] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone_prefix: "+255",
     phone: "",
@@ -37,7 +38,7 @@ export default function PublicOrderRequestPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.full_name || !form.email)
+    if (!form.first_name || !form.last_name || !form.email)
       return toast.error("Please fill in your name and email.");
     if (!form.phone)
       return toast.error("Please provide a phone number.");
@@ -47,7 +48,9 @@ export default function PublicOrderRequestPage() {
       const payload = {
         request_type: "marketplace_order",
         title: `Order Request: ${productName || "Marketplace Product"}`,
-        guest_name: form.full_name,
+        guest_name: [form.first_name, form.last_name].filter(Boolean).join(" "),
+        first_name: form.first_name,
+        last_name: form.last_name,
         guest_email: form.email,
         phone_prefix: form.phone_prefix,
         phone: form.phone,
@@ -180,17 +183,28 @@ export default function PublicOrderRequestPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                <User className="w-3.5 h-3.5 inline mr-1.5" />Full Name *
+                <User className="w-3.5 h-3.5 inline mr-1.5" />Name *
               </label>
-              <input
-                type="text"
-                value={form.full_name}
-                onChange={(e) => handleChange("full_name", e.target.value)}
-                className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                placeholder="John Doe"
-                required
-                data-testid="order-fullname"
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  value={form.first_name}
+                  onChange={(e) => handleChange("first_name", e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+                  placeholder="First name"
+                  required
+                  data-testid="order-first-name"
+                />
+                <input
+                  type="text"
+                  value={form.last_name}
+                  onChange={(e) => handleChange("last_name", e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+                  placeholder="Last name"
+                  required
+                  data-testid="order-last-name"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">

@@ -25,7 +25,8 @@ export default function CheckoutPageV2() {
 
   // Customer details form
   const [form, setForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone_prefix: "+255",
     phone: "",
@@ -69,7 +70,8 @@ export default function CheckoutPageV2() {
             if (userRes.data) {
               setForm(prev => ({
                 ...prev,
-                full_name: userRes.data.full_name || "",
+                first_name: (userRes.data.full_name || "").split(" ")[0] || "",
+                last_name: (userRes.data.full_name || "").split(" ").slice(1).join(" ") || "",
                 email: userRes.data.email || "",
                 phone: userRes.data.phone || "",
                 company_name: userRes.data.company_name || "",
@@ -123,7 +125,7 @@ export default function CheckoutPageV2() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!form.full_name || !form.email || !form.phone) {
+    if (!form.first_name || !form.last_name || !form.email || !form.phone) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -141,9 +143,12 @@ export default function CheckoutPageV2() {
     setSubmitting(true);
     try {
       // Create order
-      const { phone_prefix, ...orderForm } = form;
+      const { phone_prefix, first_name, last_name, ...orderForm } = form;
       const orderRes = await api.post("/api/orders", {
         ...orderForm,
+        customer_name: [first_name, last_name].filter(Boolean).join(" "),
+        first_name,
+        last_name,
         phone: combinePhone(phone_prefix, form.phone),
         items: cartItems.map(item => ({
           product_id: item.product_id || item.id,
@@ -232,11 +237,19 @@ export default function CheckoutPageV2() {
               <div className="grid md:grid-cols-2 gap-4 mt-5">
                 <input
                   className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                  placeholder="Full name *"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+                  placeholder="First name *"
+                  value={form.first_name}
+                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                   required
-                  data-testid="checkout-fullname"
+                  data-testid="checkout-v2-firstname"
+                />
+                <input
+                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
+                  placeholder="Last name *"
+                  value={form.last_name}
+                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                  required
+                  data-testid="checkout-v2-lastname"
                 />
                 <input
                   className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"

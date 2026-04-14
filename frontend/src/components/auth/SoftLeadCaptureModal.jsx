@@ -16,7 +16,8 @@ export default function SoftLeadCaptureModal({
   onSubmitted 
 }) {
   const [form, setForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     phone_prefix: "+255",
     phone: "",
     email: "",
@@ -35,7 +36,7 @@ export default function SoftLeadCaptureModal({
   };
 
   const validate = () => {
-    if (!form.full_name.trim()) return "Please enter your name";
+    if (!form.first_name.trim() || !form.last_name.trim()) return "Please enter your first and last name";
     if (!form.phone.trim() && !form.email.trim()) return "Please enter phone or email";
     return null;
   };
@@ -49,9 +50,12 @@ export default function SoftLeadCaptureModal({
 
     setLoading(true);
     try {
-      const { phone_prefix, ...rest } = form;
+      const { phone_prefix, first_name, last_name, ...rest } = form;
       const payload = {
         ...rest,
+        full_name: [first_name, last_name].filter(Boolean).join(" "),
+        first_name,
+        last_name,
         phone: combinePhone(phone_prefix, form.phone),
         source: "website",
         guest_session_id: localStorage.getItem("guest_session_id") || "",
@@ -102,15 +106,16 @@ export default function SoftLeadCaptureModal({
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input 
-                className="w-full border rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]" 
-                placeholder="Full Name *" 
-                value={form.full_name} 
-                onChange={(e) => handleChange("full_name", e.target.value)}
-                data-testid="soft-lead-name"
-              />
+            <div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input type="text" className="w-full border rounded-xl pl-10 pr-3 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D] text-sm" placeholder="First name *"
+                    value={form.first_name} onChange={(e) => handleChange("first_name", e.target.value)} required data-testid="lead-first-name" />
+                </div>
+                <input type="text" className="w-full border rounded-xl px-3 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D] text-sm" placeholder="Last name *"
+                  value={form.last_name} onChange={(e) => handleChange("last_name", e.target.value)} required data-testid="lead-last-name" />
+              </div>
             </div>
             <PhoneNumberField
               label=""

@@ -34,7 +34,7 @@ export default function AffiliateLandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Link
-                to="/register/affiliate"
+                to="/partners/apply"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-bold hover:bg-[#c49a3d] transition"
                 data-testid="join-affiliate-btn"
               >
@@ -174,7 +174,7 @@ export default function AffiliateLandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
-              to="/register/affiliate"
+              to="/partners/apply"
               className="inline-flex items-center gap-2 rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-bold hover:bg-[#c49a3d] transition"
               data-testid="cta-join-affiliate-btn"
             >

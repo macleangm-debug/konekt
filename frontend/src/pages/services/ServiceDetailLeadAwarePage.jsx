@@ -16,7 +16,8 @@ export default function ServiceDetailLeadAwarePage() {
   const [loading, setLoading] = useState(true);
   const [showLeadModal, setShowLeadModal] = useState(false);
   const [leadForm, setLeadForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone_prefix: "+255",
     phone: "",
@@ -89,7 +90,7 @@ export default function ServiceDetailLeadAwarePage() {
   const submitGuestLead = async (e) => {
     e.preventDefault();
     
-    if (!leadForm.full_name || !leadForm.email) {
+    if (!leadForm.first_name || !leadForm.last_name || !leadForm.email) {
       toast.error("Please fill in name and email");
       return;
     }
@@ -101,7 +102,9 @@ export default function ServiceDetailLeadAwarePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           request_type: "service_quote",
-          guest_name: leadForm.full_name,
+          guest_name: [leadForm.first_name, leadForm.last_name].filter(Boolean).join(" "),
+          first_name: leadForm.first_name,
+          last_name: leadForm.last_name,
           guest_email: leadForm.email,
           phone_prefix: leadForm.phone_prefix,
           phone: leadForm.phone,
@@ -280,14 +283,24 @@ export default function ServiceDetailLeadAwarePage() {
               </p>
 
               <div className="grid gap-4 mt-6">
-                <input 
-                  className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                  placeholder="Full name *" 
-                  value={leadForm.full_name} 
-                  onChange={(e) => setLeadForm({ ...leadForm, full_name: e.target.value })}
-                  required
-                  data-testid="lead-fullname"
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input 
+                    className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
+                    placeholder="First name *" 
+                    value={leadForm.first_name} 
+                    onChange={(e) => setLeadForm({ ...leadForm, first_name: e.target.value })}
+                    required
+                    data-testid="lead-first-name"
+                  />
+                  <input 
+                    className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
+                    placeholder="Last name *" 
+                    value={leadForm.last_name} 
+                    onChange={(e) => setLeadForm({ ...leadForm, last_name: e.target.value })}
+                    required
+                    data-testid="lead-last-name"
+                  />
+                </div>
                 <input 
                   className="border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
                   placeholder="Email *" 
