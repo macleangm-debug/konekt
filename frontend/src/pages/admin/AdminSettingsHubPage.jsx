@@ -84,7 +84,7 @@ const defaultState = {
   commercial: { minimum_company_margin_percent: 20, distribution_layer_percent: 10, protected_company_margin_percent: 8, commission_mode: "fair_balanced", affiliate_attribution_reduces_sales_commission: true, vat_percent: 18, referral_pct: 10, max_wallet_usage_pct: 30, referral_min_order_amount: 0, referral_max_reward_per_order: 0, welcome_bonus_enabled: false, welcome_bonus_type: "fixed", welcome_bonus_value: 5000, welcome_bonus_max_cap: 10000, welcome_bonus_first_purchase_only: true, welcome_bonus_trigger_event: "payment_verified", welcome_bonus_stack_with_referral: false, welcome_bonus_stack_with_wallet: true },
   margin_rules: { allow_product_group_margin_override: true, allow_product_margin_override: true, allow_service_group_margin_override: true, allow_service_margin_override: true, pricing_below_minimum_margin_requires_admin_override: true },
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
-  affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true },
+  affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true, max_active_affiliates: 0, contracts_starter_min_deals: 5, contracts_starter_min_earnings: 50000, contracts_growth_min_deals: 20, contracts_growth_min_earnings: 250000, contracts_top_min_deals: 60, contracts_top_min_earnings: 1000000, warning_threshold_pct: 50, probation_threshold_pct: 25 },
   payouts: { affiliate_minimum_payout: 50000, sales_minimum_payout: 100000, payout_cycle: "monthly", payout_methods_enabled: ["mobile_money", "bank_transfer"], manual_payout_approval: true, payout_review_mode: "admin_required" },
   sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true },
   payments: { bank_only_payments: true, card_payments_enabled: false, mobile_money_enabled: false, kwikpay_enabled: false, payment_proof_required: true, payment_proof_auto_link_to_invoice: true, payment_verification_mode: "manual", commission_creation_on_payment_approval: true },
@@ -487,22 +487,61 @@ function SalesTab({ state, setState }) {
 function AffiliateTab({ state, setState }) {
   const a = state.affiliate || {};
   return (
-    <SettingsSectionCard title="Affiliate Program" description="Approval, attribution, and governance rules. Commission rates are defined per tier in Pricing Tiers.">
-      <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
-        The default commission % below is a <strong>fallback</strong>. Actual affiliate earnings are calculated from the matching <strong>Pricing Tier</strong> distribution split per order.
-      </div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <SettingsNumberField label="Default Commission % (fallback)" value={a.default_affiliate_commission_percent} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_commission_percent", v))} />
-        <SettingsSelectField label="Default Status" value={a.default_affiliate_status} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_status", v))} options={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }]} />
-        <SettingsSelectField label="Commission Trigger" value={a.commission_trigger} onChange={(v) => setState(U(state, "affiliate", "commission_trigger", v))} options={[{ value: "payment_approved", label: "Payment Approved" }, { value: "order_completed", label: "Order Completed" }]} />
-        <SettingsSelectField label="Commission Duration" value={a.commission_duration} onChange={(v) => setState(U(state, "affiliate", "commission_duration", v))} options={[{ value: "per_successful_sale", label: "Per Sale" }, { value: "first_order_only", label: "First Order Only" }]} />
-        <SettingsSelectField label="Attribution Sources" value={a.attribution_sources} onChange={(v) => setState(U(state, "affiliate", "attribution_sources", v))} options={[{ value: "link_and_code", label: "Link + Code" }, { value: "link_only", label: "Link Only" }, { value: "code_only", label: "Code Only" }]} />
-        <SettingsNumberField label="Attribution Window (days)" value={a.attribution_window_days} onChange={(v) => setState(U(state, "affiliate", "attribution_window_days", v))} />
-        <SettingsToggleField label="Requires approval" checked={a.affiliate_registration_requires_approval} onChange={(v) => setState(U(state, "affiliate", "affiliate_registration_requires_approval", v))} />
-        <SettingsToggleField label="Personal promo code" checked={a.personal_promo_code_enabled} onChange={(v) => setState(U(state, "affiliate", "personal_promo_code_enabled", v))} />
-        <SettingsToggleField label="Watchlist logic" checked={a.watchlist_logic_enabled} onChange={(v) => setState(U(state, "affiliate", "watchlist_logic_enabled", v))} />
-      </div>
-    </SettingsSectionCard>
+    <>
+      <SettingsSectionCard title="Affiliate Program" description="Approval, attribution, and governance rules. Commission rates are defined per tier in Pricing Tiers.">
+        <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
+          The default commission % below is a <strong>fallback</strong>. Actual affiliate earnings are calculated from the matching <strong>Pricing Tier</strong> distribution split per order.
+        </div>
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsNumberField label="Default Commission % (fallback)" value={a.default_affiliate_commission_percent} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_commission_percent", v))} />
+          <SettingsNumberField label="Max Active Affiliates (0=unlimited)" value={a.max_active_affiliates} onChange={(v) => setState(U(state, "affiliate", "max_active_affiliates", v))} />
+          <SettingsSelectField label="Default Status" value={a.default_affiliate_status} onChange={(v) => setState(U(state, "affiliate", "default_affiliate_status", v))} options={[{ value: "pending", label: "Pending" }, { value: "active", label: "Active" }]} />
+          <SettingsSelectField label="Commission Trigger" value={a.commission_trigger} onChange={(v) => setState(U(state, "affiliate", "commission_trigger", v))} options={[{ value: "payment_approved", label: "Payment Approved" }, { value: "order_completed", label: "Order Completed" }]} />
+          <SettingsSelectField label="Commission Duration" value={a.commission_duration} onChange={(v) => setState(U(state, "affiliate", "commission_duration", v))} options={[{ value: "per_successful_sale", label: "Per Sale" }, { value: "first_order_only", label: "First Order Only" }]} />
+          <SettingsSelectField label="Attribution Sources" value={a.attribution_sources} onChange={(v) => setState(U(state, "affiliate", "attribution_sources", v))} options={[{ value: "link_and_code", label: "Link + Code" }, { value: "link_only", label: "Link Only" }, { value: "code_only", label: "Code Only" }]} />
+          <SettingsNumberField label="Attribution Window (days)" value={a.attribution_window_days} onChange={(v) => setState(U(state, "affiliate", "attribution_window_days", v))} />
+          <SettingsToggleField label="Requires approval" checked={a.affiliate_registration_requires_approval} onChange={(v) => setState(U(state, "affiliate", "affiliate_registration_requires_approval", v))} />
+          <SettingsToggleField label="Personal promo code" checked={a.personal_promo_code_enabled} onChange={(v) => setState(U(state, "affiliate", "personal_promo_code_enabled", v))} />
+          <SettingsToggleField label="Watchlist logic" checked={a.watchlist_logic_enabled} onChange={(v) => setState(U(state, "affiliate", "watchlist_logic_enabled", v))} />
+        </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Affiliate Contracts & Targets" description="Set minimum performance targets for each contract tier. Affiliates are measured against these.">
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-50 rounded-xl">
+            <h4 className="text-sm font-semibold text-[#20364D] mb-3">Starter (1 Month)</h4>
+            <div className="grid md:grid-cols-2 gap-4">
+              <SettingsNumberField label="Min Deals" value={a.contracts_starter_min_deals} onChange={(v) => setState(U(state, "affiliate", "contracts_starter_min_deals", v))} />
+              <SettingsNumberField label="Min Earnings (TZS)" value={a.contracts_starter_min_earnings} onChange={(v) => setState(U(state, "affiliate", "contracts_starter_min_earnings", v))} />
+            </div>
+          </div>
+          <div className="p-4 bg-slate-50 rounded-xl">
+            <h4 className="text-sm font-semibold text-[#20364D] mb-3">Growth (3 Months)</h4>
+            <div className="grid md:grid-cols-2 gap-4">
+              <SettingsNumberField label="Min Deals" value={a.contracts_growth_min_deals} onChange={(v) => setState(U(state, "affiliate", "contracts_growth_min_deals", v))} />
+              <SettingsNumberField label="Min Earnings (TZS)" value={a.contracts_growth_min_earnings} onChange={(v) => setState(U(state, "affiliate", "contracts_growth_min_earnings", v))} />
+            </div>
+          </div>
+          <div className="p-4 bg-slate-50 rounded-xl">
+            <h4 className="text-sm font-semibold text-[#20364D] mb-3">Top Performer (6 Months)</h4>
+            <div className="grid md:grid-cols-2 gap-4">
+              <SettingsNumberField label="Min Deals" value={a.contracts_top_min_deals} onChange={(v) => setState(U(state, "affiliate", "contracts_top_min_deals", v))} />
+              <SettingsNumberField label="Min Earnings (TZS)" value={a.contracts_top_min_earnings} onChange={(v) => setState(U(state, "affiliate", "contracts_top_min_earnings", v))} />
+            </div>
+          </div>
+        </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Status Engine" description="Automatic performance evaluation thresholds.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <SettingsNumberField label="Warning Threshold (%)" value={a.warning_threshold_pct} onChange={(v) => setState(U(state, "affiliate", "warning_threshold_pct", v))} />
+          <SettingsNumberField label="Probation Threshold (%)" value={a.probation_threshold_pct} onChange={(v) => setState(U(state, "affiliate", "probation_threshold_pct", v))} />
+        </div>
+        <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-700">
+          Affiliates performing below warning threshold get a warning notification. Below probation threshold triggers an "at risk" status. Statuses: <strong>Active, Warning, Probation, Suspended</strong>.
+        </div>
+      </SettingsSectionCard>
+    </>
   );
 }
 

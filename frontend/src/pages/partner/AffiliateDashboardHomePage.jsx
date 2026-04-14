@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import partnerApi from "../../lib/partnerApi";
 import {
   Wallet, Clock, CheckCircle, TrendingUp, Share2,
-  Copy, ExternalLink, Loader2, Gift, Users,
-  DollarSign, Zap, ChevronRight, BarChart3,
-  Megaphone, ArrowRight, Sparkles
+  Copy, Loader2, Users, DollarSign, ChevronRight,
+  Megaphone, Sparkles, Target, Bell, Download,
+  AlertTriangle, Shield
 } from "lucide-react";
-import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, Legend
-} from "recharts";
+import { Button } from "../../components/ui/button";
+import { toast } from "sonner";
+import api from "../../lib/api";
+import AffiliateSetupWizard from "../../components/affiliate/AffiliateSetupWizard";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -23,56 +22,66 @@ function shortMoney(v) {
   return money(v);
 }
 
-const STATUS_COLORS = {
-  pending: "bg-yellow-100 text-yellow-700",
-  approved: "bg-green-100 text-green-700",
-  paid: "bg-emerald-100 text-emerald-700",
-  rejected: "bg-red-100 text-red-700",
+function getToken() {
+  return localStorage.getItem("konekt_token") || localStorage.getItem("partner_token") || localStorage.getItem("konekt_admin_token");
+}
+
+function authHeader() {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+}
+
+const STATUS_BADGE = {
+  active: { bg: "bg-emerald-100", text: "text-emerald-700", label: "Active" },
+  warning: { bg: "bg-amber-100", text: "text-amber-700", label: "Warning" },
+  probation: { bg: "bg-red-100", text: "text-red-700", label: "Probation" },
+  suspended: { bg: "bg-slate-200", text: "text-slate-600", label: "Suspended" },
 };
 
 export default function AffiliateDashboardHomePage() {
-  const [products, setProducts] = useState([]);
-  const [earnings, setEarnings] = useState([]);
-  const [summary, setSummary] = useState({});
-  const [charts, setCharts] = useState({});
-  const [promoCode, setPromoCode] = useState("KONEKT");
-  const [affiliateName, setAffiliateName] = useState("");
-  const [referralLink, setReferralLink] = useState("");
   const [loading, setLoading] = useState(true);
+  const [setupComplete, setSetupComplete] = useState(null);
+  const [status, setStatus] = useState({});
+  const [performance, setPerformance] = useState({});
+  const [campaigns, setCampaigns] = useState([]);
+  const [notifications, setNotifications] = useState({ notifications: [], unread_count: 0 });
+  const [wallet, setWallet] = useState({});
   const [copiedId, setCopiedId] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadAll = useCallback(async () => {
     try {
-      const [promoRes, earningsRes, profileRes] = await Promise.all([
-        partnerApi.get("/api/affiliate/product-promotions").catch(() => ({ data: { products: [], promo_code: "KONEKT" } })),
-        partnerApi.get("/api/affiliate/earnings-summary").catch(() => ({ data: { summary: {}, earnings: [], charts: {} } })),
-        partnerApi.get("/api/affiliate/me").catch(() => ({ data: { profile: {} } })),
+      const headers = authHeader();
+      const [statusRes, perfRes, campRes, notifRes, walletRes] = await Promise.all([
+        api.get("/api/affiliate-program/my-status", { headers }).catch(() => ({ data: {} })),
+        api.get("/api/affiliate-program/my-performance", { headers }).catch(() => ({ data: {} })),
+        api.get("/api/affiliate-program/campaigns", { headers }).catch(() => ({ data: { campaigns: [], promo_code: "" } })),
+        api.get("/api/affiliate-program/notifications", { headers }).catch(() => ({ data: { notifications: [], unread_count: 0 } })),
+        api.get("/api/affiliate/wallet", { headers }).catch(() => ({ data: {} })),
       ]);
-
-      setProducts(promoRes.data?.products || []);
-      setPromoCode(promoRes.data?.promo_code || "KONEKT");
-      setSummary(earningsRes.data?.summary || {});
-      setEarnings(earningsRes.data?.earnings || []);
-      setCharts(earningsRes.data?.charts || {});
-
-      const profile = profileRes.data?.profile || {};
-      setAffiliateName(profile.name || "");
-      setReferralLink(profile.referral_link || `https://konekt.co.tz/?ref=${promoRes.data?.promo_code || "KONEKT"}`);
+      setStatus(statusRes.data || {});
+      setSetupComplete(statusRes.data?.setup_complete ?? true);
+      setPerformance(perfRes.data || {});
+      setCampaigns(campRes.data?.campaigns || []);
+      setNotifications(notifRes.data || { notifications: [], unread_count: 0 });
+      setWallet(walletRes.data || {});
     } catch (err) {
-      console.error("Failed to load affiliate dashboard", err);
+      console.error("Dashboard load error:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const copyToClipboard = (text, id) => {
+  useEffect(() => { loadAll(); }, [loadAll]);
+
+  const copy = (text, id) => {
     navigator.clipboard.writeText(text).catch(() => {});
     setCopiedId(id);
+    toast.success("Copied!");
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const quickShare = (campaign) => {
+    copy(campaign.caption, `quick-${campaign.id}`);
   };
 
   if (loading) {
@@ -83,6 +92,12 @@ export default function AffiliateDashboardHomePage() {
     );
   }
 
+  if (setupComplete === false) {
+    return <AffiliateSetupWizard onComplete={() => { setSetupComplete(true); loadAll(); }} />;
+  }
+
+  const perfStatus = STATUS_BADGE[status.performance_status] || STATUS_BADGE.active;
+
   return (
     <div className="space-y-5" data-testid="affiliate-dashboard-v2">
       {/* ═══ HEADER ═══ */}
@@ -90,224 +105,175 @@ export default function AffiliateDashboardHomePage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">
-              {affiliateName ? `${affiliateName}'s` : "Your"} Affiliate Hub
+              {status.name ? `${status.name}'s` : "Your"} Affiliate Hub
             </h1>
             <p className="text-slate-300 mt-1 text-sm">Share products, earn commissions, grow your network</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            {notifications.unread_count > 0 && (
+              <div className="relative" data-testid="notif-badge">
+                <Bell className="w-5 h-5 text-slate-300" />
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold flex items-center justify-center">
+                  {notifications.unread_count}
+                </span>
+              </div>
+            )}
+            <div className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${perfStatus.bg} ${perfStatus.text}`} data-testid="performance-badge">
+              {perfStatus.label}
+            </div>
             <div className="bg-white/10 backdrop-blur rounded-xl px-4 py-2.5 flex items-center gap-2">
-              <span className="text-xs text-slate-300 uppercase tracking-wider">Promo Code</span>
-              <span className="font-bold text-[#D4A843] text-lg">{promoCode}</span>
-              <button
-                onClick={() => copyToClipboard(promoCode, "promo")}
-                className="ml-1 p-1 rounded-lg hover:bg-white/10 transition"
-                data-testid="copy-promo-code"
-              >
-                {copiedId === "promo" ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-slate-300" />}
+              <span className="text-xs text-slate-300 uppercase tracking-wider">Code</span>
+              <span className="font-bold text-[#D4A843] text-lg" data-testid="header-promo-code">{status.affiliate_code || "—"}</span>
+              <button onClick={() => copy(status.affiliate_code, "header-code")} className="ml-1 p-1 rounded-lg hover:bg-white/10 transition" data-testid="copy-header-code">
+                {copiedId === "header-code" ? <CheckCircle className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-slate-300" />}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ═══ KPI ROW ═══ */}
+      {/* ═══ STATUS ALERTS ═══ */}
+      {status.performance_status === "warning" && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3" data-testid="warning-alert">
+          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Performance Warning</p>
+            <p className="text-xs text-amber-600 mt-0.5">You are below your target. Increase sharing activity to stay on track.</p>
+          </div>
+        </div>
+      )}
+      {status.performance_status === "probation" && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3" data-testid="probation-alert">
+          <Shield className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-red-800">Account at Risk</p>
+            <p className="text-xs text-red-600 mt-0.5">Your performance is significantly below target. Immediate action required to avoid suspension.</p>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ EARNINGS KPI ROW ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="affiliate-kpi-row">
-        <KpiCard
-          icon={<Wallet className="w-5 h-5" />}
-          label="Total Earned"
-          value={shortMoney(summary.total_earned)}
-          sub={`${summary.referral_count || 0} referrals`}
-          color="text-emerald-600"
-          testId="kpi-total-earned"
-        />
-        <KpiCard
-          icon={<Clock className="w-5 h-5" />}
-          label="Pending Payout"
-          value={shortMoney(summary.pending_payout)}
-          sub="Awaiting payout"
-          color="text-amber-600"
-          testId="kpi-pending-payout"
-        />
-        <KpiCard
-          icon={<CheckCircle className="w-5 h-5" />}
-          label="Paid Out"
-          value={shortMoney(summary.paid_out)}
-          sub="Already paid"
-          color="text-blue-600"
-          testId="kpi-paid-out"
-        />
-        <KpiCard
-          icon={<Megaphone className="w-5 h-5" />}
-          label="Active Promos"
-          value={summary.active_promotions || 0}
-          sub={`${summary.successful_orders || 0} conversions`}
-          color="text-purple-600"
-          testId="kpi-active-promos"
-        />
+        <KpiCard icon={<DollarSign className="w-5 h-5" />} label="Earnings This Month" value={shortMoney(performance.actuals?.total_earnings)} color="text-emerald-600" testId="kpi-earnings-month" />
+        <KpiCard icon={<Wallet className="w-5 h-5" />} label="Total Earnings" value={shortMoney(performance.actuals?.total_earnings)} color="text-blue-600" testId="kpi-total-earnings" />
+        <KpiCard icon={<Clock className="w-5 h-5" />} label="Pending Earnings" value={shortMoney(performance.actuals?.pending_earnings)} color="text-amber-600" testId="kpi-pending-earnings" />
+        <KpiCard icon={<CheckCircle className="w-5 h-5" />} label="Paid Earnings" value={shortMoney(performance.actuals?.paid_earnings)} color="text-emerald-600" testId="kpi-paid-earnings" />
       </div>
 
-      {/* ═══ EARNINGS SUMMARY ═══ */}
-      <div className="grid grid-cols-3 gap-3" data-testid="earnings-summary-cards">
-        <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-expected">
-          <DollarSign className="w-5 h-5 text-blue-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Expected</p>
-          <p className="text-lg font-bold text-blue-600 mt-0.5">{shortMoney(summary.expected)}</p>
-        </div>
-        <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-pending">
-          <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Pending Payout</p>
-          <p className="text-lg font-bold text-amber-600 mt-0.5">{shortMoney(summary.pending_payout)}</p>
-        </div>
-        <div className="bg-white border rounded-xl p-4 text-center" data-testid="earn-paid">
-          <CheckCircle className="w-5 h-5 text-emerald-500 mx-auto mb-1.5" />
-          <p className="text-[10px] font-semibold text-slate-600 uppercase tracking-wider">Paid</p>
-          <p className="text-lg font-bold text-emerald-600 mt-0.5">{shortMoney(summary.paid_out)}</p>
-        </div>
-      </div>
-
-      {/* ═══ SHARE & MOTIVATE + REFERRAL ═══ */}
-      <div className="grid lg:grid-cols-5 gap-4">
-        {/* Referral Card */}
-        <div className="lg:col-span-2 bg-white border rounded-xl p-5" data-testid="referral-card">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-7 h-7 rounded-lg bg-[#D4A843] text-white flex items-center justify-center">
-              <Gift className="w-3.5 h-3.5" />
-            </div>
-            <h2 className="text-base font-bold text-[#20364D]">Your Referral Tools</h2>
+      {/* ═══ TARGET PROGRESS + WALLET ═══ */}
+      <div className="grid lg:grid-cols-2 gap-4">
+        {/* Target Progress */}
+        <div className="bg-white border rounded-xl p-5" data-testid="target-progress">
+          <div className="flex items-center gap-2 mb-4">
+            <Target className="w-4 h-4 text-[#D4A843]" />
+            <h2 className="text-base font-bold text-[#20364D]">Target Progress</h2>
+            <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${perfStatus.bg} ${perfStatus.text}`}>
+              {performance.contract_label || "Starter"} Tier
+            </span>
           </div>
-          <div className="space-y-3">
-            <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-[10px] font-semibold text-slate-600 uppercase mb-1">Promo Code</p>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-[#20364D]">{promoCode}</span>
-                <button onClick={() => copyToClipboard(promoCode, "promo2")} className="p-1.5 rounded-lg bg-[#D4A843]/10 hover:bg-[#D4A843]/20 transition" data-testid="copy-promo-2">
-                  {copiedId === "promo2" ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-[#D4A843]" />}
-                </button>
-              </div>
-            </div>
-            <div className="bg-slate-50 rounded-lg p-3">
-              <p className="text-[10px] font-semibold text-slate-600 uppercase mb-1">Referral Link</p>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-600 truncate flex-1">{referralLink}</span>
-                <button onClick={() => copyToClipboard(referralLink, "link")} className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 transition flex-shrink-0" data-testid="copy-referral-link">
-                  {copiedId === "link" ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-blue-500" />}
-                </button>
-              </div>
-            </div>
-            <div className="bg-[#20364D]/5 rounded-lg p-3 space-y-1.5">
-              <p className="text-xs font-medium text-[#20364D]">How it works</p>
-              <p className="text-[11px] text-slate-500">Share your code or link. When a customer uses it, their discount and your commission are calculated automatically.</p>
-            </div>
+          <div className="space-y-4">
+            <ProgressBar
+              label="Deals Completed"
+              current={performance.actuals?.total_deals || 0}
+              target={performance.targets?.min_deals || 5}
+              pct={performance.progress?.deals_pct || 0}
+              testId="progress-deals"
+            />
+            <ProgressBar
+              label="Earnings"
+              current={money(performance.actuals?.total_earnings || 0)}
+              target={money(performance.targets?.min_earnings || 50000)}
+              pct={performance.progress?.earnings_pct || 0}
+              testId="progress-earnings"
+            />
           </div>
         </div>
 
-        {/* Products to Share */}
-        <div className="lg:col-span-3 bg-white border rounded-xl p-5" data-testid="products-to-share">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#D4A843]" />
-              <h2 className="text-base font-bold text-[#20364D]">Products to Share</h2>
-              <span className="text-xs text-slate-400">({products.length})</span>
+        {/* Wallet Summary */}
+        <div className="bg-white border rounded-xl p-5" data-testid="wallet-summary">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="w-4 h-4 text-[#D4A843]" />
+            <h2 className="text-base font-bold text-[#20364D]">Wallet</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-emerald-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] font-semibold text-slate-600 uppercase">Available</p>
+              <p className="text-lg font-bold text-emerald-600 mt-1" data-testid="wallet-available">{shortMoney(wallet.available)}</p>
             </div>
-            <Link to="/partner/affiliate-promotions" className="text-xs text-slate-500 hover:text-[#20364D] transition flex items-center gap-1">
-              All <ChevronRight className="w-3 h-3" />
+            <div className="bg-amber-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] font-semibold text-slate-600 uppercase">Pending</p>
+              <p className="text-lg font-bold text-amber-600 mt-1" data-testid="wallet-pending">{shortMoney(wallet.pending)}</p>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] font-semibold text-slate-600 uppercase">Paid Out</p>
+              <p className="text-lg font-bold text-blue-600 mt-1">{shortMoney(wallet.paid_out)}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3 text-center">
+              <p className="text-[10px] font-semibold text-slate-600 uppercase">Min Payout</p>
+              <p className="text-lg font-bold text-slate-600 mt-1">{shortMoney(wallet.minimum_payout)}</p>
+            </div>
+          </div>
+          {wallet.can_withdraw && (
+            <Link to="/partner/affiliate-payouts">
+              <Button className="w-full mt-3 bg-[#D4A843] hover:bg-[#c09a38] text-white" size="sm" data-testid="withdraw-btn">
+                Request Withdrawal
+              </Button>
             </Link>
-          </div>
-          {products.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <Share2 className="w-8 h-8 mx-auto mb-2" />
-              <p className="text-sm">No products available to share yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-2 max-h-[310px] overflow-y-auto pr-1">
-              {products.slice(0, 8).map((p) => (
-                <div key={p.id} className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition group" data-testid={`promo-product-${p.id}`}>
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 flex-shrink-0 overflow-hidden">
-                    {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover rounded-lg" /> : (p.product_name || "?")[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[#20364D] truncate">{p.product_name}</div>
-                    <div className="text-[11px] text-slate-400">
-                      {money(p.final_price)} • You earn <span className="font-semibold text-emerald-600">{money(p.affiliate_amount)}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    {p.captions?.[0]?.text && (
-                      <button
-                        onClick={() => copyToClipboard(p.captions[0].text, `caption-${p.id}`)}
-                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 transition"
-                        title="Copy caption"
-                        data-testid={`copy-caption-${p.id}`}
-                      >
-                        {copiedId === `caption-${p.id}` ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => copyToClipboard(`${window.location.origin}${p.share_link}`, `share-${p.id}`)}
-                      className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 transition"
-                      title="Copy share link"
-                      data-testid={`share-link-${p.id}`}
-                    >
-                      {copiedId === `share-${p.id}` ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> : <ExternalLink className="w-3.5 h-3.5 text-blue-500" />}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
           )}
         </div>
       </div>
 
-      {/* ═══ RECENT EARNINGS TABLE ═══ */}
-      <div className="bg-white border rounded-xl p-5" data-testid="earnings-table-section">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-[#20364D]">Recent Earnings</h2>
-          <Link to="/partner/affiliate-earnings" className="text-xs text-slate-500 hover:text-[#20364D] transition flex items-center gap-1">
+      {/* ═══ CONTENT STUDIO — CAMPAIGNS ═══ */}
+      <div className="bg-white border rounded-xl p-5" data-testid="content-studio">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#D4A843]" />
+            <h2 className="text-base font-bold text-[#20364D]">Content Studio</h2>
+            <span className="text-xs text-slate-400">({campaigns.length} products)</span>
+          </div>
+          <Link to="/partner/affiliate-promotions" className="text-xs text-slate-500 hover:text-[#20364D] transition flex items-center gap-1">
             All <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
-        {earnings.length === 0 ? (
+
+        {campaigns.length === 0 ? (
           <div className="text-center py-8 text-slate-400">
-            <DollarSign className="w-8 h-8 mx-auto mb-2" />
-            <p className="text-sm">No earnings yet. Start sharing to earn!</p>
+            <Share2 className="w-8 h-8 mx-auto mb-2" />
+            <p className="text-sm">No products available to share yet.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm" data-testid="earnings-table">
-              <thead>
-                <tr className="border-b text-left">
-                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Order</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide">Customer</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-right">Commission</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Status</th>
-                  <th className="pb-2 text-xs font-semibold text-slate-600 uppercase tracking-wide text-center">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {earnings.slice(0, 10).map((e, i) => (
-                  <tr key={e.id || i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition">
-                    <td className="py-2.5 font-mono text-xs text-slate-600">{e.order_number}</td>
-                    <td className="py-2.5 text-slate-700">{e.client_name || "—"}</td>
-                    <td className="py-2.5 text-right font-bold text-[#D4A843]">{money(e.affiliate_amount)}</td>
-                    <td className="py-2.5 text-center">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[e.status] || STATUS_COLORS.pending}`}>
-                        {e.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-center text-xs text-slate-400">{e.date_label}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-1">
+            {campaigns.slice(0, 12).map((c) => (
+              <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
+            ))}
           </div>
         )}
       </div>
 
-      {/* ═══ TREND CHARTS ═══ */}
-      <TrendChartsSection charts={charts} />
+      {/* ═══ NOTIFICATIONS ═══ */}
+      {notifications.notifications.length > 0 && (
+        <div className="bg-white border rounded-xl p-5" data-testid="notifications-section">
+          <div className="flex items-center gap-2 mb-3">
+            <Bell className="w-4 h-4 text-[#D4A843]" />
+            <h2 className="text-base font-bold text-[#20364D]">Notifications</h2>
+            {notifications.unread_count > 0 && (
+              <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full font-semibold">{notifications.unread_count} new</span>
+            )}
+          </div>
+          <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            {notifications.notifications.slice(0, 5).map((n) => (
+              <div key={n.id} className={`p-3 rounded-lg border text-sm ${n.is_read ? "bg-white border-slate-100" : "bg-blue-50 border-blue-100"}`} data-testid={`notif-${n.id}`}>
+                <p className="font-medium text-[#20364D]">{n.title}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{n.message}</p>
+                <p className="text-[10px] text-slate-400 mt-1">{new Date(n.created_at).toLocaleDateString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ═══ QUICK ACTIONS ═══ */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="quick-actions">
         <Link to="/partner/affiliate-promotions" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="qa-promotions">
           <Megaphone className="w-4 h-4 text-[#20364D]" /> Promotions
         </Link>
@@ -317,8 +283,8 @@ export default function AffiliateDashboardHomePage() {
         <Link to="/partner/affiliate-payouts" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="qa-payouts">
           <Wallet className="w-4 h-4 text-[#20364D]" /> Payouts
         </Link>
-        <Link to="/partner/affiliate-performance" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="qa-performance">
-          <BarChart3 className="w-4 h-4 text-[#20364D]" /> Performance
+        <Link to="/partner/affiliate-profile" className="flex items-center gap-2.5 p-3.5 bg-white border rounded-xl hover:shadow-md transition text-sm font-medium text-slate-700" data-testid="qa-profile">
+          <Users className="w-4 h-4 text-[#20364D]" /> Profile
         </Link>
       </div>
     </div>
@@ -328,60 +294,58 @@ export default function AffiliateDashboardHomePage() {
 
 /* ═══ SUB-COMPONENTS ═══ */
 
-function TrendChartsSection({ charts }) {
-  const earningsTrend = charts?.earnings_trend || [];
-  const conversionsTrend = charts?.conversions_trend || [];
-
+function CampaignCard({ campaign, copy, copiedId, quickShare }) {
+  const c = campaign;
   return (
-    <div className="grid md:grid-cols-2 gap-4" data-testid="affiliate-trend-charts">
-      {/* Earnings Trend */}
-      <div className="bg-white border rounded-xl p-5" data-testid="chart-earnings-trend">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-4 h-4 text-emerald-500" />
-          <h3 className="font-semibold text-[#20364D] text-sm">Earnings Trend (6 months)</h3>
+    <div className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition group" data-testid={`campaign-${c.id}`}>
+      <div className="flex gap-3">
+        <div className="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 flex-shrink-0 overflow-hidden">
+          {c.image_url ? <img src={c.image_url} alt="" className="w-full h-full object-cover rounded-lg" /> : (c.name || "?")[0]}
         </div>
-        {earningsTrend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={earningsTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}K` : v} />
-              <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} formatter={(v, name) => [shortMoney(v), name === "earned" ? "Earned" : "Paid"]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="earned" name="Earned" fill="#D4A843" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="paid" name="Paid" fill="#10B981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
-        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[#20364D] truncate">{c.name}</p>
+          <p className="text-xs text-slate-500">{money(c.selling_price)}</p>
+          {c.savings > 0 && (
+            <p className="text-[10px] font-semibold text-red-500">Save TZS {c.savings.toLocaleString()}</p>
+          )}
+          <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">You earn {money(c.your_earning)}</p>
+        </div>
       </div>
-
-      {/* Conversions Trend */}
-      <div className="bg-white border rounded-xl p-5" data-testid="chart-conversions-trend">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-4 h-4 text-purple-500" />
-          <h3 className="font-semibold text-[#20364D] text-sm">Conversions (6 months)</h3>
-        </div>
-        {conversionsTrend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <LineChart data={conversionsTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
-              <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
-              <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} />
-              <Line type="monotone" dataKey="orders" name="Orders" stroke="#7C3AED" strokeWidth={2.5} dot={{ r: 4, fill: "#7C3AED" }} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="h-[180px] flex items-center justify-center text-slate-400 text-sm">No data yet</div>
-        )}
+      <div className="flex gap-1.5 mt-2.5">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 text-xs h-8"
+          onClick={() => copy(c.caption, `caption-${c.id}`)}
+          data-testid={`copy-caption-${c.id}`}
+        >
+          {copiedId === `caption-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />}
+          Caption
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1 text-xs h-8"
+          onClick={() => copy(c.product_link, `link-${c.id}`)}
+          data-testid={`copy-link-${c.id}`}
+        >
+          {copiedId === `link-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />}
+          Link
+        </Button>
+        <Button
+          size="sm"
+          className="flex-1 text-xs h-8 bg-[#D4A843] hover:bg-[#c09a38] text-white"
+          onClick={() => quickShare(c)}
+          data-testid={`quick-share-${c.id}`}
+        >
+          <Share2 className="w-3 h-3 mr-1" /> Quick Share
+        </Button>
       </div>
     </div>
   );
 }
 
-function KpiCard({ icon, label, value, sub, color, testId }) {
+function KpiCard({ icon, label, value, color, testId }) {
   return (
     <div className="bg-white border rounded-xl p-4" data-testid={testId}>
       <div className="flex items-center gap-2 mb-2">
@@ -389,7 +353,23 @@ function KpiCard({ icon, label, value, sub, color, testId }) {
         <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{label}</span>
       </div>
       <div className="text-xl font-bold text-[#20364D]">{value}</div>
-      {sub && <div className="text-xs text-slate-400 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+function ProgressBar({ label, current, target, pct, testId }) {
+  const clampedPct = Math.min(100, Math.max(0, pct));
+  const barColor = clampedPct >= 80 ? "bg-emerald-500" : clampedPct >= 50 ? "bg-amber-500" : "bg-red-500";
+  return (
+    <div data-testid={testId}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-slate-600">{label}</span>
+        <span className="text-xs text-slate-400">{typeof current === 'number' ? current : current} / {typeof target === 'number' ? target : target}</span>
+      </div>
+      <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${clampedPct}%` }} />
+      </div>
+      <p className="text-[10px] text-slate-400 mt-0.5 text-right">{clampedPct.toFixed(0)}%</p>
     </div>
   );
 }

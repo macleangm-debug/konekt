@@ -94,6 +94,7 @@ from customer_invoice_routes import router as customer_invoice_router
 from customer_quote_actions_routes import router as customer_quote_actions_router
 from customer_orders_routes import router as customer_orders_router
 from affiliate_settings_routes import router as affiliate_settings_router
+from affiliate_program_routes import router as affiliate_program_router
 from affiliate_tracking_routes import router as affiliate_tracking_router
 from affiliate_promotions_routes import router as affiliate_promotions_router
 from affiliate_payout_admin_routes import router as affiliate_payout_admin_router
@@ -2593,6 +2594,7 @@ app.include_router(customer_quote_actions_router)
 app.include_router(customer_orders_router)
 app.include_router(affiliate_settings_router)
 app.include_router(affiliate_tracking_router)
+app.include_router(affiliate_program_router)
 app.include_router(affiliate_promotions_router)
 app.include_router(affiliate_payout_admin_router)
 app.include_router(affiliate_perk_router)

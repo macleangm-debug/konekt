@@ -70,7 +70,8 @@ export default function LoginPageV2() {
     const role = user.role || "customer";
     clearAllAuth();
     if (["admin", "sales", "sales_manager", "finance_manager", "marketing", "production"].includes(role)) localStorage.setItem("konekt_admin_token", token);
-    else if (["partner", "vendor", "affiliate"].includes(role)) localStorage.setItem("partner_token", token);
+    else if (role === "affiliate") { localStorage.setItem("partner_token", token); localStorage.setItem("konekt_token", token); }
+    else if (["partner", "vendor"].includes(role)) localStorage.setItem("partner_token", token);
     else localStorage.setItem("konekt_token", token);
     localStorage.setItem("token", token);
     localStorage.setItem("userRole", role);

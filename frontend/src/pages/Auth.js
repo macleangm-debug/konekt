@@ -44,9 +44,20 @@ export default function Auth({ defaultTab = 'login' }) {
     
     setLoading(true);
     try {
-      await login(loginEmail, loginPassword);
+      const userData = await login(loginEmail, loginPassword);
       toast.success('Welcome back!');
-      navigate(from, { replace: true });
+      const role = userData?.role;
+      if (role === "affiliate") {
+        navigate("/partner/affiliate-dashboard", { replace: true });
+      } else if (role === "admin" || role === "super_admin") {
+        navigate("/admin", { replace: true });
+      } else if (role === "partner" || role === "vendor") {
+        navigate("/partner", { replace: true });
+      } else if (role === "staff" || role === "sales_officer") {
+        navigate("/staff/home", { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (error) {
       console.error('Login failed:', error);
       toast.error(error.response?.data?.detail || 'Invalid credentials');

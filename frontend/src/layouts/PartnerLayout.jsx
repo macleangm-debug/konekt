@@ -12,6 +12,7 @@ import { useConfirmModal } from "../contexts/ConfirmModalContext";
 export default function PartnerLayout() {
   const [partner, setPartner] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { confirmAction } = useConfirmModal();
@@ -20,6 +21,14 @@ export default function PartnerLayout() {
     const token = localStorage.getItem("partner_token");
     if (!token) {
       navigate("/login");
+      return;
+    }
+
+    const storedRole = localStorage.getItem("userRole");
+    setUserRole(storedRole);
+
+    if (storedRole === "affiliate") {
+      setPartner({ type: "affiliate", role: "affiliate", company_name: localStorage.getItem("userName") || "Affiliate" });
       return;
     }
     
@@ -46,8 +55,8 @@ export default function PartnerLayout() {
     });
   };
 
-  // Determine partner type from partner data
-  const isAffiliate = partner?.type === "affiliate" || partner?.role === "affiliate";
+  // Determine partner type from partner data or stored role
+  const isAffiliate = partner?.type === "affiliate" || partner?.role === "affiliate" || userRole === "affiliate";
   const isVendor = partner?.type === "vendor" || partner?.role === "vendor";
   const isLogistics = partner?.partner_type === "logistics" || partner?.partner_type === "delivery" || partner?.partner_type === "distributor";
 
