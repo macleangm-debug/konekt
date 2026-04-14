@@ -37,6 +37,24 @@ const LAYOUTS = [
   { key: "promo", label: "Promo Focus" },
   { key: "service", label: "Service Focus" },
   { key: "minimal", label: "Minimal Brand" },
+  { key: "authority", label: "Authority" },
+  { key: "trust", label: "Trust" },
+];
+
+/* ═══ BRAND CONTENT TEMPLATES ═══ */
+const BRAND_TEMPLATES = [
+  { id: "authority_1", intent: "authority", name: "Built for Serious Buyers", description: "Structured sourcing. Real results.", category: "Authority", icon: "shield" },
+  { id: "authority_2", intent: "authority", name: "Trusted by Growing Businesses", description: "Reliable procurement you can count on.", category: "Authority", icon: "building" },
+  { id: "authority_3", intent: "authority", name: "Your Reliable Sourcing Partner", description: "We simplify procurement so you can focus on growth.", category: "Authority", icon: "handshake" },
+  { id: "trust_1", intent: "trust", name: "Verified Vendors. Secure Payments.", description: "Every vendor is vetted. Every payment is verified by admin.", category: "Trust", icon: "check" },
+  { id: "trust_2", intent: "trust", name: "Transparent. Accountable. Reliable.", description: "Track your order end-to-end. No surprises.", category: "Trust", icon: "eye" },
+  { id: "trust_3", intent: "trust", name: "Your Payment Is Verified First", description: "No order moves forward until payment is confirmed.", category: "Trust", icon: "lock" },
+  { id: "urgency_1", intent: "urgency", name: "Limited Slots Remaining", description: "Demand is rising — secure your order now.", category: "Urgency", icon: "clock" },
+  { id: "urgency_2", intent: "urgency", name: "Deal Closing Soon", description: "Don't miss out on volume savings.", category: "Urgency", icon: "zap" },
+  { id: "soft_1", intent: "soft_sell", name: "A Smarter Way to Source", description: "Simplify your buying process with Konekt.", category: "Soft Sell", icon: "sparkles" },
+  { id: "soft_2", intent: "soft_sell", name: "Better Buying Starts Here", description: "Explore what works for your business.", category: "Soft Sell", icon: "compass" },
+  { id: "value_1", intent: "value", name: "Quality That Lasts Longer", description: "Value beyond the lowest price.", category: "Value", icon: "star" },
+  { id: "value_2", intent: "value", name: "Reliable Sourcing Saves More", description: "Better quality. Better outcomes. Over time.", category: "Value", icon: "trending" },
 ];
 
 /* ═══ TRIAD SVG (inline for html2canvas) ═══ */
@@ -65,6 +83,7 @@ function TriadSVG({ size = 56, variant = "dark", accent = "#D4A843", primary = "
 export default function AdminContentStudioPage() {
   const [products, setProducts] = useState([]);
   const [services, setServices] = useState([]);
+  const [groupDeals, setGroupDeals] = useState([]);
   const [branding, setBranding] = useState({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("products");
@@ -77,13 +96,25 @@ export default function AdminContentStudioPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pR, sR, bR] = await Promise.all([
+      const [pR, sR, bR, gdR] = await Promise.all([
         api.get("/api/content-engine/template-data/products"),
         api.get("/api/content-engine/template-data/services"),
         api.get("/api/content-engine/template-data/branding"),
+        api.get("/api/public/group-deals/featured").catch(() => ({ data: [] })),
       ]);
       setProducts(pR.data?.items || []);
       setServices(sR.data?.items || []);
+      const deals = (gdR.data || []).map((d) => ({
+        id: d.id, name: d.product_name, description: d.description || "",
+        image_url: d.product_image || "", category: "Group Deal",
+        type: "group_deal", final_price: d.discounted_price || 0,
+        selling_price: d.original_price || 0,
+        discount_amount: (d.original_price || 0) > (d.discounted_price || 0) ? (d.original_price - d.discounted_price) : 0,
+        has_promotion: false, promo_code: "",
+        current_committed: d.current_committed || 0, display_target: d.display_target || 0,
+        buyer_count: d.buyer_count || 0,
+      }));
+      setGroupDeals(deals);
       const b = bR.data?.branding || {};
       b.resolved_logo_url = resolveLogoUrl(b.logo_url);
       setBranding(b);
@@ -92,7 +123,32 @@ export default function AdminContentStudioPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
-  const items = tab === "products" ? products : services;
+
+  const getItems = () => {
+    if (tab === "products") return products;
+    if (tab === "services") return services;
+    if (tab === "group_deals") return groupDeals;
+    if (tab === "brand") return BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
+    return products;
+  };
+  const items = getItems();
+
+  const handleSelectItem = (item) => {
+    setSelectedItem(item);
+    // Auto-set best layout for content type
+    if (item.type === "brand") {
+      const intent = item.intent || "authority";
+      if (intent === "trust") setLayout(LAYOUTS.find((l) => l.key === "trust") || LAYOUTS[3]);
+      else setLayout(LAYOUTS.find((l) => l.key === "authority") || LAYOUTS[3]);
+    } else if (tab === "services") {
+      setLayout(LAYOUTS[2]); // Service Focus
+    } else if (tab === "group_deals") {
+      setLayout(LAYOUTS[1]); // Promo Focus
+    } else {
+      setLayout(LAYOUTS[0]); // Product Focus
+    }
+    setShowPreview(true);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="content-studio">
@@ -109,9 +165,14 @@ export default function AdminContentStudioPage() {
       {/* Controls */}
       <div className="flex items-center gap-3 flex-wrap" data-testid="studio-controls">
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden">
-          {["products", "services"].map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 text-xs font-semibold transition-colors ${tab === t ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`tab-${t}`}>
-              {t === "products" ? `Products (${products.length})` : `Services (${services.length})`}
+          {[
+            { key: "products", label: `Products (${products.length})` },
+            { key: "services", label: `Services (${services.length})` },
+            { key: "group_deals", label: `Deals (${groupDeals.length})` },
+            { key: "brand", label: `Brand (${BRAND_TEMPLATES.length})` },
+          ].map((t) => (
+            <button key={t.key} onClick={() => setTab(t.key)} className={`px-4 py-2 text-xs font-semibold transition-colors ${tab === t.key ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`tab-${t.key}`}>
+              {t.label}
             </button>
           ))}
         </div>
@@ -158,7 +219,11 @@ export default function AdminContentStudioPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="studio-grid">
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} onSelect={() => { setSelectedItem(item); setShowPreview(true); }} />
+            item.type === "brand" ? (
+              <BrandTemplateCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
+            ) : (
+              <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
+            )
           ))}
         </div>
       )}
@@ -179,7 +244,7 @@ export default function AdminContentStudioPage() {
 function ItemCard({ item, onSelect }) {
   return (
     <div className="group rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer" onClick={onSelect} data-testid={`studio-item-${item.id}`}>
-      <div className="relative bg-slate-50 aspect-[4/3] overflow-hidden">
+      <div className="relative bg-slate-50 aspect-square overflow-hidden">
         {item.image_url ? (
           <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
         ) : (
@@ -187,6 +252,9 @@ function ItemCard({ item, onSelect }) {
         )}
         {item.has_promotion && (
           <div className="absolute top-2.5 right-2.5"><span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-red-500 text-white"><Tag className="w-3 h-3" /> {item.promo_code}</span></div>
+        )}
+        {item.type === "group_deal" && (
+          <div className="absolute top-2.5 left-2.5"><span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-[#D4A843] text-[#17283C]"><Tag className="w-3 h-3" /> Group Deal</span></div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
           <span className="flex items-center gap-2 bg-white text-[#20364D] rounded-lg px-4 py-2.5 text-sm font-semibold shadow-lg"><Sparkles className="w-4 h-4" /> Generate Creative</span>
@@ -201,6 +269,40 @@ function ItemCard({ item, onSelect }) {
             {item.discount_amount > 0 && <span className="text-emerald-600 font-semibold ml-1.5">Save {money(item.discount_amount)}</span>}
           </div>
         )}
+        {item.type === "group_deal" && item.display_target > 0 && (
+          <div className="mt-1.5">
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-[#D4A843] rounded-full" style={{ width: `${Math.min(100, Math.round((item.current_committed / item.display_target) * 100))}%` }} />
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{item.current_committed}/{item.display_target} units</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══ Brand Template Card ═══ */
+const INTENT_COLORS = {
+  authority: { bg: "bg-[#20364D]", text: "text-white", accent: "text-[#D4A843]" },
+  trust: { bg: "bg-emerald-700", text: "text-white", accent: "text-emerald-200" },
+  urgency: { bg: "bg-red-700", text: "text-white", accent: "text-red-200" },
+  soft_sell: { bg: "bg-slate-100", text: "text-[#20364D]", accent: "text-slate-500" },
+  value: { bg: "bg-amber-50", text: "text-[#20364D]", accent: "text-[#D4A843]" },
+};
+
+function BrandTemplateCard({ item, onSelect }) {
+  const colors = INTENT_COLORS[item.intent] || INTENT_COLORS.authority;
+  return (
+    <div className={`group rounded-xl border overflow-hidden hover:shadow-lg transition-all cursor-pointer ${colors.bg}`} onClick={onSelect} data-testid={`brand-template-${item.id}`}>
+      <div className="p-6 min-h-[180px] flex flex-col justify-center items-center text-center">
+        <div className={`text-[10px] font-bold uppercase tracking-widest mb-3 ${colors.accent}`}>{item.category}</div>
+        <h3 className={`text-lg font-bold ${colors.text} leading-tight mb-2`}>{item.name}</h3>
+        <p className={`text-sm ${colors.accent} leading-relaxed`}>{item.description}</p>
+      </div>
+      <div className="bg-black/10 px-4 py-2.5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Sparkles className="w-3.5 h-3.5 text-white" />
+        <span className="text-xs font-semibold text-white">Generate Creative</span>
       </div>
     </div>
   );
@@ -359,6 +461,8 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
     promo: () => <LayoutPromo item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
     service: () => <LayoutService item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
     minimal: () => <LayoutMinimal item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
+    authority: () => <LayoutAuthority item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} />,
+    trust: () => <LayoutTrust item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} />,
   };
 
   return (
@@ -482,6 +586,94 @@ function LayoutMinimal({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
   );
 }
 
+/* ═══ LAYOUT E: Authority (Brand Statement) ═══ */
+function LayoutAuthority({ item, theme, S, v, w, h, branding, isLight }) {
+  const [logoErr, setLogoErr] = useState(false);
+  const showUploadedLogo = branding.resolved_logo_url && !logoErr;
+  return (
+    <>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: `${S.pad * 1.5}px ${S.pad}px`, textAlign: "center", gap: v ? 36 : 24 }}>
+        {/* Icon/Logo block */}
+        <div style={{ width: v ? 120 : 100, height: v ? 120 : 100, borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: `${theme.accent}20` }}>
+          {showUploadedLogo ? (
+            <img src={branding.resolved_logo_url} alt="" crossOrigin="anonymous" onError={() => setLogoErr(true)} style={{ height: v ? 70 : 56, width: "auto", objectFit: "contain" }} />
+          ) : (
+            <TriadSVG size={v ? 70 : 56} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
+          )}
+        </div>
+
+        {/* Accent line */}
+        <div style={{ width: 80, height: 5, backgroundColor: theme.accent, borderRadius: 3 }} />
+
+        {/* Statement */}
+        <div style={{ fontSize: v ? S.headline * 1.1 : S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.08, letterSpacing: -1.5, maxWidth: v ? 900 : 800 }}>
+          {item.name}
+        </div>
+
+        {/* Subtext */}
+        {item.description && (
+          <div style={{ fontSize: v ? S.desc + 8 : S.desc + 4, color: theme.textSecondary, lineHeight: 1.5, maxWidth: v ? 700 : 600 }}>
+            {item.description}
+          </div>
+        )}
+
+        {/* Brand name */}
+        <div style={{ fontSize: v ? 32 : 24, fontWeight: 700, color: theme.accent, letterSpacing: 3, textTransform: "uppercase", marginTop: v ? 16 : 8 }}>
+          {branding.trading_name || branding.company_name || ""}
+        </div>
+
+        <PromoCode item={item} theme={theme} S={S} />
+      </div>
+      <FooterBar theme={theme} S={S} branding={branding} />
+    </>
+  );
+}
+
+/* ═══ LAYOUT F: Trust (Checklist Style) ═══ */
+function LayoutTrust({ item, theme, S, v, w, h, branding, isLight }) {
+  const [logoErr, setLogoErr] = useState(false);
+  const showUploadedLogo = branding.resolved_logo_url && !logoErr;
+  const trustPoints = (item.description || "").split(". ").filter(Boolean);
+  return (
+    <>
+      <LogoBar theme={theme} S={S} branding={branding} isLight={isLight} hasDsc={false} discount={0} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: `0 ${S.pad}px`, gap: v ? 32 : 24 }}>
+        {/* Accent line */}
+        <div style={{ width: 70, height: 5, backgroundColor: theme.accent, borderRadius: 3 }} />
+
+        {/* Main statement */}
+        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -1 }}>
+          {item.name}
+        </div>
+
+        {/* Trust points as checklist */}
+        {trustPoints.length > 1 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: v ? 20 : 14 }}>
+            {trustPoints.map((point, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: v ? 16 : 12 }}>
+                <div style={{ width: v ? 36 : 28, height: v ? 36 : 28, borderRadius: 8, backgroundColor: `${theme.accent}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <svg width={v ? 18 : 14} height={v ? 18 : 14} viewBox="0 0 24 24" fill="none" stroke={theme.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+                <span style={{ fontSize: v ? S.desc + 4 : S.desc + 2, fontWeight: 600, color: theme.textPrimary }}>{point.trim().replace(/\.$/, "")}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: v ? S.desc + 6 : S.desc + 4, color: theme.textSecondary, lineHeight: 1.5, maxWidth: 700 }}>
+            {item.description}
+          </div>
+        )}
+
+        <PromoCode item={item} theme={theme} S={S} />
+      </div>
+      <FooterBar theme={theme} S={S} branding={branding} />
+    </>
+  );
+}
+
+
 /* ═══ Shared: Logo Bar ═══ */
 function LogoBar({ theme, S, branding, isLight, hasDsc, discount }) {
   const [logoErr, setLogoErr] = useState(false);
@@ -546,11 +738,29 @@ function FooterBar({ theme, S, branding }) {
 
 /* ═══ Caption Generator ═══ */
 function generateCaptions(item, branding) {
+  const brand = branding.trading_name || branding.company_name || "";
+  const contact = [branding.phone, branding.email].filter(Boolean).join(" | ");
+
+  // Brand/Message content (no price)
+  if (item.type === "brand" || (!item.final_price && !item.selling_price)) {
+    const short = `${item.name}. ${item.description || ""}`.trim();
+    let social = `${item.name}.`;
+    if (item.description) social += ` ${item.description}`;
+    if (brand) social += `\n\n${brand}`;
+    if (item.promo_code) social += `\nUse code ${item.promo_code}`;
+
+    let whatsapp = `*${item.name}*`;
+    if (item.description) whatsapp += `\n${item.description}`;
+    if (item.promo_code) whatsapp += `\n\nPromo code: *${item.promo_code}*`;
+    if (brand || contact) whatsapp += `\n\n${[brand, contact].filter(Boolean).join("\n")}`;
+
+    return { short, social: social.trim(), whatsapp: whatsapp.trim(), story: `${item.name}\n${item.description || ""}` };
+  }
+
+  // Product/Service/Deal content (has price)
   const price = money(item.final_price);
   const save = item.discount_amount > 0 ? money(item.discount_amount) : "";
   const orig = item.selling_price !== item.final_price ? money(item.selling_price) : "";
-  const brand = branding.trading_name || branding.company_name || "";
-  const contact = [branding.phone, branding.email].filter(Boolean).join(" | ");
 
   let short = `${item.name} at ${price}.`;
   if (save) short += ` Save ${save}.`;
