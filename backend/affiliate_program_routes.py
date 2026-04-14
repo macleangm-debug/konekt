@@ -461,8 +461,9 @@ async def get_shareable_campaigns(request: Request, credentials: HTTPAuthorizati
 
     code = affiliate.get("affiliate_code", "")
 
-    from services.creative_generator_service import generate_campaign_content, get_shareable_products
+    from services.creative_generator_service import generate_campaign_content, get_shareable_products, generate_group_deal_campaigns
     products = await get_shareable_products(db)
     campaigns = await generate_campaign_content(db, products, "affiliate", code)
+    group_deals = await generate_group_deal_campaigns(db, code)
 
-    return {"campaigns": campaigns, "promo_code": code, "total": len(campaigns)}
+    return {"campaigns": campaigns, "group_deals": group_deals, "promo_code": code, "total": len(campaigns) + len(group_deals)}

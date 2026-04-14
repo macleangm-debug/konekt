@@ -14,6 +14,7 @@ export default function SalesPromoStudio() {
   const [promoCode, setPromoCode] = useState("");
   const [hasCode, setHasCode] = useState(false);
   const [campaigns, setCampaigns] = useState([]);
+  const [groupDeals, setGroupDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [codeInput, setCodeInput] = useState("");
   const [codeAvailable, setCodeAvailable] = useState(null);
@@ -30,6 +31,7 @@ export default function SalesPromoStudio() {
       setPromoCode(codeRes.data?.promo_code || "");
       setHasCode(codeRes.data?.has_code || false);
       setCampaigns(campRes.data?.campaigns || []);
+      setGroupDeals(campRes.data?.group_deals || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -125,7 +127,7 @@ export default function SalesPromoStudio() {
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[#D4A843]" />
           <h2 className="text-base font-bold text-[#20364D]">Content Studio</h2>
-          <span className="text-xs text-slate-400">({campaigns.length} products)</span>
+          <span className="text-xs text-slate-400">({campaigns.length + groupDeals.length} items)</span>
         </div>
         <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg">
           <span className="text-[10px] font-semibold text-slate-400 uppercase">Your Code</span>
@@ -136,41 +138,63 @@ export default function SalesPromoStudio() {
         </div>
       </div>
 
-      {campaigns.length === 0 ? (
+      {campaigns.length === 0 && groupDeals.length === 0 ? (
         <div className="text-center py-6 text-slate-400">
           <Share2 className="w-6 h-6 mx-auto mb-2" />
           <p className="text-sm">No products available to share yet.</p>
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
-          {campaigns.slice(0, 12).map((c) => (
-            <div key={c.id} className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition" data-testid={`sales-campaign-${c.id}`}>
-              <div className="flex gap-3">
-                <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 flex-shrink-0 overflow-hidden">
-                  {c.image_url ? <img src={c.image_url} alt="" className="w-full h-full object-cover rounded-lg" /> : (c.name || "?")[0]}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#20364D] truncate">{c.name}</p>
-                  <p className="text-xs text-slate-500">{money(c.selling_price)}</p>
-                  {c.savings > 0 && <p className="text-[10px] font-semibold text-red-500">Save TZS {c.savings.toLocaleString()}</p>}
-                  {c.your_earning > 0 && <p className="text-[10px] text-emerald-600 font-semibold">You earn {money(c.your_earning)}</p>}
-                </div>
-              </div>
-              <div className="flex gap-1.5 mt-2">
-                <Button size="sm" variant="outline" className="flex-1 text-xs h-7" onClick={() => copy(c.caption, `cap-${c.id}`)}>
-                  {copiedId === `cap-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />} Caption
-                </Button>
-                <Button size="sm" variant="outline" className="flex-1 text-xs h-7" onClick={() => copy(c.product_link, `lnk-${c.id}`)}>
-                  {copiedId === `lnk-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />} Link
-                </Button>
-                <Button size="sm" className="flex-1 text-xs h-7 bg-[#D4A843] hover:bg-[#c09a38] text-white" onClick={() => copy(c.caption, `qs-${c.id}`)}>
-                  <Share2 className="w-3 h-3 mr-1" /> Quick Share
-                </Button>
+        <div className="space-y-4">
+          {groupDeals.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-[#D4A843] uppercase tracking-wide mb-2">Group Deals</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                {groupDeals.slice(0, 6).map((c) => <SalesCampaignCard key={c.id} c={c} copy={copy} copiedId={copiedId} />)}
               </div>
             </div>
-          ))}
+          )}
+          {campaigns.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Products</p>
+              <div className="grid md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
+                {campaigns.slice(0, 12).map((c) => <SalesCampaignCard key={c.id} c={c} copy={copy} copiedId={copiedId} />)}
+              </div>
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SalesCampaignCard({ c, copy, copiedId }) {
+  return (
+    <div className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition" data-testid={`sales-campaign-${c.id}`}>
+      <div className="flex gap-3">
+        <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 flex-shrink-0 overflow-hidden">
+          {c.image_url ? <img src={c.image_url} alt="" className="w-full h-full object-cover rounded-lg" /> : (c.name || "?")[0]}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[#20364D] truncate">{c.name}</p>
+          <p className="text-xs text-slate-500">{money(c.selling_price)}</p>
+          {c.savings > 0 && <p className="text-[10px] font-semibold text-red-500">Save TZS {c.savings.toLocaleString()}</p>}
+          {c.your_earning > 0 && <p className="text-[10px] text-emerald-600 font-semibold">You earn {money(c.your_earning)}</p>}
+          {c.type === "group_deal" && c.current_committed > 0 && (
+            <p className="text-[10px] text-blue-500 font-medium">{c.current_committed}/{c.target} units</p>
+          )}
+        </div>
+      </div>
+      <div className="flex gap-1.5 mt-2">
+        <Button size="sm" variant="outline" className="flex-1 text-xs h-7" onClick={() => copy(c.caption, `cap-${c.id}`)}>
+          {copiedId === `cap-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />} Caption
+        </Button>
+        <Button size="sm" variant="outline" className="flex-1 text-xs h-7" onClick={() => copy(c.product_link, `lnk-${c.id}`)}>
+          {copiedId === `lnk-${c.id}` ? <CheckCircle className="w-3 h-3 mr-1 text-green-500" /> : <Copy className="w-3 h-3 mr-1" />} Link
+        </Button>
+        <Button size="sm" className="flex-1 text-xs h-7 bg-[#D4A843] hover:bg-[#c09a38] text-white" onClick={() => copy(c.caption, `qs-${c.id}`)}>
+          <Share2 className="w-3 h-3 mr-1" /> Quick Share
+        </Button>
+      </div>
     </div>
   );
 }

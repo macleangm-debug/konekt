@@ -94,3 +94,53 @@ async def get_shareable_products(db, limit=100):
         {"_id": 0}
     ).to_list(limit)
     return products
+
+
+async def generate_group_deal_campaigns(db, promo_code=None):
+    """Generate shareable content for active group deal campaigns."""
+    from bson import ObjectId
+    deals = await db.group_deal_campaigns.find(
+        {"status": "active"}, {"_id": 1, "campaign_id": 1, "product_name": 1,
+         "original_price": 1, "discounted_price": 1, "display_target": 1,
+         "current_committed": 1, "buyer_count": 1, "deadline": 1, "image_url": 1,
+         "vendor_threshold": 1}
+    ).to_list(50)
+
+    campaigns = []
+    for d in deals:
+        original = float(d.get("original_price", 0))
+        discounted = float(d.get("discounted_price", 0))
+        savings = max(0, original - discounted) if original > discounted else 0
+        target = d.get("display_target", d.get("vendor_threshold", 1))
+        current = d.get("current_committed", 0)
+
+        ref_param = f"?ref={promo_code}" if promo_code else ""
+        deal_link = f"{FRONTEND_URL}/group-deals/checkout?campaign_id={d['_id']}{ref_param}"
+
+        lines = ["Group Deal Live!\n"]
+        if savings > 0:
+            lines.append(f"Save TZS {savings:,.0f} on {d.get('product_name', '')}.\n")
+        if current > 0 and target > 0:
+            lines.append(f"Already {current}/{target} units committed.\n")
+        if promo_code:
+            lines.append(f"Use code: {promo_code}\n")
+        lines.append(f"Join here: {deal_link}")
+        caption = "\n".join(lines)
+
+        campaigns.append({
+            "id": str(d["_id"]),
+            "campaign_id": d.get("campaign_id", ""),
+            "name": d.get("product_name", ""),
+            "image_url": d.get("image_url", ""),
+            "selling_price": discounted,
+            "original_price": original,
+            "savings": savings,
+            "savings_text": f"Save TZS {savings:,.0f}" if savings > 0 else "",
+            "target": target,
+            "current_committed": current,
+            "product_link": deal_link,
+            "caption": caption,
+            "promo_code": promo_code or "",
+            "type": "group_deal",
+        })
+    return campaigns

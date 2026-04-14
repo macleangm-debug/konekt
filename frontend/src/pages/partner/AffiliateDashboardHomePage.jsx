@@ -44,6 +44,7 @@ export default function AffiliateDashboardHomePage() {
   const [status, setStatus] = useState({});
   const [performance, setPerformance] = useState({});
   const [campaigns, setCampaigns] = useState([]);
+  const [groupDeals, setGroupDeals] = useState([]);
   const [notifications, setNotifications] = useState({ notifications: [], unread_count: 0 });
   const [wallet, setWallet] = useState({});
   const [copiedId, setCopiedId] = useState(null);
@@ -62,6 +63,7 @@ export default function AffiliateDashboardHomePage() {
       setSetupComplete(statusRes.data?.setup_complete ?? true);
       setPerformance(perfRes.data || {});
       setCampaigns(campRes.data?.campaigns || []);
+      setGroupDeals(campRes.data?.group_deals || []);
       setNotifications(notifRes.data || { notifications: [], unread_count: 0 });
       setWallet(walletRes.data || {});
     } catch (err) {
@@ -229,23 +231,40 @@ export default function AffiliateDashboardHomePage() {
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#D4A843]" />
             <h2 className="text-base font-bold text-[#20364D]">Content Studio</h2>
-            <span className="text-xs text-slate-400">({campaigns.length} products)</span>
+            <span className="text-xs text-slate-400">({campaigns.length + groupDeals.length} items)</span>
           </div>
           <Link to="/partner/affiliate-promotions" className="text-xs text-slate-500 hover:text-[#20364D] transition flex items-center gap-1">
             All <ChevronRight className="w-3 h-3" />
           </Link>
         </div>
 
-        {campaigns.length === 0 ? (
+        {campaigns.length === 0 && groupDeals.length === 0 ? (
           <div className="text-center py-8 text-slate-400">
             <Share2 className="w-8 h-8 mx-auto mb-2" />
             <p className="text-sm">No products available to share yet.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-1">
-            {campaigns.slice(0, 12).map((c) => (
-              <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
-            ))}
+          <div className="space-y-4">
+            {groupDeals.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-[#D4A843] uppercase tracking-wide mb-2">Group Deals</p>
+                <div className="grid md:grid-cols-2 gap-3">
+                  {groupDeals.slice(0, 6).map((c) => (
+                    <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
+                  ))}
+                </div>
+              </div>
+            )}
+            {campaigns.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Products</p>
+                <div className="grid md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
+                  {campaigns.slice(0, 12).map((c) => (
+                    <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

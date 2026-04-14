@@ -126,10 +126,11 @@ async def get_sales_campaigns(request: Request, credentials: HTTPAuthorizationCr
 
     promo_code = user.get("sales_promo_code", "")
     if not promo_code:
-        return {"campaigns": [], "promo_code": "", "has_code": False, "total": 0}
+        return {"campaigns": [], "group_deals": [], "promo_code": "", "has_code": False, "total": 0}
 
-    from services.creative_generator_service import generate_campaign_content, get_shareable_products
+    from services.creative_generator_service import generate_campaign_content, get_shareable_products, generate_group_deal_campaigns
     products = await get_shareable_products(db)
     campaigns = await generate_campaign_content(db, products, "sales", promo_code)
+    group_deals = await generate_group_deal_campaigns(db, promo_code)
 
-    return {"campaigns": campaigns, "promo_code": promo_code, "has_code": True, "total": len(campaigns)}
+    return {"campaigns": campaigns, "group_deals": group_deals, "promo_code": promo_code, "has_code": True, "total": len(campaigns) + len(group_deals)}

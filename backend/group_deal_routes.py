@@ -257,15 +257,15 @@ async def join_campaign(campaign_id: str, payload: dict):
     if not customer_name and not customer_phone:
         raise HTTPException(status_code=400, detail="Customer name or phone is required.")
 
-    # Duplicate join prevention — same phone on same campaign
+    # Allow repeat buyers — only prevent duplicate pending payment submissions
     if customer_phone:
-        existing = await db.group_deal_commitments.find_one({
+        existing_pending = await db.group_deal_commitments.find_one({
             "campaign_id": str(doc["_id"]),
             "customer_phone": customer_phone,
-            "status": {"$in": ["pending_payment", "payment_submitted", "committed", "order_created"]},
+            "status": "pending_payment",
         })
-        if existing:
-            raise HTTPException(status_code=400, detail="You have already joined this deal.")
+        if existing_pending:
+            raise HTTPException(status_code=400, detail="You have a pending payment for this deal. Please complete it first.")
 
     amount = doc["discounted_price"]
     qty = max(1, int(payload.get("quantity", 1)))
@@ -386,9 +386,32 @@ async def approve_commitment_payment(commitment_ref: str):
         new_count = campaign.get("current_committed", 0) + qty
         new_buyers = campaign.get("buyer_count", 0) + 1
         update_fields = {"current_committed": new_count, "buyer_count": new_buyers, "updated_at": now}
-        if new_count >= campaign.get("vendor_threshold", campaign.get("display_target", 1)):
+
+        target = campaign.get("vendor_threshold", campaign.get("display_target", 1))
+        if new_count >= target:
             update_fields["threshold_met"] = True
+            # Quantity-based immediate closure — deal is successful
+            update_fields["status"] = "successful"
+            update_fields["completed_at"] = now
+
         await db.group_deal_campaigns.update_one({"_id": campaign["_id"]}, {"$set": update_fields})
+
+        # Send group deal success email if just became successful
+        if new_count >= target and not campaign.get("threshold_met"):
+            try:
+                from services.canonical_email_engine import send_group_deal_success_email
+                committed_docs = await db.group_deal_commitments.find(
+                    {"campaign_id": str(campaign["_id"]), "payment_status": "approved"},
+                    {"_id": 0, "customer_email": 1, "customer_name": 1}
+                ).to_list(500)
+                for cdoc in committed_docs:
+                    if cdoc.get("customer_email"):
+                        await send_group_deal_success_email(
+                            db, cdoc["customer_email"], cdoc.get("customer_name", ""),
+                            campaign.get("product_name", ""), str(campaign["_id"])
+                        )
+            except Exception as e:
+                print(f"Warning: Group deal success email error: {e}")
 
     return {"status": "approved", "commitment_ref": commitment_ref}
 

@@ -220,15 +220,29 @@ export default function GroupDealCheckoutPage() {
               <span className="text-sm font-bold text-amber-800">Invite friends to unlock faster</span>
             </div>
             <p className="text-xs text-amber-700 mb-3">The more people join, the sooner the deal activates.</p>
-            <div className="flex items-center gap-2">
-              <a href={`https://wa.me/?text=${encodeURIComponent(`Check out this group deal: ${deal.product_name} — ${dealUrl}`)}`}
-                target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold">
-                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
-              </a>
-              <button onClick={() => handleCopy(dealUrl, "share")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold">
-                <Copy className="w-3.5 h-3.5" /> {copiedField === "share" ? "Copied!" : "Copy Link"}
-              </button>
-            </div>
+            {(() => {
+              const savings = deal.original_price && deal.discounted_price ? Math.max(0, deal.original_price - deal.discounted_price) : 0;
+              const target = deal.display_target || deal.vendor_threshold || 0;
+              const current = deal.current_committed || 0;
+              const qty = commitmentAmount ? Math.round(commitmentAmount / (deal.discounted_price || 1)) : 1;
+              let msg = `I've joined the Connect Deal for ${deal.product_name}`;
+              if (qty > 1) msg += ` and bought ${qty} units`;
+              msg += ".\n";
+              if (savings > 0) msg += `Save TZS ${savings.toLocaleString()} on this deal.\n`;
+              if (current > 0 && target > 0) msg += `Already ${current}/${target} units committed.\n`;
+              msg += `Join before it closes: ${dealUrl}`;
+              return (
+                <div className="flex items-center gap-2">
+                  <a href={`https://wa.me/?text=${encodeURIComponent(msg)}`}
+                    target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-semibold" data-testid="whatsapp-share-btn">
+                    <MessageCircle className="w-3.5 h-3.5" /> Share on WhatsApp
+                  </a>
+                  <button onClick={() => { navigator.clipboard.writeText(msg); handleCopy(msg, "share"); }} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold" data-testid="copy-share-msg">
+                    <Copy className="w-3.5 h-3.5" /> {copiedField === "share" ? "Copied!" : "Copy Message"}
+                  </button>
+                </div>
+              );
+            })()}
           </div>
           <div className="flex gap-4 justify-center text-sm">
             <Link to="/track-order" className="font-semibold text-[#20364D] hover:underline" data-testid="track-status-link">Track Status</Link>
