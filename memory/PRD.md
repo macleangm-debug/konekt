@@ -5,8 +5,16 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## System Status: LAUNCH READY — PRODUCT UPLOAD WIZARD COMPLETE
 
+## Page Alignment Audit — COMPLETE
+- **Canonical admin width**: `max-w-7xl` (1280px) for data-heavy pages (dashboards, tables)
+- **Form/wizard width**: `max-w-5xl` (1024px) for focused form pages (Product Wizard, Business Settings)
+- **Account pages**: Fill layout container (no max-width), CustomerPortalLayoutV2 provides `p-4 md:p-6 lg:p-8` padding
+- **Fixed**: ProductUploadWizard `max-w-3xl` → `max-w-5xl` (was too narrow)
+- **Fixed**: BusinessSettingsPageV2 `max-w-3xl` → `max-w-5xl`
+- **Improved**: Wizard uses 2-3 column grids for better horizontal space usage
+
 ## Product Upload Wizard — COMPLETE (308 iterations tested)
-- **6-step flow**: Basic Info → Images (drag/drop + WebP pipeline) → Pricing (dynamic units) → Variants (max 2 dims, auto-combos) → Stock & Vendor → Review/Publish
+- **6-step flow**: Basic Info (2-col grid) → Images (drag/drop + WebP pipeline) → Pricing (3-col grid, dynamic units, margin preview) → Variants (max 2 dims, auto-combos) → Stock & Vendor (2-col grid) → Review/Publish (3-col summary cards)
 - **Route**: `/admin/vendor-ops/new-product` (registered in App.js)
 - **Dynamic catalog config**: Units, categories, variant types loaded from Settings Hub via `/api/vendor-ops/catalog-config`
 - **Image pipeline**: Upload → crop → WebP → 3 variants (thumbnail 200px, card 600px, detail 1200px)
@@ -20,18 +28,12 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
   - SKU Configuration: prefix + format pattern with live preview
 
 ## Vendor Ops Dashboard — ENHANCED (308 iterations tested)
-- **Products tab**: Toggle publish (eye icon), unit display, stock with unit context
+- **Products tab**: Toggle publish (eye icon), unit display, stock with unit context, Actions column
 - **Price Requests tab**: Enter Quote CTA (orange), Ready for Sales button (green), inline edit form
 - **Stats banner**: Vendors, Products, Active, Drafts, Pending Requests
 
-## Vendor Ops Foundation (307+ iterations tested)
-- **vendor_ops role**: Manages products, images, vendor coordination. Cannot access payments/commissions
-- **Image Pipeline**: Upload + crop (1:1 default) + WebP conversion + 3 variants
-- **Product CRUD**: Full product management via `/api/vendor-ops/`
-- **Price Requests**: Sales requests → Vendor Ops responds with base price → System applies margin
-- **Role Enforcement**: Admin + vendor_ops access. Sales gets 403
-
 ## All Complete Systems (308+ iterations)
+- Vendor Ops Foundation (vendor_ops role, image pipeline, product CRUD, price requests)
 - Structured Name Fields (first_name/last_name) + first-name personalization
 - Terms of Service (6 sections) + Password-Gated Settings Lock
 - Affiliate System (Qualification → Token Activation → Setup → Dashboard → Content Studio)

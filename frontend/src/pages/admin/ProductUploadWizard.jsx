@@ -92,7 +92,7 @@ export default function ProductUploadWizard() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8" data-testid="product-wizard">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6" data-testid="product-wizard">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => navigate("/admin/vendor-ops")}><ArrowLeft className="w-4 h-4" /></Button>
         <div>
@@ -154,17 +154,22 @@ export default function ProductUploadWizard() {
 function StepInfo({ form, update, config }) {
   const categories = config.categories || [];
   return (
-    <div className="space-y-4" data-testid="step-info">
+    <div className="space-y-5" data-testid="step-info">
       <h2 className="text-lg font-semibold text-[#20364D]">Basic Information</h2>
-      <div><Label className="text-xs font-semibold">Product Name *</Label><Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g., HP LaserJet Pro M404n" className="mt-1" data-testid="product-name" /></div>
-      <div><Label className="text-xs font-semibold">Category *</Label>
-        <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.category} onChange={(e) => update("category", e.target.value)} data-testid="product-category">
-          <option value="">Select category</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div><Label className="text-xs font-semibold">Product Name *</Label><Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g., HP LaserJet Pro M404n" className="mt-1" data-testid="product-name" /></div>
+        <div><Label className="text-xs font-semibold">Category *</Label>
+          <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.category} onChange={(e) => update("category", e.target.value)} data-testid="product-category">
+            <option value="">Select category</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
       </div>
-      <div><Label className="text-xs font-semibold">Brand</Label><Input value={form.brand} onChange={(e) => update("brand", e.target.value)} placeholder="e.g., HP, Canon" className="mt-1" data-testid="product-brand" /></div>
-      <div><Label className="text-xs font-semibold">Description</Label><Textarea value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Product description..." className="mt-1 min-h-[80px]" data-testid="product-description" /></div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div><Label className="text-xs font-semibold">Brand</Label><Input value={form.brand} onChange={(e) => update("brand", e.target.value)} placeholder="e.g., HP, Canon" className="mt-1" data-testid="product-brand" /></div>
+        <div><Label className="text-xs font-semibold">Subcategory</Label><Input value={form.subcategory} onChange={(e) => update("subcategory", e.target.value)} placeholder="e.g., Laser Printers" className="mt-1" data-testid="product-subcategory" /></div>
+      </div>
+      <div><Label className="text-xs font-semibold">Description</Label><Textarea value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Product description..." className="mt-1 min-h-[100px]" data-testid="product-description" /></div>
     </div>
   );
 }
@@ -284,12 +289,14 @@ function StepImages({ form, update }) {
 function StepPricing({ form, update, config }) {
   const units = config.units || [];
   return (
-    <div className="space-y-4" data-testid="step-pricing">
-      <h2 className="text-lg font-semibold text-[#20364D]">Pricing & Inventory</h2>
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-5" data-testid="step-pricing">
+      <h2 className="text-lg font-semibold text-[#20364D]">Pricing & Unit</h2>
+      <div className="grid md:grid-cols-3 gap-4">
         <div><Label className="text-xs font-semibold">Selling Price (TZS) *</Label><Input type="number" value={form.selling_price} onChange={(e) => update("selling_price", e.target.value)} placeholder="0" className="mt-1" data-testid="selling-price" /></div>
         <div><Label className="text-xs font-semibold">Original Price (TZS)</Label><Input type="number" value={form.original_price} onChange={(e) => update("original_price", e.target.value)} placeholder="0" className="mt-1" data-testid="original-price" /></div>
         <div><Label className="text-xs font-semibold">Vendor Cost (TZS)</Label><Input type="number" value={form.vendor_cost} onChange={(e) => update("vendor_cost", e.target.value)} placeholder="0" className="mt-1" data-testid="vendor-cost" /></div>
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
         <div>
           <Label className="text-xs font-semibold">Unit of Measurement *</Label>
           <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.unit_of_measurement} onChange={(e) => update("unit_of_measurement", e.target.value)} data-testid="unit-select">
@@ -297,8 +304,13 @@ function StepPricing({ form, update, config }) {
             {units.length === 0 && <option value="Piece">Piece (pcs)</option>}
           </select>
         </div>
+        <div><Label className="text-xs font-semibold">SKU</Label><Input value={form.sku} onChange={(e) => update("sku", e.target.value)} placeholder="Auto-generated if empty" className="mt-1" data-testid="product-sku" /></div>
       </div>
-      <div><Label className="text-xs font-semibold">SKU</Label><Input value={form.sku} onChange={(e) => update("sku", e.target.value)} placeholder="Auto-generated if empty" className="mt-1" data-testid="product-sku" /></div>
+      {form.selling_price && form.vendor_cost && parseFloat(form.vendor_cost) > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700" data-testid="margin-preview">
+          Margin: <strong>{money(parseFloat(form.selling_price) - parseFloat(form.vendor_cost))}</strong> ({((1 - parseFloat(form.vendor_cost) / parseFloat(form.selling_price)) * 100).toFixed(1)}%)
+        </div>
+      )}
       {form.selling_price && form.original_price && parseFloat(form.original_price) > parseFloat(form.selling_price) && (
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-700" data-testid="savings-preview">
           Customer saves: <strong>{money(parseFloat(form.original_price) - parseFloat(form.selling_price))}</strong>
@@ -419,42 +431,47 @@ function StepVariants({ variants, setVariants, variantTypes, setVariantTypes, co
 /* ═══ STEP 5: STOCK & VENDOR ═══ */
 function StepStock({ form, update, vendors, variants, setVariants }) {
   return (
-    <div className="space-y-4" data-testid="step-stock">
+    <div className="space-y-5" data-testid="step-stock">
       <h2 className="text-lg font-semibold text-[#20364D]">Stock & Vendor Assignment</h2>
-      {variants.length === 0 && (
+      <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <Label className="text-xs font-semibold">Total Stock *</Label>
-          <div className="flex items-center gap-2 mt-1">
-            <Input type="number" value={form.stock} onChange={(e) => update("stock", e.target.value)} placeholder="0" className="w-32" data-testid="total-stock" />
-            <span className="text-xs text-slate-400">{form.unit_of_measurement}s</span>
-          </div>
-        </div>
-      )}
-      {variants.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-slate-600 mb-2">Stock per Variant ({form.unit_of_measurement})</p>
-          <div className="space-y-2 max-h-[200px] overflow-y-auto">
-            {variants.map((v, i) => (
-              <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-2">
-                <span className="text-xs font-medium min-w-[120px]">{Object.values(v.attributes).join(" / ")}</span>
-                <Input type="number" placeholder="Stock" className="h-8 w-24 text-xs" value={v.stock}
-                  onChange={(e) => { const upd = [...variants]; upd[i] = { ...upd[i], stock: e.target.value }; setVariants(upd); }} />
-                <span className="text-[10px] text-slate-400">{form.unit_of_measurement}</span>
+          {variants.length === 0 && (
+            <div>
+              <Label className="text-xs font-semibold">Total Stock *</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Input type="number" value={form.stock} onChange={(e) => update("stock", e.target.value)} placeholder="0" className="w-40" data-testid="total-stock" />
+                <span className="text-xs text-slate-400">{form.unit_of_measurement}s</span>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+          {variants.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-slate-600 mb-2">Stock per Variant ({form.unit_of_measurement})</p>
+              <div className="space-y-2 max-h-[240px] overflow-y-auto">
+                {variants.map((v, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-2">
+                    <span className="text-xs font-medium min-w-[120px]">{Object.values(v.attributes).join(" / ")}</span>
+                    <Input type="number" placeholder="Stock" className="h-8 w-24 text-xs" value={v.stock}
+                      onChange={(e) => { const upd = [...variants]; upd[i] = { ...upd[i], stock: e.target.value }; setVariants(upd); }} />
+                    <span className="text-[10px] text-slate-400">{form.unit_of_measurement}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      <div>
-        <Label className="text-xs font-semibold">Assign to Vendor</Label>
-        <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.vendor_id} onChange={(e) => {
-          const v = vendors.find((vn) => (vn.id || vn._id) === e.target.value);
-          update("vendor_id", e.target.value);
-          update("vendor_name", v?.company_name || v?.name || "");
-        }} data-testid="vendor-select">
-          <option value="">Select vendor (optional)</option>
-          {vendors.map((v) => <option key={v.id || v._id} value={v.id || v._id}>{v.company_name || v.name || v.full_name || "Unnamed"}</option>)}
-        </select>
+        <div>
+          <Label className="text-xs font-semibold">Assign to Vendor</Label>
+          <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.vendor_id} onChange={(e) => {
+            const v = vendors.find((vn) => (vn.id || vn._id) === e.target.value);
+            update("vendor_id", e.target.value);
+            update("vendor_name", v?.company_name || v?.name || "");
+          }} data-testid="vendor-select">
+            <option value="">Select vendor (optional)</option>
+            {vendors.map((v) => <option key={v.id || v._id} value={v.id || v._id}>{v.company_name || v.name || v.full_name || "Unnamed"}</option>)}
+          </select>
+          <p className="text-[10px] text-slate-400 mt-2">Vendor assignment controls which vendor fulfills this product. Leave empty if no vendor is assigned yet.</p>
+        </div>
       </div>
     </div>
   );
@@ -463,14 +480,14 @@ function StepStock({ form, update, vendors, variants, setVariants }) {
 /* ═══ STEP 6: REVIEW ═══ */
 function StepReview({ form, variants }) {
   return (
-    <div className="space-y-4" data-testid="step-review">
+    <div className="space-y-5" data-testid="step-review">
       <h2 className="text-lg font-semibold text-[#20364D]">Review & Publish</h2>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-3 gap-4">
         <div className="bg-slate-50 rounded-xl p-4 space-y-2">
           <p className="text-[10px] font-semibold text-slate-500 uppercase">Product</p>
           <p className="text-base font-bold text-[#20364D]">{form.name || "Unnamed"}</p>
           <p className="text-xs text-slate-500">{form.category} {form.brand ? `\u2022 ${form.brand}` : ""}</p>
-          {form.description && <p className="text-xs text-slate-400">{form.description.slice(0, 100)}...</p>}
+          {form.description && <p className="text-xs text-slate-400 line-clamp-2">{form.description}</p>}
         </div>
         <div className="bg-slate-50 rounded-xl p-4 space-y-2">
           <p className="text-[10px] font-semibold text-slate-500 uppercase">Pricing</p>
@@ -479,13 +496,20 @@ function StepReview({ form, variants }) {
           <p className="text-xs text-slate-500">Unit: {form.unit_of_measurement}</p>
           {form.vendor_cost > 0 && <p className="text-xs text-slate-400">Vendor cost: {money(form.vendor_cost)}</p>}
         </div>
+        <div className="bg-slate-50 rounded-xl p-4 space-y-2">
+          <p className="text-[10px] font-semibold text-slate-500 uppercase">Stock & Vendor</p>
+          {variants.length === 0 && <p className="text-base font-bold text-[#20364D]">{form.stock || 0} {form.unit_of_measurement}s</p>}
+          {variants.length > 0 && <p className="text-base font-bold text-[#20364D]">{variants.reduce((s, v) => s + (parseInt(v.stock) || 0), 0)} total across {variants.length} variants</p>}
+          {form.vendor_name && <p className="text-xs text-slate-500">Vendor: {form.vendor_name}</p>}
+          {!form.vendor_name && <p className="text-xs text-slate-400">No vendor assigned</p>}
+        </div>
       </div>
       {form.images.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-slate-500 uppercase mb-2">Images ({form.images.length})</p>
           <div className="flex gap-2">
             {form.images.map((img, i) => (
-              <img key={i} src={`${API}${img.thumbnail || img.card || img.url}`} alt="" className="w-14 h-14 rounded-lg object-cover border" />
+              <img key={i} src={`${process.env.REACT_APP_BACKEND_URL}${img.thumbnail || img.card || img.url}`} alt="" className="w-16 h-16 rounded-lg object-cover border" loading="lazy" />
             ))}
           </div>
         </div>
@@ -493,19 +517,18 @@ function StepReview({ form, variants }) {
       {variants.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold text-slate-500 uppercase mb-2">Variants ({variants.length})</p>
-          <div className="space-y-1">
-            {variants.slice(0, 10).map((v, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs">
+          <div className="grid md:grid-cols-2 gap-1">
+            {variants.slice(0, 12).map((v, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs bg-slate-50 rounded-lg px-2 py-1.5">
                 <span className="font-medium">{Object.values(v.attributes).join(" / ")}</span>
-                <span className="text-slate-400">Stock: {v.stock || 0}</span>
-                {v.price_override && <span className="text-slate-400">Price: {money(v.price_override)}</span>}
+                <span className="text-slate-400 ml-auto">Stock: {v.stock || 0}</span>
+                {v.price_override && <span className="text-slate-400">{money(v.price_override)}</span>}
               </div>
             ))}
-            {variants.length > 10 && <p className="text-xs text-slate-400">+{variants.length - 10} more</p>}
+            {variants.length > 12 && <p className="text-xs text-slate-400 col-span-2">+{variants.length - 12} more</p>}
           </div>
         </div>
       )}
-      {form.vendor_name && <p className="text-xs text-slate-500">Vendor: {form.vendor_name}</p>}
     </div>
   );
 }

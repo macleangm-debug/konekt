@@ -203,7 +203,7 @@ function InvoiceBrandingSection() {
   if (loading) return <div className="h-40 bg-slate-100 rounded-xl animate-pulse" />;
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-5xl">
       {/* CFO Details */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="text-sm font-bold text-[#20364D] mb-3">CFO Details</div>
