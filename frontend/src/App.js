@@ -295,6 +295,7 @@ import VendorProductSubmissionsPage from "@/pages/vendor/VendorProductSubmission
 import VendorProductUploadPage from "@/pages/vendor/VendorProductUploadPage";
 import VendorBulkImportPage from "@/pages/vendor/VendorBulkImportPage";
 import AdminVendorSupplyReviewPage from "@/pages/admin/AdminVendorSupplyReviewPage";
+import VendorOpsPage from "@/pages/admin/VendorOpsPage";
 
 // Launch Critical Pack - New Components
 import OrderDetailPageV2 from "@/pages/account/OrderDetailPageV2";
@@ -697,6 +698,7 @@ function App() {
           <Route path="vendor-onboarding" element={<VendorOnboardingPage />} />
           <Route path="catalog" element={<UnifiedCatalogWorkspacePage />} />
           <Route path="vendor-supply-review" element={<AdminVendorSupplyReviewPage />} />
+          <Route path="vendor-ops" element={<VendorOpsPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
