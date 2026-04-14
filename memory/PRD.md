@@ -3,54 +3,46 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: LAUNCH READY — Full Growth Engine
+## System Status: LAUNCH READY — Full Growth Engine + Legal + Security
 
-## Group Deal Content Studio (Unified) - NEW
-- **ONE shared engine** across Admin, Sales, Affiliate
-- Group deals + products in Content Studio with auto-injected promo codes
-- Role-based: Admin (no code required), Sales/Affiliate (code required — blocked until set)
-- Rich WhatsApp share after payment: deal name + savings (TZS amount) + units bought + progress
+## Structured Name Fields + Personalization - NEW
+- All customer forms use first_name + last_name (checkout, group deal, affiliate apply)
+- "Hi John," personalization across: payments, group deals, track order, emails, dashboards
+- Fallback: extract first token from full_name; "Hello," if missing
+- NOT used in invoices/quotes/PDFs (stay formal)
 
-## Group Deal Logic Fixes - NEW
-- **Quantity-based immediate closure**: Deal becomes "successful" when committed units >= target (not just on deadline)
-- **Repeat buyers allowed**: Same user can buy more units in same campaign (only pending_payment duplicates blocked)
-- **Overflow allowed**: Units can exceed target without blocking
-- **Success email**: All committed users notified when deal reaches target
+## Terms of Service - NEW
+- 6 sections at /terms: Affiliate Program, Promo Codes & Attribution, Wallet Usage, Group Deals, Payment Verification, Ratings & Feedback
 
-## Affiliate Application (Qualification-Based)
-- 5-Section Form: Personal Info, Online Presence, Promotion Strategy, Commitment, Agreement
-- Admin Qualification Summary: Audience, platform, expected sales, experience, fit score (High/Medium/Low)
-- Token-Based Activation (48h, single-use) + Dual Channel (Email + WhatsApp)
-- Application Emails: Received, Approved (with CTA), Rejected
+## Password-Gated Settings Lock - NEW
+- Admin enters password to unlock sensitive settings (Commercial, Sales, Affiliate, Payout tabs)
+- 15-minute time-limited sessions with countdown timer
+- Auto-lock + manual re-lock
 
-## Sales Promo Code System
-- Personal promo codes, validated system-wide, Content Studio on Sales Dashboard
+## Route Cleanup
+- /register/affiliate → redirects to /partners/apply (canonical form)
 
-## Unified Creative Generator
-- ONE shared engine, role-based injection, amount-based only
-
-## Canonical Email Engine (Resend)
-- Settings-driven templates, 9 trigger toggles, email preview, rate-limiting
-
-## Affiliate System (Full Controlled Program)
-- Setup Wizard, Earnings-only Dashboard, Contract Tiers, Status Engine, Notifications
-
-## Base Public URL Setting
-- Single configurable source for all external links
+## Previous Systems (All Complete)
+- Affiliate System (Qualification form, token activation, dual-channel, content studio, contracts, status engine)
+- Sales Promo Code System + Unified Creative Generator
+- Group Deal Content Studio (role-based), quantity closure, repeat buyers
+- Canonical Email Engine (Resend) with 9 trigger toggles
+- Commission & Margin Distribution Engine
+- Customer Rating System
+- Track Order Universal Page
+- Performance Dashboard
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!` (code: STAFF2024)
 - Affiliate: `qualifier.test@example.com` / `Qualifier123!`
-- Legacy: `wizard.test@example.com` / `5cf702ec-737` (code: WIZARD2024)
 
 ## Next Priority
-- Vendor Product Image Pipeline
-- Super Agent Operational Dashboard
+- Vendor Ops Role + Image Pipeline + Product Wizard (foundations)
+- Vendor Management Dashboard (skeleton)
 
 ## Backlog
-- Terms of Service update
 - Vendor Proposal Document extension
-- Password-Gated Settings Lock
+- Full Vendor Ops Dashboard (SLA, fulfillment tracking, performance)
+- Downloadable Creative Image Generator
 - Twilio WhatsApp Integration
-- Downloadable Creative Image Generator (Phase 2)
