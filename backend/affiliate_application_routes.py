@@ -181,10 +181,25 @@ async def approve_application(application_id: str, request: Request):
         }
         await db.users.insert_one(user_doc)
         user_doc.pop("_id", None)
+
+        # Send affiliate approved email
+        try:
+            from services.canonical_email_engine import send_affiliate_approved_email
+            await send_affiliate_approved_email(db, app_doc["email"], app_doc.get("full_name", ""), temp_password)
+        except Exception as e:
+            print(f"Warning: Affiliate approved email error: {e}")
+
         return {"ok": True, "affiliate": affiliate_doc, "temp_password": temp_password, "user_created": True}
 
     if existing_user.get("role") != "affiliate":
         await db.users.update_one({"email": app_doc["email"]}, {"$set": {"role": "affiliate"}})
+
+    # Send affiliate approved email (existing user)
+    try:
+        from services.canonical_email_engine import send_affiliate_approved_email
+        await send_affiliate_approved_email(db, app_doc["email"], app_doc.get("full_name", ""))
+    except Exception as e:
+        print(f"Warning: Affiliate approved email error: {e}")
 
     return {"ok": True, "affiliate": affiliate_doc, "user_created": False}
 

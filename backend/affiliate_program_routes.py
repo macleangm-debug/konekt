@@ -460,54 +460,9 @@ async def get_shareable_campaigns(request: Request, credentials: HTTPAuthorizati
     affiliate = await _get_affiliate_from_token(credentials, db)
 
     code = affiliate.get("affiliate_code", "")
-    base_url = os.environ.get("REACT_APP_BACKEND_URL", "https://konekt.co.tz")
 
-    products = await db.products.find(
-        {"status": {"$in": ["active", "published"]}, "is_active": {"$ne": False}},
-        {"_id": 0}
-    ).to_list(100)
-
-    settings = await db.affiliate_settings.find_one({}, {"_id": 0}) or {}
-    commission_type = settings.get("commission_type", "percentage")
-    commission_rate = float(settings.get("default_commission_rate", 10))
-
-    campaigns = []
-    for p in products:
-        selling_price = float(p.get("selling_price", 0) or p.get("price", 0) or 0)
-        if selling_price <= 0:
-            continue
-        original_price = float(p.get("original_price", 0) or p.get("compare_at_price", 0) or 0)
-        savings = max(0, original_price - selling_price) if original_price > selling_price else 0
-
-        if commission_type == "percentage":
-            your_earning = round(selling_price * commission_rate / 100, 2)
-        else:
-            your_earning = float(settings.get("default_fixed_commission", 0))
-
-        product_link = f"{base_url}/marketplace/{p.get('slug', p.get('id'))}?ref={code}"
-        savings_text = f"Save TZS {savings:,.0f}" if savings > 0 else ""
-
-        caption = "Get this now!\n\n"
-        if savings > 0:
-            caption += f"Save TZS {savings:,.0f} on {p.get('name', 'this product')}.\n\n"
-        else:
-            caption += f"Check out {p.get('name', 'this product')}.\n\n"
-        caption += f"Use my code: {code}\n"
-        caption += f"{product_link}"
-
-        campaigns.append({
-            "id": p.get("id"),
-            "name": p.get("name", ""),
-            "image_url": p.get("image_url", ""),
-            "selling_price": selling_price,
-            "original_price": original_price,
-            "savings": savings,
-            "savings_text": savings_text,
-            "your_earning": your_earning,
-            "promo_code": code,
-            "product_link": product_link,
-            "caption": caption,
-            "category": p.get("category", ""),
-        })
+    from services.creative_generator_service import generate_campaign_content, get_shareable_products
+    products = await get_shareable_products(db)
+    campaigns = await generate_campaign_content(db, products, "affiliate", code)
 
     return {"campaigns": campaigns, "promo_code": code, "total": len(campaigns)}

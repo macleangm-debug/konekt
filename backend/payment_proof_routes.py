@@ -80,6 +80,20 @@ async def submit_payment_proof(payload: dict):
         )
     except Exception as e:
         print(f"Warning: Failed to create payment timeline event: {e}")
+
+    # ─── CANONICAL EMAIL: Payment Submitted ─────────────
+    try:
+        from services.canonical_email_engine import send_payment_submitted_email
+        customer_email = payload.get("customer_email") or ""
+        if customer_email:
+            await send_payment_submitted_email(
+                db, customer_email,
+                payload.get("customer_name") or "Valued Customer",
+                payload.get("order_number") or payload.get("invoice_number") or "",
+                float(payload.get("amount_paid", 0) or 0)
+            )
+    except Exception as e:
+        print(f"Warning: Canonical payment submitted email error: {e}")
     
     return {"message": "Payment proof submitted successfully", "submission": serialize_doc(created)}
 
@@ -230,6 +244,23 @@ async def approve_payment_proof(proof_id: str, payload: dict):
             })
     except Exception as e:
         print(f"Warning: Payment verified email hook error: {e}")
+
+    # ─── CANONICAL EMAIL: Payment Approved ─────────────
+    try:
+        from services.canonical_email_engine import send_payment_approved_email
+        customer_email = proof.get("customer_email") or ""
+        if not customer_email:
+            order_doc = await db.orders.find_one({"order_number": proof.get("order_number")}, {"_id": 0, "customer_email": 1, "customer_name": 1})
+            customer_email = (order_doc or {}).get("customer_email", "")
+        if customer_email:
+            await send_payment_approved_email(
+                db, customer_email,
+                proof.get("customer_name") or "Valued Customer",
+                proof.get("order_number") or "",
+                float(proof.get("amount_paid", 0) or 0)
+            )
+    except Exception as e:
+        print(f"Warning: Canonical payment approved email error: {e}")
     
     # Trigger Payment Timeline event for payment confirmed
     try:

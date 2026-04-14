@@ -27,6 +27,7 @@ const GROUPS = [
       { key: "doc_footer", label: "Document Footer", icon: FileText },
       { key: "doc_template", label: "Document Template", icon: Eye },
       { key: "notifications", label: "Notifications", icon: Bell },
+      { key: "email_triggers", label: "Email Notifications", icon: Bell },
       { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
     ],
   },
@@ -74,6 +75,7 @@ const TAB_DESCRIPTIONS = {
   workflows: "Order workflows and vendor visibility rules",
   partners: "Partner assignment and logistics policies",
   notifications: "Notification channels and preferences",
+  email_triggers: "Email notification triggers and template controls",
   report_delivery: "Scheduled report delivery settings",
   launch: "System mode and go-live controls",
   preview: "Preview how documents look with current settings",
@@ -86,7 +88,7 @@ const defaultState = {
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
   affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true, max_active_affiliates: 0, contracts_starter_min_deals: 5, contracts_starter_min_earnings: 50000, contracts_growth_min_deals: 20, contracts_growth_min_earnings: 250000, contracts_top_min_deals: 60, contracts_top_min_earnings: 1000000, warning_threshold_pct: 50, probation_threshold_pct: 25 },
   payouts: { affiliate_minimum_payout: 50000, sales_minimum_payout: 100000, payout_cycle: "monthly", payout_methods_enabled: ["mobile_money", "bank_transfer"], manual_payout_approval: true, payout_review_mode: "admin_required" },
-  sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true },
+  sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true, sales_promo_codes_enabled: true },
   payments: { bank_only_payments: true, card_payments_enabled: false, mobile_money_enabled: false, kwikpay_enabled: false, payment_proof_required: true, payment_proof_auto_link_to_invoice: true, payment_verification_mode: "manual", commission_creation_on_payment_approval: true },
   payment_accounts: { default_country: "TZ", account_name: "", account_number: "", bank_name: "", swift_code: "", branch_name: "", currency: "TZS", show_on_invoice: true, show_on_checkout: true },
   progress_workflows: { hide_internal_provider_details_from_customer: true, customer_safe_external_statuses_only: true, product_workflow_enabled: true, service_workflow_enabled: true },
@@ -118,6 +120,7 @@ const defaultState = {
   performance_targets: { monthly_revenue_target: 500000000, target_margin_pct: 20, channel_allocation: { sales_pct: 50, affiliate_pct: 30, direct_pct: 10, group_deals_pct: 10 }, sales_staff_count: 10, affiliate_count: 10, sales_min_kpi_pct: 70, affiliate_min_kpi_pct: 60, min_rating_threshold: 3, rating_weight_in_kpi_pct: 20 },
   ratings: { enabled: true, trigger: "delivery_confirmed", scale: 5, allow_comment: true },
   sales_visibility: { show_total_commission: true, show_monthly_commission: true, show_pending_commission: true, show_paid_commission: true, show_revenue: false, show_profit_breakdown: false },
+  email_triggers: { payment_submitted: true, payment_approved: true, order_confirmed: true, order_completed: true, group_deal_joined: true, group_deal_successful: true, withdrawal_approved: true, affiliate_application_approved: true, rating_request: true },
 };
 
 function U(state, section, field, value) {
@@ -247,6 +250,7 @@ export default function AdminSettingsHubPage() {
             {tab === "partners" && <PartnersTab state={state} setState={setState} />}
             {tab === "performance_targets" && <PerformanceTargetsTab state={state} setState={setState} />}
             {tab === "notifications" && <NotificationsTab state={state} setState={setState} />}
+            {tab === "email_triggers" && <EmailTriggersTab state={state} setState={setState} />}
             {tab === "report_delivery" && <ReportScheduleSection />}
             {tab === "launch" && <LaunchTab state={state} setState={setState} />}
             {tab === "doc_numbering" && <DocNumberingTab state={state} setState={setState} />}
@@ -479,6 +483,7 @@ function SalesTab({ state, setState }) {
         <SettingsToggleField label="Lead source visibility" checked={s.lead_source_visibility} onChange={(v) => setState(U(state, "sales", "lead_source_visibility", v))} />
         <SettingsToggleField label="Commission type visibility" checked={s.commission_type_visibility} onChange={(v) => setState(U(state, "sales", "commission_type_visibility", v))} />
         <SettingsToggleField label="Sales referral link" checked={s.sales_referral_link_enabled} onChange={(v) => setState(U(state, "sales", "sales_referral_link_enabled", v))} />
+        <SettingsToggleField label="Enable Sales Promo Codes" checked={s.sales_promo_codes_enabled} onChange={(v) => setState(U(state, "sales", "sales_promo_codes_enabled", v))} />
       </div>
     </SettingsSectionCard>
   );
@@ -614,6 +619,70 @@ function NotificationsTab({ state, setState }) {
     </>
   );
 }
+
+function EmailTriggersTab({ state, setState }) {
+  const e = state.email_triggers || {};
+  const ns = state.notification_sender || {};
+  const [previewHtml, setPreviewHtml] = React.useState("");
+  const [previewType, setPreviewType] = React.useState("order_completed");
+  const [loadingPreview, setLoadingPreview] = React.useState(false);
+
+  const loadPreview = async (type) => {
+    setLoadingPreview(true);
+    setPreviewType(type);
+    try {
+      const res = await api.get(`/api/admin/email/preview/${type}`);
+      setPreviewHtml(res.data?.html || "");
+    } catch { setPreviewHtml("<p>Failed to load preview</p>"); }
+    setLoadingPreview(false);
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Email Notification Triggers" description="Enable or disable specific email notifications. Each toggle controls whether that email type is sent.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <SettingsToggleField label="Payment Submitted" checked={e.payment_submitted} onChange={(v) => setState(U(state, "email_triggers", "payment_submitted", v))} />
+          <SettingsToggleField label="Payment Approved" checked={e.payment_approved} onChange={(v) => setState(U(state, "email_triggers", "payment_approved", v))} />
+          <SettingsToggleField label="Order Confirmed" checked={e.order_confirmed} onChange={(v) => setState(U(state, "email_triggers", "order_confirmed", v))} />
+          <SettingsToggleField label="Order Completed" checked={e.order_completed} onChange={(v) => setState(U(state, "email_triggers", "order_completed", v))} />
+          <SettingsToggleField label="Group Deal Joined" checked={e.group_deal_joined} onChange={(v) => setState(U(state, "email_triggers", "group_deal_joined", v))} />
+          <SettingsToggleField label="Group Deal Successful" checked={e.group_deal_successful} onChange={(v) => setState(U(state, "email_triggers", "group_deal_successful", v))} />
+          <SettingsToggleField label="Withdrawal Approved" checked={e.withdrawal_approved} onChange={(v) => setState(U(state, "email_triggers", "withdrawal_approved", v))} />
+          <SettingsToggleField label="Affiliate Application Approved" checked={e.affiliate_application_approved} onChange={(v) => setState(U(state, "email_triggers", "affiliate_application_approved", v))} />
+          <SettingsToggleField label="Rating Request Email" checked={e.rating_request} onChange={(v) => setState(U(state, "email_triggers", "rating_request", v))} />
+        </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Email Sender Settings" description="Sender identity used in all outgoing emails.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <SettingsTextField label="Sender Name" value={ns.sender_name} onChange={(v) => setState(U(state, "notification_sender", "sender_name", v))} placeholder="Konekt" />
+          <SettingsTextField label="Sender / Reply-To Email" value={ns.sender_email} onChange={(v) => setState(U(state, "notification_sender", "sender_email", v))} placeholder="support@konekt.co.tz" />
+          <SettingsTextField label="Email Footer Text" value={ns.email_footer_text} onChange={(v) => setState(U(state, "notification_sender", "email_footer_text", v))} placeholder="Thank you for choosing Konekt" />
+        </div>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Email Template Preview" description="Preview how your emails will look with current branding.">
+        <div className="flex gap-2 flex-wrap mb-4">
+          {["payment_submitted", "payment_approved", "order_completed", "group_deal_successful", "affiliate_approved"].map((t) => (
+            <button key={t} onClick={() => loadPreview(t)} className={`px-3 py-1.5 text-xs font-medium rounded-lg transition ${previewType === t ? "bg-[#20364D] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`} data-testid={`preview-${t}`}>
+              {t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            </button>
+          ))}
+        </div>
+        {loadingPreview && <div className="text-center py-8 text-slate-400 text-sm">Loading preview...</div>}
+        {previewHtml && !loadingPreview && (
+          <div className="border rounded-xl overflow-hidden bg-slate-50 max-h-[500px] overflow-y-auto" data-testid="email-preview-frame">
+            <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
+          </div>
+        )}
+        {!previewHtml && !loadingPreview && (
+          <div className="text-center py-8 text-slate-400 text-sm">Click a template above to preview</div>
+        )}
+      </SettingsSectionCard>
+    </>
+  );
+}
+
 
 function LaunchTab({ state, setState }) {
   const l = state.launch_controls || {};

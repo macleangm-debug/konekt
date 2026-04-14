@@ -398,6 +398,27 @@ async def update_order_status(
                 triggered_by_user_id=triggered_by_user_id,
                 triggered_by_role=triggered_by_role,
             )
+        elif status in ["completed", "delivered", "fulfilled"]:
+            # ─── CANONICAL EMAIL: Order Completed + Rating CTA ─────────────
+            try:
+                from services.canonical_email_engine import send_order_completed_email
+                customer_email = order.get("customer_email") or ""
+                customer_name = order.get("customer_name") or ""
+                staff_name = order.get("assigned_sales_name") or order.get("sales_officer_name") or ""
+                if not customer_email and customer_user_id:
+                    user_doc = await db.users.find_one({"id": customer_user_id}, {"_id": 0, "email": 1, "full_name": 1})
+                    if user_doc:
+                        customer_email = user_doc.get("email", "")
+                        customer_name = customer_name or user_doc.get("full_name", "")
+                if customer_email:
+                    frontend_url = os.environ.get("REACT_APP_BACKEND_URL", "")
+                    rating_url = f"{frontend_url}/track"
+                    await send_order_completed_email(
+                        db, customer_email, customer_name, order_number, order_id,
+                        staff_name=staff_name, rating_url=rating_url
+                    )
+            except Exception as e:
+                print(f"Warning: Order completed email error: {e}")
 
     return serialize_doc(updated)
 

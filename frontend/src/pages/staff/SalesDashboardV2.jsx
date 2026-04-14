@@ -13,6 +13,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import SalesContentBlock from "../../components/sales/SalesContentBlock";
+import SalesPromoStudio from "../../components/sales/SalesPromoStudio";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -183,6 +184,9 @@ export default function SalesDashboardV2() {
           <SalesContentBlock />
         </div>
       </div>
+
+      {/* ═══ SALES PROMO STUDIO ═══ */}
+      <SalesPromoStudio />
 
       {/* ═══ COMMISSION PER ORDER TABLE ═══ */}
       <CommissionTableSection orders={recent_orders || []} />
