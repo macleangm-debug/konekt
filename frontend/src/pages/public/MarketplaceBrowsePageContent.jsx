@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { Package, Search } from "lucide-react";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { Package, Search, Tag, ArrowRight, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "../../contexts/CartContext";
 import api from "../../lib/api";
@@ -21,6 +21,14 @@ export default function MarketplaceBrowsePageContent() {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dealCount, setDealCount] = useState(0);
+
+  // Check for active group deals
+  useEffect(() => {
+    api.get("/api/public/group-deals/featured")
+      .then((r) => setDealCount((r.data || []).length))
+      .catch(() => {});
+  }, []);
 
   // Taxonomy data
   const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
@@ -89,6 +97,27 @@ export default function MarketplaceBrowsePageContent() {
         <h1 className="text-3xl font-bold text-[#20364D]">Marketplace</h1>
         <p className="text-slate-600 mt-1">Browse products, promotional materials, and services available for your business.</p>
       </div>
+
+      {/* Group Deals Entry Point */}
+      {dealCount > 0 && (
+        <Link to="/group-deals" className="block mb-6 rounded-2xl bg-gradient-to-r from-[#0E1A2B] to-[#1a2d45] text-white p-4 md:p-5 hover:shadow-lg transition-all group" data-testid="marketplace-group-deals-banner">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-[#D4A843]/20 flex items-center justify-center flex-shrink-0">
+              <Tag className="w-6 h-6 text-[#D4A843]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold">Group Deals</h3>
+                <span className="text-[10px] font-bold bg-[#D4A843] text-[#17283C] px-2 py-0.5 rounded-full">{dealCount} active</span>
+              </div>
+              <p className="text-sm text-slate-300 mt-0.5">Join other buyers for volume discounts — save more together</p>
+            </div>
+            <div className="hidden sm:flex items-center gap-1.5 text-sm font-semibold text-[#D4A843] group-hover:gap-2.5 transition-all flex-shrink-0">
+              View Deals <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* Inline Filter Rail */}
       <InlineMarketplaceFilterRail

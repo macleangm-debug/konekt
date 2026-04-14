@@ -779,10 +779,34 @@ async def public_featured_deals():
 
 @public_router.get("/deal-of-the-day")
 async def public_deal_of_the_day():
-    """Public: get the single featured deal (Deal of the Day)."""
+    """Public: get the single featured deal (Deal of the Day). Falls back to best active deal if none featured."""
     doc = await db.group_deal_campaigns.find_one(
         {"status": "active", "is_featured": True}, HIDDEN_FIELDS,
     )
+    if not doc:
+        # Fallback: pick best active deal (highest progress, closest deadline)
+        now = datetime.now(timezone.utc)
+        active_docs = await db.group_deal_campaigns.find(
+            {"status": "active"}, HIDDEN_FIELDS,
+        ).sort("created_at", -1).to_list(10)
+        if not active_docs:
+            return None
+        best = None
+        best_score = -1
+        for d in active_docs:
+            progress = (d.get("current_committed", 0) / max(d.get("display_target", 1), 1)) * 100
+            deadline = d.get("deadline")
+            if deadline:
+                if deadline.tzinfo is None:
+                    deadline = deadline.replace(tzinfo=timezone.utc)
+                hours_left = max(0, (deadline - now).total_seconds() / 3600)
+            else:
+                hours_left = 9999
+            score = progress * 10 + (1000 / max(hours_left, 1))
+            if score > best_score:
+                best_score = score
+                best = d
+        doc = best
     if not doc:
         return None
     return _add_buyer_count(doc, _s(doc))

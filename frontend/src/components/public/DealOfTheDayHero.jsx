@@ -29,7 +29,7 @@ export default function DealOfTheDayHero() {
           {/* Image */}
           <div className="w-full md:w-48 flex-shrink-0">
             {deal.product_image ? (
-              <img src={deal.product_image} alt="" className="w-full h-40 md:h-48 rounded-2xl object-cover" />
+              <img src={deal.product_image} alt="" className="w-full h-40 md:h-48 rounded-2xl object-cover" loading="lazy" />
             ) : (
               <div className="w-full h-40 md:h-48 rounded-2xl bg-white/5 flex items-center justify-center">
                 <ShoppingCart className="w-12 h-12 text-white/20" />

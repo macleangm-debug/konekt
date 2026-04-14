@@ -17,7 +17,7 @@ function FeaturedDealCard({ deal }) {
       data-testid={`featured-deal-${deal.id}`}
     >
       {deal.product_image ? (
-        <img src={deal.product_image} alt="" className="w-full h-40 object-cover group-hover:scale-[1.02] transition-transform" />
+        <img src={deal.product_image} alt="" className="w-full h-40 object-cover group-hover:scale-[1.02] transition-transform" loading="lazy" />
       ) : (
         <div className="w-full h-40 bg-gradient-to-br from-[#20364D] to-[#1a365d] flex items-center justify-center">
           <ShoppingCart className="w-10 h-10 text-white/20" />
