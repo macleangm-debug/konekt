@@ -11,6 +11,7 @@ import CustomerActivityRulesCard from "../../components/admin/settings/CustomerA
 import SettingsPreviewPanel from "../../components/admin/settings/SettingsPreviewPanel";
 import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 import ReportScheduleSection from "../../components/admin/settings/ReportScheduleSection";
+import SettingsLockGate from "../../components/admin/SettingsLockGate";
 
 import { toast } from "sonner";
 
@@ -242,11 +243,11 @@ export default function AdminSettingsHubPage() {
               </div>
             )}
             {tab === "pricing_policy" && <PricingPolicyTab />}
-            {tab === "commercial" && <CommercialTab state={state} setState={setState} />}
+            {tab === "commercial" && <SettingsLockGate><CommercialTab state={state} setState={setState} /></SettingsLockGate>}
             {tab === "operations" && <OperationsTab state={state} setState={setState} />}
-            {tab === "sales" && <SalesTab state={state} setState={setState} />}
-            {tab === "affiliate" && <AffiliateTab state={state} setState={setState} />}
-            {tab === "payout" && <PayoutTab state={state} setState={setState} />}
+            {tab === "sales" && <SettingsLockGate><SalesTab state={state} setState={setState} /></SettingsLockGate>}
+            {tab === "affiliate" && <SettingsLockGate><AffiliateTab state={state} setState={setState} /></SettingsLockGate>}
+            {tab === "payout" && <SettingsLockGate><PayoutTab state={state} setState={setState} /></SettingsLockGate>}
             {tab === "workflows" && <WorkflowsTab state={state} setState={setState} />}
             {tab === "partners" && <PartnersTab state={state} setState={setState} />}
             {tab === "performance_targets" && <PerformanceTargetsTab state={state} setState={setState} />}

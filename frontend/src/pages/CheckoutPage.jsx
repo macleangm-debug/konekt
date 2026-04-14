@@ -14,7 +14,8 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
 
   const [form, setForm] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone_prefix: "+255",
     phone: "",
@@ -125,7 +126,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     setError("");
 
-    if (!form.full_name || !form.email || !form.phone) {
+    if (!form.first_name || !form.last_name || !form.email || !form.phone) {
       setError("Please fill in all required fields");
       return;
     }
@@ -144,7 +145,9 @@ export default function CheckoutPage() {
       setSubmitting(true);
 
       const payload = {
-        customer_name: form.full_name,
+        customer_name: [form.first_name, form.last_name].filter(Boolean).join(" "),
+        first_name: form.first_name,
+        last_name: form.last_name,
         customer_email: form.email,
         customer_phone: combinePhone(form.phone_prefix, form.phone),
         customer_company: form.company_name,
@@ -186,7 +189,7 @@ export default function CheckoutPage() {
         `/payment/select?target_type=order&target_id=${orderId}&email=${encodeURIComponent(form.email)}&amount=${grandTotal}`,
         {
           state: {
-            customerName: form.full_name,
+            customerName: form.first_name,
             orderNumber: orderNumber,
             accountInvite: accountInvite,
           },
@@ -261,11 +264,19 @@ export default function CheckoutPage() {
               <div className="grid md:grid-cols-2 gap-5 mt-5">
                 <input
                   className="border rounded-xl px-4 py-3"
-                  placeholder="Full name *"
-                  value={form.full_name}
-                  onChange={(e) => updateField("full_name", e.target.value)}
+                  placeholder="First name *"
+                  value={form.first_name}
+                  onChange={(e) => updateField("first_name", e.target.value)}
                   required
-                  data-testid="checkout-fullname"
+                  data-testid="checkout-firstname"
+                />
+                <input
+                  className="border rounded-xl px-4 py-3"
+                  placeholder="Last name *"
+                  value={form.last_name}
+                  onChange={(e) => updateField("last_name", e.target.value)}
+                  required
+                  data-testid="checkout-lastname"
                 />
                 <input
                   className="border rounded-xl px-4 py-3"

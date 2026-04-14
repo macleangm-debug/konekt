@@ -61,7 +61,7 @@ export default function GroupDealCheckoutPage() {
 
   // Forms
   const [form, setForm] = useState({
-    customer_name: "", customer_phone: "", customer_email: "", quantity: 1,
+    first_name: "", last_name: "", customer_phone: "", customer_email: "", quantity: 1,
   });
   const [proofForm, setProofForm] = useState({
     payer_name: "", amount_paid: "", bank_reference: "",
@@ -84,14 +84,17 @@ export default function GroupDealCheckoutPage() {
   };
 
   // ─── Step 1: Place commitment ───
+  const fullName = [form.first_name, form.last_name].filter(Boolean).join(" ");
   const handlePlaceCommitment = async (e) => {
     e.preventDefault();
-    if (!form.customer_name || !form.customer_phone) return toast.error("Name and phone are required.");
+    if (!form.first_name || !form.last_name || !form.customer_phone) return toast.error("First name, last name, and phone are required.");
     if (submitting) return;
     setSubmitting(true);
     try {
       const res = await api.post(`/api/admin/group-deals/campaigns/${campaignId}/join`, {
-        customer_name: form.customer_name,
+        customer_name: fullName,
+        first_name: form.first_name,
+        last_name: form.last_name,
         customer_phone: form.customer_phone,
         customer_email: form.customer_email,
         quantity: Math.max(1, form.quantity),
@@ -99,7 +102,7 @@ export default function GroupDealCheckoutPage() {
       const data = res.data;
       setCommitmentRef(data.commitment_ref);
       setCommitmentAmount(data.amount);
-      setProofForm(p => ({ ...p, payer_name: form.customer_name, amount_paid: String(data.amount) }));
+      setProofForm(p => ({ ...p, payer_name: fullName, amount_paid: String(data.amount) }));
 
       // Fetch bank details
       fetch(`${API_URL}/api/public/payment-info`)
@@ -197,7 +200,7 @@ export default function GroupDealCheckoutPage() {
               <Check className="w-10 h-10 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-[#20364D]">Payment Submitted</h1>
-            <p className="text-slate-500 mt-1">We are verifying your payment. You will be notified once approved.</p>
+            <p className="text-slate-500 mt-1">Hi {form.first_name || "there"}, your payment is under review. We will notify you once approved.</p>
           </div>
           <div className="bg-white rounded-2xl border p-6 space-y-3 mb-6">
             <div className="flex justify-between text-sm"><span className="text-slate-500">Product</span><span className="font-semibold">{deal.product_name}</span></div>
@@ -391,7 +394,12 @@ export default function GroupDealCheckoutPage() {
                 <p className="text-xs text-slate-500 mt-0.5">Fill in your details to join this group deal</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
-                <div><Label>Full Name *</Label><Input value={form.customer_name} onChange={(e) => setForm(p => ({ ...p, customer_name: e.target.value }))} placeholder="Your full name" required data-testid="input-name" /></div>
+                <div><Label>Full Name *</Label>
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <Input value={form.first_name} onChange={(e) => setForm(p => ({ ...p, first_name: e.target.value }))} placeholder="First name" required data-testid="input-first-name" />
+                    <Input value={form.last_name} onChange={(e) => setForm(p => ({ ...p, last_name: e.target.value }))} placeholder="Last name" required data-testid="input-last-name" />
+                  </div>
+                </div>
                 <div><Label>Phone Number *</Label><Input value={form.customer_phone} onChange={(e) => setForm(p => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." required data-testid="input-phone" /></div>
                 <div><Label>Email (optional)</Label><Input type="email" value={form.customer_email} onChange={(e) => setForm(p => ({ ...p, customer_email: e.target.value }))} placeholder="you@example.com" data-testid="input-email" /></div>
                 <div><Label>Quantity</Label>

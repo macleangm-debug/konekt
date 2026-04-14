@@ -11,6 +11,19 @@ RESEND_API_URL = "https://api.resend.com/emails"
 FRONTEND_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://konekt.co.tz")
 
 
+def _first_name(name):
+    """Extract first name for personalization. Fallback to 'Hello' if missing."""
+    if not name or not name.strip():
+        return ""
+    return name.strip().split()[0]
+
+
+def _greeting(name):
+    """Build personalized greeting. 'Hi John,' or 'Hello,'"""
+    fn = _first_name(name)
+    return f"Hi {fn}," if fn else "Hello,"
+
+
 async def get_email_branding(db):
     """Pull branding from Business Settings."""
     settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
@@ -148,7 +161,7 @@ async def send_payment_submitted_email(db, customer_email, customer_name, order_
         return {"ok": False, "reason": "trigger_disabled"}
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {customer_name or "Customer"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(customer_name)}</p>
     <p style="color:#475569;font-size:15px;line-height:1.6;">We have received your payment submission for order <strong>{order_number}</strong>.</p>
     <div style="background:#f8fafc;border-radius:10px;padding:16px;margin:16px 0;">
       <p style="margin:0;font-size:14px;color:#64748b;">Amount: <strong style="color:#20364D;">TZS {amount:,.0f}</strong></p>
@@ -167,7 +180,7 @@ async def send_payment_approved_email(db, customer_email, customer_name, order_n
         return {"ok": False, "reason": "trigger_disabled"}
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {customer_name or "Customer"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(customer_name)}</p>
     <p style="color:#059669;font-size:16px;font-weight:600;">Your payment has been verified and approved!</p>
     <div style="background:#ecfdf5;border-radius:10px;padding:16px;margin:16px 0;">
       <p style="margin:0;font-size:14px;color:#064e3b;">Order: <strong>{order_number}</strong></p>
@@ -199,7 +212,7 @@ async def send_order_completed_email(db, customer_email, customer_name, order_nu
         staff_line = f'<p style="color:#475569;font-size:15px;line-height:1.6;">Your order was handled by <strong>{staff_name}</strong>.</p>'
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {customer_name or "Customer"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(customer_name)}</p>
     <p style="color:#059669;font-size:16px;font-weight:600;">Your order has been successfully completed!</p>
     <div style="background:#ecfdf5;border-radius:10px;padding:16px;margin:16px 0;">
       <p style="margin:0;font-size:14px;color:#064e3b;">Order: <strong>{order_number}</strong></p>
@@ -229,7 +242,7 @@ async def send_group_deal_success_email(db, customer_email, customer_name, deal_
         return {"ok": False, "reason": "trigger_disabled"}
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {customer_name or "Customer"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(customer_name)}</p>
     <p style="color:#059669;font-size:16px;font-weight:600;">Great news! The group deal has been successfully reached!</p>
     <div style="background:#ecfdf5;border-radius:10px;padding:16px;margin:16px 0;">
       <p style="margin:0;font-size:14px;color:#064e3b;">Deal: <strong>{deal_title}</strong></p>
@@ -255,7 +268,7 @@ async def send_affiliate_approved_email(db, affiliate_email, affiliate_name, tem
         </div>'''
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {affiliate_name or "Partner"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(affiliate_name)}</p>
     <p style="color:#059669;font-size:16px;font-weight:600;">Your affiliate application has been approved!</p>
     <p style="color:#475569;font-size:14px;line-height:1.6;">Welcome to the program. Log in to set up your payout details and create your personal promo code.</p>
     {pw_line}'''
@@ -283,7 +296,7 @@ async def send_rating_request_email(db, customer_email, customer_name, order_num
     staff_line = f"Your order was completed by <strong>{staff_name}</strong>. " if staff_name else ""
 
     body = f'''
-    <p style="color:#475569;font-size:15px;line-height:1.6;">Hello {customer_name or "Customer"},</p>
+    <p style="color:#475569;font-size:15px;line-height:1.6;">{_greeting(customer_name)}</p>
     <p style="color:#475569;font-size:15px;line-height:1.6;">{staff_line}We'd love to hear about your experience with the service you received for order <strong>{order_number}</strong>.</p>
     <p style="color:#475569;font-size:14px;">Your feedback helps us improve our service quality.</p>'''
 

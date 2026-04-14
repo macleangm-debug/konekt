@@ -97,6 +97,7 @@ from affiliate_settings_routes import router as affiliate_settings_router
 from affiliate_program_routes import router as affiliate_program_router
 from sales_promo_routes import router as sales_promo_router
 from email_dispatch_routes import router as email_dispatch_router
+from settings_lock_routes import router as settings_lock_router
 from affiliate_tracking_routes import router as affiliate_tracking_router
 from affiliate_promotions_routes import router as affiliate_promotions_router
 from affiliate_payout_admin_routes import router as affiliate_payout_admin_router
@@ -2599,6 +2600,7 @@ app.include_router(affiliate_tracking_router)
 app.include_router(affiliate_program_router)
 app.include_router(sales_promo_router)
 app.include_router(email_dispatch_router)
+app.include_router(settings_lock_router)
 app.include_router(affiliate_promotions_router)
 app.include_router(affiliate_payout_admin_router)
 app.include_router(affiliate_perk_router)

@@ -839,7 +839,7 @@ function App() {
         
         {/* Affiliate Public Routes */}
         <Route path="/earn" element={<AffiliateProgramLandingPage />} />
-        <Route path="/register/affiliate" element={<AffiliateRegisterPage />} />
+        <Route path="/register/affiliate" element={<Navigate to="/partners/apply" replace />} />
         <Route path="/activate" element={<AffiliateActivatePage />} />
         
         {/* Public Expansion Page */}

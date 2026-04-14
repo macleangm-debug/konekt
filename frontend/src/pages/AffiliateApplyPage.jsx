@@ -13,7 +13,7 @@ const PLATFORMS = ["WhatsApp", "Instagram", "TikTok", "Facebook", "Website", "Ot
 const AUDIENCE_SIZES = ["< 100", "100-500", "500-1,000", "1,000-5,000", "5,000+"];
 
 const initialForm = {
-  full_name: "", email: "", phone_prefix: "+255", phone_number: "", location: "",
+  first_name: "", last_name: "", email: "", phone_prefix: "+255", phone_number: "", location: "",
   primary_platform: "", social_instagram: "", social_tiktok: "", social_facebook: "", social_website: "",
   audience_size: "", promotion_strategy: "", product_interests: "",
   prior_experience: false, experience_description: "",
@@ -34,7 +34,7 @@ export default function AffiliateApplyPage() {
   const update = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
   const validateSection = (s) => {
-    if (s === 1) return form.full_name && form.email && form.phone_number;
+    if (s === 1) return form.first_name && form.last_name && form.email && form.phone_number;
     if (s === 2) return form.primary_platform && form.audience_size;
     if (s === 3) return form.promotion_strategy && form.why_join;
     if (s === 4) return form.expected_monthly_sales;
@@ -54,11 +54,14 @@ export default function AffiliateApplyPage() {
     try {
       const payload = {
         ...form,
+        full_name: [form.first_name, form.last_name].filter(Boolean).join(" "),
         phone: form.phone_number ? `${form.phone_prefix}${form.phone_number}` : "",
         expected_monthly_sales: parseInt(form.expected_monthly_sales) || 0,
       };
       delete payload.phone_prefix;
       delete payload.phone_number;
+      delete payload.first_name;
+      delete payload.last_name;
       await api.post("/api/affiliate-applications", payload);
       setSuccess(true);
     } catch (err) {
@@ -169,7 +172,10 @@ export default function AffiliateApplyPage() {
               {section === 1 && (
                 <div className="space-y-4" data-testid="section-personal">
                   <h2 className="font-semibold text-[#20364D] text-lg">Personal Information</h2>
-                  <div><Label className="text-xs font-semibold">Full Name *</Label><Input value={form.full_name} onChange={(e) => update("full_name", e.target.value)} placeholder="Your full name" className="mt-1" data-testid="apply-name" /></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><Label className="text-xs font-semibold">First Name *</Label><Input value={form.first_name} onChange={(e) => update("first_name", e.target.value)} placeholder="First name" className="mt-1" data-testid="apply-first-name" /></div>
+                    <div><Label className="text-xs font-semibold">Last Name *</Label><Input value={form.last_name} onChange={(e) => update("last_name", e.target.value)} placeholder="Last name" className="mt-1" data-testid="apply-last-name" /></div>
+                  </div>
                   <div><Label className="text-xs font-semibold">Email *</Label><Input type="email" value={form.email} onChange={(e) => update("email", e.target.value)} placeholder="you@company.com" className="mt-1" data-testid="apply-email" /></div>
                   <PhoneNumberField label="Phone *" prefix={form.phone_prefix} number={form.phone_number} onPrefixChange={(v) => update("phone_prefix", v)} onNumberChange={(v) => update("phone_number", v)} testIdPrefix="apply-phone" />
                   <div><Label className="text-xs font-semibold">Location (City / Country)</Label><Input value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="e.g., Dar es Salaam, Tanzania" className="mt-1" data-testid="apply-location" /></div>
