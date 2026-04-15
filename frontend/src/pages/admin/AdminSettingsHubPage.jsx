@@ -1574,23 +1574,41 @@ function CatalogUnitsTab({ state, setState }) {
   );
 }
 
-/* ═══ CATALOG: PRODUCT CATEGORIES ═══ */
+/* ═══ CATALOG: PRODUCT CATEGORIES (RICH) ═══ */
 function CatalogCategoriesTab({ state, setState }) {
   const catalog = state.catalog || {};
-  const categories = catalog.product_categories || [];
+  const rawCategories = catalog.product_categories || [];
+  // Normalize: support legacy strings and new rich objects
+  const categories = rawCategories.map((c) => typeof c === "string" ? { name: c, display_mode: "visual", commercial_mode: "fixed_price", sourcing_mode: "preferred", show_on_marketplace: true, require_images: true, quote_enabled: false, search_first: false, active: true, sort_order: 0 } : c);
+
+  const [editIdx, setEditIdx] = useState(null);
   const [newCat, setNewCat] = useState("");
+
+  const updateCategory = (idx, field, value) => {
+    const updated = [...categories];
+    updated[idx] = { ...updated[idx], [field]: value };
+    // Auto-set derived fields based on display mode
+    if (field === "display_mode") {
+      if (value === "list_quote") {
+        updated[idx].require_images = false;
+        updated[idx].search_first = true;
+        updated[idx].quote_enabled = true;
+      } else {
+        updated[idx].require_images = true;
+        updated[idx].search_first = false;
+      }
+    }
+    setState((prev) => ({ ...prev, catalog: { ...prev.catalog, product_categories: updated } }));
+  };
 
   const addCategory = () => {
     const trimmed = newCat.trim();
     if (!trimmed) return;
-    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
-      toast.error("Category already exists");
-      return;
-    }
-    const updated = [...categories, trimmed];
+    if (categories.some((c) => c.name.toLowerCase() === trimmed.toLowerCase())) { toast.error("Exists"); return; }
+    const updated = [...categories, { name: trimmed, display_mode: "visual", commercial_mode: "fixed_price", sourcing_mode: "preferred", show_on_marketplace: true, require_images: true, quote_enabled: false, search_first: false, active: true, sort_order: categories.length }];
     setState((prev) => ({ ...prev, catalog: { ...prev.catalog, product_categories: updated } }));
     setNewCat("");
-    toast.success("Category added — save settings to persist");
+    toast.success("Category added — save to persist");
   };
 
   const removeCategory = (idx) => {
@@ -1598,34 +1616,112 @@ function CatalogCategoriesTab({ state, setState }) {
     setState((prev) => ({ ...prev, catalog: { ...prev.catalog, product_categories: updated } }));
   };
 
+  const MODE_INFO = {
+    visual: { label: "Visual Catalog", desc: "Image-based product cards in marketplace. Customers browse visually.", example: "Office Supplies, Stationery, Promotional Items" },
+    list_quote: { label: "List & Quote", desc: "Search-first list view. Customers select items, enter quantity, request quote.", example: "Printing Services, Medical Supplies, Bulk Orders" },
+  };
+  const COMMERCIAL_INFO = {
+    fixed_price: { label: "Fixed Price", desc: "Customers see prices immediately and can buy directly." },
+    request_quote: { label: "Request Quote", desc: "Customers must request pricing. No price shown upfront." },
+    hybrid: { label: "Hybrid", desc: "Indicative pricing shown, but customers can still request quotes for bulk/custom." },
+  };
+  const SOURCING_INFO = {
+    preferred: { label: "Single Sourcing", desc: "All requests go to one preferred vendor. Faster processing." },
+    competitive: { label: "Competitive", desc: "Requests sent to multiple vendors. System selects best price." },
+  };
+
   return (
     <>
-      <SettingsSectionCard title="Product Categories" description="Categories shown in the product upload wizard and catalog filters.">
-        <div className="flex flex-wrap gap-2">
+      <SettingsSectionCard title="Product Categories" description="Configure how each category appears and behaves across the platform. Click a category to expand its configuration.">
+        <div className="space-y-2">
           {categories.map((cat, i) => (
-            <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm" data-testid={`category-${i}`}>
-              <span className="font-medium text-[#20364D]">{cat}</span>
-              <button onClick={() => removeCategory(i)} className="text-slate-400 hover:text-red-500 transition" data-testid={`remove-cat-${i}`}>
-                <Trash2 className="w-3 h-3" />
-              </button>
+            <div key={i} className={`rounded-xl border transition ${editIdx === i ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-200 bg-white hover:border-slate-300"}`} data-testid={`category-${i}`}>
+              <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => setEditIdx(editIdx === i ? null : i)}>
+                <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${cat.active !== false ? "bg-emerald-500" : "bg-slate-300"}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-[#20364D]">{cat.name}</div>
+                  <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <span>{MODE_INFO[cat.display_mode]?.label || "Visual"}</span>
+                    <span>\u2022</span>
+                    <span>{COMMERCIAL_INFO[cat.commercial_mode]?.label || "Fixed Price"}</span>
+                    <span>\u2022</span>
+                    <span>{SOURCING_INFO[cat.sourcing_mode]?.label || "Single"}</span>
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); removeCategory(i); }} className="p-1 text-slate-400 hover:text-red-500 transition" data-testid={`remove-cat-${i}`}><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
+
+              {editIdx === i && (
+                <div className="px-4 pb-4 space-y-4 border-t border-slate-100 pt-3" data-testid={`cat-config-${i}`}>
+                  {/* Display Mode */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">Display Mode</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(MODE_INFO).map(([key, info]) => (
+                        <label key={key} className={`rounded-lg border p-3 cursor-pointer transition ${cat.display_mode === key ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}>
+                          <input type="radio" name={`dm-${i}`} checked={cat.display_mode === key} onChange={() => updateCategory(i, "display_mode", key)} className="sr-only" />
+                          <div className="text-xs font-semibold text-[#20364D]">{info.label}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{info.desc}</div>
+                          <div className="text-[10px] text-slate-400 italic mt-1">e.g. {info.example}</div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Commercial Mode */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">Pricing Behavior</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {Object.entries(COMMERCIAL_INFO).map(([key, info]) => (
+                        <label key={key} className={`rounded-lg border p-2.5 cursor-pointer transition ${cat.commercial_mode === key ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}>
+                          <input type="radio" name={`cm-${i}`} checked={cat.commercial_mode === key} onChange={() => updateCategory(i, "commercial_mode", key)} className="sr-only" />
+                          <div className="text-xs font-semibold text-[#20364D]">{info.label}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{info.desc}</div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sourcing Mode */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">Vendor Sourcing</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {Object.entries(SOURCING_INFO).map(([key, info]) => (
+                        <label key={key} className={`rounded-lg border p-2.5 cursor-pointer transition ${cat.sourcing_mode === key ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}>
+                          <input type="radio" name={`sm-${i}`} checked={cat.sourcing_mode === key} onChange={() => updateCategory(i, "sourcing_mode", key)} className="sr-only" />
+                          <div className="text-xs font-semibold text-[#20364D]">{info.label}</div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">{info.desc}</div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Toggles */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { key: "show_on_marketplace", label: "Show in Marketplace" },
+                      { key: "require_images", label: "Require Images" },
+                      { key: "quote_enabled", label: "Quote Flow Enabled" },
+                      { key: "active", label: "Active" },
+                    ].map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={cat[key] !== false} onChange={(e) => updateCategory(i, key, e.target.checked)} className="rounded border-slate-300" data-testid={`cat-${i}-${key}`} />
+                        <span className="text-xs text-slate-600">{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
           {categories.length === 0 && <p className="text-sm text-slate-400">No categories configured</p>}
         </div>
       </SettingsSectionCard>
-      <SettingsSectionCard title="Add Category" description="Add a new product category.">
+      <SettingsSectionCard title="Add Category" description="Add a new product category. Configure its behavior after adding.">
         <div className="flex items-end gap-3">
           <div>
             <label className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Category Name *</label>
-            <input
-              type="text"
-              value={newCat}
-              onChange={(e) => setNewCat(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") addCategory(); }}
-              placeholder="e.g. Medical Supplies"
-              className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-64"
-              data-testid="new-category-input"
-            />
+            <input type="text" value={newCat} onChange={(e) => setNewCat(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addCategory(); }} placeholder="e.g. Medical Supplies" className="h-9 rounded-lg border border-slate-200 px-3 text-sm w-64" data-testid="new-category-input" />
           </div>
           <button onClick={addCategory} disabled={!newCat.trim()} className="h-9 px-4 rounded-lg bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-40 transition flex items-center gap-1.5" data-testid="add-category-btn">
             <Plus className="w-3.5 h-3.5" /> Add Category

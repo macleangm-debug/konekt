@@ -378,7 +378,7 @@ async def send_to_vendors(request_id: str, request: Request):
                 if vendor:
                     vendor = dict(vendor)
                     vendor.pop("_id", None)
-            except:
+            except Exception:
                 pass
         if not vendor:
             vendor = await db.vendors.find_one({"id": vid}, {"_id": 0})
@@ -562,9 +562,18 @@ async def get_catalog_config(request: Request):
     all_units = catalog.get("units_of_measurement", defaults.get("units_of_measurement", []))
     active_units = [u for u in all_units if u.get("active", True)]
 
+    raw_cats = catalog.get("product_categories", defaults.get("product_categories", []))
+    # Normalize: support legacy string arrays and new rich objects
+    categories = []
+    for c in raw_cats:
+        if isinstance(c, str):
+            categories.append({"name": c, "display_mode": "visual", "commercial_mode": "fixed_price", "sourcing_mode": "preferred", "show_on_marketplace": True, "require_images": True, "quote_enabled": False, "search_first": False, "active": True})
+        else:
+            categories.append(c)
+
     return {
         "units": active_units,
-        "categories": catalog.get("product_categories", defaults.get("product_categories", [])),
+        "categories": categories,
         "variant_types": catalog.get("variant_types", defaults.get("variant_types", [])),
         "sku_prefix": catalog.get("sku_prefix", defaults.get("sku_prefix", "KNT")),
         "sku_format": catalog.get("sku_format", defaults.get("sku_format", "{PREFIX}-{CATEGORY}-{RANDOM}")),

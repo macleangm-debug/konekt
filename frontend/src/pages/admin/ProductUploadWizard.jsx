@@ -152,7 +152,7 @@ export default function ProductUploadWizard() {
 
 /* ═══ STEP 1: BASIC INFO ═══ */
 function StepInfo({ form, update, config }) {
-  const categories = config.categories || [];
+  const categories = (config.categories || []).filter((c) => (typeof c === "object" ? c.active !== false : true));
   return (
     <div className="space-y-5" data-testid="step-info">
       <h2 className="text-lg font-semibold text-[#20364D]">Basic Information</h2>
@@ -161,7 +161,7 @@ function StepInfo({ form, update, config }) {
         <div><Label className="text-xs font-semibold">Category *</Label>
           <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.category} onChange={(e) => update("category", e.target.value)} data-testid="product-category">
             <option value="">Select category</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            {categories.map((c) => { const name = typeof c === "object" ? c.name : c; return <option key={name} value={name}>{name}</option>; })}
           </select>
         </div>
       </div>

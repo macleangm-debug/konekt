@@ -95,6 +95,7 @@ def _status_label_map(status: str):
 
 @flow_router.post("/create-product-checkout")
 async def create_product_checkout(payload: dict, request: Request):
+    """Create checkout + invoice. Order is created ONLY after payment approval."""
     db = request.app.mongodb
     customer_id = payload.get("customer_id")
     items = payload.get("items", [])
@@ -123,7 +124,7 @@ async def create_product_checkout(payload: dict, request: Request):
     total_amount = _money(subtotal + vat_amount)
     now = datetime.now(timezone.utc).isoformat()
     ts_stamp = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
-    checkout_id, invoice_id, order_id = str(uuid4()), str(uuid4()), str(uuid4())
+    checkout_id, invoice_id = str(uuid4()), str(uuid4())
     assigned_sales_id = payload.get("assigned_sales_id") or "auto-sales"
     assigned_sales_name = payload.get("assigned_sales_name") or "Assigned Sales"
     checkout_doc = {
@@ -132,6 +133,7 @@ async def create_product_checkout(payload: dict, request: Request):
         "subtotal_amount": subtotal, "vat_amount": vat_amount, "total_amount": total_amount,
         "delivery": delivery, "quote_details": quote_details,
         "assigned_sales_id": assigned_sales_id, "assigned_sales_name": assigned_sales_name,
+        "vendor_ids": list(vendor_ids),
         "created_at": now,
     }
     invoice_doc = {
@@ -143,49 +145,21 @@ async def create_product_checkout(payload: dict, request: Request):
         "vat_amount": vat_amount, "total_amount": total_amount, "total": total_amount,
         "quote_details": quote_details, "created_at": now,
     }
-    order_doc = {
-        "id": order_id, "order_number": f"KON-ORD-{ts_stamp}",
-        "customer_id": customer_id, "user_id": customer_id,
-        "invoice_id": invoice_id, "checkout_id": checkout_id,
-        "assigned_sales_id": assigned_sales_id, "assigned_sales_name": assigned_sales_name,
-        "status": "pending_payment_confirmation",
-        "current_status": "pending_payment",
-        "type": "product",
-        "items": normalized_items, "subtotal_amount": subtotal,
-        "vat_amount": vat_amount, "total_amount": total_amount, "total": total_amount,
-        "delivery": delivery,
-        "delivery_phone": delivery.get("phone", ""),
-        "vendor_ids": list(vendor_ids),
-        "created_at": now, "updated_at": now,
-    }
     await db.product_checkouts.insert_one(checkout_doc)
     checkout_doc.pop("_id", None)
     await db.invoices.insert_one(invoice_doc)
     invoice_doc.pop("_id", None)
-    await db.orders.insert_one(order_doc)
-    order_doc.pop("_id", None)
-    for vendor_id in vendor_ids:
-        vendor_items = [x for x in normalized_items if x.get("vendor_id") == vendor_id]
-        vdoc = {
-            "id": str(uuid4()), "vendor_id": vendor_id, "order_id": order_id,
-            "customer_id": customer_id, "status": "pending_payment_confirmation",
-            "items": vendor_items, "assigned_sales_id": assigned_sales_id,
-            "created_at": now,
-        }
-        await db.vendor_orders.insert_one(vdoc)
+    # NOTE: Order is NOT created here. It is created only after payment review approval.
+    # A sales assignment is created to track the checkout.
     sdoc = {
-        "id": str(uuid4()), "customer_id": customer_id, "order_id": order_id,
-        "invoice_id": invoice_id, "sales_owner_id": assigned_sales_id,
-        "sales_owner_name": assigned_sales_name, "status": "active_followup",
+        "id": str(uuid4()), "customer_id": customer_id,
+        "checkout_id": checkout_id, "invoice_id": invoice_id,
+        "sales_owner_id": assigned_sales_id,
+        "sales_owner_name": assigned_sales_name, "status": "awaiting_payment",
         "created_at": now,
     }
     await db.sales_assignments.insert_one(sdoc)
-    edoc = {
-        "id": str(uuid4()), "order_id": order_id, "customer_id": customer_id,
-        "event": "checkout_created", "created_at": now,
-    }
-    await db.order_events.insert_one(edoc)
-    return {"ok": True, "checkout": checkout_doc, "invoice": invoice_doc, "order": order_doc}
+    return {"ok": True, "checkout": checkout_doc, "invoice": invoice_doc}
 
 @flow_router.post("/payment-proof")
 async def upload_payment_proof(payload: dict, request: Request):

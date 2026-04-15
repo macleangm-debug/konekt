@@ -24,11 +24,15 @@ function DealCard({ deal }) {
           <div className="text-base font-bold text-[#20364D] line-clamp-1">{deal.product_name}</div>
           {deal.description && <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{deal.description}</div>}
         </div>
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-xl font-extrabold text-[#D4A843]">{fmt(deal.discounted_price)}</span>
           {deal.original_price > deal.discounted_price && <span className="text-sm text-slate-400 line-through">{fmt(deal.original_price)}</span>}
-          {deal.original_price > deal.discounted_price && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">Save {fmt(deal.original_price - deal.discounted_price)}</span>}
         </div>
+        {deal.original_price > deal.discounted_price && (
+          <div className="rounded-lg bg-green-600 text-white px-3 py-1.5 text-center" data-testid="savings-badge">
+            <span className="text-sm font-bold">Save {fmt(deal.original_price - deal.discounted_price)}</span>
+          </div>
+        )}
         <div>
           <div className="flex justify-between text-xs text-slate-500 mb-1">
             <span>{deal.current_committed}/{deal.display_target} units</span>
