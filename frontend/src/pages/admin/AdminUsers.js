@@ -22,8 +22,14 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const roleConfig = {
   admin: { label: 'Admin', icon: Shield, color: 'bg-red-100 text-red-700', desc: 'Full access' },
   sales: { label: 'Sales', icon: Briefcase, color: 'bg-blue-100 text-blue-700', desc: 'Orders & customers' },
+  sales_manager: { label: 'Sales Manager', icon: Briefcase, color: 'bg-indigo-100 text-indigo-700', desc: 'Team lead + analytics' },
+  finance_manager: { label: 'Finance', icon: Shield, color: 'bg-emerald-100 text-emerald-700', desc: 'Payments & commissions' },
   marketing: { label: 'Marketing', icon: Palette, color: 'bg-purple-100 text-purple-700', desc: 'Products & analytics' },
   production: { label: 'Production', icon: Factory, color: 'bg-green-100 text-green-700', desc: 'Order status' },
+  vendor_ops: { label: 'Vendor Ops', icon: Factory, color: 'bg-orange-100 text-orange-700', desc: 'Supply & vendors' },
+  staff: { label: 'Staff', icon: Users, color: 'bg-sky-100 text-sky-700', desc: 'General staff' },
+  affiliate: { label: 'Affiliate', icon: Users, color: 'bg-amber-100 text-amber-700', desc: 'Affiliate partner' },
+  vendor: { label: 'Vendor', icon: Factory, color: 'bg-teal-100 text-teal-700', desc: 'Vendor/Supplier' },
   customer: { label: 'Customer', icon: Users, color: 'bg-slate-100 text-slate-700', desc: 'Regular user' },
 };
 
@@ -43,7 +49,8 @@ export default function AdminUsers() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    full_name: '',
+    first_name: '',
+    last_name: '',
     phone: '',
     role: 'customer'
   });
@@ -84,7 +91,8 @@ export default function AdminUsers() {
     setFormData({
       email: '',
       password: '',
-      full_name: '',
+      first_name: '',
+      last_name: '',
       phone: '',
       role: 'sales'
     });
@@ -96,7 +104,8 @@ export default function AdminUsers() {
     setFormData({
       id: user.id,
       email: user.email,
-      full_name: user.full_name,
+      first_name: user.first_name || (user.full_name || '').split(' ')[0] || '',
+      last_name: user.last_name || (user.full_name || '').split(' ').slice(1).join(' ') || '',
       phone: user.phone || '',
       role: user.role,
       is_active: user.is_active
@@ -106,8 +115,8 @@ export default function AdminUsers() {
   };
 
   const handleSave = async () => {
-    if (!formData.full_name || !formData.email) {
-      toast.error('Please fill in required fields');
+    if (!formData.first_name || !formData.email || !formData.role) {
+      toast.error('First name, email, and role are required');
       return;
     }
     
@@ -116,18 +125,25 @@ export default function AdminUsers() {
       return;
     }
     
+    const fullName = `${formData.first_name} ${formData.last_name}`.trim();
+    
     setSaving(true);
     try {
       if (editMode) {
         await axios.put(`${API_URL}/api/admin/users/${formData.id}`, {
-          full_name: formData.full_name,
+          full_name: fullName,
+          first_name: formData.first_name,
+          last_name: formData.last_name,
           phone: formData.phone || null,
           role: formData.role,
           is_active: formData.is_active
         });
         toast.success('User updated');
       } else {
-        await axios.post(`${API_URL}/api/admin/users`, formData);
+        await axios.post(`${API_URL}/api/admin/users`, {
+          ...formData,
+          full_name: fullName,
+        });
         toast.success('User created');
       }
       
@@ -360,15 +376,27 @@ export default function AdminUsers() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div>
-              <Label>Full Name *</Label>
-              <Input
-                value={formData.full_name}
-                onChange={(e) => setFormData({...formData, full_name: e.target.value})}
-                placeholder="John Doe"
-                className="mt-1"
-                data-testid="user-name-input"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>First Name *</Label>
+                <Input
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                  placeholder="John"
+                  className="mt-1"
+                  data-testid="user-first-name"
+                />
+              </div>
+              <div>
+                <Label>Last Name</Label>
+                <Input
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                  placeholder="Doe"
+                  className="mt-1"
+                  data-testid="user-last-name"
+                />
+              </div>
             </div>
             
             <div>
@@ -390,7 +418,7 @@ export default function AdminUsers() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  placeholder="••••••••"
+                  placeholder="Min 8 characters"
                   className="mt-1"
                 />
               </div>
@@ -411,22 +439,24 @@ export default function AdminUsers() {
             </div>
             
             <div>
-              <Label>Role</Label>
+              <Label>Role *</Label>
               <Select 
                 value={formData.role} 
                 onValueChange={(v) => setFormData({...formData, role: v})}
               >
                 <SelectTrigger className="mt-1" data-testid="role-select">
-                  <SelectValue />
+                  <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">Admin - Full access</SelectItem>
-                  <SelectItem value="sales">Sales - Orders & customers</SelectItem>
-                  <SelectItem value="marketing">Marketing - Products & analytics</SelectItem>
-                  <SelectItem value="production">Production - Order status updates</SelectItem>
-                  <SelectItem value="customer">Customer - Regular user</SelectItem>
+                  {Object.entries(roleConfig).filter(([k]) => k !== 'customer').map(([key, cfg]) => (
+                    <SelectItem key={key} value={key} data-testid={`role-option-${key}`}>
+                      {cfg.label} — {cfg.desc}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="customer">Customer — Regular user</SelectItem>
                 </SelectContent>
               </Select>
+              {!formData.role && <p className="text-xs text-red-500 mt-1">Role is required</p>}
             </div>
             
             {editMode && (

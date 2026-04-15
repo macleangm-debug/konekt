@@ -39,7 +39,7 @@ async def _get_admin(authorization: str):
         user = await db.users.find_one({"id": payload["user_id"]}, {"_id": 0})
         if not user:
             raise HTTPException(401, "User not found")
-        if user.get("role") not in ("admin", "sales", "marketing"):
+        if user.get("role") not in ("admin", "sales", "sales_manager", "finance_manager", "marketing", "production", "vendor_ops", "staff"):
             raise HTTPException(403, "Admin access required")
         return user
     except jwt.ExpiredSignatureError:

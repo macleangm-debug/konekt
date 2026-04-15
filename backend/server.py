@@ -292,6 +292,10 @@ class UserRole(str, Enum):
     FINANCE_MANAGER = "finance_manager"
     MARKETING = "marketing"
     PRODUCTION = "production"
+    VENDOR_OPS = "vendor_ops"
+    STAFF = "staff"
+    AFFILIATE = "affiliate"
+    VENDOR = "vendor"
     CUSTOMER = "customer"
 
 ROLE_PERMISSIONS = {
@@ -301,6 +305,10 @@ ROLE_PERMISSIONS = {
     UserRole.FINANCE_MANAGER: ["orders", "payments", "invoices", "commissions", "analytics_financial", "margins"],
     UserRole.MARKETING: ["products", "analytics", "customers"],
     UserRole.PRODUCTION: ["orders", "production_status"],
+    UserRole.VENDOR_OPS: ["products", "vendors", "price_requests", "supply_review", "images"],
+    UserRole.STAFF: ["orders", "customers", "quotes", "analytics_basic"],
+    UserRole.AFFILIATE: ["own_orders", "own_profile", "affiliate_dashboard"],
+    UserRole.VENDOR: ["own_products", "own_orders", "vendor_dashboard"],
     UserRole.CUSTOMER: ["own_orders", "own_profile"]
 }
 
@@ -341,12 +349,16 @@ class UserLogin(BaseModel):
 class AdminUserCreate(BaseModel):
     email: EmailStr
     password: str
-    full_name: str
+    full_name: str = ""
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
     phone: Optional[str] = None
     role: UserRole = UserRole.CUSTOMER
 
 class AdminUserUpdate(BaseModel):
     full_name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     phone: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
@@ -845,7 +857,7 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
         role = user.get("role", "customer")
-        if role not in ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production"]:
+        if role not in ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production", "vendor_ops", "staff"]:
             raise HTTPException(status_code=403, detail="Admin access required")
         return user
     except jwt.ExpiredSignatureError:
@@ -1388,11 +1400,17 @@ async def create_admin_user(data: AdminUserCreate, user: dict = Depends(get_admi
         raise HTTPException(status_code=400, detail="Email already registered")
     
     user_id = str(uuid.uuid4())
+    first_name = data.first_name or (data.full_name or "").split(" ")[0]
+    last_name = data.last_name or " ".join((data.full_name or "").split(" ")[1:])
+    full_name = data.full_name or f"{first_name} {last_name}".strip()
+
     user_doc = {
         "id": user_id,
         "email": data.email,
         "password_hash": hash_password(data.password),
-        "full_name": data.full_name,
+        "full_name": full_name,
+        "first_name": first_name,
+        "last_name": last_name,
         "phone": data.phone,
         "company": None,
         "points": 0,
@@ -1405,8 +1423,10 @@ async def create_admin_user(data: AdminUserCreate, user: dict = Depends(get_admi
         "created_by": user["id"]
     }
     await db.users.insert_one(user_doc)
+    user_doc.pop("_id", None)
+    user_doc.pop("password_hash", None)
     
-    return {"message": "User created successfully", "user_id": user_id}
+    return {"message": "User created successfully", "user_id": user_id, "user": {"id": user_id, "email": data.email, "role": data.role.value, "full_name": full_name, "first_name": first_name, "last_name": last_name}}
 
 @admin_router.put("/users/{user_id}")
 async def update_user(user_id: str, data: AdminUserUpdate, admin: dict = Depends(get_admin_user)):
