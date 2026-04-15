@@ -3,42 +3,51 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email) | Pillow (Image Processing)
 
-## System Status: ALL P0 + USER CREATION FIXED — 315 ITERATIONS
+## System Status: ALL P1 OPERATIONAL SURFACES COMPLETE — 316 ITERATIONS
 
-## User Creation Fix — COMPLETE (315 iterations)
-- **11 roles**: admin, sales, sales_manager, finance_manager, marketing, production, vendor_ops, staff, affiliate, vendor, customer
-- **Structured names**: First Name / Last Name instead of Full Name
-- **Role dropdown**: All 11 roles with descriptions (e.g., "Vendor Ops — Supply & vendors")
-- **Backend**: UserRole enum + ROLE_PERMISSIONS expanded, AdminUserCreate stores first_name/last_name
-- **Access fix**: vendor_ops and staff can now access admin/supply review endpoints
+## P1 Operational Control Surfaces — COMPLETE (316 iterations)
 
-## Supply Review Control Tower — COMPLETE (314 iterations)
-- Pricing Integrity Monitor (real-time %)
-- KPI Strip (Pending/Issues/Missing/Healthy)
-- 5 Filters, approve with pricing engine, override & approve, reject
+### Catalog Workspace (Fully Wired)
+- 6 KPIs: Categories (12), Products (51), Active (13), Pending (14), Pricing Issues, Quote Items (28)
+- Category cards with display_mode/commercial_mode/sourcing_mode badges
+- Product health alerts (missing images, pricing issues)
+- Quick actions: Supply Review, Vendor Ops, New Product
 
-## Pricing Engine — COMPLETE (313 iterations)
-- Shared utility, 30% target / 15% min, auto-adjust overrides
+### Vendors Page (Enhanced)
+- KPI strip: Total (12), Active (9), Types
+- Enriched table with type badge, status, contact
+- Profile drawer on row click (type, email, phone, status, categories, joined)
 
-## P0 Fixes — ALL COMPLETE
-- Payment flow: orders only after approval
-- Campaign: savings_amount (no percentage)
-- Delivery note: logistics-only, signatures
-- Affiliate activation: resend fixed
+### Commission Engine (Real Data)
+- 4 KPIs: Total Earned (45,842.6 TZS), Pending, Paid Out, Beneficiaries
+- Filterable table: Beneficiary, Type, Amount, Source, Status, Date
+- Filters: All, Pending, Approved, Paid
 
-## Complete Systems (315+ iterations)
-- Category Display Mode, Competitive Quoting, Content Studio, Group Deals Discovery
-- Product Upload Wizard, Catalog Settings, Vendor Ops, Image Pipeline
-- Affiliate, Sales, Email, Commission, Ratings, Track Order, Settings Lock
+### Finance APIs
+- `/api/admin/finance/commissions` — real commission records with status filter
+- `/api/admin/finance/commission-stats` — aggregated totals
+- `/api/admin/finance/cash-flow` — payment stats by status
+
+## Previous Completions
+- Supply Review Control Tower (314)
+- Pricing Engine + P0 Fixes (313)
+- Category Display Mode System (312)
+- Payment Flow Fix (312)
+- Competitive Quoting (311)
+- Content Studio (310)
+- Group Deals Discovery (309)
+- Product Upload Wizard (308)
+- User Creation Fix (315)
+- All core systems (affiliate, sales, email, commission, ratings, track order)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 - Vendor Ops: `vops.test@konekt.co.tz` / `VendorOps123!`
 
-## Backlog (P1 — Fully Wired)
-- Catalog Workspace (KPI strip, category cards, product health — real data)
-- Vendors Page (coverage, activity, sourcing roles — real vendor records)
-- Affiliate System UI (performance, payouts, leaderboard — real metrics)
-- Finance Pages (cash flow, commissions — real engine data)
-- List & Quote catalog frontend (search-first UX)
+## Remaining Backlog
+- (P1) Affiliate System UI upgrade (performance table, payouts drawer, leaderboard)
+- (P2) List & Quote catalog frontend (search-first UX)
+- (P2) First real product + group deal execution
+- (P2) Micro-interactions
+- (Phase 2) SLA timers, vendor scoring, split orders
