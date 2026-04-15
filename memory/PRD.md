@@ -3,42 +3,31 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email) | Pillow (Image Processing)
 
-## System Status: ALL P1 OPERATIONAL SURFACES COMPLETE — 316 ITERATIONS
+## System Status: WIRING AUDIT COMPLETE — 317 ITERATIONS
 
-## P1 Operational Control Surfaces — COMPLETE (316 iterations)
+## Final Wiring Audit — COMPLETE (317 iterations)
+- **Sidebar fixed**: Vendor Ops + Supply Review under "Catalog & Supply", Commission Engine under Finance
+- **vendor_ops/staff roles**: Added to ALL_MGMT, sidebar filtering, admin token storage, login redirect
+- **Login redirect fixed**: vendor_ops/staff now redirect to /admin instead of /account
+- **Dead links removed**: Finance Cash Flow/Commissions replaced with working Commission Engine
+- **All 11 roles**: admin, sales, sales_manager, finance_manager, marketing, production, vendor_ops, staff, affiliate, vendor, customer
 
-### Catalog Workspace (Fully Wired)
-- 6 KPIs: Categories (12), Products (51), Active (13), Pending (14), Pricing Issues, Quote Items (28)
-- Category cards with display_mode/commercial_mode/sourcing_mode badges
-- Product health alerts (missing images, pricing issues)
-- Quick actions: Supply Review, Vendor Ops, New Product
-
-### Vendors Page (Enhanced)
-- KPI strip: Total (12), Active (9), Types
-- Enriched table with type badge, status, contact
-- Profile drawer on row click (type, email, phone, status, categories, joined)
-
-### Commission Engine (Real Data)
-- 4 KPIs: Total Earned (45,842.6 TZS), Pending, Paid Out, Beneficiaries
-- Filterable table: Beneficiary, Type, Amount, Source, Status, Date
-- Filters: All, Pending, Approved, Paid
-
-### Finance APIs
-- `/api/admin/finance/commissions` — real commission records with status filter
-- `/api/admin/finance/commission-stats` — aggregated totals
-- `/api/admin/finance/cash-flow` — payment stats by status
-
-## Previous Completions
-- Supply Review Control Tower (314)
-- Pricing Engine + P0 Fixes (313)
-- Category Display Mode System (312)
-- Payment Flow Fix (312)
-- Competitive Quoting (311)
-- Content Studio (310)
-- Group Deals Discovery (309)
-- Product Upload Wizard (308)
-- User Creation Fix (315)
-- All core systems (affiliate, sales, email, commission, ratings, track order)
+## All Completed Systems (317 iterations)
+- Supply Review Control Tower (pricing integrity, approve/reject with engine)
+- Catalog Workspace (12 categories, mode badges, KPIs, health alerts)
+- Competitive Quoting (preferred/competitive, multi-vendor)
+- Content Studio (products/services/deals/brand templates)
+- Group Deals Discovery (landing page, marketplace banner, fallback)
+- Product Upload Wizard (6 steps, dynamic catalog config)
+- Pricing Engine (30% target, 15% min, auto-adjust)
+- Payment Flow Fix (orders only after approval)
+- Category Display Mode (visual/list_quote/commercial/sourcing)
+- Commission Engine (real data, KPIs, filters)
+- Vendor Ops Dashboard + Profile Drawer
+- User Creation (11 roles, structured names)
+- Delivery Note Fix (logistics-only, signatures)
+- Affiliate Activation Bug Fix
+- All core: affiliate, sales, email, commission, ratings, track order
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
@@ -50,4 +39,3 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 - (P2) List & Quote catalog frontend (search-first UX)
 - (P2) First real product + group deal execution
 - (P2) Micro-interactions
-- (Phase 2) SLA timers, vendor scoring, split orders

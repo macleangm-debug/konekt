@@ -80,7 +80,7 @@ export default function RegisterPageV2() {
       const { token, user } = res.data;
       const role = user.role || "customer";
       clearAllAuth();
-      if (["admin", "sales", "marketing", "production"].includes(role)) localStorage.setItem("konekt_admin_token", token);
+      if (["admin", "sales", "marketing", "production", "vendor_ops", "staff"].includes(role)) localStorage.setItem("konekt_admin_token", token);
       else if (["partner", "vendor", "affiliate"].includes(role)) localStorage.setItem("partner_token", token);
       else localStorage.setItem("konekt_token", token);
       localStorage.setItem("token", token);
