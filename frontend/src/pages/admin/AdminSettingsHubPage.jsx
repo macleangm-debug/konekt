@@ -65,6 +65,7 @@ const GROUPS = [
       { key: "catalog_categories", label: "Product Categories", icon: Package },
       { key: "catalog_variants", label: "Variant Types", icon: Package },
       { key: "catalog_sku", label: "SKU Configuration", icon: FileText },
+      { key: "vendor_ops_settings", label: "Sourcing Strategy", icon: Truck },
     ],
   },
 ];
@@ -96,6 +97,7 @@ const TAB_DESCRIPTIONS = {
   catalog_categories: "Manage product categories available in the catalog",
   catalog_variants: "Define variant types (Size, Color, Material) for product listings",
   catalog_sku: "SKU format, prefix, and auto-generation configuration",
+  vendor_ops_settings: "Sourcing mode, quote expiry, lead times, and vendor assignment strategy",
 };
 
 const defaultState = {
@@ -166,6 +168,13 @@ const defaultState = {
     variant_types: ["Size", "Color", "Material", "Weight", "Volume"],
     sku_prefix: "KNT",
     sku_format: "{PREFIX}-{CATEGORY}-{RANDOM}",
+  },
+  vendor_ops: {
+    default_sourcing_mode: "preferred",
+    max_vendors_per_request: 3,
+    default_quote_expiry_hours: 48,
+    default_lead_time_days: 3,
+    auto_select_best_quote: true,
   },
 };
 
@@ -306,6 +315,7 @@ export default function AdminSettingsHubPage() {
             {tab === "catalog_categories" && <CatalogCategoriesTab state={state} setState={setState} />}
             {tab === "catalog_variants" && <CatalogVariantsTab state={state} setState={setState} />}
             {tab === "catalog_sku" && <CatalogSkuTab state={state} setState={setState} />}
+            {tab === "vendor_ops_settings" && <VendorOpsSettingsTab state={state} setState={setState} />}
           </div>
         </div>
       </main>
@@ -1718,6 +1728,38 @@ function CatalogSkuTab({ state, setState }) {
         </div>
         <div className="mt-3 p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700">
           <strong>Available variables:</strong> {"{PREFIX}"} = SKU Prefix, {"{COUNTRY}"} = Country Code, {"{CATEGORY}"} = Category short code, {"{PRODUCT}"} = Product code, {"{VARIANT}"} = Variant code, {"{RANDOM}"} = Unique number, {"{DATE}"} = Date (YYMMDD)
+        </div>
+      </SettingsSectionCard>
+    </>
+  );
+}
+
+
+/* ═══ VENDOR OPS: SOURCING STRATEGY ═══ */
+function VendorOpsSettingsTab({ state, setState }) {
+  const vo = state.vendor_ops || {};
+
+  const updateVO = (field, value) => {
+    setState((prev) => ({ ...prev, vendor_ops: { ...prev.vendor_ops, [field]: value } }));
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Default Sourcing Strategy" description="Control how price requests are routed to vendors.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <SettingsSelectField label="Default Sourcing Mode" value={vo.default_sourcing_mode || "preferred"} onChange={(v) => updateVO("default_sourcing_mode", v)} options={[{ value: "preferred", label: "Preferred Vendor" }, { value: "competitive", label: "Competitive Quoting" }]} />
+          <SettingsNumberField label="Max Vendors per Request" value={vo.max_vendors_per_request || 3} onChange={(v) => updateVO("max_vendors_per_request", v)} />
+        </div>
+        <div className="mt-3 p-3 rounded-xl bg-slate-50 text-xs text-slate-500">
+          <strong>Preferred Vendor</strong>: Requests go to one assigned vendor. Fast, controlled.
+          <br /><strong>Competitive Quoting</strong>: Requests go to multiple vendors. System recommends best price.
+        </div>
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Quote & Lead Time Defaults" description="Default values auto-fill when entering vendor quotes.">
+        <div className="grid md:grid-cols-2 gap-4">
+          <SettingsNumberField label="Default Quote Expiry (hours)" value={vo.default_quote_expiry_hours || 48} onChange={(v) => updateVO("default_quote_expiry_hours", v)} />
+          <SettingsNumberField label="Default Lead Time (days)" value={vo.default_lead_time_days || 3} onChange={(v) => updateVO("default_lead_time_days", v)} />
+          <SettingsToggleField label="Auto-select best quote (lowest price)" checked={vo.auto_select_best_quote !== false} onChange={(v) => updateVO("auto_select_best_quote", v)} />
         </div>
       </SettingsSectionCard>
     </>

@@ -272,6 +272,16 @@ PLATFORM_DEFAULTS = {
         "vendor_cannot_see_customer_financials": True,
         "vendor_cannot_see_commissions": True,
     },
+    "vendor_ops": {
+        "default_sourcing_mode": "preferred",
+        "max_vendors_per_request": 3,
+        "default_quote_expiry_hours": 48,
+        "default_lead_time_days": 3,
+        "auto_select_best_quote": True,
+        "preferred_vendors_by_category": {},
+        "sourcing_mode_by_category": {},
+        "lead_time_by_category": {},
+    },
     "partner_policy": {
         "auto_assignment_mode": "capability_match",
         "logistics_handling_default": "konekt_managed",
