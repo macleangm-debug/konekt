@@ -3,47 +3,47 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email) | Pillow (Image Processing)
 
-## System Status: LAUNCH READY — COMPETITIVE QUOTING ENGINE COMPLETE
+## System Status: LAUNCH READY — PAYMENT INTEGRITY + CATEGORY ENGINE COMPLETE
 
-## Competitive Quoting System — COMPLETE (311 iterations tested)
-- **Two sourcing modes**: Preferred Vendor (1 vendor) and Competitive Quoting (multi-vendor)
-- **Full flow**: Create Request → Send to Vendors → Collect Quotes → Compare (BEST PRICE badge) → Select Winner → Apply Margin → Ready for Sales
-- **Backend endpoints**: `/api/vendor-ops/price-requests` CRUD, `/send-to-vendors`, `/submit-quote`, `/select-vendor`, `/stats`
-- **UI**: 4 sub-tabs (New/Awaiting/Ready/Closed), KPI strip, 3-column detail (Summary + Vendor Selection + Quote Comparison)
-- **Settings**: Sourcing Strategy tab in Settings Hub (mode, max vendors, quote expiry, lead time, auto-select toggle)
-- **Margin logic**: Auto-applies minimum_company_margin_percent (default 20%) when selecting vendor, with manual override
-- **Vendor isolation**: Sales never sees vendor identity or base pricing — only final sell price + lead time
+## Payment Flow Fix — COMPLETE (312 iterations tested)
+- **Critical fix**: Checkout no longer creates orders. Only creates checkout + invoice.
+- **Orders created ONLY after payment review approval** via LiveCommerceService.approve_payment_proof()
+- **No premature**: stock deduction, fulfillment, commission, revenue emails before approval
+- **Track Order**: Shows "Payment Under Review" before approval, "Order Created" after
 
-## Content Studio Expansion — COMPLETE (310 iterations)
-- 4 content tabs: Products (29), Services, Group Deals (6), Brand Content (12 templates)
-- 12 brand templates across 5 intents: Authority, Trust, Urgency, Soft Sell, Value
-- 6 layout renderers including Authority (centered) and Trust (checklist)
-- Square 1:1 image containers, dynamic captions, promo code injection
+## Category Display Mode System — COMPLETE (312 iterations tested)
+- **Rich category objects**: display_mode (visual/list_quote), commercial_mode (fixed_price/request_quote/hybrid), sourcing_mode (preferred/competitive)
+- **Backward compatible**: Legacy string arrays auto-normalized to rich objects
+- **Settings Hub**: Expandable category cards with inline descriptions + examples
+  - Display Mode: Visual Catalog vs List & Quote (with auto-set toggles)
+  - Pricing Behavior: Fixed Price vs Request Quote vs Hybrid
+  - Vendor Sourcing: Single Sourcing vs Competitive Quoting
+  - Toggles: show_on_marketplace, require_images, quote_enabled, active
+- **Product Wizard**: Category dropdown handles both string and object formats
+
+## Competitive Quoting System — COMPLETE (311 iterations)
+- Two modes: Preferred Vendor / Competitive Quoting
+- Full flow: Create → Send to Vendors → Collect Quotes → Compare → Select Winner → Ready for Sales
+- Settings Hub: Sourcing Strategy tab (mode, max vendors, quote expiry, lead time)
+
+## Content Studio — COMPLETE (310 iterations)
+- 4 tabs: Products, Services, Group Deals, Brand Content (12 templates)
+- Authority/Trust layouts, promo code injection, dynamic captions
 
 ## Group Deals Discovery — COMPLETE (309 iterations)
-- Landing page, marketplace banner, homepage fallback logic, lazy loading
+- Landing page, marketplace banner, homepage fallback, lazy loading
+- **Enhanced**: Prominent green savings badge on deal cards
 
-## Product Upload Wizard — COMPLETE (308 iterations)
-- 6-step flow, dynamic catalog config, image pipeline
-
-## Configurable Catalog Settings — COMPLETE
-- Units, Categories, Variants, SKU Config, Sourcing Strategy
-
-## All Complete Systems (311+ iterations)
-- Vendor Ops Foundation, Image Pipeline, Price Requests, Competitive Quoting
-- Structured Names, Terms of Service, Password-Gated Settings
-- Affiliate System, Sales Promos, Creative Generator
-- Group Deals, Canonical Email Engine, Commission Engine
-- Customer Rating, Track Order
+## All Systems (312+ iterations): Product Wizard, Catalog Settings, Vendor Ops, Image Pipeline, Affiliate, Sales Promos, Creative Generator, Group Deals, Email Engine, Commission Engine, Ratings, Track Order, Structured Names, Terms of Service, Settings Lock
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
-- Test Vendors: Alpha Supplies Ltd, Beta Trading Co, Gamma Mfg Ltd (seeded in partners)
+- Test Vendors: Alpha Supplies, Beta Trading, Gamma Mfg
 
 ## Backlog
 - (P1) First real product listing + first group deal execution
-- (P1) Micro-interactions (card hover lift, button feedback, skeleton loaders)
+- (P1) Micro-interactions (card hover, button feedback)
 - (P2) State-aware conversational loan entry
-- (P2) WhatsApp OG meta tags for shared deal links
-- (Phase 2) SLA timers, vendor scoring, split orders, auto-reminders
+- (P2) WhatsApp OG meta tags
+- (Phase 2) SLA timers, vendor scoring, split orders
