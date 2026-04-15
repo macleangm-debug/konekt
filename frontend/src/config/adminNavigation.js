@@ -10,7 +10,7 @@ import {
 
 /**
  * Canonical Admin Sidebar — organized by business flow.
- * Quote → Invoice → Payment → Order → Fulfillment
+ * CRM → Quotes → Invoices → Payments → Orders → Fulfillment
  */
 
 const ALL_MGMT = ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production", "vendor_ops", "staff"];
@@ -25,11 +25,12 @@ export const adminNavigation = [
     roles: ALL_MGMT,
   },
   {
-    key: "sales",
-    label: "Sales & Commerce",
+    key: "crm_sales",
+    label: "CRM & Sales Pipeline",
     roles: ["admin", "sales", "sales_manager", "finance_manager"],
     children: [
-      { label: "Requests", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
+      { label: "CRM", href: "/admin/crm", icon: Target },
+      { label: "Requests Inbox", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
       { label: "Quotes", href: "/admin/quotes", icon: FileText },
       { label: "Invoices", href: "/admin/invoices", icon: Receipt },
       { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badgeKey: "orders" },
@@ -66,7 +67,6 @@ export const adminNavigation = [
     roles: ["admin", "sales", "sales_manager"],
     children: [
       { label: "Customers", href: "/admin/customers", icon: Contact },
-      { label: "CRM", href: "/admin/crm", icon: Target },
     ],
   },
   {

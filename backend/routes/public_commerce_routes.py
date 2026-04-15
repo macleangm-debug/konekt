@@ -160,11 +160,15 @@ async def public_checkout(payload: dict):
         "city": payload.get("city", ""),
         "country": payload.get("country", "Tanzania"),
         "notes": payload.get("notes", ""),
-        "status": "pending",
-        "current_status": "awaiting_payment_proof",
+        "status": "pending_payment",
+        "current_status": "pending_payment",
         "payment_status": "pending_submission",
-        "order_status": "awaiting_payment_proof",
+        "order_status": "pending_payment",
         "pipeline_stage": "payment_verification",
+        "payment_confirmed": False,
+        "fulfillment_locked": True,
+        "commission_triggered": False,
+        "revenue_recognized": False,
         "type": "product",
         "source_type": "public_checkout",
         "is_guest_order": not bool(linked_user_id),
@@ -175,8 +179,8 @@ async def public_checkout(payload: dict):
         "approved_by": None,
         **attribution_block,
         "status_history": [{
-            "status": "awaiting_payment_proof",
-            "note": "Guest order submitted via public checkout",
+            "status": "pending_payment",
+            "note": "Order submitted via marketplace checkout. Awaiting payment.",
             "timestamp": now,
         }],
         "created_at": now,
@@ -185,6 +189,42 @@ async def public_checkout(payload: dict):
 
     await db.orders.insert_one(order_doc)
     logger.info("Guest order created: %s (%s) by %s", order_number, order_id, customer_email)
+
+    # ─── Create Invoice for this marketplace order (payment-first flow) ───
+    invoice_number = f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+    invoice_doc = {
+        "id": str(uuid4()),
+        "invoice_number": invoice_number,
+        "source_type": "marketplace_checkout",
+        "order_id": order_id,
+        "order_number": order_number,
+        "customer_name": customer_name,
+        "customer_email": customer_email,
+        "customer_phone": customer_phone,
+        "customer_company": company_name,
+        "customer_id": linked_user_id,
+        "currency": "TZS",
+        "line_items": order_items,
+        "subtotal": totals["subtotal"],
+        "tax": totals["vat_amount"],
+        "vat_amount": totals["vat_amount"],
+        "discount": total_promo_discount,
+        "total": totals["total"],
+        "status": "pending_payment",
+        "payments": [],
+        "amount_paid": 0,
+        "balance_due": totals["total"],
+        **attribution_block,
+        "created_at": now,
+        "updated_at": now,
+    }
+    await db.invoices.insert_one(invoice_doc)
+
+    # Link invoice to order
+    await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {"invoice_id": invoice_doc["id"], "invoice_number": invoice_number}}
+    )
 
     # Create guest account invite if no existing account
     account_info = None
@@ -252,6 +292,7 @@ async def public_checkout(payload: dict):
         "ok": True,
         "order_id": order_id,
         "order_number": order_number,
+        "invoice_number": invoice_number,
         "subtotal": totals["subtotal"],
         "vat_percent": totals["vat_percent"],
         "vat_amount": totals["vat_amount"],
@@ -535,4 +576,116 @@ async def upload_proof_file(file: UploadFile = File(...)):
         "url": f"/uploads/payment_proofs/{safe_name}",
         "size": len(content),
         "content_type": file.content_type,
+    }
+
+
+
+# ─── Public Quote Request (List & Quote Catalog) ───────────
+
+@router.post("/quote-requests")
+async def submit_quote_request(payload: dict):
+    """
+    Public multi-item quote request from List & Quote catalog.
+    Flow: Create Request → CRM Lead/Link → Assign Sales → Into pipeline.
+    
+    Accepts:
+      items: [{product_id, name, quantity, unit_of_measurement, category, notes}]
+      custom_items: [{name, quantity, unit_of_measurement, description}]
+      category: str
+      customer_note: str
+      customer: {first_name, last_name, email, phone, company}
+      source: str
+    """
+    from services.public_request_intake_service import create_public_request
+    from services.sales_assignment_service import assign_sales_owner
+
+    items = payload.get("items") or []
+    custom_items = payload.get("custom_items") or []
+    customer = payload.get("customer") or {}
+    category = payload.get("category") or ""
+
+    if not items and not custom_items:
+        raise HTTPException(status_code=400, detail="At least one item is required")
+
+    # Build structured item list
+    structured_items = []
+    for item in items:
+        structured_items.append({
+            "product_id": item.get("product_id") or item.get("id"),
+            "name": item.get("name", ""),
+            "quantity": int(item.get("quantity", 1) or 1),
+            "unit_of_measurement": item.get("unit_of_measurement") or "Piece",
+            "category": item.get("category") or category,
+            "notes": item.get("notes") or "",
+            "is_custom": False,
+        })
+    for ci in custom_items:
+        structured_items.append({
+            "product_id": None,
+            "name": ci.get("name", "Custom Item"),
+            "quantity": int(ci.get("quantity", 1) or 1),
+            "unit_of_measurement": ci.get("unit_of_measurement") or "Piece",
+            "category": category,
+            "notes": ci.get("description") or ci.get("notes") or "",
+            "is_custom": True,
+        })
+
+    # Build request title
+    item_count = len(structured_items)
+    title = f"Quote Request: {item_count} item{'s' if item_count != 1 else ''}"
+    if category:
+        title += f" ({category})"
+
+    # Create via the public request intake service (CRM + assignment wiring)
+    intake_payload = {
+        "request_type": "product_bulk",
+        "title": title,
+        "name": f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or customer.get("name", ""),
+        "email": customer.get("email", ""),
+        "guest_email": customer.get("email", ""),
+        "guest_name": f"{customer.get('first_name', '')} {customer.get('last_name', '')}".strip() or customer.get("name", ""),
+        "phone": customer.get("phone", ""),
+        "phone_prefix": customer.get("phone_prefix", "+255"),
+        "company_name": customer.get("company", ""),
+        "source_channel": "list_quote_catalog",
+        "source_page": f"list_quote_catalog:{category}",
+        "notes": payload.get("customer_note") or "",
+        "details": {
+            "items": structured_items,
+            "category": category,
+            "source": payload.get("source", "list_quote_catalog"),
+            "total_items": item_count,
+            "has_custom_items": any(i["is_custom"] for i in structured_items),
+        },
+    }
+
+    result = await create_public_request(db=db, payload=intake_payload, user=None)
+
+    # Ensure assignment engine runs for this request
+    request_id = result.get("request_id")
+    if request_id:
+        try:
+            assignment = await assign_sales_owner(
+                db,
+                email=customer.get("email", ""),
+                company_name=customer.get("company", ""),
+                category=category,
+            )
+            if assignment.get("assigned_sales_id"):
+                await db.requests.update_one(
+                    {"id": request_id},
+                    {"$set": {
+                        "assigned_sales_owner_id": assignment["assigned_sales_id"],
+                        "assignment_source": assignment.get("routing_mode", "system"),
+                        "assignment_deal_type": "system_assigned",
+                    }}
+                )
+        except Exception as e:
+            logger.warning(f"Assignment engine failed for quote request {request_id}: {e}")
+
+    return {
+        "ok": True,
+        "request_id": request_id,
+        "request_number": result.get("request_number"),
+        "message": "Quote request submitted successfully. Our team will contact you shortly.",
     }

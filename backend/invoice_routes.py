@@ -54,7 +54,11 @@ async def invoices_stats():
 
 @router.post("")
 async def create_invoice(payload: InvoiceCreateNew):
-    """Create a new invoice with auto-applied customer payment terms and due date"""
+    """Create a new invoice with auto-applied customer payment terms and due date.
+    
+    NOTE: Preferred flow is Quote → Approved → Auto-Invoice.
+    Manual invoice creation is for walk-in sales and exceptional cases only.
+    """
     now = datetime.now(timezone.utc)
     invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
 
@@ -73,6 +77,7 @@ async def create_invoice(payload: InvoiceCreateNew):
 
     doc = payload.model_dump()
     doc["invoice_number"] = invoice_number
+    doc["source_type"] = doc.get("source_type") or "manual"
     doc["created_at"] = now.isoformat()
     doc["updated_at"] = now.isoformat()
     doc["payments"] = []

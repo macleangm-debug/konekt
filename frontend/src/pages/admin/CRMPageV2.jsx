@@ -854,6 +854,7 @@ export default function CRMPageV2() {
                 <InfoCard label="Source" value={drawerLead.source || "\u2014"} />
                 {drawerLead.industry && <InfoCard label="Industry" value={drawerLead.industry} />}
                 {drawerLead.assigned_to && <InfoCard label="Assigned Rep" value={drawerLead.assigned_to} />}
+                {drawerLead.ownership_resolution && <InfoCard label="Assignment Source" value={drawerLead.ownership_resolution === "continuity" ? "Customer Ownership" : drawerLead.ownership_resolution === "scored_assignment" ? "System Assigned" : drawerLead.ownership_resolution || "Manual"} />}
               </div>
 
               {/* Request traceability */}
@@ -907,6 +908,30 @@ export default function CRMPageV2() {
               {/* Related Documents */}
               {drawerRelated && (
                 <div data-testid="lead-related-section">
+                  {/* Performance Summary */}
+                  {(() => {
+                    const totalQuotes = (drawerRelated.quotes || []).length;
+                    const totalOrders = (drawerRelated.orders || []).length;
+                    const totalRevenue = (drawerRelated.orders || []).reduce((s, o) => s + Number(o.total || 0), 0)
+                      + (drawerRelated.invoices || []).filter(i => i.status === "paid").reduce((s, i) => s + Number(i.total || 0), 0);
+                    const totalDeals = totalQuotes + totalOrders;
+                    return totalDeals > 0 ? (
+                      <div className="grid grid-cols-3 gap-2 mb-4" data-testid="lead-performance-summary">
+                        <div className="bg-blue-50 rounded-xl border border-blue-100 p-3 text-center">
+                          <div className="text-lg font-bold text-blue-700">{totalQuotes}</div>
+                          <div className="text-[10px] uppercase text-blue-500 font-semibold">Quotes</div>
+                        </div>
+                        <div className="bg-green-50 rounded-xl border border-green-100 p-3 text-center">
+                          <div className="text-lg font-bold text-green-700">{totalOrders}</div>
+                          <div className="text-[10px] uppercase text-green-500 font-semibold">Orders</div>
+                        </div>
+                        <div className="bg-amber-50 rounded-xl border border-amber-100 p-3 text-center">
+                          <div className="text-lg font-bold text-amber-700">TZS {totalRevenue.toLocaleString()}</div>
+                          <div className="text-[10px] uppercase text-amber-500 font-semibold">Revenue</div>
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                   <h3 className="font-semibold text-sm text-slate-700 mb-3 uppercase tracking-wide">Related Documents</h3>
                   <div className="space-y-2">
                     {(drawerRelated.quotes || []).map((q) => (
@@ -916,6 +941,11 @@ export default function CRMPageV2() {
                     ))}
                     {(drawerRelated.invoices || []).map((inv) => (
                       <RelatedRow key={inv.id} title={inv.invoice_number || "Invoice"} subtitle={`TZS ${Number(inv.total || 0).toLocaleString()} - ${inv.status || "\u2014"}`} />
+                    ))}
+                    {(drawerRelated.orders || []).map((ord) => (
+                      <div key={ord.id} onClick={() => { closeDrawer(); navigate(`/admin/orders`); }} className="cursor-pointer hover:bg-slate-50 rounded-xl transition-colors">
+                        <RelatedRow title={ord.order_number || "Order"} subtitle={`TZS ${Number(ord.total || 0).toLocaleString()} - ${ord.current_status || ord.status || "\u2014"}`} />
+                      </div>
                     ))}
                     {(drawerRelated.tasks || []).map((t) => (
                       <RelatedRow key={t.id} title={t.title || "Task"} subtitle={`${t.status || "\u2014"} - ${t.assigned_to || "\u2014"}`} />

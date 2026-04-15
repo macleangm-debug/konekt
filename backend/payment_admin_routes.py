@@ -72,16 +72,33 @@ async def verify_payment(payment_id: str):
         await db.orders.update_one(
             {"_id": ObjectId(payment["target_id"])},
             {
-                "$set": {"payment_status": "paid", "updated_at": now},
+                "$set": {
+                    "payment_status": "paid",
+                    "current_status": "confirmed",
+                    "status": "confirmed",
+                    "payment_confirmed": True,
+                    "fulfillment_locked": False,
+                    "updated_at": now,
+                },
                 "$push": {
                     "status_history": {
                         "status": "confirmed",
-                        "note": "Payment verified by admin",
+                        "note": "Payment verified by admin. Order confirmed for fulfillment.",
                         "timestamp": now,
                     }
                 },
             },
         )
+        # Also update linked invoice if any
+        order = await db.orders.find_one({"_id": ObjectId(payment["target_id"])}, {"invoice_id": 1, "invoice_number": 1})
+        if order and order.get("invoice_id"):
+            await reconcile_invoice_payment(
+                db,
+                invoice_id=order["invoice_id"],
+                amount=float(payment.get("amount", 0) or 0),
+                payment_method=payment.get("provider", "manual"),
+                reference=payment.get("transaction_id") or payment.get("reference"),
+            )
     elif payment["target_type"] == "invoice":
         # Use reconciliation service for consistent invoice payment handling
         await reconcile_invoice_payment(
@@ -113,6 +130,58 @@ async def verify_payment(payment_id: str):
                 amount=float(payment.get("amount", 0) or 0),
                 currency=invoice.get("currency", "TZS"),
             )
+
+            # ─── COMMERCIAL FLOW: Invoice paid → Confirm linked order ───
+            linked_order_id = invoice.get("order_id")
+            linked_order_number = invoice.get("order_number")
+            if linked_order_id:
+                try:
+                    order_oid = ObjectId(linked_order_id) if ObjectId.is_valid(linked_order_id) else None
+                    if order_oid:
+                        await db.orders.update_one(
+                            {"_id": order_oid},
+                            {
+                                "$set": {
+                                    "payment_status": "paid",
+                                    "current_status": "confirmed",
+                                    "status": "confirmed",
+                                    "payment_confirmed": True,
+                                    "fulfillment_locked": False,
+                                    "commission_triggered": False,
+                                    "updated_at": now,
+                                },
+                                "$push": {
+                                    "status_history": {
+                                        "status": "confirmed",
+                                        "note": f"Invoice {invoice.get('invoice_number', '')} paid. Order confirmed for fulfillment.",
+                                        "timestamp": now,
+                                    }
+                                },
+                            },
+                        )
+                except Exception:
+                    pass
+            elif linked_order_number:
+                await db.orders.update_one(
+                    {"order_number": linked_order_number},
+                    {
+                        "$set": {
+                            "payment_status": "paid",
+                            "current_status": "confirmed",
+                            "status": "confirmed",
+                            "payment_confirmed": True,
+                            "fulfillment_locked": False,
+                            "updated_at": now,
+                        },
+                        "$push": {
+                            "status_history": {
+                                "status": "confirmed",
+                                "note": f"Invoice {invoice.get('invoice_number', '')} paid. Order confirmed.",
+                                "timestamp": now,
+                            }
+                        },
+                    },
+                )
 
     return {"status": "paid", "message": "Payment verified successfully"}
 

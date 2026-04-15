@@ -206,6 +206,11 @@ PLATFORM_DEFAULTS = {
         "commission_type_visibility": True,
         "sales_referral_link_enabled": True,
         "sales_promo_codes_enabled": True,
+        "assignment_policy": {
+            "primary_strategy": "customer_ownership",
+            "fallback_strategy": "round_robin",
+            "track_deal_source": True,
+        },
     },
     "payments": {
         "bank_only_payments": True,

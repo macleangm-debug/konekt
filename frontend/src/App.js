@@ -491,6 +491,7 @@ import DashboardAffiliatePage from "@/pages/dashboard/AffiliateDashboardPage";
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
 import AffiliateDashboardV2 from "@/pages/affiliate/AffiliateDashboardV2";
 import LogoPreviewPage from "@/pages/LogoPreviewPage";
+import ListQuoteCatalogPage from "@/pages/public/ListQuoteCatalogPage";
 
 // Admin Route Guard
 function AdminRoute({ children }) {
@@ -863,6 +864,7 @@ function App() {
         
         {/* Quote Request Page */}
         <Route path="/request-quote" element={<QuoteRequestPage />} />
+        <Route path="/catalog/quote" element={<ListQuoteCatalogPage />} />
         
         {/* Public Help Routes */}
         <Route path="/help/customer" element={<HelpCustomerPage />} />

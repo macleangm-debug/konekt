@@ -106,7 +106,7 @@ const defaultState = {
   promotions: { default_promo_type: "safe_distribution", allow_margin_touching_promos: false, max_public_promo_discount_percent: 5, affiliate_visible_campaigns: true, campaign_start_end_required: true },
   affiliate: { default_affiliate_commission_percent: 10, affiliate_registration_requires_approval: true, default_affiliate_status: "pending", personal_promo_code_enabled: true, commission_trigger: "payment_approved", commission_duration: "per_successful_sale", attribution_sources: "link_and_code", attribution_window_days: 30, watchlist_logic_enabled: true, paused_logic_enabled: true, suspend_for_abuse_enabled: true, max_active_affiliates: 0, contracts_starter_min_deals: 5, contracts_starter_min_earnings: 50000, contracts_growth_min_deals: 20, contracts_growth_min_earnings: 250000, contracts_top_min_deals: 60, contracts_top_min_earnings: 1000000, warning_threshold_pct: 50, probation_threshold_pct: 25 },
   payouts: { affiliate_minimum_payout: 50000, sales_minimum_payout: 100000, payout_cycle: "monthly", payout_methods_enabled: ["mobile_money", "bank_transfer"], manual_payout_approval: true, payout_review_mode: "admin_required" },
-  sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true, sales_promo_codes_enabled: true },
+  sales: { default_sales_commission_self_generated: 15, default_sales_commission_affiliate_generated: 10, assignment_mode: "auto", smart_assignment_enabled: true, lead_source_visibility: true, commission_type_visibility: true, sales_referral_link_enabled: true, sales_promo_codes_enabled: true, assignment_policy: { primary_strategy: "customer_ownership", fallback_strategy: "round_robin", track_deal_source: true } },
   payments: { bank_only_payments: true, card_payments_enabled: false, mobile_money_enabled: false, kwikpay_enabled: false, payment_proof_required: true, payment_proof_auto_link_to_invoice: true, payment_verification_mode: "manual", commission_creation_on_payment_approval: true },
   payment_accounts: { default_country: "TZ", account_name: "", account_number: "", bank_name: "", swift_code: "", branch_name: "", currency: "TZS", show_on_invoice: true, show_on_checkout: true },
   progress_workflows: { hide_internal_provider_details_from_customer: true, customer_safe_external_statuses_only: true, product_workflow_enabled: true, service_workflow_enabled: true },
@@ -531,7 +531,9 @@ function CommercialTab({ state, setState }) {
 
 function SalesTab({ state, setState }) {
   const s = state.sales || {};
+  const ap = s.assignment_policy || {};
   return (
+    <>
     <SettingsSectionCard title="Sales & Commission" description="Commission behavior and assignment rules. Actual commission percentages are defined per tier in Pricing Tiers.">
       <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
         Commission percentages below are <strong>default values</strong>. The actual rates are calculated per order based on the matching <strong>Pricing Tier</strong> distribution split. Edit tier-specific rates in Pricing Tiers.
@@ -547,6 +549,49 @@ function SalesTab({ state, setState }) {
         <SettingsToggleField label="Enable Sales Promo Codes" checked={s.sales_promo_codes_enabled} onChange={(v) => setState(U(state, "sales", "sales_promo_codes_enabled", v))} />
       </div>
     </SettingsSectionCard>
+    <SettingsSectionCard title="Sales Assignment Policy" description="Configure how new leads and deals are assigned to sales reps. Primary strategy is used first; fallback kicks in when primary can't resolve." data-testid="assignment-policy-section">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <SettingsSelectField
+          label="Primary Strategy"
+          value={ap.primary_strategy || "customer_ownership"}
+          onChange={(v) => {
+            const updated = { ...state, sales: { ...s, assignment_policy: { ...ap, primary_strategy: v } } };
+            setState(updated);
+          }}
+          options={[
+            { value: "customer_ownership", label: "Customer Ownership (existing client keeps same rep)" },
+            { value: "weighted_availability", label: "Weighted Availability (Uber-style scoring)" },
+          ]}
+        />
+        <SettingsSelectField
+          label="Fallback Strategy"
+          value={ap.fallback_strategy || "round_robin"}
+          onChange={(v) => {
+            const updated = { ...state, sales: { ...s, assignment_policy: { ...ap, fallback_strategy: v } } };
+            setState(updated);
+          }}
+          options={[
+            { value: "round_robin", label: "Round Robin" },
+            { value: "random", label: "Random" },
+          ]}
+        />
+        <SettingsToggleField
+          label="Track deal source (system vs self-generated)"
+          checked={ap.track_deal_source !== false}
+          onChange={(v) => {
+            const updated = { ...state, sales: { ...s, assignment_policy: { ...ap, track_deal_source: v } } };
+            setState(updated);
+          }}
+        />
+      </div>
+      <div className="mt-3 p-3 rounded-xl bg-slate-50 border text-xs text-slate-600">
+        <strong>Customer Ownership:</strong> If a lead matches an existing customer, the same sales rep is preserved. <br/>
+        <strong>Weighted Availability:</strong> Scores reps by capacity, specialization, and response speed. <br/>
+        <strong>Round Robin:</strong> Rotates evenly across available reps. <br/>
+        <strong>Track Deal Source:</strong> Distinguishes between system-assigned and self-generated deals for commission reporting.
+      </div>
+    </SettingsSectionCard>
+    </>
   );
 }
 

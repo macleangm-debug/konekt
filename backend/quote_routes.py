@@ -215,7 +215,11 @@ async def update_quote(quote_id: str, payload: dict):
 
 @router.patch("/{quote_id}/status")
 async def update_quote_status(quote_id: str, status: str = Query(...), triggered_by_user_id: str = Query(default=None), triggered_by_role: str = Query(default="admin")):
-    """Update quote status with workflow-linked notifications"""
+    """Update quote status with workflow-linked notifications.
+    
+    When status = 'approved': auto-generates Invoice + Order (pending_payment).
+    This is the CANONICAL commercial flow: Quote → Invoice + Order.
+    """
     valid_statuses = ["draft", "sent", "approved", "rejected", "expired", "converted"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
@@ -236,16 +240,31 @@ async def update_quote_status(quote_id: str, status: str = Query(...), triggered
     
     # Update the quote
     target_collection = fallback if fallback_used else quotes_collection
+    update_fields = {"status": status, "updated_at": now.isoformat()}
+
+    # ─── COMMERCIAL FLOW: Quote Approved → Auto-Generate Invoice + Order ───
+    generated_docs = {}
+    if status == "approved":
+        try:
+            gen = await _auto_generate_invoice_and_order(db, quote, now)
+            generated_docs = gen
+            update_fields["converted_invoice_number"] = gen.get("invoice_number")
+            update_fields["converted_order_number"] = gen.get("order_number")
+            update_fields["converted_invoice_id"] = gen.get("invoice_id")
+            update_fields["converted_order_id"] = gen.get("order_id")
+        except Exception as e:
+            import logging
+            logging.getLogger("quote_routes").error(f"Auto-generate failed for quote {quote_id}: {e}")
+
     await target_collection.update_one(
         {"_id": ObjectId(quote_id)},
-        {"$set": {"status": status, "updated_at": now.isoformat()}}
+        {"$set": update_fields}
     )
     
     updated = await target_collection.find_one({"_id": ObjectId(quote_id)})
     
     # Send workflow-linked notifications based on status change
     if status == "sent":
-        # Quote marked ready → notify customer
         await notify_customer_quote_ready(
             db,
             customer_user_id=quote.get("customer_user_id") or quote.get("customer_id"),
@@ -255,7 +274,6 @@ async def update_quote_status(quote_id: str, status: str = Query(...), triggered
             triggered_by_role=triggered_by_role,
         )
     elif status == "approved":
-        # Quote approved by customer → notify assigned sales
         await notify_sales_quote_approved(
             db,
             sales_user_id=quote.get("assigned_sales_id") or quote.get("assigned_to"),
@@ -266,7 +284,117 @@ async def update_quote_status(quote_id: str, status: str = Query(...), triggered
             triggered_by_role=triggered_by_role,
         )
     
-    return serialize_doc(updated)
+    result = serialize_doc(updated)
+    if generated_docs:
+        result["generated_invoice"] = generated_docs.get("invoice_number")
+        result["generated_order"] = generated_docs.get("order_number")
+    return result
+
+
+async def _auto_generate_invoice_and_order(db, quote: dict, now):
+    """
+    When a quote is approved, auto-generate:
+      1. Invoice (payment document) — status: draft
+      2. Order (fulfillment document) — status: pending_payment
+    
+    STRICT RULES:
+      - Order must NOT trigger fulfillment, commissions, revenue, or stock until payment approved
+      - Invoice is the payment tracking document
+      - Order is the fulfillment tracking document
+    """
+    from attribution_capture_service import inherit_attribution_from_document
+
+    quote_id_str = str(quote["_id"])
+    quote_number = quote.get("quote_number", "")
+
+    invoice_number = f"INV-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+    order_number = f"ORD-{now.strftime('%Y%m%d')}-{uuid4().hex[:6].upper()}"
+
+    attribution = inherit_attribution_from_document(quote)
+
+    # Build invoice
+    invoice_doc = {
+        "invoice_number": invoice_number,
+        "source_type": "quote_accepted",
+        "quote_id": quote_id_str,
+        "quote_number": quote_number,
+        "customer_name": quote.get("customer_name"),
+        "customer_email": quote.get("customer_email"),
+        "customer_company": quote.get("customer_company"),
+        "customer_phone": quote.get("customer_phone"),
+        "currency": quote.get("currency", "TZS"),
+        "line_items": quote.get("line_items") or quote.get("items", []),
+        "subtotal": float(quote.get("subtotal", 0) or 0),
+        "tax": float(quote.get("tax", 0) or 0),
+        "discount": float(quote.get("discount", 0) or 0),
+        "total": float(quote.get("total", 0) or 0),
+        "notes": quote.get("notes"),
+        "terms": quote.get("terms"),
+        "status": "draft",
+        "payments": [],
+        "amount_paid": 0,
+        "balance_due": float(quote.get("total", 0) or 0),
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        **attribution,
+    }
+
+    invoices_collection = await get_invoice_collection(db)
+    inv_result = await invoices_collection.insert_one(invoice_doc)
+
+    # Build order — STRICTLY pending_payment
+    order_doc = {
+        "order_number": order_number,
+        "order_type": "quote_converted",
+        "source_type": "quote_accepted",
+        "quote_id": quote_id_str,
+        "quote_number": quote_number,
+        "invoice_id": str(inv_result.inserted_id),
+        "invoice_number": invoice_number,
+        "customer_name": quote.get("customer_name"),
+        "customer_email": quote.get("customer_email"),
+        "customer_company": quote.get("customer_company"),
+        "customer_phone": quote.get("customer_phone"),
+        "currency": quote.get("currency", "TZS"),
+        "line_items": quote.get("line_items") or quote.get("items", []),
+        "subtotal": float(quote.get("subtotal", 0) or 0),
+        "tax": float(quote.get("tax", 0) or 0),
+        "discount": float(quote.get("discount", 0) or 0),
+        "total": float(quote.get("total", 0) or 0),
+        "notes": quote.get("notes"),
+        "current_status": "pending_payment",
+        "payment_confirmed": False,
+        "fulfillment_locked": True,
+        "commission_triggered": False,
+        "revenue_recognized": False,
+        "status_history": [
+            {
+                "status": "pending_payment",
+                "note": f"Created from approved quote {quote_number}. Awaiting payment.",
+                "timestamp": now.isoformat(),
+            }
+        ],
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat(),
+        **attribution,
+    }
+
+    ord_result = await db.orders.insert_one(order_doc)
+
+    # Link invoice back to order
+    await invoices_collection.update_one(
+        {"_id": inv_result.inserted_id},
+        {"$set": {"order_id": str(ord_result.inserted_id), "order_number": order_number}}
+    )
+
+    notify_invoice_ready(invoice_doc)
+
+    return {
+        "invoice_id": str(inv_result.inserted_id),
+        "invoice_number": invoice_number,
+        "order_id": str(ord_result.inserted_id),
+        "order_number": order_number,
+    }
 
 
 @router.post("/convert-to-order")
