@@ -3,50 +3,47 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email) | Pillow (Image Processing)
 
-## System Status: LAUNCH READY — FULL CONTENT ENGINE COMPLETE
+## System Status: LAUNCH READY — COMPETITIVE QUOTING ENGINE COMPLETE
 
-## Content Studio Expansion — COMPLETE (310 iterations tested)
-- **4 content tabs**: Products (29), Services, Group Deals (6), Brand Content (12)
-- **12 brand templates** across 5 intents: Authority (3), Trust (3), Urgency (2), Soft Sell (2), Value (2)
-- **6 layout renderers**: Product Focus, Promo Focus, Service Focus, Minimal Brand, **Authority** (centered statement), **Trust** (checklist)
-- **1:1 square image containers** on all product/service/deal cards
-- **Auto-layout selection**: Brand templates auto-select Authority/Trust layouts based on intent
-- **Dynamic caption generator**: Brand content = no price, Product/Deal = with price/savings
-- **Group Deal progress bars** + badges in Content Studio cards
-- **Promo code rules**: Admin = no code, Sales/Affiliate = code injected visually + in captions
+## Competitive Quoting System — COMPLETE (311 iterations tested)
+- **Two sourcing modes**: Preferred Vendor (1 vendor) and Competitive Quoting (multi-vendor)
+- **Full flow**: Create Request → Send to Vendors → Collect Quotes → Compare (BEST PRICE badge) → Select Winner → Apply Margin → Ready for Sales
+- **Backend endpoints**: `/api/vendor-ops/price-requests` CRUD, `/send-to-vendors`, `/submit-quote`, `/select-vendor`, `/stats`
+- **UI**: 4 sub-tabs (New/Awaiting/Ready/Closed), KPI strip, 3-column detail (Summary + Vendor Selection + Quote Comparison)
+- **Settings**: Sourcing Strategy tab in Settings Hub (mode, max vendors, quote expiry, lead time, auto-select toggle)
+- **Margin logic**: Auto-applies minimum_company_margin_percent (default 20%) when selecting vendor, with manual override
+- **Vendor isolation**: Sales never sees vendor identity or base pricing — only final sell price + lead time
 
-## Group Deals Discovery — COMPLETE (309 iterations tested)
-- Landing page with hero header, featured deal banner (fallback logic), active grid, trust footer
-- Marketplace entry banner with active deal count
-- Homepage DealOfTheDayHero with fallback + conditional HomepageGroupDealsSection
-- Lazy loading on all deal images
+## Content Studio Expansion — COMPLETE (310 iterations)
+- 4 content tabs: Products (29), Services, Group Deals (6), Brand Content (12 templates)
+- 12 brand templates across 5 intents: Authority, Trust, Urgency, Soft Sell, Value
+- 6 layout renderers including Authority (centered) and Trust (checklist)
+- Square 1:1 image containers, dynamic captions, promo code injection
 
-## Product Upload Wizard — COMPLETE (308 iterations tested)
-- 6-step flow with dynamic catalog config from Settings Hub
-- Image pipeline: Upload → crop → WebP → 3 variants
+## Group Deals Discovery — COMPLETE (309 iterations)
+- Landing page, marketplace banner, homepage fallback logic, lazy loading
+
+## Product Upload Wizard — COMPLETE (308 iterations)
+- 6-step flow, dynamic catalog config, image pipeline
 
 ## Configurable Catalog Settings — COMPLETE
-- Settings Hub → Catalog: Units, Categories, Variants, SKU Config
+- Units, Categories, Variants, SKU Config, Sourcing Strategy
 
-## Vendor Ops Dashboard — ENHANCED
-- Toggle publish, Enter Quote CTA, Ready for Sales, inline edit
-
-## All Complete Systems (310+ iterations)
-- Vendor Ops Foundation, Image Pipeline, Price Requests
+## All Complete Systems (311+ iterations)
+- Vendor Ops Foundation, Image Pipeline, Price Requests, Competitive Quoting
 - Structured Names, Terms of Service, Password-Gated Settings
-- Affiliate System, Sales Promo Codes, Creative Generator
-- Group Deals (quantity closure, repeat buyers)
-- Canonical Email Engine, Commission & Margin Engine
+- Affiliate System, Sales Promos, Creative Generator
+- Group Deals, Canonical Email Engine, Commission Engine
 - Customer Rating, Track Order
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
-- Staff: `staff@konekt.co.tz` / `Staff123!` (code: STAFF2024)
-- Affiliate: `qualifier.test@example.com` / `Qualifier123!`
+- Staff: `staff@konekt.co.tz` / `Staff123!`
+- Test Vendors: Alpha Supplies Ltd, Beta Trading Co, Gamma Mfg Ltd (seeded in partners)
 
 ## Backlog
 - (P1) First real product listing + first group deal execution
-- (P1) State-aware conversational loan entry
-- (P2) WhatsApp rich share + OG meta tags for deal previews
-- (P2) Remaining configurable settings (quote expiry, lead time)
-- (Phase 2) Vendor Ops automation (SLA, scoring)
+- (P1) Micro-interactions (card hover lift, button feedback, skeleton loaders)
+- (P2) State-aware conversational loan entry
+- (P2) WhatsApp OG meta tags for shared deal links
+- (Phase 2) SLA timers, vendor scoring, split orders, auto-reminders
