@@ -3,55 +3,45 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email) | Pillow (Image Processing)
 
-## System Status: P0 COMPLETE — PRICING + DOCUMENTS + ACTIVATION FIXED
+## System Status: SUPPLY REVIEW CONTROL TOWER LIVE — 314 ITERATIONS
 
-## P0 Fixes — ALL COMPLETE (313 iterations tested)
+## Supply Review Control Tower — COMPLETE (314 iterations)
+- **Pricing Integrity Monitor**: Real-time % of products using pricing engine vs raw vendor price
+- **KPI Strip**: Pending, Pricing Issues, Missing Data, Healthy counts
+- **5 Filters**: All, Pricing Issues, Missing Data, Pending, Ready to Approve
+- **Table**: Base Price, Sell Price, Margin%, Source (Tier/Override), Health dot, Data completeness, Status, Actions
+- **Approve with Engine**: Validates margin against min threshold, auto-applies pricing tier
+- **Override & Approve**: Admin-controlled price override with reason logging
+- **Reject**: With reason, sets status to rejected
 
-### 1. Pricing Engine (Single Source of Truth)
-- **Shared utility**: `/app/backend/services/pricing_engine.py`
-- **Rule**: `sell_price = pricing_engine(vendor_cost, category, settings)` — never raw vendor price
-- **Margin rules**: Category-specific → default (30% target, 15% min) → settings hub fallback
-- **Override validation**: Below-minimum overrides auto-adjusted with warning
-- **Product creation**: Returns `margin_pct`, `margin_amount`, `pricing_rule_source` fields
-- **Applies to**: Products, services, quotes, price request vendor selection
+## Pricing Engine — COMPLETE (313 iterations)
+- Shared utility at `/app/backend/services/pricing_engine.py`
+- 30% target margin, 15% minimum floor from category rules
+- Auto-adjusts below-minimum overrides with warning
+- Used in: product creation, product approval, price request vendor selection
 
-### 2. Campaign Percentage Removed
-- **`discount_pct` removed** from campaign creation
-- **Replaced with `savings_amount`** = `original_price - discounted_price` (flat TZS)
-- Group deal cards show savings as absolute amount, not percentage
+## P0 Fixes — ALL COMPLETE
+- Payment flow: orders only after approval
+- Campaign: discount_pct → savings_amount
+- Delivery note: bank details hidden, delivered/received signatures
+- Affiliate activation: resend works for approved users
 
-### 3. Delivery Note Fix
-- **Bank details hidden** (only on invoices/quotes)
-- **"Delivered By" + "Received By"** signature areas (replaces generic "Authorized By")
-- Company stamp preserved
-- Logistics-only document
-
-### 4. Affiliate Activation Bug Fix
-- **Resend activation** now works for `status=approved` OR `activation_status=sent/expired`
-- Removed strict `status != approved` dependency
-- Multiple resends allowed for approved users
-- Blocks non-approved applications
-
-## Payment Flow — FIXED (312 iterations)
-- Orders only after payment review approval, not at checkout
-
-## Category Display Mode — COMPLETE (312 iterations)
-- Rich objects: display_mode, commercial_mode, sourcing_mode per category
-
-## Competitive Quoting — COMPLETE (311 iterations)
-## Content Studio — COMPLETE (310 iterations)
-## Group Deals Discovery — COMPLETE (309 iterations)
-## Product Upload Wizard — COMPLETE (308 iterations)
+## Complete Systems (314+ iterations)
+- Category Display Mode (visual/list_quote/commercial/sourcing)
+- Competitive Quoting (preferred/competitive, multi-vendor)
+- Content Studio (products/services/deals/brand templates)
+- Group Deals Discovery (landing page, marketplace, fallback)
+- Product Upload Wizard, Catalog Settings, Vendor Ops, Image Pipeline
+- All other systems (affiliate, sales, email, commission, ratings, track order)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 - Staff: `staff@konekt.co.tz` / `Staff123!`
 
 ## Backlog
-- (P1) Catalog + Vendor workspace redesign (KPI strips, rich tables, drawers)
-- (P1) Affiliate system UI upgrade (dashboard, drawer, payouts, leaderboard)
-- (P1) Finance pages (cash flow, commissions)
-- (P1) Supply Review fix (pending approvals, pricing issues)
-- (P1) List & Quote catalog frontend (search-first UX)
-- (P2) First real product listing + first group deal
-- (P2) Micro-interactions
+- (P1) Catalog Workspace redesign (KPI strip, category cards, product health)
+- (P1) Vendors Page redesign (coverage, activity, sourcing roles)
+- (P1) Affiliate System UI upgrade (dashboard, payouts, leaderboard)
+- (P1) Finance Pages (cash flow, commissions)
+- (P2) List & Quote catalog frontend (search-first UX)
+- (P2) First real product + group deal execution
