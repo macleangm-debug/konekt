@@ -3161,6 +3161,10 @@ app.include_router(vendor_product_upload_router)
 from routes.admin_supply_review_routes import router as admin_supply_review_router
 app.include_router(admin_supply_review_router)
 
+from routes.admin_finance_routes import router as admin_finance_router
+app.include_router(admin_finance_router)
+
+
 from routes.canonical_api_aliases import (
     public_marketplace_router as canonical_public_marketplace_router,
     account_marketplace_router as canonical_account_marketplace_router,

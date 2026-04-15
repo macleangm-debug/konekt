@@ -84,6 +84,7 @@ export default function VendorOpsPage() {
 function VendorsTab() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVendor, setSelectedVendor] = useState(null);
 
   useEffect(() => {
     api.get("/api/vendor-ops/vendors")
@@ -95,37 +96,65 @@ function VendorsTab() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="bg-white rounded-xl border overflow-hidden" data-testid="vendors-table">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-slate-50/60">
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Vendor</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Type</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Contact</th>
-              <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {vendors.length === 0 ? (
-              <tr><td colSpan={4} className="text-center py-12 text-slate-400">No vendors found</td></tr>
-            ) : vendors.map((v, i) => (
-              <tr key={v.id || i} className="border-b border-slate-50 hover:bg-slate-50/50">
-                <td className="px-4 py-3">
-                  <div className="font-medium text-[#20364D]">{v.company_name || v.name || v.full_name || "Unknown"}</div>
-                  <div className="text-[10px] text-slate-400">{v.email || ""}</div>
-                </td>
-                <td className="px-4 py-3 text-xs text-slate-600">{v.type || v.vendor_type || v.capability_type || "General"}</td>
-                <td className="px-4 py-3 text-xs text-slate-600">{v.phone || v.contact_phone || ""}</td>
-                <td className="px-4 py-3 text-center">
-                  <Badge className={`${STATUS_STYLES[v.status] || "bg-slate-100 text-slate-500"} capitalize`}>{v.status || "active"}</Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-4">
+      {/* KPI Strip */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-white rounded-xl border border-blue-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Total Vendors</p><p className="text-xl font-bold text-blue-600 mt-0.5">{vendors.length}</p></div>
+        <div className="bg-white rounded-xl border border-emerald-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Active</p><p className="text-xl font-bold text-emerald-600 mt-0.5">{vendors.filter((v) => v.status === "active").length}</p></div>
+        <div className="bg-white rounded-xl border border-slate-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Types</p><p className="text-xl font-bold text-slate-600 mt-0.5">{new Set(vendors.map((v) => v.type || "vendor")).size}</p></div>
       </div>
-      <div className="px-4 py-2 text-xs text-slate-400 border-t">{vendors.length} vendor{vendors.length !== 1 ? "s" : ""}</div>
+
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Vendors Table */}
+        <div className={`bg-white rounded-xl border overflow-hidden ${selectedVendor ? "lg:col-span-2" : "lg:col-span-3"}`} data-testid="vendors-table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-slate-50/60">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Vendor</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Type</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Contact</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vendors.length === 0 ? (
+                  <tr><td colSpan={4} className="text-center py-12 text-slate-400">No vendors found</td></tr>
+                ) : vendors.map((v, i) => (
+                  <tr key={v.id || i} className={`border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer ${selectedVendor?.id === v.id ? "bg-[#D4A843]/5" : ""}`} onClick={() => setSelectedVendor(v)} data-testid={`vendor-row-${i}`}>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-[#20364D]">{v.company_name || v.name || v.full_name || "Unknown"}</div>
+                      <div className="text-[10px] text-slate-400">{v.email || ""}</div>
+                    </td>
+                    <td className="px-4 py-3"><Badge className="text-[10px] bg-slate-100 text-slate-600 capitalize">{v.type || "vendor"}</Badge></td>
+                    <td className="px-4 py-3 text-xs text-slate-600">{v.phone || v.contact_phone || "\u2014"}</td>
+                    <td className="px-4 py-3 text-center"><Badge className={`${STATUS_STYLES[v.status] || "bg-emerald-100 text-emerald-700"} capitalize text-[10px]`}>{v.status || "active"}</Badge></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-4 py-2 text-xs text-slate-400 border-t">{vendors.length} vendor{vendors.length !== 1 ? "s" : ""}</div>
+        </div>
+
+        {/* Vendor Drawer */}
+        {selectedVendor && (
+          <div className="bg-white rounded-xl border p-4 space-y-4" data-testid="vendor-drawer">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#20364D]">{selectedVendor.company_name || selectedVendor.name || "Vendor"}</h3>
+              <button onClick={() => setSelectedVendor(null)} className="text-slate-400 hover:text-slate-600 text-xs">\u2715</button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between"><span className="text-slate-500">Type</span><span className="font-medium capitalize">{selectedVendor.type || "vendor"}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Email</span><span className="font-medium">{selectedVendor.email || "\u2014"}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Phone</span><span className="font-medium">{selectedVendor.phone || "\u2014"}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Status</span><Badge className={`${STATUS_STYLES[selectedVendor.status] || "bg-emerald-100 text-emerald-700"} capitalize text-[9px]`}>{selectedVendor.status || "active"}</Badge></div>
+              {selectedVendor.categories && <div className="flex justify-between"><span className="text-slate-500">Categories</span><span className="font-medium">{(selectedVendor.categories || []).join(", ") || "\u2014"}</span></div>}
+              {selectedVendor.created_at && <div className="flex justify-between"><span className="text-slate-500">Joined</span><span className="font-medium">{new Date(selectedVendor.created_at).toLocaleDateString()}</span></div>}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
