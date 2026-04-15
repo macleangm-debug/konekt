@@ -23,12 +23,15 @@ const initialForm = {
   bank_name: "", bank_account_name: "", bank_account_number: "",
 };
 
+const money = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
+
 export default function AffiliatesPage() {
   const [affiliates, setAffiliates] = useState([]);
   const { confirmAction } = useConfirmModal();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedAff, setSelectedAff] = useState(null);
   const [form, setForm] = useState(initialForm);
   const [saving, setSaving] = useState(false);
 
@@ -93,21 +96,33 @@ export default function AffiliatesPage() {
     !search || [a.name, a.email, a.affiliate_code].some((f) => (f || "").toLowerCase().includes(search.toLowerCase()))
   );
 
+  const activeCount = affiliates.filter((a) => a.is_active).length;
+  const totalCommission = affiliates.reduce((s, a) => s + (a.total_commission || 0), 0);
+  const totalSales = affiliates.reduce((s, a) => s + (a.total_sales || 0), 0);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="affiliates-page">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#20364D]">Affiliates</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Manage affiliate partners and commission settings</p>
+          <p className="text-sm text-slate-500 mt-0.5">Performance tracking, commissions, and partner management</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={load} data-testid="refresh-affiliates-btn">
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
           </Button>
-          <Button size="sm" onClick={() => { setForm(initialForm); setDrawerOpen(true); }} data-testid="add-affiliate-btn">
+          <Button size="sm" onClick={() => { setForm(initialForm); setSelectedAff(null); setDrawerOpen(true); }} data-testid="add-affiliate-btn">
             <Plus className="w-3.5 h-3.5 mr-1.5" /> New Affiliate
           </Button>
         </div>
+      </div>
+
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="affiliate-kpi">
+        <div className="bg-white rounded-xl border border-blue-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Total</p><p className="text-xl font-bold text-blue-600 mt-0.5">{affiliates.length}</p></div>
+        <div className="bg-white rounded-xl border border-emerald-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Active</p><p className="text-xl font-bold text-emerald-600 mt-0.5">{activeCount}</p></div>
+        <div className="bg-white rounded-xl border border-amber-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Total Commission</p><p className="text-lg font-bold text-amber-600 mt-0.5">TZS {totalCommission.toLocaleString()}</p></div>
+        <div className="bg-white rounded-xl border border-purple-200 p-3 text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Total Sales</p><p className="text-lg font-bold text-purple-600 mt-0.5">TZS {totalSales.toLocaleString()}</p></div>
       </div>
 
       {/* Search */}
@@ -116,65 +131,96 @@ export default function AffiliatesPage() {
         <Input placeholder="Search affiliates..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" data-testid="search-affiliates" />
       </div>
 
-      {/* Table */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-xl" data-testid="affiliates-empty">
-          <Users className="w-12 h-12 mx-auto text-slate-200 mb-3" />
-          <p className="text-sm font-semibold text-slate-500">{search ? "No matches" : "No affiliates yet"}</p>
-          {!search && <p className="text-xs text-slate-400 mt-1">Create your first affiliate partner</p>}
+      <div className={`grid gap-4 ${selectedAff ? "lg:grid-cols-3" : ""}`}>
+        {/* Table */}
+        <div className={selectedAff ? "lg:col-span-2" : ""}>
+          {loading ? (
+            <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 bg-white border border-dashed border-slate-200 rounded-xl" data-testid="affiliates-empty">
+              <Users className="w-12 h-12 mx-auto text-slate-200 mb-3" />
+              <p className="text-sm font-semibold text-slate-500">{search ? "No matches" : "No affiliates yet"}</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="affiliates-table">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/60">
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Name</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Code</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Sales</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Commission</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((aff) => (
+                      <tr key={aff.id} className={`border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition ${selectedAff?.id === aff.id ? "bg-[#D4A843]/5" : ""}`} onClick={() => setSelectedAff(aff)} data-testid={`affiliate-row-${aff.id}`}>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-[#20364D]">{aff.name}</div>
+                          <div className="text-[10px] text-slate-400">{aff.email}</div>
+                        </td>
+                        <td className="px-4 py-3"><code className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{aff.affiliate_code}</code></td>
+                        <td className="px-4 py-3 text-right text-xs font-medium">TZS {(aff.total_sales || 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-right text-xs font-medium">TZS {(aff.total_commission || 0).toLocaleString()}</td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge className={aff.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}>
+                            {aff.is_active ? "Active" : "Inactive"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={(e) => { e.stopPropagation(); copyLink(aff); }} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-[#20364D]" title="Copy Link" data-testid={`copy-link-${aff.id}`}>
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); deleteAffiliate(aff.id); }} className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600" title="Delete" data-testid={`delete-affiliate-${aff.id}`}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="px-4 py-2 text-xs text-slate-400 border-t">{filtered.length} affiliate{filtered.length !== 1 ? "s" : ""}</div>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden" data-testid="affiliates-table">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60">
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Name</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Email</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Code</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Commission</th>
-                  <th className="text-center px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Status</th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-600 text-xs uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((aff) => (
-                  <tr key={aff.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors" data-testid={`affiliate-row-${aff.id}`}>
-                    <td className="px-4 py-3 font-medium text-[#20364D]">{aff.name}</td>
-                    <td className="px-4 py-3 text-slate-500">{aff.email}</td>
-                    <td className="px-4 py-3">
-                      <code className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{aff.affiliate_code}</code>
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs italic">
-                      From settings
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Badge className={aff.is_active ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-100"}>
-                        {aff.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => copyLink(aff)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-[#20364D]" title="Copy Link" data-testid={`copy-link-${aff.id}`}>
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => deleteAffiliate(aff.id)} className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600" title="Delete" data-testid={`delete-affiliate-${aff.id}`}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+        {/* Profile Drawer */}
+        {selectedAff && (
+          <div className="bg-white rounded-xl border p-5 space-y-4" data-testid="affiliate-drawer">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-[#20364D]">{selectedAff.name}</h3>
+              <button onClick={() => setSelectedAff(null)} className="text-slate-400 hover:text-slate-600 text-xs">{"\u2715"}</button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Profile</p>
+              <div className="flex justify-between"><span className="text-slate-500">Email</span><span className="font-medium">{selectedAff.email}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Phone</span><span className="font-medium">{selectedAff.phone || "\u2014"}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Code</span><code className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">{selectedAff.affiliate_code}</code></div>
+              <div className="flex justify-between"><span className="text-slate-500">Promo</span><code className="font-mono bg-amber-100 px-1.5 py-0.5 rounded text-[10px] text-amber-700">{selectedAff.promo_code || "\u2014"}</code></div>
+              <div className="flex justify-between"><span className="text-slate-500">Status</span><Badge className={selectedAff.is_active ? "bg-emerald-100 text-emerald-700 text-[9px]" : "bg-slate-100 text-slate-500 text-[9px]"}>{selectedAff.is_active ? "Active" : "Inactive"}</Badge></div>
+            </div>
+            <div className="space-y-2 text-xs">
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Performance</p>
+              <div className="flex justify-between"><span className="text-slate-500">Total Sales</span><span className="font-bold text-[#20364D]">TZS {(selectedAff.total_sales || 0).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Total Commission</span><span className="font-bold text-[#D4A843]">TZS {(selectedAff.total_commission || 0).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Paid</span><span className="font-medium text-emerald-600">TZS {(selectedAff.paid_commission || 0).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Pending</span><span className="font-medium text-amber-600">TZS {(selectedAff.pending_commission || 0).toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Rate</span><span className="font-medium">{selectedAff.commission_rate || 0}%</span></div>
+            </div>
+            <div className="space-y-2 pt-2 border-t">
+              <button onClick={() => copyLink(selectedAff)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-xs font-medium text-[#20364D] flex items-center gap-2" data-testid="drawer-copy-link">
+                <LinkIcon className="w-3.5 h-3.5" /> Copy Referral Link
+              </button>
+            </div>
           </div>
-          <div className="px-4 py-2.5 text-xs text-slate-400 border-t border-slate-100">
-            {filtered.length} affiliate{filtered.length !== 1 ? "s" : ""}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Create Drawer */}
       <StandardDrawerShell
