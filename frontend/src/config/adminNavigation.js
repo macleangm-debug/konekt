@@ -1,21 +1,16 @@
 import {
   LayoutDashboard, ShoppingCart, FileText, CreditCard, Receipt,
-  Columns3, Truck, CheckSquare, Contact, Target,
-  Network, Megaphone, Wallet, Percent,
+  Columns3, CheckSquare, Contact, Target,
+  Network, Megaphone, Wallet,
   Route, Inbox, BarChart3, ClipboardList, Package,
   Settings, Users, BadgePercent, PieChart,
-  Trophy, ShieldAlert, DollarSign, Landmark,
+  Trophy, ShieldAlert, DollarSign,
   Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench,
 } from "lucide-react";
 
 /**
- * Canonical Admin Sidebar Navigation — single source of truth.
- * AdminLayout.js renders directly from this config.
- *
- * Structure: grouped sections with children.
- * Each child: { label, href, icon, badgeKey? }
- * Each section may have `roles` — if set, only those roles see it.
- * Admin always sees everything.
+ * Canonical Admin Sidebar — organized by business flow.
+ * Quote → Invoice → Payment → Order → Fulfillment
  */
 
 const ALL_MGMT = ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production", "vendor_ops", "staff"];
@@ -30,18 +25,28 @@ export const adminNavigation = [
     roles: ALL_MGMT,
   },
   {
-    key: "commerce",
-    label: "Commerce",
+    key: "sales",
+    label: "Sales & Commerce",
     roles: ["admin", "sales", "sales_manager", "finance_manager"],
     children: [
-      { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badgeKey: "orders" },
-      { label: "Walk-in Sale", href: "/admin/walk-in-sale", icon: CreditCard, roles: ["admin", "sales_manager", "sales_rep"] },
-      { label: "Group Deals", href: "/admin/group-deals", icon: Users, roles: ["admin", "sales_manager"] },
+      { label: "Requests", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
       { label: "Quotes", href: "/admin/quotes", icon: FileText },
-      { label: "Payments", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
       { label: "Invoices", href: "/admin/invoices", icon: Receipt },
+      { label: "Orders", href: "/admin/orders", icon: ShoppingCart, badgeKey: "orders" },
+      { label: "Delivery Notes", href: "/admin/delivery-notes", icon: ClipboardList },
+      { label: "Walk-in Sale", href: "/admin/walk-in-sale", icon: CreditCard, roles: ["admin", "sales_manager"] },
+    ],
+  },
+  {
+    key: "payments",
+    label: "Payments & Finance",
+    roles: ["admin", "finance_manager", "sales_manager"],
+    children: [
+      { label: "Payment Review", href: "/admin/payments", icon: CreditCard, badgeKey: "payments_queue" },
+      { label: "Commission Engine", href: "/admin/commission-engine", icon: DollarSign },
+      { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
+      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
-      { label: "Discount Analytics", href: "/admin/discount-analytics", icon: PieChart },
     ],
   },
   {
@@ -65,43 +70,15 @@ export const adminNavigation = [
     ],
   },
   {
-    key: "partners",
-    label: "Partners",
-    roles: ["admin"],
-    children: [
-      { label: "Partner Ecosystem", href: "/admin/partner-ecosystem", icon: Network },
-    ],
-  },
-  {
     key: "growth",
-    label: "Growth & Affiliates",
-    roles: ["admin", "marketing"],
+    label: "Campaigns & Growth",
+    roles: ["admin", "marketing", "sales_manager"],
     children: [
+      { label: "Group Deals", href: "/admin/group-deals", icon: Users },
       { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
       { label: "Applications", href: "/admin/affiliate-applications", icon: ClipboardList },
-      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
-      { label: "Promotions Manager", href: "/admin/promotions-manager", icon: BadgePercent },
+      { label: "Promotions", href: "/admin/promotions-manager", icon: BadgePercent },
       { label: "Content Studio", href: "/admin/content-studio", icon: Palette },
-    ],
-  },
-  {
-    key: "finance",
-    label: "Finance",
-    roles: ["admin", "finance_manager"],
-    children: [
-      { label: "Commission Engine", href: "/admin/commission-engine", icon: DollarSign },
-      { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
-      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
-    ],
-  },
-  {
-    key: "team",
-    label: "Team / Performance",
-    roles: ["admin", "sales_manager"],
-    children: [
-      { label: "Team Overview", href: "/admin/team/overview", icon: Users },
-      { label: "Leaderboard", href: "/admin/team/leaderboard", icon: Trophy },
-      { label: "Alerts", href: "/admin/team/alerts", icon: ShieldAlert },
     ],
   },
   {
@@ -110,37 +87,41 @@ export const adminNavigation = [
     roles: ["admin", "production", "vendor_ops"],
     children: [
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
-      { label: "Delivery Notes", href: "/admin/delivery-notes", icon: ClipboardList },
       { label: "Purchase Orders", href: "/admin/procurement/purchase-orders", icon: Package },
-      { label: "Requests", href: "/admin/requests-inbox", icon: Inbox, badgeKey: "requests_inbox" },
+    ],
+  },
+  {
+    key: "team",
+    label: "Team & Performance",
+    roles: ["admin", "sales_manager"],
+    children: [
+      { label: "Team Overview", href: "/admin/team/overview", icon: Users },
+      { label: "Leaderboard", href: "/admin/team/leaderboard", icon: Trophy },
+      { label: "Customer Ratings", href: "/admin/sales-ratings", icon: Star },
     ],
   },
   {
     key: "reports",
-    label: "Reports & Analytics",
+    label: "Reports",
     roles: ["admin", "sales_manager", "finance_manager"],
     children: [
-      { label: "Business Health", href: "/admin/reports/business-health", icon: Activity, roles: ["admin", "sales_manager", "finance_manager"] },
-      { label: "Financial Reports", href: "/admin/reports/financial", icon: DollarSign, roles: ["admin", "finance_manager"] },
-      { label: "Sales Reports", href: "/admin/reports/sales", icon: BarChart3, roles: ["admin", "sales_manager"] },
-      { label: "Customer Experience", href: "/admin/sales-ratings", icon: Star, roles: ["admin", "sales_manager"] },
-      { label: "Risk & Governance", href: "/admin/discount-analytics", icon: ShieldAlert, roles: ["admin", "finance_manager"] },
+      { label: "Business Health", href: "/admin/reports/business-health", icon: Activity },
+      { label: "Financial", href: "/admin/reports/financial", icon: DollarSign, roles: ["admin", "finance_manager"] },
+      { label: "Sales", href: "/admin/reports/sales", icon: BarChart3, roles: ["admin", "sales_manager"] },
+      { label: "Analytics", href: "/admin/analytics", icon: BarChart3 },
       { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
-      { label: "Inventory Intelligence", href: "/admin/reports/inventory", icon: Package, roles: ["admin", "sales_manager", "finance_manager"] },
-      { label: "Weekly Performance", href: "/admin/reports/weekly-performance", icon: CalendarDays, roles: ["admin", "sales_manager", "finance_manager"] },
-      { label: "Weekly Digest", href: "/admin/weekly-digest", icon: FileText, roles: ["admin"] },
+      { label: "Weekly Digest", href: "/admin/weekly-digest", icon: CalendarDays, roles: ["admin"] },
       { label: "Data Integrity", href: "/admin/data-integrity", icon: Shield, roles: ["admin"] },
-      { label: "Analytics", href: "/admin/analytics", icon: BarChart3, roles: ["admin", "finance_manager"] },
-      { label: "Action Center", href: "/admin/reports/alerts", icon: Bell, roles: ["admin", "sales_manager", "finance_manager"] },
     ],
   },
   {
     key: "settings",
-    label: "Settings",
+    label: "People & Control",
     roles: ["admin"],
     children: [
-      { label: "Settings Hub", href: "/admin/settings-hub", icon: Settings },
       { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Partner Ecosystem", href: "/admin/partner-ecosystem", icon: Network },
+      { label: "Settings Hub", href: "/admin/settings-hub", icon: Settings },
     ],
   },
 ];
