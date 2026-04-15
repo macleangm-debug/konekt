@@ -468,12 +468,12 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
           padding: "16px 40px",
           display: "grid",
           gridTemplateColumns:
-            settings.bank_name && settings.bank_account_number ? "1fr 240px" : "1fr",
+            docType !== "delivery_note" && settings.bank_name && settings.bank_account_number ? "1fr 240px" : "1fr",
           gap: 20,
         }}
       >
-        {/* Bank Transfer Details */}
-        {settings.bank_name && settings.bank_account_number && (
+        {/* Bank Transfer Details — HIDDEN on delivery notes (logistics-only document) */}
+        {docType !== "delivery_note" && settings.bank_name && settings.bank_account_number && (
           <div
             style={{
               border: "1px solid #e2e8f0",
@@ -529,7 +529,24 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
 
         {/* Signature + Stamp Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {/* Signature Block */}
+          {/* Delivery Note: Delivered/Received signatures */}
+          {docType === "delivery_note" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 12, textAlign: "center" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 6 }}>Delivered By</div>
+                <div style={{ height: 40, borderBottom: "2px solid #e2e8f0", marginBottom: 6 }} />
+                <div style={{ fontSize: 10, color: "#94a3b8" }}>Name & Signature</div>
+              </div>
+              <div style={{ border: "1px solid #e2e8f0", borderRadius: 12, padding: 12, textAlign: "center" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 6 }}>Received By</div>
+                <div style={{ height: 40, borderBottom: "2px solid #e2e8f0", marginBottom: 6 }} />
+                <div style={{ fontSize: 10, color: "#94a3b8" }}>Customer Signature</div>
+              </div>
+            </div>
+          )}
+
+          {/* Standard Authorized By (non-delivery notes) */}
+          {docType !== "delivery_note" && (
           <div
             style={{
               border: "1px solid #e2e8f0",
@@ -568,6 +585,7 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
               {settings.cfo_name ? settings.cfo_title : companyName}
             </div>
           </div>
+          )}
 
           {/* Stamp Block */}
           <div

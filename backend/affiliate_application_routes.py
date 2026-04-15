@@ -361,7 +361,10 @@ async def resend_activation(application_id: str, request: Request):
     """Resend or regenerate activation token."""
     db = request.app.mongodb
     app_doc = await db.affiliate_applications.find_one({"id": application_id}, {"_id": 0})
-    if not app_doc or app_doc.get("status") != "approved":
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Application not found")
+    # Allow resend if approved OR if activation was previously sent
+    if app_doc.get("status") not in ("approved",) and app_doc.get("activation_status") not in ("sent", "expired"):
         raise HTTPException(status_code=400, detail="Application must be approved first")
     if app_doc.get("account_activated"):
         raise HTTPException(status_code=400, detail="Account already activated")

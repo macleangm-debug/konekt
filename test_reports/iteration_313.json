@@ -1,0 +1,73 @@
+{
+  "summary": "Completed testing of 4 P0 fixes: Pricing Engine, Campaign savings_amount, Delivery Note, Affiliate resend-activation. All 11 backend tests passed (100%). Frontend UI verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p0_pricing_delivery_affiliate_v313.py",
+    "/app/test_reports/pytest/pytest_results_p0_fixes_v313.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Pricing Engine uses target_margin_pct=30% (not 20%) for calculating sell price, and min_margin_pct=15% for validation. This is by design from category_margin_rules default settings.",
+    "Delivery Note bank details hiding is implemented correctly in CanonicalDocumentRenderer.jsx (line 476) with docType !== 'delivery_note' condition",
+    "Delivery Note signature areas (Delivered By / Received By) are correctly rendered for delivery_note docType (lines 533-546)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p0_pricing_delivery_affiliate_v313.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created TEST_ prefixed products and affiliate applications for testing",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All 4 P0 fixes verified working: (1) Pricing Engine at /app/backend/services/pricing_engine.py applies 30% target margin and 15% minimum margin from category_margin_rules. Product creation via POST /api/vendor-ops/products returns margin_pct, margin_amount, pricing_rule_source fields. Override prices below minimum are auto-adjusted with warning. (2) Group Deal campaigns store savings_amount = original_price - discounted_price (discount_pct removed). (3) Delivery Note document hides bank transfer details and shows Delivered By / Received By signature areas instead of Authorized By. (4) Affiliate resend-activation works for status=approved OR activation_status=sent/expired.",
+  "tests_executed": {
+    "backend_api_tests": [
+      "test_pricing_engine_applies_target_margin - PASSED (vendor_cost=80000 → sell_price=104000 with 30% margin)",
+      "test_pricing_engine_override_above_minimum_accepted - PASSED (override=100000 accepted, 25% margin)",
+      "test_pricing_engine_override_below_minimum_adjusted - PASSED (override=82000 → adjusted to 92000 with warning)",
+      "test_product_creation_returns_pricing_fields - PASSED (margin_pct, margin_amount, pricing_rule_source present)",
+      "test_campaign_creation_stores_savings_amount - PASSED (savings_amount=25000 for 100000-75000)",
+      "test_campaign_savings_amount_calculation - PASSED (80000-55000=25000)",
+      "test_document_render_settings_endpoint - PASSED",
+      "test_delivery_note_bank_details_hidden_in_frontend - PASSED (code review verified)",
+      "test_resend_activation_for_approved_application - PASSED",
+      "test_resend_activation_blocks_non_approved - PASSED (400 error for pending)",
+      "test_resend_activation_allows_activation_sent_status - PASSED (multiple resends work)"
+    ],
+    "frontend_ui_tests": [
+      "Group Deals page - 18 green savings badges displayed (Save TZS X)",
+      "Admin Orders page - 304 orders listed, order detail panel working",
+      "Admin Invoices page - loading correctly",
+      "Vendor Ops Products page - loading correctly"
+    ]
+  },
+  "features_verified": {
+    "pricing_engine": {
+      "status": "VERIFIED",
+      "details": "calculate_sell_price() applies 30% target margin from category_margin_rules default. Override prices validated against 15% minimum margin. Below-minimum overrides auto-adjusted with warning. Product creation returns margin_pct, margin_amount, pricing_rule_source fields."
+    },
+    "campaign_savings_amount": {
+      "status": "VERIFIED",
+      "details": "POST /api/admin/group-deals/campaigns stores savings_amount = round(original_price - discounted_price). discount_pct field removed from response."
+    },
+    "delivery_note_document": {
+      "status": "VERIFIED",
+      "details": "CanonicalDocumentRenderer.jsx conditionally hides bank transfer details when docType='delivery_note' (line 476). Shows 'Delivered By' and 'Received By' signature areas instead of 'Authorized By' (lines 533-546)."
+    },
+    "affiliate_resend_activation": {
+      "status": "VERIFIED",
+      "details": "POST /api/affiliate-applications/{id}/resend-activation works for status='approved' OR activation_status in ('sent', 'expired'). Blocks non-approved applications with 400 error. Multiple resends allowed."
+    }
+  }
+}

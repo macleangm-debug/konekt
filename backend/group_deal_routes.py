@@ -81,7 +81,7 @@ async def create_campaign(payload: dict):
         "vendor_cost": vendor_cost,
         "original_price": original_price,
         "discounted_price": discounted_price,
-        "discount_pct": round(((original_price - discounted_price) / original_price) * 100),
+        "savings_amount": round(original_price - discounted_price),
         "margin_per_unit": margin_per_unit,
         "margin_pct": margin_pct,
         "display_target": display_target,

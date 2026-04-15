@@ -102,6 +102,14 @@ async def create_product(request: Request):
     slug = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
     slug = f"{slug}-{str(uuid4())[:6]}"
 
+    vendor_cost = float(body.get("vendor_cost", 0) or 0)
+    input_sell_price = float(body.get("selling_price", 0) or 0)
+
+    # Apply pricing engine: sell price must respect margin rules
+    from services.pricing_engine import calculate_sell_price
+    pricing = await calculate_sell_price(db, vendor_cost, category=body.get("category", ""), override_sell_price=input_sell_price if input_sell_price > 0 else None)
+    final_sell_price = pricing["sell_price"] if vendor_cost > 0 else input_sell_price
+
     doc = {
         "id": str(uuid4()),
         "slug": slug,
@@ -112,9 +120,13 @@ async def create_product(request: Request):
         "brand": body.get("brand", ""),
         "images": images,
         "image_url": primary_image,
-        "selling_price": float(body.get("selling_price", 0) or 0),
+        "selling_price": final_sell_price,
         "original_price": float(body.get("original_price", 0) or 0),
-        "vendor_cost": float(body.get("vendor_cost", 0) or 0),
+        "vendor_cost": vendor_cost,
+        "margin_pct": pricing.get("margin_pct", 0),
+        "margin_amount": pricing.get("margin_amount", 0),
+        "pricing_rule_source": pricing.get("rule_source", ""),
+        "pricing_warning": pricing.get("warning"),
         "unit_of_measurement": body.get("unit_of_measurement", "piece"),
         "sku": body.get("sku", ""),
         "stock": int(body.get("stock", 0)),
