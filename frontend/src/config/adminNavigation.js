@@ -5,7 +5,7 @@ import {
   Route, Inbox, BarChart3, ClipboardList, Package,
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign, Landmark,
-  Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield,
+  Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench,
 } from "lucide-react";
 
 /**
@@ -18,7 +18,7 @@ import {
  * Admin always sees everything.
  */
 
-const ALL_MGMT = ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production"];
+const ALL_MGMT = ["admin", "sales", "sales_manager", "finance_manager", "marketing", "production", "vendor_ops", "staff"];
 
 export const adminNavigation = [
   {
@@ -27,7 +27,7 @@ export const adminNavigation = [
     icon: LayoutDashboard,
     href: "/admin",
     exact: true,
-    roles: ["admin", "sales_manager", "finance_manager", "sales", "marketing", "production"],
+    roles: ALL_MGMT,
   },
   {
     key: "commerce",
@@ -46,13 +46,13 @@ export const adminNavigation = [
   },
   {
     key: "catalog",
-    label: "Catalog",
-    roles: ["admin", "marketing"],
+    label: "Catalog & Supply",
+    roles: ["admin", "marketing", "vendor_ops"],
     children: [
       { label: "Catalog", href: "/admin/catalog", icon: Columns3 },
+      { label: "Vendor Ops", href: "/admin/vendor-ops", icon: Wrench, roles: ["admin", "vendor_ops"] },
+      { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare, roles: ["admin", "vendor_ops"] },
       { label: "Product Approvals", href: "/admin/product-approvals", icon: CheckSquare },
-      { label: "Vendors", href: "/admin/vendors", icon: Truck },
-      { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare },
     ],
   },
   {
@@ -89,8 +89,9 @@ export const adminNavigation = [
     label: "Finance",
     roles: ["admin", "finance_manager"],
     children: [
-      { label: "Cash Flow", href: "/admin/finance/cash-flow", icon: Landmark },
-      { label: "Commissions", href: "/admin/finance/commissions", icon: DollarSign },
+      { label: "Commission Engine", href: "/admin/commission-engine", icon: DollarSign },
+      { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
+      { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
     ],
   },
   {
@@ -106,7 +107,7 @@ export const adminNavigation = [
   {
     key: "operations",
     label: "Operations",
-    roles: ["admin", "production"],
+    roles: ["admin", "production", "vendor_ops"],
     children: [
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
       { label: "Delivery Notes", href: "/admin/delivery-notes", icon: ClipboardList },
