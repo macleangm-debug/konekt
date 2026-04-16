@@ -350,8 +350,8 @@ function PriceRequestsTab() {
               <thead>
                 <tr className="border-b bg-slate-50/60">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Request</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Category</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Mode</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Client / Requested By</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Quotes</th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Best Price</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
@@ -368,24 +368,34 @@ function PriceRequestsTab() {
                   return (
                     <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`request-row-${r.id}`}>
                       <td className="px-4 py-3">
-                        <div className="font-medium text-[#20364D]">{r.product_or_service || "Unnamed"}</div>
-                        <div className="text-[10px] text-slate-400">{r.id?.slice(0, 8)} {r.quantity > 1 ? `\u2022 ${r.quantity} ${r.unit_of_measurement || ""}` : ""}</div>
+                        <div className="font-medium text-[#20364D] text-sm">{r.product_or_service || r.product_name || "Unnamed"}</div>
+                        <div className="text-[10px] text-slate-400">
+                          {r.category && <span>{r.category}</span>}
+                          {r.quantity > 1 && <span className="ml-1">{r.quantity} {r.unit_of_measurement || "pcs"}</span>}
+                          <span className="ml-1">
+                            <Badge className={`text-[8px] ${r.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
+                              {r.sourcing_mode === "competitive" ? "Competitive" : "Preferred"}
+                            </Badge>
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-600">{r.category || "\u2014"}</td>
                       <td className="px-4 py-3">
-                        <Badge className={`text-[10px] ${r.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
-                          {r.sourcing_mode === "competitive" ? "Competitive" : "Preferred"}
-                        </Badge>
+                        <div className="text-xs text-[#20364D]">{r.customer_name || r.requested_for || "\u2014"}</div>
+                        <div className="text-[10px] text-slate-400">{r.requested_by_name || r.requested_by || "System"}</div>
                       </td>
-                      <td className="px-4 py-3 text-center text-xs">{quotedCount}/{quotes.length || 0}</td>
-                      <td className="px-4 py-3 text-right text-xs font-medium">
+                      <td className="px-4 py-3">
+                        <div className="text-xs text-slate-600">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "\u2014"}</div>
+                        <div className="text-[10px] text-slate-400">{r.created_at ? new Date(r.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center text-xs font-medium">{quotedCount}/{quotes.length || 0}</td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold">
                         {r.final_sell_price ? money(r.final_sell_price) : bestPrice != null ? <span className="text-slate-400">{money(bestPrice)}</span> : "\u2014"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         <Badge className={`${STATUS_STYLES[r.status] || "bg-slate-100 text-slate-500"} capitalize text-[10px]`}>{(r.status || "").replace(/_/g, " ")}</Badge>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button onClick={() => setDetail(r)} className="px-2.5 py-1 rounded-lg bg-[#20364D] text-white text-[10px] font-semibold hover:bg-[#1a2d40] transition" data-testid={`open-request-${r.id}`}>
+                        <button onClick={() => setDetail(r)} className="px-3 py-1.5 rounded-lg bg-[#20364D] text-white text-[10px] font-semibold hover:bg-[#1a2d40] transition" data-testid={`open-request-${r.id}`}>
                           Open
                         </button>
                       </td>

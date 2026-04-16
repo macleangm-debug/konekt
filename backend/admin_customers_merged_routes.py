@@ -338,7 +338,8 @@ async def update_customer_profile(customer_id: str, payload: dict, request: Requ
                 detail=f"Business clients must have: {', '.join(missing)}. Complete these fields to continue."
             )
 
-    allowed = {"client_type", "company_name", "company", "vrn", "brn", "city", "country", "full_name", "phone", "address"}
+    allowed = {"client_type", "company_name", "company", "vrn", "brn", "city", "country", "full_name", "phone", "address",
+                "payment_term_type", "payment_term_days", "payment_term_label", "credit_terms_enabled", "credit_limit"}
     update_fields = {}
     for key in allowed:
         if key in payload:

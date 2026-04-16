@@ -171,3 +171,12 @@ async def get_catalog_summary():
         "vendor_submissions": submissions,
         "pending_submissions": pending,
     }
+
+
+
+@router.post("/api/admin/catalog/sync-from-settings")
+async def sync_categories_from_settings():
+    """Sync categories from Settings Hub to marketplace taxonomy."""
+    from services.catalog_taxonomy_service import sync_settings_categories_to_taxonomy
+    result = await sync_settings_categories_to_taxonomy(db)
+    return {"ok": True, **result}

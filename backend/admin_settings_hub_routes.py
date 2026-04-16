@@ -53,6 +53,14 @@ async def update_settings_hub(payload: dict, request: Request, _admin=Depends(_r
         upsert=True,
     )
     invalidate_settings_cache()
+
+    # Auto-sync categories to marketplace taxonomy
+    try:
+        from services.catalog_taxonomy_service import sync_settings_categories_to_taxonomy
+        await sync_settings_categories_to_taxonomy(db)
+    except Exception:
+        pass
+
     return value
 
 

@@ -162,3 +162,81 @@ async def get_taxonomy_tree(db, market_code="TZ"):
         subcategories.append(s)
 
     return {"groups": groups, "categories": categories, "subcategories": subcategories}
+
+
+
+async def sync_settings_categories_to_taxonomy(db):
+    """Sync product categories from Settings Hub to the taxonomy collections.
+    
+    This ensures the marketplace shows what's configured in Settings Hub.
+    Categories from Settings Hub become catalog_groups (top-level).
+    Subcategories become catalog_categories under their parent group.
+    """
+    hub = await db.admin_settings.find_one({"key": "settings_hub"})
+    if not hub or not hub.get("value"):
+        return {"synced": 0}
+
+    cats = hub["value"].get("catalog", {}).get("product_categories", [])
+    synced = 0
+
+    for cat_data in cats:
+        if isinstance(cat_data, str):
+            cat_name = cat_data
+            subcategories = []
+            display_mode = "visual"
+            commercial_mode = "fixed_price"
+        else:
+            cat_name = cat_data.get("name", "")
+            subcategories = cat_data.get("subcategories", [])
+            display_mode = cat_data.get("display_mode", "visual")
+            commercial_mode = cat_data.get("commercial_mode", "fixed_price")
+
+        if not cat_name:
+            continue
+
+        # Upsert as catalog_group
+        existing = await db.catalog_groups.find_one({"name": cat_name})
+        if existing:
+            await db.catalog_groups.update_one(
+                {"name": cat_name},
+                {"$set": {
+                    "is_active": cat_data.get("active", True) if isinstance(cat_data, dict) else True,
+                    "display_mode": display_mode,
+                    "commercial_mode": commercial_mode,
+                }}
+            )
+            group_id = existing.get("id")
+        else:
+            group_id = _id()
+            await db.catalog_groups.insert_one({
+                "id": group_id,
+                "market_code": "TZ",
+                "type": "service" if display_mode == "list_quote" else "product",
+                "name": cat_name,
+                "slug": cat_name.lower().replace(" & ", "-").replace(" ", "-"),
+                "is_active": True,
+                "display_mode": display_mode,
+                "commercial_mode": commercial_mode,
+                "sort_order": synced,
+                "created_at": _now(),
+            })
+        synced += 1
+
+        # Sync subcategories
+        for si, sub_name in enumerate(subcategories):
+            if not sub_name:
+                continue
+            sub_exists = await db.catalog_categories.find_one({"name": sub_name, "group_id": group_id})
+            if not sub_exists:
+                await db.catalog_categories.insert_one({
+                    "id": _id(),
+                    "group_id": group_id,
+                    "name": sub_name,
+                    "slug": sub_name.lower().replace(" & ", "-").replace(" ", "-"),
+                    "is_active": True,
+                    "sort_order": si,
+                    "created_at": _now(),
+                })
+
+    logger.info("Synced %d categories from Settings Hub to taxonomy", synced)
+    return {"synced": synced}
