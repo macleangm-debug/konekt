@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Package, Users, FileText, Loader2, Search, Plus,
+  Package, Users, FileText, Loader2, Search, Plus, ShoppingCart,
   Image as ImageIcon, CheckCircle, Clock, AlertTriangle,
   Eye, EyeOff, Edit3, MoreHorizontal, MessageSquare
 } from "lucide-react";
@@ -12,9 +12,10 @@ import { toast } from "sonner";
 import api from "../../lib/api";
 
 const TABS = [
+  { key: "requests", label: "Pricing Requests", icon: FileText },
+  { key: "orders", label: "Orders / Fulfillment", icon: ShoppingCart },
   { key: "vendors", label: "Vendors", icon: Users },
   { key: "products", label: "Products", icon: Package },
-  { key: "requests", label: "Price Requests", icon: FileText },
 ];
 
 const STATUS_STYLES = {
@@ -38,7 +39,7 @@ function money(v) { return `TZS ${Number(v || 0).toLocaleString("en-US", { maxim
 
 export default function VendorOpsPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState("products");
+  const [tab, setTab] = useState("requests");
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -77,6 +78,7 @@ export default function VendorOpsPage() {
       {tab === "vendors" && <VendorsTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "requests" && <PriceRequestsTab />}
+      {tab === "orders" && <OrdersFulfillmentTab />}
     </div>
   );
 }
@@ -619,6 +621,165 @@ function RequestDetail({ pr, vendors, onBack }) {
     </div>
   );
 }
+
+/* ═══ ORDERS / FULFILLMENT TAB ═══ */
+const ORDER_STATUSES = ["pending_payment", "confirmed", "processing", "dispatched", "delivered", "completed", "cancelled"];
+const ORDER_STATUS_COLORS = {
+  pending_payment: "bg-amber-100 text-amber-700",
+  confirmed: "bg-blue-100 text-blue-700",
+  processing: "bg-violet-100 text-violet-700",
+  dispatched: "bg-cyan-100 text-cyan-700",
+  delivered: "bg-emerald-100 text-emerald-700",
+  completed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-600",
+};
+
+function OrdersFulfillmentTab() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [updatingId, setUpdatingId] = useState(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    const params = filter ? `?status=${filter}` : "";
+    api.get(`/api/admin/orders-ops${params}`)
+      .then((res) => {
+        const data = res.data;
+        setOrders(Array.isArray(data) ? data : data?.orders || []);
+      })
+      .catch(() => toast.error("Failed to load orders"))
+      .finally(() => setLoading(false));
+  }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const updateStatus = async (orderId, newStatus) => {
+    setUpdatingId(orderId);
+    try {
+      await api.patch(`/api/admin/orders-ops/${orderId}/status`, null, { params: { status: newStatus } });
+      toast.success(`Order updated to ${newStatus.replace(/_/g, " ")}`);
+      load();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to update");
+    }
+    setUpdatingId(null);
+  };
+
+  const filtered = orders.filter((o) => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (
+      (o.order_number || "").toLowerCase().includes(s) ||
+      (o.customer_name || "").toLowerCase().includes(s) ||
+      (o.customer_company || "").toLowerCase().includes(s)
+    );
+  });
+
+  const stats = {
+    pending: orders.filter((o) => o.current_status === "pending_payment").length,
+    confirmed: orders.filter((o) => o.current_status === "confirmed").length,
+    processing: orders.filter((o) => o.current_status === "processing").length,
+    dispatched: orders.filter((o) => o.current_status === "dispatched").length,
+  };
+
+  if (loading) return <LoadingSpinner />;
+
+  return (
+    <div className="space-y-4" data-testid="orders-fulfillment-tab">
+      {/* KPI */}
+      <div className="grid grid-cols-4 gap-3">
+        <StatCard label="Pending Payment" value={stats.pending} color="text-amber-600" />
+        <StatCard label="Confirmed" value={stats.confirmed} color="text-blue-600" />
+        <StatCard label="Processing" value={stats.processing} color="text-violet-600" />
+        <StatCard label="Dispatched" value={stats.dispatched} color="text-cyan-600" />
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9 text-sm" data-testid="orders-search" />
+        </div>
+        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border rounded-lg px-3 py-2 text-xs bg-white" data-testid="orders-filter">
+          <option value="">All Statuses</option>
+          {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+        </select>
+      </div>
+
+      {/* Orders Table */}
+      <div className="bg-white rounded-xl border overflow-hidden" data-testid="orders-table">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-slate-50/60">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Order #</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Source</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Total</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Payment</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Update</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={7} className="text-center py-12 text-slate-400"><ShoppingCart className="w-8 h-8 mx-auto mb-2 text-slate-200" /><p>No orders found</p></td></tr>
+              ) : filtered.map((o) => {
+                const cs = o.current_status || o.status || "pending_payment";
+                const locked = o.fulfillment_locked === true;
+                return (
+                  <tr key={o.id || o.order_number} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`order-row-${o.order_number}`}>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-[#20364D]">{o.order_number}</div>
+                      <div className="text-[10px] text-slate-400">{o.created_at ? new Date(o.created_at).toLocaleDateString() : ""}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm">{o.customer_name || o.customer_company || "\u2014"}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge className="text-[9px] bg-slate-100 text-slate-600">{(o.source_type || o.order_type || "direct").replace(/_/g, " ")}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-semibold">{money(o.total || o.total_amount)}</td>
+                    <td className="px-4 py-3 text-center">
+                      {o.payment_confirmed ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 text-[9px]">Paid</Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 text-[9px]">Pending</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Badge className={`${ORDER_STATUS_COLORS[cs] || "bg-slate-100 text-slate-500"} capitalize text-[9px]`}>{cs.replace(/_/g, " ")}</Badge>
+                      {locked && <div className="text-[8px] text-red-500 mt-0.5">Fulfillment locked</div>}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {locked ? (
+                        <span className="text-[10px] text-slate-400">Awaiting payment</span>
+                      ) : (
+                        <select
+                          value={cs}
+                          onChange={(e) => updateStatus(o.id, e.target.value)}
+                          disabled={updatingId === o.id}
+                          className="border rounded px-2 py-1 text-[10px] bg-white"
+                          data-testid={`update-status-${o.order_number}`}
+                        >
+                          {ORDER_STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, " ")}</option>)}
+                        </select>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="px-4 py-2 text-xs text-slate-400 border-t">{filtered.length} order{filtered.length !== 1 ? "s" : ""}</div>
+      </div>
+    </div>
+  );
+}
+
 
 /* ═══ SHARED COMPONENTS ═══ */
 function ArrowLeft(props) { return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>; }

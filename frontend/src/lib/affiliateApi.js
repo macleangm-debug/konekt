@@ -48,6 +48,17 @@ export const affiliateApi = {
   markAffiliatePayoutPaid: (payoutId) =>
     axios.post(`${API_URL}/api/affiliate-payouts/admin/${payoutId}/mark-paid`, {}, { headers: getAuthHeader() }),
 
+  // Withdrawals (maps to affiliate payouts)
+  getWithdrawals: (params) =>
+    axios.get(`${API_URL}/api/affiliate-payouts/admin`, { params, headers: getAuthHeader() }),
+
+  updateWithdrawalStatus: (withdrawalId, status) => {
+    if (status === "approved") return axios.post(`${API_URL}/api/affiliate-payouts/admin/${withdrawalId}/approve`, {}, { headers: getAuthHeader() });
+    if (status === "paid") return axios.post(`${API_URL}/api/affiliate-payouts/admin/${withdrawalId}/mark-paid`, {}, { headers: getAuthHeader() });
+    if (status === "rejected") return axios.post(`${API_URL}/api/affiliate-payouts/admin/${withdrawalId}/reject`, {}, { headers: getAuthHeader() });
+    return Promise.reject(new Error("Invalid status"));
+  },
+
   // Public
   getAffiliateByCode: (code) =>
     axios.get(`${API_URL}/api/affiliates/code/${code}`),

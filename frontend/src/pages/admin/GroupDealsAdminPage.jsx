@@ -144,6 +144,7 @@ export default function GroupDealsAdminPage() {
   const [pendingPayments, setPendingPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [form, setForm] = useState({
     vendor_cost: "", original_price: "", discounted_price: "",
@@ -376,57 +377,77 @@ export default function GroupDealsAdminPage() {
         }
       </div>
 
-      {/* Create Campaign Dialog */}
-      <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) setSelectedProduct(null); }}>
+      {/* Create Campaign — Step-Based Wizard */}
+      <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) { setSelectedProduct(null); setWizardStep(1); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Group Deal Campaign</DialogTitle>
-            <DialogDescription>Select a product, set pricing, and launch a volume-based deal.</DialogDescription>
+            <DialogTitle>Create Group Deal</DialogTitle>
+            <DialogDescription>Step {wizardStep} of 5 — {["Select Product", "Deal Pricing", "Target & Duration", "Promotion Settings", "Review & Publish"][wizardStep - 1]}</DialogDescription>
           </DialogHeader>
+
+          {/* Step Indicator */}
+          <div className="flex items-center gap-1 mb-2" data-testid="wizard-steps">
+            {[1,2,3,4,5].map((s) => (
+              <div key={s} className={`h-1.5 flex-1 rounded-full transition ${s <= wizardStep ? "bg-[#D4A843]" : "bg-slate-200"}`} />
+            ))}
+          </div>
+
           <form onSubmit={createCampaign} className="space-y-4 pt-2" data-testid="create-campaign-form">
             {/* Step 1: Product Selection */}
-            <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">1. Select Product</Label>
-              <ProductSelector selected={selectedProduct} onSelect={handleProductSelect} />
-            </div>
+            {wizardStep === 1 && (
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Select Product from Catalog</Label>
+                <ProductSelector selected={selectedProduct} onSelect={handleProductSelect} />
+                {selectedProduct && (
+                  <div className="mt-3 p-3 rounded-xl bg-slate-50 border text-xs text-slate-600">
+                    <div><strong>Category:</strong> {selectedProduct.category}</div>
+                    <div><strong>Unit:</strong> {selectedProduct.unit_of_measurement || "Piece"}</div>
+                    {selectedProduct.base_price > 0 && <div><strong>Vendor Cost:</strong> {fmt(selectedProduct.base_price)}</div>}
+                    {selectedProduct.selling_price > 0 && <div><strong>Current Sell Price:</strong> {fmt(selectedProduct.selling_price)}</div>}
+                  </div>
+                )}
+              </div>
+            )}
 
-            {selectedProduct && (
-              <>
-                {/* Step 2: Description */}
-                <div><Label>Description</Label><textarea className="w-full border rounded-xl px-3 py-2.5 text-sm min-h-[60px]" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} data-testid="input-description" /></div>
-
-                {/* Step 3: Pricing — Structured */}
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">2. Pricing</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-xs">Base Price (from product)</Label>
-                      <div className="px-3 py-2.5 bg-slate-50 border rounded-xl text-sm font-semibold text-slate-600" data-testid="base-price-display">
-                        {fmt(form.original_price || 0)}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-xs">Vendor Best Price *</Label>
-                      <CurrencyInput value={form.vendor_cost} onChange={(v) => setForm(p => ({ ...p, vendor_cost: v }))} required data-testid="input-vendor-cost" placeholder="e.g. 800,000" />
-                    </div>
-                    <div>
-                      <Label className="text-xs">Group Deal Price *</Label>
-                      <CurrencyInput value={form.discounted_price} onChange={(v) => setForm(p => ({ ...p, discounted_price: v }))} required data-testid="input-deal-price" placeholder="e.g. 960,000" />
-                    </div>
+            {/* Step 2: Deal Pricing */}
+            {wizardStep === 2 && selectedProduct && (
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Deal Pricing</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Base Price (from product)</Label>
+                    <div className="px-3 py-2.5 bg-slate-50 border rounded-xl text-sm font-semibold text-slate-600" data-testid="base-price-display">{fmt(form.original_price || 0)}</div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Vendor Best Price *</Label>
+                    <CurrencyInput value={form.vendor_cost} onChange={(v) => setForm(p => ({ ...p, vendor_cost: v }))} required data-testid="input-vendor-cost" placeholder="e.g. 800,000" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Group Deal Price *</Label>
+                    <CurrencyInput value={form.discounted_price} onChange={(v) => setForm(p => ({ ...p, discounted_price: v }))} required data-testid="input-deal-price" placeholder="e.g. 960,000" />
                   </div>
                 </div>
+                <ProfitCalculator basePrice={form.original_price} vendorCost={form.vendor_cost} dealPrice={form.discounted_price} target={form.display_target || 10} />
+              </div>
+            )}
 
-                {/* Step 4: Targets */}
-                <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">3. Target & Duration</Label>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div><Label className="text-xs">Display Target (units) *</Label><Input type="number" value={form.display_target} onChange={(e) => setForm(p => ({ ...p, display_target: e.target.value }))} required data-testid="input-display-target" /></div>
-                    <div><Label className="text-xs">Vendor Threshold</Label><Input type="number" value={form.vendor_threshold} onChange={(e) => setForm(p => ({ ...p, vendor_threshold: e.target.value }))} data-testid="input-vendor-threshold" /></div>
-                    <div><Label className="text-xs">Duration (days) *</Label><Input type="number" value={form.duration_days} onChange={(e) => setForm(p => ({ ...p, duration_days: e.target.value }))} required data-testid="input-duration" /></div>
-                  </div>
+            {/* Step 3: Target & Duration */}
+            {wizardStep === 3 && (
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Target & Duration</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><Label className="text-xs">Display Target (units) *</Label><Input type="number" value={form.display_target} onChange={(e) => setForm(p => ({ ...p, display_target: e.target.value }))} required data-testid="input-display-target" /></div>
+                  <div><Label className="text-xs">Vendor Threshold</Label><Input type="number" value={form.vendor_threshold} onChange={(e) => setForm(p => ({ ...p, vendor_threshold: e.target.value }))} data-testid="input-vendor-threshold" /></div>
+                  <div><Label className="text-xs">Duration (days) *</Label><Input type="number" value={form.duration_days} onChange={(e) => setForm(p => ({ ...p, duration_days: e.target.value }))} required data-testid="input-duration" /></div>
                 </div>
+                <div><Label className="text-xs">Description</Label><textarea className="w-full border rounded-xl px-3 py-2.5 text-sm min-h-[60px]" value={form.description} onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))} data-testid="input-description" /></div>
+              </div>
+            )}
 
-                {/* Commission */}
+            {/* Step 4: Promotion Settings */}
+            {wizardStep === 4 && (
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Promotion Settings</Label>
                 <div className="grid grid-cols-2 gap-3">
                   <div><Label className="text-xs">Commission Mode</Label>
                     <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={form.commission_mode} onChange={(e) => setForm(p => ({ ...p, commission_mode: e.target.value }))} data-testid="select-commission-mode">
@@ -437,21 +458,50 @@ export default function GroupDealsAdminPage() {
                   </div>
                   {form.commission_mode !== "none" && <div><Label className="text-xs">Affiliate Share %</Label><Input type="number" value={form.affiliate_share_pct} onChange={(e) => setForm(p => ({ ...p, affiliate_share_pct: e.target.value }))} data-testid="input-affiliate-share" /></div>}
                 </div>
-
-                {/* Live Calculator */}
-                <ProfitCalculator
-                  basePrice={form.original_price}
-                  vendorCost={form.vendor_cost}
-                  dealPrice={form.discounted_price}
-                  target={form.display_target}
-                />
-
-                <div className="flex gap-3 pt-3 border-t">
-                  <Button type="button" variant="outline" onClick={() => { setShowCreate(false); setSelectedProduct(null); }} className="flex-1">Cancel</Button>
-                  <Button type="submit" disabled={creating} className="flex-1 bg-[#20364D]" data-testid="submit-campaign-btn">{creating ? "Creating..." : "Create Campaign"}</Button>
-                </div>
-              </>
+              </div>
             )}
+
+            {/* Step 5: Review & Publish */}
+            {wizardStep === 5 && (
+              <div className="space-y-4">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Review & Publish</Label>
+                <div className="bg-slate-50 rounded-xl border p-4 space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-slate-500">Product:</span><span className="font-semibold">{selectedProduct?.name}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Category:</span><span>{selectedProduct?.category}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Vendor Cost:</span><span>{fmt(form.vendor_cost)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Deal Price:</span><span className="font-bold text-emerald-600">{fmt(form.discounted_price)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Target Qty:</span><span>{form.display_target} units</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Duration:</span><span>{form.duration_days} days</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Commission:</span><span>{form.commission_mode === "none" ? "None" : `${form.commission_mode} (${form.affiliate_share_pct}%)`}</span></div>
+                </div>
+                <ProfitCalculator basePrice={form.original_price} vendorCost={form.vendor_cost} dealPrice={form.discounted_price} target={form.display_target} />
+                {Number(form.discounted_price || 0) <= Number(form.vendor_cost || 0) && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+                    Deal price is at or below vendor cost. This deal will result in a loss.
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex gap-3 pt-3 border-t">
+              {wizardStep > 1 && (
+                <Button type="button" variant="outline" onClick={() => setWizardStep(s => s - 1)} className="flex-1" data-testid="wizard-back">Back</Button>
+              )}
+              {wizardStep < 5 ? (
+                <Button type="button" onClick={() => {
+                  if (wizardStep === 1 && !selectedProduct) { toast.error("Select a product first"); return; }
+                  if (wizardStep === 2 && (!form.vendor_cost || !form.discounted_price)) { toast.error("Set vendor cost and deal price"); return; }
+                  if (wizardStep === 3 && (!form.display_target || !form.duration_days)) { toast.error("Set target and duration"); return; }
+                  setWizardStep(s => s + 1);
+                }} className="flex-1 bg-[#20364D]" data-testid="wizard-next">Next</Button>
+              ) : (
+                <Button type="submit" disabled={creating} className="flex-1 bg-[#D4A843] hover:bg-[#c49a3d] text-[#17283C] font-bold" data-testid="submit-campaign-btn">
+                  {creating ? "Creating..." : "Publish Campaign"}
+                </Button>
+              )}
+              <Button type="button" variant="outline" onClick={() => { setShowCreate(false); setSelectedProduct(null); setWizardStep(1); }}>Cancel</Button>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

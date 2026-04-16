@@ -132,3 +132,73 @@ async def update_category_config(cat_name: str, payload: dict, request: Request)
         pass
 
     return {"ok": True, "category": cat_name, "updated_fields": updated_fields}
+
+
+
+@router.post("/bulk-import")
+async def bulk_import_catalog(request: Request):
+    """
+    Bulk import list items/services from CSV.
+    Expected CSV columns: name, category, subcategory, unit_of_measurement, sku, description, active
+    """
+    import csv
+    import io
+    from uuid import uuid4
+    from datetime import datetime, timezone
+
+    db = request.app.mongodb
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        from fastapi import HTTPException
+        raise HTTPException(400, "No file uploaded")
+
+    content = await file.read()
+    text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    imported = 0
+    skipped = 0
+    errors = []
+    now = datetime.now(timezone.utc).isoformat()
+
+    for row_num, row in enumerate(reader, start=2):
+        name = (row.get("name") or "").strip()
+        if not name:
+            skipped += 1
+            errors.append({"row": row_num, "error": "Missing name"})
+            continue
+
+        category = (row.get("category") or "").strip()
+        sku = (row.get("sku") or "").strip()
+
+        # Check for duplicate by name + category
+        exists = await db.products.find_one({"name": name, "category_name": category})
+        if exists:
+            skipped += 1
+            errors.append({"row": row_num, "error": f"Duplicate: '{name}' in '{category}'"})
+            continue
+
+        doc = {
+            "id": str(uuid4()),
+            "name": name,
+            "category_name": category,
+            "subcategory": (row.get("subcategory") or "").strip(),
+            "unit_of_measurement": (row.get("unit_of_measurement") or "Piece").strip(),
+            "sku": sku or f"SKU-{uuid4().hex[:6].upper()}",
+            "description": (row.get("description") or "").strip(),
+            "status": "active" if (row.get("active") or "true").strip().lower() in ("true", "yes", "1", "active") else "draft",
+            "source": "bulk_import",
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.products.insert_one(doc)
+        imported += 1
+
+    return {
+        "ok": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": errors[:20],
+        "total_rows": imported + skipped,
+    }

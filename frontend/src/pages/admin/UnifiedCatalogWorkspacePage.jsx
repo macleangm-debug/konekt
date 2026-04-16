@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Tag, AlertTriangle, Search, Eye, Loader2, RefreshCw, Plus, ChevronDown, ChevronUp, Settings2, Save, LayoutGrid, List, Zap, ShoppingCart } from "lucide-react";
+import { Package, Tag, AlertTriangle, Search, Eye, Loader2, RefreshCw, Plus, ChevronDown, ChevronUp, Settings2, Save, LayoutGrid, List, Zap, ShoppingCart, Upload, FileSpreadsheet, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -309,6 +309,9 @@ export default function UnifiedCatalogWorkspacePage() {
         </div>
       </div>
 
+      {/* Bulk Import */}
+      <BulkImportSection onImported={load} />
+
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-3">
         <button onClick={() => navigate("/admin/vendor-supply-review")} className="bg-white rounded-xl border p-4 text-left hover:shadow-md transition group" data-testid="qa-supply-review">
@@ -324,6 +327,77 @@ export default function UnifiedCatalogWorkspacePage() {
           <p className="text-xs text-slate-500">Upload a new product using the wizard</p>
         </button>
       </div>
+    </div>
+  );
+}
+
+
+function BulkImportSection({ onImported }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await api.post("/api/admin/catalog-workspace/bulk-import", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setResult(res.data);
+      toast.success(`Imported ${res.data.imported} items`);
+      onImported?.();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Import failed");
+    }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  return (
+    <div className="bg-white rounded-xl border p-4" data-testid="bulk-import-section">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <FileSpreadsheet className="w-5 h-5 text-[#D4A843]" />
+          <div>
+            <h3 className="text-sm font-bold text-[#20364D]">Bulk Import</h3>
+            <p className="text-xs text-slate-400">Upload CSV with columns: name, category, subcategory, unit_of_measurement, sku, description, active</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="/api/admin/catalog-workspace/bulk-import-template" download className="text-xs text-blue-600 hover:underline">Download Template</a>
+          <input ref={fileRef} type="file" accept=".csv,.xlsx" onChange={handleUpload} className="hidden" data-testid="import-file-input" />
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
+            data-testid="bulk-import-btn"
+          >
+            {uploading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Upload className="w-3.5 h-3.5 mr-1" />}
+            {uploading ? "Importing..." : "Upload CSV"}
+          </Button>
+        </div>
+      </div>
+      {result && (
+        <div className="mt-3 p-3 rounded-lg bg-slate-50 border text-sm" data-testid="import-result">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 text-emerald-600"><CheckCircle className="w-4 h-4" /> {result.imported} imported</div>
+            {result.skipped > 0 && <div className="flex items-center gap-1 text-amber-600"><XCircle className="w-4 h-4" /> {result.skipped} skipped</div>}
+          </div>
+          {result.errors?.length > 0 && (
+            <div className="mt-2 text-xs text-slate-500">
+              {result.errors.slice(0, 5).map((e, i) => (
+                <div key={i}>Row {e.row}: {e.error}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
