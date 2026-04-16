@@ -64,6 +64,7 @@ CATEGORY_DEFAULTS = {
     "display_mode": "visual",
     "commercial_mode": "fixed_price",
     "sourcing_mode": "preferred",
+    "category_type": "product",
     "allow_custom_items": False,
     "require_description": False,
     "show_price_in_list": True,
@@ -71,6 +72,11 @@ CATEGORY_DEFAULTS = {
     "search_first": False,
     "show_on_marketplace": True,
     "require_images": True,
+    "requires_site_visit": False,
+    "site_visit_optional": False,
+    "installment_payments": False,
+    "installment_split": "60/40",
+    "related_services": [],
     "active": True,
 }
 
@@ -97,10 +103,13 @@ async def update_category_config(cat_name: str, payload: dict, request: Request)
     updated = False
     updated_fields = []
     allowed_fields = {
-        "display_mode", "commercial_mode", "sourcing_mode",
+        "display_mode", "commercial_mode", "sourcing_mode", "category_type",
         "allow_custom_items", "require_description", "show_price_in_list",
         "multi_item_request", "search_first", "show_on_marketplace",
         "require_images", "active",
+        "requires_site_visit", "site_visit_optional",
+        "installment_payments", "installment_split",
+        "related_services", "subcategories",
     }
     for cat in normalized:
         if cat.get("name", "").lower() == cat_name.lower():

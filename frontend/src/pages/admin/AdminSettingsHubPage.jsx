@@ -1994,11 +1994,18 @@ function CategoryConfigRow({ cat, onSaved }) {
         display_mode: local.display_mode,
         commercial_mode: local.commercial_mode,
         sourcing_mode: local.sourcing_mode,
+        category_type: local.category_type,
         allow_custom_items: local.allow_custom_items,
         require_description: local.require_description,
         show_price_in_list: local.show_price_in_list,
         multi_item_request: local.multi_item_request,
         search_first: local.search_first,
+        requires_site_visit: local.requires_site_visit,
+        site_visit_optional: local.site_visit_optional,
+        installment_payments: local.installment_payments,
+        installment_split: local.installment_split,
+        related_services: local.related_services,
+        subcategories: local.subcategories,
       });
       setDirty(false);
       onSaved?.();
@@ -2015,10 +2022,13 @@ function CategoryConfigRow({ cat, onSaved }) {
       <button onClick={() => setExpanded(!expanded)} className="w-full p-3 flex items-center justify-between text-left">
         <div>
           <span className="text-sm font-semibold text-[#20364D]">{cat.name}</span>
-          <div className="flex gap-1 mt-1">
+          <div className="flex gap-1 mt-1 flex-wrap">
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{local.category_type === "service" ? "Service" : "Product"}</span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{MODES[local.display_mode] || "Visual"}</span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">{COMMERCIAL[local.commercial_mode] || "Fixed Price"}</span>
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{SOURCING[local.sourcing_mode] || "Single"}</span>
+            {local.requires_site_visit && <span className="text-[9px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-600">Site Visit</span>}
+            {local.installment_payments && <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-50 text-cyan-600">Installments</span>}
             {dirty && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Unsaved</span>}
           </div>
         </div>
@@ -2026,7 +2036,15 @@ function CategoryConfigRow({ cat, onSaved }) {
       </button>
       {expanded && (
         <div className="px-3 pb-3 border-t pt-3 space-y-3">
-          <div className="grid sm:grid-cols-3 gap-3">
+          {/* Core */}
+          <div className="grid sm:grid-cols-4 gap-3">
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Category Type</label>
+              <select value={local.category_type || "product"} onChange={(e) => upd("category_type", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="product">Product</option>
+                <option value="service">Service</option>
+              </select>
+            </div>
             <div>
               <label className="text-[10px] font-semibold text-slate-500 uppercase">Display Mode</label>
               <select value={local.display_mode || "visual"} onChange={(e) => upd("display_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
@@ -2037,19 +2055,20 @@ function CategoryConfigRow({ cat, onSaved }) {
             <div>
               <label className="text-[10px] font-semibold text-slate-500 uppercase">Commercial Mode</label>
               <select value={local.commercial_mode || "fixed_price"} onChange={(e) => upd("commercial_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
-                <option value="fixed_price">Fixed Price (user sees price)</option>
-                <option value="request_quote">Request Quote (no price shown)</option>
-                <option value="hybrid">Hybrid (indicative price + quote)</option>
+                <option value="fixed_price">Fixed Price</option>
+                <option value="request_quote">Request Quote</option>
+                <option value="hybrid">Hybrid</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] font-semibold text-slate-500 uppercase">Sourcing Mode</label>
               <select value={local.sourcing_mode || "preferred"} onChange={(e) => upd("sourcing_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
                 <option value="preferred">Single Vendor</option>
-                <option value="competitive">Competitive Quoting</option>
+                <option value="competitive">Competitive</option>
               </select>
             </div>
           </div>
+          {/* Toggles */}
           <div className="grid sm:grid-cols-2 gap-2 text-sm">
             {[
               ["allow_custom_items", "Allow Custom Items", "Users can add items not in the list"],
@@ -2057,12 +2076,57 @@ function CategoryConfigRow({ cat, onSaved }) {
               ["show_price_in_list", "Show Price in List", "Display prices in item list"],
               ["multi_item_request", "Multi-item Request", "Multiple items in one quote"],
               ["search_first", "Search-first Mode", "Prioritize search over browsing"],
+              ["requires_site_visit", "Requires Site Visit", "Service requires on-site assessment before quoting"],
+              ["site_visit_optional", "Site Visit Optional", "User can choose whether site visit is needed"],
+              ["installment_payments", "Allow Installment Payments", "Split payment (e.g., 60% upfront, 40% on delivery)"],
             ].map(([key, label, help]) => (
               <label key={key} className="flex items-center gap-2 py-1 cursor-pointer">
                 <input type="checkbox" checked={local[key] ?? (key === "show_price_in_list" || key === "multi_item_request")} onChange={(e) => upd(key, e.target.checked)} className="rounded" />
                 <div><div className="text-xs font-medium">{label}</div><div className="text-[10px] text-slate-400">{help}</div></div>
               </label>
             ))}
+          </div>
+          {/* Installment split */}
+          {local.installment_payments && (
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Installment Split</label>
+              <select value={local.installment_split || "60/40"} onChange={(e) => upd("installment_split", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="50/50">50% upfront / 50% on delivery</option>
+                <option value="60/40">60% upfront / 40% on delivery</option>
+                <option value="70/30">70% upfront / 30% on delivery</option>
+                <option value="100/0">100% upfront (full payment)</option>
+              </select>
+            </div>
+          )}
+          {/* Related Services (product→service cross-sell) */}
+          {local.category_type === "product" && (
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Related Customization Services</label>
+              <p className="text-[10px] text-slate-400 mb-1">Link to service categories for "Customize this" CTA on products</p>
+              <input type="text" placeholder="Type service category name + Enter..." className="w-full border rounded-lg px-3 py-2 text-xs"
+                onKeyDown={(e) => { if (e.key === "Enter" && e.target.value.trim()) { upd("related_services", [...(local.related_services || []), e.target.value.trim()]); e.target.value = ""; } }}
+              />
+              <div className="flex flex-wrap gap-1 mt-1">
+                {(local.related_services || []).map((s, si) => (
+                  <span key={si} className="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded flex items-center gap-1">
+                    {s} <button onClick={() => { const rs = [...(local.related_services || [])]; rs.splice(si, 1); upd("related_services", rs); }} className="text-purple-400 hover:text-red-500">&times;</button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Subcategories */}
+          <div>
+            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">Subcategories</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {(local.subcategories || []).map((sub, si) => (
+                <span key={si} className="text-xs bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                  {sub} <button onClick={() => { const u = [...(local.subcategories || [])]; u.splice(si, 1); upd("subcategories", u); }} className="text-slate-400 hover:text-red-500">&times;</button>
+                </span>
+              ))}
+              {(!local.subcategories || local.subcategories.length === 0) && <span className="text-xs text-slate-400">No subcategories</span>}
+            </div>
+            <input type="text" placeholder="Add subcategory + Enter" className="h-8 rounded-lg border px-3 text-xs w-full" onKeyDown={(e) => { if (e.key === "Enter" && e.target.value.trim()) { upd("subcategories", [...(local.subcategories || []), e.target.value.trim()]); e.target.value = ""; } }} />
           </div>
           <div className="flex justify-end">
             <button onClick={save} disabled={!dirty || saving} className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#D4A843] text-[#17283C] hover:bg-[#c49a3d] disabled:opacity-40" data-testid={`save-cat-${cat.name?.replace(/\s/g, "-")}`}>
