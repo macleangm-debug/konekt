@@ -683,21 +683,30 @@ async def get_quote(quote_id: str):
 @router.patch("/quotes/{quote_id}/status")
 async def update_quote_status(quote_id: str, status: str = Query(...)):
     """Update quote status"""
-    valid_statuses = ["draft", "sent", "accepted", "rejected", "expired", "converted"]
+    valid_statuses = ["draft", "waiting_for_pricing", "ready_to_send", "sent", "accepted", "approved", "rejected", "expired", "converted"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     
     now = datetime.now(timezone.utc)
     
+    # Try ObjectId first, then string ID
+    quote_filter = {"_id": ObjectId(quote_id)} if ObjectId.is_valid(quote_id) else {"id": quote_id}
     result = await db.quotes.update_one(
-        {"_id": ObjectId(quote_id)},
+        quote_filter,
         {"$set": {"status": status, "updated_at": now.isoformat()}}
     )
     
     if result.matched_count == 0:
+        # Try quotes_v2 collection
+        result = await db.quotes_v2.update_one(
+            quote_filter,
+            {"$set": {"status": status, "updated_at": now.isoformat()}}
+        )
+    
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Quote not found")
     
-    updated = await db.quotes.find_one({"_id": ObjectId(quote_id)})
+    updated = await db.quotes.find_one(quote_filter) or await db.quotes_v2.find_one(quote_filter)
     return serialize_doc(updated)
 
 
