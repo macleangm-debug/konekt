@@ -1,0 +1,64 @@
+{
+  "summary": "Iteration 332 - Taxonomy restructure + category enhancements testing. Backend API tests: 8 passed, 1 failed, 6 skipped. Frontend UI tests: All passed. CRITICAL BUG: 25 orphan categories exist with invalid group_ids pointing to deleted groups.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/marketplace/taxonomy",
+        "issue": "25 orphan categories have invalid group_ids pointing to deleted groups. Categories like 'Office Supplies', 'Apparel', 'Printed Materials' etc. still reference old group IDs that no longer exist.",
+        "priority": "HIGH",
+        "root_cause": "sync_settings_categories_to_taxonomy() deletes old standalone groups but doesn't clean up or reassign categories that were linked to them",
+        "affected_file": "/app/backend/services/catalog_taxonomy_service.py lines 252-258"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_taxonomy_restructure_v332.py",
+    "/app/test_reports/pytest/pytest_results_v332.xml"
+  ],
+  "action_items": [
+    "FIX CRITICAL: Update sync_settings_categories_to_taxonomy() to either delete orphan categories or reassign them to the correct Products/Services group based on their category_type",
+    "The sync function at lines 252-258 deletes old groups but leaves categories orphaned. Need to add logic to handle orphan categories before or after deleting old groups."
+  ],
+  "critical_code_review_comments": [
+    "catalog_taxonomy_service.py: sync function has unreachable code at lines 263-264 (duplicate return statements)",
+    "catalog_taxonomy_service.py: When deleting old groups (lines 252-258), orphan categories are not handled - they retain invalid group_ids"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_taxonomy_restructure_v332.py"
+  ],
+  "success_rate": {
+    "backend": "53% (8/15 tests passed, 6 skipped due to rate limiting, 1 failed)",
+    "frontend": "100% (all UI verifications passed)"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Taxonomy restructure partially complete. 2 top-level groups (Products, Services) exist correctly. However, 25 categories have orphan group_ids from deleted groups. The sync function needs to be fixed to handle orphan categories.",
+  "features_verified": {
+    "taxonomy_two_groups": "PASSED - GET /api/marketplace/taxonomy returns exactly 2 groups: Products and Services",
+    "no_test_entries_groups": "PASSED - No TEST_ entries in taxonomy groups",
+    "no_test_entries_categories": "PASSED - No TEST_ entries in taxonomy categories",
+    "categories_valid_group_ids": "FAILED - 25 categories have invalid group_ids pointing to deleted groups",
+    "products_group_type": "PASSED - Products group has type='product'",
+    "services_group_type": "PASSED - Services group has type='service'",
+    "no_old_standalone_groups": "PASSED - Old standalone groups (Office Supplies, Printing & Stationery, Promotional Items) removed",
+    "category_update_fulfillment_type": "PASSED (via UI) - PUT /api/admin/catalog-workspace/categories/{name} accepts fulfillment_type",
+    "settings_hub_fulfillment_dropdown": "PASSED - UI shows Fulfillment Type dropdown with options (delivery_pickup, delivery_only, pickup_only, digital, on_site)",
+    "settings_hub_category_type_dropdown": "PASSED - UI shows Category Type dropdown (Product/Service)",
+    "sidebar_operations_label": "PASSED - Sidebar shows 'Operations' not 'Vendor Ops'",
+    "invoices_no_create_button": "PASSED - Invoices page has no 'Create Invoice' button"
+  },
+  "orphan_categories_detail": {
+    "count": 25,
+    "examples": ["Office Supplies", "Apparel", "Printed Materials", "Printers", "Stationery", "Bags", "Display Materials", "Laptops", "Desk Organizers", "Caps"],
+    "valid_categories_under_products": 12,
+    "valid_categories_under_services": 1
+  }
+}

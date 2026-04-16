@@ -77,6 +77,7 @@ CATEGORY_DEFAULTS = {
     "installment_payments": False,
     "installment_split": "60/40",
     "related_services": [],
+    "fulfillment_type": "delivery_pickup",
     "active": True,
 }
 
@@ -109,7 +110,7 @@ async def update_category_config(cat_name: str, payload: dict, request: Request)
         "require_images", "active",
         "requires_site_visit", "site_visit_optional",
         "installment_payments", "installment_split",
-        "related_services", "subcategories",
+        "related_services", "subcategories", "fulfillment_type",
     }
     for cat in normalized:
         if cat.get("name", "").lower() == cat_name.lower():

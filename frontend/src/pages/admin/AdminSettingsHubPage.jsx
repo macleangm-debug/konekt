@@ -2086,6 +2086,18 @@ function CategoryConfigRow({ cat, onSaved }) {
               </label>
             ))}
           </div>
+          {/* Fulfillment type */}
+          <div>
+            <label className="text-[10px] font-semibold text-slate-500 uppercase">Fulfillment Type</label>
+            <select value={local.fulfillment_type || "delivery_pickup"} onChange={(e) => upd("fulfillment_type", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="delivery_pickup">Delivery or Pickup</option>
+              <option value="delivery_only">Delivery Only</option>
+              <option value="pickup_only">Pickup Only</option>
+              <option value="digital">Digital / Non-physical</option>
+              <option value="on_site">On-site Service</option>
+            </select>
+            <p className="text-[10px] text-slate-400 mt-0.5">How this category's orders are fulfilled</p>
+          </div>
           {/* Installment split */}
           {local.installment_payments && (
             <div>

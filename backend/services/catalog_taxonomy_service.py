@@ -168,57 +168,71 @@ async def get_taxonomy_tree(db, market_code="TZ"):
 async def sync_settings_categories_to_taxonomy(db):
     """Sync product categories from Settings Hub to the taxonomy collections.
     
-    This ensures the marketplace shows what's configured in Settings Hub.
-    Categories from Settings Hub become catalog_groups (top-level).
-    Subcategories become catalog_categories under their parent group.
+    Hierarchy:
+      - catalog_groups: "Products" and "Services" (top-level)
+      - catalog_categories: actual category names under their group
+      - catalog_subcategories: subcategories under each category
     """
     hub = await db.admin_settings.find_one({"key": "settings_hub"})
     if not hub or not hub.get("value"):
         return {"synced": 0}
 
     cats = hub["value"].get("catalog", {}).get("product_categories", [])
-    synced = 0
 
+    # Ensure top-level groups exist: Products and Services
+    for gname, gtype in [("Products", "product"), ("Services", "service")]:
+        exists = await db.catalog_groups.find_one({"name": gname, "type": gtype})
+        if not exists:
+            await db.catalog_groups.insert_one({
+                "id": _id(), "market_code": "TZ", "type": gtype,
+                "name": gname, "slug": gname.lower(), "is_active": True,
+                "sort_order": 0 if gtype == "product" else 1, "created_at": _now(),
+            })
+
+    products_group = await db.catalog_groups.find_one({"name": "Products", "type": "product"})
+    services_group = await db.catalog_groups.find_one({"name": "Services", "type": "service"})
+    products_gid = products_group["id"] if products_group else None
+    services_gid = services_group["id"] if services_group else None
+
+    synced = 0
     for cat_data in cats:
         if isinstance(cat_data, str):
             cat_name = cat_data
             subcategories = []
-            display_mode = "visual"
-            commercial_mode = "fixed_price"
+            cat_type = "product"
+            fulfillment_type = "delivery_pickup"
         else:
             cat_name = cat_data.get("name", "")
             subcategories = cat_data.get("subcategories", [])
-            display_mode = cat_data.get("display_mode", "visual")
-            commercial_mode = cat_data.get("commercial_mode", "fixed_price")
+            cat_type = cat_data.get("category_type", "product")
+            fulfillment_type = cat_data.get("fulfillment_type", "delivery_pickup")
 
         if not cat_name:
             continue
 
-        # Upsert as catalog_group
-        existing = await db.catalog_groups.find_one({"name": cat_name})
-        if existing:
-            await db.catalog_groups.update_one(
-                {"name": cat_name},
+        parent_gid = services_gid if cat_type == "service" else products_gid
+
+        # Upsert as catalog_category under the right group
+        existing_cat = await db.catalog_categories.find_one({"name": cat_name, "group_id": parent_gid})
+        if existing_cat:
+            await db.catalog_categories.update_one(
+                {"_id": existing_cat["_id"]},
                 {"$set": {
                     "is_active": cat_data.get("active", True) if isinstance(cat_data, dict) else True,
-                    "display_mode": display_mode,
-                    "commercial_mode": commercial_mode,
+                    "category_type": cat_type,
+                    "fulfillment_type": fulfillment_type,
                 }}
             )
-            group_id = existing.get("id")
+            cat_id = existing_cat.get("id")
         else:
-            group_id = _id()
-            await db.catalog_groups.insert_one({
-                "id": group_id,
-                "market_code": "TZ",
-                "type": "service" if display_mode == "list_quote" else "product",
+            cat_id = _id()
+            await db.catalog_categories.insert_one({
+                "id": cat_id, "group_id": parent_gid,
                 "name": cat_name,
                 "slug": cat_name.lower().replace(" & ", "-").replace(" ", "-"),
-                "is_active": True,
-                "display_mode": display_mode,
-                "commercial_mode": commercial_mode,
-                "sort_order": synced,
-                "created_at": _now(),
+                "is_active": True, "category_type": cat_type,
+                "fulfillment_type": fulfillment_type,
+                "sort_order": synced, "created_at": _now(),
             })
         synced += 1
 
@@ -226,17 +240,25 @@ async def sync_settings_categories_to_taxonomy(db):
         for si, sub_name in enumerate(subcategories):
             if not sub_name:
                 continue
-            sub_exists = await db.catalog_categories.find_one({"name": sub_name, "group_id": group_id})
+            sub_exists = await db.catalog_subcategories.find_one({"name": sub_name, "category_id": cat_id})
             if not sub_exists:
-                await db.catalog_categories.insert_one({
-                    "id": _id(),
-                    "group_id": group_id,
+                await db.catalog_subcategories.insert_one({
+                    "id": _id(), "category_id": cat_id,
                     "name": sub_name,
                     "slug": sub_name.lower().replace(" & ", "-").replace(" ", "-"),
-                    "is_active": True,
-                    "sort_order": si,
-                    "created_at": _now(),
+                    "is_active": True, "sort_order": si, "created_at": _now(),
                 })
+
+    # Clean up old standalone groups that are now categories
+    old_groups = []
+    async for g in db.catalog_groups.find({"name": {"$nin": ["Products", "Services"]}}):
+        old_groups.append(g["_id"])
+    if old_groups:
+        await db.catalog_groups.delete_many({"_id": {"$in": old_groups}})
+        logger.info("Cleaned up %d old standalone groups", len(old_groups))
+
+    logger.info("Synced %d categories from Settings Hub to taxonomy", synced)
+    return {"synced": synced}
 
     logger.info("Synced %d categories from Settings Hub to taxonomy", synced)
     return {"synced": synced}
