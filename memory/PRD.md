@@ -3,54 +3,58 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 330 ITERATIONS, 100% PASS RATE
+## System Status: 331 ITERATIONS, 100% PASS RATE
 
 ---
 
-## LATEST CHANGES (330)
+## SERVICE FLOW CONFIGURATION — COMPLETE (331)
 
-### Vendor Ops → Operations (renamed everywhere)
-- Sidebar: "Operations" (not "Vendor Ops")
-- VendorOpsPage title: "Operations"
-- SystemItemSelector: "Request Price from Operations"
-- All user-facing text uses "Operations" — vendor details hidden from sales
+### Category Types
+- **Product**: Visual catalog, fixed/hybrid pricing, "Customize this" CTA linking to related services
+- **Service**: List & Quote, request-based, can require site visit, installment payments
 
-### Create Invoice CTA Removed
-- Invoices page: no "Create Invoice" button
-- Subtitle: "auto-generated from accepted quotes and marketplace checkout"
-- Invoices are ONLY created from: accepted quotes OR marketplace checkout
+### New Category Config Fields
+- `category_type`: product | service
+- `requires_site_visit`: boolean — service requires on-site assessment before quoting
+- `site_visit_optional`: boolean — user can choose whether site visit is needed
+- `installment_payments`: boolean — allow split payment (e.g., 60% upfront, 40% on delivery)
+- `installment_split`: "50/50" | "60/40" | "70/30" | "100/0"
+- `related_services`: array — cross-sell link from product category to service categories
 
-### Document Numbering with Country Code
-- Format: {PREFIX}-{COUNTRY}-{SEQUENCE} (e.g., QT-TZ-000001, IN-TZ-000001)
-- Configurable in Settings Hub → Document Numbering
-- use_shared_sequence: quote and invoice share same sequence number
-- Backend service: /app/backend/services/document_numbering.py
+### Service Flow (2-stage for site visit)
+1. User selects service → enters location if site visit required
+2. Request → Sales → Operations gets base price
+3. Site Visit Quote → Client accepts → Invoice → Payment → Site visit happens
+4. Operations enters actual job cost → Pricing engine calculates sell price
+5. Service Quote → Client accepts → Invoice (with installments if configured) → Payment → Fulfillment
 
-### Product Add — Subcategory from Source of Truth
-- Subcategory is dropdown from Settings Hub categories (not free text)
-- "Request new subcategory" option → admin approval queue
-- POST /api/admin/catalog/subcategory-requests
+### Product → Service Cross-Sell
+- Promotional Materials → linked to "Printing & Stationery", "Graphics & Design"
+- "Customize this" CTA on product cards links to related service categories
+- All configured in Settings Hub per category
 
-### Commission Engine — Tier Distribution Wired
-- Reads Pricing Tier distribution_split: affiliate_pct, sales_pct, referral_pct, reserve_pct
-- reserve_pct = promotion budget (year-round promotions)
-- tier_applied: true in all commission calculations
+### Data Examples
+- Printing & Stationery: service, site_visit_optional=true, installment=60/40
+  - Subcategories: Business Cards, Flyers, Banners, Screen Printing, Embroidery, DTF
+- Promotional Materials: product, related_services=[Printing, Graphics]
+  - Subcategories: T-Shirts, Caps, Mugs, Bags, Lanyards, Notebooks
 
-### Bug Fix: Quote Status Update
-- Fixed UUID vs ObjectId mismatch in admin_routes.py
-- Now handles both ObjectId and string IDs across quotes/quotes_v2 collections
-
-## ROLE SEPARATION (LOCKED)
-- **Sales**: Select customer + items + qty. Request discount. Request status from Operations. CRM task updates only.
-- **Operations**: Enter base prices, vendor follow-up, order status updates, fulfillment tracking.
-- **Admin**: Approve discounts, configure settings, approve categories.
-- **Finance**: Payment verification, commission payouts.
+## ALL SYSTEMS (complete and wired)
+- Operations (renamed from Vendor Ops) — pricing, vendor follow-up, fulfillment
+- Pricing Engine — uses Pricing Tiers (35% for 0-100K)
+- Commission Engine — tier distribution_split (affiliate, sales, referral, promotion reserve)
+- Document Numbering — QT-TZ-000001 format with country code
+- Category Config — full service/product config in Settings Hub
+- Quote → Invoice → Order (auto-generated, payment-gated)
+- CRM → Assignment → Sales pipeline
+- Marketplace CTA — "Can't find what you need?" → Requests
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 
 ## Remaining
-- Service site visit flow (location-dependent pricing)
+- Service cards UI on marketplace + in-account (collapsible, subcategory drill-down)
+- "Customize this" CTA on product pages linking to related services
+- Delivery flow (Operations updates status, client confirmation)
 - Statement of Accounts document
-- Further Operations page UI simplification
-- Sales role restriction enforcement (no status updates)
+- Sales role restriction enforcement
