@@ -62,10 +62,41 @@ async def public_list_products(
     category: Optional[str] = None,
     limit: int = Query(50, le=200),
 ):
-    """List all published/active products."""
-    query = {"is_active": True}
+    """List all published/active products with computed selling prices."""
+
+    query = {"$or": [
+        {"is_active": True},
+        {"status": {"$in": ["active", "published", "approved"]}},
+    ]}
     if category:
         query["category_name"] = {"$regex": category, "$options": "i"}
+    
+    # If text search is provided, add regex to MongoDB query for efficiency
+    if q:
+        search_regex = {"$regex": q, "$options": "i"}
+        query["$or"] = [
+            {"name": search_regex},
+            {"brand": search_regex},
+            {"sku": search_regex},
+            {"category_name": search_regex},
+            {"description": search_regex},
+        ]
+        # Combine with status/active filter using $and
+        query = {"$and": [
+            {"$or": [
+                {"is_active": True},
+                {"status": {"$in": ["active", "published", "approved"]}},
+            ]},
+            {"$or": [
+                {"name": search_regex},
+                {"brand": search_regex},
+                {"sku": search_regex},
+                {"category_name": search_regex},
+                {"description": search_regex},
+            ]}
+        ]}
+        if category:
+            query["$and"].append({"category_name": {"$regex": category, "$options": "i"}})
 
     products = []
     async for p in db.products.find(query).sort("created_at", -1).limit(limit):
@@ -76,14 +107,17 @@ async def public_list_products(
         p.pop("vendor_name", None)
         p.pop("vendor_product_code", None)
         p.pop("source_submission_id", None)
-        # Text search filter
-        if q:
-            hay = " ".join([
-                str(p.get("name", "")), str(p.get("brand", "")),
-                str(p.get("category_name", "")), str(p.get("description", "")),
-            ]).lower()
-            if q.lower() not in hay:
-                continue
+
+        # Compute selling_price from pricing engine if not set
+        if not p.get("selling_price") and p.get("base_price"):
+            try:
+                from services.pricing_engine import calculate_sell_price
+                base = float(p["base_price"])
+                result = await calculate_sell_price(db, base, category=p.get("category_name"))
+                p["selling_price"] = result.get("sell_price", base)
+            except Exception:
+                p["selling_price"] = p.get("base_price")
+
         products.append(p)
     return products
 
