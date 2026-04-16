@@ -1,0 +1,127 @@
+{
+  "summary": "Backend API tests for Quote Creation Simplification passed (13/13). Frontend testing revealed CRITICAL ISSUE: QuotesPage.jsx with SystemItemSelector is NOT wired into routes. Admin /admin/quotes uses QuotesRequestsPage (read-only list). Quote creation from CRM uses QuoteBuilderDrawer which lacks pricing_status/waiting_for_pricing handling.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "critical": [
+      {
+        "component": "QuotesPage.jsx",
+        "issue": "QuotesPage.jsx with SystemItemSelector is NOT imported or used in App.js routes. The admin /admin/quotes route uses QuotesRequestsPage instead.",
+        "priority": "CRITICAL",
+        "details": "The new QuotesPage.jsx component with SystemItemSelector exists at /app/frontend/src/pages/admin/QuotesPage.jsx but is not wired into the application routes. Users cannot access the new quote creation UI with catalog search."
+      },
+      {
+        "component": "QuoteBuilderDrawer.jsx",
+        "issue": "QuoteBuilderDrawer (used in CRM for quote creation) does not implement pricing_status or waiting_for_pricing handling",
+        "priority": "HIGH",
+        "details": "The QuoteBuilderDrawer component at /app/frontend/src/components/crm/QuoteBuilderDrawer.jsx is used for creating quotes from leads but lacks the pricing_status field and waiting_for_pricing badge functionality."
+      }
+    ],
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Quote Creation from Admin Panel",
+        "issue": "No direct 'Create Quote' button on /admin/quotes page - QuotesRequestsPage is read-only",
+        "affected_selectors": ["[data-testid='create-quote-btn']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_quote_creation_simplification_v321.py",
+    "/app/test_reports/pytest/pytest_results_quote_simplification_v321.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Wire QuotesPage.jsx into App.js routes - replace QuotesRequestsPage with QuotesPage at /admin/quotes route OR add a new route for the new quote creation UI",
+    "HIGH: Add pricing_status field handling to QuoteBuilderDrawer.jsx for CRM quote creation flow",
+    "HIGH: Add 'Waiting for pricing' amber badge to QuoteBuilderDrawer when items have zero price",
+    "MEDIUM: Disable 'Create Quote' button in QuoteBuilderDrawer when items have waiting_for_pricing status"
+  ],
+  "critical_code_review_comments": [
+    "QuotesPage.jsx exists with SystemItemSelector but is NOT used in routes - dead code",
+    "App.js line 640: Route path='quotes' uses QuotesRequestsPage, not QuotesPage",
+    "QuoteBuilderDrawer.jsx does not track pricing_status field in line items",
+    "Backend API correctly supports pricing_status field and waiting_for_pricing status",
+    "Backend status transitions (waiting_for_pricing → ready_to_send → sent → approved) work correctly",
+    "Quote approval correctly auto-generates Invoice + Order"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_quote_creation_simplification_v321.py"
+  ],
+  "success_rate": {
+    "backend": "100% (13/13 tests passed)",
+    "frontend": "0% - QuotesPage with SystemItemSelector not accessible via routes"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Test quotes created during backend testing with TEST_ prefix",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend APIs for quote creation with pricing_status work correctly. The main issue is frontend routing - QuotesPage.jsx with SystemItemSelector is not wired into App.js. The current /admin/quotes route uses QuotesRequestsPage (read-only list view). Quote creation from CRM uses QuoteBuilderDrawer which lacks pricing_status handling. Main agent needs to: 1) Add QuotesPage to routes, 2) Update QuoteBuilderDrawer with pricing_status support.",
+  "tests_executed": {
+    "backend_api_tests": [
+      "GET /api/public-marketplace/products?q=test returns 200 - PASSED",
+      "Product search returns array with required fields - PASSED",
+      "POST /api/admin/quotes-v2 with priced items creates draft quote - PASSED",
+      "POST /api/admin/quotes-v2 with waiting_for_pricing items creates waiting_for_pricing quote - PASSED",
+      "PATCH status transition draft → ready_to_send - PASSED",
+      "PATCH status transition ready_to_send → sent - PASSED",
+      "PATCH status transition sent → approved auto-generates Invoice + Order - PASSED",
+      "PATCH status transition waiting_for_pricing → ready_to_send - PASSED",
+      "Valid statuses accepted - PASSED",
+      "Invalid status rejected with 400 - PASSED",
+      "GET /api/admin/quotes-v2 list quotes - PASSED",
+      "GET /api/admin/quotes-v2/{id} get quote by ID - PASSED"
+    ],
+    "frontend_ui_tests": [
+      "/admin/quotes loads QuotesRequestsPage (read-only list) - VERIFIED",
+      "QuotesPage.jsx with SystemItemSelector NOT accessible via routes - ISSUE FOUND",
+      "CRM page quote creation uses QuoteBuilderDrawer - VERIFIED",
+      "QuoteBuilderDrawer has product catalog search - VERIFIED",
+      "QuoteBuilderDrawer lacks pricing_status handling - ISSUE FOUND"
+    ]
+  },
+  "features_verified": {
+    "backend_quote_creation_with_pricing_status": {
+      "status": "VERIFIED",
+      "endpoint": "POST /api/admin/quotes-v2",
+      "details": "Accepts line_items with pricing_status field. Quote status set to waiting_for_pricing when items have that status."
+    },
+    "backend_status_transitions": {
+      "status": "VERIFIED",
+      "endpoint": "PATCH /api/admin/quotes-v2/{id}/status",
+      "details": "All transitions work: draft, waiting_for_pricing, ready_to_send, sent, approved, rejected, expired, converted"
+    },
+    "backend_quote_approval_auto_generation": {
+      "status": "VERIFIED",
+      "details": "Quote approval auto-generates Invoice + Order with generated_invoice and generated_order in response"
+    },
+    "frontend_system_item_selector": {
+      "status": "NOT ACCESSIBLE",
+      "details": "QuotesPage.jsx with SystemItemSelector exists but is not wired into routes"
+    },
+    "frontend_waiting_for_pricing_badge": {
+      "status": "NOT IMPLEMENTED",
+      "details": "QuoteBuilderDrawer does not show amber 'Waiting for pricing' badge for items with zero price"
+    },
+    "frontend_send_button_disabled": {
+      "status": "NOT TESTABLE",
+      "details": "Cannot test Send button disabled state since QuotesPage is not accessible"
+    }
+  },
+  "route_analysis": {
+    "current_admin_quotes_route": {
+      "path": "/admin/quotes",
+      "component": "QuotesRequestsPage",
+      "file": "/app/frontend/src/pages/admin/QuotesRequestsPage.jsx",
+      "issue": "Read-only list view, no Create Quote functionality"
+    },
+    "unused_quotes_page": {
+      "component": "QuotesPage",
+      "file": "/app/frontend/src/pages/admin/QuotesPage.jsx",
+      "features": ["SystemItemSelector", "Create Quote form", "pricing_status handling", "waiting_for_pricing badge"],
+      "issue": "NOT imported or used in App.js"
+    }
+  }
+}

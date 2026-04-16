@@ -7,6 +7,8 @@ from datetime import datetime
 
 QuoteStatus = Literal[
     "draft",
+    "waiting_for_pricing",
+    "ready_to_send",
     "sent",
     "approved",
     "rejected",
@@ -89,6 +91,10 @@ class QuoteLineItem(BaseModel):
     promo_discount_per_unit: Optional[float] = None
     subtotal: Optional[float] = None
     category_name: Optional[str] = None
+    # Pricing status for source-of-truth enforcement
+    pricing_status: Optional[str] = None  # "priced" | "waiting_for_pricing"
+    vendor_cost: Optional[float] = None
+    unit_of_measurement: Optional[str] = None
 
 
 class QuoteCreate(BaseModel):

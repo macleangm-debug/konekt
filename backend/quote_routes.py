@@ -220,7 +220,7 @@ async def update_quote_status(quote_id: str, status: str = Query(...), triggered
     When status = 'approved': auto-generates Invoice + Order (pending_payment).
     This is the CANONICAL commercial flow: Quote → Invoice + Order.
     """
-    valid_statuses = ["draft", "sent", "approved", "rejected", "expired", "converted"]
+    valid_statuses = ["draft", "waiting_for_pricing", "ready_to_send", "sent", "approved", "rejected", "expired", "converted"]
     if status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
     

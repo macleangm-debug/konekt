@@ -6,12 +6,15 @@ import CustomerSummaryCard from "@/components/admin/CustomerSummaryCard";
 import PaymentTermsCard from "@/components/admin/PaymentTermsCard";
 import TaxSummaryCard from "@/components/admin/TaxSummaryCard";
 import LineItemsEditor from "@/components/admin/LineItemsEditor";
+import SystemItemSelector from "@/components/admin/SystemItemSelector";
 import PhoneNumberField from "@/components/forms/PhoneNumberField";
 import { safeDisplay } from "@/utils/safeDisplay";
 
-const quoteStatuses = ["draft", "sent", "approved", "rejected", "expired", "converted"];
+const quoteStatuses = ["draft", "waiting_for_pricing", "ready_to_send", "sent", "approved", "rejected", "expired", "converted"];
 const statusColors = {
   draft: "bg-slate-100 text-slate-700",
+  waiting_for_pricing: "bg-amber-100 text-amber-700",
+  ready_to_send: "bg-teal-100 text-teal-700",
   sent: "bg-blue-100 text-blue-700",
   approved: "bg-green-100 text-green-700",
   rejected: "bg-red-100 text-red-700",
@@ -46,9 +49,7 @@ export default function QuotesPage() {
     terms: "",
   });
 
-  const [lineItems, setLineItems] = useState([
-    { sku: "", description: "", quantity: 1, unit_price: 0, total: 0 },
-  ]);
+  const [lineItems, setLineItems] = useState([]);
 
   const [discount, setDiscount] = useState(0);
 
@@ -127,13 +128,29 @@ export default function QuotesPage() {
   const createQuote = async (e) => {
     e.preventDefault();
 
+    if (lineItems.length === 0) {
+      alert("Add at least one item from the system catalog");
+      return;
+    }
+
+    // Determine status based on pricing completeness
+    const waitingForPricing = lineItems.some((i) => i.pricing_status === "waiting_for_pricing");
+    const quoteStatus = waitingForPricing ? "waiting_for_pricing" : "draft";
+
     const payload = {
       ...form,
       line_items: lineItems.map((item) => ({
-        description: item.description,
+        description: item.description || item.name,
+        name: item.name,
+        product_id: item.product_id,
+        sku: item.sku,
+        category: item.category,
+        unit_of_measurement: item.unit_of_measurement,
         quantity: Number(item.quantity),
         unit_price: Number(item.unit_price),
         total: Number(item.total),
+        pricing_status: item.pricing_status || "priced",
+        vendor_cost: item.vendor_cost || 0,
       })),
       subtotal: totals.subtotal,
       discount: totals.discount,
@@ -147,7 +164,7 @@ export default function QuotesPage() {
       payment_term_days: selectedCustomer?.payment_term_days || 0,
       payment_term_label: selectedCustomer?.payment_term_label || "Due on Receipt",
       payment_term_notes: selectedCustomer?.payment_term_notes || "",
-      status: "draft",
+      status: quoteStatus,
     };
 
     try {
@@ -169,7 +186,7 @@ export default function QuotesPage() {
         notes: "",
         terms: "",
       });
-      setLineItems([{ sku: "", description: "", quantity: 1, unit_price: 0, total: 0 }]);
+      setLineItems([]);
       setDiscount(0);
       setShowForm(false);
       load();
@@ -307,11 +324,10 @@ export default function QuotesPage() {
                 </div>
               </div>
 
-              {/* Line Items */}
-              <LineItemsEditor
+              {/* Line Items — System Items Only */}
+              <SystemItemSelector
                 items={lineItems}
                 setItems={setLineItems}
-                onFetchPricing={fetchPricing}
                 currency={form.currency}
               />
 
@@ -492,7 +508,9 @@ export default function QuotesPage() {
                                 <button
                                   type="button"
                                   onClick={() => sendQuote(quote.id)}
-                                  className="rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-slate-100"
+                                  disabled={quote.status === "waiting_for_pricing"}
+                                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${quote.status === "waiting_for_pricing" ? "opacity-40 cursor-not-allowed" : "hover:bg-slate-100"}`}
+                                  title={quote.status === "waiting_for_pricing" ? "Cannot send — items still waiting for pricing" : "Send quote to customer"}
                                   data-testid={`quote-send-${quote.id}`}
                                 >
                                   Send
