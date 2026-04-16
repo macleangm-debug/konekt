@@ -1,20 +1,28 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Search, Plus, Trash2, Loader2, AlertTriangle, Package, Check } from "lucide-react";
+import { Search, Plus, Trash2, Loader2, AlertTriangle, Package, Check, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import api from "@/lib/api";
 
 const money = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
 
 /**
  * SystemItemSelector — Source-of-truth line item editor for quotes.
- * Items MUST come from system catalog. No free-text entry.
- * Respects category config for pricing visibility.
+ * 
+ * RULES:
+ * - Items MUST come from system catalog. No free-text.
+ * - Sales CANNOT edit prices. Prices come from pricing engine only.
+ * - Sales can ONLY change quantity.
+ * - If item has no price → "Request Price" sends to Vendor Ops.
+ * - Quote cannot be sent until all items are priced.
  */
 export default function SystemItemSelector({ items, setItems, currency = "TZS" }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [requestingPrice, setRequestingPrice] = useState(null);
   const searchRef = useRef(null);
   const timerRef = useRef(null);
 
@@ -42,8 +50,8 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
         i.product_id === product.id ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.unit_price } : i
       ));
     } else {
-      const price = Number(product.selling_price || product.price || 0);
-      const hasPricing = price > 0;
+      const sellPrice = Number(product.selling_price || product.price || 0);
+      const hasPricing = sellPrice > 0;
       setItems([...items, {
         product_id: product.id,
         name: product.name || "",
@@ -52,8 +60,8 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
         category: product.category || product.category_name || "",
         unit_of_measurement: product.unit_of_measurement || "Piece",
         quantity: 1,
-        unit_price: price,
-        total: price,
+        unit_price: sellPrice,
+        total: sellPrice,
         has_pricing: hasPricing,
         pricing_status: hasPricing ? "priced" : "waiting_for_pricing",
         vendor_cost: Number(product.vendor_cost || product.base_price || 0),
@@ -71,18 +79,34 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
     ));
   };
 
-  const updatePrice = (idx, price) => {
-    const p = Number(price) || 0;
-    setItems(items.map((item, i) =>
-      i === idx ? { ...item, unit_price: p, total: item.quantity * p, has_pricing: p > 0, pricing_status: p > 0 ? "priced" : "waiting_for_pricing" } : item
-    ));
-  };
-
   const removeItem = (idx) => {
     setItems(items.filter((_, i) => i !== idx));
   };
 
-  const waitingCount = items.filter((i) => i.pricing_status === "waiting_for_pricing").length;
+  const requestPrice = async (idx) => {
+    const item = items[idx];
+    setRequestingPrice(idx);
+    try {
+      await api.post("/api/vendor-ops/price-requests", {
+        product_id: item.product_id,
+        product_name: item.name,
+        category: item.category,
+        unit_of_measurement: item.unit_of_measurement,
+        quantity_needed: item.quantity,
+        request_type: "quote_pricing",
+        notes: `Price needed for quote. Product: ${item.name}, Qty: ${item.quantity} ${item.unit_of_measurement}`,
+      });
+      setItems(items.map((it, i) =>
+        i === idx ? { ...it, pricing_status: "requested_from_vendor_ops" } : it
+      ));
+      toast.success(`Price request sent to Vendor Ops for "${item.name}"`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to send price request");
+    }
+    setRequestingPrice(null);
+  };
+
+  const waitingCount = items.filter((i) => i.pricing_status !== "priced").length;
 
   return (
     <div className="rounded-2xl border bg-white p-5" data-testid="system-item-selector">
@@ -98,7 +122,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
           className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50 transition-colors"
           data-testid="add-system-item-btn"
         >
-          <Plus className="w-4 h-4" /> Add Item
+          <Plus className="w-4 h-4" /> Add Item from Catalog
         </button>
       </div>
 
@@ -107,7 +131,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
         <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 mb-4" data-testid="pricing-warning">
           <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
           <div className="text-sm text-amber-800">
-            <strong>{waitingCount} item{waitingCount > 1 ? "s" : ""}</strong> waiting for pricing from Vendor Ops. Quote cannot be sent until all prices are set.
+            <strong>{waitingCount} item{waitingCount > 1 ? "s" : ""}</strong> need pricing. Send price requests to Vendor Ops or wait for pricing to complete. Quote cannot be sent until all items are priced.
           </div>
         </div>
       )}
@@ -155,7 +179,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
                         {price > 0 ? (
                           <span className="text-sm font-semibold text-emerald-600">{money(price)}</span>
                         ) : (
-                          <Badge className="bg-amber-100 text-amber-700 text-[9px]">Quote</Badge>
+                          <Badge className="bg-amber-100 text-amber-700 text-[9px]">Needs Pricing</Badge>
                         )}
                         {alreadyAdded && <Check className="w-4 h-4 text-green-500" />}
                       </div>
@@ -166,12 +190,13 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
             </div>
           )}
           {query.length >= 2 && !searching && results.length === 0 && (
-            <div className="mt-2 text-center py-4 text-sm text-slate-400">No products found for "{query}"</div>
+            <div className="mt-2 text-center py-4 text-sm text-slate-400">
+              No products found for "{query}".
+              <span className="block text-xs mt-1">If the item doesn't exist, Vendor Ops needs to add it to the catalog first.</span>
+            </div>
           )}
           <div className="mt-2 flex justify-end">
-            <button type="button" onClick={() => { setShowSearch(false); setQuery(""); setResults([]); }} className="text-xs text-slate-500 hover:text-slate-700">
-              Close search
-            </button>
+            <button type="button" onClick={() => { setShowSearch(false); setQuery(""); setResults([]); }} className="text-xs text-slate-500 hover:text-slate-700">Close search</button>
           </div>
         </div>
       )}
@@ -180,64 +205,82 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
       {items.length === 0 ? (
         <div className="text-center py-8 text-slate-400" data-testid="empty-items">
           <Package className="w-10 h-10 mx-auto mb-2 text-slate-200" />
-          <p className="text-sm">No items added. Click "Add Item" to search from the catalog.</p>
-          <p className="text-xs text-slate-300 mt-1">All items must come from the system catalog.</p>
+          <p className="text-sm">No items added. Click "Add Item from Catalog" to search products.</p>
+          <p className="text-xs text-slate-300 mt-1">All items and prices come from the system. Sales only sets quantity.</p>
         </div>
       ) : (
         <div className="space-y-3" data-testid="line-items-list">
-          {items.map((item, idx) => (
-            <div
-              key={item.product_id || idx}
-              className={`rounded-xl border p-4 ${item.pricing_status === "waiting_for_pricing" ? "border-amber-200 bg-amber-50/50" : "border-slate-200 bg-slate-50"}`}
-              data-testid={`quote-line-item-${idx}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#20364D]">{item.name}</span>
-                    {item.sku && <span className="text-[10px] text-slate-400">SKU: {item.sku}</span>}
-                    {item.pricing_status === "waiting_for_pricing" && (
-                      <Badge className="bg-amber-100 text-amber-700 text-[8px]" data-testid={`waiting-badge-${idx}`}>Waiting for pricing</Badge>
-                    )}
+          {items.map((item, idx) => {
+            const needsPrice = item.pricing_status !== "priced";
+            const requested = item.pricing_status === "requested_from_vendor_ops";
+            return (
+              <div
+                key={item.product_id || idx}
+                className={`rounded-xl border p-4 ${needsPrice ? "border-amber-200 bg-amber-50/50" : "border-slate-200 bg-slate-50"}`}
+                data-testid={`quote-line-item-${idx}`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold text-[#20364D]">{item.name}</span>
+                      {item.sku && <span className="text-[10px] text-slate-400">SKU: {item.sku}</span>}
+                      {item.pricing_status === "priced" && <Badge className="bg-emerald-100 text-emerald-700 text-[8px]">Priced</Badge>}
+                      {item.pricing_status === "waiting_for_pricing" && <Badge className="bg-amber-100 text-amber-700 text-[8px]">Needs Pricing</Badge>}
+                      {requested && <Badge className="bg-blue-100 text-blue-700 text-[8px]">Sent to Vendor Ops</Badge>}
+                    </div>
+                    {item.category && <div className="text-[10px] text-slate-400 mt-0.5">{item.category} / {item.unit_of_measurement || "Piece"}</div>}
                   </div>
-                  {item.category && <div className="text-[10px] text-slate-400 mt-0.5">{item.category} / {item.unit_of_measurement || "Piece"}</div>}
+                  <button type="button" onClick={() => removeItem(idx)} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition" data-testid={`remove-item-${idx}`}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button type="button" onClick={() => removeItem(idx)} className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition" data-testid={`remove-item-${idx}`}>
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-3">
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">Qty</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => updateQty(idx, e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm text-center bg-white"
-                    data-testid={`item-qty-${idx}`}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">Unit Price ({currency})</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={item.unit_price}
-                    onChange={(e) => updatePrice(idx, e.target.value)}
-                    className={`w-full border rounded-lg px-3 py-2 text-sm text-right ${item.pricing_status === "waiting_for_pricing" ? "border-amber-300 bg-amber-50" : "bg-white"}`}
-                    data-testid={`item-price-${idx}`}
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-500 block mb-0.5">Total</label>
-                  <div className="border rounded-lg px-3 py-2 text-sm text-right font-medium bg-slate-100">
-                    {money(item.total)}
+
+                <div className="grid grid-cols-3 gap-3 mt-3">
+                  <div>
+                    <label className="text-[10px] text-slate-500 block mb-0.5">Quantity</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={item.quantity}
+                      onChange={(e) => updateQty(idx, e.target.value)}
+                      className="w-full border rounded-lg px-3 py-2 text-sm text-center bg-white"
+                      data-testid={`item-qty-${idx}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 block mb-0.5">Unit Price ({currency})</label>
+                    <div className={`border rounded-lg px-3 py-2 text-sm text-right font-medium ${needsPrice ? "bg-amber-50 border-amber-200 text-amber-700" : "bg-slate-100 text-[#20364D]"}`} data-testid={`item-price-${idx}`}>
+                      {needsPrice ? "Pending" : money(item.unit_price)}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 block mb-0.5">Total</label>
+                    <div className="border rounded-lg px-3 py-2 text-sm text-right font-medium bg-slate-100">
+                      {needsPrice ? "\u2014" : money(item.total)}
+                    </div>
                   </div>
                 </div>
+
+                {/* Request Price button — only for items needing pricing */}
+                {item.pricing_status === "waiting_for_pricing" && (
+                  <div className="mt-3 flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => requestPrice(idx)}
+                      disabled={requestingPrice === idx}
+                      className="text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                      data-testid={`request-price-${idx}`}
+                    >
+                      {requestingPrice === idx ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
+                      Request Price from Vendor Ops
+                    </Button>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
