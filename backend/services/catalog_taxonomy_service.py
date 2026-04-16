@@ -249,13 +249,38 @@ async def sync_settings_categories_to_taxonomy(db):
                     "is_active": True, "sort_order": si, "created_at": _now(),
                 })
 
-    # Clean up old standalone groups that are now categories
+    # Clean up old standalone groups and reassign orphan categories
+    products_group = await db.catalog_groups.find_one({"name": "Products", "type": "product"})
+    services_group = await db.catalog_groups.find_one({"name": "Services", "type": "service"})
+    p_gid = products_group["id"] if products_group else None
+    s_gid = services_group["id"] if services_group else None
+
+    valid_group_ids = set()
+    if p_gid: valid_group_ids.add(p_gid)
+    if s_gid: valid_group_ids.add(s_gid)
+
+    # Delete old standalone groups (not Products/Services)
     old_groups = []
     async for g in db.catalog_groups.find({"name": {"$nin": ["Products", "Services"]}}):
-        old_groups.append(g["_id"])
+        old_groups.append(g)
     if old_groups:
-        await db.catalog_groups.delete_many({"_id": {"$in": old_groups}})
+        await db.catalog_groups.delete_many({"name": {"$nin": ["Products", "Services"]}})
         logger.info("Cleaned up %d old standalone groups", len(old_groups))
+
+    # Reassign orphan categories to the correct group
+    orphan_count = 0
+    async for cat in db.catalog_categories.find({}):
+        gid = cat.get("group_id")
+        if gid and gid not in valid_group_ids:
+            # Determine correct group based on category_type or default to Products
+            new_gid = s_gid if cat.get("category_type") == "service" else p_gid
+            await db.catalog_categories.update_one(
+                {"_id": cat["_id"]},
+                {"$set": {"group_id": new_gid}}
+            )
+            orphan_count += 1
+    if orphan_count:
+        logger.info("Reassigned %d orphan categories", orphan_count)
 
     logger.info("Synced %d categories from Settings Hub to taxonomy", synced)
     return {"synced": synced}
