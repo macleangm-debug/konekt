@@ -1696,7 +1696,7 @@ function CatalogCategoriesTab({ state, setState }) {
                     <span>{SOURCING_INFO[cat.sourcing_mode]?.label || "Single"}</span>
                   </div>
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); removeCategory(i); }} className="p-1 text-slate-400 hover:text-red-500 transition" data-testid={`remove-cat-${i}`}><Trash2 className="w-3.5 h-3.5" /></button>
+                <span className="text-[10px] text-slate-400 px-2">{cat.active !== false ? "Active" : "Inactive"}</span>
               </div>
 
               {editIdx === i && (
@@ -1757,6 +1757,39 @@ function CatalogCategoriesTab({ state, setState }) {
                         <span className="text-xs text-slate-600">{label}</span>
                       </label>
                     ))}
+                  </div>
+
+                  {/* Subcategories */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1.5">Subcategories</label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {(cat.subcategories || []).map((sub, si) => (
+                        <span key={si} className="text-xs bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                          {sub}
+                          <button onClick={() => {
+                            const updated = [...(cat.subcategories || [])];
+                            updated.splice(si, 1);
+                            updateCategory(i, "subcategories", updated);
+                          }} className="text-slate-400 hover:text-red-500">&times;</button>
+                        </span>
+                      ))}
+                      {(!cat.subcategories || cat.subcategories.length === 0) && <span className="text-xs text-slate-400">No subcategories</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Add subcategory..."
+                        className="h-8 rounded-lg border border-slate-200 px-3 text-xs flex-1"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && e.target.value.trim()) {
+                            const subs = [...(cat.subcategories || []), e.target.value.trim()];
+                            updateCategory(i, "subcategories", subs);
+                            e.target.value = "";
+                          }
+                        }}
+                        data-testid={`cat-${i}-add-subcategory`}
+                      />
+                    </div>
                   </div>
                 </div>
               )}

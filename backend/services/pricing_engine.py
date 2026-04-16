@@ -3,12 +3,51 @@ Shared Pricing Engine — Single Source of Truth for all sell prices.
 
 Rule: sell_price = pricing_engine(vendor_cost, category, settings)
 Never use vendor_cost directly as sell_price.
+
+Priority: Pricing Tiers (by amount) → Category-specific rules → Global defaults
 """
 from datetime import datetime, timezone
 
 
-async def get_margin_rules(db, category: str = None):
-    """Get margin rules from settings. Priority: category-specific → default → global."""
+async def get_tier_margin(db, amount: float):
+    """Get margin from Pricing Tiers based on the vendor cost amount."""
+    hub = await db.admin_settings.find_one({"key": "settings_hub"})
+    if not hub or not hub.get("value"):
+        return None
+
+    tiers = hub["value"].get("pricing_policy_tiers", [])
+    for tier in tiers:
+        min_amt = float(tier.get("min_amount", 0) or 0)
+        max_amt = float(tier.get("max_amount", 999999999) or 999999999)
+        if min_amt <= amount <= max_amt:
+            total_margin = tier.get("total_margin_pct")
+            if total_margin is not None:
+                return {
+                    "total_margin_pct": float(total_margin),
+                    "protected_pct": float(tier.get("protected_platform_margin_pct", 0) or 0),
+                    "distributable_pct": float(tier.get("distributable_margin_pct", 0) or 0),
+                    "tier_label": tier.get("label", ""),
+                    "distribution_split": tier.get("distribution_split", {}),
+                }
+    return None
+
+
+async def get_margin_rules(db, category: str = None, vendor_cost: float = 0):
+    """Get margin rules. Priority: Pricing Tiers → category-specific → default → global."""
+
+    # 1. Try Pricing Tiers first (amount-based)
+    if vendor_cost > 0:
+        tier = await get_tier_margin(db, vendor_cost)
+        if tier and tier["total_margin_pct"] > 0:
+            return {
+                "min_margin_pct": tier["protected_pct"] or tier["total_margin_pct"] * 0.5,
+                "target_margin_pct": tier["total_margin_pct"],
+                "max_discount_pct": tier["distributable_pct"],
+                "rule_source": f"pricing_tier:{tier['tier_label']}",
+                "tier_data": tier,
+            }
+
+    # 2. Category-specific rules
     cat_rules = await db.platform_settings.find_one({"key": "category_margin_rules"})
     if cat_rules and cat_rules.get("value"):
         rules = cat_rules["value"]
@@ -31,7 +70,7 @@ async def get_margin_rules(db, category: str = None):
                 "rule_source": "default",
             }
 
-    # Fallback: settings hub commercial
+    # 3. Settings hub commercial fallback
     hub = await db.admin_settings.find_one({"key": "settings_hub"})
     if hub and hub.get("value"):
         comm = hub["value"].get("commercial", {})
@@ -43,7 +82,8 @@ async def get_margin_rules(db, category: str = None):
 
 async def calculate_sell_price(db, vendor_cost: float, category: str = None, override_sell_price: float = None):
     """Calculate sell price from vendor cost using margin rules.
-    
+
+    Uses Pricing Tiers (amount-based) first, then category rules.
     If override_sell_price is provided, validates it meets minimum margin.
     Returns dict with sell_price, margin_pct, margin_amount, rule_source.
     """
@@ -56,7 +96,7 @@ async def calculate_sell_price(db, vendor_cost: float, category: str = None, ove
             "warning": None,
         }
 
-    rules = await get_margin_rules(db, category)
+    rules = await get_margin_rules(db, category, vendor_cost=vendor_cost)
     target_pct = rules["target_margin_pct"]
     min_pct = rules["min_margin_pct"]
 

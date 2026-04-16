@@ -93,15 +93,15 @@ export default function QuotesPage() {
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border"><FileText className="w-10 h-10 mx-auto mb-2 text-slate-200" /><p className="text-sm text-slate-400">No quotes yet</p></div>
       ) : (
-        <div className="bg-white rounded-xl border overflow-hidden" data-testid="quotes-table">
+        <div className="bg-white rounded-xl border overflow-hidden w-full" data-testid="quotes-table">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[700px]">
               <thead><tr className="border-b bg-slate-50/60">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Quote #</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Customer</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Total</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase min-w-[120px]">Status</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase min-w-[160px]">Actions</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase w-[18%]">Quote #</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase w-[25%]">Customer</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase w-[15%]">Total</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase w-[15%]">Status</th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase w-[27%]">Actions</th>
               </tr></thead>
               <tbody>
                 {filtered.map((q) => (
