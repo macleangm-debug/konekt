@@ -70,6 +70,7 @@ import CompanySettingsPage from "@/pages/admin/CompanySettingsPage";
 import OrdersPage from "@/pages/admin/OrdersPage";
 import PaymentsQueuePage from "@/pages/admin/PaymentsQueuePage";
 import QuotesPage from "@/pages/admin/QuotesPage";
+import CreateQuotePage from "@/pages/admin/CreateQuotePage";
 import ProductionQueuePage from "@/pages/admin/ProductionQueuePage";
 import CustomersPageMerged from "@/pages/admin/CustomersPageMerged";
 import CustomerProfilePage from "@/pages/admin/CustomerProfilePage";
@@ -638,6 +639,7 @@ function App() {
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="invoices/:id" element={<InvoicePreviewPage />} />
           <Route path="quotes" element={<QuotesPage />} />
+          <Route path="quotes/new" element={<CreateQuotePage />} />
           <Route path="quotes/:id" element={<QuotePreviewPage />} />
           <Route path="quotes/:id/edit" element={<QuoteEditorPage />} />
           <Route path="workflow" element={<DocumentWorkflowPage />} />

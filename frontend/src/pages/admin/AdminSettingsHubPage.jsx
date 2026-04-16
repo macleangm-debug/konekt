@@ -63,6 +63,7 @@ const GROUPS = [
     tabs: [
       { key: "catalog_units", label: "Units of Measurement", icon: Package },
       { key: "catalog_categories", label: "Product Categories", icon: Package },
+      { key: "catalog_category_config", label: "Category Configuration", icon: Settings },
       { key: "catalog_variants", label: "Variant Types", icon: Package },
       { key: "catalog_sku", label: "SKU Configuration", icon: FileText },
       { key: "vendor_ops_settings", label: "Sourcing Strategy", icon: Truck },
@@ -95,6 +96,7 @@ const TAB_DESCRIPTIONS = {
   performance_targets: "Monthly revenue targets, team sizes, and KPI thresholds",
   catalog_units: "Configure units of measurement for products (Piece, Kg, Litre, etc.)",
   catalog_categories: "Manage product categories available in the catalog",
+  catalog_category_config: "Configure display mode, pricing behavior, and sourcing strategy per category",
   catalog_variants: "Define variant types (Size, Color, Material) for product listings",
   catalog_sku: "SKU format, prefix, and auto-generation configuration",
   vendor_ops_settings: "Sourcing mode, quote expiry, lead times, and vendor assignment strategy",
@@ -313,6 +315,7 @@ export default function AdminSettingsHubPage() {
             {tab === "doc_template" && <DocTemplateTab state={state} setState={setState} />}
             {tab === "catalog_units" && <CatalogUnitsTab state={state} setState={setState} />}
             {tab === "catalog_categories" && <CatalogCategoriesTab state={state} setState={setState} />}
+            {tab === "catalog_category_config" && <SettingsLockGate><CategoryConfigTab /></SettingsLockGate>}
             {tab === "catalog_variants" && <CatalogVariantsTab state={state} setState={setState} />}
             {tab === "catalog_sku" && <CatalogSkuTab state={state} setState={setState} />}
             {tab === "vendor_ops_settings" && <VendorOpsSettingsTab state={state} setState={setState} />}
@@ -1906,3 +1909,134 @@ function VendorOpsSettingsTab({ state, setState }) {
     </>
   );
 }
+
+/* ═══ CATEGORY CONFIGURATION TAB (moved from Catalog Workspace) ═══ */
+function CategoryConfigTab() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = () => {
+    setLoading(true);
+    api.get("/api/admin/catalog-workspace/stats")
+      .then((r) => setCategories(r.data?.categories || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
+
+  if (loading) return <div className="text-center py-8 text-slate-400">Loading categories...</div>;
+
+  return (
+    <div className="space-y-3" data-testid="category-config-settings">
+      <SettingsSectionCard title="Category Configuration" description="Configure display mode, pricing behavior, and sourcing strategy for each product category. These settings control how customers interact with each category.">
+        {categories.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-sm">No categories configured. Add categories in Product Categories tab first.</div>
+        ) : (
+          <div className="space-y-2">
+            {categories.map((cat, i) => (
+              <CategoryConfigRow key={cat.name || i} cat={cat} onSaved={load} />
+            ))}
+          </div>
+        )}
+      </SettingsSectionCard>
+    </div>
+  );
+}
+
+function CategoryConfigRow({ cat, onSaved }) {
+  const [expanded, setExpanded] = useState(false);
+  const [local, setLocal] = useState({ ...cat });
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const upd = (k, v) => { setLocal((p) => ({ ...p, [k]: v })); setDirty(true); };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put(`/api/admin/catalog-workspace/categories/${encodeURIComponent(cat.name)}`, {
+        display_mode: local.display_mode,
+        commercial_mode: local.commercial_mode,
+        sourcing_mode: local.sourcing_mode,
+        allow_custom_items: local.allow_custom_items,
+        require_description: local.require_description,
+        show_price_in_list: local.show_price_in_list,
+        multi_item_request: local.multi_item_request,
+        search_first: local.search_first,
+      });
+      setDirty(false);
+      onSaved?.();
+    } catch { /* ignore */ }
+    setSaving(false);
+  };
+
+  const MODES = { visual: "Visual", list_quote: "List & Quote" };
+  const COMMERCIAL = { fixed_price: "Fixed Price", request_quote: "Request Quote", hybrid: "Hybrid" };
+  const SOURCING = { preferred: "Single Vendor", competitive: "Competitive" };
+
+  return (
+    <div className={`rounded-xl border ${expanded ? "border-[#D4A843]/30 shadow-sm" : ""}`} data-testid={`cat-cfg-${cat.name?.replace(/\s/g, "-")}`}>
+      <button onClick={() => setExpanded(!expanded)} className="w-full p-3 flex items-center justify-between text-left">
+        <div>
+          <span className="text-sm font-semibold text-[#20364D]">{cat.name}</span>
+          <div className="flex gap-1 mt-1">
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600">{MODES[local.display_mode] || "Visual"}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600">{COMMERCIAL[local.commercial_mode] || "Fixed Price"}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{SOURCING[local.sourcing_mode] || "Single"}</span>
+            {dirty && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">Unsaved</span>}
+          </div>
+        </div>
+        <span className="text-slate-400 text-xs">{expanded ? "▲" : "▼"}</span>
+      </button>
+      {expanded && (
+        <div className="px-3 pb-3 border-t pt-3 space-y-3">
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Display Mode</label>
+              <select value={local.display_mode || "visual"} onChange={(e) => upd("display_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="visual">Visual Catalog (image cards)</option>
+                <option value="list_quote">List & Quote (search-based)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Commercial Mode</label>
+              <select value={local.commercial_mode || "fixed_price"} onChange={(e) => upd("commercial_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="fixed_price">Fixed Price (user sees price)</option>
+                <option value="request_quote">Request Quote (no price shown)</option>
+                <option value="hybrid">Hybrid (indicative price + quote)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-slate-500 uppercase">Sourcing Mode</label>
+              <select value={local.sourcing_mode || "preferred"} onChange={(e) => upd("sourcing_mode", e.target.value)} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+                <option value="preferred">Single Vendor</option>
+                <option value="competitive">Competitive Quoting</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-2 text-sm">
+            {[
+              ["allow_custom_items", "Allow Custom Items", "Users can add items not in the list"],
+              ["require_description", "Require Description", "Users must describe specifications"],
+              ["show_price_in_list", "Show Price in List", "Display prices in item list"],
+              ["multi_item_request", "Multi-item Request", "Multiple items in one quote"],
+              ["search_first", "Search-first Mode", "Prioritize search over browsing"],
+            ].map(([key, label, help]) => (
+              <label key={key} className="flex items-center gap-2 py-1 cursor-pointer">
+                <input type="checkbox" checked={local[key] ?? (key === "show_price_in_list" || key === "multi_item_request")} onChange={(e) => upd(key, e.target.checked)} className="rounded" />
+                <div><div className="text-xs font-medium">{label}</div><div className="text-[10px] text-slate-400">{help}</div></div>
+              </label>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <button onClick={save} disabled={!dirty || saving} className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#D4A843] text-[#17283C] hover:bg-[#c49a3d] disabled:opacity-40" data-testid={`save-cat-${cat.name?.replace(/\s/g, "-")}`}>
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

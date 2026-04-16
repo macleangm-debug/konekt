@@ -287,25 +287,21 @@ export default function UnifiedCatalogWorkspacePage() {
         </div>
       )}
 
-      {/* Category Configuration Cards */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
+      {/* Category Summary (config moved to Settings Hub) */}
+      <div className="bg-white rounded-xl border p-4" data-testid="category-summary">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-[#20364D]">Category Configuration</h2>
-            <p className="text-xs text-slate-400 mt-0.5">Click a category to configure display mode, pricing behavior, and sourcing strategy</p>
+            <h2 className="text-sm font-bold text-[#20364D]">Categories</h2>
+            <p className="text-xs text-slate-400">{categories.length} categories configured</p>
           </div>
+          <button onClick={() => navigate("/admin/settings-hub")} className="text-xs text-[#D4A843] hover:underline font-medium" data-testid="go-category-config">
+            Configure in Settings Hub →
+          </button>
         </div>
-        <div className="space-y-2" data-testid="category-config-grid">
-          {categories.map((cat, i) => (
-            <CategoryConfigCard key={cat.name || i} cat={cat} onSave={load} />
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {categories.map((c, i) => (
+            <span key={c.name || i} className="text-[10px] px-2 py-1 rounded-lg bg-slate-50 border text-slate-600">{c.name}</span>
           ))}
-          {categories.length === 0 && (
-            <div className="text-center py-12 bg-white rounded-xl border">
-              <Tag className="w-8 h-8 mx-auto mb-2 text-slate-200" />
-              <p className="text-sm text-slate-400">No categories configured</p>
-              <p className="text-xs text-slate-300 mt-1">Add categories in Settings Hub → Catalog</p>
-            </div>
-          )}
         </div>
       </div>
 
