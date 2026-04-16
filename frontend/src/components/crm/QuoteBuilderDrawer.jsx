@@ -85,6 +85,7 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
       effective_cost: effectiveCost,
       unit_price: sellingPrice,
       total: sellingPrice * qty,
+      pricing_status: sellingPrice > 0 ? "priced" : "waiting_for_pricing",
     };
 
     setLineItems((prev) => [...prev, item]);
@@ -108,6 +109,7 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
   const subtotal = lineItems.reduce((sum, item) => sum + item.total, 0);
   const tax = 0;
   const total = subtotal + tax;
+  const hasWaitingPricing = lineItems.some((i) => i.pricing_status === "waiting_for_pricing");
 
   const handleCreateQuote = async () => {
     if (lineItems.length === 0) return toast.error("Add at least one item");
@@ -128,6 +130,7 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
           effective_cost: item.effective_cost,
           unit_price: item.unit_price,
           total: item.total,
+          pricing_status: item.pricing_status || "priced",
         })),
         subtotal,
         tax,
@@ -175,11 +178,14 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Items ({lineItems.length})</p>
               <div className="space-y-2">
                 {lineItems.map((item, idx) => (
-                  <div key={idx} className="rounded-xl border p-3 flex items-start justify-between" data-testid={`line-item-${idx}`}>
+                  <div key={idx} className={`rounded-xl border p-3 flex items-start justify-between ${item.pricing_status === "waiting_for_pricing" ? "border-amber-200 bg-amber-50/50" : ""}`} data-testid={`line-item-${idx}`}>
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
                         {item.type === "product" ? <Package className="w-3.5 h-3.5 text-blue-500" /> : <Wrench className="w-3.5 h-3.5 text-amber-500" />}
                         <span className="text-sm font-semibold text-[#20364D]">{item.name}</span>
+                        {item.pricing_status === "waiting_for_pricing" && (
+                          <span className="text-[8px] font-medium bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">Waiting for pricing</span>
+                        )}
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
                         {item.quantity} x TZS {item.unit_price.toLocaleString()} = <span className="font-semibold text-[#20364D]">TZS {item.total.toLocaleString()}</span>
@@ -370,13 +376,18 @@ export default function QuoteBuilderDrawer({ lead, onClose, onCreated }) {
             <span>Total</span>
             <span>TZS {total.toLocaleString()}</span>
           </div>
+          {hasWaitingPricing && (
+            <div className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 border border-amber-200">
+              Some items are waiting for pricing. Quote will be created as "waiting for pricing" until all prices are set.
+            </div>
+          )}
           <button
             onClick={handleCreateQuote}
             disabled={lineItems.length === 0 || submitting}
             className="w-full rounded-xl bg-[#D4A843] text-[#17283C] px-5 py-3 font-semibold hover:bg-[#c49a3d] transition disabled:opacity-40 flex items-center justify-center gap-2"
             data-testid="create-quote-submit"
           >
-            {submitting ? <><Loader2 className="w-4 h-4 animate-spin" />Creating...</> : <><CheckCircle2 className="w-4 h-4" />Create Quote</>}
+            {submitting ? <><Loader2 className="w-4 h-4 animate-spin" />Creating...</> : <><CheckCircle2 className="w-4 h-4" />{hasWaitingPricing ? "Create Quote (Waiting for Pricing)" : "Create Quote"}</>}
           </button>
         </div>
       </div>
