@@ -1,0 +1,60 @@
+{
+  "summary": "Tested Konekt B2B iteration 329: Product upload wizard subcategory dropdown, commission engine distribution_split, quote→invoice→order flow, subcategory request endpoints, and vendor ops select-winner pricing engine. All 11 backend tests passed. Frontend verified Product Upload Wizard loads correctly with category dropdown and conditional subcategory field.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_product_commission_quote_v329.py",
+    "/app/test_reports/pytest/pytest_results_v329.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_product_commission_quote_v329.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 passed)",
+    "frontend": "100%"
+  },
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "Created test subcategory requests, price requests, and quotes with TEST_ prefix",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All features verified: (1) Product Upload Wizard at /admin/vendor-ops/new-product shows subcategory as dropdown when category has subcategories configured, otherwise shows disabled input. Code includes '+ Request new subcategory' option with value='__request_new__'. Currently no categories have subcategories configured in Settings Hub. (2) Commission engine POST /api/admin/commission/calculate uses tier distribution_split - affiliate channel returns affiliate_allocation > 0, direct channel returns sales_allocation > 0. (3) Quote→Invoice→Order flow: PATCH /api/admin/quotes-v2/{id}/status?status=approved generates Invoice + Order with pending_payment status. (4) POST /api/admin/catalog/subcategory-requests creates pending requests, GET returns list. (5) Vendor Ops select-winner at POST /api/vendor-ops/price-requests/{id}/select-vendor uses pricing engine - base=50000 returns sell_price with ~35% margin.",
+  "features_tested": {
+    "ProductUploadWizardSubcategoryDropdown": {
+      "status": "PASS",
+      "details": "Wizard loads at /admin/vendor-ops/new-product. Category dropdown has 14 options. Subcategory shows as dropdown when category has subcategories (with '+ Request new subcategory' option), otherwise shows disabled input. Code verified correct."
+    },
+    "CommissionEngineDistributionSplit": {
+      "status": "PASS",
+      "details": "POST /api/admin/commission/calculate returns allocations based on tier distribution_split. Affiliate channel: affiliate_allocation > 0. Direct channel: sales_allocation > 0."
+    },
+    "QuoteToInvoiceOrderFlow": {
+      "status": "PASS",
+      "details": "PATCH /api/admin/quotes-v2/{id}/status?status=approved generates Invoice + Order. Order has current_status='pending_payment'."
+    },
+    "SubcategoryRequestEndpoints": {
+      "status": "PASS",
+      "details": "POST /api/admin/catalog/subcategory-requests creates request with status='pending'. GET returns list of pending requests."
+    },
+    "VendorOpsSelectWinnerPricingEngine": {
+      "status": "PASS",
+      "details": "POST /api/vendor-ops/price-requests/{id}/select-vendor uses calculate_sell_price from pricing engine. base_price=50000 returns sell_price with margin applied (not hardcoded)."
+    },
+    "CatalogConfigSubcategories": {
+      "status": "PASS",
+      "details": "GET /api/vendor-ops/catalog-config returns categories array. Categories can have subcategories array. Currently 0 categories have subcategories configured."
+    },
+    "PricingTierDistributionSplit": {
+      "status": "PASS",
+      "details": "Settings Hub pricing_policy_tiers have distribution_split with affiliate_pct, sales_pct, referral_pct, reserve_pct."
+    }
+  }
+}

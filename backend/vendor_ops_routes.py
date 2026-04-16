@@ -504,15 +504,16 @@ async def select_vendor_quote(request_id: str, request: Request):
         raise HTTPException(status_code=400, detail="No valid quote found for this vendor")
 
     base = float(selected["base_price"])
-    # Apply margin from settings
-    settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
-    s = settings_row.get("value", {}) if settings_row else {}
-    min_margin = s.get("commercial", {}).get("minimum_company_margin_percent", 20)
-    sell_price = round(base * (1 + min_margin / 100))
+    # Apply pricing engine (uses Pricing Tiers)
+    from services.pricing_engine import calculate_sell_price
+    pricing = await calculate_sell_price(db, base, category=pr.get("category"))
+    sell_price = pricing.get("sell_price", round(base * 1.35))
 
-    # Allow override
+    # Allow override only if above minimum
     if body.get("final_sell_price"):
-        sell_price = float(body["final_sell_price"])
+        override = float(body["final_sell_price"])
+        min_price = pricing.get("min_price", base)
+        sell_price = max(override, min_price)
 
     now = datetime.now(timezone.utc).isoformat()
     await db.price_requests.update_one({"id": request_id}, {"$set": {

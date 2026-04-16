@@ -153,6 +153,33 @@ async def delete_subcategory(sub_id: str):
     return {"ok": True}
 
 
+@router.post("/api/admin/catalog/subcategory-requests")
+async def request_new_subcategory(payload: dict):
+    """Request a new subcategory (from vendor or product upload flow)."""
+    doc = {
+        "id": str(uuid4()),
+        "category_name": payload.get("category_name", ""),
+        "requested_name": payload.get("name", ""),
+        "requested_by": payload.get("requested_by", ""),
+        "reason": payload.get("reason", ""),
+        "status": "pending",
+        "created_at": _now(),
+    }
+    await db.catalog_subcategory_requests.insert_one(doc)
+    doc.pop("_id", None)
+    return {"ok": True, "request": doc}
+
+
+@router.get("/api/admin/catalog/subcategory-requests")
+async def list_subcategory_requests():
+    """List pending subcategory requests."""
+    results = []
+    async for r in db.catalog_subcategory_requests.find({"status": "pending"}, {"_id": 0}).sort("created_at", -1):
+        results.append(r)
+    return results
+
+
+
 # ─── Admin Summary ────────────────────────────────────────
 
 @router.get("/api/admin/catalog/summary")

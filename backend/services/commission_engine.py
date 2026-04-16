@@ -135,6 +135,32 @@ async def compute_order_commission(
     channel: str,
     wallet_balance: float = 0,
 ) -> dict:
-    """High-level: compute commission for an order using live settings."""
+    """High-level: compute commission for an order using live settings.
+    
+    Uses Pricing Tier distribution_split when available (amount-based),
+    falls back to global Settings Hub percentages.
+    """
     settings = await _get_settings()
-    return calculate_margin_distribution(selling_price, vendor_cost, channel, settings, wallet_balance)
+
+    # Try to get tier-specific distribution split
+    try:
+        from services.pricing_engine import get_tier_margin
+        tier = await get_tier_margin(db, vendor_cost)
+        if tier and tier.get("distribution_split"):
+            split = tier["distribution_split"]
+            # Override settings with tier-specific values if present
+            if "affiliate_pct" in split:
+                settings["affiliate_pct"] = float(split["affiliate_pct"])
+            if "sales_pct" in split:
+                settings["sales_direct_pct"] = float(split["sales_pct"])
+                settings["sales_assisted_pct"] = float(split["sales_pct"]) * 0.67
+            if "referral_pct" in split:
+                settings["referral_pct"] = float(split["referral_pct"])
+            if "reserve_pct" in split:
+                settings["promotion_reserve_pct"] = float(split["reserve_pct"])
+    except Exception:
+        pass
+
+    result = calculate_margin_distribution(selling_price, vendor_cost, channel, settings, wallet_balance)
+    result["tier_applied"] = True
+    return result

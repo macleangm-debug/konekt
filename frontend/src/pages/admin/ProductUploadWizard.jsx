@@ -153,13 +153,17 @@ export default function ProductUploadWizard() {
 /* ═══ STEP 1: BASIC INFO ═══ */
 function StepInfo({ form, update, config }) {
   const categories = (config.categories || []).filter((c) => (typeof c === "object" ? c.active !== false : true));
+  // Get subcategories for selected category
+  const selectedCat = categories.find((c) => (typeof c === "object" ? c.name : c) === form.category);
+  const subcategories = (typeof selectedCat === "object" ? selectedCat?.subcategories : null) || [];
+
   return (
     <div className="space-y-5" data-testid="step-info">
       <h2 className="text-lg font-semibold text-[#20364D]">Basic Information</h2>
       <div className="grid md:grid-cols-2 gap-4">
         <div><Label className="text-xs font-semibold">Product Name *</Label><Input value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g., HP LaserJet Pro M404n" className="mt-1" data-testid="product-name" /></div>
         <div><Label className="text-xs font-semibold">Category *</Label>
-          <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.category} onChange={(e) => update("category", e.target.value)} data-testid="product-category">
+          <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.category} onChange={(e) => { update("category", e.target.value); update("subcategory", ""); }} data-testid="product-category">
             <option value="">Select category</option>
             {categories.map((c) => { const name = typeof c === "object" ? c.name : c; return <option key={name} value={name}>{name}</option>; })}
           </select>
@@ -167,7 +171,20 @@ function StepInfo({ form, update, config }) {
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div><Label className="text-xs font-semibold">Brand</Label><Input value={form.brand} onChange={(e) => update("brand", e.target.value)} placeholder="e.g., HP, Canon" className="mt-1" data-testid="product-brand" /></div>
-        <div><Label className="text-xs font-semibold">Subcategory</Label><Input value={form.subcategory} onChange={(e) => update("subcategory", e.target.value)} placeholder="e.g., Laser Printers" className="mt-1" data-testid="product-subcategory" /></div>
+        <div><Label className="text-xs font-semibold">Subcategory {subcategories.length > 0 ? "*" : ""}</Label>
+          {subcategories.length > 0 ? (
+            <select className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" value={form.subcategory} onChange={(e) => update("subcategory", e.target.value)} data-testid="product-subcategory">
+              <option value="">Select subcategory</option>
+              {subcategories.map((s) => <option key={s} value={s}>{s}</option>)}
+              <option value="__request_new__">+ Request new subcategory</option>
+            </select>
+          ) : (
+            <Input value={form.subcategory} onChange={(e) => update("subcategory", e.target.value)} placeholder="No subcategories configured for this category" className="mt-1 bg-slate-50" data-testid="product-subcategory" disabled={!form.category} />
+          )}
+          {form.subcategory === "__request_new__" && (
+            <Input value={form.requested_subcategory || ""} onChange={(e) => update("requested_subcategory", e.target.value)} placeholder="Enter requested subcategory name..." className="mt-1 border-amber-300 bg-amber-50" data-testid="request-subcategory-input" />
+          )}
+        </div>
       </div>
       <div><Label className="text-xs font-semibold">Description</Label><Textarea value={form.description} onChange={(e) => update("description", e.target.value)} placeholder="Product description..." className="mt-1 min-h-[100px]" data-testid="product-description" /></div>
     </div>
