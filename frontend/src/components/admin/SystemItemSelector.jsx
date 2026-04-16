@@ -14,7 +14,7 @@ const money = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
  * - Items MUST come from system catalog. No free-text.
  * - Sales CANNOT edit prices. Prices come from pricing engine only.
  * - Sales can ONLY change quantity.
- * - If item has no price → "Request Price" sends to Vendor Ops.
+ * - If item has no price → "Request Price" sends to Operations.
  * - Quote cannot be sent until all items are priced.
  */
 export default function SystemItemSelector({ items, setItems, currency = "TZS" }) {
@@ -99,7 +99,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
       setItems(items.map((it, i) =>
         i === idx ? { ...it, pricing_status: "requested_from_vendor_ops" } : it
       ));
-      toast.success(`Price request sent to Vendor Ops for "${item.name}"`);
+      toast.success(`Price request sent to Operations for "${item.name}"`);
     } catch (e) {
       toast.error(e.response?.data?.detail || "Failed to send price request");
     }
@@ -131,7 +131,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
         <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 mb-4" data-testid="pricing-warning">
           <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
           <div className="text-sm text-amber-800">
-            <strong>{waitingCount} item{waitingCount > 1 ? "s" : ""}</strong> need pricing. Send price requests to Vendor Ops or wait for pricing to complete. Quote cannot be sent until all items are priced.
+            <strong>{waitingCount} item{waitingCount > 1 ? "s" : ""}</strong> need pricing. Send price requests to Operations or wait for pricing to complete. Quote cannot be sent until all items are priced.
           </div>
         </div>
       )}
@@ -192,7 +192,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
           {query.length >= 2 && !searching && results.length === 0 && (
             <div className="mt-2 text-center py-4 text-sm text-slate-400">
               No products found for "{query}".
-              <span className="block text-xs mt-1">If the item doesn't exist, Vendor Ops needs to add it to the catalog first.</span>
+              <span className="block text-xs mt-1">If the item doesn't exist, Operations needs to add it to the catalog first.</span>
             </div>
           )}
           <div className="mt-2 flex justify-end">
@@ -226,7 +226,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
                       {item.sku && <span className="text-[10px] text-slate-400">SKU: {item.sku}</span>}
                       {item.pricing_status === "priced" && <Badge className="bg-emerald-100 text-emerald-700 text-[8px]">Priced</Badge>}
                       {item.pricing_status === "waiting_for_pricing" && <Badge className="bg-amber-100 text-amber-700 text-[8px]">Needs Pricing</Badge>}
-                      {requested && <Badge className="bg-blue-100 text-blue-700 text-[8px]">Sent to Vendor Ops</Badge>}
+                      {requested && <Badge className="bg-blue-100 text-blue-700 text-[8px]">Sent to Operations</Badge>}
                     </div>
                     {item.category && <div className="text-[10px] text-slate-400 mt-0.5">{item.category} / {item.unit_of_measurement || "Piece"}</div>}
                   </div>
@@ -274,7 +274,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
                       data-testid={`request-price-${idx}`}
                     >
                       {requestingPrice === idx ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Send className="w-3 h-3 mr-1" />}
-                      Request Price from Vendor Ops
+                      Request Price from Operations
                     </Button>
                   </div>
                 )}

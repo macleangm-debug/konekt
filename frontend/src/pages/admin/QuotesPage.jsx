@@ -129,7 +129,7 @@ export default function QuotesPage() {
                           </Button>
                         )}
                         {q.status === "waiting_for_pricing" && (
-                          <Badge className="bg-amber-50 text-amber-600 text-[9px]">Awaiting Vendor Ops</Badge>
+                          <Badge className="bg-amber-50 text-amber-600 text-[9px]">Awaiting Operations</Badge>
                         )}
                         {q.status === "sent" && (
                           <>

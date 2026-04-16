@@ -53,7 +53,7 @@ export default function VendorOpsPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="vendor-ops-page">
       <div>
-        <h1 className="text-xl font-bold text-[#20364D]">Vendor Operations</h1>
+        <h1 className="text-xl font-bold text-[#20364D]">Operations</h1>
         <p className="text-sm text-slate-500 mt-0.5">Manage vendors, products, and price requests</p>
       </div>
 

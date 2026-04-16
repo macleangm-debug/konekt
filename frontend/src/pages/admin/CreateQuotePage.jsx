@@ -223,7 +223,7 @@ export default function CreateQuotePage() {
               {!allPriced && (
                 <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800">
                   <AlertTriangle className="w-3.5 h-3.5 inline mr-1" />
-                  Some items need pricing from Vendor Ops. Quote will be saved as "waiting for pricing" and cannot be sent until all prices are set.
+                  Some items need pricing from Operations. Quote will be saved as "waiting for pricing" and cannot be sent until all prices are set.
                 </div>
               )}
             </div>

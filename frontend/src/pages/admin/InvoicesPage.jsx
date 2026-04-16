@@ -184,10 +184,7 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-4" data-testid="invoices-page">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-[#20364D]">Invoices</h1><p className="text-slate-500 text-sm">Manage invoices — create, track, and send</p></div>
-        <button onClick={() => setShowForm(!showForm)} className="inline-flex items-center gap-2 bg-[#20364D] text-white px-5 py-3 rounded-xl font-semibold hover:bg-[#2a4a66] transition" data-testid="create-invoice-btn">
-          {showForm ? <><ChevronUp className="w-4 h-4" /> Close Form</> : <><Receipt className="w-4 h-4" /> Create Invoice</>}
-        </button>
+        <div><h1 className="text-2xl font-bold text-[#20364D]">Invoices</h1><p className="text-slate-500 text-sm">Invoices are auto-generated from accepted quotes and marketplace checkout</p></div>
       </div>
 
       {/* Stat Cards */}

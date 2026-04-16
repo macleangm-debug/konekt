@@ -404,6 +404,14 @@ PLATFORM_DEFAULTS = {
             "Food & Beverages", "Fashion & Apparel", "Other"
         ],
     },
+    "document_numbering": {
+        "country_code": "TZ",
+        "quote_prefix": "QT",
+        "invoice_prefix": "IN",
+        "order_prefix": "ORD",
+        "delivery_note_prefix": "DN",
+        "use_shared_sequence": True,
+    },
 }
 
 
