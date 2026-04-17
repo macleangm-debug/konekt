@@ -331,8 +331,17 @@ async def update_order_status(
     triggered_by_user_id: Optional[str] = Query(default=None),
     triggered_by_role: str = Query(default="admin"),
 ):
-    """Update order status with history tracking and workflow-linked notifications"""
+    """Update order status with history tracking and workflow-linked notifications.
+    
+    ROLE RESTRICTION: Sales personnel cannot update order status.
+    Only Operations (vendor_ops), admin, and finance_manager can update.
+    Sales should use "Request Status" instead.
+    """
     now = datetime.now(timezone.utc)
+
+    # Enforce role restriction
+    if triggered_by_role in ("sales",):
+        raise HTTPException(status_code=403, detail="Sales personnel cannot update order status. Use 'Request Status' instead.")
 
     try:
         order = await db.orders.find_one({"_id": ObjectId(order_id)})
@@ -788,3 +797,39 @@ async def get_purchase_orders_for_order(order_id: str):
                 if user:
                     vo["vendor_name"] = user.get("full_name", "")
     return {"purchase_orders": vos, "count": len(vos)}
+
+
+
+@router.post("/{order_id}/request-status")
+async def request_status_update(order_id: str, payload: dict = {}):
+    """Sales requests a status update from Operations for an order.
+    
+    Creates a status request notification visible to the Operations team.
+    Sales cannot update status directly — they can only request.
+    """
+    from uuid import uuid4
+    now = datetime.now(timezone.utc)
+
+    try:
+        order = await db.orders.find_one({"_id": ObjectId(order_id)})
+    except Exception:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    request_doc = {
+        "id": str(uuid4()),
+        "type": "status_request",
+        "order_id": order_id,
+        "order_number": order.get("order_number", ""),
+        "customer_name": order.get("customer_name", ""),
+        "requested_by": payload.get("requested_by", ""),
+        "requested_by_role": payload.get("requested_by_role", "sales"),
+        "reason": payload.get("reason", "Client inquiring about order status"),
+        "current_status": order.get("current_status", ""),
+        "status": "pending",
+        "created_at": now.isoformat(),
+    }
+    await db.status_requests.insert_one(request_doc)
+
+    return {"ok": True, "message": "Status request sent to Operations team"}

@@ -137,6 +137,15 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
             >
               Request Quote
             </button>
+            {product?.related_services?.length > 0 && (
+              <Link
+                to={`/marketplace?tab=services`}
+                className="w-full text-center text-xs text-[#D4A843] hover:text-[#c49a3d] font-semibold py-0.5 transition-colors"
+                data-testid={`customize-cta-${product?.id}`}
+              >
+                Customize this →
+              </Link>
+            )}
           </div>
         </div>
       </div>

@@ -25,6 +25,7 @@ const GROUPS = [
       { key: "payment", label: "Payment Details", icon: CreditCard },
       { key: "branding", label: "Document Branding", icon: FileText },
       { key: "doc_numbering", label: "Document Numbering", icon: FileText },
+      { key: "countries", label: "Countries & Markets", icon: Globe },
       { key: "doc_footer", label: "Document Footer", icon: FileText },
       { key: "doc_template", label: "Document Template", icon: Eye },
       { key: "notifications", label: "Notifications", icon: Bell },
@@ -78,6 +79,7 @@ const TAB_DESCRIPTIONS = {
   payment: "Bank accounts and payment method configuration",
   branding: "Logo, signature, stamp, and document branding assets",
   doc_numbering: "Quote, Invoice, Order, Delivery Note, PO, and SKU numbering",
+  countries: "Configure countries, currencies, and market-specific settings",
   doc_footer: "Footer content displayed on all business documents",
   doc_template: "Select document layout template",
   pricing_policy: "Margin tiers and pricing tier configuration",
@@ -313,6 +315,7 @@ export default function AdminSettingsHubPage() {
             {tab === "report_delivery" && <ReportScheduleSection />}
             {tab === "launch" && <LaunchTab state={state} setState={setState} />}
             {tab === "doc_numbering" && <DocNumberingTab state={state} setState={setState} />}
+            {tab === "countries" && <CountriesTab state={state} setState={setState} />}
             {tab === "doc_footer" && <DocFooterTab state={state} setState={setState} />}
             {tab === "doc_template" && <DocTemplateTab state={state} setState={setState} />}
             {tab === "catalog_units" && <CatalogUnitsTab state={state} setState={setState} />}
@@ -2148,6 +2151,61 @@ function CategoryConfigRow({ cat, onSaved }) {
         </div>
       )}
     </div>
+  );
+}
+
+
+function CountriesTab({ state, setState }) {
+  const countries = state.countries || {};
+  const available = countries.available_countries || [
+    { code: "TZ", name: "Tanzania", currency: "TZS", currency_symbol: "TSh", timezone: "Africa/Dar_es_Salaam", vat_rate: 18, phone_prefix: "+255", doc_prefix_code: "TZ" },
+    { code: "KE", name: "Kenya", currency: "KES", currency_symbol: "KSh", timezone: "Africa/Nairobi", vat_rate: 16, phone_prefix: "+254", doc_prefix_code: "KE" },
+    { code: "UG", name: "Uganda", currency: "UGX", currency_symbol: "USh", timezone: "Africa/Kampala", vat_rate: 18, phone_prefix: "+256", doc_prefix_code: "UG" },
+  ];
+  const activeCountry = countries.active_country || "TZ";
+
+  const updateCountry = (idx, field, value) => {
+    const updated = [...available];
+    updated[idx] = { ...updated[idx], [field]: value };
+    setState({ ...state, countries: { ...countries, available_countries: updated, active_country: activeCountry } });
+  };
+
+  return (
+    <>
+      <SettingsSectionCard title="Countries & Markets" description="Configure countries for multi-market expansion. Each country has its own currency, tax rate, phone prefix, and document code. Clone settings from existing country when expanding.">
+        <div className="mb-4">
+          <label className="text-xs font-semibold text-slate-500 uppercase">Active Country</label>
+          <select value={activeCountry} onChange={(e) => setState({ ...state, countries: { ...countries, active_country: e.target.value } })} className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white" data-testid="active-country-select">
+            {available.map((c) => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
+          </select>
+          <p className="text-[10px] text-slate-400 mt-1">This determines the default currency, tax rate, and document prefixes for new records.</p>
+        </div>
+        <div className="space-y-3">
+          {available.map((c, idx) => (
+            <div key={c.code} className={`rounded-xl border p-4 ${c.code === activeCountry ? "border-[#D4A843]/30 bg-[#D4A843]/5" : ""}`} data-testid={`country-${c.code}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{c.code === "TZ" ? "🇹🇿" : c.code === "KE" ? "🇰🇪" : c.code === "UG" ? "🇺🇬" : "🌍"}</span>
+                  <span className="text-sm font-bold text-[#20364D]">{c.name}</span>
+                  {c.code === activeCountry && <span className="text-[9px] bg-[#D4A843] text-[#17283C] px-2 py-0.5 rounded font-semibold">Active</span>}
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-3">
+                <div><label className="text-[10px] text-slate-500">Currency</label><SettingsTextField value={c.currency} onChange={(v) => updateCountry(idx, "currency", v)} /></div>
+                <div><label className="text-[10px] text-slate-500">Symbol</label><SettingsTextField value={c.currency_symbol} onChange={(v) => updateCountry(idx, "currency_symbol", v)} /></div>
+                <div><label className="text-[10px] text-slate-500">VAT Rate %</label><SettingsNumberField value={c.vat_rate} onChange={(v) => updateCountry(idx, "vat_rate", v)} /></div>
+                <div><label className="text-[10px] text-slate-500">Phone Prefix</label><SettingsTextField value={c.phone_prefix} onChange={(v) => updateCountry(idx, "phone_prefix", v)} /></div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-2">
+                <div><label className="text-[10px] text-slate-500">Doc Prefix</label><SettingsTextField value={c.doc_prefix_code} onChange={(v) => updateCountry(idx, "doc_prefix_code", v)} /></div>
+                <div><label className="text-[10px] text-slate-500">Timezone</label><SettingsTextField value={c.timezone} onChange={(v) => updateCountry(idx, "timezone", v)} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-400 mt-3">To expand to a new country: add it here, set country-specific details, then switch active country. All new documents will use the active country's settings.</p>
+      </SettingsSectionCard>
+    </>
   );
 }
 
