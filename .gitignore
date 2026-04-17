@@ -288,3 +288,4 @@ credentials.json
 *.key
 .credentials
 frontend/node_modules/.cache/default-development/62.pack
+frontend/node_modules/.cache/default-development/81.pack

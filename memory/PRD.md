@@ -3,46 +3,43 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 332 ITERATIONS
+## System Status: 333 ITERATIONS, 100% PASS RATE
 
 ---
 
-## TAXONOMY — RESTRUCTURED (332)
-- **Groups**: Products | Services (top-level only)
-- **Categories**: Office Supplies, Printing, Safety, etc. (nested under group)
-- **Subcategories**: Business Cards, Flyers, T-Shirts, etc. (nested under category)
-- Auto-sync from Settings Hub on save
-- TEST_ entries cleaned up, orphan categories reassigned
-- 37 product categories, 1 service category (grows as configured)
+## SERVICE CARDS — LIVE ON MARKETPLACE (333)
+- Collapsible service cards showing all 6 service categories
+- Click card → expand to subcategories → select multiple → Request Quote
+- Multi-service selection across categories in one request
+- Site visit location field appears when needed (Facilities, Technical, Office Branding)
+- Fulfillment badges: Site Visit, On-site, Digital, Delivery/Pickup
+- Submits to Requests table via POST /api/public/quote-requests
 
-## CATEGORY CONFIG — FULLY ENRICHED (332)
-- `category_type`: product | service
-- `display_mode`: visual | list_quote
-- `commercial_mode`: fixed_price | request_quote | hybrid
-- `sourcing_mode`: preferred | competitive
-- `fulfillment_type`: delivery_pickup | delivery_only | pickup_only | digital | on_site
-- `requires_site_visit`: boolean
-- `site_visit_optional`: boolean
-- `installment_payments`: boolean + split (50/50, 60/40, 70/30)
-- `related_services`: product→service cross-sell
-- `subcategories`: array of subcategory names
-- All configurable in Settings Hub per category
+### Service Categories Seeded
+1. **Printing & Branding** (8 subs): Business Cards, Flyers, Banners, Screen Printing, Embroidery, DTF, etc.
+2. **Creative & Design** (5 subs): Logo, Graphic, Presentation, Social Media, Brand Identity
+3. **Facilities Services** (4 subs): Deep Cleaning, Carpet, Fumigation, Window Cleaning — requires site visit
+4. **Technical Support** (5 subs): Printer Servicing, CCTV, Access Control, Network, Equipment Maintenance — requires site visit
+5. **Office Branding** (5 subs): Wall Branding, Signage, Billboard, Showroom, Reception — requires site visit
+6. **Uniforms & Workwear** (4 subs): Tailoring, PPE, Name Tags, Corporate Wear — installment payments
 
-## ALL SYSTEMS (wired)
-- Pricing Engine: Pricing Tiers (35% for 0-100K)
-- Commission Engine: tier distribution_split
-- Operations (renamed from Vendor Ops)
-- Document Numbering: QT-TZ-000001 format
-- Quote → Invoice → Order (auto-generated)
-- Marketplace CTA → Requests
-- CRM → Assignment → Sales pipeline
+### Product Categories Seeded
+1. **Office Equipment**: Desks, Chairs, Storage, Whiteboards
+2. **Stationery**: Paper, Writing, Filing, Desk Accessories
+3. **Promotional Materials**: T-Shirts, Caps, Mugs, Bags, Lanyards — linked to Printing & Creative services
+
+## TAXONOMY: Products (37 cats) | Services (7 cats) — zero orphans
+
+## CATEGORY CONFIG — ALL FIELDS
+category_type, display_mode, commercial_mode, sourcing_mode, fulfillment_type, requires_site_visit, site_visit_optional, installment_payments, installment_split, related_services, subcategories, allow_custom_items, require_description, show_price_in_list, multi_item_request, search_first
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 
 ## Remaining
-- Service cards UI on marketplace (collapsible, subcategory drill-down)
-- "Customize this" CTA on product pages
-- Delivery/handover tracking
+- "Customize this" CTA on product pages → linked service categories
+- Guided checkout flow (delivery address, pickup option)
+- Delivery/service handover tracking
 - Statement of Accounts document
 - Sales role restriction enforcement
+- Per-product fulfillment_type override
