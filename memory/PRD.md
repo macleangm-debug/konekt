@@ -3,36 +3,33 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 338 ITERATIONS
+## System Status: 339 ITERATIONS
 
 ---
 
 ## COMPLETED (Apr 17, 2026)
 
-### Session 2 — Batch 3 (Latest)
-1. **Feedback/Issue Widget** — Floating "Help & Feedback" button (bottom-left) on all pages. Users pick category (Bug, Payment, Order, Feature Request, General), describe issue. Admin inbox at /admin/feedback-inbox with stats + status management.
-2. **Vendor-Category Assignment System** — Assign vendors to categories with type (Product/Service/Both) + preferred flag. Single Source auto-routes, Competitive shows all vendors.
-3. **Order Splitting** — POST /api/admin/vendor-assignments/split-order auto-groups order items by vendor capability based on category assignments. Unassigned items flagged for manual routing.
+### Batch 4 (Latest)
+1. **Number & Currency Format Settings** — New tab in Settings Hub > Business Identity. Configurable: thousand separator (comma/period/space), decimal separator, decimal places, currency position, currency symbol (TZS/KES/UGX/USD) + live preview
+2. **Admin Override Promo** — New discount type: gives away ENTIRE distributable margin as discount (platform keeps only protected margin). Red warning UI in promotion form
+3. **Services in Quote Creation** — SystemItemSelector now searches both products AND service categories. Service items show "Service" badge + "Request Quote" badge. Added as waiting_for_pricing
+4. **Impersonation Return Banner** — Amber banner at top when acting as another user: "You are acting as [name]" + "Return to Admin" button. Restores original admin token
 
-### Session 2 — Batch 2
-4. Go-Live Reset (Testing → Controlled → Full Live modes)
-5. Impersonate Users (Admin/Ops act as vendor/sales)
-6. "Customize this" CTA on products → related services
-7. Credit Terms enforcement at checkout
-8. Operations Nav consolidated
+### Batch 3
+5. Feedback/Issue Widget (floating + admin inbox)
+6. Vendor-Category Assignment System + Order Auto-Splitting
+7. Go-Live Reset (settings/catalog/pricing all preserved)
 
-### Session 2 — Batch 1
-9. Quote Creation branded preview
-10. Marketplace "No Listing Found" fix
-11. Profit display fix (floors at 0)
+### Batch 2
+8. Go-Live Mode + Impersonate Users + "Customize this" CTA
+9. Credit Terms at Checkout + Operations Nav consolidated
+
+### Batch 1
+10. Quote Creation branded preview + Marketplace fix + Profit display
 
 ### Session 1
-12. Dashboard Profit Tracking (KPI + dual-line chart)
-13. Admin-Only Credit Terms
-14. Service Site Visit 2-Stage Flow
-15. Statement of Accounts Branding
-16. Multi-Country Config + Document Numbering
-17. Order Status Restrictions (Sales blocked)
+11. Dashboard Profit Tracking + Admin Credit Terms + Site Visit Flow
+12. Statement Branding + Multi-Country + Document Numbering + Order Restrictions
 
 ---
 
@@ -41,13 +38,8 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## REMAINING
 
-### P0
-- Promotions wired from categories (admin override promo = all distributable margin)
-- Services in Quote Creation (add service items, "Request for Quote")
-- Number formatting (full thousand separators on detail views)
-- Impersonate return flow ("Return to Admin" banner)
-
 ### P1
-- Light micro-interactions
+- Light micro-interactions (hover lift, skeleton loaders)
 - Service card subcategory content fix
 - Full vendor-order routing automation in Operations
+- Multi-country config propagation (switching active country)
