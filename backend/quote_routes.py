@@ -389,11 +389,19 @@ async def _auto_generate_invoice_and_order(db, quote: dict, now):
 
     notify_invoice_ready(invoice_doc)
 
+    # Auto-route order items to vendors
+    try:
+        from services.vendor_order_routing import auto_route_order_to_vendors
+        routing_result = await auto_route_order_to_vendors(str(ord_result.inserted_id), trigger="order_created")
+    except Exception as e:
+        routing_result = {"error": str(e)}
+
     return {
         "invoice_id": str(inv_result.inserted_id),
         "invoice_number": invoice_number,
         "order_id": str(ord_result.inserted_id),
         "order_number": order_number,
+        "vendor_routing": routing_result,
     }
 
 

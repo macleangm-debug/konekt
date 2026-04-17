@@ -833,3 +833,18 @@ async def request_status_update(order_id: str, payload: dict = {}):
     await db.status_requests.insert_one(request_doc)
 
     return {"ok": True, "message": "Status request sent to Operations team"}
+
+
+
+@router.post("/{order_id}/auto-route")
+async def auto_route_order(order_id: str, payload: dict = {}):
+    """Manually trigger vendor order auto-routing for an existing order.
+    
+    Splits order items by category → vendor assignments → creates vendor_orders.
+    """
+    from services.vendor_order_routing import auto_route_order_to_vendors
+    trigger = payload.get("trigger", "manual")
+    result = await auto_route_order_to_vendors(order_id, trigger=trigger)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return result

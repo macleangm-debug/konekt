@@ -12,6 +12,63 @@ import BrandLogo from '../../components/branding/BrandLogo';
 import { adminNavigation } from '../../config/adminNavigation';
 import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 
+const API = process.env.REACT_APP_BACKEND_URL || "";
+
+/* ───── Country Switcher ───── */
+function CountrySwitcher() {
+  const [countries, setCountries] = React.useState([]);
+  const [active, setActive] = React.useState("TZ");
+  const [open, setOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("token") || localStorage.getItem("konekt_token");
+    if (!token) return;
+    fetch(`${API}/api/admin/active-country-config`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => setActive(d.code || "TZ"))
+      .catch(() => {});
+    // Also fetch all countries
+    fetch(`${API}/api/admin/settings-hub`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => {
+        // Countries can be at root level or nested under value
+        const cs = d?.countries?.available_countries || d?.value?.countries?.available_countries || [];
+        if (cs.length > 0) setCountries(cs);
+      })
+      .catch(() => {});
+  }, []);
+
+  const FLAGS = { TZ: "\u{1F1F9}\u{1F1FF}", KE: "\u{1F1F0}\u{1F1EA}", UG: "\u{1F1FA}\u{1F1EC}" };
+  const activeName = countries.find(c => c.code === active)?.name || active;
+
+  if (countries.length <= 1) return null;
+
+  return (
+    <div className="relative" data-testid="country-switcher">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">
+        <span>{FLAGS[active] || "\u{1F30D}"}</span>
+        <span>{active}</span>
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-1 bg-white border rounded-xl shadow-lg py-1 min-w-[160px] z-50">
+          {countries.map(c => (
+            <button
+              key={c.code}
+              onClick={() => { setActive(c.code); setOpen(false); }}
+              className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 flex items-center gap-2 ${c.code === active ? "bg-slate-50 font-bold" : ""}`}
+              data-testid={`switch-country-${c.code}`}
+            >
+              <span>{FLAGS[c.code] || "\u{1F30D}"}</span>
+              <span>{c.name} ({c.currency})</span>
+              {c.code === active && <span className="ml-auto text-emerald-500 text-[10px] font-bold">Active</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ───── Profile Dropdown ───── */
 function ProfileDropdown({ name, role, onLogout }) {
   const [open, setOpen] = React.useState(false);
@@ -154,7 +211,7 @@ export default function AdminLayout() {
 
   // Poll sidebar counts every 30 seconds
   React.useEffect(() => {
-    const token = localStorage.getItem("admin_token") || localStorage.getItem("konekt_admin_token");
+    const token = localStorage.getItem("token") || localStorage.getItem("konekt_token") || localStorage.getItem("admin_token") || localStorage.getItem("konekt_admin_token");
     if (!token) return;
     const API = process.env.REACT_APP_BACKEND_URL || "";
     const fetchCounts = async () => {
@@ -309,6 +366,9 @@ export default function AdminLayout() {
             </div>
 
             <div className="flex items-center gap-3">
+              {/* Country Switcher */}
+              <CountrySwitcher />
+
               {/* Notifications */}
               <NotificationBell />
 

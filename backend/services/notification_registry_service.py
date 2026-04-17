@@ -47,6 +47,16 @@ async def build_notification_summary(db):
         "status": {"$in": ["pending", "new"]}
     })
 
+    # Feedback — new/unread issues
+    feedback_new = await db.feedback.count_documents({
+        "status": "new"
+    })
+
+    # Discount Requests — pending
+    discount_requests_pending = await db.discount_requests.count_documents({
+        "status": {"$in": ["pending", "submitted"]}
+    })
+
     return {
         "requests_inbox": {
             "new_count": 0,
@@ -83,6 +93,18 @@ async def build_notification_summary(db):
             "action_required_count": 0,
             "badge_count": customers_new,
             "badge_type": "new",
+        },
+        "feedback_new": {
+            "new_count": feedback_new,
+            "action_required_count": feedback_new,
+            "badge_count": feedback_new,
+            "badge_type": "action",
+        },
+        "discount_requests": {
+            "new_count": discount_requests_pending,
+            "action_required_count": discount_requests_pending,
+            "badge_count": discount_requests_pending,
+            "badge_type": "action",
         },
         "generated_at": now.isoformat(),
     }
