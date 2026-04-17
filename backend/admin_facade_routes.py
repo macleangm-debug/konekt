@@ -267,6 +267,64 @@ async def go_live_reset(request: Request):
 
 
 @router.get("/dashboard/summary")
+
+@router.post("/impersonate/{user_id}")
+async def impersonate_user(user_id: str, request: Request):
+    """Admin/Ops can impersonate another user account (vendor, sales, etc).
+    
+    Creates a temporary JWT token for the target user, allowing Ops to
+    perform actions on their behalf. Original admin session is preserved.
+    
+    Only admin and vendor_ops roles can impersonate.
+    """
+    db = request.app.mongodb
+    
+    # Verify caller is admin or vendor_ops
+    caller_role = _get_caller_role(request)
+    if caller_role not in ("admin", "vendor_ops"):
+        raise HTTPException(status_code=403, detail="Only admin and operations can impersonate users")
+    
+    # Find target user
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        # Try partner_users
+        target = await db.partner_users.find_one({"partner_id": user_id})
+        if target:
+            target["id"] = target.get("partner_id", user_id)
+            target["role"] = target.get("partner_type", "vendor")
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Cannot impersonate admin
+    if target.get("role") == "admin":
+        raise HTTPException(status_code=403, detail="Cannot impersonate admin accounts")
+    
+    jwt_secret = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
+    token_payload = {
+        "user_id": target.get("id", user_id),
+        "email": target.get("email", ""),
+        "role": target.get("role", "vendor"),
+        "full_name": target.get("full_name", target.get("name", "")),
+        "impersonated_by": caller_role,
+        "is_impersonation": True,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=4),
+    }
+    
+    token = pyjwt.encode(token_payload, jwt_secret, algorithm="HS256")
+    
+    return {
+        "token": token,
+        "user": {
+            "id": target.get("id", user_id),
+            "name": target.get("full_name", target.get("name", "")),
+            "email": target.get("email", ""),
+            "role": target.get("role", "vendor"),
+            "company": target.get("company_name", target.get("company", "")),
+        },
+        "message": f"Impersonating {target.get('full_name', target.get('email', user_id))}",
+    }
+
+
 async def dashboard_summary(request: Request):
     db = request.app.mongodb
     pending_payments = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending"]}})

@@ -74,6 +74,10 @@ async def get_public_listing(slug: str):
             # Enrich with active promotions
             product = await enrich_product_with_promotion(product, db=db)
             related_products = await enrich_products_batch(related_products, db=db)
+            # Enrich with related_services from category config
+            cat_config = await db.catalog_categories.find_one({"name": category})
+            if cat_config and cat_config.get("related_services"):
+                product["related_services"] = cat_config["related_services"]
             return {
                 "listing": product,
                 "related": related_products,
@@ -122,6 +126,11 @@ async def get_public_listing(slug: str):
     main_listing = await enrich_product_with_promotion(main_listing, db=db)
     enriched_related = await enrich_products_batch([serialize_public_doc(x) for x in related], db=db)
     enriched_suggestions = await enrich_products_batch([serialize_public_doc(x) for x in suggestions], db=db)
+
+    # Enrich with related_services from category config
+    cat_config = await db.catalog_categories.find_one({"name": category})
+    if cat_config and cat_config.get("related_services"):
+        main_listing["related_services"] = cat_config["related_services"]
 
     return {
         "listing": main_listing,

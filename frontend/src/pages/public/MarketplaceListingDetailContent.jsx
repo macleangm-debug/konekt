@@ -4,7 +4,7 @@ import {
   ChevronRight, Check, Package, Truck, Clock,
   ShoppingCart, ShieldCheck, CreditCard, ArrowRight,
   Minus, Plus, ChevronLeft, FileText,
-  Share2, Heart,
+  Share2, Heart, Sparkles,
 } from "lucide-react";
 import axios from "axios";
 import { toast } from "sonner";
@@ -479,6 +479,27 @@ export default function MarketplaceListingDetailContent() {
             onClick={() => setShowSalesAssist(true)}
             compact
           />
+
+          {/* Customize this — related services CTA */}
+          {listing.related_services?.length > 0 && (
+            <div className="rounded-2xl border-2 border-dashed border-[#D4A843]/40 bg-[#D4A843]/5 p-5" data-testid="customize-this-cta">
+              <h3 className="text-sm font-bold text-[#20364D] mb-1">Customize this product</h3>
+              <p className="text-xs text-slate-500 mb-3">Add branding, printing, or other customizations through our service partners</p>
+              <div className="flex flex-wrap gap-2">
+                {listing.related_services.map((svc, i) => (
+                  <button
+                    key={i}
+                    onClick={() => navigate(`/request-quote?type=service_quote&service=${encodeURIComponent(listing.name || "")}&category=${encodeURIComponent(svc)}`)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#D4A843] bg-white border border-[#D4A843]/30 rounded-lg px-3 py-2 hover:bg-[#D4A843]/10 transition"
+                    data-testid={`customize-svc-${i}`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {svc}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

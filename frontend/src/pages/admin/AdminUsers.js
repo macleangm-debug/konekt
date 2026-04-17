@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 import { 
   Search, Plus, Edit, UserX, Users, Shield, Briefcase, 
-  Palette, Factory, ChevronLeft, ChevronRight, Mail, Phone
+  Palette, Factory, ChevronLeft, ChevronRight, Mail, Phone, LogIn
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -112,6 +112,29 @@ export default function AdminUsers() {
     });
     setEditMode(true);
     setShowModal(true);
+  };
+
+  const handleImpersonate = async (user) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/impersonate/${user.id}`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      // Store original admin token for returning
+      localStorage.setItem('admin_token_backup', localStorage.getItem('token'));
+      localStorage.setItem('token', res.data.token);
+      toast.success(`Now acting as ${res.data.user.name || res.data.user.email}. Use browser back or re-login to return.`);
+      // Redirect based on role
+      const role = res.data.user.role;
+      if (role === 'vendor' || role === 'supplier') {
+        window.location.href = '/vendor';
+      } else if (role === 'sales') {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/admin';
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to impersonate');
+    }
   };
 
   const handleSave = async () => {
@@ -311,6 +334,18 @@ export default function AdminUsers() {
                       <td className="px-6 py-4 text-right">
                         {isAdmin && user.id !== admin?.id && (
                           <div className="flex items-center justify-end gap-2">
+                            {user.role !== 'admin' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="text-[#D4A843] hover:text-[#c49a3d]"
+                                onClick={() => handleImpersonate(user)}
+                                title={`Act as ${user.full_name}`}
+                                data-testid={`impersonate-${user.id}`}
+                              >
+                                <LogIn className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button 
                               variant="ghost" 
                               size="sm"

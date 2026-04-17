@@ -111,11 +111,31 @@ async def create_checkout_quote(data: CheckoutQuoteCreate, request: Request):
     
     # Also store a backup in quotes for legacy compatibility
     await db.quotes.insert_one({**quote_doc})
-    
+
+    # Check if customer has credit terms — if so, they can proceed without immediate payment
+    credit_terms_enabled = user.get("credit_terms_enabled", False)
+    credit_limit = float(user.get("credit_limit", 0) or 0)
+    payment_term_label = user.get("payment_term_label", "Prepaid")
+    payment_required_now = True
+
+    if credit_terms_enabled and credit_limit > 0:
+        # Calculate outstanding balance
+        outstanding = await db.invoices.aggregate([
+            {"$match": {"customer_id": user["id"], "status": {"$in": ["unpaid", "pending", "sent"]}}},
+            {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
+        ]).to_list(1)
+        outstanding_amount = outstanding[0]["total"] if outstanding else 0
+        available_credit = credit_limit - outstanding_amount
+        if available_credit >= data.total:
+            payment_required_now = False
+
     return {
         "id": quote_id,
         "quote_number": quote_number,
         "total": data.total,
         "status": "pending",
-        "message": "Quote created successfully. You can review and proceed to payment."
+        "payment_required_now": payment_required_now,
+        "credit_terms_enabled": credit_terms_enabled,
+        "payment_term_label": payment_term_label,
+        "message": "Quote created successfully." + (" Payment on credit terms." if not payment_required_now else " You can review and proceed to payment."),
     }
