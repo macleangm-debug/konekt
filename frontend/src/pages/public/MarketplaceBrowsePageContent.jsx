@@ -164,12 +164,14 @@ export default function MarketplaceBrowsePageContent() {
             ))}
           </div>
         ) : (
-          <PremiumEmptyState
-            title="No listings found"
-            description="Try another search term or clear filters to browse all products, promotional materials, and services."
-            ctaLabel="Clear filters"
-            ctaHref="/marketplace"
-          />
+          !filters.group_id && !filters.category_id && !filters.q ? null : (
+            <PremiumEmptyState
+              title="No product listings found"
+              description="Try another search term or clear filters. Check the service cards below for available services."
+              ctaLabel="Clear filters"
+              ctaHref="/marketplace"
+            />
+          )
         )}
       </section>
 

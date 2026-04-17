@@ -56,8 +56,6 @@ export const adminNavigation = [
     roles: ["admin", "marketing", "vendor_ops"],
     children: [
       { label: "Catalog", href: "/admin/catalog", icon: Columns3 },
-      { label: "Operations", href: "/admin/vendor-ops", icon: Wrench, roles: ["admin", "vendor_ops"] },
-      { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare, roles: ["admin", "vendor_ops"] },
       { label: "Product Approvals", href: "/admin/product-approvals", icon: CheckSquare },
     ],
   },
@@ -86,9 +84,11 @@ export const adminNavigation = [
     label: "Operations",
     roles: ["admin", "production", "vendor_ops"],
     children: [
+      { label: "Orders & Fulfillment", href: "/admin/vendor-ops", icon: Wrench, roles: ["admin", "vendor_ops"] },
+      { label: "Site Visits", href: "/admin/site-visits", icon: MapPin, roles: ["admin", "vendor_ops"] },
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
       { label: "Purchase Orders", href: "/admin/procurement/purchase-orders", icon: Package },
-      { label: "Site Visits", href: "/admin/site-visits", icon: MapPin, roles: ["admin", "vendor_ops"] },
+      { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare, roles: ["admin", "vendor_ops"] },
     ],
   },
   {

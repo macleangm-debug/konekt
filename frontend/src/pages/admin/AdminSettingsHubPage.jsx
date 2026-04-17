@@ -819,18 +819,103 @@ function AffiliateEmailSettingsSection({ state, setState }) {
 
 function LaunchTab({ state, setState }) {
   const l = state.launch_controls || {};
+  const [resetting, setResetting] = React.useState(false);
+  const [confirmReset, setConfirmReset] = React.useState(false);
+  const [confirmText, setConfirmText] = React.useState("");
+
+  const handleGoLiveReset = async () => {
+    if (confirmText !== "GO LIVE") return;
+    setResetting(true);
+    try {
+      await api.post("/api/admin/system/go-live-reset");
+      toast.success("Test data cleared! System is now in Live mode.");
+      setConfirmReset(false);
+      setConfirmText("");
+      setState(U(state, "launch_controls", "system_mode", "full_live"));
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Reset failed");
+    }
+    setResetting(false);
+  };
+
   return (
-    <SettingsSectionCard title="Launch Controls" description="Recommended defaults for controlled launch.">
-      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <SettingsSelectField label="System Mode" value={l.system_mode} onChange={(v) => setState(U(state, "launch_controls", "system_mode", v))} options={[{ value: "controlled_launch", label: "Controlled Launch" }, { value: "full_live", label: "Full Live" }]} />
-        <SettingsToggleField label="Manual payment verification" checked={l.manual_payment_verification} onChange={(v) => setState(U(state, "launch_controls", "manual_payment_verification", v))} />
-        <SettingsToggleField label="Manual payout approval" checked={l.manual_payout_approval} onChange={(v) => setState(U(state, "launch_controls", "manual_payout_approval", v))} />
-        <SettingsToggleField label="Affiliate approval required" checked={l.affiliate_approval_required} onChange={(v) => setState(U(state, "launch_controls", "affiliate_approval_required", v))} />
-        <SettingsToggleField label="AI enabled" checked={l.ai_enabled} onChange={(v) => setState(U(state, "launch_controls", "ai_enabled", v))} />
-        <SettingsToggleField label="Bank-only payments" checked={l.bank_only_payments} onChange={(v) => setState(U(state, "launch_controls", "bank_only_payments", v))} />
-        <SettingsToggleField label="Audit notifications" checked={l.audit_notifications_enabled} onChange={(v) => setState(U(state, "launch_controls", "audit_notifications_enabled", v))} />
-      </div>
-    </SettingsSectionCard>
+    <>
+      <SettingsSectionCard title="Launch Controls" description="Recommended defaults for controlled launch.">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <SettingsSelectField label="System Mode" value={l.system_mode} onChange={(v) => setState(U(state, "launch_controls", "system_mode", v))} options={[{ value: "testing", label: "Testing Mode" }, { value: "controlled_launch", label: "Controlled Launch" }, { value: "full_live", label: "Full Live" }]} />
+          <SettingsToggleField label="Manual payment verification" checked={l.manual_payment_verification} onChange={(v) => setState(U(state, "launch_controls", "manual_payment_verification", v))} />
+          <SettingsToggleField label="Manual payout approval" checked={l.manual_payout_approval} onChange={(v) => setState(U(state, "launch_controls", "manual_payout_approval", v))} />
+          <SettingsToggleField label="Affiliate approval required" checked={l.affiliate_approval_required} onChange={(v) => setState(U(state, "launch_controls", "affiliate_approval_required", v))} />
+          <SettingsToggleField label="AI enabled" checked={l.ai_enabled} onChange={(v) => setState(U(state, "launch_controls", "ai_enabled", v))} />
+          <SettingsToggleField label="Bank-only payments" checked={l.bank_only_payments} onChange={(v) => setState(U(state, "launch_controls", "bank_only_payments", v))} />
+          <SettingsToggleField label="Audit notifications" checked={l.audit_notifications_enabled} onChange={(v) => setState(U(state, "launch_controls", "audit_notifications_enabled", v))} />
+        </div>
+        {l.system_mode === "testing" && (
+          <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800">
+            <strong>Testing Mode:</strong> All data created is test data. When you're ready to go live, use the "Go Live" action below to clear all test data and start fresh.
+          </div>
+        )}
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Go Live — Clear Test Data" description="When you're ready to deploy to production, this will delete all test orders, quotes, invoices, payments, customers (except admin accounts), and commissions. Settings, categories, and products are preserved.">
+        {!confirmReset ? (
+          <button
+            onClick={() => setConfirmReset(true)}
+            className="px-5 py-2.5 text-sm font-semibold rounded-xl bg-red-600 text-white hover:bg-red-700 transition"
+            data-testid="go-live-btn"
+          >
+            Prepare Go-Live Reset
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-4 rounded-xl bg-red-50 border-2 border-red-300">
+              <p className="text-sm font-bold text-red-800 mb-2">This will permanently delete:</p>
+              <ul className="text-xs text-red-700 space-y-1 list-disc pl-4">
+                <li>All orders and vendor orders</li>
+                <li>All quotes (v1 and v2)</li>
+                <li>All invoices and payment proofs</li>
+                <li>All customer accounts (non-admin, non-staff users)</li>
+                <li>All commissions and payouts</li>
+                <li>All requests, site visits, and group deal participations</li>
+                <li>All notifications and timeline events</li>
+              </ul>
+              <p className="text-sm font-bold text-red-800 mt-3">Preserved:</p>
+              <ul className="text-xs text-red-700 space-y-1 list-disc pl-4">
+                <li>Admin & staff accounts</li>
+                <li>Settings Hub configuration</li>
+                <li>Product catalog and categories</li>
+                <li>Partner/vendor accounts</li>
+                <li>Affiliate accounts (status reset to pending)</li>
+              </ul>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-red-700">Type <strong>GO LIVE</strong> to confirm:</label>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                className="w-full mt-1 border-2 border-red-300 rounded-lg px-3 py-2 text-sm focus:border-red-500 focus:outline-none"
+                placeholder="Type GO LIVE"
+                data-testid="go-live-confirm-input"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleGoLiveReset}
+                disabled={confirmText !== "GO LIVE" || resetting}
+                className="px-5 py-2.5 text-sm font-bold rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-40 transition"
+                data-testid="go-live-confirm-btn"
+              >
+                {resetting ? "Clearing..." : "Clear Test Data & Go Live"}
+              </button>
+              <button onClick={() => { setConfirmReset(false); setConfirmText(""); }} className="px-4 py-2.5 text-sm font-semibold rounded-xl border text-slate-600 hover:bg-slate-50">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </SettingsSectionCard>
+    </>
   );
 }
 

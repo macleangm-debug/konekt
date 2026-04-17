@@ -118,6 +118,9 @@ async def dashboard_kpis(request: Request):
     ).to_list(length=5000)
     commissions_total_month = sum(float(c.get("amount") or 0) for c in month_commissions)
     profit_month -= commissions_total_month
+    # Only show negative profit if there's actual revenue (avoid misleading negatives from test commissions)
+    if revenue_month <= 0:
+        profit_month = 0
 
     # ── Chart: revenue + profit by month (last 6 months) ──
     revenue_trend = []
@@ -152,6 +155,8 @@ async def dashboard_kpis(request: Request):
         ).to_list(length=5000)
         m_comm_total = sum(float(c.get("amount") or 0) for c in m_comms)
         m_profit = m_revenue - m_base - m_comm_total
+        if m_revenue <= 0:
+            m_profit = 0
 
         revenue_trend.append({
             "month": m_start_dt.strftime("%b %Y"),
@@ -201,6 +206,65 @@ async def dashboard_kpis(request: Request):
         },
         "caller_role": _get_caller_role(request),
     }
+
+
+@router.post("/system/go-live-reset")
+async def go_live_reset(request: Request):
+    """Clear all test data for go-live. Preserves: admin/staff accounts, settings, catalog, partners.
+    Deletes: orders, quotes, invoices, payments, customers, commissions, requests, site visits, notifications.
+    """
+    db = request.app.mongodb
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Collections to completely clear
+    clear_collections = [
+        "orders", "vendor_orders", "quotes", "quotes_v2",
+        "invoices", "payment_proofs", "commissions", "payouts",
+        "requests", "site_visits", "status_requests",
+        "order_events", "stock_movements", "inventory_reservations",
+        "production_queue", "admin_tasks", "delivery_notes",
+        "notifications", "referral_events", "sales_assignments",
+        "discount_requests", "group_deal_participants",
+        "document_sequences",
+    ]
+
+    deleted_counts = {}
+    for coll_name in clear_collections:
+        try:
+            coll = db[coll_name]
+            result = await coll.delete_many({})
+            deleted_counts[coll_name] = result.deleted_count
+        except Exception:
+            deleted_counts[coll_name] = 0
+
+    # Delete non-admin, non-staff users (customers)
+    protected_roles = {"admin", "sales", "sales_manager", "finance_manager", "vendor_ops", "production", "staff", "marketing"}
+    cust_result = await db.users.delete_many({"role": {"$nin": list(protected_roles)}})
+    deleted_counts["customer_users"] = cust_result.deleted_count
+
+    # Reset affiliate statuses to pending (preserve accounts)
+    await db.affiliates.update_many({}, {"$set": {"status": "pending", "updated_at": now}})
+
+    # Update system mode to full_live
+    await db.admin_settings.update_one(
+        {"key": "settings_hub"},
+        {"$set": {"value.launch_controls.system_mode": "full_live"}},
+    )
+
+    # Log the reset event
+    await db.audit_log.insert_one({
+        "action": "go_live_reset",
+        "performed_at": now,
+        "deleted_counts": deleted_counts,
+        "note": "Test data cleared for go-live deployment",
+    })
+
+    return {
+        "status": "success",
+        "message": "Test data cleared. System is now in Live mode.",
+        "deleted_counts": deleted_counts,
+    }
+
 
 @router.get("/dashboard/summary")
 async def dashboard_summary(request: Request):

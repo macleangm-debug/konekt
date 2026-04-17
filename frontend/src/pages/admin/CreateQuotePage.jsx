@@ -112,24 +112,11 @@ export default function CreateQuotePage() {
   };
 
   // Build live preview data
-  const previewData = {
-    document_type: "quote",
-    quote_number: "DRAFT",
-    date: new Date().toISOString(),
-    valid_until: validUntil || null,
-    ...getCustomerData(),
-    line_items: lineItems.map((item) => ({
-      description: item.name || item.description,
-      quantity: item.quantity,
-      unit_price: item.pricing_status === "priced" ? item.unit_price : 0,
-      total: item.pricing_status === "priced" ? item.total : 0,
-      unit_of_measurement: item.unit_of_measurement,
-    })),
-    subtotal, tax, vat_amount: tax, vat_rate: taxRate, total,
-    discount: 0,
-    notes,
-    status: "draft",
-    currency: "TZS",
+  const customerData = getCustomerData();
+  const fmtDate = (d) => {
+    if (!d) return "";
+    try { return new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); }
+    catch { return d; }
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="w-6 h-6 animate-spin text-slate-300" /></div>;
@@ -238,17 +225,33 @@ export default function CreateQuotePage() {
               {lineItems.length > 0 && <Badge className="text-[9px] bg-emerald-50 text-emerald-600">{lineItems.length} item{lineItems.length !== 1 ? "s" : ""}</Badge>}
             </div>
             <div className="p-2 max-h-[calc(100vh-180px)] overflow-y-auto" style={{ transform: "scale(0.75)", transformOrigin: "top left", width: "133.33%" }}>
-              {lineItems.length > 0 && hasCustomer ? (
-                <CanonicalDocumentRenderer
-                  documentType="quote"
-                  documentData={previewData}
-                />
-              ) : (
-                <div className="text-center py-20 text-slate-300">
-                  <FileText className="w-16 h-16 mx-auto mb-3 text-slate-200" />
-                  <p className="text-sm text-slate-400">Select a customer and add items to see the branded quote preview</p>
-                </div>
-              )}
+              <CanonicalDocumentRenderer
+                docType="quote"
+                docNumber="DRAFT"
+                docDate={fmtDate(new Date().toISOString())}
+                dueDate={validUntil ? fmtDate(validUntil) : ""}
+                status="draft"
+                toBlock={{
+                  name: customerData.customer_name || "",
+                  company: customerData.customer_company || "",
+                  email: customerData.customer_email || "",
+                  phone: customerData.customer_phone || "",
+                  address: customerData.customer_address || "",
+                }}
+                lineItems={lineItems.map((item) => ({
+                  description: item.name || item.description || "",
+                  quantity: Number(item.quantity || 1),
+                  unit_price: item.pricing_status === "priced" ? Number(item.unit_price || 0) : 0,
+                  total: item.pricing_status === "priced" ? Number(item.total || 0) : 0,
+                }))}
+                subtotal={subtotal}
+                taxRate={taxRate}
+                tax={tax}
+                total={total}
+                currency="TZS"
+                notes={notes}
+                paymentTermLabel={selectedCustomer?.payment_term_label || ""}
+              />
             </div>
           </div>
         </div>
