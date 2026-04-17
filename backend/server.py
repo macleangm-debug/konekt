@@ -171,6 +171,8 @@ from public_service_routes import router as public_service_router
 from partner_capability_routes import router as partner_capability_router
 from delivery_partner_routes import router as delivery_partner_router
 from product_insight_routes import router as product_insight_router
+from feedback_routes import router as feedback_router
+from vendor_assignment_routes import router as vendor_assignment_router
 
 # Recurring Services + Reorder Pack Routes
 from reorder_routes import router as reorder_router
@@ -2725,6 +2727,8 @@ app.include_router(public_service_router)
 app.include_router(partner_capability_router)
 app.include_router(delivery_partner_router)
 app.include_router(product_insight_router)
+app.include_router(feedback_router)
+app.include_router(vendor_assignment_router)
 
 # Recurring Services + Reorder Pack Routes
 app.include_router(reorder_router)

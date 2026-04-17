@@ -6,6 +6,7 @@ import {
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign,
   Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench, MapPin,
+  MessageCircle, Truck,
 } from "lucide-react";
 
 /**
@@ -89,6 +90,7 @@ export const adminNavigation = [
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
       { label: "Purchase Orders", href: "/admin/procurement/purchase-orders", icon: Package },
       { label: "Supply Review", href: "/admin/vendor-supply-review", icon: CheckSquare, roles: ["admin", "vendor_ops"] },
+      { label: "Vendor Assignments", href: "/admin/vendor-assignments", icon: Truck, roles: ["admin", "vendor_ops"] },
     ],
   },
   {
@@ -113,6 +115,7 @@ export const adminNavigation = [
       { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
       { label: "Weekly Digest", href: "/admin/weekly-digest", icon: CalendarDays, roles: ["admin"] },
       { label: "Data Integrity", href: "/admin/data-integrity", icon: Shield, roles: ["admin"] },
+      { label: "Feedback Inbox", href: "/admin/feedback-inbox", icon: MessageCircle, roles: ["admin"] },
     ],
   },
   {
