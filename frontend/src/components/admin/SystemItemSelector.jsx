@@ -30,9 +30,31 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
     if (!q || q.length < 2) { setResults([]); return; }
     setSearching(true);
     try {
-      const res = await api.get(`/api/public-marketplace/products?q=${encodeURIComponent(q)}&limit=15`);
-      const products = Array.isArray(res.data) ? res.data : res.data?.products || [];
-      setResults(products);
+      // Search both products and service categories
+      const [prodRes, svcRes] = await Promise.all([
+        api.get(`/api/public-marketplace/products?q=${encodeURIComponent(q)}&limit=15`),
+        api.get(`/api/admin/catalog-workspace/categories`).catch(() => ({ data: [] })),
+      ]);
+      const products = Array.isArray(prodRes.data) ? prodRes.data : prodRes.data?.products || [];
+      // Filter services matching query
+      const allCats = Array.isArray(svcRes.data) ? svcRes.data : [];
+      const serviceCats = allCats.filter(c =>
+        (c.category_type === "service" || c.group_name === "Services") &&
+        (c.name || "").toLowerCase().includes(q.toLowerCase())
+      );
+      // Map services as items with a special flag
+      const serviceItems = serviceCats.map(s => ({
+        id: `svc-${s.name}`,
+        name: s.name,
+        description: `Service: ${s.name}`,
+        category: s.name,
+        category_name: s.name,
+        is_service: true,
+        requires_site_visit: s.requires_site_visit || false,
+        selling_price: 0,
+        price: 0,
+      }));
+      setResults([...products, ...serviceItems]);
     } catch { setResults([]); }
     setSearching(false);
   }, []);
@@ -44,6 +66,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
   }, [query, searchProducts]);
 
   const addItem = (product) => {
+    const isService = product.is_service === true;
     const existing = items.find((i) => i.product_id === product.id);
     if (existing) {
       setItems(items.map((i) =>
@@ -51,20 +74,22 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
       ));
     } else {
       const sellPrice = Number(product.selling_price || product.price || 0);
-      const hasPricing = sellPrice > 0;
+      const hasPricing = sellPrice > 0 && !isService;
       setItems([...items, {
         product_id: product.id,
         name: product.name || "",
         description: product.description || product.name || "",
         sku: product.sku || "",
         category: product.category || product.category_name || "",
-        unit_of_measurement: product.unit_of_measurement || "Piece",
+        unit_of_measurement: isService ? "Service" : (product.unit_of_measurement || "Piece"),
         quantity: 1,
         unit_price: sellPrice,
         total: sellPrice,
         has_pricing: hasPricing,
         pricing_status: hasPricing ? "priced" : "waiting_for_pricing",
         vendor_cost: Number(product.vendor_cost || product.base_price || 0),
+        is_service: isService,
+        requires_site_visit: product.requires_site_visit || false,
       }]);
     }
     setQuery("");
@@ -144,7 +169,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
             <input
               ref={searchRef}
               type="text"
-              placeholder="Search products by name, SKU, or category..."
+              placeholder="Search products or services..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#D4A843]/30 focus:border-[#D4A843] outline-none"
@@ -157,6 +182,7 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
               {results.map((p) => {
                 const price = Number(p.selling_price || p.price || 0);
                 const alreadyAdded = items.some((i) => i.product_id === p.id);
+                const isService = p.is_service === true;
                 return (
                   <button
                     key={p.id}
@@ -168,15 +194,21 @@ export default function SystemItemSelector({ items, setItems, currency = "TZS" }
                   >
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium text-[#20364D] truncate">{p.name}</div>
+                        <div className="text-sm font-medium text-[#20364D] truncate">
+                          {p.name}
+                          {isService && <Badge className="ml-2 bg-purple-100 text-purple-700 text-[8px]">Service</Badge>}
+                        </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
                           {p.sku && <span>SKU: {p.sku}</span>}
                           {p.category_name && <span className="ml-2">{p.category_name}</span>}
-                          {p.unit_of_measurement && <span className="ml-2">/ {p.unit_of_measurement}</span>}
+                          {!isService && p.unit_of_measurement && <span className="ml-2">/ {p.unit_of_measurement}</span>}
+                          {isService && p.requires_site_visit && <span className="ml-2 text-amber-500">Requires site visit</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                        {price > 0 ? (
+                        {isService ? (
+                          <Badge className="bg-purple-100 text-purple-700 text-[9px]">Request Quote</Badge>
+                        ) : price > 0 ? (
                           <span className="text-sm font-semibold text-emerald-600">{money(price)}</span>
                         ) : (
                           <Badge className="bg-amber-100 text-amber-700 text-[9px]">Needs Pricing</Badge>

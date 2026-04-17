@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target, Package } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target, Package, DollarSign } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -28,6 +28,7 @@ const GROUPS = [
       { key: "countries", label: "Countries & Markets", icon: Globe },
       { key: "doc_footer", label: "Document Footer", icon: FileText },
       { key: "doc_template", label: "Document Template", icon: Eye },
+      { key: "number_format", label: "Number & Currency", icon: DollarSign },
       { key: "notifications", label: "Notifications", icon: Bell },
       { key: "email_triggers", label: "Email Notifications", icon: Bell },
       { key: "report_delivery", label: "Report Delivery", icon: CalendarClock },
@@ -82,6 +83,7 @@ const TAB_DESCRIPTIONS = {
   countries: "Configure countries, currencies, and market-specific settings",
   doc_footer: "Footer content displayed on all business documents",
   doc_template: "Select document layout template",
+  number_format: "Number formatting, thousand separators, decimal places, and currency display",
   pricing_policy: "Margin tiers and pricing tier configuration",
   commercial: "Distribution rules, margins, VAT, and referral limits",
   operations: "Date formats, timezone, and follow-up thresholds",
@@ -318,6 +320,7 @@ export default function AdminSettingsHubPage() {
             {tab === "countries" && <CountriesTab state={state} setState={setState} />}
             {tab === "doc_footer" && <DocFooterTab state={state} setState={setState} />}
             {tab === "doc_template" && <DocTemplateTab state={state} setState={setState} />}
+            {tab === "number_format" && <NumberFormatTab state={state} setState={setState} />}
             {tab === "catalog_units" && <CatalogUnitsTab state={state} setState={setState} />}
             {tab === "catalog_categories" && <CatalogCategoriesTab state={state} setState={setState} />}
             {tab === "catalog_category_config" && <SettingsLockGate><CategoryConfigTab /></SettingsLockGate>}
@@ -2294,3 +2297,82 @@ function CountriesTab({ state, setState }) {
   );
 }
 
+
+
+function NumberFormatTab({ state, setState }) {
+  const nf = state.number_format || {};
+  return (
+    <SettingsSectionCard title="Number & Currency Formatting" description="Controls how numbers, prices, and currencies are displayed across the entire system.">
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <SettingsSelectField
+          label="Thousand Separator"
+          value={nf.thousand_separator || "comma"}
+          onChange={(v) => setState(U(state, "number_format", "thousand_separator", v))}
+          options={[
+            { value: "comma", label: "Comma (1,000,000)" },
+            { value: "period", label: "Period (1.000.000)" },
+            { value: "space", label: "Space (1 000 000)" },
+            { value: "none", label: "None (1000000)" },
+          ]}
+        />
+        <SettingsSelectField
+          label="Decimal Separator"
+          value={nf.decimal_separator || "period"}
+          onChange={(v) => setState(U(state, "number_format", "decimal_separator", v))}
+          options={[
+            { value: "period", label: "Period (1,000.50)" },
+            { value: "comma", label: "Comma (1.000,50)" },
+          ]}
+        />
+        <SettingsSelectField
+          label="Decimal Places (Prices)"
+          value={nf.decimal_places ?? "0"}
+          onChange={(v) => setState(U(state, "number_format", "decimal_places", v))}
+          options={[
+            { value: "0", label: "None (1,000)" },
+            { value: "2", label: "Two (1,000.00)" },
+          ]}
+        />
+        <SettingsSelectField
+          label="Currency Position"
+          value={nf.currency_position || "before"}
+          onChange={(v) => setState(U(state, "number_format", "currency_position", v))}
+          options={[
+            { value: "before", label: "Before (TZS 1,000)" },
+            { value: "after", label: "After (1,000 TZS)" },
+          ]}
+        />
+        <SettingsSelectField
+          label="Currency Symbol"
+          value={nf.currency_symbol || "TZS"}
+          onChange={(v) => setState(U(state, "number_format", "currency_symbol", v))}
+          options={[
+            { value: "TZS", label: "TZS (Tanzania Shilling)" },
+            { value: "KES", label: "KES (Kenya Shilling)" },
+            { value: "UGX", label: "UGX (Uganda Shilling)" },
+            { value: "USD", label: "USD (US Dollar)" },
+          ]}
+        />
+        <SettingsToggleField
+          label="Show currency on all amounts"
+          checked={nf.show_currency !== false}
+          onChange={(v) => setState(U(state, "number_format", "show_currency", v))}
+        />
+      </div>
+      <div className="mt-4 p-4 rounded-xl bg-slate-50 border">
+        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Preview</label>
+        <div className="mt-2 text-lg font-bold text-[#20364D]">
+          {(() => {
+            const sep = nf.thousand_separator === "period" ? "." : nf.thousand_separator === "space" ? " " : nf.thousand_separator === "none" ? "" : ",";
+            const dec = nf.decimal_separator === "comma" ? "," : ".";
+            const dp = parseInt(nf.decimal_places || "0");
+            const sym = nf.currency_symbol || "TZS";
+            const num = "1" + sep + "234" + sep + "567" + (dp > 0 ? dec + "00" : "");
+            return nf.currency_position === "after" ? `${num} ${sym}` : `${sym} ${num}`;
+          })()}
+        </div>
+        <p className="text-xs text-slate-500 mt-1">This is how amounts will display across the system</p>
+      </div>
+    </SettingsSectionCard>
+  );
+}

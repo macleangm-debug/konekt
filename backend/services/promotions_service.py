@@ -114,17 +114,25 @@ def calculate_effective_discount(
     promo_pct_of_dist = float(split.get("promotion_pct", 0))
 
     distributable_pool = round(base_cost * (dist_pct / 100.0), 2)
-    max_promo_amount = round(distributable_pool * (promo_pct_of_dist / 100.0), 2)
+
+    # Admin Override: give away the ENTIRE distributable margin
+    discount_type = promo.get("discount_type", "percentage")
+    if discount_type == "admin_override":
+        max_promo_amount = distributable_pool  # Full distributable margin
+    else:
+        max_promo_amount = round(distributable_pool * (promo_pct_of_dist / 100.0), 2)
 
     # Reduce when affiliate is active
     if has_affiliate and stacking_rule == "reduce_when_affiliate":
         max_promo_amount = round(max_promo_amount * 0.5, 2)  # 50% reduction
 
     # Calculate raw discount
-    discount_type = promo.get("discount_type", "percentage")
     discount_value = float(promo.get("discount_value", 0))
 
-    if discount_type == "percentage":
+    if discount_type == "admin_override":
+        # Admin override: the discount IS the entire distributable pool
+        raw_discount = distributable_pool
+    elif discount_type == "percentage":
         raw_discount = round(selling_price * (discount_value / 100.0), 2)
     else:  # fixed_amount
         raw_discount = round(discount_value, 2)

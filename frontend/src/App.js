@@ -18,6 +18,7 @@ import ChatWidget from "@/components/ChatWidget";
 // Removed: ExitIntentPopup, PromoBanner (interruptive popups cleaned up)
 import AIChatWidget from "@/components/AIChatWidget";
 import FeedbackWidget from "@/components/feedback/FeedbackWidget";
+import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import { ConfirmModalProvider } from "@/contexts/ConfirmModalContext";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
 import CartDrawerV2 from "@/components/cart/CartDrawerV2";
@@ -1035,6 +1036,7 @@ function App() {
           </AuthProvider>
         } />
       </Routes>
+      <ImpersonationBanner />
       <Toaster position="top-center" richColors />
       <AIChatWidget />
       <FeedbackWidget />

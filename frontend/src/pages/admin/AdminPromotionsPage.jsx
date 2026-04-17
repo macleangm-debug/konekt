@@ -426,10 +426,34 @@ function PromotionForm({ initial, categories, products, onSaved, onCancel }) {
         </FormField>
       )}
 
-      {/* Discount — Automatically from pricing policy */}
-      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Discount Calculation</div>
-        <div className="text-xs text-slate-600">Discount is automatically calculated based on pricing policy settings (distributable margin and promotion allocation).</div>
+      {/* Discount — Admin Override or Automatic from pricing policy */}
+      <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-3">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Discount Type</div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => update("discount_type", "auto")}
+            className={`rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${(form.discount_type || "auto") === "auto" ? "border-[#20364D] bg-[#20364D]/5 text-[#20364D]" : "border-slate-200 text-slate-500"}`}
+            data-testid="discount-type-auto"
+          >
+            Auto (Pricing Policy)
+          </button>
+          <button
+            type="button"
+            onClick={() => update("discount_type", "admin_override")}
+            className={`rounded-lg border px-3 py-2.5 text-xs font-semibold transition ${form.discount_type === "admin_override" ? "border-red-400 bg-red-50 text-red-700" : "border-slate-200 text-slate-500"}`}
+            data-testid="discount-type-override"
+          >
+            Admin Override (Max Discount)
+          </button>
+        </div>
+        {form.discount_type === "admin_override" ? (
+          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">
+            <strong>Admin Override:</strong> This promotion will give away the ENTIRE distributable margin as a discount. The platform keeps only the protected margin. Use for special campaigns, VIP clients, or market-entry pricing.
+          </div>
+        ) : (
+          <div className="text-xs text-slate-600">Discount is automatically calculated based on pricing policy settings (distributable margin and promotion allocation).</div>
+        )}
       </div>
 
       {/* Stacking Rule */}
