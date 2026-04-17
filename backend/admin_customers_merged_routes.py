@@ -304,6 +304,11 @@ async def customer_detail_360(customer_id: str, request: Request):
         "recent_invoices": [fmt_invoice(i) for i in recent_invoices_raw],
         "recent_orders": [fmt_order(o) for o in recent_orders_raw],
         "notes": "",
+        "credit_terms_enabled": user.get("credit_terms_enabled", False),
+        "payment_term_type": user.get("payment_term_type", "prepaid"),
+        "payment_term_days": user.get("payment_term_days", 0),
+        "payment_term_label": user.get("payment_term_label", "Prepaid"),
+        "credit_limit": user.get("credit_limit", 0),
     }
 
 
@@ -350,6 +355,32 @@ async def update_customer_profile(customer_id: str, payload: dict, request: Requ
     await db.users.update_one({"id": uid}, {"$set": update_fields})
 
     return {"status": "success", "message": "Customer profile updated"}
+
+
+# ─── Credit Terms (Admin Only) ──────────────────────────────────────
+@router.put("/{customer_id}/credit-terms")
+async def update_credit_terms(customer_id: str, request: Request):
+    """Admin-only: Set credit/payment terms for a customer.
+    Sales cannot set credit terms — only admin/finance.
+    """
+    db = request.app.mongodb
+    body = await request.json()
+    user = await db.users.find_one({"id": customer_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    allowed_fields = {
+        "credit_terms_enabled", "payment_term_type", "payment_term_days",
+        "payment_term_label", "credit_limit",
+    }
+    update = {}
+    for k in allowed_fields:
+        if k in body:
+            update[k] = body[k]
+    update["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.users.update_one({"id": customer_id}, {"$set": update})
+    return {"status": "success", "message": "Credit terms updated"}
 
 
 # ─── Statement of Account ───────────────────────────────────────────

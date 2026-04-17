@@ -812,9 +812,10 @@ function AdminDashboardMain() {
       </div>
 
       {/* Top KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4" data-testid="kpi-row">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 md:gap-4" data-testid="kpi-row">
         <KpiCard icon={ShoppingCart} label="Orders Today" value={kpis.orders_today || 0} color="bg-blue-50 text-blue-600" to="/admin/orders" />
         <KpiCard icon={DollarSign} label="Revenue (Month)" value={fmtMoney(kpis.revenue_month)} color="bg-green-50 text-green-600" trend />
+        <KpiCard icon={TrendingUp} label="Profit (Month)" value={fmtMoney(kpis.profit_month)} color="bg-emerald-50 text-emerald-700" trend />
         <KpiCard icon={CreditCard} label="Pending Payments" value={kpis.pending_payments || 0} color="bg-amber-50 text-amber-600" to="/admin/payments" badge={kpis.pending_payments} />
         <KpiCard icon={FileText} label="Active Quotes" value={kpis.active_quotes || 0} color="bg-purple-50 text-purple-600" to="/admin/quotes" />
         <KpiCard icon={AlertTriangle} label="Open Delays" value={kpis.open_delays || 0} color="bg-red-50 text-red-600" to="/admin/orders" badge={kpis.open_delays} />
@@ -973,22 +974,27 @@ function AdminDashboardMain() {
           )}
         </div>
 
-        {/* Revenue Trend */}
+        {/* Revenue & Profit Trend */}
         <div className="bg-white border rounded-2xl p-5" data-testid="chart-revenue-trend">
-          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Revenue Trend (6 months)</h3>
+          <h3 className="font-semibold text-[#20364D] text-sm mb-4">Revenue & Profit Trend (6 months)</h3>
           {charts.revenue_trend?.length > 0 ? (
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={charts.revenue_trend}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
                 <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} tickFormatter={(v) => v >= 1e6 ? `${(v/1e6).toFixed(0)}M` : v >= 1e3 ? `${(v/1e3).toFixed(0)}K` : v} />
-                <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} formatter={(v) => [fmtMoney(v), "Revenue"]} />
-                <Line type="monotone" dataKey="revenue" stroke="#D4A843" strokeWidth={2.5} dot={{ r: 4, fill: "#D4A843" }} />
+                <Tooltip contentStyle={{ borderRadius: 12, borderColor: "#e2e8f0", fontSize: 12 }} formatter={(v, name) => [fmtMoney(v), name === "revenue" ? "Revenue" : "Profit"]} />
+                <Line type="monotone" dataKey="revenue" stroke="#D4A843" strokeWidth={2.5} dot={{ r: 4, fill: "#D4A843" }} name="revenue" />
+                <Line type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2.5} dot={{ r: 4, fill: "#10B981" }} name="profit" />
               </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[180px] flex items-center justify-center text-slate-500 text-sm font-medium">No data available yet</div>
           )}
+          <div className="flex items-center gap-4 mt-3 justify-center">
+            <div className="flex items-center gap-1.5 text-xs text-slate-500"><div className="w-3 h-0.5 bg-[#D4A843] rounded" /> Revenue</div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500"><div className="w-3 h-0.5 bg-emerald-500 rounded" /> Profit</div>
+          </div>
         </div>
 
         {/* Status Distribution */}

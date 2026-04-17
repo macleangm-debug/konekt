@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { adminApi } from "@/lib/adminApi";
+import api from "@/lib/api";
 import StatusBadge from "@/components/admin/shared/StatusBadge";
 import StatementOfAccountTab from "@/components/customers/StatementOfAccountTab";
+import { toast } from "sonner";
 import {
   User, FileText, Receipt, ShoppingCart, MessageSquare,
-  ArrowLeft, Inbox, CreditCard, BookOpen,
+  ArrowLeft, Inbox, CreditCard, BookOpen, Shield,
 } from "lucide-react";
 
 const fmtDate = (d) => {
@@ -78,6 +80,87 @@ function TransactionTable({ items, columns, emptyMessage = "No records yet." }) 
         </tbody>
       </table>
     </div>
+  );
+}
+
+function CreditTermsSection({ customerId, customer }) {
+  const [enabled, setEnabled] = useState(customer.credit_terms_enabled || false);
+  const [termType, setTermType] = useState(customer.payment_term_type || "prepaid");
+  const [termDays, setTermDays] = useState(customer.payment_term_days || 0);
+  const [creditLimit, setCreditLimit] = useState(customer.credit_limit || 0);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put(`/api/admin/customers/${customerId}/credit-terms`, {
+        credit_terms_enabled: enabled,
+        payment_term_type: termType,
+        payment_term_days: termDays,
+        payment_term_label: termType === "prepaid" ? "Prepaid" : `Net ${termDays}`,
+        credit_limit: creditLimit,
+      });
+      toast.success("Credit terms updated");
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to update credit terms");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <section className="rounded-xl border border-slate-200 p-5" data-testid="credit-terms-section">
+      <div className="flex items-center gap-2 mb-4">
+        <Shield className="w-4 h-4 text-[#D4A843]" />
+        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Payment & Credit Terms</h3>
+        <span className="text-[9px] bg-[#20364D] text-white px-2 py-0.5 rounded font-semibold ml-auto">Admin Only</span>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase">Credit Terms Enabled</label>
+          <div className="mt-1">
+            <button
+              onClick={() => setEnabled(!enabled)}
+              data-testid="credit-terms-toggle"
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${enabled ? "bg-emerald-500" : "bg-slate-300"}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${enabled ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+            <span className="ml-2 text-xs text-slate-600">{enabled ? "Active" : "Disabled"}</span>
+          </div>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase">Term Type</label>
+          <select value={termType} onChange={(e) => setTermType(e.target.value)} data-testid="term-type-select" className="w-full mt-1 border rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="prepaid">Prepaid (Full upfront)</option>
+            <option value="net_30">Net 30</option>
+            <option value="net_60">Net 60</option>
+            <option value="net_90">Net 90</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase">Payment Days</label>
+          <input type="number" value={termDays} onChange={(e) => setTermDays(parseInt(e.target.value) || 0)} data-testid="term-days-input" className="w-full mt-1 border rounded-lg px-3 py-2 text-sm" />
+          <p className="text-[10px] text-slate-400 mt-0.5">Days after invoice to pay</p>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold text-slate-500 uppercase">Credit Limit (TZS)</label>
+          <input type="number" value={creditLimit} onChange={(e) => setCreditLimit(parseInt(e.target.value) || 0)} data-testid="credit-limit-input" className="w-full mt-1 border rounded-lg px-3 py-2 text-sm" />
+          <p className="text-[10px] text-slate-400 mt-0.5">Max outstanding before payment required</p>
+        </div>
+      </div>
+      {enabled && (
+        <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700">
+          This client has <strong>{termType === "prepaid" ? "Prepaid" : `Net ${termDays}`}</strong> payment terms with a credit limit of <strong>TZS {Number(creditLimit).toLocaleString()}</strong>.
+          Invoices will show payment due date based on these terms.
+        </div>
+      )}
+      <div className="flex justify-end mt-4">
+        <button onClick={save} disabled={saving} data-testid="save-credit-terms" className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#20364D] text-white hover:bg-[#1a2d40] disabled:opacity-50">
+          {saving ? "Saving..." : "Save Credit Terms"}
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -162,6 +245,9 @@ function OverviewTab({ customer }) {
           </dl>
         </section>
       </div>
+
+      {/* Credit & Payment Terms — Admin Only */}
+      <CreditTermsSection customerId={c.id} customer={c} />
     </div>
   );
 }

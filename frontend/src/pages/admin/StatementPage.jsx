@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { FileText, Download, Search } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { FileText, Download, Search, Printer } from "lucide-react";
 import api from "@/lib/api";
 import { formatMoney } from "@/utils/finance";
+import CanonicalDocumentRenderer from "@/components/documents/CanonicalDocumentRenderer";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -11,24 +12,26 @@ export default function StatementPage() {
   const [aging, setAging] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showBrandedView, setShowBrandedView] = useState(false);
+  const docRef = useRef(null);
 
   const loadStatement = async () => {
     if (!customerEmail) {
       setError("Please enter a customer email");
       return;
     }
-    
+
     try {
       setLoading(true);
       setError("");
       setStatement(null);
       setAging(null);
-      
+
       const [statementRes, agingRes] = await Promise.all([
         api.get(`/api/admin/statements/customer/${encodeURIComponent(customerEmail)}`),
         api.get(`/api/admin/statements/customer/${encodeURIComponent(customerEmail)}/aging`).catch(() => null),
       ]);
-      
+
       setStatement(statementRes.data);
       if (agingRes) setAging(agingRes.data);
     } catch (err) {
@@ -36,6 +39,23 @@ export default function StatementPage() {
       setError(err.response?.data?.detail || "No statement data found for this customer");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Build line items for CanonicalDocumentRenderer from statement entries
+  const buildLineItems = () => {
+    if (!statement?.entries) return [];
+    return statement.entries.map((e, idx) => ({
+      description: `${(e.entry_type || "").toUpperCase()} — ${e.document_number || ""}: ${e.description || ""}`,
+      quantity: 1,
+      unit_price: e.debit > 0 ? e.debit : -(e.credit || 0),
+      total: e.debit > 0 ? e.debit : -(e.credit || 0),
+    }));
+  };
+
+  const handleExportPDF = async () => {
+    if (docRef.current?.exportAsPDF) {
+      await docRef.current.exportAsPDF(`Statement-${customerEmail}.pdf`);
     }
   };
 
@@ -86,7 +106,7 @@ export default function StatementPage() {
 
         {statement && (
           <>
-            {/* Customer Info & PDF Download */}
+            {/* Customer Info & Actions */}
             <div className="rounded-2xl border bg-white p-5 flex items-start justify-between">
               <div>
                 {(statement.customer_name || statement.customer_company) ? (
@@ -101,34 +121,52 @@ export default function StatementPage() {
                   </>
                 )}
               </div>
-              <a
-                href={`${API_URL}/api/pdf/statements/${encodeURIComponent(statement.customer_email)}`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] transition-colors shrink-0"
-                data-testid="download-statement-pdf"
-              >
-                <Download className="w-4 h-4" /> Download PDF
-              </a>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowBrandedView(!showBrandedView)}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 text-slate-700 px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 transition-colors"
+                  data-testid="toggle-branded-view"
+                >
+                  <Printer className="w-4 h-4" /> {showBrandedView ? "Table View" : "Branded View"}
+                </button>
+                {showBrandedView && (
+                  <button
+                    onClick={handleExportPDF}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#D4A843] text-[#17283C] px-4 py-2.5 text-sm font-semibold hover:bg-[#c49a3d] transition-colors"
+                    data-testid="export-branded-pdf"
+                  >
+                    <Download className="w-4 h-4" /> Export Branded PDF
+                  </button>
+                )}
+                <a
+                  href={`${API_URL}/api/pdf/statements/${encodeURIComponent(statement.customer_email)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] text-white px-4 py-2.5 text-sm font-semibold hover:bg-[#2a4a66] transition-colors shrink-0"
+                  data-testid="download-statement-pdf"
+                >
+                  <Download className="w-4 h-4" /> Download PDF
+                </a>
+              </div>
             </div>
 
             {/* Summary Cards */}
             <div className="grid md:grid-cols-3 gap-4">
               <div className="rounded-2xl border bg-white p-5">
                 <div className="text-sm text-slate-500">Total Invoiced</div>
-                <div className="text-2xl font-bold mt-2">
+                <div className="text-2xl font-bold mt-2" data-testid="total-invoiced">
                   {formatMoney(statement.summary.total_invoiced)}
                 </div>
               </div>
               <div className="rounded-2xl border bg-white p-5">
                 <div className="text-sm text-slate-500">Total Paid</div>
-                <div className="text-2xl font-bold mt-2 text-green-600">
+                <div className="text-2xl font-bold mt-2 text-green-600" data-testid="total-paid">
                   {formatMoney(statement.summary.total_paid)}
                 </div>
               </div>
               <div className="rounded-2xl border bg-white p-5">
                 <div className="text-sm text-slate-500">Balance Due</div>
-                <div className={`text-2xl font-bold mt-2 ${statement.summary.balance_due > 0 ? "text-red-600" : "text-green-600"}`}>
+                <div className={`text-2xl font-bold mt-2 ${statement.summary.balance_due > 0 ? "text-red-600" : "text-green-600"}`} data-testid="balance-due">
                   {formatMoney(statement.summary.balance_due)}
                 </div>
               </div>
@@ -136,7 +174,7 @@ export default function StatementPage() {
 
             {/* Aging Report */}
             {aging && aging.total_outstanding > 0 && (
-              <div className="rounded-2xl border bg-white p-5">
+              <div className="rounded-2xl border bg-white p-5" data-testid="aging-report">
                 <h2 className="text-lg font-bold mb-4">Aging Summary</h2>
                 <div className="grid sm:grid-cols-4 gap-4">
                   {Object.entries(aging.aging).map(([key, bucket]) => (
@@ -154,61 +192,87 @@ export default function StatementPage() {
               </div>
             )}
 
-            {/* Statement Entries Table */}
-            <div className="rounded-2xl border bg-white overflow-hidden">
-              <div className="px-5 py-4 border-b bg-slate-50">
-                <h2 className="text-lg font-bold">Transaction History</h2>
+            {/* Branded View (CanonicalDocumentRenderer) */}
+            {showBrandedView && (
+              <div className="rounded-2xl border bg-white overflow-hidden" data-testid="branded-statement">
+                <CanonicalDocumentRenderer
+                  ref={docRef}
+                  docType="statement"
+                  docNumber={`SOA-${(statement.customer_email || "").split("@")[0].toUpperCase()}`}
+                  docDate={new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                  toBlock={{
+                    name: statement.customer_name || "",
+                    company: statement.customer_company || "",
+                    email: statement.customer_email || "",
+                    phone: statement.customer_phone || "",
+                  }}
+                  lineItems={buildLineItems()}
+                  subtotal={statement.summary?.total_invoiced || 0}
+                  discount={statement.summary?.total_paid || 0}
+                  total={statement.summary?.balance_due || 0}
+                  currency="TZS"
+                  notes={`Period: All Time | Generated: ${new Date().toLocaleDateString()}`}
+                />
               </div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left">
-                  <thead className="bg-slate-50 border-b">
-                    <tr>
-                      <th className="px-5 py-4 text-sm font-semibold">Date</th>
-                      <th className="px-5 py-4 text-sm font-semibold">Type</th>
-                      <th className="px-5 py-4 text-sm font-semibold">Document</th>
-                      <th className="px-5 py-4 text-sm font-semibold">Description</th>
-                      <th className="px-5 py-4 text-sm font-semibold text-right">Debit</th>
-                      <th className="px-5 py-4 text-sm font-semibold text-right">Credit</th>
-                      <th className="px-5 py-4 text-sm font-semibold text-right">Balance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {statement.entries.map((item, idx) => (
-                      <tr key={idx} className="border-b last:border-b-0 hover:bg-slate-50">
-                        <td className="px-5 py-4 text-sm">
-                          {item.date ? new Date(item.date).toLocaleDateString() : "—"}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
-                            item.entry_type === "invoice" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
-                          }`}>
-                            {item.entry_type}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 font-medium">{item.document_number}</td>
-                        <td className="px-5 py-4 text-slate-600">{item.description}</td>
-                        <td className="px-5 py-4 text-right">
-                          {item.debit > 0 ? formatMoney(item.debit) : "—"}
-                        </td>
-                        <td className="px-5 py-4 text-right text-green-600">
-                          {item.credit > 0 ? formatMoney(item.credit) : "—"}
-                        </td>
-                        <td className={`px-5 py-4 text-right font-medium ${item.balance > 0 ? "text-red-600" : "text-green-600"}`}>
-                          {formatMoney(item.balance)}
-                        </td>
-                      </tr>
-                    ))}
-                    {statement.entries.length === 0 && (
+            )}
+
+            {/* Statement Entries Table (default view) */}
+            {!showBrandedView && (
+              <div className="rounded-2xl border bg-white overflow-hidden" data-testid="statement-entries-table">
+                <div className="px-5 py-4 border-b bg-slate-50">
+                  <h2 className="text-lg font-bold">Transaction History</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left">
+                    <thead className="bg-slate-50 border-b">
                       <tr>
-                        <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
-                          No transactions found
-                        </td>
+                        <th className="px-5 py-4 text-sm font-semibold">Date</th>
+                        <th className="px-5 py-4 text-sm font-semibold">Type</th>
+                        <th className="px-5 py-4 text-sm font-semibold">Document</th>
+                        <th className="px-5 py-4 text-sm font-semibold">Description</th>
+                        <th className="px-5 py-4 text-sm font-semibold text-right">Debit</th>
+                        <th className="px-5 py-4 text-sm font-semibold text-right">Credit</th>
+                        <th className="px-5 py-4 text-sm font-semibold text-right">Balance</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {statement.entries.map((item, idx) => (
+                        <tr key={idx} className="border-b last:border-b-0 hover:bg-slate-50">
+                          <td className="px-5 py-4 text-sm">
+                            {item.date ? new Date(item.date).toLocaleDateString() : "-"}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${
+                              item.entry_type === "invoice" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"
+                            }`}>
+                              {item.entry_type}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-medium">{item.document_number}</td>
+                          <td className="px-5 py-4 text-slate-600">{item.description}</td>
+                          <td className="px-5 py-4 text-right">
+                            {item.debit > 0 ? formatMoney(item.debit) : "-"}
+                          </td>
+                          <td className="px-5 py-4 text-right text-green-600">
+                            {item.credit > 0 ? formatMoney(item.credit) : "-"}
+                          </td>
+                          <td className={`px-5 py-4 text-right font-medium ${item.balance > 0 ? "text-red-600" : "text-green-600"}`}>
+                            {formatMoney(item.balance)}
+                          </td>
+                        </tr>
+                      ))}
+                      {statement.entries.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-5 py-10 text-center text-slate-500">
+                            No transactions found
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Generated At */}
             <div className="text-sm text-slate-500 text-right">

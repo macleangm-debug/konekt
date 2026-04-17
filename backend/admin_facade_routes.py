@@ -101,7 +101,25 @@ async def dashboard_kpis(request: Request):
         count = await db.orders.count_documents({"created_at": {"$gte": day.isoformat(), "$lt": next_day.isoformat()}})
         orders_trend.append({"date": day.strftime("%d %b"), "orders": count})
 
-    # ── Chart: revenue by month (last 6 months) ──
+    # ── Profit this month: Revenue - Base Cost - Commissions paid ──
+    profit_month = 0
+    month_orders = await db.orders.find(
+        {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}
+    ).to_list(length=5000)
+    total_base_cost_month = 0
+    for mo in month_orders:
+        sell = float(mo.get("total") or mo.get("total_amount") or 0)
+        base = float(mo.get("base_cost") or mo.get("vendor_cost") or 0)
+        total_base_cost_month += base
+        profit_month += (sell - base)
+    # Subtract commissions paid this month
+    month_commissions = await db.commissions.find(
+        {"created_at": {"$gte": month_start}, "status": {"$in": ["earned", "approved", "paid", "payable"]}}
+    ).to_list(length=5000)
+    commissions_total_month = sum(float(c.get("amount") or 0) for c in month_commissions)
+    profit_month -= commissions_total_month
+
+    # ── Chart: revenue + profit by month (last 6 months) ──
     revenue_trend = []
     for i in range(5, -1, -1):
         m = now.month - i
@@ -109,7 +127,8 @@ async def dashboard_kpis(request: Request):
         while m <= 0:
             m += 12
             y -= 1
-        m_start = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        m_start_dt = datetime(y, m, 1, tzinfo=timezone.utc)
+        m_start = m_start_dt.isoformat()
         nm = m + 1
         ny = y
         if nm > 12:
@@ -121,7 +140,24 @@ async def dashboard_kpis(request: Request):
             {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
         ]
         r = await db.orders.aggregate(rev_p).to_list(length=1)
-        revenue_trend.append({"month": datetime(y, m, 1).strftime("%b %Y"), "revenue": r[0]["total"] if r else 0})
+        m_revenue = r[0]["total"] if r else 0
+
+        # Profit for this month: revenue - base costs - commissions
+        m_orders = await db.orders.find(
+            {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": m_start, "$lt": m_end}}
+        ).to_list(length=5000)
+        m_base = sum(float(o.get("base_cost") or o.get("vendor_cost") or 0) for o in m_orders)
+        m_comms = await db.commissions.find(
+            {"created_at": {"$gte": m_start, "$lt": m_end}, "status": {"$in": ["earned", "approved", "paid", "payable"]}}
+        ).to_list(length=5000)
+        m_comm_total = sum(float(c.get("amount") or 0) for c in m_comms)
+        m_profit = m_revenue - m_base - m_comm_total
+
+        revenue_trend.append({
+            "month": m_start_dt.strftime("%b %Y"),
+            "revenue": round(m_revenue, 0),
+            "profit": round(m_profit, 0),
+        })
 
     # ── Chart: status distribution ──
     status_distribution = [{"status": k.replace("_", " ").title(), "count": v} for k, v in status_counts.items() if v > 0]
@@ -130,6 +166,7 @@ async def dashboard_kpis(request: Request):
         "kpis": {
             "orders_today": orders_today,
             "revenue_month": revenue_month,
+            "profit_month": round(profit_month, 0),
             "pending_payments": pending_payments,
             "active_quotes": active_quotes,
             "open_delays": delayed_orders + vo_delayed,
