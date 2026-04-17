@@ -266,6 +266,48 @@ async def go_live_reset(request: Request):
     }
 
 
+
+@router.get("/active-country-config")
+async def get_active_country_config(request: Request):
+    """Get the active country configuration.
+    
+    Returns the currency, VAT rate, phone prefix, etc. for the currently active country.
+    Frontend uses this to determine how to format numbers, which currency to display, etc.
+    """
+    db = request.app.mongodb
+    hub = await db.admin_settings.find_one({"key": "settings_hub"})
+    if not hub:
+        return {
+            "code": "TZ", "name": "Tanzania", "currency": "TZS",
+            "currency_symbol": "TSh", "vat_rate": 18, "phone_prefix": "+255",
+            "doc_prefix_code": "TZ", "timezone": "Africa/Dar_es_Salaam",
+        }
+    
+    countries_cfg = (hub.get("value") or {}).get("countries", {})
+    active_code = countries_cfg.get("active_country", "TZ")
+    available = countries_cfg.get("available_countries", [])
+    
+    for c in available:
+        if c.get("code") == active_code:
+            return {
+                "code": c.get("code", "TZ"),
+                "name": c.get("name", "Tanzania"),
+                "currency": c.get("currency", "TZS"),
+                "currency_symbol": c.get("currency_symbol", "TSh"),
+                "vat_rate": float(c.get("vat_rate", 18) or 18),
+                "phone_prefix": c.get("phone_prefix", "+255"),
+                "doc_prefix_code": c.get("doc_prefix_code", "TZ"),
+                "timezone": c.get("timezone", "Africa/Dar_es_Salaam"),
+            }
+    
+    # Fallback
+    return {
+        "code": "TZ", "name": "Tanzania", "currency": "TZS",
+        "currency_symbol": "TSh", "vat_rate": 18, "phone_prefix": "+255",
+        "doc_prefix_code": "TZ", "timezone": "Africa/Dar_es_Salaam",
+    }
+
+
 @router.get("/dashboard/summary")
 
 @router.post("/impersonate/{user_id}")

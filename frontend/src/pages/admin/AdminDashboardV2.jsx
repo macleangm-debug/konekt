@@ -30,7 +30,7 @@ const STATUS_COLORS = [
 function KpiCard({ icon: Icon, label, value, color, to, trend, badge }) {
   const Wrapper = to ? Link : "div";
   return (
-    <Wrapper to={to} className={`bg-white border rounded-2xl p-5 hover:shadow-lg transition group ${to ? "cursor-pointer" : ""}`} data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}>
+    <Wrapper to={to} className={`bg-white border rounded-2xl p-5 card-lift hover:shadow-lg transition group ${to ? "cursor-pointer" : ""}`} data-testid={`kpi-${label.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center group-hover:scale-105 transition`}>
           <Icon className="w-5 h-5" />

@@ -121,7 +121,7 @@ export default function ServiceCardsSection() {
       </div>
 
       {/* Service Category Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="service-cards-grid">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 stagger-enter" data-testid="service-cards-grid">
         {categories.map((cat) => {
           const isExpanded = expandedCat === cat.name;
           const subs = cat.subcategories || [];
@@ -136,7 +136,7 @@ export default function ServiceCardsSection() {
           };
 
           return (
-            <div key={cat.name} className={`rounded-xl border transition overflow-hidden ${isExpanded ? "border-[#D4A843]/40 shadow-md" : "hover:shadow-sm"}`} data-testid={`service-card-${cat.name.replace(/\s/g, "-")}`}>
+            <div key={cat.name} className={`rounded-xl border transition overflow-hidden card-lift ${isExpanded ? "border-[#D4A843]/40 shadow-md" : "hover:shadow-sm"}`} data-testid={`service-card-${cat.name.replace(/\s/g, "-")}`}>
               <button
                 onClick={() => setExpandedCat(isExpanded ? null : cat.name)}
                 className="w-full p-4 text-left flex items-center gap-3 bg-white hover:bg-slate-50/50 transition"
@@ -174,6 +174,17 @@ export default function ServiceCardsSection() {
                       </button>
                     );
                   })}
+                </div>
+              )}
+              {isExpanded && subs.length === 0 && (
+                <div className="border-t bg-slate-50/50 p-4 text-center" data-testid={`service-empty-${cat.name.replace(/\s/g, "-")}`}>
+                  <p className="text-xs text-slate-500 mb-2">No specific sub-services listed yet</p>
+                  <button
+                    onClick={() => toggleSub(cat.name, "General")}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${selected.some((s) => s.key === `${cat.name}::General`) ? "bg-[#D4A843]/10 border border-[#D4A843]/30 text-[#20364D]" : "bg-white border text-slate-600 hover:border-[#D4A843]/30"}`}
+                  >
+                    <Send className="w-3.5 h-3.5" /> Request {cat.name} Quote
+                  </button>
                 </div>
               )}
             </div>
