@@ -8,6 +8,7 @@ import ListingGridSkeleton from "../../components/public/ListingGridSkeleton";
 import PremiumEmptyState from "../../components/ui/PremiumEmptyState";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
+import ServiceCardsSection from "../../components/marketplace/ServiceCardsSection";
 import ProductCardCompact from "../../components/marketplace/ProductCardCompact";
 
 function money(v) {
@@ -172,6 +173,7 @@ export default function MarketplaceBrowsePageContent() {
         )}
       </section>
 
+      <ServiceCardsSection />
       <CantFindWhatYouNeedBanner className="mt-8" />
     </div>
   );
