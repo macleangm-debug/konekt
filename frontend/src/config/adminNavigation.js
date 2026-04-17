@@ -5,7 +5,7 @@ import {
   Route, Inbox, BarChart3, ClipboardList, Package,
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign,
-  Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench,
+  Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench, MapPin,
 } from "lucide-react";
 
 /**
@@ -88,6 +88,7 @@ export const adminNavigation = [
     children: [
       { label: "Deliveries", href: "/admin/deliveries", icon: Route, badgeKey: "deliveries" },
       { label: "Purchase Orders", href: "/admin/procurement/purchase-orders", icon: Package },
+      { label: "Site Visits", href: "/admin/site-visits", icon: MapPin, roles: ["admin", "vendor_ops"] },
     ],
   },
   {
