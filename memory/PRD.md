@@ -3,91 +3,54 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 335 ITERATIONS, 100% PASS RATE
+## System Status: 336 ITERATIONS, 100% PASS RATE
 
 ---
 
-## COMPLETED IN SESSION (Apr 17, 2026)
+## COMPLETED (Apr 17, 2026 — Session 2)
 
-### 1. Dashboard Profit Tracking (DONE)
-- Added `profit_month` KPI to admin dashboard (Revenue - Base Costs - Commissions)
-- Revenue & Profit Trend chart shows dual-line graph (6 months)
-- Profit formula: sell_price - vendor_cost - distributed_commissions
+### Batch 1 Fixes
+1. **Quote Creation Preview** — Fixed CanonicalDocumentRenderer props (docType, toBlock, lineItems, subtotal, tax, total). Preview now shows company branding, logo, bank details, signature immediately. Client info + items populate live as added.
+2. **Marketplace "No Listing Found"** — Removed misleading empty state when no filters active. Service cards always visible below product grid.
+3. **Profit Display Fix** — Dashboard profit floors at TZS 0 when no revenue (no misleading negative from test commissions)
+4. **Operations Nav Consolidation** — Merged all Ops items: Orders & Fulfillment, Site Visits, Deliveries, Purchase Orders, Supply Review
+5. **Go-Live Reset** — New feature in Settings Hub > Launch Controls. Testing Mode / Controlled Launch / Full Live modes. "Go Live" button clears all test data (orders, quotes, invoices, customers, commissions) while preserving settings, catalog, admin accounts.
 
-### 2. Admin-Only Credit Terms (DONE)
-- Credit terms section on Customer 360 Profile (Overview tab)
-- Fields: credit_terms_enabled, payment_term_type (prepaid/net_30/net_60/net_90/custom), payment_term_days, credit_limit
-- Admin-only badge — Sales cannot set credit terms
-- PUT /api/admin/customers-360/{id}/credit-terms endpoint
-- Credit terms returned in 360 detail response
-
-### 3. Service Site Visit 2-Stage Flow (DONE)
-- Full workflow: Initiate → Fee Payment → Visit Scheduled → In Progress → Findings Submitted → Service Quote Generated
-- POST /api/site-visits/initiate creates site_visit + visit-fee quote (SVQ-prefix)
-- Ops workflow: PATCH status, POST submit-findings, POST generate-service-quote
-- Service quote applies pricing engine margins to vendor base cost
-- SiteVisitsPage.jsx with stage filters, progress bars, detail drawer
-- Route: /admin/site-visits under Operations nav
-
-### 4. Statement of Accounts Branding (DONE)
-- StatementPage.jsx updated with branded view toggle
-- Branded view uses CanonicalDocumentRenderer for consistent document styling
-- Export Branded PDF button for CanonicalDocumentRenderer output
-- Regular table view still available as default
-
-### 5. Multi-Country Configuration (DONE - Previous Session)
-- CountriesTab in Settings Hub with TZ, KE, UG configs
-- Currency, VAT rate, phone prefix, doc prefix, timezone per country
-
-### 6. Document Numbering (DONE - Previous Session)
-- DocNumberingTab in Settings Hub
-- Configurable prefixes/digits for QT, IN, ORD, DN, PO, SKU
-- document_numbering.py generates format like QT-TZ-000001
-
-### 7. Order Status Restrictions (DONE - Previous Session)
-- Sales blocked from updating order status (403)
-- Request Status endpoint for sales to ask Ops for updates
+### Session 1 Features
+6. **Dashboard Profit Tracking** — profit_month KPI + Revenue & Profit dual-line trend chart
+7. **Admin-Only Credit Terms** — CreditTermsSection on Customer 360 Profile, PUT endpoint
+8. **Service Site Visit 2-Stage Flow** — Full workflow: Initiate → Fee Quote → Visit → Findings → Service Quote
+9. **Statement of Accounts Branding** — Branded view toggle using CanonicalDocumentRenderer
+10. **Multi-Country Config** — CountriesTab with TZ, KE, UG
+11. **Document Numbering** — Configurable prefixes (QT-TZ-000001)
+12. **Order Status Restrictions** — Sales blocked (403), Request Status endpoint
 
 ---
 
 ## TAXONOMY: Products (37 cats) | Services (7 cats) — zero orphans
-
-## SERVICE CARDS — LIVE ON MARKETPLACE
-- 6 service categories with subcategories
-- Site visit location field for Facilities, Technical, Office Branding categories
-- Fulfillment badges: Site Visit, On-site, Digital, Delivery/Pickup
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
 
 ---
 
-## UPCOMING TASKS
+## REMAINING TASKS
 
-### P0 — Deployment Critical
-1. Upload first real product listing end-to-end (Product Upload Wizard at /admin/vendor-ops/new-product)
-2. Execute first live Group Deal (Group Deals admin at /admin/group-deals)
-3. Activate internal sales and external affiliates
-4. End-to-end order flow test (quote → invoice → payment → order → delivery)
+### P0 — Critical
+1. Upload first real product listing E2E (Product Upload Wizard)
+2. Execute first live Group Deal
+3. Activate internal sales + external affiliates
+4. Full E2E order flow test
 
-### P1 — Post-Launch
-1. "Customize this" CTA on product pages → linked service categories
-2. Guided checkout flow (delivery address, pickup option)
-3. Client credit terms enforcement in checkout (skip payment if within credit limit)
-4. Per-product fulfillment_type override
+### P1 — Important
+5. Number formatting (thousand separators across all financial displays)
+6. Phone prefix on all form inputs
+7. Vendor Ops account switching (Ops acts as vendor)
+8. Services in Quote Creation (add service items, "Request for Quote" for unpriced)
+9. Credit terms enforcement at checkout
+10. "Customize this" CTA on product pages → linked services
 
-### P2 — Backlog
-1. Light micro-interactions (card hover lift, button click feedback, skeleton loaders)
-2. Full Operations automation (SLA timers, vendor scoring, advanced tracking)
-3. Delivery/service handover tracking
-4. Statement of Accounts PDF auto-send scheduling
-
-## RECOMMENDED REPORTS FOR LAUNCH
-1. **Profit & Loss Report** — Monthly/quarterly P&L showing revenue, COGS (base costs), gross margin, commissions, net profit
-2. **Order Profitability Report** — Per-order breakdown: sell price, base cost, margin, commissions, net profit
-3. **Sales Performance Report** — Rep-level revenue, deals closed, commission earned, conversion rate
-4. **Affiliate Performance Report** — Attribution, conversions, commission payable, ROI per affiliate
-5. **Accounts Receivable Aging** — Outstanding invoices by age bucket (current, 30d, 60d, 90d+)
-6. **Client Lifetime Value Report** — Revenue per client, order frequency, average order value
-7. **Inventory Turnover Report** — Stock movement, fast/slow movers, reorder alerts
-8. **Site Visit Pipeline Report** — Visits by stage, conversion rate to service quotes, avg visit-to-quote time
+### P2 — Polish
+11. Light micro-interactions (hover lift, skeleton loaders)
+12. Service card subcategory content (some categories show empty when expanded)
+13. Full Operations automation (SLA timers, vendor scoring)
