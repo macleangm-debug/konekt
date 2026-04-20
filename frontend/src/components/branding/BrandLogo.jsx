@@ -74,7 +74,7 @@ export default function BrandLogo({
   const gap = Math.max(6, iconSize * 0.25);
   const brandName = b.brand_name || "Konekt";
   const tagline = b.tagline || "Business Procurement Simplified";
-  const logoUrl = isLight ? (b.secondary_logo_url || b.primary_logo_url) : b.primary_logo_url;
+  const logoUrl = null; // Always use TriadIcon for nav/UI; documents use render-settings API
 
   return (
     <div
@@ -85,40 +85,42 @@ export default function BrandLogo({
       {logoUrl ? (
         <img src={logoUrl} alt={brandName} style={{ height: iconSize, width: "auto" }} />
       ) : (
-        <TriadIcon size={iconSize} variant={variant} primaryColor={primaryColor} accentColor={accent} />
-      )}
-      {type !== "icon" && (
-        <div className="flex flex-col justify-center" style={{ minWidth: 0 }}>
-          <span
-            style={{
-              fontSize,
-              fontWeight: 700,
-              color: textColor,
-              fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-              letterSpacing: "-0.025em",
-              lineHeight: 1.15,
-              whiteSpace: "nowrap",
-            }}
-          >
-            {brandName}
-          </span>
-          {type === "full" && (
-            <span
-              style={{
-                fontSize: tagFontSize,
-                fontWeight: 500,
-                color: tagColor,
-                fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
-                letterSpacing: "0.02em",
-                lineHeight: 1.3,
-                marginTop: 1,
-                whiteSpace: "nowrap",
-              }}
-            >
-              {tagline}
-            </span>
+        <>
+          <TriadIcon size={iconSize} variant={variant} primaryColor={primaryColor} accentColor={accent} />
+          {type !== "icon" && (
+            <div className="flex flex-col justify-center" style={{ minWidth: 0 }}>
+              <span
+                style={{
+                  fontSize,
+                  fontWeight: 700,
+                  color: textColor,
+                  fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                  letterSpacing: "-0.025em",
+                  lineHeight: 1.15,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {brandName}
+              </span>
+              {type === "full" && (
+                <span
+                  style={{
+                    fontSize: tagFontSize,
+                    fontWeight: 500,
+                    color: tagColor,
+                    fontFamily: "'Inter', 'Segoe UI', system-ui, sans-serif",
+                    letterSpacing: "0.02em",
+                    lineHeight: 1.3,
+                    marginTop: 1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {tagline}
+                </span>
+              )}
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
