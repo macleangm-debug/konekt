@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Package, Megaphone, Wrench } from "lucide-react";
 import api from "../../lib/api";
 import ProductCardCompact from "../../components/marketplace/ProductCardCompact";
@@ -12,10 +12,10 @@ import PromoMultiBlankBuilder from "../../components/requests/PromoMultiBlankBui
 import MultiServiceRequestBuilder from "../../components/services/MultiServiceRequestBuilder";
 import InlineMarketplaceFilterRail from "../../components/marketplace/InlineMarketplaceFilterRail";
 import CantFindWhatYouNeedBanner from "../../components/public/CantFindWhatYouNeedBanner";
+import MarketplaceCountrySelector from "../../components/marketplace/MarketplaceCountrySelector";
 import { getAllServicesForGrid } from "../../data/comprehensiveServiceData";
 import { useCartDrawer } from "../../contexts/CartDrawerContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
 
 const TABS = [
   { key: "products", label: "Products", icon: Package },
@@ -55,6 +55,18 @@ export default function MarketplaceUnifiedPageV3() {
   const [showServiceBuilder, setShowServiceBuilder] = useState(false);
   const [taxonomy, setTaxonomy] = useState({ groups: [], categories: [], subcategories: [] });
   const [inlineFilters, setInlineFilters] = useState({ q: "", group_id: "", category_id: "", subcategory_id: "", sort: "relevance" });
+  const [activeCountry, setActiveCountry] = useState(params.get("country") || "TZ");
+
+  const handleCountryChange = (code) => {
+    setActiveCountry(code);
+    // If country is not live, redirect to expansion page
+    const notLive = ["KE", "UG"];
+    if (notLive.includes(code)) {
+      navigate(`/expand/${code.toLowerCase()}`);
+      return;
+    }
+    setParams((prev) => { prev.set("country", code); return prev; });
+  };
 
   useEffect(() => {
     const staticServices = getAllServicesForGrid();
@@ -87,6 +99,7 @@ export default function MarketplaceUnifiedPageV3() {
       if (inlineFilters.group_id) search.set("group_id", inlineFilters.group_id);
       if (inlineFilters.category_id) search.set("category_id", inlineFilters.category_id);
       if (inlineFilters.subcategory_id) search.set("subcategory_id", inlineFilters.subcategory_id);
+      if (activeCountry) search.set("country", activeCountry);
       const res = await api.get(`/api/marketplace/products/search?${search.toString()}`);
       let prods = res.data || [];
       if (inlineFilters.sort === "newest") prods.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
@@ -101,7 +114,7 @@ export default function MarketplaceUnifiedPageV3() {
     } finally {
       setLoading(false);
     }
-  }, [inlineFilters]);
+  }, [inlineFilters, activeCountry]);
 
   useEffect(() => { loadProducts(); }, [loadProducts]);
   useEffect(() => { setParams({ tab }, { replace: true }); setVisibleCount(PAGE_SIZE); }, [tab, setParams]);
@@ -119,20 +132,24 @@ export default function MarketplaceUnifiedPageV3() {
 
   return (
     <div className="space-y-6" data-testid="marketplace-unified-page-v3">
-      <div className="rounded-2xl border border-slate-200 bg-white p-2 flex flex-wrap gap-2" data-testid="marketplace-tabs">
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => { setTab(key); setSelectedService(null); }}
-            data-testid={`tab-${key}`}
-            className={`rounded-xl px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors ${
-              tab === key ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
+      {/* Country Selector + Tabs Row */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="rounded-2xl border border-slate-200 bg-white p-2 flex flex-wrap gap-2 flex-1" data-testid="marketplace-tabs">
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => { setTab(key); setSelectedService(null); }}
+              data-testid={`tab-${key}`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold flex items-center gap-2 transition-colors ${
+                tab === key ? "bg-[#20364D] text-white" : "text-[#20364D] hover:bg-slate-50"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+        <MarketplaceCountrySelector activeCountry={activeCountry} onCountryChange={handleCountryChange} />
       </div>
 
       {(tab === "products" || tab === "promo") && (

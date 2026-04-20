@@ -60,9 +60,12 @@ public_marketplace_router = APIRouter(
 async def public_list_products(
     q: Optional[str] = None,
     category: Optional[str] = None,
+    country: Optional[str] = None,
     limit: int = Query(50, le=200),
 ):
-    """List all published/active products with computed selling prices."""
+    """List all published/active products with computed selling prices.
+    Optional country filter — only show products from vendors in that country.
+    """
 
     query = {"$or": [
         {"is_active": True},
@@ -70,19 +73,13 @@ async def public_list_products(
     ]}
     if category:
         query["category_name"] = {"$regex": category, "$options": "i"}
+    if country:
+        query["country_code"] = country.upper()
     
     # If text search is provided, add regex to MongoDB query for efficiency
     if q:
         search_regex = {"$regex": q, "$options": "i"}
-        query["$or"] = [
-            {"name": search_regex},
-            {"brand": search_regex},
-            {"sku": search_regex},
-            {"category_name": search_regex},
-            {"description": search_regex},
-        ]
-        # Combine with status/active filter using $and
-        query = {"$and": [
+        and_filters = [
             {"$or": [
                 {"is_active": True},
                 {"status": {"$in": ["active", "published", "approved"]}},
@@ -94,9 +91,12 @@ async def public_list_products(
                 {"category_name": search_regex},
                 {"description": search_regex},
             ]}
-        ]}
+        ]
         if category:
-            query["$and"].append({"category_name": {"$regex": category, "$options": "i"}})
+            and_filters.append({"category_name": {"$regex": category, "$options": "i"}})
+        if country:
+            and_filters.append({"country_code": country.upper()})
+        query = {"$and": and_filters}
 
     products = []
     async for p in db.products.find(query).sort("created_at", -1).limit(limit):

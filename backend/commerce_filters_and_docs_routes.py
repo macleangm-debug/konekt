@@ -138,27 +138,37 @@ async def search_products(
     category_id: Optional[str] = None,
     subcategory_id: Optional[str] = None,
     group: Optional[str] = None,
+    country: Optional[str] = None,
 ):
-    """Search products with optional filters (legacy + taxonomy)"""
-    query = {"is_active": True}
+    """Search products with optional filters (legacy + taxonomy + country)"""
+    and_conditions = [{"is_active": True}]
+    
+    # Country filter — TZ includes products without country_code (legacy data)
+    if country:
+        if country.upper() == "TZ":
+            and_conditions.append({"$or": [{"country_code": "TZ"}, {"country_code": {"$exists": False}}, {"country_code": None}, {"country_code": ""}]})
+        else:
+            and_conditions.append({"country_code": country.upper()})
 
     # Legacy slug filters
     if group_slug:
-        query["$or"] = [{"group_slug": group_slug}, {"branch": group_slug}]
+        and_conditions.append({"$or": [{"group_slug": group_slug}, {"branch": group_slug}]})
     if subgroup_slug:
-        query["subgroup_slug"] = subgroup_slug
+        and_conditions.append({"subgroup_slug": subgroup_slug})
 
     # Taxonomy filters
     if group_id:
-        query["group_id"] = group_id
+        and_conditions.append({"group_id": group_id})
     if category_id:
-        query["category_id"] = category_id
+        and_conditions.append({"category_id": category_id})
     if subcategory_id:
-        query["subcategory_id"] = subcategory_id
+        and_conditions.append({"subcategory_id": subcategory_id})
 
     # Simple group name filter (from marketplace page)
     if group and not group_id:
-        query["group_name"] = group
+        and_conditions.append({"group_name": group})
+
+    query = {"$and": and_conditions} if len(and_conditions) > 1 else and_conditions[0]
 
     rows = await db.products.find(query).sort("name", 1).to_list(length=2000)
 
