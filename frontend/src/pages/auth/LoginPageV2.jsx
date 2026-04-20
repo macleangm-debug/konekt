@@ -27,6 +27,7 @@ export default function LoginPageV2() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formLoadedAt] = useState(() => new Date().toISOString());
   const [validating, setValidating] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -87,7 +88,7 @@ export default function LoginPageV2() {
     if (!email || !password) { toast.error("Email and password are required"); return; }
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/login", { email, password });
+      const res = await api.post("/api/auth/login", { email, password, form_loaded_at: formLoadedAt });
       handleSuccess(res);
     } catch (err) { toast.error(err?.response?.data?.detail || "Invalid email or password"); }
     finally { setLoading(false); }
@@ -99,7 +100,7 @@ export default function LoginPageV2() {
     if (pin.length < 4 || pin.length > 6) { toast.error("PIN must be 4 to 6 digits"); return; }
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/login", { phone, pin, country_code: country.dial });
+      const res = await api.post("/api/auth/login", { phone, pin, country_code: country.dial, form_loaded_at: formLoadedAt });
       handleSuccess(res);
     } catch (err) { toast.error(err?.response?.data?.detail || "Invalid phone number or PIN"); }
     finally { setLoading(false); }

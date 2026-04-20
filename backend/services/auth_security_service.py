@@ -152,12 +152,32 @@ def check_honeypot(payload: dict) -> bool:
     """
     Returns True if honeypot is clean (not a bot).
     Returns False if honeypot field is filled (likely bot).
+    Checks multiple common honeypot field names.
     """
-    honeypot_value = payload.get("website", "") or payload.get("url", "")
-    if honeypot_value:
-        logger.warning(f"Honeypot triggered: {honeypot_value}")
-        return False
+    honeypot_fields = ["website", "url", "company_url", "homepage", "fax", "middle_name_2"]
+    for field in honeypot_fields:
+        if payload.get(field):
+            logger.warning(f"Honeypot triggered on field '{field}': {payload[field]}")
+            return False
     return True
+
+
+def check_submission_timing(form_loaded_at: str) -> bool:
+    """
+    Returns True if timing is human-like (>2 seconds to fill form).
+    Returns False if submitted too fast (likely bot).
+    """
+    if not form_loaded_at:
+        return True  # No timing data = allow (backwards compat)
+    try:
+        loaded = datetime.fromisoformat(form_loaded_at.replace("Z", "+00:00"))
+        elapsed = (datetime.now(timezone.utc) - loaded).total_seconds()
+        if elapsed < 2.0:
+            logger.warning(f"Bot timing detected: form submitted in {elapsed:.1f}s")
+            return False
+        return True
+    except Exception:
+        return True  # Parse error = allow
 
 
 # ═══════════════════════════════════════════

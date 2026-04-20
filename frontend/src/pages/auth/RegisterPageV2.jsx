@@ -23,6 +23,7 @@ export default function RegisterPageV2() {
   const [honeypot, setHoneypot] = useState("");
   const [pinValue, setPinValue] = useState("");
   const [showPin, setShowPin] = useState(false);
+  const [formLoadedAt] = useState(() => new Date().toISOString());
 
   const source = searchParams.get("source") || "";
   const affiliateCode = searchParams.get("ref") || searchParams.get("affiliate_code") || "";
@@ -75,6 +76,7 @@ export default function RegisterPageV2() {
         country_code: phonePrefix || "+255",
         affiliate_code: affiliateCode || undefined,
         website: honeypot || undefined,
+        form_loaded_at: formLoadedAt,
       };
       const res = await api.post("/api/auth/register", payload);
       const { token, user } = res.data;

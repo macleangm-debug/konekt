@@ -338,8 +338,12 @@ class UserCreate(BaseModel):
     # Attribution fields
     affiliate_code: Optional[str] = None
     campaign_id: Optional[str] = None
-    # Honeypot field — must be empty, bots fill this
+    # Anti-bot fields
     website: Optional[str] = None
+    form_loaded_at: Optional[str] = None
+
+    class Config:
+        extra = "allow"
 
 class UserLogin(BaseModel):
     email: Optional[EmailStr] = None
@@ -347,6 +351,10 @@ class UserLogin(BaseModel):
     phone: Optional[str] = None
     pin: Optional[str] = None
     country_code: Optional[str] = "+255"
+    form_loaded_at: Optional[str] = None
+
+    class Config:
+        extra = "allow"
 
 class AdminUserCreate(BaseModel):
     email: EmailStr
@@ -886,7 +894,7 @@ async def register(request: Request, data: UserCreate):
         hydrate_affiliate_from_code,
         build_attribution_block
     )
-    from services.auth_security_service import check_rate_limit, check_honeypot
+    from services.auth_security_service import check_rate_limit, check_honeypot, check_submission_timing
 
     # Rate limit
     client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
@@ -897,6 +905,11 @@ async def register(request: Request, data: UserCreate):
     body_raw = data.model_dump()
     if not check_honeypot(body_raw):
         # Silently reject — return success-like response to fool bots
+        await asyncio.sleep(1)
+        return {"token": "", "user": {"id": "", "email": data.email, "role": "customer"}}
+
+    # Timing check (bot fills form in <2s)
+    if not check_submission_timing(body_raw.get("form_loaded_at") or body_raw.get("_form_loaded_at", "")):
         await asyncio.sleep(1)
         return {"token": "", "user": {"id": "", "email": data.email, "role": "customer"}}
     
@@ -1061,7 +1074,14 @@ async def _create_welcome_notification(database, user_id: str, role: str, full_n
 
 @api_router.post("/auth/login")
 async def login(request: Request, data: UserLogin):
-    from services.auth_security_service import check_rate_limit
+    from services.auth_security_service import check_rate_limit, check_submission_timing
+    
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    
+    # Timing check
+    body_raw = data.model_dump() if hasattr(data, 'model_dump') else {}
+    if not check_submission_timing(body_raw.get("form_loaded_at") or body_raw.get("_form_loaded_at", "")):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
     client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
     
