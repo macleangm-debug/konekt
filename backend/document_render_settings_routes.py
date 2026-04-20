@@ -49,11 +49,12 @@ async def get_render_settings(request: Request):
     # Business profile from hub
     business_profile = hub.get("business_profile", {})
     payment_accounts = hub.get("payment_accounts", {})
+    hub_branding = hub.get("branding", {})
 
     return {
-        # Company info
-        "company_name": biz.get("company_name") or biz.get("trading_name") or business_profile.get("legal_name") or "",
-        "trading_name": biz.get("trading_name") or business_profile.get("brand_name") or "",
+        # Company info — cascade: business_settings > hub business_profile > hub branding
+        "company_name": biz.get("company_name") or biz.get("trading_name") or business_profile.get("legal_name") or hub_branding.get("company_name") or "",
+        "trading_name": biz.get("trading_name") or business_profile.get("brand_name") or hub_branding.get("company_name") or "",
         "phone": biz.get("phone") or business_profile.get("support_phone") or "",
         "email": biz.get("email") or business_profile.get("support_email") or "",
         "address": biz.get("address") or biz.get("address_line_1") or business_profile.get("business_address") or "",
@@ -69,8 +70,10 @@ async def get_render_settings(request: Request):
         "bank_account_number": biz.get("bank_account_number") or payment_accounts.get("account_number") or "",
         "bank_branch": biz.get("bank_branch") or payment_accounts.get("branch_name") or "",
         "swift_code": biz.get("bank_swift_code") or payment_accounts.get("swift_code") or "",
-        # Branding assets
-        "logo_url": branding_doc.get("company_logo_url") or biz.get("company_logo_path") or "",
+        # Branding assets — cascade: invoice_branding > hub branding > business_settings
+        "logo_url": branding_doc.get("company_logo_url") or hub_branding.get("primary_logo_url") or biz.get("company_logo_path") or "",
+        "secondary_logo_url": hub_branding.get("secondary_logo_url") or "",
+        "tagline": hub_branding.get("tagline") or "",
         "show_signature": branding_doc.get("show_signature", False),
         "cfo_name": branding_doc.get("cfo_name") or "",
         "cfo_title": branding_doc.get("cfo_title") or "Chief Finance Officer",

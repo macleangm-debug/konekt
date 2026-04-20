@@ -188,9 +188,11 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
     if (!url) return "";
     if (url.startsWith("data:")) return url;
     if (url.startsWith("http")) return url;
+    if (url.startsWith("/branding/") || url.startsWith("/logos/")) return url;
     return `${API_URL}/api/files/serve/${url}`;
   };
   const logoUrl = resolveUrl(settings.logo_url);
+  const headerLogoUrl = resolveUrl(settings.secondary_logo_url || settings.logo_url);
   const signatureUrl = resolveUrl(settings.cfo_signature_url);
   const stampUrl = resolveUrl(settings.stamp_uploaded_url || settings.stamp_preview_url);
 
@@ -237,9 +239,9 @@ const CanonicalDocumentRenderer = forwardRef(function CanonicalDocumentRenderer(
         alignItems: "flex-start",
       }}>
         <div>
-          {logoUrl ? (
+          {headerLogoUrl ? (
             <img
-              src={logoUrl}
+              src={headerLogoUrl}
               alt=""
               crossOrigin="anonymous"
               style={{ height: 48, width: "auto", objectFit: "contain", marginBottom: 12 }}
