@@ -68,9 +68,24 @@ export default function VendorPartnerPresentation() {
               <span className="text-[#D4A843]">Partnership Program</span>
             </h1>
             <p className="mt-6 text-xl text-white/70 max-w-[640px] leading-relaxed font-light">
-              Grow your business with our B2B commerce platform.<br />
-              Access verified customers, structured workflows, and flexible payment terms.
+              Grow your business with East Africa's unified B2B commerce platform.<br />
+              Access verified customers, automated order routing, and flexible payment terms.
             </p>
+            <div className="mt-8 flex gap-4">
+              {[
+                { label: "Tanzania", flag: "\u{1F1F9}\u{1F1FF}", status: "Live" },
+                { label: "Kenya", flag: "\u{1F1F0}\u{1F1EA}", status: "2026" },
+                { label: "Uganda", flag: "\u{1F1FA}\u{1F1EC}", status: "2026" },
+              ].map(c => (
+                <div key={c.label} className="flex items-center gap-2 bg-white/10 backdrop-blur rounded-lg px-3 py-2">
+                  <span className="text-lg">{c.flag}</span>
+                  <div>
+                    <div className="text-xs font-semibold text-white">{c.label}</div>
+                    <div className="text-[9px] text-white/50">{c.status}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-6 text-sm text-white/50">
             <span>Confidential</span>
@@ -101,10 +116,10 @@ export default function VendorPartnerPresentation() {
 
             <div className="mt-8 grid grid-cols-2 gap-4">
               {[
-                { icon: Users, label: "Growing Customer Base", desc: "Verified business buyers" },
-                { icon: Zap, label: "Automated Operations", desc: "Orders flow to you seamlessly" },
-                { icon: Shield, label: "Vendor Privacy", desc: "Your pricing stays confidential" },
-                { icon: Globe, label: "Market Expansion", desc: "East Africa coverage" },
+                { icon: Users, label: "Verified Business Buyers", desc: "Pre-vetted, paying companies only" },
+                { icon: Zap, label: "Auto Order Routing", desc: "Orders auto-split to your categories" },
+                { icon: Shield, label: "Category Exclusivity", desc: "Preferred vendors get guaranteed flow" },
+                { icon: Globe, label: "East Africa Expansion", desc: "Tanzania live, Kenya & Uganda 2026" },
               ].map(({ icon: Icon, label, desc }) => (
                 <div key={label} className="flex items-start gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#20364D]/5 flex-shrink-0">
@@ -158,9 +173,10 @@ export default function VendorPartnerPresentation() {
               icon: Building2,
               title: "Business Services",
               color: "from-teal-600 to-teal-700",
-              items: ["Printing & Design", "Cleaning Services", "Pest Control", "Maintenance & Repair", "IT Support", "Courier & Logistics"],
+              items: ["Printing & Design", "Office Branding", "Cleaning Services", "Technical Support", "Creative & Design", "Facilities Management"],
+              note: "Services use our 2-stage site visit workflow — assessment first, then accurate pricing",
             },
-          ].map(({ icon: Icon, title, color, items }) => (
+          ].map(({ icon: Icon, title, color, items, note }) => (
             <div key={title} className="rounded-2xl border border-slate-200 overflow-hidden">
               <div className={`bg-gradient-to-br ${color} px-6 py-5 text-white`}>
                 <Icon className="h-8 w-8 mb-3 opacity-80" />
@@ -173,6 +189,7 @@ export default function VendorPartnerPresentation() {
                     {item}
                   </div>
                 ))}
+                {note && <p className="text-[10px] text-slate-400 italic mt-3 pt-2 border-t">{note}</p>}
               </div>
             </div>
           ))}
@@ -460,15 +477,15 @@ export default function VendorPartnerPresentation() {
               <span className="text-[#D4A843]">Something Great Together</span>
             </h2>
             <p className="mt-6 text-xl text-white/60 max-w-[640px] mx-auto leading-relaxed font-light">
-              Join a fast-growing B2B commerce platform.<br />
-              Access customers, structure your operations, and grow with confidence.
+              Join East Africa's fastest-growing B2B commerce platform.<br />
+              Automated order routing, verified buyers, and flexible payments — across Tanzania, Kenya, and Uganda.
             </p>
 
             <div className="mt-12 grid grid-cols-3 gap-6 max-w-[660px] mx-auto">
               {[
                 { label: "Website", value: "konekt.co.tz" },
                 { label: "Email", value: "partners@konekt.co.tz" },
-                { label: "Phone", value: "+255 xxx xxx xxx" },
+                { label: "Phone", value: "+255 715 222 132" },
               ].map(({ label, value }) => (
                 <div key={label} className="text-center">
                   <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{label}</div>
