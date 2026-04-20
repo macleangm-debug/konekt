@@ -115,6 +115,7 @@ export const adminNavigation = [
       { label: "Product Insights", href: "/admin/product-insights", icon: Gauge, roles: ["admin"] },
       { label: "Weekly Digest", href: "/admin/weekly-digest", icon: CalendarDays, roles: ["admin"] },
       { label: "Data Integrity", href: "/admin/data-integrity", icon: Shield, roles: ["admin"] },
+      { label: "Country Reports", href: "/admin/country-reports", icon: PieChart, roles: ["admin"] },
       { label: "Feedback Inbox", href: "/admin/feedback-inbox", icon: MessageCircle, roles: ["admin"], badgeKey: "feedback_new" },
     ],
   },

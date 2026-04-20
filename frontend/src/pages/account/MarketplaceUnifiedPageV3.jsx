@@ -57,6 +57,21 @@ export default function MarketplaceUnifiedPageV3() {
   const [inlineFilters, setInlineFilters] = useState({ q: "", group_id: "", category_id: "", subcategory_id: "", sort: "relevance" });
   const [activeCountry, setActiveCountry] = useState(params.get("country") || "TZ");
 
+  // Auto-detect country on first load
+  useEffect(() => {
+    if (!params.get("country")) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      api.get(`/api/geo/detect-country?tz=${encodeURIComponent(tz)}`)
+        .then(res => {
+          const detected = res.data?.country_code;
+          if (detected && detected !== activeCountry) {
+            setActiveCountry(detected);
+          }
+        })
+        .catch(() => {});
+    }
+  }, []);
+
   const handleCountryChange = (code) => {
     setActiveCountry(code);
     // If country is not live, redirect to expansion page

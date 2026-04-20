@@ -173,6 +173,8 @@ from delivery_partner_routes import router as delivery_partner_router
 from product_insight_routes import router as product_insight_router
 from feedback_routes import router as feedback_router
 from vendor_assignment_routes import router as vendor_assignment_router
+from geo_detection_routes import router as geo_detection_router
+from admin_reports_routes import router as admin_reports_router
 
 # Recurring Services + Reorder Pack Routes
 from reorder_routes import router as reorder_router
@@ -2758,6 +2760,8 @@ app.include_router(delivery_partner_router)
 app.include_router(product_insight_router)
 app.include_router(feedback_router)
 app.include_router(vendor_assignment_router)
+app.include_router(geo_detection_router)
+app.include_router(admin_reports_router)
 
 # Recurring Services + Reorder Pack Routes
 app.include_router(reorder_router)

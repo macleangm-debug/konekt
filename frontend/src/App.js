@@ -303,6 +303,7 @@ import ProductUploadWizard from "@/pages/admin/ProductUploadWizard";
 import SiteVisitsPage from "@/pages/admin/SiteVisitsPage";
 import FeedbackInboxPage from "@/pages/admin/FeedbackInboxPage";
 import VendorAssignmentsPage from "@/pages/admin/VendorAssignmentsPage";
+import AdminReportsPage from "@/pages/admin/AdminReportsPage";
 
 // Launch Critical Pack - New Components
 import OrderDetailPageV2 from "@/pages/account/OrderDetailPageV2";
@@ -717,6 +718,7 @@ function App() {
           <Route path="site-visits" element={<SiteVisitsPage />} />
           <Route path="feedback-inbox" element={<FeedbackInboxPage />} />
           <Route path="vendor-assignments" element={<VendorAssignmentsPage />} />
+          <Route path="country-reports" element={<AdminReportsPage />} />
           {/* Partner Ecosystem Routes */}
           <Route path="partners" element={<PartnersPage />} />
           <Route path="partner-catalog" element={<PartnerCatalogPage />} />
