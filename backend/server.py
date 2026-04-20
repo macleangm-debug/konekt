@@ -828,6 +828,14 @@ def normalize_phone(phone: str, country_code: str = "+255") -> str:
         country_code = "+" + country_code
     return country_code + p
 
+
+def _resolve_country_from_phone(phone_prefix: str) -> str:
+    """Resolve 2-letter country code from phone prefix."""
+    prefix_map = {"+255": "TZ", "+254": "KE", "+256": "UG", "+250": "RW", "+233": "GH", "+234": "NG", "+27": "ZA", "+1": "US"}
+    clean = phone_prefix.strip().replace(" ", "")
+    return prefix_map.get(clean, "TZ")
+
+
 def generate_order_number() -> str:
     return f"KNK-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}"
 
@@ -941,6 +949,7 @@ async def register(request: Request, data: UserCreate):
         "role": "customer",
         "is_active": True,
         "onboarding_completed": False,
+        "country_code": _resolve_country_from_phone(data.country_code or "+255"),
         "created_at": datetime.now(timezone.utc).isoformat(),
         # Attribution fields
         **build_attribution_block(attribution),

@@ -38,42 +38,47 @@ def _clean(doc):
 # ─── DASHBOARD ────────────────────────────────────────────────────────────────
 
 @router.get("/dashboard/kpis")
-async def dashboard_kpis(request: Request):
-    """Comprehensive admin dashboard KPIs, snapshots, and chart data."""
+async def dashboard_kpis(request: Request, country: str = ""):
+    """Comprehensive admin dashboard KPIs, snapshots, and chart data.
+    Optional country filter — if provided, all metrics scoped to that country.
+    """
     db = request.app.mongodb
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
 
+    # Country filter — applies to all queries if provided
+    country_filter = {"country_code": country} if country else {}
+
     # ── Top KPI row ──
-    orders_today = await db.orders.count_documents({"created_at": {"$gte": today_start}})
+    orders_today = await db.orders.count_documents({**country_filter, "created_at": {"$gte": today_start}})
     
     # Revenue this month (from completed/delivered/paid orders)
     revenue_pipeline = [
-        {"$match": {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}},
+        {"$match": {**country_filter, "status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}},
         {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
     ]
     rev_result = await db.orders.aggregate(revenue_pipeline).to_list(length=1)
     revenue_month = rev_result[0]["total"] if rev_result else 0
 
-    pending_payments = await db.payment_proofs.count_documents({"status": {"$in": ["uploaded", "submitted", "pending"]}})
-    active_quotes = await db.quotes.count_documents({"status": {"$in": ["pending", "sent", "quoting"]}})
-    delayed_orders = await db.orders.count_documents({"status": "delayed"})
-    vo_delayed = await db.vendor_orders.count_documents({"status": "delayed"})
+    pending_payments = await db.payment_proofs.count_documents({**country_filter, "status": {"$in": ["uploaded", "submitted", "pending"]}})
+    active_quotes = await db.quotes.count_documents({**country_filter, "status": {"$in": ["pending", "sent", "quoting"]}})
+    delayed_orders = await db.orders.count_documents({**country_filter, "status": "delayed"})
+    vo_delayed = await db.vendor_orders.count_documents({**country_filter, "status": "delayed"})
     pending_approvals = pending_payments  # Payment proofs needing approval
 
     # ── Operations snapshot ──
     status_counts = {}
     pipeline_statuses = ["pending", "confirmed", "paid", "assigned", "in_production", "in_progress", "ready", "dispatched", "in_transit", "delivered", "completed", "delayed", "cancelled"]
     for st in pipeline_statuses:
-        status_counts[st] = await db.orders.count_documents({"status": st})
-    total_orders = await db.orders.count_documents({})
+        status_counts[st] = await db.orders.count_documents({**country_filter, "status": st})
+    total_orders = await db.orders.count_documents(country_filter)
 
     # ── Finance snapshot ──
-    invoices_issued = await db.invoices.count_documents({"created_at": {"$gte": month_start}})
-    total_invoices = await db.invoices.count_documents({})
+    invoices_issued = await db.invoices.count_documents({**country_filter, "created_at": {"$gte": month_start}})
+    total_invoices = await db.invoices.count_documents(country_filter)
     outstanding_pipeline = [
-        {"$match": {"status": {"$in": ["unpaid", "pending", "sent"]}}},
+        {"$match": {**country_filter, "status": {"$in": ["unpaid", "pending", "sent"]}}},
         {"$group": {"_id": None, "total": {"$sum": {"$toDouble": {"$ifNull": ["$total", 0]}}}}},
     ]
     outstanding_result = await db.invoices.aggregate(outstanding_pipeline).to_list(length=1)
@@ -104,7 +109,7 @@ async def dashboard_kpis(request: Request):
     # ── Profit this month: Revenue - Base Cost - Commissions paid ──
     profit_month = 0
     month_orders = await db.orders.find(
-        {"status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}
+        {**country_filter, "status": {"$in": ["delivered", "completed", "paid"]}, "created_at": {"$gte": month_start}}
     ).to_list(length=5000)
     total_base_cost_month = 0
     for mo in month_orders:

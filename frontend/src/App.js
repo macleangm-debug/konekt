@@ -604,7 +604,11 @@ function App() {
         {/* Password Reset */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        
+
+        {/* Country Expansion Pages (Public) */}
+        <Route path="/expand/ke" element={<CountryExpansionPage countryCode="KE" />} />
+        <Route path="/expand/ug" element={<CountryExpansionPage countryCode="UG" />} />
+
         {/* Staff Login (separate from admin) */}
         <Route path="/staff-login" element={
           <StaffAuthProvider>
