@@ -12,18 +12,14 @@ DB_NAME = os.environ.get("DB_NAME", "konekt_db")
 
 
 @router.get("/render-settings")
-async def get_render_settings(request: Request):
+async def get_render_settings(request: Request, country: str = ""):
     """
-    Public endpoint (no auth) — returns everything the document renderer needs:
-    - Company info (name, address, phone, email, TIN, BRN, bank details)
-    - Branding (logo, signature, stamp, CFO info)
-    - Doc footer toggles
-    - Doc numbering config
-    - Doc template selection
+    Public endpoint (no auth) — returns everything the document renderer needs.
+    Optional country param — when provided, loads that country's settings hub.
     """
     db = request.app.mongodb
 
-    # 1. Business settings (company profile)
+    # 1. Business settings (company profile) — base
     biz = await db.business_settings.find_one({}, {"_id": 0}) or {}
 
     # 2. Invoice branding (logo, signature, stamp)
@@ -32,9 +28,19 @@ async def get_render_settings(request: Request):
     ) or {}
     branding_doc.pop("type", None)
 
-    # 3. Settings hub (doc_footer, doc_numbering, doc_template)
-    hub_row = await db.admin_settings.find_one({"key": "settings_hub"})
+    # 3. Settings hub — country-aware
+    hub_key = "settings_hub" if not country or country.upper() == "TZ" else f"settings_hub_{country.upper()}"
+    hub_row = await db.admin_settings.find_one({"key": hub_key})
+    if not hub_row and country:
+        hub_row = await db.admin_settings.find_one({"key": "settings_hub"})
     hub = hub_row.get("value", {}) if hub_row else {}
+
+    # If country-specific hub has business_settings overrides, apply them
+    hub_biz = hub.get("business_settings", {})
+    if hub_biz:
+        for k, v in hub_biz.items():
+            if v and k != "type":
+                biz[k] = v
 
     doc_footer = hub.get("doc_footer", {
         "show_address": True,
