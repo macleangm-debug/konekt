@@ -3,38 +3,47 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 344 ITERATIONS — 100% PASS RATE
+## System Status: 345 ITERATIONS — 100% PASS RATE
 
 ---
 
-## COMPLETED (Apr 17-20, 2026) — 9 Batches
+## COMPLETED (Apr 17-20, 2026) — Full Country Wiring
 
-### Batch 9 (Latest) — Multi-Country Data Isolation
-1. **country_code on all entities** — Users get country_code derived from phone prefix (+255=TZ, +254=KE, +256=UG). Orders, invoices, quotes tagged with country_code.
-2. **Dashboard filtering by country** — GET /api/admin/dashboard/kpis?country=TZ filters all metrics (revenue, profit, orders, invoices) by country. Empty country = all data.
-3. **Expansion pages on public routes** — /expand/ke and /expand/ug accessible without login. Shows "Konekt is coming to [Country]" with interest registration form.
+### Country Filtering (Complete)
+- **Marketplace country selector** — TZ/KE/UG dropdown in marketplace header
+- **Product filtering** — Products filtered by vendor's country. TZ includes legacy products
+- **Non-live redirect** — Selecting KE/UG redirects to branded expansion page
+- **Dashboard KPIs** — Filter by ?country= param
+- **User registration** — country_code derived from phone prefix
+- **Orders/Invoices** — Tagged with country_code
+- **Vendors/Partners** — Already have country_code field
+- **Settings Hub** — Per-country settings with selector
 
-### Batch 8 — Anti-Bot Protection
-4. Honeypot fields, timing analysis (<2s = bot), rate limiting. All invisible to users.
-
-### Batch 7 — Multi-Country Architecture
-5. Country selector in Settings Hub, per-country settings storage, settings replication
-
-### Batch 6 — Vendor Routing + Notifications
-6. Vendor order auto-routing, real-time feedback badge, country switcher in header
-
-### Batches 1-5
-7-24. Dashboard profit, credit terms, site visit flow, statement branding, doc numbering, order restrictions, quote preview, marketplace fix, go-live reset, impersonation, "Customize this" CTA, checkout credit terms, feedback widget, vendor assignments, number format, admin override promo, services in quotes, micro-interactions
-
----
-
-## Multi-Country Model (Complete)
-- **Data isolation**: country_code on users, orders, invoices, quotes
-- **Settings isolation**: Per-country settings (settings_hub_TZ, settings_hub_KE, settings_hub_UG)  
-- **Dashboard isolation**: ?country= param filters all KPIs
-- **Phone → Country**: +255=TZ, +254=KE, +256=UG auto-derived at registration
-- **Non-live countries**: Public /expand/{code} pages for interest registration
-- **Country switcher**: Admin header dropdown + Settings Hub selector
+### Full Feature List (All Tested & Verified)
+1. Dashboard Profit Tracking + Revenue & Profit dual-line chart
+2. Admin-Only Credit Terms on Customer Profiles
+3. Service Site Visit 2-Stage Flow (fee quote → visit → service quote)
+4. Statement of Accounts with branded CanonicalDocumentRenderer
+5. Multi-Country Config + Document Numbering
+6. Order Status Restrictions (Sales blocked, Request Status endpoint)
+7. Quote Creation with branded live preview
+8. Marketplace fix (service cards, no false empty state)
+9. Go-Live Reset (Testing → Live mode with data cleanup)
+10. Impersonate Users (Admin/Ops act as vendor/sales) + Return Banner
+11. "Customize this" CTA on products → linked services
+12. Credit Terms at Checkout (skip payment within credit limit)
+13. Feedback/Issue Widget + Admin Inbox with real-time badge
+14. Vendor-Category Assignments + Order Auto-Splitting
+15. Number & Currency Format Settings (configurable separators)
+16. Admin Override Promo (all distributable margin as discount)
+17. Services in Quote Creation (products + services search)
+18. Micro-interactions (card lift, button press, stagger animations)
+19. Vendor Order Auto-Routing (auto-creates vendor_orders)
+20. Country Switcher (admin header + marketplace)
+21. Anti-Bot Protection (honeypot + timing + rate limiting)
+22. Multi-Country Data Isolation (country_code on all entities)
+23. Country Expansion Pages (non-live countries show interest form)
+24. Marketplace Country Filtering (products by vendor country)
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
