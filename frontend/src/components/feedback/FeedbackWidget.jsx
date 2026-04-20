@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { MessageCircle, X, Send, Bug, CreditCard, Package, Lightbulb, HelpCircle } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
@@ -11,12 +12,21 @@ const CATEGORIES = [
   { key: "general", label: "General Feedback", icon: HelpCircle, color: "text-slate-500" },
 ];
 
+// Pages where feedback widget should NOT appear
+const HIDDEN_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/staff-login", "/partner-login", "/checkout", "/account/checkout"];
+
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false);
+  const location = useLocation();
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+
+  // Hide on login, register, payment pages
+  const currentPath = location.pathname;
+  const hidden = HIDDEN_PATHS.some(p => currentPath === p || currentPath.startsWith(p + "/"));
+  if (hidden) return null;
 
   const submit = async () => {
     if (!category || !description.trim()) {
@@ -59,7 +69,7 @@ export default function FeedbackWidget() {
           style={{ zIndex: 9998 }}
         >
           <MessageCircle className="w-5 h-5 group-hover:scale-110 transition" />
-          <span className="text-sm font-semibold">Help & Feedback</span>
+          <span className="text-sm font-semibold">Help us improve</span>
         </button>
       )}
 
@@ -74,7 +84,7 @@ export default function FeedbackWidget() {
           <div className="bg-[#20364D] text-white px-5 py-4 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold">Help us improve Konekt</h3>
-              <p className="text-[10px] text-slate-300 mt-0.5">Report issues or share ideas</p>
+              <p className="text-[10px] text-slate-300 mt-0.5">Your feedback shapes our platform</p>
             </div>
             <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white">
               <X className="w-5 h-5" />
