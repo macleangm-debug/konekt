@@ -3,34 +3,38 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 343 ITERATIONS — ALL FEATURES VERIFIED
+## System Status: 344 ITERATIONS — 100% PASS RATE
 
 ---
 
-## COMPLETED (Apr 17-20, 2026) — 8 Batches
+## COMPLETED (Apr 17-20, 2026) — 9 Batches
 
-### Batch 8 (Latest) — Anti-Bot Protection
-1. **Honeypot Fields** — Hidden "website" field on register form. Bots fill it, humans don't. Returns fake success to fool bots.
-2. **Timing Analysis** — Forms track load time. Submissions faster than 2 seconds = bot. Silently rejected.
-3. **Rate Limiting** — Register: 5/10min per IP. Login: 10/5min per IP+email. Returns 429.
-4. All measures are INVISIBLE to users — zero UX impact.
+### Batch 9 (Latest) — Multi-Country Data Isolation
+1. **country_code on all entities** — Users get country_code derived from phone prefix (+255=TZ, +254=KE, +256=UG). Orders, invoices, quotes tagged with country_code.
+2. **Dashboard filtering by country** — GET /api/admin/dashboard/kpis?country=TZ filters all metrics (revenue, profit, orders, invoices) by country. Empty country = all data.
+3. **Expansion pages on public routes** — /expand/ke and /expand/ug accessible without login. Shows "Konekt is coming to [Country]" with interest registration form.
+
+### Batch 8 — Anti-Bot Protection
+4. Honeypot fields, timing analysis (<2s = bot), rate limiting. All invisible to users.
 
 ### Batch 7 — Multi-Country Architecture
-5. Country Selector in Settings Hub (TZ/KE/UG)
-6. Per-country settings storage + replication with auto-adjusted currency/VAT
-7. Country expansion page for non-live markets
+5. Country selector in Settings Hub, per-country settings storage, settings replication
 
-### Batches 1-6
-8-24. Dashboard profit, credit terms, site visit flow, statement branding, multi-country config, doc numbering, order restrictions, quote preview, marketplace fix, go-live reset, impersonation, "Customize this" CTA, checkout credit terms, feedback widget + inbox, vendor assignments + order splitting, number format settings, admin override promo, services in quotes, micro-interactions, vendor order auto-routing, notification badges, country switcher
+### Batch 6 — Vendor Routing + Notifications
+6. Vendor order auto-routing, real-time feedback badge, country switcher in header
+
+### Batches 1-5
+7-24. Dashboard profit, credit terms, site visit flow, statement branding, doc numbering, order restrictions, quote preview, marketplace fix, go-live reset, impersonation, "Customize this" CTA, checkout credit terms, feedback widget, vendor assignments, number format, admin override promo, services in quotes, micro-interactions
 
 ---
 
-## Anti-Bot Protection Summary
-| Layer | Method | Catches | UX Impact |
-|-------|--------|---------|-----------|
-| 1 | Honeypot (hidden field) | 80% of basic bots | Zero |
-| 2 | Timing (<2s = bot) | Rapid-fire bots | Zero |
-| 3 | Rate limiting (IP-based) | Brute force | Only on abuse |
+## Multi-Country Model (Complete)
+- **Data isolation**: country_code on users, orders, invoices, quotes
+- **Settings isolation**: Per-country settings (settings_hub_TZ, settings_hub_KE, settings_hub_UG)  
+- **Dashboard isolation**: ?country= param filters all KPIs
+- **Phone → Country**: +255=TZ, +254=KE, +256=UG auto-derived at registration
+- **Non-live countries**: Public /expand/{code} pages for interest registration
+- **Country switcher**: Admin header dropdown + Settings Hub selector
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
