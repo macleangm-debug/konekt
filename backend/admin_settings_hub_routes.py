@@ -26,9 +26,14 @@ from services.settings_resolver import PLATFORM_DEFAULTS, invalidate_settings_ca
 DEFAULT_SETTINGS = {**PLATFORM_DEFAULTS, "updated_at": None}
 
 @router.get("")
-async def get_settings_hub(request: Request, _admin=Depends(_require_admin)):
+async def get_settings_hub(request: Request, country: str = "TZ", _admin=Depends(_require_admin)):
     db = request.app.mongodb
-    row = await db.admin_settings.find_one({"key": "settings_hub"})
+    # Country-specific settings key
+    settings_key = "settings_hub" if country == "TZ" else f"settings_hub_{country}"
+    row = await db.admin_settings.find_one({"key": settings_key})
+    if not row and country != "TZ":
+        # Fall back to main settings for new countries
+        row = await db.admin_settings.find_one({"key": "settings_hub"})
     if not row:
         return DEFAULT_SETTINGS
     stored = row.get("value", {})
@@ -44,12 +49,13 @@ async def get_settings_hub(request: Request, _admin=Depends(_require_admin)):
     return merged
 
 @router.put("")
-async def update_settings_hub(payload: dict, request: Request, _admin=Depends(_require_admin)):
+async def update_settings_hub(payload: dict, request: Request, country: str = "TZ", _admin=Depends(_require_admin)):
     db = request.app.mongodb
-    value = {**DEFAULT_SETTINGS, **payload, "updated_at": datetime.utcnow().isoformat()}
+    settings_key = "settings_hub" if country == "TZ" else f"settings_hub_{country}"
+    value = {**DEFAULT_SETTINGS, **payload, "updated_at": datetime.utcnow().isoformat(), "_country": country}
     await db.admin_settings.update_one(
-        {"key": "settings_hub"},
-        {"$set": {"key": "settings_hub", "value": value}},
+        {"key": settings_key},
+        {"$set": {"key": settings_key, "value": value}},
         upsert=True,
     )
     invalidate_settings_cache()
@@ -62,6 +68,64 @@ async def update_settings_hub(payload: dict, request: Request, _admin=Depends(_r
         pass
 
     return value
+
+
+@router.post("/replicate")
+async def replicate_settings(payload: dict, request: Request, _admin=Depends(_require_admin)):
+    """Copy settings from source country to target country.
+    
+    Copies all general settings but adjusts country-specific fields (currency, VAT, phone prefix).
+    """
+    db = request.app.mongodb
+    source = payload.get("source_country", "TZ")
+    target = payload.get("target_country")
+    if not target:
+        raise HTTPException(status_code=400, detail="target_country required")
+    if source == target:
+        raise HTTPException(status_code=400, detail="Source and target must be different")
+
+    # Load source settings
+    source_key = "settings_hub" if source == "TZ" else f"settings_hub_{source}"
+    row = await db.admin_settings.find_one({"key": source_key})
+    if not row:
+        raise HTTPException(status_code=404, detail=f"No settings found for {source}")
+
+    source_value = row.get("value", {})
+
+    # Country-specific overrides
+    country_map = {
+        "TZ": {"currency": "TZS", "vat_rate": 18, "phone_prefix": "+255", "timezone": "Africa/Dar_es_Salaam"},
+        "KE": {"currency": "KES", "vat_rate": 16, "phone_prefix": "+254", "timezone": "Africa/Nairobi"},
+        "UG": {"currency": "UGX", "vat_rate": 18, "phone_prefix": "+256", "timezone": "Africa/Kampala"},
+    }
+    overrides = country_map.get(target, {})
+
+    # Clone and adjust
+    import copy
+    cloned = copy.deepcopy(source_value)
+    cloned["_country"] = target
+    cloned["updated_at"] = datetime.utcnow().isoformat()
+
+    # Adjust country-specific fields
+    if "commercial" in cloned:
+        cloned["commercial"]["vat_percent"] = overrides.get("vat_rate", 18)
+    if "payment_accounts" in cloned:
+        cloned["payment_accounts"]["default_country"] = target
+        cloned["payment_accounts"]["currency"] = overrides.get("currency", "TZS")
+    if "operational_rules" in cloned:
+        cloned["operational_rules"]["default_country"] = target
+        cloned["operational_rules"]["timezone"] = overrides.get("timezone", "Africa/Dar_es_Salaam")
+    if "doc_numbering" in cloned:
+        cloned["doc_numbering"]["country_code"] = target
+
+    target_key = "settings_hub" if target == "TZ" else f"settings_hub_{target}"
+    await db.admin_settings.update_one(
+        {"key": target_key},
+        {"$set": {"key": target_key, "value": cloned}},
+        upsert=True,
+    )
+
+    return {"status": "success", "message": f"Settings replicated from {source} to {target}"}
 
 
 @router.get("/report-schedule")

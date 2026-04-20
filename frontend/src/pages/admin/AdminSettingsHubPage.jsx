@@ -194,30 +194,102 @@ export default function AdminSettingsHubPage() {
   const [state, setState] = useState(defaultState);
   const [tab, setTab] = useState("profile");
   const [saving, setSaving] = useState(false);
+  const [activeCountry, setActiveCountry] = useState("TZ");
+  const [countries, setCountries] = useState([
+    { code: "TZ", name: "Tanzania", currency: "TZS", live: true },
+    { code: "KE", name: "Kenya", currency: "KES", live: false },
+    { code: "UG", name: "Uganda", currency: "UGX", live: false },
+  ]);
 
+  const FLAGS = { TZ: "\u{1F1F9}\u{1F1FF}", KE: "\u{1F1F0}\u{1F1EA}", UG: "\u{1F1FA}\u{1F1EC}" };
+
+  // Load settings for active country
   useEffect(() => {
-    api.get("/api/admin/settings-hub").then((res) => setState((prev) => {
-      const merged = { ...prev };
-      Object.keys(res.data || {}).forEach((k) => {
-        if (typeof merged[k] === "object" && typeof res.data[k] === "object") {
-          merged[k] = { ...merged[k], ...res.data[k] };
-        }
+    api.get(`/api/admin/settings-hub?country=${activeCountry}`).then((res) => {
+      const data = res.data || {};
+      // Load available countries from the response
+      const countryList = data.countries?.available_countries;
+      if (countryList && countryList.length > 0) {
+        setCountries(countryList.map(c => ({
+          code: c.code, name: c.name, currency: c.currency,
+          live: c.live !== false && c.code === (data.countries?.active_country || "TZ"),
+        })));
+      }
+      setState((prev) => {
+        const merged = { ...prev };
+        Object.keys(data).forEach((k) => {
+          if (typeof merged[k] === "object" && typeof data[k] === "object") {
+            merged[k] = { ...merged[k], ...data[k] };
+          }
+        });
+        return merged;
       });
-      return merged;
-    }));
-  }, []);
+    });
+  }, [activeCountry]);
 
   const save = async () => {
     setSaving(true);
     try {
-      await api.put("/api/admin/settings-hub", state);
-      toast.success("Settings saved successfully");
+      await api.put(`/api/admin/settings-hub?country=${activeCountry}`, state);
+      toast.success(`Settings saved for ${countries.find(c => c.code === activeCountry)?.name || activeCountry}`);
     } catch { toast.error("Error saving settings"); }
     setSaving(false);
   };
 
+  const replicateToCountry = async (targetCode) => {
+    try {
+      await api.post("/api/admin/settings-hub/replicate", {
+        source_country: activeCountry,
+        target_country: targetCode,
+      });
+      toast.success(`Settings replicated to ${targetCode}`);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to replicate");
+    }
+  };
+
   return (
-    <div className="flex min-h-[calc(100vh-80px)]" data-testid="settings-hub-page">
+    <div className="flex flex-col min-h-[calc(100vh-80px)]" data-testid="settings-hub-page">
+      {/* ─── Country Selector Bar ─── */}
+      <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between" data-testid="settings-country-bar">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Country:</span>
+          <div className="flex gap-1.5">
+            {countries.map((c) => (
+              <button
+                key={c.code}
+                onClick={() => setActiveCountry(c.code)}
+                data-testid={`country-btn-${c.code}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  activeCountry === c.code
+                    ? "bg-[#20364D] text-white shadow-sm"
+                    : c.live !== false
+                      ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      : "bg-slate-50 text-slate-400 hover:bg-slate-100 border border-dashed border-slate-300"
+                }`}
+              >
+                <span>{FLAGS[c.code] || "\u{1F30D}"}</span>
+                {c.name}
+                {c.live === false && <span className="text-[8px] ml-1 opacity-60">Soon</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {countries.filter(c => c.code !== activeCountry).map(c => (
+            <button
+              key={c.code}
+              onClick={() => replicateToCountry(c.code)}
+              className="text-[10px] text-slate-400 hover:text-[#D4A843] transition"
+              title={`Copy current settings to ${c.name}`}
+            >
+              Copy to {c.code}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-1">
       {/* ─── Sidebar ─── */}
       <aside className="w-[240px] shrink-0 border-r border-slate-200 bg-white py-5 overflow-y-auto hidden lg:block">
         <div className="px-4 mb-4">
@@ -330,6 +402,7 @@ export default function AdminSettingsHubPage() {
           </div>
         </div>
       </main>
+      </div>
     </div>
   );
 }

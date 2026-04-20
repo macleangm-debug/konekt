@@ -354,6 +354,7 @@ import EmptyState, { EmptyQuotes, EmptyOrders, EmptyInvoices } from "@/component
 import CountryLaunchPage from "@/pages/public/CountryLaunchPage";
 import MarketplaceListingDetailPage from "@/pages/public/MarketplaceListingDetailPage";
 import MarketplaceBrowsePage from "@/pages/public/MarketplaceBrowsePage";
+import CountryExpansionPage from "@/pages/public/CountryExpansionPage";
 
 // Premium UI Pages
 import ExpansionPremiumPage from "@/pages/public/ExpansionPremiumPage";
@@ -930,6 +931,8 @@ function App() {
           <Route path="marketplace/:productId" element={<AccountProductDetailPage />} />
           <Route path="cart" element={<AccountCartPage />} />
           <Route path="checkout" element={<AccountCheckoutPage />} />
+          <Route path="expand/ke" element={<CountryExpansionPage countryCode="KE" />} />
+          <Route path="expand/ug" element={<CountryExpansionPage countryCode="UG" />} />
           <Route path="services" element={<AccountServicesPageV2 />} />
           <Route path="services/:slug" element={<AccountServiceDetailPage />} />
           <Route path="assisted-quote" element={<AssistedQuoteRequestPage />} />
