@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { MessageCircle, X, Send, Bug, CreditCard, Package, Lightbulb, HelpCircle } from "lucide-react";
+import { X, Send, Bug, CreditCard, Package, Lightbulb, HelpCircle } from "lucide-react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -65,11 +65,23 @@ export default function FeedbackWidget() {
         <button
           onClick={() => setOpen(true)}
           data-testid="feedback-widget-trigger"
-          className="fixed bottom-6 left-6 z-50 flex items-center gap-2 bg-[#20364D] text-white pl-4 pr-5 py-3 rounded-full shadow-lg hover:shadow-xl hover:bg-[#1a2d40] transition-all group"
+          aria-label="Help us improve"
+          className="fixed bottom-6 left-6 z-50 group feedback-launcher"
           style={{ zIndex: 9998 }}
         >
-          <MessageCircle className="w-5 h-5 group-hover:scale-110 transition" />
-          <span className="text-sm font-semibold">Help us improve</span>
+          {/* Pulse aura rings — grab attention */}
+          <span className="absolute inset-0 rounded-full bg-[#D4A843]/30 animate-ping" aria-hidden="true" />
+          <span className="absolute inset-0 rounded-full bg-[#D4A843]/20 animate-pulse" aria-hidden="true" />
+          {/* Orbiting accent dot */}
+          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#D4A843] border-2 border-white shadow-sm animate-bounce" aria-hidden="true" />
+          {/* Main button */}
+          <span className="relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#20364D] to-[#17283C] text-white shadow-xl group-hover:scale-110 group-hover:shadow-2xl transition-all duration-300">
+            <HelpCircle className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" strokeWidth={2.25} />
+          </span>
+          {/* Expanding label on hover */}
+          <span className="absolute left-16 top-1/2 -translate-y-1/2 whitespace-nowrap bg-[#20364D] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg opacity-0 translate-x-[-8px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 pointer-events-none">
+            Need help?
+          </span>
         </button>
       )}
 

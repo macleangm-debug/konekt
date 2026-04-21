@@ -16,6 +16,9 @@ export default function DealOfTheDayHero() {
 
   if (!deal) return null;
 
+  // Hide expired deals client-side (defense in depth — backend also filters, but this catches cached/stale responses)
+  if (deal.deadline && new Date(deal.deadline) <= new Date()) return null;
+
   const progress = deal.display_target > 0 ? Math.round((deal.current_committed / deal.display_target) * 100) : 0;
   const daysLeft = deal.deadline ? Math.max(0, Math.ceil((new Date(deal.deadline) - new Date()) / 86400000)) : 0;
   const hoursLeft = deal.deadline ? Math.max(0, Math.ceil((new Date(deal.deadline) - new Date()) / 3600000) % 24) : 0;

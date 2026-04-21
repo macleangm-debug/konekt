@@ -152,6 +152,7 @@ export default function GroupDealsAdminPage() {
     commission_mode: "none", affiliate_share_pct: "0", description: "",
   });
   const [creating, setCreating] = useState(false);
+  const [buyersFor, setBuyersFor] = useState(null); // { campaign, commitments }
 
   useEffect(() => { loadCampaigns(); loadPendingPayments(); }, []);
 
@@ -257,6 +258,17 @@ export default function GroupDealsAdminPage() {
     } catch (err) { toast.error(err.response?.data?.detail || "Failed to update featured status"); }
   };
 
+  const openBuyers = async (campaign) => {
+    setBuyersFor({ campaign, commitments: null });
+    try {
+      const r = await api.get(`/api/admin/group-deals/campaigns/${campaign.id}`);
+      setBuyersFor({ campaign, commitments: r.data?.commitments || [] });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to load buyers");
+      setBuyersFor({ campaign, commitments: [] });
+    }
+  };
+
   const stats = useMemo(() => ({
     active: campaigns.filter(c => c.status === "active").length,
     threshold_ready: campaigns.filter(c => c.status === "active" && c.threshold_met).length,
@@ -313,20 +325,23 @@ export default function GroupDealsAdminPage() {
             const sc = statusConfig[c.status] || statusConfig.active;
             const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
             const daysLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 86400000)) : 0;
+            const hoursLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 3600000)) : 0;
+            const isExpired = c.status === "active" && c.deadline && new Date(c.deadline) <= new Date();
             const thresholdReady = c.status === "active" && c.threshold_met;
 
             return (
-              <div key={c.id} className={`bg-white rounded-2xl border p-5 ${thresholdReady ? "ring-2 ring-amber-400" : ""}`} data-testid={`campaign-${c.id}`}>
+              <div key={c.id} className={`bg-white rounded-2xl border p-5 ${thresholdReady ? "ring-2 ring-amber-400" : ""} ${isExpired ? "ring-2 ring-red-300" : ""}`} data-testid={`campaign-${c.id}`}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="text-base font-bold text-[#20364D] truncate">{c.product_name}</div>
                     <div className="text-xs text-slate-500 mt-0.5">{c.campaign_id} {c.description ? `\u2022 ${c.description.slice(0, 60)}` : ""}</div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
                     <Badge className={sc.color}>{sc.label}</Badge>
+                    {isExpired && <Badge className="bg-red-100 text-red-700" data-testid={`expired-badge-${c.id}`}>Expired — needs action</Badge>}
                     {thresholdReady && <Badge className="bg-amber-100 text-amber-700 animate-pulse">Threshold Met</Badge>}
                     {c.is_featured && <Badge className="bg-yellow-100 text-yellow-700">Featured</Badge>}
-                    {c.status === "active" && <span className="text-xs text-slate-400">{daysLeft}d left</span>}
+                    {c.status === "active" && !isExpired && <span className="text-xs text-slate-400">{daysLeft > 0 ? `${daysLeft}d left` : `${hoursLeft}h left`}</span>}
                   </div>
                 </div>
 
@@ -349,6 +364,9 @@ export default function GroupDealsAdminPage() {
                 )}
 
                 <div className="flex gap-2 mt-3 flex-wrap">
+                  <Button size="sm" variant="outline" onClick={() => openBuyers(c)} data-testid={`view-buyers-${c.id}`}>
+                    <Users className="w-3 h-3 mr-1" /> View Buyers ({c.buyer_count || 0})
+                  </Button>
                   {thresholdReady && (
                     <Button size="sm" onClick={() => finalizeCampaign(c.id)} className="bg-green-600 hover:bg-green-700" data-testid={`finalize-${c.id}`}>
                       <Check className="w-3 h-3 mr-1" /> Finalize Orders
@@ -362,7 +380,7 @@ export default function GroupDealsAdminPage() {
                   )}
                   {c.status === "active" && (
                     <Button size="sm" variant="outline" onClick={() => cancelCampaign(c.id)} className="text-red-600 border-red-200" data-testid={`cancel-${c.id}`}>
-                      <X className="w-3 h-3 mr-1" /> Cancel
+                      <X className="w-3 h-3 mr-1" /> {isExpired ? "Close & Refund" : "Cancel"}
                     </Button>
                   )}
                   {c.status === "failed" && (
@@ -503,6 +521,76 @@ export default function GroupDealsAdminPage() {
               <Button type="button" variant="outline" onClick={() => { setShowCreate(false); setSelectedProduct(null); setWizardStep(1); }}>Cancel</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Buyers Modal */}
+      <Dialog open={!!buyersFor} onOpenChange={(v) => !v && setBuyersFor(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-hidden flex flex-col" data-testid="buyers-modal">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#20364D]" /> Buyers — {buyersFor?.campaign?.product_name}
+            </DialogTitle>
+            <DialogDescription>
+              {buyersFor?.campaign?.campaign_id} • {buyersFor?.campaign?.buyer_count || 0} buyers • {fmtNum(buyersFor?.campaign?.current_committed || 0)} units committed
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto -mx-1 px-1">
+            {!buyersFor?.commitments ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading buyers…</div>
+            ) : buyersFor.commitments.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-sm">No commitments yet.</div>
+            ) : (
+              <table className="w-full text-sm" data-testid="buyers-table">
+                <thead className="sticky top-0 bg-white border-b">
+                  <tr className="text-xs uppercase tracking-wider text-slate-400">
+                    <th className="text-left py-2 px-3 font-semibold">Customer</th>
+                    <th className="text-left py-2 px-3 font-semibold">Phone</th>
+                    <th className="text-right py-2 px-3 font-semibold">Qty</th>
+                    <th className="text-right py-2 px-3 font-semibold">Amount</th>
+                    <th className="text-left py-2 px-3 font-semibold">Status</th>
+                    <th className="text-left py-2 px-3 font-semibold">Joined</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {buyersFor.commitments.map((b, i) => {
+                    const statusColor = {
+                      paid: "bg-emerald-100 text-emerald-700",
+                      payment_submitted: "bg-amber-100 text-amber-700",
+                      pending: "bg-slate-100 text-slate-600",
+                      refund_pending: "bg-orange-100 text-orange-700",
+                      refunded: "bg-blue-100 text-blue-700",
+                      cancelled: "bg-red-100 text-red-700",
+                    }[b.status] || "bg-slate-100 text-slate-600";
+                    const statusLabel = {
+                      paid: "Paid",
+                      payment_submitted: "Payment submitted",
+                      pending: "Pending",
+                      refund_pending: "Refund pending",
+                      refunded: "Refunded",
+                      cancelled: "Cancelled",
+                    }[b.status] || b.status;
+                    return (
+                      <tr key={i} className="border-b last:border-0 hover:bg-slate-50" data-testid={`buyer-row-${i}`}>
+                        <td className="py-2 px-3 font-semibold text-[#20364D]">{b.customer_name || "—"}</td>
+                        <td className="py-2 px-3 text-slate-600">{b.customer_phone || "—"}</td>
+                        <td className="py-2 px-3 text-right">{fmtNum(b.quantity)}</td>
+                        <td className="py-2 px-3 text-right font-mono">{fmt(b.amount)}</td>
+                        <td className="py-2 px-3"><Badge className={statusColor}>{statusLabel}</Badge></td>
+                        <td className="py-2 px-3 text-xs text-slate-400">{b.created_at ? new Date(b.created_at).toLocaleString() : "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="text-xs text-slate-500">
+              {buyersFor?.commitments && `${buyersFor.commitments.filter(b => b.status === "paid").length} paid • ${buyersFor.commitments.filter(b => b.status === "payment_submitted").length} awaiting approval • ${buyersFor.commitments.filter(b => b.status === "pending").length} pending`}
+            </div>
+            <Button variant="outline" onClick={() => setBuyersFor(null)} data-testid="buyers-modal-close">Close</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

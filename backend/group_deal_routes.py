@@ -779,15 +779,19 @@ async def public_featured_deals():
 
 @public_router.get("/deal-of-the-day")
 async def public_deal_of_the_day():
-    """Public: get the single featured deal (Deal of the Day). Falls back to best active deal if none featured."""
+    """Public: get the single featured deal (Deal of the Day). Falls back to best active deal if none featured.
+    Expired campaigns (deadline in the past) are excluded — even if their status is still 'active'.
+    """
+    now = datetime.now(timezone.utc)
+    # Only surface deals whose deadline hasn't passed yet (or has no deadline set)
+    not_expired_clause = {"$or": [{"deadline": {"$gt": now}}, {"deadline": None}, {"deadline": {"$exists": False}}]}
     doc = await db.group_deal_campaigns.find_one(
-        {"status": "active", "is_featured": True}, HIDDEN_FIELDS,
+        {"status": "active", "is_featured": True, **not_expired_clause}, HIDDEN_FIELDS,
     )
     if not doc:
-        # Fallback: pick best active deal (highest progress, closest deadline)
-        now = datetime.now(timezone.utc)
+        # Fallback: pick best active, non-expired deal (highest progress, closest deadline)
         active_docs = await db.group_deal_campaigns.find(
-            {"status": "active"}, HIDDEN_FIELDS,
+            {"status": "active", **not_expired_clause}, HIDDEN_FIELDS,
         ).sort("created_at", -1).to_list(10)
         if not active_docs:
             return None

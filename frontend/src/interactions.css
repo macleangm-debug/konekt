@@ -143,3 +143,21 @@
   animation: k-fade-in 200ms ease-out;
   border-left: 3px solid #D4A843;
 }
+
+/* ─── Feedback launcher (help button) ─── */
+@keyframes k-feedback-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.feedback-launcher {
+  width: 56px;
+  height: 56px;
+  animation: k-feedback-float 3.2s ease-in-out infinite;
+}
+.feedback-launcher:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback-launcher { animation: none; }
+}
+
