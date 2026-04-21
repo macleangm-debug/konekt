@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="white"/>
+  <!-- Asymmetric triad -->
+  <line x1="297" y1="67" x2="61" y2="420" stroke="#20364D" stroke-opacity="0.45" stroke-width="14" stroke-linecap="round"/>
+  <path d="M297,67 Q358,166 461,368" stroke="#20364D" stroke-opacity="0.45" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <line x1="61" y1="420" x2="461" y2="368" stroke="#20364D" stroke-opacity="0.45" stroke-width="14" stroke-linecap="round"/>
+  <!-- Nodes: gold accent + 2 navy -->
+  <circle cx="297" cy="67" r="72" fill="#D4A843"/>
+  <circle cx="61" cy="420" r="55" fill="#20364D"/>
+  <circle cx="461" cy="368" r="55" fill="#20364D"/>
+</svg>
