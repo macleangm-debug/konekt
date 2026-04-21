@@ -37,6 +37,54 @@ def _s(doc):
     return d
 
 
+async def _get_gd_settings():
+    """Read Group-Deal commission settings from settings_hub.
+    Defaults: 5% affiliate commission, TZS 50,000 minimum per-attributee payout."""
+    row = await db.admin_settings.find_one({"key": "settings_hub"})
+    hub = (row or {}).get("value", {}) if row else {}
+    gd = hub.get("group_deals", {}) or {}
+    payouts = hub.get("payouts", {}) or {}
+    return {
+        "affiliate_pct": float(gd.get("affiliate_commission_pct", 5.0)),
+        "min_payout": float(payouts.get("affiliate_minimum_payout", 50000.0)),
+    }
+
+
+async def _resolve_referral(code: str):
+    """Resolve a referral/promo code to an attributee.
+    Returns: dict with keys {type: 'affiliate'|'sales', id, email, name, promo_code} or None."""
+    if not code:
+        return None
+    code = code.strip()
+    if not code:
+        return None
+    # First try affiliates
+    aff = await db.affiliates.find_one(
+        {"promo_code": {"$regex": f"^{code}$", "$options": "i"}, "status": "active"}
+    )
+    if aff:
+        return {
+            "type": "affiliate",
+            "id": str(aff.get("_id")),
+            "email": aff.get("email") or "",
+            "name": aff.get("name") or aff.get("full_name") or "",
+            "promo_code": aff.get("promo_code") or code,
+        }
+    # Then try users with sales role + promo_code
+    user = await db.users.find_one(
+        {"promo_code": {"$regex": f"^{code}$", "$options": "i"}, "role": {"$in": ["sales", "staff", "sales_manager"]}}
+    )
+    if user:
+        return {
+            "type": "sales",
+            "id": user.get("id") or str(user.get("_id")),
+            "email": user.get("email") or "",
+            "name": user.get("full_name") or user.get("name") or "",
+            "promo_code": user.get("promo_code") or code,
+        }
+    return None
+
+
 # ─── CAMPAIGNS ───
 
 @router.post("/campaigns")
@@ -523,6 +571,16 @@ async def finalize_campaign(campaign_id: str):
     orders_created = 0
     total_units = 0
 
+    # Commission config — per-campaign override wins; otherwise use global settings
+    gd_settings = await _get_gd_settings()
+    affiliate_pct = float(doc.get("affiliate_share_pct") or 0) or gd_settings["affiliate_pct"]
+    min_payout = gd_settings["min_payout"]
+    vendor_cost = float(doc.get("vendor_cost", 0))
+    margin_per_unit = float(doc.get("margin_per_unit") or (float(doc.get("discounted_price", 0)) - vendor_cost))
+
+    # Per-attributee commission accumulator: { "affiliate:email@x.com": {..., "amount": N, "commitments": [...]}, ... }
+    attributions = {}
+
     # 1. Create individual buyer orders
     for c in commitments:
         qty = c.get("quantity", 1)
@@ -561,6 +619,24 @@ async def finalize_campaign(campaign_id: str):
         )
         orders_created += 1
 
+        # Accumulate commission by attributee (resolve promo/referral code)
+        referral = c.get("referral_code") or ""
+        if referral and affiliate_pct > 0 and margin_per_unit > 0:
+            attributee = await _resolve_referral(referral)
+            if attributee:
+                key = f"{attributee['type']}:{attributee.get('email') or attributee.get('id')}"
+                commission_amt = round(margin_per_unit * qty * (affiliate_pct / 100.0), 2)
+                if key not in attributions:
+                    attributions[key] = {
+                        **attributee,
+                        "amount": 0,
+                        "units": 0,
+                        "commitments": [],
+                    }
+                attributions[key]["amount"] += commission_amt
+                attributions[key]["units"] += qty
+                attributions[key]["commitments"].append(c.get("commitment_ref", ""))
+
     # 2. Create ONE aggregated vendor back order
     vbo_number = f"VBO-{doc['campaign_id']}-{now.strftime('%Y%m%d')}"
     vendor_back_order = {
@@ -584,7 +660,43 @@ async def finalize_campaign(campaign_id: str):
     }
     await db.vendor_back_orders.insert_one(vendor_back_order)
 
-    # 3. Update campaign status — LOCKED after finalize
+    # 3. Record commissions (one row per attributee) — only if total per-attributee >= floor
+    commissions_recorded = []
+    commissions_skipped = []
+    total_commission_paid = 0.0
+    for key, data in attributions.items():
+        amt = round(data["amount"], 2)
+        if amt >= min_payout:
+            await db.affiliate_commissions.insert_one({
+                "affiliate_email": data.get("email") or "",
+                "affiliate_name": data.get("name") or "",
+                "attributee_type": data.get("type"),
+                "attributee_id": data.get("id"),
+                "promo_code": data.get("promo_code"),
+                "source": "group_deal",
+                "campaign_id": str(doc["_id"]),
+                "campaign_code": doc.get("campaign_id"),
+                "product_name": doc.get("product_name"),
+                "commission_amount": amt,
+                "commission_pct": affiliate_pct,
+                "units_attributed": data.get("units", 0),
+                "commitment_refs": data.get("commitments", []),
+                "status": "approved",  # credited immediately on finalize
+                "created_at": now,
+                "approved_at": now,
+            })
+            commissions_recorded.append({"name": data.get("name"), "email": data.get("email"), "type": data.get("type"), "amount": amt})
+            total_commission_paid += amt
+        else:
+            commissions_skipped.append({"name": data.get("name"), "email": data.get("email"), "type": data.get("type"), "amount": amt, "reason": f"Below minimum payout of {min_payout}"})
+
+    # P&L totals
+    buyer_total_revenue = float(doc["discounted_price"]) * total_units
+    vendor_total_cost = vendor_cost * total_units
+    total_margin = buyer_total_revenue - vendor_total_cost
+    konekt_net_profit = total_margin - total_commission_paid
+
+    # 4. Update campaign status — LOCKED after finalize
     await db.group_deal_campaigns.update_one(
         {"_id": doc["_id"]},
         {"$set": {
@@ -594,6 +706,13 @@ async def finalize_campaign(campaign_id: str):
             "total_units_ordered": total_units,
             "vbo_number": vbo_number,
             "is_featured": False,
+            "buyer_total_revenue": buyer_total_revenue,
+            "vendor_total_cost": vendor_total_cost,
+            "total_margin": total_margin,
+            "total_commission_paid": total_commission_paid,
+            "konekt_net_profit": konekt_net_profit,
+            "applied_affiliate_pct": affiliate_pct,
+            "vendor_payout_status": "pending",
             "updated_at": now,
         }}
     )
@@ -613,7 +732,125 @@ async def finalize_campaign(campaign_id: str):
         "orders_created": orders_created,
         "total_units": total_units,
         "vendor_back_order": vbo_number,
+        "pnl": {
+            "revenue": buyer_total_revenue,
+            "vendor_cost": vendor_total_cost,
+            "gross_margin": total_margin,
+            "commissions_paid": total_commission_paid,
+            "konekt_net_profit": konekt_net_profit,
+            "applied_affiliate_pct": affiliate_pct,
+        },
+        "commissions": {
+            "recorded": commissions_recorded,
+            "skipped_below_floor": commissions_skipped,
+        },
     }
+
+
+@router.get("/campaigns/{campaign_id}/buyers.csv")
+async def export_buyers_csv(campaign_id: str):
+    """Admin: download CSV of all buyers for a campaign — to share with vendor for fulfillment coordination."""
+    from fastapi.responses import Response
+    import csv
+    from io import StringIO
+
+    doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    commitments = await db.group_deal_commitments.find(
+        {"campaign_id": str(doc["_id"])}
+    ).to_list(2000)
+
+    buf = StringIO()
+    writer = csv.writer(buf)
+    writer.writerow([
+        "Commitment Ref", "Customer Name", "Customer Phone", "Customer Email",
+        "Quantity", "Amount (TZS)", "Status", "Payment Method", "Payment Reference",
+        "Referral Code", "Order Number", "Joined At", "Finalized At",
+    ])
+    for c in commitments:
+        writer.writerow([
+            c.get("commitment_ref", ""),
+            c.get("customer_name", ""),
+            c.get("customer_phone", ""),
+            c.get("customer_email", ""),
+            c.get("quantity", 0),
+            c.get("amount", 0),
+            c.get("status", ""),
+            c.get("payment_method", ""),
+            c.get("payment_reference", ""),
+            c.get("referral_code", ""),
+            c.get("order_number", ""),
+            c.get("created_at").isoformat() if isinstance(c.get("created_at"), datetime) else "",
+            c.get("finalized_at").isoformat() if isinstance(c.get("finalized_at"), datetime) else "",
+        ])
+    csv_data = buf.getvalue()
+    filename = f"group-deal-{doc.get('campaign_id','export')}-buyers.csv"
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.post("/campaigns/{campaign_id}/vendor-payout")
+async def mark_vendor_payout(campaign_id: str, payload: dict):
+    """Admin: toggle vendor payout status on a finalized campaign.
+    payload: {status: 'paid'|'pending', reference?: str, paid_at?: iso-date}"""
+    doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    if doc.get("status") != "finalized":
+        raise HTTPException(status_code=400, detail="Only finalized campaigns can have vendor payouts.")
+    status = (payload.get("status") or "pending").lower()
+    if status not in ("paid", "pending"):
+        raise HTTPException(status_code=400, detail="Invalid status.")
+    now = datetime.now(timezone.utc)
+    update = {"vendor_payout_status": status, "updated_at": now}
+    if status == "paid":
+        update["vendor_payout_reference"] = payload.get("reference", "")
+        update["vendor_payout_paid_at"] = now
+    else:
+        update["vendor_payout_reference"] = ""
+        update["vendor_payout_paid_at"] = None
+    await db.group_deal_campaigns.update_one({"_id": doc["_id"]}, {"$set": update})
+    return {"status": status, "reference": update.get("vendor_payout_reference", ""), "paid_at": now.isoformat() if status == "paid" else None}
+
+
+@router.post("/campaigns/{campaign_id}/broadcast")
+async def log_buyer_broadcast(campaign_id: str, payload: dict):
+    """Admin: log that a broadcast message was sent to buyers (actual sending is done client-side via WhatsApp/email).
+    payload: {channel: 'whatsapp'|'email'|'manual', message: str, recipient_count: int}"""
+    doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    now = datetime.now(timezone.utc)
+    await db.group_deal_broadcasts.insert_one({
+        "campaign_id": str(doc["_id"]),
+        "campaign_code": doc.get("campaign_id"),
+        "channel": payload.get("channel", "manual"),
+        "message": (payload.get("message") or "")[:2000],
+        "recipient_count": int(payload.get("recipient_count") or 0),
+        "created_at": now,
+    })
+    return {"ok": True, "at": now.isoformat()}
+
+
+@router.get("/campaigns/{campaign_id}/broadcasts")
+async def list_broadcasts(campaign_id: str):
+    """Admin: list all broadcasts sent for a campaign."""
+    doc = await db.group_deal_campaigns.find_one({"_id": ObjectId(campaign_id)})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    rows = await db.group_deal_broadcasts.find(
+        {"campaign_id": str(doc["_id"])}, {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    for r in rows:
+        if isinstance(r.get("created_at"), datetime):
+            r["created_at"] = r["created_at"].isoformat()
+    return rows
+
+
 
 
 @router.post("/campaigns/{campaign_id}/cancel")
