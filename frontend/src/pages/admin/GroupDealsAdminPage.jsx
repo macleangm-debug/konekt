@@ -141,7 +141,6 @@ function ProductSelector({ onSelect, selected }) {
 
 export default function GroupDealsAdminPage() {
   const [campaigns, setCampaigns] = useState([]);
-  const [pendingPayments, setPendingPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -154,7 +153,7 @@ export default function GroupDealsAdminPage() {
   const [creating, setCreating] = useState(false);
   const [buyersFor, setBuyersFor] = useState(null); // { campaign, commitments }
 
-  useEffect(() => { loadCampaigns(); loadPendingPayments(); }, []);
+  useEffect(() => { loadCampaigns(); }, []);
 
   const loadCampaigns = async () => {
     try {
@@ -164,18 +163,10 @@ export default function GroupDealsAdminPage() {
     finally { setLoading(false); }
   };
 
-  const loadPendingPayments = async () => {
-    try {
-      const r = await api.get("/api/admin/group-deals/commitments/pending-payments");
-      setPendingPayments(r.data || []);
-    } catch { /* silent */ }
-  };
-
   const approvePayment = async (ref) => {
     try {
       await api.post(`/api/admin/group-deals/commitments/${ref}/approve-payment`);
       toast.success("Payment approved");
-      loadPendingPayments();
       loadCampaigns();
     } catch (err) { toast.error(err.response?.data?.detail || "Failed to approve"); }
   };
@@ -312,7 +303,8 @@ export default function GroupDealsAdminPage() {
     const totalMargin = fulfillment.reduce((s, c) => s + (c.total_margin || 0), 0);
     const totalNetProfit = fulfillment.reduce((s, c) => s + (c.konekt_net_profit || 0), 0);
     const pendingVendorPayouts = fulfillment.filter(c => (c.vendor_payout_status || "pending") === "pending").length;
-    return { live, needsDecision, fulfillment, closed, totalMargin, totalNetProfit, pendingVendorPayouts };
+    const pendingPaymentsTotal = campaigns.reduce((s, c) => s + (c.pending_payment_count || 0), 0);
+    return { live, needsDecision, fulfillment, closed, totalMargin, totalNetProfit, pendingVendorPayouts, pendingPaymentsTotal };
   }, [campaigns]);
 
   const [stageTab, setStageTab] = useState("all");
@@ -342,9 +334,10 @@ export default function GroupDealsAdminPage() {
       </div>
 
       {/* Summary stat cards — financial focus */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-blue-600">{stats.live.length}</div><div className="text-xs text-slate-500">Live</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-red-600">{stats.needsDecision.length}</div><div className="text-xs text-slate-500">Needs Decision</div></div>
+        <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-amber-600">{stats.pendingPaymentsTotal}</div><div className="text-xs text-slate-500">Payments to approve</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-emerald-600">{stats.fulfillment.length}</div><div className="text-xs text-slate-500">In Fulfillment</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-xl font-extrabold text-[#20364D]" title={fmt(stats.totalMargin)}>{fmt(stats.totalNetProfit)}</div><div className="text-xs text-slate-500">Net Profit (finalized)</div></div>
         <div className="bg-white rounded-xl border p-4"><div className="text-2xl font-extrabold text-amber-600">{stats.pendingVendorPayouts}</div><div className="text-xs text-slate-500">Vendor Payouts Due</div></div>
@@ -359,27 +352,6 @@ export default function GroupDealsAdminPage() {
             <div className="text-xs text-red-700 mt-0.5">Expired campaigns — push to sales (if threshold met) or cancel & refund. Contact buyers either way.</div>
           </div>
           <Button size="sm" variant="outline" className="border-red-300 text-red-700" onClick={() => setStageTab("needs_decision")} data-testid="goto-needs-decision">Review now →</Button>
-        </div>
-      )}
-
-      {/* Pending Payments */}
-      {pendingPayments.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5" data-testid="pending-payments-section">
-          <div className="text-sm font-bold text-amber-800 mb-3">Payments Awaiting Approval ({pendingPayments.length})</div>
-          <div className="space-y-2">
-            {pendingPayments.map((p) => (
-              <div key={p.commitment_ref} className="flex items-center justify-between bg-white rounded-xl border p-3" data-testid={`pending-${p.commitment_ref}`}>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[#20364D]">{p.customer_name} <span className="text-xs text-slate-400">{p.customer_phone}</span></div>
-                  <div className="text-xs text-slate-500">{p.campaign_name} &middot; {p.quantity} units &middot; {fmt(p.amount)}</div>
-                  {p.payment_proof?.bank_reference && <div className="text-xs text-slate-400 font-mono">Ref: {p.payment_proof.bank_reference}</div>}
-                </div>
-                <Button size="sm" onClick={() => approvePayment(p.commitment_ref)} className="bg-green-600 hover:bg-green-700 flex-shrink-0" data-testid={`approve-${p.commitment_ref}`}>
-                  <Check className="w-3 h-3 mr-1" /> Approve
-                </Button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -423,6 +395,7 @@ export default function GroupDealsAdminPage() {
                   <th className="text-right py-2.5 px-3 font-semibold">Price</th>
                   <th className="text-left py-2.5 px-3 font-semibold w-44">Progress</th>
                   <th className="text-right py-2.5 px-3 font-semibold">Buyers</th>
+                  <th className="text-right py-2.5 px-3 font-semibold">Payments</th>
                   <th className="text-right py-2.5 px-3 font-semibold">Revenue</th>
                   <th className="text-left py-2.5 px-3 font-semibold">Status</th>
                   <th className="text-left py-2.5 px-3 font-semibold">Deadline</th>
@@ -456,6 +429,13 @@ export default function GroupDealsAdminPage() {
                         <div className="text-[10px] text-slate-400 mt-1">{fmtNum(c.current_committed)}/{fmtNum(c.display_target)} ({progress}%)</div>
                       </td>
                       <td className="py-3 px-3 text-right">{c.buyer_count || 0}</td>
+                      <td className="py-3 px-3 text-right">
+                        {c.pending_payment_count > 0 ? (
+                          <Badge className="bg-amber-100 text-amber-700 font-bold" data-testid={`pending-pay-${c.id}`}>
+                            {c.pending_payment_count} to approve
+                          </Badge>
+                        ) : <span className="text-slate-300 text-xs">—</span>}
+                      </td>
                       <td className="py-3 px-3 text-right font-semibold">
                         {c.status === "finalized" ? fmt(c.buyer_total_revenue || 0) : fmt((c.current_committed || 0) * (c.discounted_price || 0))}
                       </td>
@@ -820,6 +800,7 @@ export default function GroupDealsAdminPage() {
                     <th className="text-right py-2 px-3 font-semibold">Amount</th>
                     <th className="text-left py-2 px-3 font-semibold">Status</th>
                     <th className="text-left py-2 px-3 font-semibold">Joined</th>
+                    <th className="text-right py-2 px-3 font-semibold"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -848,6 +829,22 @@ export default function GroupDealsAdminPage() {
                         <td className="py-2 px-3 text-right font-mono">{fmt(b.amount)}</td>
                         <td className="py-2 px-3"><Badge className={statusColor}>{statusLabel}</Badge></td>
                         <td className="py-2 px-3 text-xs text-slate-400">{b.created_at ? new Date(b.created_at).toLocaleString() : "—"}</td>
+                        <td className="py-2 px-3 text-right">
+                          {b.status === "payment_submitted" && (
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700 h-7 text-xs"
+                              onClick={async () => {
+                                await approvePayment(b.commitment_ref);
+                                // Refresh buyer list in modal
+                                try {
+                                  const r = await api.get(`/api/admin/group-deals/campaigns/${buyersFor.campaign.id}`);
+                                  setBuyersFor({ campaign: buyersFor.campaign, commitments: r.data?.commitments || [] });
+                                } catch { /* no-op */ }
+                              }}
+                              data-testid={`approve-buyer-${i}`}>
+                              <Check className="w-3 h-3 mr-1" /> Approve
+                            </Button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}

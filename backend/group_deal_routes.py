@@ -194,7 +194,20 @@ async def list_campaigns(status: str = None):
     if status:
         query["status"] = status
     docs = await db.group_deal_campaigns.find(query).sort("created_at", -1).to_list(200)
-    return [_s(d) for d in docs]
+    # Aggregate pending-payment counts per campaign in ONE query for perf
+    pipeline = [
+        {"$match": {"status": "payment_submitted"}},
+        {"$group": {"_id": "$campaign_id", "count": {"$sum": 1}}},
+    ]
+    pending_map = {}
+    async for row in db.group_deal_commitments.aggregate(pipeline):
+        pending_map[row["_id"]] = row["count"]
+    out = []
+    for d in docs:
+        row = _s(d)
+        row["pending_payment_count"] = pending_map.get(str(d["_id"]), 0)
+        out.append(row)
+    return out
 
 
 @router.get("/campaigns/{campaign_id}")
@@ -206,7 +219,7 @@ async def get_campaign(campaign_id: str):
         raise HTTPException(status_code=404, detail="Campaign not found")
     commitments = await db.group_deal_commitments.find(
         {"campaign_id": str(doc["_id"])},
-        {"_id": 0, "customer_name": 1, "customer_phone": 1, "amount": 1, "quantity": 1, "status": 1, "created_at": 1}
+        {"_id": 0, "commitment_ref": 1, "customer_name": 1, "customer_phone": 1, "amount": 1, "quantity": 1, "status": 1, "created_at": 1, "payment_proof": 1}
     ).to_list(500)
     result = _s(doc)
     result["commitments"] = [
