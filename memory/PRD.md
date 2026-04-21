@@ -41,5 +41,38 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 23. Country Expansion Pages (non-live markets)
 24. Country Reports + Geo Auto-Detection
 
+### Production Launch (Apr 21, 2026)
+25. **Emergent badge hidden** for production (CSS override in index.html)
+26. **Konekt Triad logo** enforced site-wide — all other logo variants deleted; only `konekt-triad-logo.svg`, `konekt-triad-icon.png`, `konekt-triad-full.png` remain
+27. **Domain linked** — konekt.co.tz live via Zesha DNS (A records 162.159.142.117, 172.66.2.113 + CNAME www → konekt.co.tz, DNS-only)
+
+### Group Deal Command Center (Apr 21, 2026)
+28. **Expired deals auto-hide** from Deal of the Day (backend `deadline > now` filter + frontend fallback)
+29. **Unified table + drawer UI** on /admin/group-deals — one single table (Product / Price / Progress / Buyers / Payments / Revenue / Status / Deadline), click row → drawer with full details and all actions (View buyers, Contact buyers, Push to Sales, Mark vendor paid, Cancel & refund)
+30. **Lifecycle stages**: Live / Needs Decision / In Fulfillment / Closed tabs + red "Needs Decision" banner
+31. **Commission engine for Group Deals** — 5% of margin (configurable per-campaign, defaults from settings), attributed via buyer's promo code → affiliate OR sales wallet, min payout floor TZS 50,000, credited on finalize
+32. **P&L per finalized campaign** — revenue / vendor cost / margin / commissions / Konekt net profit
+33. **Vendor payout tracker** — admin marks vendor paid with reference; status syncs to vendor's dashboard
+34. **Group Deal vendor orders** — finalize creates an aggregated `vendor_order` (is_group_deal: true, no client details) that surfaces on vendor dashboard with amber "GD" badge
+35. **Inline Approve** for payment_submitted buyers in the View Buyers modal (replaces old separate Pending Payments section)
+36. **Contact Buyers modal** — WhatsApp bulk open, email BCC, copy phones/emails/message, template with {name} personalization
+37. **Help (?) icon redesigned** — circular navy gradient button with float + pulsing aura + bouncing accent dot, respects prefers-reduced-motion
+
+### Vendor Operations RFQ Workflow (Apr 21, 2026)
+38. **Vendor-facing RFQ inbox** — new page `/partner/vendor/quote-requests` + sidebar link. Desktop table + mobile cards + drawer. 5 stat tabs (Awaiting/Quoted/Won/Lost/Expired).
+39. **Vendor submits quote online** — base price, lead time, notes → lands in Ops review state (never auto-propagates)
+40. **Vendor can decline** with reason
+41. **RFQ auto-expiry** — checked on read; vendor quote marked `expired` if past `quote_expiry` or `sent_at + default_quote_expiry_hours`
+42. **Notifications** — vendor gets notified on new RFQ sent + award/not-selected decision. Ops gets notified on vendor quote submission.
+43. **Konekt pricing-engine reference** on each Ops quote card — shows Konekt expected sell price, min sell, margin % beside the vendor's base price, so Ops always compares against source of truth
+44. **RFQ stats card** on vendor dashboard — "X quote requests awaiting you" with animated amber banner
+45. **Competitor price isolation** — vendor only sees their own quote row; competitor prices never exposed
+
+## Key Backend Routes (added this batch)
+- `/api/vendor/quote-requests[/stats|/{id}|/{id}/respond|/{id}/decline]` (vendor-facing)
+- `/api/admin/group-deals/campaigns/{id}/vendor-payout` (payout toggle + vendor-order sync)
+- `/api/admin/group-deals/campaigns/{id}/broadcast[s]` (log outbound blasts)
+- Ops `/api/vendor-ops/price-requests/{id}` now returns `pricing_references[]`
+
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

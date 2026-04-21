@@ -591,6 +591,8 @@ function RequestDetail({ pr, vendors, onBack }) {
               {quotedQuotes.map((q, i) => {
                 const isBest = q === bestQuote;
                 const isSelected = request.selected_vendor_id === q.vendor_id;
+                // Match pricing reference for this vendor from backend response
+                const pricingRef = (request.pricing_references || []).find(p => p && p.vendor_id === q.vendor_id);
                 return (
                   <div key={i} className={`rounded-lg border p-2.5 transition ${isSelected ? "border-emerald-500 bg-emerald-50" : isBest ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-100"}`} data-testid={`quote-card-${i}`}>
                     <div className="flex items-center justify-between">
@@ -604,6 +606,14 @@ function RequestDetail({ pr, vendors, onBack }) {
                         {isSelected && <span className="text-[9px] font-bold text-emerald-600">SELECTED</span>}
                       </div>
                     </div>
+                    {/* Konekt pricing reference — source of truth comparison */}
+                    {pricingRef && (
+                      <div className="bg-white rounded-md border border-slate-200 p-2 mt-2 text-[10px] grid grid-cols-3 gap-1" data-testid={`pricing-ref-${i}`}>
+                        <div><div className="uppercase tracking-wider text-slate-400">Konekt sell</div><div className="font-bold text-[#20364D]">{money(pricingRef.konekt_sell_price)}</div></div>
+                        <div><div className="uppercase tracking-wider text-slate-400">Min sell</div><div className="font-bold text-slate-700">{money(pricingRef.min_sell_price)}</div></div>
+                        <div><div className="uppercase tracking-wider text-slate-400">Margin</div><div className="font-bold text-emerald-700">{pricingRef.margin_pct ? `${Number(pricingRef.margin_pct).toFixed(1)}%` : "—"}</div></div>
+                      </div>
+                    )}
                     {!isSelected && request.status !== "ready_for_sales" && (
                       <button onClick={() => selectVendor(q.vendor_id, i)} disabled={saving} className="mt-2 w-full text-center py-1.5 rounded-lg bg-[#20364D] text-white text-[10px] font-semibold hover:bg-[#1a2d40] transition" data-testid={`select-vendor-${i}`}>
                         Select This Vendor

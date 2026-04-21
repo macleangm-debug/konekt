@@ -249,6 +249,7 @@ import AffiliatePartnerManagerPage from "@/pages/admin/AffiliatePartnerManagerPa
 import AffiliatePartnerDetailPage from "@/pages/admin/AffiliatePartnerDetailPage";
 import VendorDashboardPage from "@/pages/partner/VendorDashboardPage";
 import VendorMyPerformancePage from "@/pages/partner/VendorMyPerformancePage";
+import VendorQuoteRequestsPage from "@/pages/partner/VendorQuoteRequestsPage";
 import PartnerAssignedWorkPage from "@/pages/partner/PartnerAssignedWorkPage";
 import HelpCustomerPage from "@/pages/help/HelpCustomerPage";
 import HelpAdminPage from "@/pages/help/HelpAdminPage";
@@ -847,6 +848,7 @@ function App() {
           {/* Vendor Dashboard */}
           <Route path="vendor-dashboard" element={<VendorDashboardPage />} />
           <Route path="vendor-performance" element={<VendorMyPerformancePage />} />
+          <Route path="vendor/quote-requests" element={<VendorQuoteRequestsPage />} />
           {/* Assigned Work (Service + Logistics Tasks) */}
           <Route path="assigned-work" element={<PartnerAssignedWorkPage />} />
           {/* Vendor Products */}

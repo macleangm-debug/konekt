@@ -7,7 +7,7 @@ import {
   Briefcase, Clock, CheckCircle, AlertTriangle,
   Package, Truck, ChevronRight, Loader2,
   Flame, ArrowRight, DollarSign, Zap,
-  BarChart3, TrendingUp
+  BarChart3, TrendingUp, FileText
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -60,9 +60,11 @@ const PIPELINE_STAGES = [
 export default function VendorDashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rfqStats, setRfqStats] = useState({ awaiting: 0, quoted: 0 });
 
   useEffect(() => {
     loadDashboard();
+    partnerApi.get("/api/vendor/quote-requests/stats").then(r => setRfqStats(r.data || {})).catch(() => {});
   }, []);
 
   const loadDashboard = async () => {
@@ -123,6 +125,23 @@ export default function VendorDashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* ═══ INCOMING RFQ ALERT ═══ */}
+      {(rfqStats.awaiting || 0) > 0 && (
+        <Link to="/partner/vendor/quote-requests" data-testid="rfq-alert-card"
+          className="flex items-center justify-between bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-400 rounded-xl p-4 hover:shadow-md transition group">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center animate-pulse">
+              <FileText className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-amber-900">{rfqStats.awaiting} quote request{rfqStats.awaiting > 1 ? "s" : ""} awaiting your response</div>
+              <div className="text-xs text-amber-700">Konekt Operations has invited you to quote. Respond promptly to improve your win rate.</div>
+            </div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-amber-700 group-hover:translate-x-1 transition" />
+        </Link>
+      )}
 
       {/* ═══ KPI ROW ═══ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3" data-testid="vendor-kpi-row">

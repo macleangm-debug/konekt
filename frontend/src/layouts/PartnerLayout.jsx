@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle, ClipboardList, FileText } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
 import OnboardingGate from "../components/onboarding/OnboardingGate";
@@ -93,6 +93,7 @@ export default function PartnerLayout() {
   const vendorItems = [
     { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
     { path: "/partner/assigned-work", label: "Assigned Work", icon: ClipboardList },
+    { path: "/partner/vendor/quote-requests", label: "Quote Requests", icon: FileText },
     { path: "/partner/vendor-performance", label: "My Performance", icon: BarChart3 },
     { path: "/partner/product-upload", label: "Add Product", icon: PlusCircle },
     { path: "/partner/bulk-import", label: "Bulk Import", icon: Upload },

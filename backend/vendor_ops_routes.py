@@ -320,12 +320,43 @@ async def price_request_stats(request: Request):
 
 @router.get("/price-requests/{request_id}")
 async def get_price_request(request_id: str, request: Request):
-    """Get single price request with full detail."""
+    """Get single price request with full detail.
+    Also returns a Konekt pricing-engine reference per vendor quote so Ops can compare
+    the vendor's base price against the expected Konekt sell price from our source of truth.
+    """
     await _require_ops_role(request)
     db = request.app.mongodb
     pr = await db.price_requests.find_one({"id": request_id}, {"_id": 0})
     if not pr:
         raise HTTPException(status_code=404, detail="Price request not found")
+
+    # For every quote with a base_price, run it through the pricing engine
+    try:
+        from services.pricing_engine import calculate_sell_price
+        category = pr.get("category", "")
+        pricing_refs = []
+        for q in pr.get("vendor_quotes", []) or []:
+            base = q.get("base_price")
+            if base is None:
+                pricing_refs.append(None)
+                continue
+            try:
+                ref = await calculate_sell_price(db, float(base), category=category)
+                pricing_refs.append({
+                    "vendor_id": q.get("vendor_id"),
+                    "base_price": float(base),
+                    "konekt_sell_price": ref.get("sell_price"),
+                    "min_sell_price": ref.get("min_price"),
+                    "margin_pct": ref.get("margin_pct"),
+                    "distributable_margin": ref.get("distributable_margin"),
+                    "tier_applied": ref.get("tier_name") or ref.get("tier"),
+                })
+            except Exception:
+                pricing_refs.append(None)
+        pr["pricing_references"] = pricing_refs
+    except Exception:
+        pr["pricing_references"] = []
+
     return {"price_request": pr}
 
 
@@ -412,6 +443,22 @@ async def send_to_vendors(request_id: str, request: Request):
         "updated_at": now,
         "updated_by": user.get("id"),
     }})
+
+    # Notify each invited vendor
+    for vid in vendor_ids:
+        try:
+            await db.notifications.insert_one({
+                "target_type": "vendor",
+                "target_id": vid,
+                "title": f"New quote request — {pr.get('product_or_service', '')}",
+                "message": f"{pr.get('category', 'Uncategorized')} · Qty {pr.get('quantity', 1)} {pr.get('unit_of_measurement', '')}. Please submit your quote.",
+                "link": "/partner/vendor/quote-requests",
+                "read": False,
+                "created_at": now,
+            })
+        except Exception:
+            pass
+
     return {"ok": True, "vendors_contacted": len(vendor_ids)}
 
 
