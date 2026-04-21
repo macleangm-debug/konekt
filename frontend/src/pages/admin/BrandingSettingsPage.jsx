@@ -8,8 +8,8 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 export default function BrandingSettingsPage() {
   const [form, setForm] = useState({
     company_name: "",
-    logo_url: "/branding/konekt-logo-full.png",
-    icon_url: "/branding/konekt-icon.png",
+    logo_url: "/branding/konekt-triad-logo.svg",
+    icon_url: "/branding/konekt-triad-logo.svg",
     company_email: "",
     company_phone_prefix: "+255",
     company_phone_number: "",

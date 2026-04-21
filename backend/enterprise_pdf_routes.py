@@ -8,8 +8,8 @@ router = APIRouter(prefix="/api/enterprise-docs", tags=["Enterprise PDFs"])
 def _defaults():
     return {
         "company_name": "Konekt",
-        "logo_url": "/branding/konekt-logo-full.png",
-        "icon_url": "/branding/konekt-icon.png",
+        "logo_url": "/branding/konekt-triad-logo.svg",
+        "icon_url": "/branding/konekt-triad-logo.svg",
         "company_email": "hello@konekt.co.tz",
         "company_phone": "+255 000 000 000",
         "company_address": "Dar es Salaam, Tanzania",
