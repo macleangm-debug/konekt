@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Plus, Clock, Check, X, Users, Package, RefreshCw, Star, Search, MessageCircle, Download } from "lucide-react";
+import { Plus, Clock, Check, X, Users, Package, RefreshCw, Star, Search, MessageCircle } from "lucide-react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -271,6 +271,7 @@ export default function GroupDealsAdminPage() {
 
   const [broadcastFor, setBroadcastFor] = useState(null); // { campaign, buyers, message, channel }
   const [payoutFor, setPayoutFor] = useState(null); // { campaign, reference }
+  const [drawerFor, setDrawerFor] = useState(null); // { campaign details } — click row to open
 
   const openContact = async (campaign) => {
     const defaultMsg = `Hi {name}, this is Konekt. Thank you for joining "${campaign.product_name}" — `;
@@ -282,22 +283,6 @@ export default function GroupDealsAdminPage() {
     } catch {
       setBroadcastFor(prev => prev ? { ...prev, buyers: [] } : null);
     }
-  };
-
-  const exportBuyersCsv = (campaign) => {
-    const token = localStorage.getItem("token");
-    const url = `${process.env.REACT_APP_BACKEND_URL}/api/admin/group-deals/campaigns/${campaign.id}/buyers.csv`;
-    fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-      .then(r => r.blob())
-      .then(blob => {
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `group-deal-${campaign.campaign_id}-buyers.csv`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-      })
-      .catch(() => toast.error("Failed to export"));
   };
 
   const markVendorPayout = async (campaign, status, reference) => {
@@ -425,116 +410,115 @@ export default function GroupDealsAdminPage() {
         </div>
       </div>
 
-      {/* Campaign List */}
-      <div className="space-y-3">
-        {loading ? <div className="text-slate-500 p-8 text-center">Loading...</div> :
-          visibleCampaigns.length === 0 ? <div className="text-slate-400 p-8 text-center bg-white rounded-xl border">No campaigns in this stage.</div> :
-          visibleCampaigns.map((c) => {
-            const sc = statusConfig[c.status] || statusConfig.active;
-            const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
-            const daysLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 86400000)) : 0;
-            const hoursLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 3600000)) : 0;
-            const isExpired = c.status === "active" && c.deadline && new Date(c.deadline) <= new Date();
-            const thresholdReady = c.status === "active" && c.threshold_met;
+      {/* Campaign List — Desktop Table + Mobile Cards */}
+      {loading ? <div className="text-slate-500 p-8 text-center">Loading...</div> :
+        visibleCampaigns.length === 0 ? <div className="text-slate-400 p-8 text-center bg-white rounded-xl border">No campaigns in this stage.</div> : (
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-2xl border overflow-hidden">
+            <table className="w-full text-sm" data-testid="campaigns-table">
+              <thead className="bg-slate-50 border-b">
+                <tr className="text-xs uppercase tracking-wider text-slate-500">
+                  <th className="text-left py-2.5 px-4 font-semibold">Product</th>
+                  <th className="text-right py-2.5 px-3 font-semibold">Price</th>
+                  <th className="text-left py-2.5 px-3 font-semibold w-44">Progress</th>
+                  <th className="text-right py-2.5 px-3 font-semibold">Buyers</th>
+                  <th className="text-right py-2.5 px-3 font-semibold">Revenue</th>
+                  <th className="text-left py-2.5 px-3 font-semibold">Status</th>
+                  <th className="text-left py-2.5 px-3 font-semibold">Deadline</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleCampaigns.map((c) => {
+                  const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
+                  const daysLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 86400000)) : 0;
+                  const hoursLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 3600000)) : 0;
+                  const isExpired = c.status === "active" && c.deadline && new Date(c.deadline) <= new Date();
+                  const thresholdReady = c.status === "active" && c.threshold_met;
+                  const sc = statusConfig[c.status] || statusConfig.active;
+                  return (
+                    <tr key={c.id}
+                        className={`border-b last:border-0 cursor-pointer hover:bg-slate-50 transition ${isExpired ? "bg-red-50/30" : thresholdReady ? "bg-amber-50/30" : ""}`}
+                        onClick={() => setDrawerFor(c)}
+                        data-testid={`campaign-row-${c.id}`}>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-[#20364D] truncate max-w-[240px]">{c.product_name}</div>
+                        <div className="text-[11px] text-slate-400">{c.campaign_id} • {c.category || "Uncategorized"}</div>
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <div className="font-bold text-[#D4A843]">{fmt(c.discounted_price)}</div>
+                        <div className="text-[10px] text-slate-400 line-through">{fmt(c.original_price)}</div>
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-blue-500" : "bg-amber-400"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-1">{fmtNum(c.current_committed)}/{fmtNum(c.display_target)} ({progress}%)</div>
+                      </td>
+                      <td className="py-3 px-3 text-right">{c.buyer_count || 0}</td>
+                      <td className="py-3 px-3 text-right font-semibold">
+                        {c.status === "finalized" ? fmt(c.buyer_total_revenue || 0) : fmt((c.current_committed || 0) * (c.discounted_price || 0))}
+                      </td>
+                      <td className="py-3 px-3">
+                        <div className="flex flex-col gap-1">
+                          <Badge className={`${sc.color} w-fit`}>{sc.label}</Badge>
+                          {isExpired && <Badge className="bg-red-100 text-red-700 w-fit text-[10px]">Expired</Badge>}
+                          {thresholdReady && <Badge className="bg-amber-100 text-amber-700 w-fit text-[10px] animate-pulse">Threshold</Badge>}
+                          {c.is_featured && <Badge className="bg-yellow-100 text-yellow-700 w-fit text-[10px]">Featured</Badge>}
+                          {c.status === "finalized" && (c.vendor_payout_status || "pending") === "paid" && <Badge className="bg-emerald-100 text-emerald-700 w-fit text-[10px]">Vendor paid</Badge>}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-xs text-slate-500 whitespace-nowrap">
+                        {c.status === "active" && !isExpired ? (daysLeft > 0 ? `${daysLeft}d left` : `${hoursLeft}h left`)
+                          : c.deadline ? new Date(c.deadline).toLocaleDateString() : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
 
-            return (
-              <div key={c.id} className={`bg-white rounded-2xl border p-5 ${thresholdReady ? "ring-2 ring-amber-400" : ""} ${isExpired ? "ring-2 ring-red-300" : ""}`} data-testid={`campaign-${c.id}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-base font-bold text-[#20364D] truncate">{c.product_name}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{c.campaign_id} {c.description ? `\u2022 ${c.description.slice(0, 60)}` : ""}</div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                    <Badge className={sc.color}>{sc.label}</Badge>
-                    {isExpired && <Badge className="bg-red-100 text-red-700" data-testid={`expired-badge-${c.id}`}>Expired — needs action</Badge>}
-                    {thresholdReady && <Badge className="bg-amber-100 text-amber-700 animate-pulse">Threshold Met</Badge>}
-                    {c.is_featured && <Badge className="bg-yellow-100 text-yellow-700">Featured</Badge>}
-                    {c.status === "active" && !isExpired && <span className="text-xs text-slate-400">{daysLeft > 0 ? `${daysLeft}d left` : `${hoursLeft}h left`}</span>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3 text-sm">
-                  <div><span className="text-slate-400 text-xs">Price</span><div className="font-bold text-[#D4A843]">{fmt(c.discounted_price)} <span className="text-xs text-slate-400 line-through ml-1">{fmt(c.original_price)}</span></div></div>
-                  <div><span className="text-slate-400 text-xs">Margin</span><div className="font-bold">{fmt(c.margin_per_unit)} <span className="text-xs text-slate-400">({c.margin_pct}%)</span></div></div>
-                  <div><span className="text-slate-400 text-xs">Units / Buyers</span><div className="font-bold">{fmtNum(c.current_committed)}/{fmtNum(c.display_target)} <span className="text-xs text-slate-400">({c.buyer_count || 0} buyers)</span></div></div>
-                  <div><span className="text-slate-400 text-xs">Revenue</span><div className="font-bold">{fmt(c.current_committed * c.discounted_price)}</div></div>
-                </div>
-
-                <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-blue-500" : "bg-amber-400"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
-                </div>
-
-                {c.status === "finalized" && c.vbo_number && (
-                  <div className="mt-3 bg-slate-50 rounded-xl p-3 space-y-1 text-xs" data-testid={`pnl-${c.id}`}>
-                    <div className="flex items-center justify-between text-emerald-700 font-bold text-sm mb-1">
-                      <span className="flex items-center gap-1"><Package className="w-3.5 h-3.5" /> Finalized — VBO {c.vbo_number}</span>
-                      <span>{c.orders_created || 0} orders • {fmtNum(c.total_units_ordered || 0)} units</span>
+          {/* Mobile Cards — one card per deal, click to open drawer with everything */}
+          <div className="md:hidden space-y-2">
+            {visibleCampaigns.map((c) => {
+              const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
+              const daysLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 86400000)) : 0;
+              const isExpired = c.status === "active" && c.deadline && new Date(c.deadline) <= new Date();
+              const thresholdReady = c.status === "active" && c.threshold_met;
+              const sc = statusConfig[c.status] || statusConfig.active;
+              return (
+                <button key={c.id}
+                  onClick={() => setDrawerFor(c)}
+                  className={`w-full text-left bg-white rounded-xl border p-3.5 hover:border-[#20364D]/40 transition ${isExpired ? "border-red-300 bg-red-50/40" : thresholdReady ? "border-amber-300 bg-amber-50/30" : ""}`}
+                  data-testid={`campaign-card-${c.id}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-[#20364D] truncate">{c.product_name}</div>
+                      <div className="text-[11px] text-slate-400">{c.campaign_id}</div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-slate-700">
-                      <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Revenue</div><div className="font-semibold">{fmt(c.buyer_total_revenue || (c.discounted_price * (c.total_units_ordered || 0)))}</div></div>
-                      <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Vendor Cost</div><div className="font-semibold text-red-600">-{fmt(c.vendor_total_cost || (c.vendor_cost * (c.total_units_ordered || 0)))}</div></div>
-                      <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Gross Margin</div><div className="font-semibold">{fmt(c.total_margin || 0)}</div></div>
-                      <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Commissions ({c.applied_affiliate_pct || 0}%)</div><div className="font-semibold text-orange-600">-{fmt(c.total_commission_paid || 0)}</div></div>
-                      <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Konekt Net</div><div className="font-extrabold text-emerald-700">{fmt(c.konekt_net_profit || 0)}</div></div>
-                    </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-200">
-                      <span className="text-xs text-slate-500">Vendor Payout:</span>
-                      {(c.vendor_payout_status || "pending") === "paid" ? (
-                        <span className="flex items-center gap-2">
-                          <Badge className="bg-emerald-100 text-emerald-700">Paid{c.vendor_payout_reference ? ` • ${c.vendor_payout_reference}` : ""}</Badge>
-                          <button className="text-xs text-slate-400 hover:text-red-600 underline" onClick={() => markVendorPayout(c, "pending")} data-testid={`payout-reset-${c.id}`}>Reset</button>
-                        </span>
-                      ) : (
-                        <Button size="sm" onClick={() => setPayoutFor({ campaign: c, reference: "" })} className="bg-amber-500 hover:bg-amber-600 h-7 text-xs" data-testid={`mark-payout-${c.id}`}>
-                          Mark Vendor Paid
-                        </Button>
-                      )}
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <Badge className={`${sc.color} text-[10px]`}>{sc.label}</Badge>
+                      {isExpired && <Badge className="bg-red-100 text-red-700 text-[9px]">Expired</Badge>}
                     </div>
                   </div>
-                )}
-
-                <div className="flex gap-2 mt-3 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => openBuyers(c)} data-testid={`view-buyers-${c.id}`}>
-                    <Users className="w-3 h-3 mr-1" /> View Buyers ({c.buyer_count || 0})
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => openContact(c)} data-testid={`contact-buyers-${c.id}`}>
-                    <MessageCircle className="w-3 h-3 mr-1" /> Contact Buyers
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => exportBuyersCsv(c)} data-testid={`export-csv-${c.id}`}>
-                    <Download className="w-3 h-3 mr-1" /> CSV
-                  </Button>
-                  {thresholdReady && (
-                    <Button size="sm" onClick={() => finalizeCampaign(c.id)} className="bg-green-600 hover:bg-green-700" data-testid={`finalize-${c.id}`}>
-                      <Check className="w-3 h-3 mr-1" /> Push to Sales
-                    </Button>
-                  )}
-                  {c.status === "active" && !thresholdReady && isExpired && (c.current_committed || 0) >= (c.vendor_threshold || 0) && (
-                    <Button size="sm" onClick={() => finalizeCampaign(c.id)} className="bg-green-600 hover:bg-green-700" data-testid={`finalize-expired-${c.id}`}>
-                      <Check className="w-3 h-3 mr-1" /> Push to Sales
-                    </Button>
-                  )}
-                  {c.status === "active" && (
-                    <Button size="sm" variant="outline" onClick={() => toggleFeatured(c.id, c.is_featured)}
-                      className={c.is_featured ? "text-amber-600 border-amber-300 bg-amber-50" : "text-slate-600"} data-testid={`featured-${c.id}`}>
-                      <Star className={`w-3 h-3 mr-1 ${c.is_featured ? "fill-amber-500" : ""}`} /> {c.is_featured ? "Featured" : "Set Featured"}
-                    </Button>
-                  )}
-                  {c.status === "active" && (
-                    <Button size="sm" variant="outline" onClick={() => cancelCampaign(c.id)} className="text-red-600 border-red-200" data-testid={`cancel-${c.id}`}>
-                      <X className="w-3 h-3 mr-1" /> {isExpired ? "Close & Refund" : "Cancel"}
-                    </Button>
-                  )}
-                  {c.status === "failed" && (
-                    <Button size="sm" onClick={() => processRefunds(c.id)} className="bg-orange-600 hover:bg-orange-700" data-testid={`refund-${c.id}`}>
-                      <RefreshCw className="w-3 h-3 mr-1" /> Process Refunds
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        }
-      </div>
+                  <div className="flex items-center justify-between mt-2 text-xs">
+                    <span className="font-bold text-[#D4A843]">{fmt(c.discounted_price)}</span>
+                    <span className="text-slate-500">{c.buyer_count || 0} buyers • {fmtNum(c.current_committed)}/{fmtNum(c.display_target)}</span>
+                  </div>
+                  <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-blue-500" : "bg-amber-400"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-[10px] text-slate-400">{c.status === "active" ? `${daysLeft}d left` : c.status === "finalized" ? `Net ${fmt(c.konekt_net_profit || 0)}` : ""}</span>
+                    <span className="text-[10px] text-[#20364D] font-semibold">Tap for details →</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Create Campaign — Step-Based Wizard */}
       <Dialog open={showCreate} onOpenChange={(v) => { setShowCreate(v); if (!v) { setSelectedProduct(null); setWizardStep(1); } }}>
@@ -668,6 +652,145 @@ export default function GroupDealsAdminPage() {
               <Button type="button" variant="outline" onClick={() => { setShowCreate(false); setSelectedProduct(null); setWizardStep(1); }}>Cancel</Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Campaign Drawer — click row/card to open; contains ALL details + actions in one place */}
+      <Dialog open={!!drawerFor} onOpenChange={(v) => !v && setDrawerFor(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] overflow-hidden flex flex-col p-0" data-testid="campaign-drawer">
+          {drawerFor && (() => {
+            const c = drawerFor;
+            const progress = c.display_target > 0 ? Math.round((c.current_committed / c.display_target) * 100) : 0;
+            const daysLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 86400000)) : 0;
+            const hoursLeft = c.deadline ? Math.max(0, Math.ceil((new Date(c.deadline) - new Date()) / 3600000)) : 0;
+            const isExpired = c.status === "active" && c.deadline && new Date(c.deadline) <= new Date();
+            const thresholdReady = c.status === "active" && c.threshold_met;
+            const sc = statusConfig[c.status] || statusConfig.active;
+            return (
+              <>
+                <div className="px-6 pt-5 pb-4 border-b">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-lg font-bold text-[#20364D] truncate">{c.product_name}</div>
+                      <div className="text-xs text-slate-500 mt-0.5">{c.campaign_id} • {c.category || "Uncategorized"}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                      <Badge className={sc.color}>{sc.label}</Badge>
+                      {isExpired && <Badge className="bg-red-100 text-red-700">Expired</Badge>}
+                      {thresholdReady && <Badge className="bg-amber-100 text-amber-700 animate-pulse">Threshold met</Badge>}
+                      {c.is_featured && <Badge className="bg-yellow-100 text-yellow-700">Featured</Badge>}
+                    </div>
+                  </div>
+                  {c.description && <p className="text-sm text-slate-600 mt-2">{c.description}</p>}
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 py-4 space-y-5">
+                  {/* Progress bar + countdown */}
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="text-slate-600 font-semibold">{fmtNum(c.current_committed)} of {fmtNum(c.display_target)} units • {c.buyer_count || 0} buyers</span>
+                      <span className="text-slate-500">{c.status === "active" ? (isExpired ? "Deadline passed" : (daysLeft > 0 ? `${daysLeft}d left` : `${hoursLeft}h left`)) : c.deadline ? `Ended ${new Date(c.deadline).toLocaleDateString()}` : ""}</span>
+                    </div>
+                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${progress >= 100 ? "bg-green-500" : progress >= 60 ? "bg-blue-500" : "bg-amber-400"}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Pricing + Margin */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                    <div className="bg-slate-50 rounded-xl p-3"><div className="text-[10px] uppercase tracking-wider text-slate-400">Deal price</div><div className="font-bold text-[#D4A843] mt-0.5">{fmt(c.discounted_price)}</div><div className="text-[10px] text-slate-400 line-through">{fmt(c.original_price)}</div></div>
+                    <div className="bg-slate-50 rounded-xl p-3"><div className="text-[10px] uppercase tracking-wider text-slate-400">Vendor cost</div><div className="font-bold text-red-600 mt-0.5">{fmt(c.vendor_cost)}</div><div className="text-[10px] text-slate-400">per unit</div></div>
+                    <div className="bg-slate-50 rounded-xl p-3"><div className="text-[10px] uppercase tracking-wider text-slate-400">Margin</div><div className="font-bold mt-0.5">{fmt(c.margin_per_unit)}</div><div className="text-[10px] text-slate-400">({c.margin_pct}%)</div></div>
+                    <div className="bg-slate-50 rounded-xl p-3"><div className="text-[10px] uppercase tracking-wider text-slate-400">Revenue so far</div><div className="font-bold mt-0.5">{fmt(c.status === "finalized" ? (c.buyer_total_revenue || 0) : (c.current_committed || 0) * (c.discounted_price || 0))}</div></div>
+                  </div>
+
+                  {/* P&L breakdown — finalized only */}
+                  {c.status === "finalized" && c.vbo_number && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-2" data-testid={`drawer-pnl-${c.id}`}>
+                      <div className="flex items-center justify-between text-sm font-bold text-emerald-800">
+                        <span className="flex items-center gap-1.5"><Package className="w-4 h-4" /> Finalized — VBO {c.vbo_number}</span>
+                        <span>{c.orders_created || 0} orders • {fmtNum(c.total_units_ordered || 0)} units</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Revenue</div><div className="font-semibold">{fmt(c.buyer_total_revenue || 0)}</div></div>
+                        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Vendor cost</div><div className="font-semibold text-red-600">-{fmt(c.vendor_total_cost || 0)}</div></div>
+                        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Gross margin</div><div className="font-semibold">{fmt(c.total_margin || 0)}</div></div>
+                        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Commissions ({c.applied_affiliate_pct || 0}%)</div><div className="font-semibold text-orange-600">-{fmt(c.total_commission_paid || 0)}</div></div>
+                        <div><div className="text-[10px] uppercase tracking-wider text-slate-500">Konekt net</div><div className="font-extrabold text-emerald-700">{fmt(c.konekt_net_profit || 0)}</div></div>
+                      </div>
+
+                      {/* Vendor payout strip */}
+                      <div className="flex items-center justify-between pt-2 border-t border-emerald-200 mt-2">
+                        <div className="text-xs">
+                          <div className="text-slate-600 font-semibold">Vendor payout • {c.vendor_name || "Unassigned vendor"}</div>
+                          {c.vendor_payout_paid_at && <div className="text-[10px] text-slate-500">Paid on {new Date(c.vendor_payout_paid_at).toLocaleDateString()} • Ref: {c.vendor_payout_reference || "—"}</div>}
+                        </div>
+                        {(c.vendor_payout_status || "pending") === "paid" ? (
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-emerald-100 text-emerald-700">Paid</Badge>
+                            <button className="text-[11px] text-slate-400 hover:text-red-600 underline" onClick={() => markVendorPayout(c, "pending")} data-testid={`drawer-payout-reset-${c.id}`}>Reset</button>
+                          </div>
+                        ) : (
+                          <Button size="sm" onClick={() => setPayoutFor({ campaign: c, reference: "" })} className="bg-amber-500 hover:bg-amber-600 h-8" data-testid={`drawer-mark-payout-${c.id}`}>
+                            Mark vendor paid
+                          </Button>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-600 bg-white rounded-lg px-2 py-1.5 border">
+                        The vendor sees this as a <b>Group Deal</b> aggregated order in their dashboard, with no client details — only the total quantity to prepare. When you mark them paid here, their dashboard updates too.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Metadata */}
+                  <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                    <div><span className="text-slate-400">Vendor threshold:</span> {fmtNum(c.vendor_threshold || 0)} units</div>
+                    <div><span className="text-slate-400">Deadline:</span> {c.deadline ? new Date(c.deadline).toLocaleString() : "—"}</div>
+                    <div><span className="text-slate-400">Created:</span> {c.created_at ? new Date(c.created_at).toLocaleDateString() : "—"}</div>
+                    <div><span className="text-slate-400">Affiliate commission:</span> {c.applied_affiliate_pct || c.affiliate_share_pct || 5}% of margin</div>
+                  </div>
+                </div>
+
+                {/* Action footer */}
+                <div className="px-6 py-3 border-t bg-slate-50 flex flex-wrap gap-2" data-testid="drawer-actions">
+                  <Button size="sm" variant="outline" onClick={() => { setDrawerFor(null); openBuyers(c); }} data-testid={`drawer-view-buyers-${c.id}`}>
+                    <Users className="w-3.5 h-3.5 mr-1" /> View buyers ({c.buyer_count || 0})
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => { setDrawerFor(null); openContact(c); }} data-testid={`drawer-contact-${c.id}`}>
+                    <MessageCircle className="w-3.5 h-3.5 mr-1" /> Contact buyers
+                  </Button>
+                  {thresholdReady && (
+                    <Button size="sm" onClick={() => { finalizeCampaign(c.id); setDrawerFor(null); }} className="bg-green-600 hover:bg-green-700" data-testid={`drawer-finalize-${c.id}`}>
+                      <Check className="w-3.5 h-3.5 mr-1" /> Push to Sales
+                    </Button>
+                  )}
+                  {c.status === "active" && !thresholdReady && isExpired && (c.current_committed || 0) >= (c.vendor_threshold || 0) && (
+                    <Button size="sm" onClick={() => { finalizeCampaign(c.id); setDrawerFor(null); }} className="bg-green-600 hover:bg-green-700" data-testid={`drawer-finalize-expired-${c.id}`}>
+                      <Check className="w-3.5 h-3.5 mr-1" /> Push to Sales
+                    </Button>
+                  )}
+                  {c.status === "active" && (
+                    <Button size="sm" variant="outline" onClick={() => toggleFeatured(c.id, c.is_featured)}
+                      className={c.is_featured ? "text-amber-600 border-amber-300 bg-amber-50" : "text-slate-600"} data-testid={`drawer-featured-${c.id}`}>
+                      <Star className={`w-3.5 h-3.5 mr-1 ${c.is_featured ? "fill-amber-500" : ""}`} /> {c.is_featured ? "Featured" : "Set featured"}
+                    </Button>
+                  )}
+                  {c.status === "active" && (
+                    <Button size="sm" variant="outline" onClick={() => { cancelCampaign(c.id); setDrawerFor(null); }} className="text-red-600 border-red-200" data-testid={`drawer-cancel-${c.id}`}>
+                      <X className="w-3.5 h-3.5 mr-1" /> {isExpired ? "Close & refund" : "Cancel"}
+                    </Button>
+                  )}
+                  {c.status === "failed" && (
+                    <Button size="sm" onClick={() => { processRefunds(c.id); setDrawerFor(null); }} className="bg-orange-600 hover:bg-orange-700" data-testid={`drawer-refund-${c.id}`}>
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" /> Process refunds
+                    </Button>
+                  )}
+                  <div className="flex-1" />
+                  <Button size="sm" variant="outline" onClick={() => setDrawerFor(null)}>Close</Button>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

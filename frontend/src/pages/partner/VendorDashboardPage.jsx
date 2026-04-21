@@ -300,9 +300,13 @@ function RecentAssignmentsSection({ assignments }) {
               {assignments.slice(0, 8).map((a) => (
                 <tr key={a.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition" data-testid={`assignment-row-${a.vendor_order_no}`}>
                   <td className="py-2.5">
-                    <span className="font-mono text-xs text-slate-600">{a.vendor_order_no}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-xs text-slate-600">{a.vendor_order_no}</span>
+                      {a.is_group_deal && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300" title="Group Deal — aggregated order, no client details">GD</span>}
+                    </div>
                   </td>
                   <td className="py-2.5 text-slate-700 text-xs">
+                    {a.is_group_deal && <span className="block text-[10px] text-amber-700 font-semibold">Group Deal • {a.total_quantity || (a.items?.[0]?.quantity)} units</span>}
                     {(a.items || []).map(i => i.name).join(", ") || "—"}
                   </td>
                   <td className="py-2.5 text-right font-medium text-[#20364D]">{money(a.base_price)}</td>

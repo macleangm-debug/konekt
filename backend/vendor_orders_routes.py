@@ -73,6 +73,44 @@ async def list_vendor_orders(
 
         order_id = row.get("order_id")
 
+        # Group Deal vendor orders are aggregated — no client details, no parent order lookup
+        is_group_deal = bool(row.get("is_group_deal") or row.get("source") == "group_deal")
+        if is_group_deal:
+            gd_order_no = row.get("vendor_order_no") or f"GD-{row.get('campaign_code','')}"
+            gd_price = float(row.get("base_price") or row.get("base_cost") or row.get("vendor_total") or 0)
+            rows.append({
+                "id": row.get("id"),
+                "vendor_order_no": gd_order_no,
+                "order_id": row.get("order_id") or "",
+                "created_at": row.get("created_at", ""),
+                "date": str(row.get("created_at", ""))[:10],
+                "source_type": "group_deal",
+                "is_group_deal": True,
+                "campaign_code": row.get("campaign_code", ""),
+                "vbo_number": row.get("vbo_number", ""),
+                "fulfillment_state": row.get("status", "assigned"),
+                "status": row.get("status", "assigned"),
+                "priority": row.get("priority", "normal"),
+                "base_price": gd_price,
+                "total_quantity": row.get("total_quantity") or row.get("items", [{}])[0].get("quantity", 0),
+                "buyer_count": row.get("buyer_count", 0),
+                "vendor_payment_status": row.get("vendor_payment_status", "pending"),
+                "vendor_payment_reference": row.get("vendor_payment_reference", ""),
+                "vendor_paid_at": row.get("vendor_paid_at", ""),
+                "items": [{
+                    "name": item.get("name", ""),
+                    "description": item.get("description", ""),
+                    "quantity": item.get("quantity", 1),
+                    "vendor_price": item.get("vendor_price") or item.get("unit_price") or 0,
+                } for item in row.get("items", [])],
+                "customer_name": "",
+                "customer_phone": "",
+                "delivery_address": "",
+                "sales_contact": {},
+                "timeline": [{"label": "Group deal order assigned", "date": str(row.get("created_at", ""))[:10]}],
+            })
+            continue
+
         # Enrich from parent order
         parent_order = None
         if order_id:

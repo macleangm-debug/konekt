@@ -660,6 +660,87 @@ async def finalize_campaign(campaign_id: str):
     }
     await db.vendor_back_orders.insert_one(vendor_back_order)
 
+    # 2b. Create an aggregated vendor_order so the vendor sees it in their dashboard
+    # — This is modelled on regular vendor_orders but with NO customer details and a group_deal flag.
+    vendor_order_id = ""
+    vendor_id = ""
+    vendor_name = ""
+    try:
+        category = doc.get("category", "") or ""
+        if category:
+            assignment = await db.vendor_assignments.find_one({
+                "is_active": True,
+                "categories": {"$elemMatch": {"name": category}},
+            }, sort=[("is_preferred", -1)])
+            if assignment:
+                vendor_id = assignment.get("vendor_id") or ""
+                vendor_name = assignment.get("vendor_name") or ""
+        # Virtual parent order id — links back to the campaign
+        virtual_parent_id = f"GD-{doc.get('campaign_id')}"
+        vendor_order_id = f"VO-GD-{doc.get('campaign_id')}-{uuid4().hex[:5].upper()}"
+        vendor_order_doc = {
+            "id": vendor_order_id,
+            "vendor_order_no": f"GD-{doc.get('campaign_id')}",
+            "vendor_id": vendor_id,
+            "vendor_name": vendor_name,
+            "order_id": virtual_parent_id,
+            "source": "group_deal",
+            "is_group_deal": True,
+            "campaign_id": str(doc["_id"]),
+            "campaign_code": doc.get("campaign_id"),
+            "vbo_number": vbo_number,
+            "product_id": doc.get("product_id", ""),
+            "product_name": doc.get("product_name"),
+            "product_image": doc.get("product_image", ""),
+            "category": category,
+            "description": doc.get("description", ""),
+            "items": [{
+                "name": doc.get("product_name"),
+                "description": doc.get("description", ""),
+                "quantity": total_units,
+                "vendor_price": vendor_cost,
+                "unit_price": vendor_cost,
+                "total": vendor_cost * total_units,
+            }],
+            "line_items": [{
+                "name": doc.get("product_name"),
+                "description": doc.get("description", ""),
+                "quantity": total_units,
+                "unit_price": vendor_cost,
+                "total": vendor_cost * total_units,
+            }],
+            "total_quantity": total_units,
+            "buyer_count": orders_created,
+            "base_price": vendor_cost * total_units,
+            "base_cost": vendor_cost * total_units,
+            "base_cost_per_unit": vendor_cost,
+            "vendor_total": vendor_cost * total_units,
+            "total_amount": vendor_cost * total_units,
+            "status": "assigned",
+            "release_status": "released",
+            "sourcing_mode": "single",
+            "vendor_payment_status": "pending",  # admin will toggle when paid
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.vendor_orders.insert_one(vendor_order_doc)
+        # Notify vendor
+        if vendor_id:
+            await db.notifications.insert_one({
+                "id": str(ObjectId()),
+                "target_type": "vendor",
+                "target_id": vendor_id,
+                "title": f"New Group Deal order — {doc.get('product_name')}",
+                "message": f"{total_units} units aggregated from {orders_created} buyers. Campaign {doc.get('campaign_id')}.",
+                "read": False,
+                "link": "/partner/vendor/orders",
+                "created_at": now,
+            })
+    except Exception:
+        # Vendor-order creation is non-blocking — campaign still finalizes even if this fails
+        import traceback
+        traceback.print_exc()
+
     # 3. Record commissions (one row per attributee) — only if total per-attributee >= floor
     commissions_recorded = []
     commissions_skipped = []
@@ -713,6 +794,9 @@ async def finalize_campaign(campaign_id: str):
             "konekt_net_profit": konekt_net_profit,
             "applied_affiliate_pct": affiliate_pct,
             "vendor_payout_status": "pending",
+            "vendor_order_id": vendor_order_id,
+            "vendor_id": vendor_id,
+            "vendor_name": vendor_name,
             "updated_at": now,
         }}
     )
@@ -814,6 +898,14 @@ async def mark_vendor_payout(campaign_id: str, payload: dict):
         update["vendor_payout_reference"] = ""
         update["vendor_payout_paid_at"] = None
     await db.group_deal_campaigns.update_one({"_id": doc["_id"]}, {"$set": update})
+    # Sync to the aggregated vendor_order so vendor sees payment status on their end
+    voi = doc.get("vendor_order_id") or ""
+    if voi:
+        vo_update = {"vendor_payment_status": status, "updated_at": now}
+        if status == "paid":
+            vo_update["vendor_payment_reference"] = payload.get("reference", "")
+            vo_update["vendor_paid_at"] = now
+        await db.vendor_orders.update_one({"id": voi}, {"$set": vo_update})
     return {"status": status, "reference": update.get("vendor_payout_reference", ""), "paid_at": now.isoformat() if status == "paid" else None}
 
 
