@@ -107,3 +107,13 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
+
+### Vendor Payables + QR Codes — Session 3A (Apr 22, 2026)
+63. **Per-vendor `payment_modality`** — `pay_per_order` (default, new vendors) or `monthly_statement` (trusted). Stored on `db.partners` via ObjectId OR `db.users` (role:vendor) — dual-collection lookup via `_get_vendor_doc`.
+64. **Admin Vendor Payables page** — `/admin/vendor-payables` (Payments & Finance sidebar). Tabs: Per-Order Payables / Monthly Statements / Modality Requests.  Filters by vendor/status/modality/country. Mark-paid modal captures payment reference.
+65. **Monthly statement engine** — `POST /api/admin/vendor-payables/statements/generate` aggregates vendor_orders for end-of-calendar-month; idempotent per period, freezes when paid; notifies vendor.
+66. **Vendor Payables UI** — `/partner/vendor/payables` with modality pill, outstanding total, "how to get paid" card; per-order + statements tabs; upload invoice (PDF/image) with invoice number.
+67. **Modality requests** — vendors can request upgrade/downgrade from dashboard; admin approves/denies, auto-applies on approve.  Admin can also set modality directly per vendor.
+68. **Vendor invoice storage** — local disk `/app/uploads/vendor_invoices/{vendor_id}/{orders|statements}/{uuid}.pdf` served via `/uploads` static mount.  20MB max; PDF + image accepted.
+69. **QR Code service** — `GET /api/qr/{kind}/{id}` JSON info + `GET /api/qr/{kind}/{id}.png` (cached on disk at `/app/static/qr/`).  Supports product / group_deal / promo_campaign / content_post with canonical FRONTEND_URL deep links.  `QrCodeButton` component lives at `components/common/QrCodeButton.jsx` with download/copy/target-link actions. Wired into Group Deals drawer; ready to drop into products/promos/content.
+70. **Backend tests** — 41/41 green. `/app/backend/tests/test_session_3a.py` + `test_session_3a_extended.py`.
