@@ -105,9 +105,6 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 - `/api/admin/group-deals/campaigns/{id}/broadcast[s]` (log outbound blasts)
 - Ops `/api/vendor-ops/price-requests/{id}` now returns `pricing_references[]`
 
-## Credentials
-- Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
-
 ### Vendor Payables + QR Codes — Session 3A (Apr 22, 2026)
 63. **Per-vendor `payment_modality`** — `pay_per_order` (default, new vendors) or `monthly_statement` (trusted). Stored on `db.partners` via ObjectId OR `db.users` (role:vendor) — dual-collection lookup via `_get_vendor_doc`.
 64. **Admin Vendor Payables page** — `/admin/vendor-payables` (Payments & Finance sidebar). Tabs: Per-Order Payables / Monthly Statements / Modality Requests.  Filters by vendor/status/modality/country. Mark-paid modal captures payment reference.
@@ -116,4 +113,18 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 67. **Modality requests** — vendors can request upgrade/downgrade from dashboard; admin approves/denies, auto-applies on approve.  Admin can also set modality directly per vendor.
 68. **Vendor invoice storage** — local disk `/app/uploads/vendor_invoices/{vendor_id}/{orders|statements}/{uuid}.pdf` served via `/uploads` static mount.  20MB max; PDF + image accepted.
 69. **QR Code service** — `GET /api/qr/{kind}/{id}` JSON info + `GET /api/qr/{kind}/{id}.png` (cached on disk at `/app/static/qr/`).  Supports product / group_deal / promo_campaign / content_post with canonical FRONTEND_URL deep links.  `QrCodeButton` component lives at `components/common/QrCodeButton.jsx` with download/copy/target-link actions. Wired into Group Deals drawer; ready to drop into products/promos/content.
-70. **Backend tests** — 41/41 green. `/app/backend/tests/test_session_3a.py` + `test_session_3a_extended.py`.
+
+### AI-Assisted Smart Import — Session 3B (Apr 22, 2026)
+70. **`POST /api/smart-import/ai-parse`** — single endpoint handling four source kinds:
+   - `source=pdf` — vendor PDF catalog (max 40 MB)
+   - `source=image` — single catalog page photo (max 20 MB)
+   - `source=photos` — up to 25 photos in one request (batch mode)
+   - `source=text` — pasted-from-clipboard text (max 200k chars)
+71. **Model**: Gemini 3 Flash (`gemini-3-flash-preview`, overridable via `AI_IMPORT_MODEL` env) with fallback to `gemini-2.5-pro` on failure.  Uses Emergent LLM key.  `emergentintegrations.llm.chat.LlmChat` with `FileContentWithMimeType` for PDF + images.
+72. **Normalised output** — LLM is forced to return `{rows:[{name, vendor_sku, category, vendor_cost, stock, unit, description, brand}]}`.  Cleaner `_parse_rows()` strips fences, locates outermost JSON, drops blank rows.
+73. **Session compatibility** — AI-parsed rows are persisted in `smart_import_sessions` with the SAME schema as uploaded-file sessions, so the existing wizard Steps 2–4 (column map → category map → commit) work unchanged.  The existing `/api/smart-import/commit` is source-agnostic.
+74. **Frontend** — extended `SmartBulkImportPage.jsx` with a tab switcher at Step 1 (Excel/CSV vs AI Import).  The AI panel has a 2×2 grid picker (PDF catalog / Single image / Photo batch / Paste text), a context-aware file or textarea input, and a single "Extract with AI" CTA that funnels into the standard mapping preview.  Works in both `mode="admin"` and `mode="partner"`.
+75. **Backend tests** — 49/49 green total (added `/app/backend/tests/test_session_3b.py`, 8 tests).  Live LLM smoke tests included; skip gracefully without `EMERGENT_LLM_KEY`.
+
+## Credentials
+- Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

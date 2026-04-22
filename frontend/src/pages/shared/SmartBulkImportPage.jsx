@@ -6,7 +6,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { toast } from "sonner";
-import { UploadCloud, FileSpreadsheet, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2, Sparkles, ClipboardPaste, FileText, Image as ImageIcon, Camera } from "lucide-react";
 
 /**
  * Smart Bulk Import wizard — 4 steps:
@@ -31,6 +31,13 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
   const [committing, setCommitting] = useState(false);
   const [result, setResult] = useState(null);
   const fileInputRef = useRef(null);
+  // AI mode state
+  const [uploadMode, setUploadMode] = useState("spreadsheet"); // spreadsheet | ai
+  const [aiKind, setAiKind] = useState("pdf"); // pdf | image | photos | text
+  const [aiText, setAiText] = useState("");
+  const [aiFiles, setAiFiles] = useState([]);
+  const [aiBusy, setAiBusy] = useState(false);
+  const aiFileRef = useRef(null);
 
   const canonicalFields = [
     { key: "name", label: "Product name", required: true },
@@ -70,6 +77,42 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
     }
   };
 
+  const handleAiSubmit = async () => {
+    // Validate per kind
+    if (aiKind === "text" && !aiText.trim()) { toast.error("Paste some text first"); return; }
+    if ((aiKind === "pdf" || aiKind === "image") && aiFiles.length === 0) { toast.error("Choose a file first"); return; }
+    if (aiKind === "photos" && aiFiles.length === 0) { toast.error("Select at least one photo"); return; }
+
+    setAiBusy(true);
+    const fd = new FormData();
+    fd.append("source", aiKind);
+    if (partnerIdOverride) fd.append("partner_id_override", partnerIdOverride);
+    fd.append("target", "partner_catalog");
+    if (aiKind === "text") {
+      fd.append("text", aiText);
+    } else if (aiKind === "photos") {
+      aiFiles.forEach((f) => fd.append("files", f));
+    } else {
+      fd.append("file", aiFiles[0]);
+    }
+    try {
+      const r = await http.post("/api/smart-import/ai-parse", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      setPreview(r.data);
+      setColumnMap(r.data.auto_map || {});
+      const cats = await http.get("/api/smart-import/categories").catch(() => ({ data: { categories: [] } }));
+      setKonektCategories(cats.data.categories || []);
+      const defaults = {};
+      (r.data.vendor_category_groups || []).forEach(g => { defaults[g.label] = ""; });
+      setCategoryMap(defaults);
+      setStep(2);
+      toast.success(`AI extracted ${r.data.total_rows} product${r.data.total_rows === 1 ? "" : "s"}. Review below.`);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "AI extraction failed");
+    } finally {
+      setAiBusy(false);
+    }
+  };
+
   const commit = async () => {
     if (!columnMap.name) { toast.error("Please map the Product name column first"); return; }
     setCommitting(true);
@@ -98,7 +141,7 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
           <h1 className="text-xl sm:text-2xl font-extrabold text-[#20364D] flex items-center gap-2">
             <FileSpreadsheet className="w-6 h-6" /> Smart Product Import
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Upload an Excel or CSV file of up to 5,000 products. We'll auto-detect your columns, map them to Konekt categories, generate Konekt SKUs, and import in minutes.</p>
+          <p className="text-sm text-slate-500 mt-1">Upload an Excel/CSV of up to 5,000 products, or let Gemini AI pull products from a PDF, photos, or pasted text. We auto-detect columns, map to Konekt categories, generate SKUs, and import in minutes.</p>
         </div>
       </div>
 
@@ -130,26 +173,150 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
 
       {/* STEP 1: Upload */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border-2 border-dashed p-10 text-center space-y-4" data-testid="step-upload"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}>
-          <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-              <UploadCloud className="w-8 h-8 text-[#20364D]" />
+        <div className="space-y-4" data-testid="step-upload">
+          {/* Mode tabs */}
+          <div className="bg-white rounded-2xl border p-1 inline-flex gap-1" data-testid="upload-mode-tabs">
+            <button
+              onClick={() => setUploadMode("spreadsheet")}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${uploadMode === "spreadsheet" ? "bg-[#20364D] text-white shadow" : "text-slate-600 hover:bg-slate-50"}`}
+              data-testid="mode-spreadsheet"
+            >
+              <FileSpreadsheet className="w-4 h-4" /> Excel / CSV
+            </button>
+            <button
+              onClick={() => setUploadMode("ai")}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${uploadMode === "ai" ? "bg-indigo-600 text-white shadow" : "text-slate-600 hover:bg-slate-50"}`}
+              data-testid="mode-ai"
+            >
+              <Sparkles className="w-4 h-4" /> AI Import
+              <span className="text-[9px] uppercase tracking-wide bg-white/30 px-1.5 py-0.5 rounded">Beta</span>
+            </button>
+          </div>
+
+          {uploadMode === "spreadsheet" && (
+            <div className="bg-white rounded-2xl border-2 border-dashed p-10 text-center space-y-4"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}>
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                  <UploadCloud className="w-8 h-8 text-[#20364D]" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#20364D]">Drop your file here</h3>
+                <p className="text-sm text-slate-500 mt-1">or click below to browse. Accepts .xlsx, .xls, .csv (max 25 MB / ~5,000 rows).</p>
+              </div>
+              <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} data-testid="file-input" />
+              <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="bg-[#20364D] hover:bg-[#1a2d40]" data-testid="choose-file-btn">
+                {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />}
+                {uploading ? "Reading file..." : "Choose file"}
+              </Button>
+              <div className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
+                Tip: any column order is fine. We'll auto-detect columns like "Item", "Code", "Price", etc.
+              </div>
             </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-[#20364D]">Drop your file here</h3>
-            <p className="text-sm text-slate-500 mt-1">or click below to browse. Accepts .xlsx, .xls, .csv (max 25 MB / ~5,000 rows).</p>
-          </div>
-          <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} data-testid="file-input" />
-          <Button size="lg" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="bg-[#20364D] hover:bg-[#1a2d40]" data-testid="choose-file-btn">
-            {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />}
-            {uploading ? "Reading file..." : "Choose file"}
-          </Button>
-          <div className="text-[11px] text-slate-400 max-w-md mx-auto leading-relaxed">
-            Tip: any column order is fine. We'll auto-detect columns like "Item", "Code", "Price", etc.
-          </div>
+          )}
+
+          {uploadMode === "ai" && (
+            <div className="bg-gradient-to-br from-indigo-50 via-white to-white rounded-2xl border border-indigo-100 p-6 space-y-5" data-testid="step-ai-import">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#20364D]">AI-assisted extraction</h3>
+                  <p className="text-xs text-slate-600 mt-1 max-w-xl">
+                    Upload a PDF catalog, paste rows from your inbox, or snap photos of a printed price list —
+                    Gemini will pull out the products and route them through the regular review step. You'll still
+                    confirm everything before committing.
+                  </p>
+                </div>
+              </div>
+
+              {/* Kind picker */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" data-testid="ai-kind-picker">
+                {[
+                  { k: "pdf", label: "PDF catalog", icon: FileText },
+                  { k: "image", label: "Single image", icon: ImageIcon },
+                  { k: "photos", label: "Photo batch", icon: Camera },
+                  { k: "text", label: "Paste text", icon: ClipboardPaste },
+                ].map(({ k, label, icon: Icon }) => (
+                  <button
+                    key={k}
+                    onClick={() => { setAiKind(k); setAiFiles([]); setAiText(""); }}
+                    className={`flex flex-col items-center gap-1.5 px-3 py-4 rounded-xl border-2 transition text-xs font-semibold ${aiKind === k ? "border-indigo-500 bg-white text-indigo-700 shadow-sm" : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"}`}
+                    data-testid={`ai-kind-${k}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Kind-specific input */}
+              {aiKind === "text" && (
+                <textarea
+                  value={aiText}
+                  onChange={(e) => setAiText(e.target.value)}
+                  rows={10}
+                  placeholder="Paste rows from your supplier's email, WhatsApp, or a PDF.&#10;Mixed formats are OK — Gemini will normalise them."
+                  className="w-full border rounded-xl px-3 py-2.5 text-sm font-mono resize-y"
+                  data-testid="ai-text-input"
+                />
+              )}
+
+              {(aiKind === "pdf" || aiKind === "image" || aiKind === "photos") && (
+                <div>
+                  <input
+                    ref={aiFileRef}
+                    type="file"
+                    accept={aiKind === "pdf" ? ".pdf" : "image/*"}
+                    multiple={aiKind === "photos"}
+                    className="hidden"
+                    onChange={(e) => setAiFiles(Array.from(e.target.files || []))}
+                    data-testid="ai-file-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => aiFileRef.current?.click()}
+                    className="w-full border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-indigo-400 hover:bg-indigo-50/40 transition"
+                    data-testid="ai-file-btn"
+                  >
+                    <UploadCloud className="w-8 h-8 mx-auto text-indigo-500" />
+                    <div className="text-sm font-semibold text-slate-700 mt-2">
+                      {aiFiles.length
+                        ? `${aiFiles.length} file${aiFiles.length === 1 ? "" : "s"} selected`
+                        : aiKind === "pdf" ? "Choose a PDF catalog (max 40 MB)"
+                        : aiKind === "image" ? "Choose one catalog photo (max 20 MB)"
+                        : "Choose up to 25 photos (max 20 MB each)"}
+                    </div>
+                    {aiFiles.length > 0 && (
+                      <div className="text-[11px] text-slate-500 mt-1 truncate max-w-sm mx-auto">
+                        {aiFiles.slice(0, 3).map(f => f.name).join(", ")}{aiFiles.length > 3 ? ` +${aiFiles.length - 3} more` : ""}
+                      </div>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Button
+                  size="lg"
+                  onClick={handleAiSubmit}
+                  disabled={aiBusy}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                  data-testid="ai-extract-btn"
+                >
+                  {aiBusy
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Extracting…</>
+                    : <><Sparkles className="w-4 h-4 mr-2" /> Extract with AI</>}
+                </Button>
+                <div className="text-[11px] text-slate-500">
+                  Powered by Gemini 3 · You review before committing · ~15–60 s per page
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
