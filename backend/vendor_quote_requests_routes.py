@@ -48,12 +48,18 @@ async def _auto_expire(pr: dict) -> dict:
 
 
 def _strip_ops(pr: dict, partner_id: str) -> dict:
-    """Return RFQ shape suitable for the vendor — hide other vendors' prices and internal notes."""
+    """Return RFQ shape suitable for the vendor — Konekt is the single client.
+    NEVER leak end-customer identity, internal notes, or other vendors' quotes.
+    """
     my_quote = None
     for q in pr.get("vendor_quotes", []) or []:
         if q.get("vendor_id") == partner_id:
             my_quote = q
             break
+    # Sanitize sales notes — they may contain end-customer names/contact.
+    # Strip any obvious PII patterns before showing to vendor.
+    raw_notes = pr.get("notes_from_sales", "") or ""
+    sanitized_notes = _sanitize_for_vendor(raw_notes)
     return {
         "id": pr.get("id"),
         "product_or_service": pr.get("product_or_service", ""),
@@ -63,12 +69,26 @@ def _strip_ops(pr: dict, partner_id: str) -> dict:
         "unit_of_measurement": pr.get("unit_of_measurement", "Piece"),
         "sourcing_mode": pr.get("sourcing_mode", "preferred"),
         "status": pr.get("status", "new"),
-        "notes_from_sales": pr.get("notes_from_sales", ""),
+        # Requester is ALWAYS shown as Konekt — never a specific salesperson/end-customer
+        "requested_by": "Konekt Operations",
+        "notes_from_konekt": sanitized_notes,  # renamed to match vendor's mental model
         "default_quote_expiry_hours": pr.get("default_quote_expiry_hours", 48),
         "default_lead_time_days": pr.get("default_lead_time_days", 3),
         "created_at": pr.get("created_at", ""),
         "my_quote": my_quote,  # ONLY the vendor's own quote row — never show competitors
     }
+
+
+def _sanitize_for_vendor(text: str) -> str:
+    """Best-effort scrub of end-customer PII from free-text notes before showing to a vendor."""
+    if not text:
+        return ""
+    import re
+    # Remove phone-number-like patterns (7+ digit runs, possibly with +/spaces/dashes)
+    cleaned = re.sub(r"(\+?\d[\d\s\-()]{6,}\d)", "[redacted]", text)
+    # Remove email addresses
+    cleaned = re.sub(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "[redacted]", cleaned)
+    return cleaned.strip()
 
 
 @router.get("")

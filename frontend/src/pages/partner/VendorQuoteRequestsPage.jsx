@@ -239,10 +239,10 @@ export default function VendorQuoteRequestsPage() {
                   {drawerFor.description && (
                     <div className="bg-slate-50 rounded-xl p-3 text-sm text-slate-700">{drawerFor.description}</div>
                   )}
-                  {drawerFor.notes_from_sales && (
+                  {drawerFor.notes_from_konekt && (
                     <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm">
-                      <div className="text-[10px] uppercase tracking-wider text-blue-700 font-bold mb-1">Notes from Konekt Sales</div>
-                      <div className="text-blue-900 text-sm">{drawerFor.notes_from_sales}</div>
+                      <div className="text-[10px] uppercase tracking-wider text-blue-700 font-bold mb-1">Notes from Konekt</div>
+                      <div className="text-blue-900 text-sm">{drawerFor.notes_from_konekt}</div>
                     </div>
                   )}
 

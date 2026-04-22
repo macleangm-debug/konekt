@@ -281,7 +281,7 @@ export default function PartnerDashboardV2() {
                       <div className="font-medium text-slate-800">
                         {job.title || `Job #${job.id.slice(0, 8)}`}
                       </div>
-                      <div className="text-xs text-slate-500">{job.customer_name || "Customer"}</div>
+                      <div className="text-xs text-slate-500">{job.client_name || "Konekt Operations"}</div>
                     </div>
                     <div className="flex items-center gap-2">
                       {job.status === "assigned" && (

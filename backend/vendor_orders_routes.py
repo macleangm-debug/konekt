@@ -111,43 +111,29 @@ async def list_vendor_orders(
             })
             continue
 
-        # Enrich from parent order
+        # Enrich from parent order — but NEVER expose the end customer to the vendor.
+        # Konekt is the single client from the vendor's perspective. We only need parent order
+        # metadata like order_number for timeline / vendor's own reference.
         parent_order = None
         if order_id:
             parent_order = await db.orders.find_one(
                 {"$or": [{"id": order_id}, {"order_number": order_id}]},
-                {"_id": 0, "order_number": 1, "delivery": 1, "delivery_phone": 1,
-                 "customer_id": 1, "user_id": 1, "assigned_sales_id": 1, "type": 1,
-                 "created_at": 1}
+                {"_id": 0, "order_number": 1, "delivery": 1, "assigned_sales_id": 1, "type": 1, "created_at": 1}
             )
 
-        # Customer info (safe for vendor: name + phone only)
-        customer_id = row.get("customer_id") or (parent_order or {}).get("customer_id") or (parent_order or {}).get("user_id")
-        customer_name = ""
-        customer_phone = ""
-        if customer_id:
-            cust = await db.users.find_one({"id": customer_id}, {"_id": 0, "full_name": 1, "phone": 1})
-            if cust:
-                customer_name = cust.get("full_name", "")
-                customer_phone = cust.get("phone", "")
+        # Delivery address: only the physical destination (city/area) — NO end-customer name/phone.
+        # Konekt acts as the logistics orchestrator. For non-group-deal product orders, the vendor
+        # just needs to know where to deliver.
+        delivery = (parent_order or {}).get("delivery") or {}
+        delivery_address = delivery.get("city", "") or delivery.get("area", "")
+        # Never fall back to end-customer phone; fall back to blank so vendor can't see it.
 
-        # Sales contact
-        sales_id = row.get("assigned_sales_id") or (parent_order or {}).get("assigned_sales_id")
+        # Konekt Operations is the vendor's point of contact. We do NOT expose the assigned
+        # salesperson — vendors communicate with Konekt Ops, not individual sales reps.
+        # (Left here as placeholder — frontend will render "Konekt Operations" when empty.)
         sales_name = ""
         sales_phone = ""
         sales_email = ""
-        if sales_id:
-            sales_user = await db.users.find_one({"id": sales_id}, {"_id": 0, "full_name": 1, "phone": 1, "email": 1})
-            if sales_user:
-                sales_name = sales_user.get("full_name", "")
-                sales_phone = sales_user.get("phone", "")
-                sales_email = sales_user.get("email", "")
-
-        # Delivery / execution address
-        delivery = (parent_order or {}).get("delivery") or {}
-        delivery_address = delivery.get("address", "") or delivery.get("city", "")
-        if not delivery_address:
-            delivery_address = (parent_order or {}).get("delivery_phone", "")
 
         # Build timeline from order_events
         timeline = []
@@ -210,6 +196,9 @@ async def list_vendor_orders(
             "status": row.get("status", "processing"),
             "priority": priority,
             "base_price": base_price,
+            # Konekt is the single client — never expose end-customer identity
+            "client_name": "Konekt Operations",
+            "client_contact": "",  # Vendor should use their existing Konekt contact channel
             "delivery_address": delivery_address,
             "sales_name": sales_name,
             "sales_phone": sales_phone,

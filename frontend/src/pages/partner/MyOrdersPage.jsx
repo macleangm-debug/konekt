@@ -86,7 +86,6 @@ export default function MyOrdersPage() {
       const q = searchQuery.toLowerCase();
       data = data.filter(r =>
         (r.vendor_order_no || "").toLowerCase().includes(q) ||
-        (r.customer_name || "").toLowerCase().includes(q) ||
         (r.order_id || "").toLowerCase().includes(q)
       );
     }

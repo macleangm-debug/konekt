@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package, Users, FileText, Loader2, Search, Plus, ShoppingCart,
-  Image as ImageIcon, CheckCircle, Clock, AlertTriangle,
-  Eye, EyeOff, Edit3, MoreHorizontal, MessageSquare
+  Image as ImageIcon, CheckCircle, CheckCircle2, Clock, AlertTriangle,
+  Eye, EyeOff, Edit3, MoreHorizontal, MessageSquare, Send, ArrowLeft, Check
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -580,146 +580,224 @@ function RequestDetail({ pr, vendors, onBack }) {
     );
   }
 
+  // ─── Wizard step logic ───
+  // Step 1 = Details (always done if request exists)
+  // Step 2 = Pick vendors & send     (active if status in new/pending_vendor_response)
+  // Step 3 = Review quotes            (active if status in sent_to_vendors/partially_quoted/response_received)
+  // Step 4 = Award winner             (active if any quote is 'quoted' — parallel to step 3)
+  // Step 5 = Done                     (status ready_for_sales or later)
+  const currentStep = (() => {
+    const s = request.status || "new";
+    if (s === "ready_for_sales" || s === "quoted_to_customer" || s === "closed") return 5;
+    if (quotedQuotes.length > 0) return 4;
+    if (["sent_to_vendors", "awaiting_quotes", "partially_quoted", "response_received"].includes(s)) return 3;
+    return 2;
+  })();
+
+  const steps = [
+    { n: 1, label: "Details" },
+    { n: 2, label: "Pick vendors" },
+    { n: 3, label: "Wait for quotes" },
+    { n: 4, label: "Pick a winner" },
+    { n: 5, label: "Done" },
+  ];
+
   return (
-    <div className="space-y-4" data-testid="request-detail">
+    <div className="space-y-5 max-w-4xl mx-auto" data-testid="request-detail">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onBack} data-testid="back-btn"><ArrowLeft className="w-4 h-4" /></Button>
-        <div>
-          <h2 className="text-lg font-bold text-[#20364D]">{request.product_or_service}</h2>
-          <p className="text-xs text-slate-400">{request.id?.slice(0, 8)} \u2022 {request.category || "No category"} \u2022 {request.quantity || 1} {request.unit_of_measurement || "Piece"}s</p>
+        <Button variant="ghost" size="sm" onClick={onBack} data-testid="back-btn"><ArrowLeft className="w-4 h-4" /> Back</Button>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-bold text-[#20364D] truncate">{request.product_or_service}</h2>
+          <p className="text-xs text-slate-400">{request.category || "No category"} • {request.quantity || 1} {request.unit_of_measurement || "Piece"}</p>
         </div>
-        <Badge className={`ml-auto ${STATUS_STYLES[request.status] || "bg-slate-100 text-slate-500"}`}>{prettyStatus(request.status)}</Badge>
+        <Badge className={`${STATUS_STYLES[request.status] || "bg-slate-100 text-slate-500"}`}>{prettyStatus(request.status)}</Badge>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-4">
-        {/* Block 1: Request Summary */}
-        <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="request-summary">
-          <h3 className="text-xs font-bold text-slate-400 uppercase">About this request</h3>
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">From</span><span className="font-medium">{request.requested_by_name || request.requested_by_role || "Sales"}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Strategy</span><Badge className={`text-[10px] ${request.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>{request.sourcing_mode === "competitive" ? "Multiple quotes" : "Single vendor"}</Badge></div>
-            <div className="flex justify-between"><span className="text-slate-500">Vendors have</span><span>{request.default_quote_expiry_hours || 48}h to quote</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Expected lead time</span><span>{request.default_lead_time_days || 3} days</span></div>
-          </div>
-          {request.notes_from_sales && <div className="bg-slate-50 rounded-lg p-2 text-xs text-slate-600"><span className="font-semibold">Sales notes:</span> {request.notes_from_sales}</div>}
-        </div>
-
-        {/* Block 2: Vendor Selection + Send */}
-        <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="vendor-selection">
-          <h3 className="text-xs font-bold text-slate-400 uppercase">Which vendors should quote?</h3>
-          {["new", "pending_vendor_response"].includes(request.status) ? (
-            <div className="space-y-2">
-              <div className="max-h-[200px] overflow-y-auto space-y-1.5">
-                {vendors.map((v) => {
-                  const vid = v.id || v._id;
-                  const checked = selectedVendors.includes(vid);
-                  return (
-                    <label key={vid} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition ${checked ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-100 hover:border-slate-200"}`}>
-                      <input type="checkbox" checked={checked} onChange={() => setSelectedVendors(checked ? selectedVendors.filter((x) => x !== vid) : [...selectedVendors, vid])} className="rounded" />
-                      <div className="text-xs"><div className="font-medium">{v.company_name || v.name || "Unnamed"}</div><div className="text-slate-400">{v.type || "vendor"}</div></div>
-                    </label>
-                  );
-                })}
-                {vendors.length === 0 && <p className="text-xs text-slate-400">No vendors available</p>}
-              </div>
-              <Button size="sm" className="w-full bg-[#20364D] hover:bg-[#1a2d40]" onClick={sendToVendors} disabled={saving || !selectedVendors.length} data-testid="send-to-vendors-btn">
-                {saving ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5 mr-1" />} Send to {selectedVendors.length} Vendor{selectedVendors.length !== 1 ? "s" : ""}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <p className="text-xs text-slate-500">{quotes.length} vendor{quotes.length !== 1 ? "s" : ""} contacted</p>
-              {quotes.map((q, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={`w-2 h-2 rounded-full ${q.status === "quoted" ? "bg-emerald-500" : q.status === "declined" ? "bg-red-500" : "bg-amber-400"}`} />
-                  <span className="font-medium">{q.vendor_name}</span>
-                  <span className="text-slate-400 ml-auto">{q.status === "quoted" ? money(q.base_price) : q.status}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Block 3: Quote Entry + Comparison */}
-        <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="quote-comparison">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-400 uppercase">Prices from vendors</h3>
-            {request.status !== "new" && (
-              <button onClick={() => setShowQuoteForm(!showQuoteForm)} className="text-[10px] font-semibold text-[#D4A843] hover:underline" data-testid="enter-quote-toggle">
-                {showQuoteForm ? "Cancel" : "+ Enter price manually"}
-              </button>
-            )}
-          </div>
-
-          {showQuoteForm && (
-            <div className="bg-slate-50 rounded-lg p-3 space-y-2" data-testid="quote-entry-form">
-              <select value={quoteForm.vendor_id} onChange={(e) => setQuoteForm({ ...quoteForm, vendor_id: e.target.value })} className="w-full border rounded-lg px-2 py-1.5 text-xs bg-white" data-testid="qf-vendor">
-                <option value="">Select vendor</option>
-                {quotes.map((q) => <option key={q.vendor_id} value={q.vendor_id}>{q.vendor_name}</option>)}
-                {vendors.filter((v) => !quotes.find((q) => q.vendor_id === (v.id || v._id))).map((v) => <option key={v.id || v._id} value={v.id || v._id}>{v.company_name || v.name}</option>)}
-              </select>
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="number" placeholder="Base Price" className="h-8 text-xs" value={quoteForm.base_price} onChange={(e) => setQuoteForm({ ...quoteForm, base_price: e.target.value })} data-testid="qf-price" />
-                <Input placeholder="Lead time" className="h-8 text-xs" value={quoteForm.lead_time} onChange={(e) => setQuoteForm({ ...quoteForm, lead_time: e.target.value })} data-testid="qf-lead" />
-              </div>
-              <Input placeholder="Notes" className="h-8 text-xs" value={quoteForm.notes} onChange={(e) => setQuoteForm({ ...quoteForm, notes: e.target.value })} data-testid="qf-notes" />
-              <Button size="sm" className="w-full bg-[#D4A843] hover:bg-[#c49a38] text-[#17283C]" onClick={submitQuote} disabled={saving} data-testid="submit-quote-btn">Submit Quote</Button>
-            </div>
-          )}
-
-          {/* Comparison */}
-          {quotedQuotes.length > 0 ? (
-            <div className="space-y-2">
-              {quotedQuotes.map((q, i) => {
-                const isBest = q === bestQuote;
-                const isSelected = request.selected_vendor_id === q.vendor_id;
-                // Match pricing reference for this vendor from backend response
-                const pricingRef = (request.pricing_references || []).find(p => p && p.vendor_id === q.vendor_id);
-                return (
-                  <div key={i} className={`rounded-lg border p-2.5 transition ${isSelected ? "border-emerald-500 bg-emerald-50" : isBest ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-100"}`} data-testid={`quote-card-${i}`}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs font-semibold text-[#20364D]">{q.vendor_name}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{q.lead_time || "No lead time"} {q.notes ? `\u2022 ${q.notes}` : ""}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-[#20364D]">{money(q.base_price)}</div>
-                        {isBest && !isSelected && <span className="text-[9px] font-bold text-[#D4A843]">BEST PRICE</span>}
-                        {isSelected && <span className="text-[9px] font-bold text-emerald-600">SELECTED</span>}
-                      </div>
-                    </div>
-                    {/* Konekt pricing reference — source of truth comparison */}
-                    {pricingRef && (
-                      <div className="bg-white rounded-md border border-slate-200 p-2 mt-2 text-[10px] grid grid-cols-3 gap-1" data-testid={`pricing-ref-${i}`}>
-                        <div><div className="uppercase tracking-wider text-slate-400">Konekt sell</div><div className="font-bold text-[#20364D]">{money(pricingRef.konekt_sell_price)}</div></div>
-                        <div><div className="uppercase tracking-wider text-slate-400">Min sell</div><div className="font-bold text-slate-700">{money(pricingRef.min_sell_price)}</div></div>
-                        <div><div className="uppercase tracking-wider text-slate-400">Margin</div><div className="font-bold text-emerald-700">{pricingRef.margin_pct ? `${Number(pricingRef.margin_pct).toFixed(1)}%` : "—"}</div></div>
-                      </div>
-                    )}
-                    {!isSelected && request.status !== "ready_for_sales" && (
-                      <button onClick={() => selectVendor(q.vendor_id, i)} disabled={saving} className="mt-2 w-full text-center py-1.5 rounded-lg bg-[#20364D] text-white text-[10px] font-semibold hover:bg-[#1a2d40] transition" data-testid={`select-vendor-${i}`}>
-                        Select This Vendor
-                      </button>
-                    )}
+      {/* ─── Progress Stepper ─── */}
+      <div className="bg-white rounded-xl border p-4" data-testid="wizard-stepper">
+        <div className="flex items-center justify-between overflow-x-auto">
+          {steps.map((s, i) => {
+            const done = currentStep > s.n;
+            const active = currentStep === s.n;
+            return (
+              <React.Fragment key={s.n}>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    done ? "bg-emerald-500 text-white" : active ? "bg-[#20364D] text-white ring-4 ring-[#20364D]/15" : "bg-slate-100 text-slate-400"
+                  }`}>
+                    {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : s.n}
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 py-4 text-center">No quotes yet</p>
-          )}
-
-          {/* Final Output */}
-          {request.status === "ready_for_sales" && request.final_sell_price && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-1" data-testid="final-output">
-              <div className="text-[10px] font-bold text-emerald-700 uppercase">Ready for Sales</div>
-              <div className="flex justify-between text-xs"><span className="text-slate-500">Base Price</span><span className="font-medium">{money(request.final_base_price)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-slate-600 font-semibold">Sell Price</span><span className="font-bold text-emerald-700">{money(request.final_sell_price)}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-500">Lead Time</span><span>{request.final_lead_time || "TBD"}</span></div>
-            </div>
-          )}
+                  <span className={`text-xs font-semibold whitespace-nowrap ${active ? "text-[#20364D]" : done ? "text-emerald-700" : "text-slate-400"}`}>{s.label}</span>
+                </div>
+                {i < steps.length - 1 && <div className={`h-0.5 flex-1 mx-2 min-w-[12px] ${done ? "bg-emerald-400" : "bg-slate-200"}`} />}
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
+
+      {/* ─── STEP 2: Pick vendors & send ─── */}
+      {currentStep === 2 && (
+        <div className="bg-white rounded-2xl border p-5 space-y-4" data-testid="step-pick-vendors">
+          <div>
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Step 2 of 5</div>
+            <h3 className="text-lg font-bold text-[#20364D]">Which vendors should quote on this?</h3>
+            <p className="text-xs text-slate-500 mt-1">Tick the vendors you want to ask. {request.sourcing_mode === "competitive" ? "We'll send to multiple for price competition." : "We'll send to your preferred vendor."}</p>
+          </div>
+          <div className="border rounded-xl max-h-[360px] overflow-y-auto divide-y">
+            {vendors.map((v) => {
+              const vid = v.id || v._id;
+              const checked = selectedVendors.includes(vid);
+              return (
+                <label key={vid} className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-50 transition ${checked ? "bg-[#20364D]/5" : ""}`} data-testid={`vendor-pick-${vid}`}>
+                  <input type="checkbox" checked={checked} onChange={(e) => setSelectedVendors(e.target.checked ? [...selectedVendors, vid] : selectedVendors.filter(x => x !== vid))} className="w-4 h-4 accent-[#20364D]" />
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm text-[#20364D] truncate">{v.company_name || v.name}</div>
+                    <div className="text-[11px] text-slate-400">{(v.categories || []).slice(0, 3).join(", ") || "All categories"}</div>
+                  </div>
+                  {v.is_preferred && <Badge className="bg-amber-100 text-amber-700 text-[10px]">Preferred</Badge>}
+                </label>
+              );
+            })}
+            {vendors.length === 0 && <div className="p-6 text-center text-xs text-slate-400">No vendors registered yet.</div>}
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t">
+            <div className="text-xs text-slate-500">{selectedVendors.length} vendor{selectedVendors.length !== 1 ? "s" : ""} selected</div>
+            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 px-6" onClick={sendToVendors} disabled={saving || !selectedVendors.length} data-testid="wizard-send-btn">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <><Send className="w-4 h-4 mr-2" /> Send Request →</>}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── STEP 3: Waiting for vendors (no quotes yet) ─── */}
+      {currentStep === 3 && (
+        <div className="bg-white rounded-2xl border p-6 text-center space-y-3" data-testid="step-waiting">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 3 of 5</div>
+          <div className="flex justify-center"><Clock className="w-12 h-12 text-blue-400" /></div>
+          <h3 className="text-lg font-bold text-[#20364D]">Waiting for vendors to respond</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">We've sent this to {quotes.length} vendor{quotes.length !== 1 ? "s" : ""}. You'll be notified here as soon as any of them submits a quote.</p>
+          <div className="max-w-md mx-auto bg-slate-50 rounded-xl p-3 space-y-1.5">
+            {quotes.map((q, i) => (
+              <div key={i} className="flex items-center justify-between text-xs" data-testid={`waiting-vendor-${i}`}>
+                <span className="font-medium text-[#20364D]">{q.vendor_name}</span>
+                <Badge className={q.status === "quoted" ? "bg-emerald-100 text-emerald-700" : q.status === "declined_by_vendor" ? "bg-slate-100 text-slate-500" : "bg-amber-100 text-amber-700"}>
+                  {q.status === "quoted" ? "✓ Quoted" : q.status === "declined_by_vendor" ? "Declined" : "Waiting…"}
+                </Badge>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setShowQuoteForm(!showQuoteForm)} className="text-xs font-semibold text-[#D4A843] hover:underline" data-testid="manual-quote-toggle">
+            {showQuoteForm ? "Cancel" : "Or enter a vendor's quote manually ↓"}
+          </button>
+          {showQuoteForm && <ManualQuoteForm vendors={vendors} quotes={quotes} quoteForm={quoteForm} setQuoteForm={setQuoteForm} onSubmit={submitQuote} saving={saving} />}
+        </div>
+      )}
+
+      {/* ─── STEP 4: Pick a winner ─── */}
+      {currentStep === 4 && (
+        <div className="space-y-4" data-testid="step-pick-winner">
+          <div className="bg-white rounded-2xl border p-4">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 4 of 5</div>
+            <h3 className="text-lg font-bold text-[#20364D] mt-1">Compare quotes and pick a winner</h3>
+            <p className="text-xs text-slate-500 mt-1">Each vendor's price is checked against the Konekt pricing engine (source of truth) so you can be confident your margin is safe.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-3">
+            {quotedQuotes.map((q, i) => {
+              const isBest = q === bestQuote;
+              const isSelected = request.selected_vendor_id === q.vendor_id;
+              const pricingRef = (request.pricing_references || []).find(p => p && p.vendor_id === q.vendor_id);
+              return (
+                <div key={i} className={`rounded-2xl border-2 p-4 space-y-3 transition ${isSelected ? "border-emerald-500 bg-emerald-50" : isBest ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-200 bg-white"}`} data-testid={`winner-card-${i}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-[#20364D]">{q.vendor_name}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">{q.lead_time || "No lead time given"}</div>
+                    </div>
+                    {isBest && !isSelected && <Badge className="bg-[#D4A843] text-white text-[10px]">BEST PRICE</Badge>}
+                    {isSelected && <Badge className="bg-emerald-600 text-white text-[10px]">SELECTED ✓</Badge>}
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wider text-slate-400">Vendor's price</div>
+                    <div className="text-2xl font-extrabold text-[#20364D]">{money(q.base_price)}</div>
+                  </div>
+                  {pricingRef && (
+                    <div className="bg-white/60 backdrop-blur rounded-lg border border-slate-200 p-2 text-[11px] grid grid-cols-3 gap-1" data-testid={`pricing-ref-${i}`}>
+                      <div><div className="uppercase tracking-wider text-slate-400 text-[9px]">Konekt sells at</div><div className="font-bold text-[#20364D]">{money(pricingRef.konekt_sell_price)}</div></div>
+                      <div><div className="uppercase tracking-wider text-slate-400 text-[9px]">Min sell</div><div className="font-bold text-slate-600">{money(pricingRef.min_sell_price)}</div></div>
+                      <div><div className="uppercase tracking-wider text-slate-400 text-[9px]">Margin</div><div className="font-bold text-emerald-700">{pricingRef.margin_pct ? `${Number(pricingRef.margin_pct).toFixed(1)}%` : "—"}</div></div>
+                    </div>
+                  )}
+                  {q.notes && <div className="text-xs text-slate-600 bg-slate-50 rounded p-2">{q.notes}</div>}
+                  {!isSelected && (
+                    <Button onClick={() => selectVendor(q.vendor_id, quotes.indexOf(q))} disabled={saving} className="w-full bg-[#20364D] hover:bg-[#1a2d40]" data-testid={`wizard-pick-${i}`}>
+                      Pick this winner →
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="text-center">
+            <button onClick={() => setShowQuoteForm(!showQuoteForm)} className="text-xs font-semibold text-[#D4A843] hover:underline" data-testid="manual-quote-toggle">
+              {showQuoteForm ? "Cancel" : "+ Enter another vendor's quote manually"}
+            </button>
+            {showQuoteForm && <ManualQuoteForm vendors={vendors} quotes={quotes} quoteForm={quoteForm} setQuoteForm={setQuoteForm} onSubmit={submitQuote} saving={saving} />}
+          </div>
+        </div>
+      )}
+
+      {/* ─── STEP 5: Done ─── */}
+      {currentStep === 5 && (
+        <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-6 space-y-4" data-testid="step-done">
+          <div className="flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-xl font-extrabold text-emerald-800">Done — ready for the customer</h3>
+            <p className="text-sm text-emerald-700 mt-1">Sales can now send this quote to the customer.</p>
+          </div>
+          <div className="bg-white rounded-xl border border-emerald-200 p-4 grid grid-cols-3 gap-2 text-center" data-testid="final-numbers">
+            <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Vendor base</div><div className="font-bold text-[#20364D]">{money(request.final_base_price)}</div></div>
+            <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Konekt sell price</div><div className="font-extrabold text-emerald-700 text-lg">{money(request.final_sell_price)}</div></div>
+            <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Lead time</div><div className="font-bold">{request.final_lead_time || "TBD"}</div></div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Context strip (notes + request details) ─── */}
+      <details className="bg-slate-50 rounded-xl border p-3">
+        <summary className="text-xs font-semibold text-slate-500 cursor-pointer select-none">About this request</summary>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600">
+          <div><span className="text-slate-400">From:</span> {request.requested_by_name || "Konekt Sales"}</div>
+          <div><span className="text-slate-400">Strategy:</span> {request.sourcing_mode === "competitive" ? "Multiple quotes" : "Single vendor"}</div>
+          <div><span className="text-slate-400">Vendors have:</span> {request.default_quote_expiry_hours || 48}h to quote</div>
+          <div><span className="text-slate-400">Lead time target:</span> {request.default_lead_time_days || 3} days</div>
+          {request.notes_from_sales && <div className="col-span-2 mt-2 bg-white rounded-lg p-2 text-slate-700"><span className="font-semibold">Sales notes:</span> {request.notes_from_sales}</div>}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/* Manual Quote Entry Form — shared between wizard steps 3 and 4 */
+function ManualQuoteForm({ vendors, quotes, quoteForm, setQuoteForm, onSubmit, saving }) {
+  return (
+    <div className="mt-3 max-w-lg mx-auto bg-slate-50 rounded-xl p-3 space-y-2 border" data-testid="quote-entry-form">
+      <select value={quoteForm.vendor_id} onChange={(e) => setQuoteForm({ ...quoteForm, vendor_id: e.target.value })} className="w-full border rounded-lg px-2 py-1.5 text-xs bg-white" data-testid="qf-vendor">
+        <option value="">Select vendor</option>
+        {quotes.map((q) => <option key={q.vendor_id} value={q.vendor_id}>{q.vendor_name}</option>)}
+        {vendors.filter((v) => !quotes.find((q) => q.vendor_id === (v.id || v._id))).map((v) => <option key={v.id || v._id} value={v.id || v._id}>{v.company_name || v.name}</option>)}
+      </select>
+      <Input type="number" placeholder="Base price" value={quoteForm.base_price} onChange={(e) => setQuoteForm({ ...quoteForm, base_price: parseFloat(e.target.value) || "" })} className="text-xs" data-testid="qf-price" />
+      <Input placeholder="Lead time" value={quoteForm.lead_time} onChange={(e) => setQuoteForm({ ...quoteForm, lead_time: e.target.value })} className="text-xs" data-testid="qf-lead" />
+      <Button size="sm" className="w-full bg-[#D4A843] hover:bg-[#b38f38] text-white" onClick={onSubmit} disabled={saving} data-testid="submit-quote-btn">
+        {saving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Check className="w-3 h-3 mr-1" />} Save Quote
+      </Button>
     </div>
   );
 }
@@ -884,7 +962,6 @@ function OrdersFulfillmentTab() {
 
 
 /* ═══ SHARED COMPONENTS ═══ */
-function ArrowLeft(props) { return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>; }
 
 function StatCard({ label, value, color }) {
   return (

@@ -68,6 +68,22 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 44. **RFQ stats card** on vendor dashboard — "X quote requests awaiting you" with animated amber banner
 45. **Competitor price isolation** — vendor only sees their own quote row; competitor prices never exposed
 
+### Vendor Ops UX Overhaul — Task-First Design (Apr 22, 2026)
+46. **Kanban board replaces the crammed RFQ table** — 4 columns (NEW / WAITING FOR VENDORS / PICK A WINNER / DONE) with colour-coded dots, progress bars, and a single stage-specific CTA per card
+47. **Urgent "What needs me?" strip** at top — red when work pending (*"N quotes need a winner · N new to send"*), green ✓ *"All clear"* otherwise
+48. **Plain-language vocabulary** — `prettyStatus()` helper maps internal statuses to plain English ("Waiting for vendors", "All quotes in", "Ready for customer", etc.)
+49. **Wizard stepper for RFQ detail** — 5 steps (Details → Pick vendors → Wait for quotes → Pick a winner → Done). ONE decision visible per step, stepper bar at top shows progress at a glance
+50. **Konekt-as-single-client model** — vendor-facing endpoints now scrub ALL end-customer identity:
+    - `/api/vendor/orders` returns `client_name: "Konekt Operations"`, no customer_name/customer_phone/sales_name/sales_phone/sales_email
+    - `/api/vendor/quote-requests` returns `requested_by: "Konekt Operations"` and sanitizes free-text notes (`_sanitize_for_vendor`) to strip phone/email patterns before showing
+    - Vendor Order drawer UI now labels contact section "Konekt Operations (your client)" — no salesperson exposed
+    - Dashboard job cards show "Konekt Operations" as client
+51. **Step-specific UX**:
+    - Step 2 shows vendor checklist with preferred-vendor badge + "Send Request →" primary CTA
+    - Step 3 shows per-vendor status rail (Quoted ✓ / Declined / Waiting…) + collapsible manual entry
+    - Step 4 shows big quote cards (BEST PRICE badge), inline Konekt sell/min sell/margin reference, huge "Pick this winner →" button
+    - Step 5 shows emerald success screen with final numbers grid
+
 ## Key Backend Routes (added this batch)
 - `/api/vendor/quote-requests[/stats|/{id}|/{id}/respond|/{id}/decline]` (vendor-facing)
 - `/api/admin/group-deals/campaigns/{id}/vendor-payout` (payout toggle + vendor-order sync)

@@ -170,26 +170,21 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
         </div>
       )}
 
-      {/* Konekt Sales Contact */}
+      {/* Konekt Operations Contact — Konekt is the single client for vendors */}
       <section className="rounded-xl border p-4" data-testid="drawer-sales-contact">
-        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">{brand_name} Sales Contact</div>
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3">{brand_name} Operations (your client)</div>
         <div className="grid gap-3 text-sm">
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-slate-400 shrink-0" />
-            <span className="font-medium text-slate-700">{order?.sales_name || "Not assigned"}</span>
+            <span className="font-medium text-slate-700">{brand_name} Operations Team</span>
           </div>
-          {order?.sales_phone && (
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-              <a href={`tel:${order.sales_phone}`} className="text-blue-600 hover:underline">{order.sales_phone}</a>
-            </div>
-          )}
-          {order?.sales_email && (
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4 text-slate-400 shrink-0" />
-              <a href={`mailto:${order.sales_email}`} className="text-blue-600 hover:underline">{order.sales_email}</a>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+            <a href="tel:+255000000000" className="text-blue-600 hover:underline">Konekt Ops hotline</a>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-relaxed">
+            {brand_name} is your single client — reach us through our Ops team for all queries on this order.
+          </p>
         </div>
       </section>
 
@@ -325,18 +320,16 @@ export default function VendorOrderDrawer({ order, onStatusUpdate }) {
       </section>
 
       {/* Contact Konekt */}
-      {order?.sales_phone && (
-        <section className="rounded-xl bg-slate-50 border p-4" data-testid="drawer-contact-konekt">
-          <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Need Help?</div>
-          <a
-            href={`tel:${order.sales_phone}`}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4565] transition"
-            data-testid="call-sales-btn"
-          >
-            <Phone className="w-4 h-4" /> Call {brand_name} Sales
-          </a>
-        </section>
-      )}
+      <section className="rounded-xl bg-slate-50 border p-4" data-testid="drawer-contact-konekt">
+        <div className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2">Need Help?</div>
+        <a
+          href="tel:+255000000000"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#20364D] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4565] transition"
+          data-testid="call-sales-btn"
+        >
+          <Phone className="w-4 h-4" /> Call {brand_name} Operations
+        </a>
+      </section>
     </div>
   );
 }
