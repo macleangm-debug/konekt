@@ -150,7 +150,7 @@ from media_upload_routes import router as media_upload_router
 from partner_excel_import_routes import router as partner_excel_import_router
 from vendor_orders_routes import router as vendor_orders_router
 from vendor_quote_requests_routes import router as vendor_quote_requests_router
-from admin_supply_review_routes import router as admin_supply_review_router
+from smart_bulk_import_routes import router as smart_bulk_import_router
 from vendors_admin_routes import router as vendors_admin_router
 from margin_admin_routes import router as margin_admin_router
 from stripe_payment_routes import router as stripe_payment_router
@@ -2721,7 +2721,7 @@ app.include_router(media_upload_router)
 app.include_router(partner_excel_import_router)
 app.include_router(vendor_orders_router)
 app.include_router(vendor_quote_requests_router)
-app.include_router(admin_supply_review_router)
+app.include_router(smart_bulk_import_router)
 
 from vendor_performance_routes import router as vendor_performance_router
 app.include_router(vendor_performance_router)
