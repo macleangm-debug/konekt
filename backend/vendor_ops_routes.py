@@ -9,6 +9,7 @@ from typing import Optional
 import json
 import os
 import jwt
+from services.sku_service import generate_konekt_sku, matches_konekt_pattern
 
 router = APIRouter(prefix="/api/vendor-ops", tags=["Vendor Ops"])
 
@@ -110,6 +111,13 @@ async def create_product(request: Request):
     pricing = await calculate_sell_price(db, vendor_cost, category=body.get("category", ""), override_sell_price=input_sell_price if input_sell_price > 0 else None)
     final_sell_price = pricing["sell_price"] if vendor_cost > 0 else input_sell_price
 
+    # Konekt SKU (auto-generated, country + category aware); vendor's own SKU stored separately
+    country_code = (body.get("country_code") or body.get("country") or "TZ").upper()[:2]
+    incoming_sku = (body.get("sku") or "").strip()
+    konekt_sku = incoming_sku if matches_konekt_pattern(incoming_sku) else await generate_konekt_sku(
+        db, category_name=body.get("category", ""), country_code=country_code
+    )
+
     doc = {
         "id": str(uuid4()),
         "slug": slug,
@@ -128,7 +136,9 @@ async def create_product(request: Request):
         "pricing_rule_source": pricing.get("rule_source", ""),
         "pricing_warning": pricing.get("warning"),
         "unit_of_measurement": body.get("unit_of_measurement", "piece"),
-        "sku": body.get("sku", ""),
+        "sku": konekt_sku,
+        "vendor_sku": (body.get("vendor_sku") or (incoming_sku if incoming_sku and incoming_sku != konekt_sku else "")),
+        "country_code": country_code,
         "stock": int(body.get("stock", 0)),
         "variants": variants,
         "has_variants": len(variants) > 0,
@@ -576,6 +586,135 @@ async def select_vendor_quote(request_id: str, request: Request):
     return {"ok": True, "base_price": base, "sell_price": sell_price, "lead_time": selected.get("lead_time", "")}
 
 
+@router.post("/price-requests/{request_id}/handoff-to-sales")
+async def handoff_to_sales(request_id: str, request: Request):
+    """Explicit handoff from Ops to the originating (or chosen) salesperson.
+    Payload: {sales_user_id?: str, note?: str}
+    - If sales_user_id is not given, we try to auto-pick the requester (requested_by).
+    - Notifies the sales user so they can quote the end customer.
+    """
+    await _require_ops_role(request)
+    db = request.app.mongodb
+    user = await _require_ops_role(request)
+    body = await request.json()
+
+    pr = await db.price_requests.find_one({"id": request_id})
+    if not pr:
+        raise HTTPException(status_code=404, detail="Price request not found")
+    if pr.get("status") != "ready_for_sales":
+        raise HTTPException(status_code=400, detail="Pick a winner first before handing off to sales.")
+
+    target_sales_id = body.get("sales_user_id") or pr.get("requested_by")
+    note = (body.get("note") or "")[:1000]
+    now = datetime.now(timezone.utc).isoformat()
+
+    update_fields = {
+        "status": "quoted_to_customer",
+        "handed_off_to_sales_at": now,
+        "handed_off_by": user.get("id"),
+        "assigned_sales_id": target_sales_id or "",
+        "handoff_note": note,
+        "updated_at": now,
+    }
+    await db.price_requests.update_one({"id": request_id}, {"$set": update_fields})
+
+    if target_sales_id:
+        try:
+            await db.notifications.insert_one({
+                "target_type": "user",
+                "target_id": target_sales_id,
+                "title": f"Quote ready — {pr.get('product_or_service', '')}",
+                "message": f"Base {pr.get('final_base_price', 0):,.0f} · Sell {pr.get('final_sell_price', 0):,.0f} · Lead {pr.get('final_lead_time', 'TBD')}. Ready to share with customer.",
+                "link": f"/sales/quote-builder?rfq={request_id}",
+                "read": False,
+                "created_at": now,
+            })
+        except Exception:
+            pass
+
+    return {"ok": True, "handed_off_to": target_sales_id or None, "status": "quoted_to_customer"}
+
+
+@router.get("/price-requests/{request_id}/suggested-vendors")
+async def suggested_vendors(request_id: str, request: Request):
+    """Konekt suggests which vendors to invite for this RFQ's category.
+    Scoring:
+      +3  preferred vendor for the category
+      +2  per past RFQ win (cap 6)
+      +1  per past quoted response (cap 4)
+      -3  if declined the last 2 RFQs
+    Returns top 5 vendors with score + rationale.
+    """
+    await _require_ops_role(request)
+    db = request.app.mongodb
+
+    pr = await db.price_requests.find_one({"id": request_id}, {"_id": 0})
+    if not pr:
+        raise HTTPException(status_code=404, detail="Price request not found")
+    category = (pr.get("category") or "").strip()
+    if not category:
+        return {"suggestions": []}
+
+    # All vendors with this category
+    vendors = await db.vendor_assignments.find({
+        "is_active": True,
+        "categories": {"$elemMatch": {"name": category}},
+    }).to_list(length=100)
+
+    # Look up past RFQs (for this category) to score
+    past = await db.price_requests.find(
+        {"category": category, "vendor_quotes": {"$exists": True}},
+        {"_id": 0, "vendor_quotes": 1, "selected_vendor_id": 1},
+    ).sort("created_at", -1).to_list(length=200)
+
+    scores = {}
+    for v in vendors:
+        vid = v.get("vendor_id")
+        if not vid:
+            continue
+        scores[vid] = {
+            "vendor_id": vid,
+            "vendor_name": v.get("vendor_name"),
+            "is_preferred": bool(v.get("is_preferred")),
+            "score": 3 if v.get("is_preferred") else 0,
+            "wins": 0,
+            "responses": 0,
+            "declines": 0,
+            "reasons": [],
+        }
+        if v.get("is_preferred"):
+            scores[vid]["reasons"].append("Preferred vendor for this category")
+
+    for p in past:
+        for q in p.get("vendor_quotes") or []:
+            vid = q.get("vendor_id")
+            if vid not in scores:
+                continue
+            if q.get("status") == "awarded" or p.get("selected_vendor_id") == vid:
+                scores[vid]["wins"] += 1
+            if q.get("status") == "quoted":
+                scores[vid]["responses"] += 1
+            if q.get("status") == "declined_by_vendor":
+                scores[vid]["declines"] += 1
+
+    for s in scores.values():
+        s["score"] += min(s["wins"] * 2, 6)
+        s["score"] += min(s["responses"], 4)
+        if s["declines"] >= 2:
+            s["score"] -= 3
+        if s["wins"]:
+            s["reasons"].append(f"Won {s['wins']} past RFQ{'s' if s['wins'] > 1 else ''} in this category")
+        if s["responses"]:
+            s["reasons"].append(f"Responded to {s['responses']} RFQ{'s' if s['responses'] > 1 else ''}")
+        if s["declines"] >= 2:
+            s["reasons"].append("Has declined recent RFQs")
+
+    ranked = sorted(scores.values(), key=lambda s: (-s["score"], s["vendor_name"] or ""))
+    # Pick count based on sourcing_mode
+    n = 3 if pr.get("sourcing_mode") == "competitive" else 1
+    return {"suggestions": ranked[:max(n, 3)], "recommended_count": n}
+
+
 # ═══ DASHBOARD STATS ═══
 
 @router.get("/dashboard-stats")
@@ -636,5 +775,5 @@ async def get_catalog_config(request: Request):
         "categories": categories,
         "variant_types": catalog.get("variant_types", defaults.get("variant_types", [])),
         "sku_prefix": catalog.get("sku_prefix", defaults.get("sku_prefix", "KNT")),
-        "sku_format": catalog.get("sku_format", defaults.get("sku_format", "{PREFIX}-{CATEGORY}-{RANDOM}")),
+        "sku_format": catalog.get("sku_format", defaults.get("sku_format", "{PREFIX}-{COUNTRY}-{CATEGORY}-{RANDOM}")),
     }

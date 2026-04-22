@@ -10,6 +10,7 @@ from bson import ObjectId
 from typing import Optional
 
 from partner_access_service import get_partner_user_from_header
+from services.sku_service import generate_konekt_sku, matches_konekt_pattern
 
 router = APIRouter(prefix="/api/partner-bulk-upload", tags=["Partner Bulk Upload"])
 
@@ -48,28 +49,52 @@ async def bulk_upload_catalog(payload: dict, authorization: Optional[str] = Head
 
     for idx, row in enumerate(rows):
         try:
-            sku = row.get("sku")
+            vendor_sku_raw = (row.get("sku") or row.get("vendor_sku") or "").strip()
             name = row.get("name")
 
-            if not sku or not name:
-                raise ValueError("sku and name are required")
+            if not name:
+                raise ValueError("name is required")
 
-            # Check if SKU exists for this partner
-            existing = await db.partner_catalog_items.find_one({
-                "partner_id": partner_id,
-                "sku": sku
-            })
+            country_code = (row.get("country_code") or partner.get("country_code") or "TZ").upper()[:2]
+
+            # Dedupe strategy:
+            #   1) Match by vendor_sku (the vendor recognises their own SKU when re-uploading)
+            #   2) If vendor didn't give a SKU, match by (partner_id, name) as a fallback
+            existing = None
+            if vendor_sku_raw:
+                existing = await db.partner_catalog_items.find_one({
+                    "partner_id": partner_id,
+                    "$or": [{"vendor_sku": vendor_sku_raw}, {"sku": vendor_sku_raw}],
+                })
+            if not existing:
+                existing = await db.partner_catalog_items.find_one({
+                    "partner_id": partner_id,
+                    "name": name,
+                    "country_code": country_code,
+                })
+
+            if existing:
+                # Preserve the existing Konekt SKU on re-upload
+                konekt_sku = existing.get("sku")
+            elif matches_konekt_pattern(vendor_sku_raw):
+                # Vendor happens to be supplying a KNT-format SKU (from an earlier export) — trust it
+                konekt_sku = vendor_sku_raw
+            else:
+                konekt_sku = await generate_konekt_sku(
+                    db, category_name=row.get("category", ""), country_code=country_code
+                )
 
             doc = {
                 "partner_id": partner_id,
                 "partner_name": partner.get("name"),
                 "source_type": row.get("source_type", "product"),
-                "sku": sku,
+                "sku": konekt_sku,
+                "vendor_sku": vendor_sku_raw if vendor_sku_raw and vendor_sku_raw != konekt_sku else existing.get("vendor_sku", "") if existing else "",
                 "name": name,
                 "description": row.get("description", ""),
                 "category": row.get("category"),
                 "base_partner_price": float(row.get("base_partner_price", 0) or 0),
-                "country_code": row.get("country_code") or partner.get("country_code"),
+                "country_code": country_code,
                 "regions": row.get("regions") if isinstance(row.get("regions"), list) else partner.get("regions", []),
                 "partner_available_qty": float(row.get("partner_available_qty", 0) or 0),
                 "partner_status": row.get("partner_status", "in_stock"),

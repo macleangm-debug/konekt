@@ -501,10 +501,36 @@ function RequestDetail({ pr, vendors, onBack }) {
   const [quoteForm, setQuoteForm] = useState({ vendor_id: "", base_price: "", lead_time: "", notes: "" });
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [selectedVendors, setSelectedVendors] = useState([]);
+  const [suggestions, setSuggestions] = useState(null);
   const isNew = request._new;
 
   // New request form
   const [newForm, setNewForm] = useState({ product_or_service: "", category: "", description: "", quantity: 1, unit_of_measurement: "Piece", notes: "" });
+
+  // Fetch Konekt suggestions once the request has a category
+  useEffect(() => {
+    if (!request?.id || !request?.category || request.status !== "new") { setSuggestions(null); return; }
+    api.get(`/api/vendor-ops/price-requests/${request.id}/suggested-vendors`)
+      .then(r => setSuggestions(r.data))
+      .catch(() => setSuggestions(null));
+  }, [request?.id, request?.category, request?.status]);
+
+  const useKonektSuggestions = () => {
+    if (!suggestions?.suggestions?.length) return;
+    const n = suggestions.recommended_count || 3;
+    setSelectedVendors(suggestions.suggestions.slice(0, n).map(s => s.vendor_id));
+    toast.success(`Picked top ${Math.min(n, suggestions.suggestions.length)} vendor(s) for you`);
+  };
+
+  const handoffToSales = async () => {
+    setSaving(true);
+    try {
+      const res = await api.post(`/api/vendor-ops/price-requests/${request.id}/handoff-to-sales`, {});
+      toast.success("Handed off to sales");
+      setRequest({ ...request, status: "quoted_to_customer", assigned_sales_id: res.data.handed_off_to });
+    } catch (e) { toast.error(e.response?.data?.detail || "Failed"); }
+    setSaving(false);
+  };
 
   const createRequest = async () => {
     setSaving(true);
@@ -644,6 +670,33 @@ function RequestDetail({ pr, vendors, onBack }) {
             <h3 className="text-lg font-bold text-[#20364D]">Which vendors should quote on this?</h3>
             <p className="text-xs text-slate-500 mt-1">Tick the vendors you want to ask. {request.sourcing_mode === "competitive" ? "We'll send to multiple for price competition." : "We'll send to your preferred vendor."}</p>
           </div>
+
+          {/* Konekt suggests */}
+          {suggestions?.suggestions?.length > 0 && (
+            <div className="bg-gradient-to-r from-[#D4A843]/10 to-amber-50 border border-[#D4A843]/40 rounded-xl p-3" data-testid="konekt-suggests">
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-[#20364D] flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#D4A843]" />
+                    Konekt suggests these vendors
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-0.5">Based on past wins, responsiveness, and preferred status for this category.</p>
+                </div>
+                <Button size="sm" className="bg-[#D4A843] hover:bg-[#b88f35] text-[#20364D] font-bold" onClick={useKonektSuggestions} data-testid="use-suggestions-btn">
+                  Use top {Math.min(suggestions.recommended_count || 3, suggestions.suggestions.length)}
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {suggestions.suggestions.slice(0, 5).map((s, i) => (
+                  <div key={s.vendor_id} className="inline-flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-0.5 text-[11px]" data-testid={`suggestion-${i}`}>
+                    <span className="font-semibold text-[#20364D]">{s.vendor_name}</span>
+                    {s.is_preferred && <span className="text-[9px] font-bold text-amber-700">★</span>}
+                    <span className="text-slate-400 text-[10px]">· {s.score} pts</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="border rounded-xl max-h-[360px] overflow-y-auto divide-y">
             {vendors.map((v) => {
               const vid = v.id || v._id;
@@ -758,14 +811,22 @@ function RequestDetail({ pr, vendors, onBack }) {
             </div>
           </div>
           <div className="text-center">
-            <h3 className="text-xl font-extrabold text-emerald-800">Done — ready for the customer</h3>
-            <p className="text-sm text-emerald-700 mt-1">Sales can now send this quote to the customer.</p>
+            <h3 className="text-xl font-extrabold text-emerald-800">Ready for the customer</h3>
+            <p className="text-sm text-emerald-700 mt-1">Hand this off to the salesperson so they can quote the client.</p>
           </div>
           <div className="bg-white rounded-xl border border-emerald-200 p-4 grid grid-cols-3 gap-2 text-center" data-testid="final-numbers">
             <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Vendor base</div><div className="font-bold text-[#20364D]">{money(request.final_base_price)}</div></div>
             <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Konekt sell price</div><div className="font-extrabold text-emerald-700 text-lg">{money(request.final_sell_price)}</div></div>
             <div><div className="text-[10px] uppercase tracking-wider text-slate-400">Lead time</div><div className="font-bold">{request.final_lead_time || "TBD"}</div></div>
           </div>
+          {request.status === "ready_for_sales" ? (
+            <Button size="lg" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold" onClick={handoffToSales} disabled={saving} data-testid="handoff-btn">
+              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Send to Sales →
+            </Button>
+          ) : (
+            <div className="text-center text-xs text-emerald-700 font-semibold pt-1">✓ Already sent to sales</div>
+          )}
         </div>
       )}
 

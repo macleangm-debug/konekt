@@ -2,6 +2,7 @@
 Catalog Workspace Routes — Unified catalog overview with real data.
 """
 from fastapi import APIRouter, Request
+from services.sku_service import generate_konekt_sku, matches_konekt_pattern
 
 
 router = APIRouter(prefix="/api/admin/catalog-workspace", tags=["Catalog Workspace"])
@@ -189,13 +190,23 @@ async def bulk_import_catalog(request: Request):
             errors.append({"row": row_num, "error": f"Duplicate: '{name}' in '{category}'"})
             continue
 
+        # Konekt SKU — always Konekt-owned (auto-generated), vendor SKU stored separately
+        country_code = (row.get("country") or "TZ").strip().upper()[:2] or "TZ"
+        vendor_sku = (sku or "").strip()
+        # If the row already ships a valid Konekt SKU, trust it; otherwise generate
+        konekt_sku = vendor_sku if matches_konekt_pattern(vendor_sku) else await generate_konekt_sku(
+            db, category_name=category, country_code=country_code
+        )
+
         doc = {
             "id": str(uuid4()),
             "name": name,
             "category_name": category,
             "subcategory": (row.get("subcategory") or "").strip(),
             "unit_of_measurement": (row.get("unit_of_measurement") or "Piece").strip(),
-            "sku": sku or f"SKU-{uuid4().hex[:6].upper()}",
+            "sku": konekt_sku,
+            "vendor_sku": vendor_sku if vendor_sku and vendor_sku != konekt_sku else "",
+            "country_code": country_code,
             "description": (row.get("description") or "").strip(),
             "status": "active" if (row.get("active") or "true").strip().lower() in ("true", "yes", "1", "active") else "draft",
             "source": "bulk_import",

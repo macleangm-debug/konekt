@@ -82,7 +82,22 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
     - Step 2 shows vendor checklist with preferred-vendor badge + "Send Request →" primary CTA
     - Step 3 shows per-vendor status rail (Quoted ✓ / Declined / Waiting…) + collapsible manual entry
     - Step 4 shows big quote cards (BEST PRICE badge), inline Konekt sell/min sell/margin reference, huge "Pick this winner →" button
-    - Step 5 shows emerald success screen with final numbers grid
+    - Step 5 shows emerald success screen with final numbers grid + **"Send to Sales →"** button that hands off to the assigned salesperson with notification
+
+### Product SKU Foundation (Apr 22, 2026)
+52. **Konekt SKU generator** (`services/sku_service.py`) — single source of truth
+53. **Pattern**: `{PREFIX}-{COUNTRY}-{CATEGORY}-{RANDOM}` → `KNT-TZ-OEQ-A7K92M` — country-isolated for multi-country rollout
+54. **Auto-derive category code** from category name with admin override option (Settings Hub → catalog → categories → code)
+55. **Collision checking** — retries up to 5 times, falls back to extra random chars
+56. **Vendor SKU separation** — every product row now has `sku` (Konekt-owned, auto) + `vendor_sku` (vendor's own, optional)
+57. **Wired into all product creation paths**: admin catalog import, partner catalog create, partner bulk upload (with upsert-by-vendor_sku dedupe), vendor-ops direct-create
+58. **Legacy format auto-upgrade** — if stored sku_format doesn't include `{COUNTRY}`, generator forces the new pattern
+
+### Vendor Ops Quick Wins (Apr 22, 2026)
+59. **Send to Sales handoff** — `/api/vendor-ops/price-requests/{id}/handoff-to-sales` flips status to `quoted_to_customer` and notifies the originating salesperson with a deep link to the quote builder
+60. **Konekt suggests vendors** — `/api/vendor-ops/price-requests/{id}/suggested-vendors` scores vendors by preferred status + past wins + responsiveness + recent declines; UI chip in Step 2 lets Ops one-click pick the top recommendations
+61. **Supply Review endpoint** — `/api/admin/vendor-supply/review-dashboard` now exists (was previously a 404). Returns products with health classification (critical/warning/healthy), specific issue list per product, margin % check, pricing integrity stats
+62. **Konekt-as-client scrub** on vendor orders — no more end-customer/sales PII leaked through vendor-facing APIs
 
 ## Key Backend Routes (added this batch)
 - `/api/vendor/quote-requests[/stats|/{id}|/{id}/respond|/{id}/decline]` (vendor-facing)

@@ -439,7 +439,7 @@ PLATFORM_DEFAULTS = {
             {"name": "Service Unit", "abbr": "svc", "type": "service"},
         ],
         "sku_prefix": "KNT",
-        "sku_format": "{PREFIX}-{CATEGORY}-{RANDOM}",
+        "sku_format": "{PREFIX}-{COUNTRY}-{CATEGORY}-{RANDOM}",
         "variant_types": ["Size", "Color", "Material", "Weight", "Volume"],
         "product_categories": [
             "Office Equipment", "Printing & Stationery", "IT & Electronics",

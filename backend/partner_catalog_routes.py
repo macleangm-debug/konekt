@@ -7,6 +7,7 @@ from bson import ObjectId
 from fastapi import APIRouter, HTTPException
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from services.sku_service import generate_konekt_sku, matches_konekt_pattern
 
 router = APIRouter(prefix="/api/admin/partner-catalog", tags=["Partner Catalog"])
 
@@ -64,11 +65,19 @@ async def create_partner_catalog_item(payload: dict):
     if not partner:
         raise HTTPException(status_code=404, detail="Partner not found")
 
+    # Generate Konekt-owned SKU; keep vendor's own SKU separately
+    country_code = (payload.get("country_code") or partner.get("country_code", "TZ")).upper()[:2]
+    incoming_sku = (payload.get("sku") or "").strip()
+    konekt_sku = incoming_sku if matches_konekt_pattern(incoming_sku) else await generate_konekt_sku(
+        db, category_name=payload.get("category", ""), country_code=country_code
+    )
+
     doc = {
         "partner_id": partner_id,
         "partner_name": partner.get("name"),
         "source_type": payload.get("source_type", "product"),  # product | service
-        "sku": payload.get("sku"),
+        "sku": konekt_sku,
+        "vendor_sku": payload.get("vendor_sku") or (incoming_sku if incoming_sku and incoming_sku != konekt_sku else ""),
         "name": payload.get("name"),
         "description": payload.get("description", ""),
         "category": payload.get("category"),
