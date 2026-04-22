@@ -251,6 +251,8 @@ import VendorDashboardPage from "@/pages/partner/VendorDashboardPage";
 import VendorMyPerformancePage from "@/pages/partner/VendorMyPerformancePage";
 import VendorQuoteRequestsPage from "@/pages/partner/VendorQuoteRequestsPage";
 import SmartBulkImportPage from "@/pages/shared/SmartBulkImportPage";
+import AdminVendorPayablesPage from "@/pages/admin/AdminVendorPayablesPage";
+import VendorPayablesPage from "@/pages/partner/VendorPayablesPage";
 import PartnerAssignedWorkPage from "@/pages/partner/PartnerAssignedWorkPage";
 import HelpCustomerPage from "@/pages/help/HelpCustomerPage";
 import HelpAdminPage from "@/pages/help/HelpAdminPage";
@@ -716,6 +718,7 @@ function App() {
           <Route path="vendor-supply-review" element={<AdminVendorSupplyReviewPage />} />
           <Route path="vendor-ops" element={<VendorOpsPage />} />
           <Route path="smart-import" element={<SmartBulkImportPage mode="admin" />} />
+          <Route path="vendor-payables" element={<AdminVendorPayablesPage />} />
           <Route path="vendor-ops/new-product" element={<ProductUploadWizard />} />
           <Route path="site-visits" element={<SiteVisitsPage />} />
           <Route path="feedback-inbox" element={<FeedbackInboxPage />} />
@@ -852,6 +855,7 @@ function App() {
           <Route path="vendor-performance" element={<VendorMyPerformancePage />} />
           <Route path="vendor/quote-requests" element={<VendorQuoteRequestsPage />} />
           <Route path="vendor/smart-import" element={<SmartBulkImportPage mode="partner" />} />
+          <Route path="vendor/payables" element={<VendorPayablesPage />} />
           {/* Assigned Work (Service + Logistics Tasks) */}
           <Route path="assigned-work" element={<PartnerAssignedWorkPage />} />
           {/* Vendor Products */}

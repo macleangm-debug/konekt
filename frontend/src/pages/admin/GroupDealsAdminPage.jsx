@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import QrCodeButton from "@/components/common/QrCodeButton";
 
 // ─── Number formatting ───
 const fmtNum = (v) => Number(v || 0).toLocaleString("en-US");
@@ -739,6 +740,7 @@ export default function GroupDealsAdminPage() {
                   <Button size="sm" variant="outline" onClick={() => { setDrawerFor(null); openContact(c); }} data-testid={`drawer-contact-${c.id}`}>
                     <MessageCircle className="w-3.5 h-3.5 mr-1" /> Contact buyers
                   </Button>
+                  <QrCodeButton kind="group_deal" id={c.id} label="QR" />
                   {thresholdReady && (
                     <Button size="sm" onClick={() => { finalizeCampaign(c.id); setDrawerFor(null); }} className="bg-green-600 hover:bg-green-700" data-testid={`drawer-finalize-${c.id}`}>
                       <Check className="w-3.5 h-3.5 mr-1" /> Push to Sales

@@ -94,6 +94,7 @@ export default function PartnerLayout() {
     { path: "/partner/vendor-dashboard", label: "Vendor Dashboard", icon: Briefcase },
     { path: "/partner/assigned-work", label: "Assigned Work", icon: ClipboardList },
     { path: "/partner/vendor/quote-requests", label: "Quote Requests", icon: FileText },
+    { path: "/partner/vendor/payables", label: "My Payables", icon: Receipt },
     { path: "/partner/vendor/smart-import", label: "Bulk Import (Smart)", icon: Upload },
     { path: "/partner/vendor-performance", label: "My Performance", icon: BarChart3 },
     { path: "/partner/product-upload", label: "Add Product", icon: PlusCircle },

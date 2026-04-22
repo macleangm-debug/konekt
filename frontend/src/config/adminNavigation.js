@@ -6,7 +6,7 @@ import {
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign,
   Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench, MapPin,
-  MessageCircle, Truck,
+  MessageCircle, Truck, Banknote,
 } from "lucide-react";
 
 /**
@@ -48,6 +48,7 @@ export const adminNavigation = [
       { label: "Commission Engine", href: "/admin/commission-engine", icon: DollarSign },
       { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
+      { label: "Vendor Payables", href: "/admin/vendor-payables", icon: Banknote },
       { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
     ],
   },

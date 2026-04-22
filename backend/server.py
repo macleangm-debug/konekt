@@ -2723,6 +2723,13 @@ app.include_router(vendor_orders_router)
 app.include_router(vendor_quote_requests_router)
 app.include_router(smart_bulk_import_router)
 
+from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
+app.include_router(vendor_payables_admin_router)
+app.include_router(vendor_payables_vendor_router)
+
+from qr_code_routes import router as qr_code_router
+app.include_router(qr_code_router)
+
 from vendor_performance_routes import router as vendor_performance_router
 app.include_router(vendor_performance_router)
 
