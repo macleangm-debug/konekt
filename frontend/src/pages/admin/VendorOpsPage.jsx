@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import api from "../../lib/api";
 
 const TABS = [
-  { key: "requests", label: "Pricing Requests", icon: FileText },
+  { key: "requests", label: "Quote Requests", icon: FileText },
   { key: "orders", label: "Orders / Fulfillment", icon: ShoppingCart },
   { key: "vendors", label: "Vendors", icon: Users },
   { key: "products", label: "Products", icon: Package },
@@ -34,6 +34,21 @@ const STATUS_STYLES = {
   expired: "bg-red-100 text-red-600",
   closed: "bg-slate-200 text-slate-600",
 };
+
+// Plain-language status labels so Ops staff don't need a glossary
+const STATUS_LABELS = {
+  new: "New",
+  pending_vendor_response: "New",
+  sent_to_vendors: "Waiting for vendors",
+  awaiting_quotes: "Waiting for vendors",
+  partially_quoted: "Some vendors responded",
+  response_received: "All quotes in",
+  ready_for_sales: "Ready for customer",
+  quoted_to_customer: "Sent to customer",
+  expired: "Expired",
+  closed: "Closed",
+};
+const prettyStatus = (s) => STATUS_LABELS[s] || (s || "").replace(/_/g, " ");
 
 function money(v) { return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`; }
 
@@ -288,15 +303,16 @@ function PriceRequestsTab() {
   const [requests, setRequests] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [subTab, setSubTab] = useState("new");
   const [stats, setStats] = useState({});
   const [detail, setDetail] = useState(null);
+  const [searchQ, setSearchQ] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
+      // Fetch ALL RFQs — Kanban renders all stages simultaneously
       const [rRes, vRes, sRes] = await Promise.all([
-        api.get(`/api/vendor-ops/price-requests?tab=${subTab}`),
+        api.get(`/api/vendor-ops/price-requests`),
         api.get("/api/vendor-ops/vendors").catch(() => ({ data: { vendors: [] } })),
         api.get("/api/vendor-ops/price-requests/stats").catch(() => ({ data: {} })),
       ]);
@@ -305,112 +321,178 @@ function PriceRequestsTab() {
       setStats(sRes.data || {});
     } catch { toast.error("Failed to load"); }
     setLoading(false);
-  }, [subTab]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
   if (detail) return <RequestDetail pr={detail} vendors={vendors} onBack={() => { setDetail(null); load(); }} />;
 
-  const SUB_TABS = [
-    { key: "new", label: "New", count: stats.new || 0, color: "text-amber-600" },
-    { key: "awaiting", label: "Awaiting Quotes", count: stats.awaiting || 0, color: "text-blue-600" },
-    { key: "ready", label: "Ready for Sales", count: stats.ready || 0, color: "text-emerald-600" },
-    { key: "closed", label: "Closed", count: 0, color: "text-slate-500" },
-  ];
+  // Group RFQs into Kanban columns based on status semantics
+  const filtered = searchQ.trim()
+    ? requests.filter(r => (r.product_or_service || "").toLowerCase().includes(searchQ.trim().toLowerCase()) || (r.category || "").toLowerCase().includes(searchQ.trim().toLowerCase()))
+    : requests;
+
+  const columns = {
+    new: { title: "NEW", subtitle: "Send these to vendors", accent: "amber", items: [] },
+    waiting: { title: "WAITING FOR VENDORS", subtitle: "Quotes coming in", accent: "blue", items: [] },
+    decision: { title: "PICK A WINNER", subtitle: "Quotes ready — your turn", accent: "red", items: [], urgent: true },
+    done: { title: "DONE", subtitle: "Closed / awarded", accent: "slate", items: [] },
+  };
+  for (const r of filtered) {
+    const s = r.status || "new";
+    if (["new", "pending_vendor_response"].includes(s)) columns.new.items.push(r);
+    else if (["sent_to_vendors", "awaiting_quotes"].includes(s)) columns.waiting.items.push(r);
+    else if (["partially_quoted", "response_received"].includes(s)) columns.decision.items.push(r);
+    else columns.done.items.push(r);
+  }
+
+  const needsDecisionCount = columns.decision.items.length;
+  const newCount = columns.new.items.length;
 
   return (
     <div className="space-y-4" data-testid="price-requests-section">
-      {/* KPI Strip */}
-      <div className="grid grid-cols-4 gap-3">
-        <StatCard label="New" value={stats.new || 0} color="text-amber-600" />
-        <StatCard label="Awaiting Quotes" value={stats.awaiting || 0} color="text-blue-600" />
-        <StatCard label="Ready for Sales" value={stats.ready || 0} color="text-emerald-600" />
-        <StatCard label="Overdue" value={stats.overdue || 0} color="text-red-600" />
-      </div>
-
-      {/* Sub-tabs */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="flex rounded-lg border bg-white overflow-hidden">
-          {SUB_TABS.map((t) => (
-            <button key={t.key} onClick={() => setSubTab(t.key)} className={`px-3 py-2 text-xs font-semibold transition ${subTab === t.key ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`pr-tab-${t.key}`}>
-              {t.label} {t.count > 0 && <span className="ml-1 text-[10px] opacity-70">({t.count})</span>}
-            </button>
-          ))}
+      {/* ── Urgent "What needs me?" strip ── */}
+      {(needsDecisionCount > 0 || newCount > 0) ? (
+        <div className="bg-gradient-to-r from-red-50 via-amber-50 to-white border-l-4 border-red-400 rounded-xl p-4 flex items-start gap-3" data-testid="urgent-strip">
+          <div className="text-xl">⚡</div>
+          <div className="flex-1 text-sm">
+            <div className="font-bold text-red-800">
+              {needsDecisionCount > 0 && <>{needsDecisionCount} quote{needsDecisionCount > 1 ? "s" : ""} need a winner picked</>}
+              {needsDecisionCount > 0 && newCount > 0 && " · "}
+              {newCount > 0 && <>{newCount} new request{newCount > 1 ? "s" : ""} to send out</>}
+            </div>
+            <div className="text-xs text-red-700 mt-0.5">Take action on the cards below to keep things moving.</div>
+          </div>
         </div>
-        <Button size="sm" className="bg-[#20364D] hover:bg-[#1a2d40] ml-auto" onClick={() => setDetail({ _new: true })} data-testid="new-request-btn">
+      ) : (
+        <div className="bg-emerald-50 border-l-4 border-emerald-300 rounded-xl p-4 flex items-center gap-3" data-testid="urgent-strip-clear">
+          <div className="text-xl">✓</div>
+          <div className="flex-1 text-sm">
+            <div className="font-bold text-emerald-800">All clear — nothing needs you right now.</div>
+            <div className="text-xs text-emerald-700 mt-0.5">Create a new request when a customer asks for a quote.</div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Header bar: search + new ── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input className="pl-9 h-9 text-sm" placeholder="Search by product or category..." value={searchQ} onChange={(e) => setSearchQ(e.target.value)} data-testid="rfq-search" />
+        </div>
+        <div className="text-xs text-slate-500 flex items-center gap-3">
+          <span><span className="font-bold text-[#20364D]">{requests.length}</span> total</span>
+          {stats.overdue > 0 && <span className="text-red-600 font-bold">{stats.overdue} overdue</span>}
+        </div>
+        <Button size="sm" className="bg-[#20364D] hover:bg-[#1a2d40]" onClick={() => setDetail({ _new: true })} data-testid="new-request-btn">
           <Plus className="w-3.5 h-3.5 mr-1" /> New Request
         </Button>
       </div>
 
-      {/* Table */}
+      {/* ── Kanban Board ── */}
       {loading ? <LoadingSpinner /> : (
-        <div className="bg-white rounded-xl border overflow-hidden" data-testid="price-requests-table">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-slate-50/60">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Request</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Client / Requested By</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Quotes</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Best Price</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Status</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-12 text-slate-400"><FileText className="w-8 h-8 mx-auto mb-2 text-slate-200" /><p>No requests in this tab</p></td></tr>
-                ) : requests.map((r) => {
-                  const quotes = r.vendor_quotes || [];
-                  const quotedCount = quotes.filter((q) => q.status === "quoted").length;
-                  const bestPrice = quotes.filter((q) => q.base_price != null).sort((a, b) => a.base_price - b.base_price)[0]?.base_price;
-                  return (
-                    <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50/50" data-testid={`request-row-${r.id}`}>
-                      <td className="px-4 py-3">
-                        <div className="font-medium text-[#20364D] text-sm">{r.product_or_service || r.product_name || "Unnamed"}</div>
-                        <div className="text-[10px] text-slate-400">
-                          {r.category && <span>{r.category}</span>}
-                          {r.quantity > 1 && <span className="ml-1">{r.quantity} {r.unit_of_measurement || "pcs"}</span>}
-                          <span className="ml-1">
-                            <Badge className={`text-[8px] ${r.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-500"}`}>
-                              {r.sourcing_mode === "competitive" ? "Competitive" : "Preferred"}
-                            </Badge>
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs text-[#20364D]">{r.customer_name || r.requested_for || "\u2014"}</div>
-                        <div className="text-[10px] text-slate-400">{r.requested_by_name || r.requested_by || "System"}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-xs text-slate-600">{r.created_at ? new Date(r.created_at).toLocaleDateString() : "\u2014"}</div>
-                        <div className="text-[10px] text-slate-400">{r.created_at ? new Date(r.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}</div>
-                      </td>
-                      <td className="px-4 py-3 text-center text-xs font-medium">{quotedCount}/{quotes.length || 0}</td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold">
-                        {r.final_sell_price ? money(r.final_sell_price) : bestPrice != null ? <span className="text-slate-400">{money(bestPrice)}</span> : "\u2014"}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge className={`${STATUS_STYLES[r.status] || "bg-slate-100 text-slate-500"} capitalize text-[10px]`}>{(r.status || "").replace(/_/g, " ")}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button onClick={() => setDetail(r)} className="px-3 py-1.5 rounded-lg bg-[#20364D] text-white text-[10px] font-semibold hover:bg-[#1a2d40] transition" data-testid={`open-request-${r.id}`}>
-                          Open
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-2 text-xs text-slate-400 border-t">{requests.length} request{requests.length !== 1 ? "s" : ""}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" data-testid="kanban-board">
+          {Object.entries(columns).map(([key, col]) => (
+            <KanbanColumn key={key} colKey={key} column={col} onOpen={(r) => setDetail(r)} />
+          ))}
         </div>
       )}
     </div>
   );
 }
+
+function KanbanColumn({ colKey, column, onOpen }) {
+  const ACCENT = {
+    amber: { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-800", dot: "bg-amber-400" },
+    blue: { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800", dot: "bg-blue-400" },
+    red: { bg: "bg-red-50", border: "border-red-200", text: "text-red-800", dot: "bg-red-500 animate-pulse" },
+    slate: { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700", dot: "bg-slate-400" },
+  }[column.accent];
+
+  return (
+    <div className={`rounded-2xl border ${ACCENT.border} ${ACCENT.bg} p-3 flex flex-col gap-2 min-h-[280px]`} data-testid={`kanban-col-${colKey}`}>
+      {/* Column header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${ACCENT.dot}`} />
+          <h3 className={`text-[11px] font-bold tracking-wider ${ACCENT.text}`}>{column.title}</h3>
+          <span className={`text-xs font-extrabold ${ACCENT.text}`}>{column.items.length}</span>
+        </div>
+      </div>
+      <p className={`text-[11px] ${ACCENT.text}/80 opacity-70 px-1 -mt-1`}>{column.subtitle}</p>
+
+      {/* Cards */}
+      <div className="space-y-2 flex-1">
+        {column.items.length === 0 && (
+          <div className="text-center py-6 text-xs text-slate-400">
+            {colKey === "new" && "No new requests"}
+            {colKey === "waiting" && "No pending quotes"}
+            {colKey === "decision" && "Nothing to decide"}
+            {colKey === "done" && "No closed deals yet"}
+          </div>
+        )}
+        {column.items.map((r) => (
+          <RfqCard key={r.id} rfq={r} colKey={colKey} onOpen={() => onOpen(r)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RfqCard({ rfq, colKey, onOpen }) {
+  const quotes = rfq.vendor_quotes || [];
+  const quoted = quotes.filter(q => q.status === "quoted").length;
+  const total = quotes.length;
+  const bestPrice = quotes.filter(q => q.base_price != null).sort((a, b) => a.base_price - b.base_price)[0]?.base_price;
+
+  const cardConfig = {
+    new: { cta: "Send to vendors →", ctaClass: "bg-amber-500 hover:bg-amber-600" },
+    waiting: { cta: "View quotes", ctaClass: "bg-blue-500 hover:bg-blue-600" },
+    decision: { cta: "Pick a winner", ctaClass: "bg-red-500 hover:bg-red-600" },
+    done: { cta: "View", ctaClass: "bg-slate-400 hover:bg-slate-500" },
+  }[colKey];
+
+  return (
+    <button
+      onClick={onOpen}
+      className="w-full text-left bg-white rounded-xl border border-slate-200 hover:border-[#20364D]/40 hover:shadow-md transition p-3 space-y-1.5"
+      data-testid={`rfq-card-${rfq.id}`}
+    >
+      <div className="font-semibold text-sm text-[#20364D] line-clamp-2">{rfq.product_or_service || "Unnamed request"}</div>
+      <div className="text-[11px] text-slate-500 flex items-center gap-2 flex-wrap">
+        {rfq.category && <span>{rfq.category}</span>}
+        {rfq.quantity > 1 && <span>• {rfq.quantity} {rfq.unit_of_measurement || "pcs"}</span>}
+      </div>
+
+      {/* Status-specific body */}
+      {colKey === "waiting" && total > 0 && (
+        <div className="text-[11px] text-slate-600">
+          <span className="font-semibold">{quoted}</span> of {total} vendor{total !== 1 ? "s" : ""} replied
+          <div className="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${total > 0 ? (quoted / total) * 100 : 0}%` }} />
+          </div>
+        </div>
+      )}
+
+      {colKey === "decision" && (
+        <div className="text-[11px] text-slate-600">
+          <span className="font-bold text-emerald-700">{quoted} quote{quoted !== 1 ? "s" : ""} in</span>
+          {bestPrice != null && <> · Best: <span className="font-bold">{money(bestPrice)}</span></>}
+        </div>
+      )}
+
+      {colKey === "done" && rfq.final_sell_price && (
+        <div className="text-[11px] text-slate-600">Sold at <span className="font-bold text-emerald-700">{money(rfq.final_sell_price)}</span></div>
+      )}
+
+      {/* CTA */}
+      <div className={`mt-2 w-full text-center py-1.5 rounded-lg text-white text-[11px] font-semibold ${cardConfig.ctaClass} transition`}>
+        {cardConfig.cta}
+      </div>
+    </button>
+  );
+}
+
 
 /* ═══ REQUEST DETAIL VIEW ═══ */
 function RequestDetail({ pr, vendors, onBack }) {
@@ -506,25 +588,25 @@ function RequestDetail({ pr, vendors, onBack }) {
           <h2 className="text-lg font-bold text-[#20364D]">{request.product_or_service}</h2>
           <p className="text-xs text-slate-400">{request.id?.slice(0, 8)} \u2022 {request.category || "No category"} \u2022 {request.quantity || 1} {request.unit_of_measurement || "Piece"}s</p>
         </div>
-        <Badge className={`ml-auto ${STATUS_STYLES[request.status] || "bg-slate-100 text-slate-500"} capitalize`}>{(request.status || "").replace(/_/g, " ")}</Badge>
+        <Badge className={`ml-auto ${STATUS_STYLES[request.status] || "bg-slate-100 text-slate-500"}`}>{prettyStatus(request.status)}</Badge>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4">
         {/* Block 1: Request Summary */}
         <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="request-summary">
-          <h3 className="text-xs font-bold text-slate-400 uppercase">Request Summary</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase">About this request</h3>
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-slate-500">Requested by</span><span className="font-medium">{request.requested_by_name || request.requested_by_role || "Sales"}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Mode</span><Badge className={`text-[10px] ${request.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>{request.sourcing_mode === "competitive" ? "Competitive" : "Preferred"}</Badge></div>
-            <div className="flex justify-between"><span className="text-slate-500">Quote expiry</span><span>{request.default_quote_expiry_hours || 48}h</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Lead time default</span><span>{request.default_lead_time_days || 3}d</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">From</span><span className="font-medium">{request.requested_by_name || request.requested_by_role || "Sales"}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Strategy</span><Badge className={`text-[10px] ${request.sourcing_mode === "competitive" ? "bg-blue-100 text-blue-700" : "bg-slate-100 text-slate-600"}`}>{request.sourcing_mode === "competitive" ? "Multiple quotes" : "Single vendor"}</Badge></div>
+            <div className="flex justify-between"><span className="text-slate-500">Vendors have</span><span>{request.default_quote_expiry_hours || 48}h to quote</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Expected lead time</span><span>{request.default_lead_time_days || 3} days</span></div>
           </div>
           {request.notes_from_sales && <div className="bg-slate-50 rounded-lg p-2 text-xs text-slate-600"><span className="font-semibold">Sales notes:</span> {request.notes_from_sales}</div>}
         </div>
 
         {/* Block 2: Vendor Selection + Send */}
         <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="vendor-selection">
-          <h3 className="text-xs font-bold text-slate-400 uppercase">Send to Vendors</h3>
+          <h3 className="text-xs font-bold text-slate-400 uppercase">Which vendors should quote?</h3>
           {["new", "pending_vendor_response"].includes(request.status) ? (
             <div className="space-y-2">
               <div className="max-h-[200px] overflow-y-auto space-y-1.5">
@@ -561,10 +643,10 @@ function RequestDetail({ pr, vendors, onBack }) {
         {/* Block 3: Quote Entry + Comparison */}
         <div className="bg-white rounded-xl border p-4 space-y-3" data-testid="quote-comparison">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-400 uppercase">Vendor Quotes</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase">Prices from vendors</h3>
             {request.status !== "new" && (
               <button onClick={() => setShowQuoteForm(!showQuoteForm)} className="text-[10px] font-semibold text-[#D4A843] hover:underline" data-testid="enter-quote-toggle">
-                {showQuoteForm ? "Cancel" : "+ Enter Quote"}
+                {showQuoteForm ? "Cancel" : "+ Enter price manually"}
               </button>
             )}
           </div>
