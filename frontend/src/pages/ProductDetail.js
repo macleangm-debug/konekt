@@ -121,11 +121,11 @@ export default function ProductDetail() {
             animate={{ opacity: 1, x: 0 }}
             className="space-y-4"
           >
-            <div className="relative rounded-2xl overflow-hidden bg-gray-50">
+            <div className="relative rounded-2xl overflow-hidden bg-white border border-slate-100">
               <img 
                 src={product.image_url} 
                 alt={product.name}
-                className="w-full aspect-square object-cover"
+                className="w-full aspect-square object-contain p-6"
               />
               <div className="absolute top-4 left-4">
                 <Badge className="bg-primary text-white text-sm px-3 py-1">

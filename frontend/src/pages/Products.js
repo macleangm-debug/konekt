@@ -356,11 +356,11 @@ export default function Products() {
                     data-testid={`product-${product.id}`}
                   >
                     {/* Product Image */}
-                    <div className="relative overflow-hidden">
+                    <div className="relative overflow-hidden bg-white">
                       <img 
                         src={product.image_url} 
                         alt={product.name}
-                        className="w-full h-48 object-cover transition-transform duration-500 product-image"
+                        className="w-full h-56 object-contain p-3 transition-transform duration-500 product-image"
                       />
                       <div className="absolute top-3 left-3 flex flex-col gap-1">
                         <Badge className={`${isKonektSeries ? 'bg-secondary text-primary' : 'bg-primary/90 text-white'} hover:bg-primary`}>

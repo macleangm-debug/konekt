@@ -169,9 +169,14 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 105. **Blank vendor-agreement template PDF** — `GET /api/admin/vendor-agreements/template/blank.pdf` returns a clean 5 KB template PDF with blank signature/address fields. "Download blank template" button on `/admin/vendor-agreements` next to Nudge + Bump version, ready to share with prospective vendors.
 106. **Component path fix** — `components/admin/settings/SystemNotificationControlPanel.jsx` had broken imports (`../ui/button`, `../../lib/api`) that broke React bundle compile on any page touching Admin Settings Hub. Corrected to `../../ui/button` + `../../../lib/api`.
 
+### Taxonomy integration + image display fix (Apr 23, 2026)
+107. **Full marketplace taxonomy wired up** — Darcity's 37 sub-categories are now registered under an official "Promotional Materials" category in `catalog_categories` (Products group). All 616 Darcity products carry `group_id`, `category_id`, and `subcategory_id` pointing at the proper taxonomy rows so the Settings Hub and `/marketplace` filter UI (Groups → Categories → Subcategories) all see them. No more orphan "branch" strings.
+108. **Image display fix** — `/products` cards + `/product/{id}` detail page switched from `object-cover` to `object-contain` on a white background. Full products are visible (X-Banner Stand, Executive Desk Stand, etc.) — nothing cropped. Card height bumped to 56 (14rem) with 3rem inner padding.
+
 ### Deployment Notes (latest)
 - `products` collection is the canonical marketplace feed (read by `/api/products`, limit 2000). `partner_catalog_items` is the vendor's private SKU list.
 - Image URLs stored as `/api/uploads/...` — `/uploads/*` external requests hit the frontend and return HTML.
+- Taxonomy is 3-level: catalog_groups → catalog_categories → catalog_subcategories. `/api/marketplace/taxonomy` returns the full tree for filters.
 - **All services healthy**: backend RUNNING, frontend RUNNING, mongodb RUNNING.  Backend `/api/` responds 200.
 - **Database migrations needed**: none.  All new collections (`system_notification_config`, `vendor_agreements`, `vendor_statements`, `vendor_modality_requests`, `impersonation_audit`, `smart_import_sessions`) are created lazily.
 
