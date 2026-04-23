@@ -96,6 +96,24 @@ def _stock_to_number(text: str) -> str:
     return m.group(1).replace(",", "") if m else ""
 
 
+def _clean_product_name(name: str) -> str:
+    """Normalise vendor product names: strip leading 4-digit Darcity-style codes,
+    and wrap trailing model codes in parens so they still differentiate SKUs."""
+    if not name:
+        return name
+    n = name.strip()
+    # Strip leading 4-digit SKU like "2406 - " or "2406G - "
+    n = re.sub(r"^\d{4}[A-Z]?\s*-\s*", "", n)
+    # Wrap trailing short model codes: " BXP14" → " (BXP14)"
+    n = re.sub(r"[\s\-]+([A-Z]{2,6}\s?\d{1,5}[A-Z]?)\s*$", r" (\1)", n)
+    # Wrap trailing bare model numbers: " - 1501" → " (#1501)"
+    n = re.sub(r"\s+-\s+(\d{3,5}[A-Z]?)\s*$", r" (#\1)", n)
+    # Strip trailing lowercase-letter noise codes: " hdp 5000"
+    n = re.sub(r"\s+[a-z]{2,4}\s+\d{2,5}\s*$", "", n)
+    n = re.sub(r"\s+", " ", n).strip()
+    return n
+
+
 def _parse_product_card(card: BeautifulSoup, base_url: str) -> Optional[dict]:
     """Extract one product from a product card.  Handles Darcity-style markup and
     falls back to a generic parser for other sites."""
@@ -112,6 +130,7 @@ def _parse_product_card(card: BeautifulSoup, base_url: str) -> Optional[dict]:
     name = name_el.get_text(strip=True)
     if not name:
         return None
+    name = _clean_product_name(name)
 
     # 2. IMAGE
     img = card.find("img")

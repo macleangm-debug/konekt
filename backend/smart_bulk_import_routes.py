@@ -351,6 +351,7 @@ async def commit_import(
                         "approval_status": "approved" if is_url_source else "pending",
                         "status": "published" if is_url_source else "draft",
                         "is_active": True if is_url_source else False,
+                        "is_customizable": False if is_url_source else True,
                         "source": "url_import" if is_url_source else "smart_import",
                     }
                     if existing:
