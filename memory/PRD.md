@@ -144,7 +144,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 88. **Smart Import: download failed rows** — `/api/smart-import/failed-rows/{session_id}.xlsx` returns an Excel of every failed row + the original columns + a "Failure reason" column, ready to be fixed and re-uploaded.  Button on the Smart Import result screen.
 89. **QR codes wired into admin UI** — `QrCodeButton` now surfaces on: Group Deals drawer, Admin Promotions table, Admin Content Studio item card (auto-kind by item type), Partner Catalog card.
 90. **Wiring audit** — 37/37 admin nav links and 22/22 partner nav links resolve to a defined route in App.js (confirmed by a small static checker).
-91. **Backend tests — 85/85 green** across Sessions 3A + 3B + 4 + 5.  Added `/app/backend/tests/test_session_5.py` (10 tests: notification system config, Resend diagnostics, agreement bump, failed-rows auth/404).
+91. **Backend tests — 85/85 green** across Sessions 3A + 3B + 4 + 5.  Added `/app/backend/tests/test_session_5.py` (10 tests).
+
+### Pre-Deployment Sweep — Session 6 (Apr 23, 2026)
+92. **Country breakdown PDF export** — `GET /api/admin/reports/country-breakdown/pdf?period=month` generates a branded reportlab PDF with rollup summary + per-country table.  "Download PDF" button added to `/admin/country-reports`.
+93. **Weekly digest email delivery** — `services/weekly_digest.deliver_digest` now emails the digest to every admin (via Resend) as well as creating the in-app notification.  Honours the `weekly_operations_digest` system kill-switch.  Degrades gracefully when `RESEND_API_KEY` is unset.
+94. **Nudge unsigned vendors** — `POST /api/admin/vendor-agreements/nudge-unsigned` sends a templated email to every vendor who hasn't signed the current agreement version; logs `sent/failed/unsigned_count`.  Exposed as a button on `/admin/vendor-agreements`.
+95. **QR codes on invoice / quote PDFs** — `pdf_commercial_documents.generate_commercial_document_pdf` now appends a footer with a Konekt-styled QR linking to the hosted document (`/invoice/{id}` or `/quote/{id}`).  Cached under `/app/static/qr/invoices|quotes/`.
+96. **Backend tests — 90/90 green** across all sessions.  Added `/app/backend/tests/test_session_6.py` (5 tests).
+
+### Deployment Notes
+- **Resend is live** (`RESEND_API_KEY` set, key `…RAl`) but sending from sandbox domain `onboarding@resend.dev`.  For full email deliverability, verify `konekt.co.tz` in the Resend dashboard and set `RESEND_FROM_EMAIL=notifications@konekt.co.tz` in `backend/.env`.  The Settings Hub Resend widget flags this.
+- **All services healthy**: backend RUNNING, frontend RUNNING, mongodb RUNNING.  Backend `/api/` responds 200.
+- **Database migrations needed**: none.  All new collections (`system_notification_config`, `vendor_agreements`, `vendor_statements`, `vendor_modality_requests`, `impersonation_audit`, `smart_import_sessions`) are created lazily.
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

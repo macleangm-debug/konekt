@@ -16,6 +16,23 @@ export default function AdminVendorAgreementsPage() {
   const [newVersion, setNewVersion] = useState("");
   const [bumpReason, setBumpReason] = useState("");
   const [bumping, setBumping] = useState(false);
+  const [nudging, setNudging] = useState(false);
+
+  const nudgeUnsigned = async () => {
+    if (!window.confirm("Send a reminder email to every vendor that has NOT signed the current agreement?")) return;
+    setNudging(true);
+    try {
+      const r = await api.post("/api/admin/vendor-agreements/nudge-unsigned");
+      if (r.data.unsigned_count === 0) {
+        toast.success("All vendors have already signed. No emails sent.");
+      } else {
+        toast.success(`Nudged ${r.data.sent} of ${r.data.unsigned_count} unsigned vendors${(r.data.failed || []).length ? ` · ${r.data.failed.length} failed` : ""}`);
+      }
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Nudge failed");
+    }
+    setNudging(false);
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,9 +78,15 @@ export default function AdminVendorAgreementsPage() {
           <h1 className="text-2xl font-bold text-[#20364D]">Vendor Supply Agreements</h1>
           <p className="text-sm text-slate-500 mt-1">Track which vendors have signed the current contract version.</p>
         </div>
-        <Button variant="outline" onClick={() => setShowBumpModal(true)} data-testid="bump-version-btn">
-          <RefreshCcw className="w-4 h-4 mr-2" /> Bump contract version
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={nudgeUnsigned} disabled={nudging} data-testid="nudge-unsigned-btn">
+            {nudging ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <AlertCircle className="w-4 h-4 mr-2" />}
+            {nudging ? "Sending…" : "Nudge unsigned vendors"}
+          </Button>
+          <Button variant="outline" onClick={() => setShowBumpModal(true)} data-testid="bump-version-btn">
+            <RefreshCcw className="w-4 h-4 mr-2" /> Bump contract version
+          </Button>
+        </div>
       </div>
 
       {stats && (

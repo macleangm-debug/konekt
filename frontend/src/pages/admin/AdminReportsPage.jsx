@@ -45,9 +45,19 @@ export default function AdminReportsPage() {
           </h1>
           <p className="text-sm text-slate-500 mt-1">Revenue, profit, and operational metrics by country</p>
         </div>
-        <button onClick={exportJSON} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] transition" data-testid="export-report-btn">
-          <Download className="w-4 h-4" /> Export Report
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href={`${process.env.REACT_APP_BACKEND_URL}/api/admin/reports/country-breakdown/pdf?period=${period}`}
+            target="_blank" rel="noreferrer"
+            data-testid="export-report-pdf-btn"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-[#20364D] text-sm font-semibold hover:bg-slate-50 transition"
+          >
+            <Download className="w-4 h-4" /> Download PDF
+          </a>
+          <button onClick={exportJSON} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#20364D] text-white text-sm font-semibold hover:bg-[#1a2d40] transition" data-testid="export-report-btn">
+            <Download className="w-4 h-4" /> Export JSON
+          </button>
+        </div>
       </div>
 
       {/* Period Selector */}

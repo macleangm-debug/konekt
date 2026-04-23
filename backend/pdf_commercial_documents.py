@@ -266,6 +266,48 @@ def generate_commercial_document_pdf(doc, settings, document_type="invoice"):
     notes_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
     story.append(KeepTogether(notes_table))
 
+    # QR code footer — links back to the hosted document/landing page
+    try:
+        qr_id = doc.get("id") or number
+        if qr_id:
+            from pathlib import Path as _Path
+            import qrcode
+            from qrcode.constants import ERROR_CORRECT_M
+            from reportlab.platypus import Image as _RLImage
+            qr_dir = _Path("/app/static/qr/invoices") if document_type == "invoice" else _Path("/app/static/qr/quotes")
+            qr_dir.mkdir(parents=True, exist_ok=True)
+            qr_path = qr_dir / f"{qr_id}.png"
+            if not qr_path.exists():
+                target_url = (
+                    f"https://konekt.co.tz/invoice/{qr_id}" if document_type == "invoice"
+                    else f"https://konekt.co.tz/quote/{qr_id}"
+                )
+                qr_img = qrcode.QRCode(error_correction=ERROR_CORRECT_M, box_size=8, border=2)
+                qr_img.add_data(target_url)
+                qr_img.make(fit=True)
+                qr_img.make_image(fill_color="#20364D", back_color="white").save(qr_path, format="PNG")
+            story.append(Spacer(1, 6 * mm))
+            qr_row = Table(
+                [[
+                    Paragraph(
+                        f"Scan to view the live {document_type} online.",
+                        styles["BodySmall"],
+                    ),
+                    _RLImage(str(qr_path), width=22 * mm, height=22 * mm),
+                ]],
+                colWidths=[140 * mm, 28 * mm],
+            )
+            qr_row.setStyle(TableStyle([
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                ("LINEABOVE", (0, 0), (-1, 0), 0.4, BORDER),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+            ]))
+            story.append(qr_row)
+    except Exception as _qr_err:
+        import logging as _lg
+        _lg.getLogger("pdf_commercial").warning("QR attach failed: %s", _qr_err)
+
     pdf.build(story)
     buffer.seek(0)
     return buffer

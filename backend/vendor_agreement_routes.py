@@ -459,6 +459,73 @@ async def admin_pdf(agreement_id: str):
                         filename=f"konekt-supply-agreement-v{doc.get('version')}-{agreement_id[:8]}.pdf")
 
 
+@admin_router.post("/nudge-unsigned")
+async def nudge_unsigned_vendors():
+    """Email every vendor that has not yet signed the current agreement version.
+    Falls back gracefully if Resend is not configured.  Returns per-vendor send status.
+    """
+    import os
+    import resend
+    import asyncio
+    api_key = os.getenv("RESEND_API_KEY")
+    from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="RESEND_API_KEY is not set — configure Resend first")
+
+    # Find all partners that do NOT have a signed current-version agreement
+    signed_vendor_ids = set()
+    async for d in db.vendor_agreements.find(
+        {"version": AGREEMENT_VERSION, "status": "signed"}, {"_id": 0, "vendor_id": 1}
+    ):
+        signed_vendor_ids.add(d["vendor_id"])
+
+    unsigned = []
+    async for p in db.partners.find({"email": {"$exists": True, "$ne": ""}}, {"_id": 1, "email": 1, "name": 1, "company_name": 1}):
+        if str(p["_id"]) in signed_vendor_ids:
+            continue
+        unsigned.append({
+            "id": str(p["_id"]),
+            "email": p["email"],
+            "name": p.get("company_name") or p.get("name") or "—",
+        })
+
+    if not unsigned:
+        return {"ok": True, "sent": 0, "unsigned_count": 0, "message": "All vendors have signed."}
+
+    resend.api_key = api_key
+    sent = 0
+    failed = []
+    for v in unsigned:
+        html = f"""
+        <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px'>
+          <h2 style='color:#20364D;margin:0 0 8px'>Please sign your Konekt Supply Agreement</h2>
+          <p style='color:#475569;font-size:14px'>Hi {v['name']},</p>
+          <p style='color:#475569;font-size:14px;line-height:1.6'>Our records show that your vendor account does not yet have a signed <b>Konekt Vendor Supply Agreement (v{AGREEMENT_VERSION})</b> on file. Please sign in to your Konekt portal to complete this quick step — it takes about 2 minutes.</p>
+          <p><a href='https://konekt.co.tz/partner/agreement' style='display:inline-block;background:#20364D;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:700'>Sign the agreement</a></p>
+          <p style='color:#94a3b8;font-size:11px;margin-top:20px'>If you have already signed this, you can ignore this message.</p>
+        </div>
+        """
+        try:
+            await asyncio.to_thread(
+                resend.Emails.send,
+                {"from": from_email, "to": [v["email"]],
+                 "subject": f"Action required — sign your Konekt Supply Agreement (v{AGREEMENT_VERSION})",
+                 "html": html},
+            )
+            sent += 1
+        except Exception as e:
+            failed.append({"vendor_id": v["id"], "email": v["email"], "error": str(e)[:200]})
+
+    # Audit
+    await db.admin_settings.update_one(
+        {"key": "vendor_agreement_last_nudge"},
+        {"$set": {"key": "vendor_agreement_last_nudge", "value": datetime.now(timezone.utc).isoformat(),
+                   "sent": sent, "failed": len(failed), "version": AGREEMENT_VERSION}},
+        upsert=True,
+    )
+    return {"ok": True, "sent": sent, "failed": failed, "unsigned_count": len(unsigned)}
+
+
 @admin_router.get("/stats")
 async def admin_agreement_stats():
     total_vendors = await db.partners.count_documents({})

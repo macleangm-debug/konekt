@@ -120,7 +120,7 @@ async def generate_digest(db) -> dict:
 
 
 async def deliver_digest(db, digest: dict):
-    """Create in-app notification with the digest content."""
+    """Create in-app notification + email digest to all admins with email prefs on."""
     now = datetime.now(timezone.utc).isoformat()
 
     # Build clean message body
@@ -144,6 +144,46 @@ async def deliver_digest(db, digest: dict):
         "digest_data": digest,
         "created_at": now,
     })
+
+    # Email (best-effort) — only if Resend is configured and the weekly_operations_digest event isn't system-off
+    try:
+        import os
+        api_key = os.getenv("RESEND_API_KEY")
+        from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
+        if not api_key:
+            return
+        cfg = await db.system_notification_config.find_one({"event_key": "weekly_operations_digest"}, {"_id": 0})
+        if cfg and cfg.get("email_enabled") is False:
+            logger.info("Weekly digest email suppressed by system config")
+            return
+
+        admins = await db.users.find({"role": "admin", "email": {"$exists": True, "$ne": ""}}, {"_id": 0, "email": 1, "full_name": 1}).to_list(50)
+        if not admins:
+            return
+
+        html = f"""
+        <div style='font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px'>
+          <h2 style='color:#20364D'>Konekt — Weekly Operations Digest</h2>
+          <p style='color:#475569;font-size:13px'>{digest['period']}</p>
+          <pre style='white-space:pre-wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;font-family:ui-monospace,monospace;font-size:12px;color:#1f2937'>{body}</pre>
+          <p style='color:#94a3b8;font-size:11px'>Generated automatically · view the full dashboard at <a href='https://konekt.co.tz/admin'>konekt.co.tz/admin</a></p>
+        </div>
+        """
+        import resend
+        import asyncio
+        resend.api_key = api_key
+        for admin in admins:
+            try:
+                await asyncio.to_thread(
+                    resend.Emails.send,
+                    {"from": from_email, "to": [admin["email"]],
+                     "subject": f"Konekt weekly digest — {digest['period']}", "html": html},
+                )
+            except Exception as mail_err:
+                logger.warning("Digest email to %s failed: %s", admin.get("email"), mail_err)
+    except Exception as e:
+        logger.error("Digest email section failed: %s", e)
+
     logger.info(f"Weekly digest delivered for period {digest['period']}")
 
 
