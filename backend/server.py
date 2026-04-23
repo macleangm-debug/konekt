@@ -2760,6 +2760,9 @@ app.include_router(url_catalog_import_router)
 from seo_sitemap_routes import router as seo_sitemap_router
 app.include_router(seo_sitemap_router)
 
+from admin_promotions_routes import router as admin_promotions_router, expire_due_promotions
+app.include_router(admin_promotions_router)
+
 from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
 app.include_router(vendor_payables_admin_router)
 app.include_router(vendor_payables_vendor_router)

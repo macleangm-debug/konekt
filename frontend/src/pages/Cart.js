@@ -218,6 +218,16 @@ export default function Cart() {
                       <div className="text-xs text-muted-foreground">
                         TZS {item.unit_price.toLocaleString()} each
                       </div>
+                      {item.original_unit_price && item.original_unit_price > item.unit_price && (
+                        <>
+                          <div className="text-xs text-muted-foreground line-through mt-0.5" data-testid={`cart-item-${item.id}-original`}>
+                            TZS {item.original_unit_price.toLocaleString()}
+                          </div>
+                          <div className="text-[11px] font-bold text-red-600 mt-0.5" data-testid={`cart-item-${item.id}-savings`}>
+                            Save TZS {((item.original_unit_price - item.unit_price) * item.quantity).toLocaleString()}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 ))}

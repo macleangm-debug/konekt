@@ -29,6 +29,84 @@ export default function ProductDetail() {
     fetchProduct();
   }, [productId]);
 
+  // Dynamic SEO meta + JSON-LD for Google Shopping free visibility
+  useEffect(() => {
+    if (!product) return;
+    const price = Number(product.customer_price || product.base_price || 0);
+    const orig = Number(product.original_price || product.compare_at_price || 0);
+    const hasPromo = orig > price && price > 0;
+    const siteUrl = "https://konekt.co.tz";
+    const url = `${siteUrl}/product/${product.id}`;
+    const title = `${product.name} | Konekt ${product.branch || "Marketplace"}`;
+    const desc = (product.description || "").slice(0, 155) || `Buy ${product.name} on Konekt Tanzania. In stock, ready to ship.`;
+    const img = product.image_url?.startsWith("http") ? product.image_url : `${siteUrl}${product.image_url || ""}`;
+
+    document.title = title;
+    const setTag = (attr, key, val) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, key); document.head.appendChild(el); }
+      el.setAttribute("content", val);
+    };
+    // Standard + Open Graph + Twitter
+    setTag("name", "description", desc);
+    setTag("property", "og:type", "product");
+    setTag("property", "og:url", url);
+    setTag("property", "og:title", title);
+    setTag("property", "og:description", desc);
+    setTag("property", "og:image", img);
+    setTag("property", "product:price:amount", String(price));
+    setTag("property", "product:price:currency", "TZS");
+    setTag("property", "product:availability", "in stock");
+    setTag("name", "twitter:card", "summary_large_image");
+    setTag("name", "twitter:title", title);
+    setTag("name", "twitter:description", desc);
+    setTag("name", "twitter:image", img);
+
+    // JSON-LD Product schema (Google Merchant Center free listings + rich results)
+    const ld = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      name: product.name,
+      description: product.description || desc,
+      image: img,
+      sku: product.sku || product.id,
+      brand: { "@type": "Brand", name: product.brand || product.partner_name || "Konekt" },
+      category: [product.branch, product.category].filter(Boolean).join(" > "),
+      offers: {
+        "@type": "Offer",
+        url,
+        priceCurrency: "TZS",
+        price: price,
+        priceValidUntil: (new Date(Date.now() + 90 * 86400000)).toISOString().slice(0, 10),
+        availability: "https://schema.org/InStock",
+        itemCondition: "https://schema.org/NewCondition",
+        seller: { "@type": "Organization", name: "Konekt Tanzania" },
+      },
+    };
+    if (hasPromo) {
+      ld.offers.priceSpecification = {
+        "@type": "UnitPriceSpecification",
+        price: price,
+        priceCurrency: "TZS",
+        referencePrice: { "@type": "PriceSpecification", price: orig, priceCurrency: "TZS" },
+      };
+    }
+    let ldEl = document.getElementById("jsonld-product");
+    if (!ldEl) { ldEl = document.createElement("script"); ldEl.type = "application/ld+json"; ldEl.id = "jsonld-product"; document.head.appendChild(ldEl); }
+    ldEl.textContent = JSON.stringify(ld);
+
+    // Canonical URL
+    let canon = document.querySelector('link[rel="canonical"]');
+    if (!canon) { canon = document.createElement("link"); canon.setAttribute("rel", "canonical"); document.head.appendChild(canon); }
+    canon.setAttribute("href", url);
+
+    return () => {
+      // Clean up JSON-LD when leaving the detail page so it doesn't bleed to other routes
+      const el = document.getElementById("jsonld-product");
+      if (el) el.remove();
+    };
+  }, [product]);
+
   const fetchProduct = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/products/${productId}`);
@@ -53,6 +131,8 @@ export default function ProductDetail() {
     
     setAddingToCart(true);
     
+    const livePrice = Number(product.customer_price || product.base_price || 0);
+    const origPrice = Number(product.original_price || product.compare_at_price || 0);
     const item = {
       product_id: product.id,
       product_name: product.name,
@@ -62,8 +142,9 @@ export default function ProductDetail() {
       print_method: 'Pre-designed',
       logo_url: null,
       logo_position: null,
-      unit_price: product.base_price,
-      subtotal: product.base_price * quantity,
+      unit_price: livePrice,
+      original_unit_price: origPrice > livePrice ? origPrice : null,
+      subtotal: livePrice * quantity,
       customization_data: {
         colorHex: selectedColor?.hex,
         isKonektSeries: true
@@ -172,7 +253,6 @@ export default function ProductDetail() {
               const price = Number(product.customer_price || product.base_price || 0);
               const orig = Number(product.original_price || product.compare_at_price || 0);
               const hasPromo = orig > price && price > 0;
-              const off = hasPromo ? Math.round(100 * (orig - price) / orig) : 0;
               const save = hasPromo ? orig - price : 0;
               return (
                 <div className="p-6 bg-gradient-to-r from-primary/5 to-secondary/10 rounded-2xl" data-testid="detail-price-block">
@@ -184,14 +264,9 @@ export default function ProductDetail() {
                       TZS {price.toLocaleString()}
                     </p>
                     {hasPromo && (
-                      <>
-                        <span className="text-lg text-muted-foreground line-through" data-testid="detail-price-original">
-                          TZS {orig.toLocaleString()}
-                        </span>
-                        <span className="text-xs font-bold bg-red-600 text-white px-2 py-1 rounded-full" data-testid="detail-price-off-pill">
-                          -{off}%
-                        </span>
-                      </>
+                      <span className="text-lg text-muted-foreground line-through" data-testid="detail-price-original">
+                        TZS {orig.toLocaleString()}
+                      </span>
                     )}
                   </div>
                   {hasPromo && (
@@ -288,33 +363,47 @@ export default function ProductDetail() {
             </div>
 
             {/* Total */}
-            <div className="border-t border-border pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg">Total:</span>
-                <span className="text-2xl font-bold text-primary">
-                  TZS {(product.base_price * quantity).toLocaleString()}
-                </span>
-              </div>
-              
-              <Button 
-                onClick={handleAddToCart}
-                disabled={addingToCart}
-                className="w-full btn-gamified text-lg py-6"
-                data-testid="add-to-cart-btn"
-              >
-                {addingToCart ? (
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                ) : (
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                )}
-                {addingToCart ? 'Adding...' : 'Add to Cart'}
-              </Button>
-              
-              <p className="text-xs text-center text-muted-foreground mt-4">
-                <Package className="w-4 h-4 inline mr-1" />
-                Ships within 2-3 business days
-              </p>
-            </div>
+            {(() => {
+              const livePrice = Number(product.customer_price || product.base_price || 0);
+              const origPrice = Number(product.original_price || product.compare_at_price || 0);
+              const hasPromo = origPrice > livePrice && livePrice > 0;
+              const totalSavings = hasPromo ? (origPrice - livePrice) * quantity : 0;
+              return (
+                <div className="border-t border-border pt-6">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-lg">Total:</span>
+                    <span className="text-2xl font-bold text-primary">
+                      TZS {(livePrice * quantity).toLocaleString()}
+                    </span>
+                  </div>
+                  {hasPromo && (
+                    <div className="flex items-center justify-between mb-4 text-sm text-red-600 font-semibold" data-testid="detail-total-savings">
+                      <span>Your savings:</span>
+                      <span>TZS {totalSavings.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {!hasPromo && <div className="mb-4" />}
+                  <Button 
+                    onClick={handleAddToCart}
+                    disabled={addingToCart}
+                    className="w-full btn-gamified text-lg py-6"
+                    data-testid="add-to-cart-btn"
+                  >
+                    {addingToCart ? (
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                    )}
+                    {addingToCart ? 'Adding...' : 'Add to Cart'}
+                  </Button>
+                  
+                  <p className="text-xs text-center text-muted-foreground mt-4">
+                    <Package className="w-4 h-4 inline mr-1" />
+                    Ships within 2-3 business days
+                  </p>
+                </div>
+              );
+            })()}
           </motion.div>
         </div>
       </div>

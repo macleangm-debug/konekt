@@ -373,11 +373,11 @@ export default function Products() {
                         const price = Number(product.customer_price || product.base_price || 0);
                         const orig = Number(product.original_price || product.compare_at_price || 0);
                         if (orig > price && price > 0) {
-                          const off = Math.round(100 * (orig - price) / orig);
+                          const save = orig - price;
                           return (
                             <div className="absolute top-3 right-3" data-testid="product-discount-badge">
-                              <div className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
-                                -{off}%
+                              <div className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow">
+                                Save TZS {save.toLocaleString()}
                               </div>
                             </div>
                           );
@@ -389,9 +389,9 @@ export default function Products() {
                     {/* Product Info */}
                     <div className="p-4">
                       {/* Title on its own line — full width, no cramping */}
-                      <h3 className="font-bold text-lg mb-1 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                      <h3 className="font-bold text-base mb-1 line-clamp-2 min-h-[3rem] leading-tight">{product.name}</h3>
                       {/* Sub-category chip */}
-                      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                      <div className="flex flex-wrap items-center gap-1.5 mb-2 min-h-[1.25rem]">
                         {product.category && product.branch && (
                           <Badge variant="outline" className="text-[10px] font-normal py-0 px-2">
                             {product.category}
@@ -404,35 +404,38 @@ export default function Products() {
                         )}
                       </div>
 
-                      {/* === PRICE BLOCK === */}
+                      {/* === PRICE BLOCK (fixed height so all cards align) === */}
                       {(() => {
                         const price = Number(product.customer_price || product.base_price || 0);
                         const orig = Number(product.original_price || product.compare_at_price || 0);
                         const hasPromo = orig > price && price > 0;
-                        const off = hasPromo ? Math.round(100 * (orig - price) / orig) : 0;
                         const save = hasPromo ? orig - price : 0;
                         return (
-                          <div className="mb-3 flex items-baseline gap-2 flex-wrap" data-testid="product-price-block">
-                            {!isKonektSeries && (
-                              <span className="text-[11px] text-muted-foreground uppercase tracking-wide mr-0.5">From</span>
-                            )}
-                            <span className="text-2xl font-extrabold text-primary leading-none">
-                              TZS {price.toLocaleString()}
-                            </span>
-                            {hasPromo && (
-                              <>
+                          <div className="mb-2 min-h-[3.25rem]" data-testid="product-price-block">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              {!isKonektSeries && (
+                                <span className="text-[11px] text-muted-foreground uppercase tracking-wide mr-0.5">From</span>
+                              )}
+                              <span className="text-2xl font-extrabold text-primary leading-none">
+                                TZS {price.toLocaleString()}
+                              </span>
+                              {hasPromo && (
                                 <span className="text-sm text-muted-foreground line-through" data-testid="product-price-original">
                                   TZS {orig.toLocaleString()}
                                 </span>
-                                <span className="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded" data-testid="product-price-savings">
-                                  Save TZS {save.toLocaleString()} ({off}%)
-                                </span>
-                              </>
+                              )}
+                            </div>
+                            {hasPromo ? (
+                              <div className="mt-1 text-[11px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded inline-block" data-testid="product-price-savings">
+                                Save TZS {save.toLocaleString()}
+                              </div>
+                            ) : (
+                              <div className="mt-1 h-[1.25rem]" />
                             )}
                           </div>
                         );
                       })()}
-                      <p className="text-sm text-muted-foreground line-clamp-1 mb-3">{product.description || "\u00A0"}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description || "\u00A0"}</p>
                       
                       {/* Colors Preview */}
                       {product.colors && product.colors.length > 0 && (

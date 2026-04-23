@@ -271,6 +271,7 @@ import NavigationAuditPage from "@/pages/system/NavigationAuditPage";
 import AdminSettingsHubPage from "@/pages/admin/AdminSettingsHubPage";
 import DiscountAnalyticsPage from "@/pages/admin/DiscountAnalyticsPage";
 import AdminPromotionsPage from "@/pages/admin/AdminPromotionsPage";
+import AdminBulkDiscountsPage from "@/pages/admin/AdminBulkDiscountsPage";
 
 // Admin Control Center
 import AdminControlCenterPage from "@/pages/admin/AdminControlCenterPage";
@@ -815,6 +816,7 @@ function App() {
           <Route path="settings-hub" element={<AdminSettingsHubPage />} />
           {/* Admin Promotions */}
           <Route path="promotions-manager" element={<AdminPromotionsPage />} />
+          <Route path="bulk-discounts" element={<AdminBulkDiscountsPage />} />
           {/* Discount Analytics */}
           <Route path="discount-analytics" element={<DiscountAnalyticsPage />} />
           {/* Admin Control Center */}
