@@ -265,6 +265,9 @@ async def commit_import(
                 unit = _clean_cell(row.get(column_map.get("unit"), "")) or "piece"
                 description = _clean_cell(row.get(column_map.get("description"), ""))
                 brand = _clean_cell(row.get(column_map.get("brand"), ""))
+                # Image priority: locally-downloaded copy (from URL import) > remote URL
+                image_url = _clean_cell(row.get("image_local", "")) or _clean_cell(row.get(column_map.get("image_url"), "")) or _clean_cell(row.get("image_url", ""))
+                source_url = _clean_cell(row.get("source_url", ""))
 
                 # De-dupe: for partner catalog we key on (partner_id + vendor_sku) or (partner_id + name)
                 existing = None
@@ -304,6 +307,8 @@ async def commit_import(
                     "vendor_sku": vendor_sku_raw if vendor_sku_raw and vendor_sku_raw != konekt_sku else (existing or {}).get("vendor_sku", ""),
                     "country_code": country_code,
                     "unit": unit,
+                    "image_url": image_url or (existing or {}).get("image_url", ""),
+                    "source_url": source_url or (existing or {}).get("source_url", ""),
                     "updated_at": now,
                 }
 

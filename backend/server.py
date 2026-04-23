@@ -2743,6 +2743,12 @@ app.include_router(impersonation_router)
 from notification_system_control_routes import router as notification_system_router
 app.include_router(notification_system_router)
 
+from catalog_maintenance_routes import router as catalog_maintenance_router
+app.include_router(catalog_maintenance_router)
+
+from url_catalog_import_routes import router as url_catalog_import_router
+app.include_router(url_catalog_import_router)
+
 from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
 app.include_router(vendor_payables_admin_router)
 app.include_router(vendor_payables_vendor_router)
