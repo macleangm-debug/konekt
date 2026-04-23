@@ -368,17 +368,29 @@ export default function Products() {
                           {product.branch || product.category}
                         </Badge>
                       </div>
+                      {/* Discount badge (only when there is a real promo) */}
+                      {(() => {
+                        const price = Number(product.customer_price || product.base_price || 0);
+                        const orig = Number(product.original_price || product.compare_at_price || 0);
+                        if (orig > price && price > 0) {
+                          const off = Math.round(100 * (orig - price) / orig);
+                          return (
+                            <div className="absolute top-3 right-3" data-testid="product-discount-badge">
+                              <div className="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
+                                -{off}%
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                     
                     {/* Product Info */}
                     <div className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="font-bold text-lg line-clamp-1 flex-1">{product.name}</h3>
-                        <div className="text-xs font-bold text-primary whitespace-nowrap">
-                          {isKonektSeries ? '' : 'From '}TZS {(product.base_price || 0).toLocaleString()}
-                        </div>
-                      </div>
-                      {/* Sub-category + exclusive badges now sit under the title, not over the image */}
+                      {/* Title on its own line — full width, no cramping */}
+                      <h3 className="font-bold text-lg mb-1 line-clamp-2 min-h-[3.5rem]">{product.name}</h3>
+                      {/* Sub-category chip */}
                       <div className="flex flex-wrap items-center gap-1.5 mb-3">
                         {product.category && product.branch && (
                           <Badge variant="outline" className="text-[10px] font-normal py-0 px-2">
@@ -391,7 +403,36 @@ export default function Products() {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.description}</p>
+
+                      {/* === PRICE BLOCK === */}
+                      {(() => {
+                        const price = Number(product.customer_price || product.base_price || 0);
+                        const orig = Number(product.original_price || product.compare_at_price || 0);
+                        const hasPromo = orig > price && price > 0;
+                        const off = hasPromo ? Math.round(100 * (orig - price) / orig) : 0;
+                        const save = hasPromo ? orig - price : 0;
+                        return (
+                          <div className="mb-3 flex items-baseline gap-2 flex-wrap" data-testid="product-price-block">
+                            {!isKonektSeries && (
+                              <span className="text-[11px] text-muted-foreground uppercase tracking-wide mr-0.5">From</span>
+                            )}
+                            <span className="text-2xl font-extrabold text-primary leading-none">
+                              TZS {price.toLocaleString()}
+                            </span>
+                            {hasPromo && (
+                              <>
+                                <span className="text-sm text-muted-foreground line-through" data-testid="product-price-original">
+                                  TZS {orig.toLocaleString()}
+                                </span>
+                                <span className="text-[10px] font-bold bg-red-50 text-red-600 px-1.5 py-0.5 rounded" data-testid="product-price-savings">
+                                  Save TZS {save.toLocaleString()} ({off}%)
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      <p className="text-sm text-muted-foreground line-clamp-1 mb-3">{product.description || "\u00A0"}</p>
                       
                       {/* Colors Preview */}
                       {product.colors && product.colors.length > 0 && (

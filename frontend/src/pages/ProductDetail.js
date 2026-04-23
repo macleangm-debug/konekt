@@ -168,16 +168,44 @@ export default function ProductDetail() {
             </div>
 
             {/* Price */}
-            <div className="p-6 bg-gradient-to-r from-primary/5 to-secondary/10 rounded-2xl">
-              <p className="text-sm text-muted-foreground mb-1">Price</p>
-              <p className="text-4xl font-bold text-primary">
-                TZS {product.base_price.toLocaleString()}
-              </p>
-              <p className="text-sm text-secondary mt-2">
-                <Check className="w-4 h-4 inline mr-1" />
-                In Stock • Ready to Ship
-              </p>
-            </div>
+            {(() => {
+              const price = Number(product.customer_price || product.base_price || 0);
+              const orig = Number(product.original_price || product.compare_at_price || 0);
+              const hasPromo = orig > price && price > 0;
+              const off = hasPromo ? Math.round(100 * (orig - price) / orig) : 0;
+              const save = hasPromo ? orig - price : 0;
+              return (
+                <div className="p-6 bg-gradient-to-r from-primary/5 to-secondary/10 rounded-2xl" data-testid="detail-price-block">
+                  <p className="text-sm text-muted-foreground mb-1">
+                    {hasPromo ? "Promo price" : "Price"}
+                  </p>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <p className="text-4xl font-bold text-primary">
+                      TZS {price.toLocaleString()}
+                    </p>
+                    {hasPromo && (
+                      <>
+                        <span className="text-lg text-muted-foreground line-through" data-testid="detail-price-original">
+                          TZS {orig.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-bold bg-red-600 text-white px-2 py-1 rounded-full" data-testid="detail-price-off-pill">
+                          -{off}%
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  {hasPromo && (
+                    <p className="text-sm text-red-600 font-semibold mt-2" data-testid="detail-price-savings">
+                      You save TZS {save.toLocaleString()} today
+                    </p>
+                  )}
+                  <p className="text-sm text-secondary mt-2">
+                    <Check className="w-4 h-4 inline mr-1" />
+                    In Stock • Ready to Ship
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* Color Selection */}
             {product.colors && product.colors.length > 0 && (
