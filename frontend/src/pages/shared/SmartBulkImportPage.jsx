@@ -460,11 +460,29 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
           </div>
           {result.errors?.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4" data-testid="error-list">
-              <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 mb-2"><AlertCircle className="w-4 h-4" /> {result.errors.length} rows had issues (showing first 50)</div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                  <AlertCircle className="w-4 h-4" /> {result.errors.length} rows had issues
+                </div>
+                {preview?.session_id && (
+                  <a
+                    href={`${process.env.REACT_APP_BACKEND_URL}/api/smart-import/failed-rows/${preview.session_id}.xlsx`}
+                    download
+                    data-testid="download-failed-rows"
+                  >
+                    <Button size="sm" variant="outline" className="text-amber-900 border-amber-300">
+                      Download failed rows (Excel)
+                    </Button>
+                  </a>
+                )}
+              </div>
               <div className="max-h-60 overflow-y-auto text-xs space-y-1 font-mono">
                 {result.errors.slice(0, 50).map((e, i) => (
                   <div key={i} className="text-amber-900">Row {e.row}: {e.reason}</div>
                 ))}
+              </div>
+              <div className="text-[11px] text-amber-900/80 mt-2">
+                Download the Excel above, fix the failed rows, then re-upload the file — only those rows will be processed again.
               </div>
             </div>
           )}

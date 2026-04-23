@@ -135,7 +135,16 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 81. **Impersonation banner** — full-width yellow banner with "Return to Admin" button (ends audit session via `POST /api/admin/impersonation-log/{audit_id}/end`); restores admin token from `admin_token_backup_v2`.  Handles both legacy admin-user and new partner impersonation.
 82. **Impersonation Log page** — `/admin/impersonation-log` with total/active/unique-impersonator stats + search + duration calc.
 83. **Ops Onboarding modal** — 3-step walkthrough (Daily Queue · Payables · Impersonation) with progress dots, CTA per step (opens relevant page), skip/back/next/finish.  Auto-opens once for admin/ops on first login, dismissed via localStorage.  Reopenable any time from the `HelpCircle` icon in the admin top bar.
-84. **Backend tests — 75/75 green total** across Sessions 3A + 3B + 4.  Files: `test_session_3a.py`, `test_session_3a_extended.py`, `test_session_3b.py`, `test_session_4.py`, `test_session_4_extended.py`.
+
+### P2 Backlog Cleanup — Session 5 (Apr 23, 2026)
+84. **Settings Hub → System-wide Notification Control** (`SystemNotificationControlPanel`) — grouped event catalog × 3 channels (in-app / email / WhatsApp).  Admin can globally toggle every event's channel, with group-level bulk on/off.  Lives inside both Notifications tab + Email Triggers tab.  Backed by `db.system_notification_config` (one doc per `event_key`); `dispatch_notification` honours it on top of per-user preferences (AND gate).
+85. **Resend diagnostics** — `/api/admin/notification-system/resend-status` + `resend-test` endpoint; UI shows "Configured / Default domain / Not configured" with an "advice" copy and a 1-click "Send test email" box.  Production-live Resend is **configured** but currently sends from `onboarding@resend.dev` (Resend default sandbox domain).  Advised to verify `konekt.co.tz` in Resend dashboard and switch `RESEND_FROM_EMAIL=notifications@konekt.co.tz` before scaling.
+86. **Agreement version bump** — admin can bump `AGREEMENT_VERSION` (persisted in `admin_settings`) which re-blocks every vendor until they re-sign.  New "Bump contract version" modal on `/admin/vendor-agreements`.
+87. **Signed-agreement email** — Resend email with the signed PDF attached is dispatched to the signatory at sign time (best-effort, failures logged, do not block the sign response).
+88. **Smart Import: download failed rows** — `/api/smart-import/failed-rows/{session_id}.xlsx` returns an Excel of every failed row + the original columns + a "Failure reason" column, ready to be fixed and re-uploaded.  Button on the Smart Import result screen.
+89. **QR codes wired into admin UI** — `QrCodeButton` now surfaces on: Group Deals drawer, Admin Promotions table, Admin Content Studio item card (auto-kind by item type), Partner Catalog card.
+90. **Wiring audit** — 37/37 admin nav links and 22/22 partner nav links resolve to a defined route in App.js (confirmed by a small static checker).
+91. **Backend tests — 85/85 green** across Sessions 3A + 3B + 4 + 5.  Added `/app/backend/tests/test_session_5.py` (10 tests: notification system config, Resend diagnostics, agreement bump, failed-rows auth/404).
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`

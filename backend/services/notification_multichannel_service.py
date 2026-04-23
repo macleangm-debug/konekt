@@ -116,6 +116,18 @@ def _get_channel_prefs(preferences: dict, event_key: str, role: str) -> dict:
     return defaults.get(event_key, {"in_app": True, "email": False, "whatsapp": False})
 
 
+async def get_system_config(db, event_key: str) -> dict:
+    """Return system-wide enable/disable for an event.  Default: both channels ON."""
+    doc = await db.system_notification_config.find_one({"event_key": event_key}, {"_id": 0})
+    if not doc:
+        return {"in_app_enabled": True, "email_enabled": True, "whatsapp_enabled": True}
+    return {
+        "in_app_enabled": doc.get("in_app_enabled", True),
+        "email_enabled": doc.get("email_enabled", True),
+        "whatsapp_enabled": doc.get("whatsapp_enabled", True),
+    }
+
+
 async def dispatch_notification(
     db,
     event_key: str,
@@ -131,16 +143,19 @@ async def dispatch_notification(
 ):
     """
     Multi-channel notification dispatcher.
-    Checks user preferences, sends via enabled channels.
+    Honors BOTH: system-wide admin config AND per-user preferences (AND gate).
     """
-    # Get user preferences
+    # System-level kill-switch per channel
+    sys_cfg = await get_system_config(db, event_key)
+
+    # Per-user preferences
     prefs = await get_user_preferences(db, recipient_user_id or "", recipient_role or "customer")
     channel_prefs = _get_channel_prefs(prefs, event_key, recipient_role or "customer")
 
     results = {"event": event_key, "channels": {}}
 
     # 1. In-app notification
-    if channel_prefs.get("in_app", True):
+    if channel_prefs.get("in_app", True) and sys_cfg["in_app_enabled"]:
         try:
             from services.in_app_notification_service import create_in_app_notification
             await create_in_app_notification(
@@ -157,9 +172,11 @@ async def dispatch_notification(
         except Exception as e:
             logger.error("In-app notification failed: %s", str(e))
             results["channels"]["in_app"] = f"failed: {str(e)}"
+    elif not sys_cfg["in_app_enabled"]:
+        results["channels"]["in_app"] = "blocked_by_system"
 
     # 2. Email via Resend
-    if channel_prefs.get("email", False):
+    if channel_prefs.get("email", False) and sys_cfg["email_enabled"]:
         try:
             email_result = await _send_email_notification(
                 db, recipient_user_id, title, message, target_url, cta_label
@@ -168,9 +185,11 @@ async def dispatch_notification(
         except Exception as e:
             logger.error("Email notification failed: %s", str(e))
             results["channels"]["email"] = f"failed: {str(e)}"
+    elif not sys_cfg["email_enabled"]:
+        results["channels"]["email"] = "blocked_by_system"
 
     # 3. WhatsApp via Twilio
-    if channel_prefs.get("whatsapp", False):
+    if channel_prefs.get("whatsapp", False) and sys_cfg["whatsapp_enabled"]:
         try:
             wa_result = await _send_whatsapp_notification(
                 db, recipient_user_id, message, target_url
@@ -179,6 +198,8 @@ async def dispatch_notification(
         except Exception as e:
             logger.error("WhatsApp notification failed: %s", str(e))
             results["channels"]["whatsapp"] = f"failed: {str(e)}"
+    elif not sys_cfg["whatsapp_enabled"]:
+        results["channels"]["whatsapp"] = "blocked_by_system"
 
     # Log dispatch
     await _log_dispatch(db, event_key, recipient_user_id, recipient_role, results)

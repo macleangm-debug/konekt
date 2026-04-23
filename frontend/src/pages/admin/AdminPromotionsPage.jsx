@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Plus, Search, Tag, Percent, DollarSign, Calendar, Users, Layers, Trash2, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, X, Loader2, ChevronRight } from "lucide-react";
 import api from "@/lib/api";
+import QrCodeButton from "@/components/common/QrCodeButton";
 import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 
@@ -210,6 +211,7 @@ export default function AdminPromotionsPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <QrCodeButton kind="promo_campaign" id={p.id} label="QR" />
                       <button onClick={() => openEdit(p)} className="text-slate-400 hover:text-[#20364D] p-1 transition-colors" data-testid={`edit-promo-${p.id}`}>
                         <ChevronRight className="w-4 h-4" />
                       </button>

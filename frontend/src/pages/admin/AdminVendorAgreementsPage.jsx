@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { ShieldCheck, CheckCircle2, FileText, Download, AlertCircle, Loader2 } from "lucide-react";
+import { ShieldCheck, CheckCircle2, FileText, Download, AlertCircle, Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -12,6 +12,10 @@ export default function AdminVendorAgreementsPage() {
   const [docs, setDocs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const [showBumpModal, setShowBumpModal] = useState(false);
+  const [newVersion, setNewVersion] = useState("");
+  const [bumpReason, setBumpReason] = useState("");
+  const [bumping, setBumping] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -33,6 +37,23 @@ export default function AdminVendorAgreementsPage() {
     !q || [d.vendor_display_name, d.signatory_name, d.signatory_email].some((f) => (f || "").toLowerCase().includes(q.toLowerCase()))
   );
 
+  const bumpVersion = async () => {
+    if (!newVersion.trim()) { toast.error("Enter a new version (e.g. 1.1)"); return; }
+    if (!window.confirm(`Bump to v${newVersion}? Every vendor will be blocked from the portal until they re-sign. This cannot be undone.`)) return;
+    setBumping(true);
+    try {
+      await api.post("/api/admin/vendor-agreements/bump-version", { new_version: newVersion, reason: bumpReason });
+      toast.success(`Bumped to v${newVersion}. Vendors will re-sign on next login.`);
+      setShowBumpModal(false);
+      setNewVersion("");
+      setBumpReason("");
+      await load();
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to bump version");
+    }
+    setBumping(false);
+  };
+
   return (
     <div className="p-6 space-y-6" data-testid="admin-vendor-agreements-page">
       <div className="flex items-start justify-between">
@@ -40,6 +61,9 @@ export default function AdminVendorAgreementsPage() {
           <h1 className="text-2xl font-bold text-[#20364D]">Vendor Supply Agreements</h1>
           <p className="text-sm text-slate-500 mt-1">Track which vendors have signed the current contract version.</p>
         </div>
+        <Button variant="outline" onClick={() => setShowBumpModal(true)} data-testid="bump-version-btn">
+          <RefreshCcw className="w-4 h-4 mr-2" /> Bump contract version
+        </Button>
       </div>
 
       {stats && (
@@ -117,6 +141,30 @@ export default function AdminVendorAgreementsPage() {
           </table>
         )}
       </div>
+
+      {showBumpModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" data-testid="bump-version-modal">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0"><AlertTriangle className="w-5 h-5" /></div>
+              <div>
+                <h3 className="text-lg font-bold text-[#20364D]">Bump contract version</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Current: <b>v{stats?.current_version}</b>. All vendors will be blocked until they re-sign.</p>
+              </div>
+            </div>
+            <label className="text-xs font-semibold text-slate-600">New version</label>
+            <Input value={newVersion} onChange={(e) => setNewVersion(e.target.value)} placeholder="e.g. 1.1" className="mb-3" data-testid="new-version-input" />
+            <label className="text-xs font-semibold text-slate-600">Reason for the update (internal)</label>
+            <Input value={bumpReason} onChange={(e) => setBumpReason(e.target.value)} placeholder="e.g. Added new payment-terms clause" className="mb-4" data-testid="bump-reason-input" />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setShowBumpModal(false)} disabled={bumping}>Cancel</Button>
+              <Button onClick={bumpVersion} disabled={bumping || !newVersion.trim()} className="bg-amber-600 hover:bg-amber-700" data-testid="bump-confirm">
+                {bumping ? "Bumping…" : "Bump version"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

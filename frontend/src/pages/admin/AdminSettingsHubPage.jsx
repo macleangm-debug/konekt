@@ -11,6 +11,7 @@ import CustomerActivityRulesCard from "../../components/admin/settings/CustomerA
 import SettingsPreviewPanel from "../../components/admin/settings/SettingsPreviewPanel";
 import NotificationPreferencesSection from "../../components/shared/NotificationPreferencesSection";
 import ReportScheduleSection from "../../components/admin/settings/ReportScheduleSection";
+import SystemNotificationControlPanel from "../../components/admin/settings/SystemNotificationControlPanel";
 import SettingsLockGate from "../../components/admin/SettingsLockGate";
 
 import { toast } from "sonner";
@@ -790,7 +791,10 @@ function NotificationsTab({ state, setState }) {
   const ai = state.ai_assistant || {};
   return (
     <>
-      <SettingsSectionCard title="System-Wide Notifications" description="Choose which parties receive default notifications.">
+      <SettingsSectionCard title="In-App Notification & Email Channels" description="Global kill-switches for every event type, grouped by category. Turning a channel off here disables it for every user.">
+        <SystemNotificationControlPanel />
+      </SettingsSectionCard>
+      <SettingsSectionCard title="Role-Level Notifications" description="High-level role gates layered on top of the per-event channels above.">
         <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4">
           <SettingsToggleField label="Customer" checked={n.customer_notifications_enabled} onChange={(v) => setState(U(state, "notifications", "customer_notifications_enabled", v))} />
           <SettingsToggleField label="Sales" checked={n.sales_notifications_enabled} onChange={(v) => setState(U(state, "notifications", "sales_notifications_enabled", v))} />
@@ -831,7 +835,11 @@ function EmailTriggersTab({ state, setState }) {
 
   return (
     <>
-      <SettingsSectionCard title="Email Notification Triggers" description="Enable or disable specific email notifications. Each toggle controls whether that email type is sent.">
+      <SettingsSectionCard title="Event Email Kill-Switches" description="Global toggles for every event type's email channel, grouped by category. Shared with the Notifications tab — whichever channel you flip affects both.">
+        <SystemNotificationControlPanel />
+      </SettingsSectionCard>
+
+      <SettingsSectionCard title="Transactional Email Triggers (legacy)" description="Enable or disable specific email notifications. Each toggle controls whether that email type is sent.">
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           <SettingsToggleField label="Payment Submitted" checked={e.payment_submitted} onChange={(v) => setState(U(state, "email_triggers", "payment_submitted", v))} />
           <SettingsToggleField label="Payment Approved" checked={e.payment_approved} onChange={(v) => setState(U(state, "email_triggers", "payment_approved", v))} />

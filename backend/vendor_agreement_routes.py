@@ -37,6 +37,18 @@ AGREEMENT_DIR = Path("/app/uploads/vendor_agreements")
 AGREEMENT_DIR.mkdir(parents=True, exist_ok=True)
 
 
+async def _load_persisted_version():
+    """On startup, try to load the persisted version from admin_settings."""
+    global AGREEMENT_VERSION
+    try:
+        row = await db.admin_settings.find_one({"key": "vendor_agreement_version"}, {"_id": 0})
+        if row and row.get("value"):
+            AGREEMENT_VERSION = str(row["value"])
+            AGREEMENT_TEMPLATE["version"] = AGREEMENT_VERSION
+    except Exception:
+        pass
+
+
 # ───────────────────────────── Template ─────────────────────────────
 
 AGREEMENT_TEMPLATE = {
@@ -339,6 +351,42 @@ async def sign_agreement(payload: SignPayload, request: Request, authorization: 
         "created_at": now.isoformat(),
     })
 
+    # Email the signed PDF to the signatory (best-effort)
+    try:
+        import resend
+        import asyncio as _asyncio
+        api_key = os.getenv("RESEND_API_KEY")
+        from_email = os.getenv("RESEND_FROM_EMAIL") or "onboarding@resend.dev"
+        if api_key and data["signatory_email"]:
+            import base64
+            resend.api_key = api_key
+            with open(pdf_path, "rb") as fh:
+                pdf_b64 = base64.b64encode(fh.read()).decode("utf-8")
+            html = f"""
+            <div style='font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px'>
+              <h2 style='color:#20364D;margin:0 0 8px'>Your Konekt Supply Agreement</h2>
+              <p style='color:#475569;font-size:14px'>Hi {data['signatory_name']},</p>
+              <p style='color:#475569;font-size:14px;line-height:1.6'>Thank you for signing the Konekt Vendor Supply Agreement (v{AGREEMENT_VERSION}). A copy is attached for your records and also available from your Documents tab in the Konekt portal.</p>
+              <p style='color:#94a3b8;font-size:11px;margin-top:20px'>Signed at {data['signed_at']} UTC · Agreement ID {data['id']}</p>
+            </div>
+            """
+            await _asyncio.to_thread(
+                resend.Emails.send,
+                {
+                    "from": from_email,
+                    "to": [data["signatory_email"]],
+                    "subject": f"Your signed Konekt Supply Agreement (v{AGREEMENT_VERSION})",
+                    "html": html,
+                    "attachments": [{
+                        "filename": f"konekt-supply-agreement-v{AGREEMENT_VERSION}.pdf",
+                        "content": pdf_b64,
+                    }],
+                },
+            )
+    except Exception as _email_err:
+        import logging as _lg
+        _lg.getLogger("vendor_agreement").warning("Signed-agreement email failed: %s", _email_err)
+
     return {"ok": True, "id": doc_id, "pdf_url": pdf_url}
 
 
@@ -423,3 +471,31 @@ async def admin_agreement_stats():
         "current_version": AGREEMENT_VERSION,
         "coverage_pct": round((signed / total_vendors) * 100, 1) if total_vendors else 0,
     }
+
+
+class BumpVersionPayload(BaseModel):
+    new_version: str
+    reason: Optional[str] = ""
+
+
+@admin_router.post("/bump-version")
+async def bump_agreement_version(payload: BumpVersionPayload):
+    """Bump the current agreement version, invalidating existing signatures and re-blocking all vendors."""
+    global AGREEMENT_VERSION
+    v = (payload.new_version or "").strip()
+    if not v:
+        raise HTTPException(status_code=400, detail="new_version required")
+    if v == AGREEMENT_VERSION:
+        raise HTTPException(status_code=400, detail=f"Version is already {v}")
+    previous = AGREEMENT_VERSION
+    AGREEMENT_VERSION = v
+    AGREEMENT_TEMPLATE["version"] = v
+
+    # Persist so restarts pick up the latest version
+    await db.admin_settings.update_one(
+        {"key": "vendor_agreement_version"},
+        {"$set": {"key": "vendor_agreement_version", "value": v, "previous": previous,
+                   "reason": payload.reason or "", "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True,
+    )
+    return {"ok": True, "previous_version": previous, "current_version": v}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import api from "@/lib/api";
+import QrCodeButton from "@/components/common/QrCodeButton";
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import {
@@ -261,8 +262,19 @@ function ItemCard({ item, onSelect }) {
         </div>
       </div>
       <div className="px-3.5 py-3">
-        <div className="text-sm font-semibold text-[#20364D] truncate">{item.name}</div>
-        <div className="text-[10px] text-slate-400 mt-0.5">{item.category || item.type}</div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-[#20364D] truncate">{item.name}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5">{item.category || item.type}</div>
+          </div>
+          <div onClick={(e) => e.stopPropagation()}>
+            <QrCodeButton
+              kind={item.type === "group_deal" ? "group_deal" : item.type === "promotion" ? "promo_campaign" : "product"}
+              id={item.id}
+              label="QR"
+            />
+          </div>
+        </div>
         {item.final_price > 0 && (
           <div className="text-xs font-bold text-[#20364D] mt-1">
             {money(item.final_price)}

@@ -347,11 +347,51 @@ async def commit_import(
 
             except Exception as e:
                 stats["skipped"] += 1
-                stats["errors"].append({"row": absolute_idx + 2, "reason": str(e)[:200]})
+                stats["errors"].append({
+                    "row": absolute_idx + 2,
+                    "reason": str(e)[:200],
+                    "original_row": {k: _clean_cell(v) for k, v in row.items()},
+                })
 
     # Persist a final report
     await db.smart_import_sessions.update_one(
         {"id": session_id},
-        {"$set": {"completed_at": now, "stats": {k: v for k, v in stats.items() if k != "errors"}, "error_sample": stats["errors"][:50]}},
+        {"$set": {"completed_at": now, "stats": {k: v for k, v in stats.items() if k != "errors"}, "error_sample": stats["errors"][:200]}},
     )
     return stats
+
+
+@router.get("/failed-rows/{session_id}.xlsx")
+async def download_failed_rows(session_id: str):
+    """Return an Excel file containing every failed row + the reason, ready for re-upload."""
+    sess = await db.smart_import_sessions.find_one({"id": session_id}, {"_id": 0})
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    errors = sess.get("error_sample") or []
+    if not errors:
+        raise HTTPException(status_code=404, detail="No failed rows on this session")
+
+    # Build dataframe — columns = original headers + 'Failure reason'
+    import pandas as pd
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+
+    headers = sess.get("headers") or []
+    rows = []
+    for err in errors:
+        orig = err.get("original_row") or {}
+        row_out = {h: orig.get(h, "") for h in headers}
+        row_out["Source row #"] = err.get("row", "")
+        row_out["Failure reason"] = err.get("reason", "")
+        rows.append(row_out)
+
+    df = pd.DataFrame(rows, columns=(headers + ["Source row #", "Failure reason"]))
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as w:
+        df.to_excel(w, index=False, sheet_name="Failed rows")
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="konekt-failed-rows-{session_id[:8]}.xlsx"'},
+    )

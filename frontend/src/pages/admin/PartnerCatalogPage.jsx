@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Package, Plus, Check, DollarSign } from "lucide-react";
 import api from "../../lib/api";
+import QrCodeButton from "../../components/common/QrCodeButton";
 
 export default function PartnerCatalogPage() {
   const [items, setItems] = useState([]);
@@ -291,10 +292,13 @@ export default function PartnerCatalogPage() {
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-2 flex flex-wrap items-center gap-1">
                 <span className="px-2 py-0.5 rounded text-xs bg-slate-100">{item.category || "uncategorized"}</span>
                 <span className="px-2 py-0.5 rounded text-xs bg-slate-100">{item.lead_time_days}d</span>
                 <span className="px-2 py-0.5 rounded text-xs bg-slate-100">{item.source_type}</span>
+                <div className="ml-auto">
+                  <QrCodeButton kind="product" id={item.id} label="QR" />
+                </div>
               </div>
             </div>
           ))}
