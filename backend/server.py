@@ -2757,6 +2757,9 @@ app.include_router(catalog_maintenance_router)
 from url_catalog_import_routes import router as url_catalog_import_router
 app.include_router(url_catalog_import_router)
 
+from seo_sitemap_routes import router as seo_sitemap_router
+app.include_router(seo_sitemap_router)
+
 from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
 app.include_router(vendor_payables_admin_router)
 app.include_router(vendor_payables_vendor_router)

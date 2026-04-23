@@ -376,6 +376,16 @@ async def commit_import(
         {"id": session_id},
         {"$set": {"completed_at": now, "stats": {k: v for k, v in stats.items() if k != "errors"}, "error_sample": stats["errors"][:200]}},
     )
+
+    # Auto-refresh the public sitemap when we've published new products
+    if stats.get("imported", 0) + stats.get("updated", 0) > 0 and (session.get("target") == "products" or session.get("source") == "url"):
+        try:
+            from seo_sitemap_routes import build_sitemap_xml, PUBLIC_DIR
+            xml, _ = await build_sitemap_xml()
+            (PUBLIC_DIR / "sitemap.xml").write_text(xml)
+        except Exception as _e:
+            pass
+
     return stats
 
 

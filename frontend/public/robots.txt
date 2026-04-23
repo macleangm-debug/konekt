@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /ops
+Disallow: /api
+Disallow: /customize
+Disallow: /checkout
+Disallow: /cart
+Disallow: /account
+
+Sitemap: https://konekt.co.tz/sitemap.xml

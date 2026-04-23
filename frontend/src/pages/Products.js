@@ -362,29 +362,35 @@ export default function Products() {
                         alt={product.name}
                         className="w-full h-56 object-contain p-3 transition-transform duration-500 product-image"
                       />
-                      <div className="absolute top-3 left-3 flex flex-col gap-1">
-                        <Badge className={`${isKonektSeries ? 'bg-secondary text-primary' : 'bg-primary/90 text-white'} hover:bg-primary`}>
+                      {/* Only the branch badge stays on the image — everything else moves below */}
+                      <div className="absolute top-3 left-3">
+                        <Badge className={`${isKonektSeries ? 'bg-secondary text-primary' : 'bg-primary/90 text-white'} hover:bg-primary shadow`}>
                           {product.branch || product.category}
                         </Badge>
-                        {product.category && product.branch && (
-                          <Badge variant="outline" className="bg-white/90 text-xs">
-                            {product.category}
-                          </Badge>
-                        )}
-                        {isKonektSeries && (
-                          <Badge className="bg-primary text-white">
-                            <Star className="w-3 h-3 mr-1" /> Exclusive
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="absolute top-3 right-3 bg-white px-2 py-1 text-xs font-bold rounded-full shadow-md text-primary">
-                        {isKonektSeries ? '' : 'From '}TZS {(product.base_price || 0).toLocaleString()}
                       </div>
                     </div>
                     
                     {/* Product Info */}
                     <div className="p-4">
-                      <h3 className="font-bold text-lg mb-2 line-clamp-1">{product.name}</h3>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="font-bold text-lg line-clamp-1 flex-1">{product.name}</h3>
+                        <div className="text-xs font-bold text-primary whitespace-nowrap">
+                          {isKonektSeries ? '' : 'From '}TZS {(product.base_price || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      {/* Sub-category + exclusive badges now sit under the title, not over the image */}
+                      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                        {product.category && product.branch && (
+                          <Badge variant="outline" className="text-[10px] font-normal py-0 px-2">
+                            {product.category}
+                          </Badge>
+                        )}
+                        {isKonektSeries && (
+                          <Badge className="bg-primary text-white text-[10px] py-0 px-2">
+                            <Star className="w-2.5 h-2.5 mr-1" /> Exclusive
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{product.description}</p>
                       
                       {/* Colors Preview */}
