@@ -253,6 +253,10 @@ import VendorQuoteRequestsPage from "@/pages/partner/VendorQuoteRequestsPage";
 import SmartBulkImportPage from "@/pages/shared/SmartBulkImportPage";
 import AdminVendorPayablesPage from "@/pages/admin/AdminVendorPayablesPage";
 import VendorPayablesPage from "@/pages/partner/VendorPayablesPage";
+import VendorAgreementPage from "@/pages/partner/VendorAgreementPage";
+import VendorDocumentsPage from "@/pages/partner/VendorDocumentsPage";
+import AdminVendorAgreementsPage from "@/pages/admin/AdminVendorAgreementsPage";
+import AdminImpersonationLogPage from "@/pages/admin/AdminImpersonationLogPage";
 import PartnerAssignedWorkPage from "@/pages/partner/PartnerAssignedWorkPage";
 import HelpCustomerPage from "@/pages/help/HelpCustomerPage";
 import HelpAdminPage from "@/pages/help/HelpAdminPage";
@@ -719,6 +723,8 @@ function App() {
           <Route path="vendor-ops" element={<VendorOpsPage />} />
           <Route path="smart-import" element={<SmartBulkImportPage mode="admin" />} />
           <Route path="vendor-payables" element={<AdminVendorPayablesPage />} />
+          <Route path="vendor-agreements" element={<AdminVendorAgreementsPage />} />
+          <Route path="impersonation-log" element={<AdminImpersonationLogPage /> } />
           <Route path="vendor-ops/new-product" element={<ProductUploadWizard />} />
           <Route path="site-visits" element={<SiteVisitsPage />} />
           <Route path="feedback-inbox" element={<FeedbackInboxPage />} />
@@ -856,6 +862,8 @@ function App() {
           <Route path="vendor/quote-requests" element={<VendorQuoteRequestsPage />} />
           <Route path="vendor/smart-import" element={<SmartBulkImportPage mode="partner" />} />
           <Route path="vendor/payables" element={<VendorPayablesPage />} />
+          <Route path="agreement" element={<VendorAgreementPage />} />
+          <Route path="documents" element={<VendorDocumentsPage />} />
           {/* Assigned Work (Service + Logistics Tasks) */}
           <Route path="assigned-work" element={<PartnerAssignedWorkPage />} />
           {/* Vendor Products */}

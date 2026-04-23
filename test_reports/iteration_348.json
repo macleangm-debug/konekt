@@ -1,0 +1,56 @@
+{
+  "summary": "Session 4 extended coverage. Ran 6 baseline + added 20 new backend tests covering agreement template shape, field validation, IP capture, admin list/stats projection, impersonation edge cases (no active users, duration, partner-token shape, auth), and admin nav wiring. 25/26 pass. 1 failure uncovers a real bug: the advertised signed-PDF URL /uploads/vendor_agreements/{file}.pdf is NOT reachable through the public URL (returns React SPA index.html).",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/uploads/vendor_agreements/{file}.pdf (static mount)",
+        "issue": "Signed PDF advertised by POST /api/vendor/agreement/sign is unreachable through REACT_APP_BACKEND_URL — the path goes to the frontend (returns index.html HTML) because Kubernetes ingress only proxies /api/* to backend. Additionally, app.mount('/uploads', StaticFiles(directory='uploads')) in server.py uses a RELATIVE path that resolves to /app/backend/uploads, but PDFs are written to the absolute /app/uploads/vendor_agreements — two different folders. Even on localhost:8001 the mount returns 404. Vendor Documents-tab download is broken as implemented.",
+        "priority": "HIGH"
+      }
+    ],
+    "minor": [
+      {
+        "endpoint": "POST /api/vendor/agreement/sign",
+        "issue": "Signature-match check uses .strip().lower() so 'match exactly' is actually case-insensitive. Also, when signatory_name is blank, the signature-mismatch check fires before the required-field loop so the 'signatory name is required' message is unreachable (still returns 400, just with the mismatch message)."
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "Vendor Documents tab — download signed agreement PDF",
+        "issue": "Link uses backend-advertised /uploads/vendor_agreements/<file>.pdf which falls through to the SPA and returns HTML. Vendor will see a 200 'download' that is actually the React app HTML.",
+        "affected_selectors": ["a[href*='/uploads/vendor_agreements/']"]
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_session_4_extended.py",
+    "/app/backend/tests/test_session_4.py",
+    "/app/test_reports/pytest/pytest_results_session_4_combined.xml",
+    "/app/test_reports/pytest/pytest_results_session_4_extended.xml"
+  ],
+  "action_items": [
+    "Expose signed PDFs under an /api/* path. Two options: (a) add FastAPI endpoint GET /api/vendor/agreement/pdf/{id} returning FileResponse (partner-auth'd) and change sign response pdf_url accordingly; (b) mount StaticFiles at /api/uploads with absolute directory='/app/uploads' and return /api/uploads/vendor_agreements/{file}.pdf. Option (a) is preferred — it also enforces auth on the download.",
+    "Fix server.py mount: app.mount('/uploads', StaticFiles(directory='/app/uploads')) — current relative 'uploads' resolves to /app/backend/uploads which is the WRONG folder for vendor agreements (and points to a different upload root than other modules use).",
+    "Either tighten the signature-match check (case-sensitive to meet the 'exactly' promise in the error message) or update the error copy to say 'case-insensitive match'."
+  ],
+  "critical_code_review_comments": [
+    "vendor_agreement_routes.py writes to absolute /app/uploads/vendor_agreements but server.py mounts /uploads with a relative directory — upload-root inconsistency across modules (listing_media, payment_proofs use /app/backend/uploads).",
+    "Agreement sign validation order: empty-signature and signature-match checks run before the required-field loop for signatory_name, making the per-field error unreachable for that field. Move the required-field loop first for clearer errors.",
+    "impersonation_routes.py correctly uses PARTNER_JWT_SECRET (different from admin JWT secret) — good isolation. Audit doc captures ip, user_agent, impersonator_role, target info, and end_impersonation idempotency works as tested.",
+    "admin_list_agreements uses projection {'_id': 0} and enriches with vendor_display_name — good. No ObjectId leakage verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_session_4_extended.py (new)"
+  ],
+  "success_rate": {"backend": "96% (25/26 session-4 tests)", "frontend": "not tested this round"},
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! — NOTE: brute-force lockout kicks in at 10 logins/5-min per IP+email and is IN-MEMORY. Backend was restarted once during this run to clear it; subsequent runs should cache the admin token (both test_session_4.py and test_session_4_extended.py do).",
+  "seed_data_creation": "test_impersonate_partner_without_active_user_returns_400 creates+deletes a transient TEST_NoUserPartner partner doc. Several /api/vendor/agreement/sign calls leave signed PDFs on disk at /app/uploads/vendor_agreements and 1 vendor_agreements row per run for the demo@supplier.com vendor (wiped at start of each validation test).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Session 4 baseline (test_session_4.py, 6 tests) + extended (test_session_4_extended.py, 20 tests) are stable. Only known failure is test_signed_pdf_is_reachable_via_public_url which is a real infrastructure bug (see action_items). After main agent re-routes PDF through /api/*, re-run: cd /app/backend && pytest tests/test_session_4.py tests/test_session_4_extended.py -v. If admin login returns 429, restart backend (sudo supervisorctl restart backend) — rate-limit is in-memory.",
+  "rca of the issue": "Reproduction: 1) POST /api/vendor/agreement/sign with partner JWT — receive pdf_url='/uploads/vendor_agreements/<id>.pdf'. 2) GET {REACT_APP_BACKEND_URL}{pdf_url} — returns 200 text/html <!doctype html> (React SPA). 3) GET http://localhost:8001/uploads/vendor_agreements/<id>.pdf — returns 404 from FastAPI (StaticFiles mount directory='uploads' is relative, resolves to /app/backend/uploads which does not contain vendor_agreements/). Root cause: (a) ingress routes only /api/* to backend, and (b) the StaticFiles mount uses a relative path pointing at the wrong directory. Mitigation: introduce an authenticated /api/vendor/agreement/pdf/{id} endpoint returning FileResponse, update the sign response pdf_url, and fix the mount to use an absolute path (or remove it entirely once the API route replaces it)."
+}

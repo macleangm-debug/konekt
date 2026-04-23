@@ -42,6 +42,21 @@ export default function PartnerLayout() {
       });
   }, [navigate]);
 
+  // Agreement guard — block the portal until vendor has signed v1 of supply agreement
+  useEffect(() => {
+    if (!partner) return;
+    const isVendorPartner = partner?.type === "vendor" || partner?.role === "vendor" || partner?.partner_type === "product" || partner?.partner_type === "hybrid";
+    if (!isVendorPartner) return;
+    if (location.pathname.startsWith("/partner/agreement")) return;
+    partnerApi.get("/api/vendor/agreement/status")
+      .then((r) => {
+        if (r?.data && r.data.signed === false) {
+          navigate("/partner/agreement", { replace: true });
+        }
+      })
+      .catch(() => {});
+  }, [partner, location.pathname, navigate]);
+
   const logout = () => {
     confirmAction({
       title: "Sign Out?",
@@ -95,6 +110,7 @@ export default function PartnerLayout() {
     { path: "/partner/assigned-work", label: "Assigned Work", icon: ClipboardList },
     { path: "/partner/vendor/quote-requests", label: "Quote Requests", icon: FileText },
     { path: "/partner/vendor/payables", label: "My Payables", icon: Receipt },
+    { path: "/partner/documents", label: "Documents", icon: FileText },
     { path: "/partner/vendor/smart-import", label: "Bulk Import (Smart)", icon: Upload },
     { path: "/partner/vendor-performance", label: "My Performance", icon: BarChart3 },
     { path: "/partner/product-upload", label: "Add Product", icon: PlusCircle },

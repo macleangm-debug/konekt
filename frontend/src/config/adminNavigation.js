@@ -6,7 +6,7 @@ import {
   Settings, Users, BadgePercent, PieChart,
   Trophy, ShieldAlert, DollarSign,
   Activity, Star, Gauge, CalendarDays, Bell, Palette, Shield, Wrench, MapPin,
-  MessageCircle, Truck, Banknote,
+  MessageCircle, Truck, Banknote, ShieldCheck, UserCog,
 } from "lucide-react";
 
 /**
@@ -49,6 +49,7 @@ export const adminNavigation = [
       { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Vendor Payables", href: "/admin/vendor-payables", icon: Banknote },
+      { label: "Vendor Agreements", href: "/admin/vendor-agreements", icon: ShieldCheck },
       { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
     ],
   },
@@ -127,6 +128,7 @@ export const adminNavigation = [
     children: [
       { label: "Users", href: "/admin/users", icon: Users },
       { label: "Partner Ecosystem", href: "/admin/partner-ecosystem", icon: Network },
+      { label: "Impersonation Log", href: "/admin/impersonation-log", icon: UserCog, roles: ["admin"] },
       { label: "Settings Hub", href: "/admin/settings-hub", icon: Settings },
     ],
   },

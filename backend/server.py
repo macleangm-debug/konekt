@@ -2726,6 +2726,13 @@ app.include_router(smart_bulk_import_router)
 from smart_bulk_import_ai_routes import router as smart_bulk_import_ai_router
 app.include_router(smart_bulk_import_ai_router)
 
+from vendor_agreement_routes import admin_router as vendor_agreement_admin_router, vendor_router as vendor_agreement_vendor_router
+app.include_router(vendor_agreement_admin_router)
+app.include_router(vendor_agreement_vendor_router)
+
+from impersonation_routes import router as impersonation_router
+app.include_router(impersonation_router)
+
 from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
 app.include_router(vendor_payables_admin_router)
 app.include_router(vendor_payables_vendor_router)

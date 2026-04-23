@@ -11,6 +11,8 @@ import NotificationBell from '../../components/admin/NotificationBell';
 import BrandLogo from '../../components/branding/BrandLogo';
 import { adminNavigation } from '../../config/adminNavigation';
 import { useConfirmModal } from '../../contexts/ConfirmModalContext';
+import OpsOnboardingModal, { isOnboardingDismissed } from '../../components/admin/OpsOnboardingModal';
+import { HelpCircle } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -208,6 +210,16 @@ export default function AdminLayout() {
   const { admin, logout } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [badgeCounts, setBadgeCounts] = React.useState({});
+  const [onboardingOpen, setOnboardingOpen] = React.useState(false);
+
+  // First-login onboarding — auto-open once for admin + ops roles
+  React.useEffect(() => {
+    if (!admin) return;
+    if (!["admin", "vendor_ops", "ops"].includes(admin.role)) return;
+    if (isOnboardingDismissed()) return;
+    const t = setTimeout(() => setOnboardingOpen(true), 600);
+    return () => clearTimeout(t);
+  }, [admin]);
 
   // Poll sidebar counts every 30 seconds
   React.useEffect(() => {
@@ -369,6 +381,16 @@ export default function AdminLayout() {
               {/* Country Switcher */}
               <CountrySwitcher />
 
+              {/* Help / Onboarding */}
+              <button
+                onClick={() => setOnboardingOpen(true)}
+                className="h-10 w-10 rounded-full border bg-white flex items-center justify-center text-[#20364D] hover:bg-slate-50 transition relative"
+                title="Open Ops onboarding"
+                data-testid="open-ops-onboarding-btn"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+
               {/* Notifications */}
               <NotificationBell />
 
@@ -391,6 +413,12 @@ export default function AdminLayout() {
           </OnboardingGate>
         </main>
       </div>
+
+      <OpsOnboardingModal
+        open={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+        onCta={(path) => { setOnboardingOpen(false); navigate(path); }}
+      />
     </div>
   );
 }

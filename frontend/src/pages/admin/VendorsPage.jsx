@@ -4,7 +4,9 @@ import FilterBar from "../../components/admin/shared/FilterBar";
 import StatusBadge from "../../components/admin/shared/StatusBadge";
 import DetailDrawer from "../../components/admin/shared/DetailDrawer";
 import EmptyState from "../../components/admin/shared/EmptyState";
-import { Truck, Package, ToggleLeft, ToggleRight } from "lucide-react";
+import { Truck, Package, ToggleLeft, ToggleRight, UserCog } from "lucide-react";
+import api from "../../lib/api";
+import { toast } from "sonner";
 
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString() : "-"; }
 
@@ -47,6 +49,24 @@ export default function VendorsPage() {
       load();
     } catch (err) { alert("Failed: " + (err.response?.data?.detail || err.message)); }
     setActionLoading(false);
+  };
+
+  const handleImpersonate = async (vendor) => {
+    if (!vendor) return;
+    const reason = window.prompt("Reason for impersonation (required, audit log):", "Supporting vendor with portal issue");
+    if (!reason || !reason.trim()) return;
+    try {
+      const r = await api.post(`/api/admin/impersonate-partner/${vendor.id}`, { reason: reason.trim() });
+      const adminToken = localStorage.getItem("token");
+      if (adminToken) localStorage.setItem("admin_token_backup_v2", adminToken);
+      localStorage.setItem("partner_token", r.data.access_token);
+      localStorage.setItem("impersonation_target_name", r.data.partner?.name || vendor.name || "Vendor");
+      localStorage.setItem("impersonation_audit_id", r.data.audit_id || "");
+      toast.success(`Now acting as ${r.data.partner?.name || vendor.name}`);
+      window.location.href = "/partner/vendor-dashboard";
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Impersonation failed");
+    }
   };
 
   return (
@@ -123,7 +143,11 @@ export default function VendorsPage() {
                 </div>
               </div>
             )}
-            <div className="pt-4 border-t border-slate-200">
+            <div className="pt-4 border-t border-slate-200 space-y-2">
+              <button onClick={() => handleImpersonate(detail.vendor || selected)} data-testid={`impersonate-vendor-btn-${(detail.vendor || selected)?.id}`}
+                className="w-full rounded-xl border-2 border-indigo-200 bg-indigo-50 px-4 py-3 font-semibold text-indigo-700 hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2">
+                <UserCog size={16} /> Impersonate vendor
+              </button>
               <button onClick={handleToggleStatus} disabled={actionLoading} data-testid="toggle-vendor-status-btn"
                 className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 font-semibold text-[#20364D] hover:bg-slate-50 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {detail.vendor?.status === "active" ? <><ToggleLeft size={16} /> Deactivate Vendor</> : <><ToggleRight size={16} /> Activate Vendor</>}
