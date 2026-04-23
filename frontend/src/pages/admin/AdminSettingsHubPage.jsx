@@ -1105,6 +1105,96 @@ function PerformanceTargetsTab({ state, setState }) {
 
 
 
+function PromotionEngineDefaultsCard() {
+  const [def, setDef] = React.useState({ sales_preserve_floor_pct: 10, allow_eat_platform_margin: false, default_pools: ["promotion", "reserve"] });
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await api.get("/api/admin/promotions/defaults");
+        if (alive && r.data) setDef({ ...def, ...r.data });
+      } catch (e) { /* ignore */ }
+      finally { alive && setLoading(false); }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const togglePool = (key) => {
+    setDef((d) => ({ ...d, default_pools: (d.default_pools || []).includes(key) ? d.default_pools.filter((p) => p !== key) : [...(d.default_pools || []), key] }));
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put("/api/admin/promotions/defaults", def);
+      toast.success("Promotion engine defaults saved");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to save");
+    } finally { setSaving(false); }
+  };
+
+  if (loading) return <SettingsSectionCard title="Promotion Engine Defaults" description="Loading…"><div className="h-10" /></SettingsSectionCard>;
+
+  return (
+    <SettingsSectionCard
+      title="Promotion Engine Defaults"
+      description="Global guardrails for the Smart Promotion Engine. These apply whenever admins create a bulk discount at /admin/bulk-discounts."
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Sales commission preserve floor (%)</label>
+          <input
+            type="number" min="0" max="100"
+            value={def.sales_preserve_floor_pct}
+            onChange={(e) => setDef({ ...def, sales_preserve_floor_pct: Number(e.target.value) })}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            data-testid="promo-defaults-sales-floor"
+          />
+          <p className="text-[11px] text-muted-foreground mt-1">% of the sales pool always kept intact so assisted-sales commissions still work on discounted items.</p>
+        </div>
+        <div>
+          <label className="flex items-start gap-2 mt-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!def.allow_eat_platform_margin}
+              onChange={(e) => setDef({ ...def, allow_eat_platform_margin: e.target.checked })}
+              className="mt-0.5"
+              data-testid="promo-defaults-allow-platform"
+            />
+            <div>
+              <div className="font-semibold text-sm text-red-600">Allow eating into Konekt platform margin</div>
+              <div className="text-[11px] text-muted-foreground">DANGEROUS — when enabled, promotions can cut into the protected Konekt margin. Leave off in normal operations.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="text-xs font-semibold text-slate-700 mb-1 block">Default pools pre-ticked when creating a promo</label>
+        <div className="flex flex-wrap gap-2">
+          {["promotion", "reserve", "affiliate", "referral", "sales"].map((k) => (
+            <label key={k} className={`px-3 py-1.5 rounded-full border text-xs cursor-pointer ${(def.default_pools || []).includes(k) ? "bg-[#20364D] text-white border-[#20364D]" : "bg-white text-slate-700"}`}>
+              <input type="checkbox" className="hidden" checked={(def.default_pools || []).includes(k)} onChange={() => togglePool(k)} data-testid={`promo-defaults-pool-${k}`} />
+              {k}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 flex justify-end">
+        <button onClick={save} disabled={saving} className="rounded-xl bg-[#20364D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50" data-testid="promo-defaults-save">
+          {saving ? "Saving…" : "Save promotion defaults"}
+        </button>
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+
 function PricingPolicyTab() {
   const [tiers, setTiers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -1287,6 +1377,9 @@ function PricingPolicyTab() {
           </button>
         </div>
       </SettingsSectionCard>
+
+      {/* Promotion Engine Defaults */}
+      <PromotionEngineDefaultsCard />
 
       {/* Live Preview */}
       <SettingsSectionCard title="Pricing Preview" description="Test how a specific base cost resolves through the pricing policy.">

@@ -133,17 +133,22 @@ export default function PublicCartPage() {
             <h2 className="text-lg font-bold text-[#20364D] mb-4">Order Summary</h2>
             <div className="space-y-3 text-sm">
               {(() => {
-                const totalSavings = (items || []).reduce((acc, it) => {
+                const items_local = items || [];
+                const totalSavings = items_local.reduce((acc, it) => {
                   if (it.original_unit_price && it.original_unit_price > it.unit_price) {
                     return acc + (it.original_unit_price - it.unit_price) * it.quantity;
                   }
                   return acc;
                 }, 0);
+                const preDiscountSubtotal = (total || 0) + totalSavings;
+                const VAT_RATE = 0.18; // Tanzania standard VAT 18%
+                const vatAmount = Math.round((total || 0) * VAT_RATE);
+                const grandTotal = (total || 0) + vatAmount;
                 return (
                   <>
                     <div className="flex justify-between text-slate-600">
                       <span>Subtotal ({itemCount} items)</span>
-                      <span>{money(total)}</span>
+                      <span>{money(preDiscountSubtotal)}</span>
                     </div>
                     {totalSavings > 0 && (
                       <div className="flex justify-between text-red-600 font-semibold" data-testid="cart-total-savings">
@@ -151,13 +156,21 @@ export default function PublicCartPage() {
                         <span>-{money(totalSavings)}</span>
                       </div>
                     )}
+                    <div className="flex justify-between text-slate-600">
+                      <span>Subtotal after savings</span>
+                      <span>{money(total)}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-500">
+                      <span>VAT (18%)</span>
+                      <span>{money(vatAmount)}</span>
+                    </div>
                     <div className="flex justify-between text-slate-500">
                       <span>Shipping</span>
                       <span>Calculated at checkout</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between font-bold text-lg text-[#20364D]">
-                      <span>Total</span>
-                      <span>{money(total)}</span>
+                      <span>Total (incl. VAT)</span>
+                      <span>{money(grandTotal)}</span>
                     </div>
                   </>
                 );

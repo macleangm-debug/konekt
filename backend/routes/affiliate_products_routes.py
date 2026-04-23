@@ -66,11 +66,17 @@ async def get_affiliate_product_promotions(request: Request):
         except Exception:
             pass
 
-    # Get active products
+    # Get active products — exclude those on a promo that consumed the affiliate pool
     products = await db.products.find(
-        {"status": {"$in": ["active", "approved", None]}},
+        {
+            "status": {"$in": ["active", "approved", None]},
+            "$or": [
+                {"promo_blocks.affiliate": {"$ne": True}},
+                {"promo_blocks": {"$exists": False}},
+            ],
+        },
         {"_id": 0}
-    ).to_list(200)
+    ).to_list(2000)
 
     split = await get_split_settings(db)
     result = []

@@ -27,6 +27,29 @@ class CheckoutEvaluationRequest(BaseModel):
     affiliate_code: Optional[str] = None
 
 
+@router.post("/check-promo-channel-eligibility")
+async def check_promo_channel_eligibility(payload: dict):
+    """Frontend helper — given a list of product_ids + a channel ('referral' or 'affiliate'),
+    return which products are blocked from that channel due to an active promo that
+    already gave away the channel's commission pool.
+    """
+    product_ids = [p for p in (payload.get("product_ids") or []) if p]
+    channel = (payload.get("channel") or "").lower()
+    if channel not in ("referral", "affiliate"):
+        return {"blocked_ids": [], "reason": "invalid channel"}
+    if not product_ids:
+        return {"blocked_ids": []}
+    key = f"promo_blocks.{channel}"
+    blocked: list[str] = []
+    async for p in db.products.find({"id": {"$in": product_ids}, key: True}, {"_id": 0, "id": 1, "name": 1, "active_promotion_label": 1}):
+        blocked.append({
+            "product_id": p["id"],
+            "product_name": p.get("name"),
+            "promo_label": p.get("active_promotion_label"),
+        })
+    return {"blocked": blocked, "blocked_ids": [b["product_id"] for b in blocked]}
+
+
 @router.post("/evaluate-campaign")
 async def evaluate_campaign(payload: dict):
     """

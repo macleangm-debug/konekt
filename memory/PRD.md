@@ -183,11 +183,25 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 114. **Taxonomy cleanup** — merged 3 CoolTex variants ("CoolTex Polo", "Cooltex - Long Sleeves", "Cooltex - Women") into single "Cooltex" subcategory; 52 products repointed. Seeded 11 Office Equipment subcategories (Printers, Photocopiers, Scanners, Shredders, Laminators, Binding Machines, Projectors, Telephones & Intercoms, Calculators) + 10 Stationery subcategories (Paper, Notebooks, Pens & Pencils, Folders & Binders, Envelopes, Staplers & Punches, Adhesives & Tape, Markers & Highlighters, Desk Accessories, Filing Supplies). Sitemap now 822 URLs.
 115. **JSON-LD product schema + meta tags for Google Shopping** — `/product/{id}` pages now inject full schema.org/Product JSON-LD (with Offer, priceCurrency=TZS, availability, brand, seller, promo referencePrice when active), Open Graph tags (og:type=product, og:image, product:price:amount), Twitter Card tags, and a canonical URL. Cleans up on route change. This unlocks Google's free "Shopping" rich results (image + price + stock visible directly in search).
 116. **Consistent card height** — all product cards now render identical dimensions whether or not they're on promo. Fixed min-heights on title (3rem), subcategory row (1.25rem), and price block (3.25rem). Tighter inter-row spacing (mb-2) across the card body.
-117. **Live bulk-promo test passed** — applied "Trophy Test — TZS 2,000 off" promo to 20 Awards/Trophies/Plaques products. Verified end-to-end:
-     - Marketplace cards: "Save TZS 2,000" red corner badge + strikethrough TZS 243,000 → TZS 241,000 + red savings pill ✓
-     - Detail page: "You save TZS 1,950 today" line + Total row shows "Your savings: TZS 1,950" ✓
-     - Cart: per-line strikethrough original price + red "Save TZS 5,850" chip + Order Summary "Your savings: -TZS 5,850" row ✓
-118. **IndexNow auto-ping + SEO submission playbook** — Google & Bing deprecated their legacy `/ping?sitemap=` endpoints (2023 & 2022). Replaced with **IndexNow** protocol: POST to `https://api.indexnow.org/indexnow` pushes the latest 1000 product URLs to Bing + Yandex + Naver + Seznam within minutes. Triggered automatically after every sitemap regen (which itself fires after every Smart-Import commit). Setup: drop `{KEY}.txt` into `/app/frontend/public/` + set `INDEXNOW_KEY` in backend .env. Full submission playbook at `/app/memory/SEO_SUBMISSION.md`. Google still requires a one-time manual submission in Search Console (documented step-by-step).
+### Smart Promotion Engine + Cart VAT (Apr 24, 2026)
+119. **Smart Promotion Engine** rebuilt on top of the Settings Hub pricing_policy_tiers. Replaces the old flat-TZS discount with a **margin-aware** engine:
+     - Admin picks which pools to fund the promo from: **Promotion · Reserve · Affiliate · Referral · Sales · Platform margin**
+     - Each product resolves its tier from `vendor_cost`, then the engine pulls from the allowed pools in proportion to the tier's distribution_split
+     - **Sales pool** preserves a configurable floor (default 10%) so assisted-sales commissions still work on discounted items
+     - **Platform margin** is hard-locked by default; admins must enable it in Settings Hub → Promotion Engine Defaults
+     - **Fixed TZS discount mode**: if admin types "TZS 2,000 off", products where the allowed pools can't cover are SKIPPED (safer) instead of auto-shrinking
+     - **Channel blocking**: ticking Affiliate pool → products auto-filtered out of `/api/affiliate/content/products`; ticking Referral pool → new helper `/api/checkout/check-promo-channel-eligibility` reports which cart lines can't stack referral codes
+     - Full endpoint set: `GET/PUT /api/admin/promotions/defaults`, `POST /preview`, `POST /`, `POST /{id}/end`, `DELETE /{id}`, auto-expiry on `end_date`
+120. **Settings Hub — Promotion Engine Defaults card** — new section under pricing tiers: sales_preserve_floor_pct slider, "Allow eating platform margin" toggle (🔴 danger), default pre-ticked pools picker. All wired to `/api/admin/promotions/defaults`.
+121. **Admin UI rebuild** — `/admin/bulk-discounts` now has:
+     - 6 coloured pool checkboxes (amber shield for channel-blocking pools, red triangle for platform margin)
+     - Pool-drawdown % slider + platform-eat % (only when allowed)
+     - Preview panel shows: products matched, avg margin before→after, per-product tier + pool breakdown in samples, channels-blocked warning ("Affiliate Content Studio won't show these products"), skipped-fixed-amount warning
+122. **Cart math + VAT fixed**:
+     - Subtotal now shows pre-discount total (e.g. TZS 911,250), then "Your savings -TZS 23,625", then "Subtotal after savings TZS 887,625"
+     - **VAT (18%)** line added explicitly — prices on marketplace/product pages stay VAT-exclusive, tax shown at cart/checkout
+     - Total (incl. VAT) renders the full amount customer pays (TZS 1,047,398 in the above example)
+     - Each cart item line shows strikethrough original unit price + red "Save TZS X" chip
 
 ### Deployment Notes (latest)
 - `products` collection is the canonical marketplace feed (read by `/api/products`, limit 2000). `partner_catalog_items` is the vendor's private SKU list.
