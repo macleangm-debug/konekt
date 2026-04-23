@@ -1755,7 +1755,7 @@ async def get_products(branch: Optional[str] = None, category: Optional[str] = N
             {"description": {"$regex": search, "$options": "i"}}
         ]
     
-    products = await db.products.find(query, {"_id": 0}).to_list(100)
+    products = await db.products.find(query, {"_id": 0}).to_list(2000)
     return {"products": products}
 
 @api_router.get("/products/{product_id}")

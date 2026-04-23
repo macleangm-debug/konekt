@@ -257,7 +257,7 @@ async def commit_import(
                     continue
 
                 vendor_label = _clean_cell(row.get(column_map.get("category"), ""))
-                konekt_cat = category_map.get(vendor_label) or category_map.get("__default__") or ""
+                konekt_cat = category_map.get(vendor_label) or category_map.get("__default__") or vendor_label or ""
 
                 vendor_sku_raw = _clean_cell(row.get(column_map.get("vendor_sku"), ""))
                 vendor_cost = _to_number(row.get(column_map.get("vendor_cost"), 0))

@@ -44,6 +44,8 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
   const [urlVendorName, setUrlVendorName] = useState("");
   const [urlTarget, setUrlTarget] = useState("products"); // "products" = live marketplace, "partner_catalog" = vendor-only
   const [urlMaxPages, setUrlMaxPages] = useState(20);
+  const [urlCrawlAll, setUrlCrawlAll] = useState(true);
+  const [urlBranch, setUrlBranch] = useState("Promotional Materials");
   const [urlBusy, setUrlBusy] = useState(false);
   const [vendorList, setVendorList] = useState([]);
 
@@ -124,6 +126,8 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
         max_pages: Number(urlMaxPages) || 20,
         download_images: true,
         target: urlTarget,
+        crawl_all_categories: urlCrawlAll,
+        branch: urlBranch,
       });
       setPreview(r.data);
       setColumnMap(r.data.auto_map || {});
@@ -485,15 +489,28 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
                     <Input
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder="https://darcity.tz/shop-list.aspx"
+                      placeholder="https://darcity.tz"
                       className="flex-1 text-sm"
                       data-testid="url-input"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <label className="flex items-start gap-2 p-2 border rounded-lg hover:bg-slate-50 cursor-pointer md:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={urlCrawlAll}
+                      onChange={(e) => setUrlCrawlAll(e.target.checked)}
+                      data-testid="url-crawl-all"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-semibold text-[#20364D] text-sm">Crawl all categories</div>
+                      <div className="text-[11px] text-slate-500">Auto-discover every category page from the homepage nav (recommended — gets hundreds of products in one go).</div>
+                    </div>
+                  </label>
                   <div>
-                    <Label className="text-xs font-semibold">Max pages to crawl</Label>
+                    <Label className="text-xs font-semibold">Max pages (single URL mode)</Label>
                     <Input
                       type="number"
                       min={1}
@@ -501,10 +518,25 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
                       value={urlMaxPages}
                       onChange={(e) => setUrlMaxPages(e.target.value)}
                       className="mt-1 text-sm"
+                      disabled={urlCrawlAll}
                       data-testid="url-max-pages"
                     />
-                    <p className="text-[11px] text-slate-500 mt-1">We stop automatically when a page returns no new products.</p>
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Konekt branch</Label>
+                  <select
+                    value={urlBranch}
+                    onChange={(e) => setUrlBranch(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 mt-1 text-sm bg-white"
+                    data-testid="url-branch-select"
+                  >
+                    <option value="Promotional Materials">Promotional Materials</option>
+                    <option value="Office Equipment">Office Equipment</option>
+                    <option value="KonektSeries">KonektSeries</option>
+                    <option value="">— Leave vendor labels as-is —</option>
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">All scraped products will be tagged with this Konekt branch.  The vendor's own sub-category stays in the category field.</p>
                 </div>
               </div>
 

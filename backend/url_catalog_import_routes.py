@@ -228,6 +228,92 @@ class UrlPreviewPayload(BaseModel):
     max_pages: int = MAX_PAGES_DEFAULT
     download_images: bool = True
     target: str = "partner_catalog"  # "partner_catalog" | "products" (marketplace-live)
+    # Site-wide crawl: when true, we treat `url` as the site root and auto-discover
+    # every /shop-list?Category=... link from the homepage nav, then scrape each one.
+    crawl_all_categories: bool = False
+    branch: str = ""               # force Konekt branch label (e.g. "Promotional Materials")
+
+
+async def _discover_category_urls(http: httpx.AsyncClient, root_url: str) -> list[str]:
+    """Fetch the site root and extract every `/shop-list?Category=<name>` URL from the nav."""
+    try:
+        r = await http.get(root_url)
+    except Exception as e:
+        logger.warning("Root fetch failed %s: %s", root_url, e)
+        return []
+    if r.status_code != 200:
+        return []
+    soup = BeautifulSoup(r.text, "html.parser")
+    seen: set[str] = set()
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if "shop-list" in href and "Category=" in href:
+            full = urljoin(root_url, href)
+            # Normalise trailing whitespace
+            seen.add(full.split("#")[0])
+    return sorted(seen)
+
+
+async def _scrape_page(http: httpx.AsyncClient, page_url: str, seen_skus: set, rows: list) -> int:
+    """Scrape a single listing page; append products to `rows` and return the count added."""
+    try:
+        r = await http.get(page_url)
+    except Exception as e:
+        logger.warning("Page fetch failed: %s — %s", page_url, e)
+        return 0
+    if r.status_code != 200:
+        return 0
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    cards = []
+    for sel in ("div.product-card", "div.product-item", "article.product", "li.product", ".product-cell"):
+        found = soup.select(sel)
+        if found:
+            cards = found
+            break
+    if not cards:
+        # Strategy B — walk up from anchors, skipping navbar entries
+        anchors = soup.select('a[href*="product-details"]')
+        if not anchors:
+            return 0
+        seen_cards = set()
+        for a in anchors:
+            parents = list(a.parents)
+            if any(
+                p.name == "nav"
+                or "navbar" in (p.get("class") or [])
+                or "dropdown-menu" in (p.get("class") or [])
+                or "submenu" in (p.get("class") or [])
+                for p in parents[:8]
+            ):
+                continue
+            node = a
+            for _ in range(6):
+                node = node.parent
+                if node is None:
+                    break
+                text = node.get_text(" ", strip=True) if node else ""
+                if node.find("img") and re.search(r"(?:TSh|Tsh|TZS)", text) and 20 < len(text) < 600:
+                    if id(node) in seen_cards:
+                        break
+                    seen_cards.add(id(node))
+                    cards.append(node)
+                    break
+
+    added = 0
+    for c in cards:
+        parsed = _parse_product_card(c, page_url)
+        if not parsed or not parsed["name"]:
+            continue
+        sku_key = parsed["vendor_sku"] or f"{parsed['name']}|{parsed.get('vendor_cost','')}"
+        if sku_key in seen_skus:
+            continue
+        seen_skus.add(sku_key)
+        rows.append(parsed)
+        added += 1
+        if len(rows) >= MAX_PRODUCTS:
+            break
+    return added
 
 
 @router.post("/preview")
@@ -248,76 +334,26 @@ async def url_preview(payload: UrlPreviewPayload, request: Request):
     pages_crawled = 0
 
     async with httpx.AsyncClient(headers={"User-Agent": USER_AGENT}, follow_redirects=True, timeout=45) as http:
-        for page in range(1, max(1, min(payload.max_pages, MAX_PAGES_DEFAULT)) + 1):
-            page_url = payload.url if page == 1 else _build_next_page_url(payload.url, page)
-            try:
-                r = await http.get(page_url)
-            except Exception as e:
-                logger.warning("Page fetch failed: %s — %s", page_url, e)
-                break
-            if r.status_code != 200:
-                logger.info("Stopping at page %d (%d)", page, r.status_code)
-                break
+        # Build the list of URLs to scrape
+        if payload.crawl_all_categories:
+            # Site-wide mode: discover every category page from the root, plus the root itself
+            category_urls = await _discover_category_urls(http, payload.url)
+            if not category_urls:
+                raise HTTPException(status_code=422, detail="No category links found on the root URL.  Use a direct category/shop URL instead.")
+            urls_to_crawl = category_urls
+        else:
+            # Single-URL mode: also try paginated variants
+            urls_to_crawl = [payload.url]
+            for p in range(2, max(2, min(payload.max_pages, MAX_PAGES_DEFAULT)) + 1):
+                urls_to_crawl.append(_build_next_page_url(payload.url, p))
 
-            soup = BeautifulSoup(r.text, "html.parser")
-            # Strategy A (preferred): look for divs with `product-card` / `.card.product-card` style classes.
-            # Strategy B (fallback): walk up from each product-details anchor and find the nearest
-            # ancestor that has an <img>, a price, and is NOT inside the navbar.
-            cards = []
-            # Strategy A — direct CSS selectors for common card markup
-            for sel in ("div.product-card", "div.product-item", "article.product", "li.product", ".product-cell"):
-                found = soup.select(sel)
-                if found:
-                    cards = found
-                    break
-
-            if not cards:
-                # Strategy B — walk up from anchors, skipping navbar entries
-                anchors = soup.select('a[href*="product-details"]')
-                if not anchors:
-                    break
-                seen_cards = set()
-                for a in anchors:
-                    parents = list(a.parents)
-                    if any(
-                        p.name == "nav"
-                        or "navbar" in (p.get("class") or [])
-                        or "dropdown-menu" in (p.get("class") or [])
-                        or "submenu" in (p.get("class") or [])
-                        for p in parents[:8]
-                    ):
-                        continue
-                    node = a
-                    for _ in range(6):
-                        node = node.parent
-                        if node is None:
-                            break
-                        text = node.get_text(" ", strip=True) if node else ""
-                        if node.find("img") and re.search(r"(?:TSh|Tsh|TZS)", text) and 20 < len(text) < 600:
-                            if id(node) in seen_cards:
-                                break
-                            seen_cards.add(id(node))
-                            cards.append(node)
-                            break
-
-            new_on_page = 0
-            for c in cards:
-                parsed = _parse_product_card(c, page_url)
-                if not parsed or not parsed["name"]:
-                    continue
-                if parsed["vendor_sku"] in seen_skus:
-                    continue
-                seen_skus.add(parsed["vendor_sku"] or f"anon-{len(rows)}")
-                rows.append(parsed)
-                new_on_page += 1
-                if len(rows) >= MAX_PRODUCTS:
-                    break
-
+        for url in urls_to_crawl:
+            added = await _scrape_page(http, url, seen_skus, rows)
             pages_crawled += 1
-            if new_on_page == 0:
-                # No new products on this page — stop
-                break
             if len(rows) >= MAX_PRODUCTS:
+                break
+            if not payload.crawl_all_categories and added == 0:
+                # Pagination mode: stop when a page returns no new products
                 break
             await asyncio.sleep(PER_REQUEST_DELAY)
 
@@ -351,6 +387,7 @@ async def url_preview(payload: UrlPreviewPayload, request: Request):
         "target": payload.target if payload.target in ("partner_catalog", "products") else "partner_catalog",
         "partner_id": payload.vendor_id,
         "country_code": (payload.country_code or "TZ").upper()[:2],
+        "branch": (payload.branch or "").strip() or None,
         "headers": headers,
         "auto_map": auto_map,
         "rows_json": json.dumps(rows),
@@ -361,6 +398,7 @@ async def url_preview(payload: UrlPreviewPayload, request: Request):
         "source": "url",
         "source_url": payload.url,
         "pages_crawled": pages_crawled,
+        "crawl_all_categories": payload.crawl_all_categories,
     }
     await db.smart_import_sessions.insert_one(session_doc)
 
