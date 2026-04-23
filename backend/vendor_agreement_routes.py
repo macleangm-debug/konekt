@@ -16,6 +16,7 @@ Triad logo text heading.
 """
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Header, Request
+from fastapi.responses import FileResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from pathlib import Path
@@ -279,8 +280,8 @@ async def sign_agreement(payload: SignPayload, request: Request, authorization: 
         raise HTTPException(status_code=400, detail="You must tick 'I agree' to sign")
     if not payload.signature_text.strip():
         raise HTTPException(status_code=400, detail="Typed signature is required")
-    if payload.signature_text.strip().lower() != payload.signatory_name.strip().lower():
-        raise HTTPException(status_code=400, detail="Typed signature must match the signatory's full name exactly")
+    if payload.signature_text.strip() != payload.signatory_name.strip():
+        raise HTTPException(status_code=400, detail="Typed signature must match the signatory's full name exactly (case sensitive)")
     for field in ("vendor_legal_name", "vendor_address", "signatory_name", "signatory_title", "signatory_email"):
         if not (getattr(payload, field) or "").strip():
             raise HTTPException(status_code=400, detail=f"{field.replace('_', ' ').title()} is required")
@@ -301,7 +302,7 @@ async def sign_agreement(payload: SignPayload, request: Request, authorization: 
     ip = _client_ip(request)
     pdf_name = f"{vid}_{doc_id}.pdf"
     pdf_path = AGREEMENT_DIR / pdf_name
-    pdf_url = f"/uploads/vendor_agreements/{pdf_name}"
+    pdf_url = f"/api/vendor/agreement/pdf/{doc_id}"
 
     data = {
         "id": doc_id,
@@ -347,7 +348,26 @@ async def vendor_history(authorization: Optional[str] = Header(None)):
     user = await get_partner_user_from_header(authorization)
     vid = user["partner_id"]
     docs = await db.vendor_agreements.find({"vendor_id": vid}, {"_id": 0}).sort("created_at", -1).to_list(50)
+    # Migrate legacy /uploads URLs to the API URL
+    for d in docs:
+        if d.get("pdf_url", "").startswith("/uploads/"):
+            d["pdf_url"] = f"/api/vendor/agreement/pdf/{d['id']}"
     return docs
+
+
+@vendor_router.get("/pdf/{agreement_id}")
+async def vendor_pdf(agreement_id: str, authorization: Optional[str] = Header(None)):
+    """Partner-auth download.  Verifies the agreement belongs to the calling vendor."""
+    user = await get_partner_user_from_header(authorization)
+    vid = user["partner_id"]
+    doc = await db.vendor_agreements.find_one({"id": agreement_id, "vendor_id": vid}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Agreement not found")
+    path = AGREEMENT_DIR / f"{doc['vendor_id']}_{agreement_id}.pdf"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="PDF missing on server")
+    return FileResponse(str(path), media_type="application/pdf",
+                        filename=f"konekt-supply-agreement-v{doc.get('version')}-{agreement_id[:8]}.pdf")
 
 
 # ───────────────────────────── Admin-facing ─────────────────────────────
@@ -373,8 +393,22 @@ async def admin_list_agreements(status: Optional[str] = None, version: Optional[
                 vendor_name = (p or {}).get("company_name") or (p or {}).get("name") or vendor_name
             except Exception:
                 pass
+        # Use admin-authenticated PDF URL
+        d["pdf_url"] = f"/api/admin/vendor-agreements/{d['id']}/pdf"
         out.append({**_strip(d), "vendor_display_name": vendor_name})
     return out
+
+
+@admin_router.get("/{agreement_id}/pdf")
+async def admin_pdf(agreement_id: str):
+    doc = await db.vendor_agreements.find_one({"id": agreement_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Agreement not found")
+    path = AGREEMENT_DIR / f"{doc['vendor_id']}_{agreement_id}.pdf"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="PDF missing on server")
+    return FileResponse(str(path), media_type="application/pdf",
+                        filename=f"konekt-supply-agreement-v{doc.get('version')}-{agreement_id[:8]}.pdf")
 
 
 @admin_router.get("/stats")

@@ -158,7 +158,19 @@ def test_agreement_sign_validates_and_prevents_double_sign():
     })
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["ok"] and d["id"] and d["pdf_url"].endswith(".pdf")
+    assert d["ok"] and d["id"]
+    # pdf_url must be an /api/* path (reachable through public URL)
+    assert d["pdf_url"].startswith("/api/vendor/agreement/pdf/")
+
+    # Vendor can fetch the PDF
+    r = httpx.get(f"{API_URL}{d['pdf_url']}", headers=h, timeout=20)
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("application/pdf")
+    assert len(r.content) > 500
+
+    # Another vendor (no token) cannot
+    r = httpx.get(f"{API_URL}{d['pdf_url']}", timeout=15)
+    assert r.status_code in (401, 403)
 
     # Status reflects signed
     r = httpx.get(f"{API_URL}/api/vendor/agreement/status", headers=h, timeout=15)

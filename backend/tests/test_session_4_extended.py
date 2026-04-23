@@ -178,17 +178,18 @@ class TestAgreementFieldValidation:
         assert r.status_code == 400
         assert "signature" in r.json()["detail"].lower()
 
-    def test_signature_match_is_case_insensitive(self):
-        """Spec: 'match exactly' but code uses .lower() — verify actual behaviour."""
+    def test_signature_match_is_case_sensitive(self):
+        """After fix: typed signature must match signatory_name EXACTLY (case-sensitive)."""
         h = partner_headers()
         if not h:
             pytest.skip("no partner token")
         self._wipe_partner_agreements(h)
         p = self._base_payload()
         p["signature_text"] = "jane smith"  # lower-case
-        p["signatory_name"] = "JANE SMITH"  # upper-case
+        p["signatory_name"] = "JANE SMITH"  # upper-case → mismatch
         r = httpx.post(f"{API_URL}/api/vendor/agreement/sign", headers=h, json=p, timeout=30)
-        assert r.status_code == 200, r.text
+        assert r.status_code == 400
+        assert "match" in r.json()["detail"].lower()
 
     def test_sign_persists_ip_and_writes_pdf_on_disk(self):
         h = partner_headers()
@@ -204,27 +205,28 @@ class TestAgreementFieldValidation:
         )
         assert r.status_code == 200, r.text
         d = r.json()
-        assert d["pdf_url"].startswith("/uploads/vendor_agreements/") and d["pdf_url"].endswith(".pdf")
+        # After the public-URL fix, pdf_url is an /api/* path (auth-gated)
+        assert d["pdf_url"].startswith("/api/vendor/agreement/pdf/")
 
-        # PDF file written to disk at the expected absolute path
-        pdf_fname = d["pdf_url"].rsplit("/", 1)[-1]
-        pdf_path = Path("/app/uploads/vendor_agreements") / pdf_fname
-        assert pdf_path.exists(), f"PDF not written at {pdf_path}"
-        assert pdf_path.stat().st_size > 1000
-        assert pdf_path.read_bytes()[:4] == b"%PDF"
-
-        # IP captured from X-Forwarded-For
+        # PDF file written to disk at the documented absolute path
         async def _chk():
             cli = AsyncIOMotorClient(MONGO)
             db = cli[DB]
             doc = await db.vendor_agreements.find_one({"id": d["id"]})
             return doc
         doc = asyncio.run(_chk())
-        assert doc and doc["signed_ip"].startswith("203.0.113.42")
+        assert doc is not None
+        pdf_path = Path("/app/uploads/vendor_agreements") / f"{doc['vendor_id']}_{d['id']}.pdf"
+        assert pdf_path.exists(), f"PDF not written at {pdf_path}"
+        assert pdf_path.stat().st_size > 1000
+        assert pdf_path.read_bytes()[:4] == b"%PDF"
+
+        # IP captured from X-Forwarded-For
+        assert doc["signed_ip"].startswith("203.0.113.42")
         assert doc["version"]
 
     def test_signed_pdf_is_reachable_via_public_url(self):
-        """Advertised pdf_url must be fetchable by the client (vendor Documents tab)."""
+        """Advertised pdf_url must be fetchable by the authenticated vendor client."""
         h = partner_headers()
         if not h:
             pytest.skip("no partner token")
@@ -234,14 +236,18 @@ class TestAgreementFieldValidation:
         assert r.status_code == 200
         pdf_url = r.json()["pdf_url"]
 
-        pdf = httpx.get(f"{API_URL}{pdf_url}", timeout=20, follow_redirects=True)
+        # With partner auth
+        pdf = httpx.get(f"{API_URL}{pdf_url}", headers=h, timeout=20, follow_redirects=True)
         assert pdf.status_code == 200, (
-            f"Advertised pdf_url {pdf_url} is NOT reachable via public URL "
-            f"(got {pdf.status_code}, content-type={pdf.headers.get('content-type')})."
+            f"Advertised pdf_url {pdf_url} is NOT reachable (got {pdf.status_code})."
         )
         assert (pdf.headers.get("content-type", "").startswith("application/pdf")
                 or pdf.content[:4] == b"%PDF"), \
             f"URL returned non-PDF body (ctype={pdf.headers.get('content-type')})"
+
+        # Without auth → 401/403 (previously was 200 SPA HTML — the bug)
+        r2 = httpx.get(f"{API_URL}{pdf_url}", timeout=20, follow_redirects=True)
+        assert r2.status_code in (401, 403)
 
 
 # ════════════════════════════════════════════

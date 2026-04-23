@@ -124,7 +124,18 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 72. **Normalised output** — LLM is forced to return `{rows:[{name, vendor_sku, category, vendor_cost, stock, unit, description, brand}]}`.  Cleaner `_parse_rows()` strips fences, locates outermost JSON, drops blank rows.
 73. **Session compatibility** — AI-parsed rows are persisted in `smart_import_sessions` with the SAME schema as uploaded-file sessions, so the existing wizard Steps 2–4 (column map → category map → commit) work unchanged.  The existing `/api/smart-import/commit` is source-agnostic.
 74. **Frontend** — extended `SmartBulkImportPage.jsx` with a tab switcher at Step 1 (Excel/CSV vs AI Import).  The AI panel has a 2×2 grid picker (PDF catalog / Single image / Photo batch / Paste text), a context-aware file or textarea input, and a single "Extract with AI" CTA that funnels into the standard mapping preview.  Works in both `mode="admin"` and `mode="partner"`.
-75. **Backend tests** — 49/49 green total (added `/app/backend/tests/test_session_3b.py`, 8 tests).  Live LLM smoke tests included; skip gracefully without `EMERGENT_LLM_KEY`.
+
+### Vendor Supply Agreement + Ops Onboarding + Impersonation — Session 4 (Apr 23, 2026)
+75. **Konekt Vendor Supply Agreement** — 8-clause contract (v1.0) with vendor legal name, address, signatory + title + email fields.  Typed-name signature + case-sensitive match check + "I agree" checkbox + IP capture + timestamp.  Signed PDF rendered via reportlab (Konekt-branded), stored at `/app/uploads/vendor_agreements/{vendor_id}_{doc_id}.pdf`.
+76. **Agreement guard (vendor portal)** — `PartnerLayout.jsx` calls `GET /api/vendor/agreement/status` on every partner-page mount; if unsigned and vendor is a product/hybrid partner, redirects to `/partner/agreement`.  Portal unlocks post-sign.
+77. **Auth-gated PDF download** — `GET /api/vendor/agreement/pdf/{id}` (partner auth, verifies ownership) and `GET /api/admin/vendor-agreements/{id}/pdf` (admin).  Path is an /api/* route so it traverses the public ingress correctly.  Old `/uploads/vendor_agreements/...` path was broken (ingress 404).
+78. **Vendor Documents tab** — `/partner/documents` lists signed agreements with download CTA.
+79. **Admin Vendor Agreements page** — `/admin/vendor-agreements` shows stats (signed / coverage %) + signed-agreements table with search, PDF download, vendor name enrichment.
+80. **Ops Impersonation — partner-token flow** — `POST /api/admin/impersonate-partner/{partner_id}` issues a PARTNER JWT (not admin token) so admin/ops can authenticate against `/api/vendor/*` endpoints.  Writes allowed (with explicit confirm on trigger).  Every session logged in `db.impersonation_audit` with reason, IP, user-agent, start/end timestamps.
+81. **Impersonation banner** — full-width yellow banner with "Return to Admin" button (ends audit session via `POST /api/admin/impersonation-log/{audit_id}/end`); restores admin token from `admin_token_backup_v2`.  Handles both legacy admin-user and new partner impersonation.
+82. **Impersonation Log page** — `/admin/impersonation-log` with total/active/unique-impersonator stats + search + duration calc.
+83. **Ops Onboarding modal** — 3-step walkthrough (Daily Queue · Payables · Impersonation) with progress dots, CTA per step (opens relevant page), skip/back/next/finish.  Auto-opens once for admin/ops on first login, dismissed via localStorage.  Reopenable any time from the `HelpCircle` icon in the admin top bar.
+84. **Backend tests — 75/75 green total** across Sessions 3A + 3B + 4.  Files: `test_session_3a.py`, `test_session_3a_extended.py`, `test_session_3b.py`, `test_session_4.py`, `test_session_4_extended.py`.
 
 ## Credentials
 - Admin: `admin@konekt.co.tz` / `KnktcKk_L-hw1wSyquvd!`
