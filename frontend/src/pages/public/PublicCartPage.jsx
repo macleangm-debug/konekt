@@ -69,7 +69,19 @@ export default function PublicCartPage() {
                   {item.size && <span> · {item.size}</span>}
                   {item.color && <span> · {item.color}</span>}
                 </div>
-                <p className="text-sm font-medium text-slate-700 mt-1">{money(item.unit_price)} each</p>
+                <p className="text-sm font-medium text-slate-700 mt-1">
+                  {money(item.unit_price)} each
+                  {item.original_unit_price && item.original_unit_price > item.unit_price && (
+                    <span className="ml-2 text-xs text-slate-400 line-through" data-testid={`cart-item-${item.id}-original`}>
+                      {money(item.original_unit_price)}
+                    </span>
+                  )}
+                </p>
+                {item.original_unit_price && item.original_unit_price > item.unit_price && (
+                  <p className="text-[11px] font-bold text-red-600 mt-0.5" data-testid={`cart-item-${item.id}-savings`}>
+                    Save {money((item.original_unit_price - item.unit_price) * item.quantity)}
+                  </p>
+                )}
 
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border rounded-lg overflow-hidden">
@@ -120,18 +132,36 @@ export default function PublicCartPage() {
           <div className="rounded-2xl border bg-white p-6 sticky top-24" data-testid="cart-summary">
             <h2 className="text-lg font-bold text-[#20364D] mb-4">Order Summary</h2>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between text-slate-600">
-                <span>Subtotal ({itemCount} items)</span>
-                <span>{money(total)}</span>
-              </div>
-              <div className="flex justify-between text-slate-500">
-                <span>Shipping</span>
-                <span>Calculated at checkout</span>
-              </div>
-              <div className="border-t pt-3 flex justify-between font-bold text-lg text-[#20364D]">
-                <span>Total</span>
-                <span>{money(total)}</span>
-              </div>
+              {(() => {
+                const totalSavings = (items || []).reduce((acc, it) => {
+                  if (it.original_unit_price && it.original_unit_price > it.unit_price) {
+                    return acc + (it.original_unit_price - it.unit_price) * it.quantity;
+                  }
+                  return acc;
+                }, 0);
+                return (
+                  <>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Subtotal ({itemCount} items)</span>
+                      <span>{money(total)}</span>
+                    </div>
+                    {totalSavings > 0 && (
+                      <div className="flex justify-between text-red-600 font-semibold" data-testid="cart-total-savings">
+                        <span>Your savings</span>
+                        <span>-{money(totalSavings)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-slate-500">
+                      <span>Shipping</span>
+                      <span>Calculated at checkout</span>
+                    </div>
+                    <div className="border-t pt-3 flex justify-between font-bold text-lg text-[#20364D]">
+                      <span>Total</span>
+                      <span>{money(total)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             <button
               onClick={() => navigate("/checkout")}

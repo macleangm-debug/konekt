@@ -177,7 +177,41 @@ async def regenerate_sitemap(
     xml, stats = await build_sitemap_xml()
     (PUBLIC_DIR / "sitemap.xml").write_text(xml)
     _write_robots_txt()
-    return {"ok": True, "written": str(PUBLIC_DIR / "sitemap.xml"), "stats": stats}
+
+    # Best-effort ping via IndexNow (Bing, Yandex, Naver, Seznam all accept it;
+    # Google's legacy sitemap ping was deprecated in 2023 so we skip it).
+    # Set INDEXNOW_KEY + drop the key string into /app/frontend/public/{key}.txt
+    # to enable. The protocol accepts a list of URLs in a single POST.
+    import httpx as _httpx
+    pinged: dict = {}
+    indexnow_key = os.environ.get("INDEXNOW_KEY") or ""
+    if indexnow_key:
+        try:
+            recent_urls: list[str] = []
+            async for p in db.products.find({"is_active": True}, {"_id": 0, "id": 1, "slug": 1}).sort("updated_at", -1).limit(1000):
+                slug = p.get("slug")
+                pid = p.get("id")
+                if slug:
+                    recent_urls.append(f"{SITE_BASE}/marketplace/{slug}")
+                elif pid:
+                    recent_urls.append(f"{SITE_BASE}/product/{pid}")
+            async with _httpx.AsyncClient(timeout=10) as cli:
+                r = await cli.post(
+                    "https://api.indexnow.org/indexnow",
+                    json={
+                        "host": SITE_BASE.replace("https://", "").replace("http://", ""),
+                        "key": indexnow_key,
+                        "keyLocation": f"{SITE_BASE}/{indexnow_key}.txt",
+                        "urlList": recent_urls[:1000],
+                    },
+                )
+                pinged["indexnow"] = r.status_code
+        except Exception as e:
+            pinged["indexnow"] = f"error: {e}"
+    else:
+        pinged["indexnow"] = "skipped — set INDEXNOW_KEY env var to enable"
+
+    return {"ok": True, "written": str(PUBLIC_DIR / "sitemap.xml"), "stats": stats, "pinged": pinged}
 
 
 @router.get("/sitemap.xml")
