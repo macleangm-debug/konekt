@@ -459,6 +459,32 @@ async def admin_pdf(agreement_id: str):
                         filename=f"konekt-supply-agreement-v{doc.get('version')}-{agreement_id[:8]}.pdf")
 
 
+@admin_router.get("/template/blank.pdf")
+async def admin_blank_template_pdf():
+    """Generate a clean blank copy of the current Konekt Vendor Supply Agreement.
+    Useful for sharing with prospective vendors before they sign online.
+    """
+    import tempfile
+    blank_data = {
+        "vendor_legal_name": "____________________________",
+        "vendor_address": "____________________________",
+        "vendor_phone": "____________________________",
+        "signatory_name": "____________________________",
+        "signatory_title": "____________________________",
+        "signatory_email": "____________________________",
+        "signature_text": "_________________________",
+        "signed_at": _now_iso(),
+        "signed_ip": "—",
+    }
+    tmp = Path(tempfile.mkstemp(suffix=".pdf", prefix=f"konekt-agreement-blank-v{AGREEMENT_VERSION}-")[1])
+    _generate_pdf(tmp, blank_data)
+    return FileResponse(
+        str(tmp),
+        media_type="application/pdf",
+        filename=f"konekt-vendor-agreement-template-v{AGREEMENT_VERSION}.pdf",
+    )
+
+
 @admin_router.post("/nudge-unsigned")
 async def nudge_unsigned_vendors():
     """Email every vendor that has not yet signed the current agreement version.

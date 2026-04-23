@@ -332,14 +332,26 @@ async def commit_import(
                         await db.partner_catalog_items.insert_one(doc)
                         stats["imported"] += 1
                 else:
+                    # URL-imported sessions carry source_url → auto-publish to marketplace
+                    is_url_source = bool(source_url) or (session.get("source") == "url")
+                    # Compute a customer price using default markup when only vendor_cost is provided
+                    markup = float(session.get("markup_multiplier", 1.35))
+                    customer_price = round(vendor_cost * markup, 0) if vendor_cost and vendor_cost > 0 else 0
                     doc = {
                         **doc_common,
                         "category_name": konekt_cat,
+                        "branch": session.get("branch") or "Promotional Materials",
                         "vendor_cost": vendor_cost,
+                        "base_price": customer_price,
+                        "customer_price": customer_price,
                         "stock": stock,
-                        "approval_status": "pending",
-                        "status": "draft",
-                        "source": "smart_import",
+                        "partner_id": partner_id,
+                        "partner_name": partner_name,
+                        "vendor_id": partner_id,
+                        "approval_status": "approved" if is_url_source else "pending",
+                        "status": "published" if is_url_source else "draft",
+                        "is_active": True if is_url_source else False,
+                        "source": "url_import" if is_url_source else "smart_import",
                     }
                     if existing:
                         await db.products.update_one({"_id": existing["_id"]}, {"$set": doc})

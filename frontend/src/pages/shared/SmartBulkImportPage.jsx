@@ -6,7 +6,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { toast } from "sonner";
-import { UploadCloud, FileSpreadsheet, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2, Sparkles, ClipboardPaste, FileText, Image as ImageIcon, Camera } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Loader2, Sparkles, ClipboardPaste, FileText, Image as ImageIcon, Camera, Globe, Link as LinkIcon } from "lucide-react";
 
 /**
  * Smart Bulk Import wizard — 4 steps:
@@ -32,12 +32,20 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
   const [result, setResult] = useState(null);
   const fileInputRef = useRef(null);
   // AI mode state
-  const [uploadMode, setUploadMode] = useState("spreadsheet"); // spreadsheet | ai
+  const [uploadMode, setUploadMode] = useState("spreadsheet"); // spreadsheet | ai | url
   const [aiKind, setAiKind] = useState("pdf"); // pdf | image | photos | text
   const [aiText, setAiText] = useState("");
   const [aiFiles, setAiFiles] = useState([]);
   const [aiBusy, setAiBusy] = useState(false);
   const aiFileRef = useRef(null);
+  // URL mode state (admin only)
+  const [urlInput, setUrlInput] = useState("");
+  const [urlVendorId, setUrlVendorId] = useState(partnerIdOverride || "");
+  const [urlVendorName, setUrlVendorName] = useState("");
+  const [urlTarget, setUrlTarget] = useState("products"); // "products" = live marketplace, "partner_catalog" = vendor-only
+  const [urlMaxPages, setUrlMaxPages] = useState(20);
+  const [urlBusy, setUrlBusy] = useState(false);
+  const [vendorList, setVendorList] = useState([]);
 
   const canonicalFields = [
     { key: "name", label: "Product name", required: true },
@@ -74,6 +82,62 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
       toast.error(e?.response?.data?.detail || "Failed to read file");
     } finally {
       setUploading(false);
+    }
+  };
+
+  // URL-import: fetch vendor list (admin mode)
+  const loadVendors = async () => {
+    if (mode !== "admin" || vendorList.length) return;
+    try {
+      const r = await http.get("/api/admin/partners?limit=500");
+      const data = r.data;
+      setVendorList(Array.isArray(data) ? data : (data.partners || []));
+    } catch {
+      setVendorList([]);
+    }
+  };
+
+  const handleEnsureVendor = async () => {
+    if (!urlVendorName.trim()) { toast.error("Enter a vendor/brand name"); return; }
+    try {
+      const r = await http.post("/api/admin/maintenance/ensure-vendor", {
+        name: urlVendorName.trim(),
+        country_code: "TZ",
+        partner_type: "product",
+      });
+      setUrlVendorId(r.data.partner_id);
+      toast.success(r.data.created ? `Created vendor ${r.data.name}` : `Using existing vendor ${r.data.name}`);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to create vendor");
+    }
+  };
+
+  const handleUrlSubmit = async () => {
+    if (!urlInput.trim().startsWith("http")) { toast.error("Paste a full https:// URL"); return; }
+    if (!urlVendorId) { toast.error("Pick or create a vendor first"); return; }
+    setUrlBusy(true);
+    try {
+      const r = await http.post("/api/admin/url-import/preview", {
+        url: urlInput.trim(),
+        vendor_id: urlVendorId,
+        country_code: "TZ",
+        max_pages: Number(urlMaxPages) || 20,
+        download_images: true,
+        target: urlTarget,
+      });
+      setPreview(r.data);
+      setColumnMap(r.data.auto_map || {});
+      const cats = await http.get("/api/smart-import/categories").catch(() => ({ data: { categories: [] } }));
+      setKonektCategories(cats.data.categories || []);
+      const defaults = {};
+      (r.data.vendor_category_groups || []).forEach(g => { defaults[g.label] = ""; });
+      setCategoryMap(defaults);
+      setStep(2);
+      toast.success(`Scraped ${r.data.total_rows} products across ${r.data.pages_crawled} page${r.data.pages_crawled === 1 ? "" : "s"}. Review below.`);
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "URL scrape failed");
+    } finally {
+      setUrlBusy(false);
     }
   };
 
@@ -191,6 +255,16 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
               <Sparkles className="w-4 h-4" /> AI Import
               <span className="text-[9px] uppercase tracking-wide bg-white/30 px-1.5 py-0.5 rounded">Beta</span>
             </button>
+            {mode === "admin" && (
+              <button
+                onClick={() => { setUploadMode("url"); loadVendors(); }}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2 ${uploadMode === "url" ? "bg-emerald-600 text-white shadow" : "text-slate-600 hover:bg-slate-50"}`}
+                data-testid="mode-url"
+              >
+                <Globe className="w-4 h-4" /> From URL
+                <span className="text-[9px] uppercase tracking-wide bg-white/30 px-1.5 py-0.5 rounded">Admin</span>
+              </button>
+            )}
           </div>
 
           {uploadMode === "spreadsheet" && (
@@ -313,6 +387,141 @@ export default function SmartBulkImportPage({ mode = "admin", partnerIdOverride 
                 </Button>
                 <div className="text-[11px] text-slate-500">
                   Powered by Gemini 3 · You review before committing · ~15–60 s per page
+                </div>
+              </div>
+            </div>
+          )}
+
+          {uploadMode === "url" && mode === "admin" && (
+            <div className="bg-gradient-to-br from-emerald-50 via-white to-white rounded-2xl border border-emerald-100 p-6 space-y-5" data-testid="step-url-import">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#20364D]">Import directly from a partner's URL</h3>
+                  <p className="text-xs text-slate-600 mt-1 max-w-xl">
+                    Paste a vendor's public catalog/shop URL (e.g. <code className="bg-white px-1 rounded border">darcity.tz/shop-list.aspx</code>).
+                    We'll crawl up to the page limit, download each product image locally, and feed everything
+                    into the same wizard — you still confirm categories + markup before committing.
+                  </p>
+                </div>
+              </div>
+
+              {/* Vendor picker / creator */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white rounded-xl border p-4">
+                <div>
+                  <Label className="text-xs font-semibold">Attach to vendor</Label>
+                  <select
+                    value={urlVendorId}
+                    onChange={(e) => setUrlVendorId(e.target.value)}
+                    className="w-full border rounded-xl px-3 py-2 mt-1 text-sm bg-white"
+                    data-testid="url-vendor-select"
+                  >
+                    <option value="">— Pick existing vendor —</option>
+                    {vendorList.map((v) => (
+                      <option key={v.id || v._id} value={v.id || v._id}>
+                        {v.name || v.company_name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1">…or create one on the fly:</p>
+                  <div className="flex gap-2 mt-1">
+                    <Input
+                      value={urlVendorName}
+                      onChange={(e) => setUrlVendorName(e.target.value)}
+                      placeholder="New vendor / brand name"
+                      className="text-sm"
+                      data-testid="url-vendor-new-name"
+                    />
+                    <Button variant="outline" size="sm" onClick={handleEnsureVendor} data-testid="url-vendor-create-btn">
+                      + Create
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Destination</Label>
+                  <div className="flex flex-col gap-2 mt-1 text-sm">
+                    <label className="flex items-start gap-2 p-2 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="url-target"
+                        checked={urlTarget === "products"}
+                        onChange={() => setUrlTarget("products")}
+                        data-testid="url-target-products"
+                        className="mt-0.5"
+                      />
+                      <div>
+                        <div className="font-semibold text-[#20364D]">Live marketplace</div>
+                        <div className="text-[11px] text-slate-500">Products show up immediately on Konekt shop (with 1.35× markup). Recommended.</div>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2 p-2 border rounded-lg hover:bg-slate-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="url-target"
+                        checked={urlTarget === "partner_catalog"}
+                        onChange={() => setUrlTarget("partner_catalog")}
+                        data-testid="url-target-partner"
+                        className="mt-0.5"
+                      />
+                      <div>
+                        <div className="font-semibold text-[#20364D]">Vendor catalog only</div>
+                        <div className="text-[11px] text-slate-500">Kept behind the vendor portal; not shown on marketplace.</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* URL + pages */}
+              <div className="bg-white rounded-xl border p-4 space-y-3">
+                <div>
+                  <Label className="text-xs font-semibold">Catalog URL</Label>
+                  <div className="flex gap-2 mt-1">
+                    <div className="flex items-center bg-slate-50 border rounded-xl px-3 text-slate-400">
+                      <LinkIcon className="w-4 h-4" />
+                    </div>
+                    <Input
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      placeholder="https://darcity.tz/shop-list.aspx"
+                      className="flex-1 text-sm"
+                      data-testid="url-input"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs font-semibold">Max pages to crawl</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={urlMaxPages}
+                      onChange={(e) => setUrlMaxPages(e.target.value)}
+                      className="mt-1 text-sm"
+                      data-testid="url-max-pages"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">We stop automatically when a page returns no new products.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  size="lg"
+                  onClick={handleUrlSubmit}
+                  disabled={urlBusy}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  data-testid="url-scrape-btn"
+                >
+                  {urlBusy
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Scraping…</>
+                    : <><Globe className="w-4 h-4 mr-2" /> Scrape this URL</>}
+                </Button>
+                <div className="text-[11px] text-slate-500">
+                  Images are downloaded + resized · ~2–10 s per page
                 </div>
               </div>
             </div>

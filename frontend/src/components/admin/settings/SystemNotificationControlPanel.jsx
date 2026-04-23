@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import api from "../../lib/api";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Badge } from "../ui/badge";
+import api from "../../../lib/api";
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Badge } from "../../ui/badge";
 import { toast } from "sonner";
 import { Bell, Mail, MessageCircle, AlertCircle, CheckCircle2, Send, Loader2, Users, RefreshCw } from "lucide-react";
 

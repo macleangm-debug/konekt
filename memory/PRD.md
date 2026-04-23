@@ -153,8 +153,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 95. **QR codes on invoice / quote PDFs** — `pdf_commercial_documents.generate_commercial_document_pdf` now appends a footer with a Konekt-styled QR linking to the hosted document (`/invoice/{id}` or `/quote/{id}`).  Cached under `/app/static/qr/invoices|quotes/`.
 96. **Backend tests — 90/90 green** across all sessions.  Added `/app/backend/tests/test_session_6.py` (5 tests).
 
-### Deployment Notes
-- **Resend is live** (`RESEND_API_KEY` set, key `…RAl`) but sending from sandbox domain `onboarding@resend.dev`.  For full email deliverability, verify `konekt.co.tz` in the Resend dashboard and set `RESEND_FROM_EMAIL=notifications@konekt.co.tz` in `backend/.env`.  The Settings Hub Resend widget flags this.
+### Live Launch — Darcity Seed + Production Polish (Apr 23, 2026)
+97. **Darcity Promotion live on marketplace** — 24 products scraped from `darcity.tz/shop-list.aspx` are now live on `/products` (customer marketplace) with real product images, 1.35× markup applied, and 24 entries in `partner_catalog_items` mirrored to `products.is_active=true`.
+98. **URL Import UI tab** — `/admin/smart-import` now has a third tab "From URL" (Admin-only) that lets Ops paste a vendor catalog URL, pick/create the vendor on the fly, choose destination (Live marketplace vs. Vendor catalog only), set max pages, and scrape directly into the existing mapping wizard. Backed by `POST /api/admin/url-import/preview`.
+99. **Smart-Import commit → products upgrade** — when a URL-sourced session is committed with `target="products"`, it writes to `db.products` with `is_active=true`, `status=published`, `approval_status=approved`, `customer_price = vendor_cost × 1.35`, `branch="Promotional Materials"`, so the products surface on the marketplace instantly.
+100. **Test pollution purge** — new `POST /api/admin/maintenance/purge-test-pollution {confirm:"PURGE-TESTS"}` wipes TEST_/Demo leftovers from `vendor_product_submissions`, `catalog_products`, `partner_catalog_items`, `marketplace_listings`, `products`.  Run once in this session: 65 rows deleted.
+101. **Publish partner catalog to marketplace** — new `POST /api/admin/maintenance/publish-partner-catalog-to-products {partner_id, markup_multiplier, branch, confirm:"PUBLISH"}` promotes every partner_catalog_items row for a vendor into `db.products` (idempotent, matched by sku). Applied for Darcity Promotion: 24 products inserted.
+102. **Static /api/uploads mount** — images under `/app/uploads/` now served both at `/uploads/*` (internal) and `/api/uploads/*` (external) so the Kubernetes ingress can surface them without hitting the frontend. Fixed `StaticFiles(directory="uploads")` → absolute path `/app/uploads`, and updated url_catalog_import to emit `/api/uploads/...` URLs.
+103. **Blank vendor-agreement template PDF** — new `GET /api/admin/vendor-agreements/template/blank.pdf` (admin JWT) returns a clean template PDF with blank signature/address fields.  Admin UI at `/admin/vendor-agreements` gained a "Download blank template" button next to Nudge + Bump version, to share with prospective vendors.
+104. **Component path fix** — `components/admin/settings/SystemNotificationControlPanel.jsx` had broken imports (`../ui/button` and `../../lib/api`). Corrected to `../../ui/button` and `../../../lib/api`; the whole React bundle was failing to compile on any page that referenced this component.
+
+### Deployment Notes (latest)
+- `products` collection is the canonical marketplace feed (read by `/api/products`).  `partner_catalog_items` is the vendor's private SKU list.  URL/Admin imports default to live marketplace; vendor imports default to vendor catalog only.
+- Image URLs are stored as `/api/uploads/...`. `/uploads/*` requests from the external URL hit the frontend and return HTML — always reference `/api/uploads/*` in image URLs.
 - **All services healthy**: backend RUNNING, frontend RUNNING, mongodb RUNNING.  Backend `/api/` responds 200.
 - **Database migrations needed**: none.  All new collections (`system_notification_config`, `vendor_agreements`, `vendor_statements`, `vendor_modality_requests`, `impersonation_audit`, `smart_import_sessions`) are created lazily.
 

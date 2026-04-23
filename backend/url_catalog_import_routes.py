@@ -206,7 +206,7 @@ async def _download_image(http: httpx.AsyncClient, url: str, dest_dir: Path, key
         else:
             raw_path.rename(final_path)
         rel = final_path.relative_to(Path("/app/uploads"))
-        return f"/uploads/{rel.as_posix()}"
+        return f"/api/uploads/{rel.as_posix()}"
     except Exception as e:
         logger.warning("Image download failed for %s: %s", url, e)
         return None
@@ -227,6 +227,7 @@ class UrlPreviewPayload(BaseModel):
     country_code: str = "TZ"
     max_pages: int = MAX_PAGES_DEFAULT
     download_images: bool = True
+    target: str = "partner_catalog"  # "partner_catalog" | "products" (marketplace-live)
 
 
 @router.post("/preview")
@@ -347,7 +348,7 @@ async def url_preview(payload: UrlPreviewPayload, request: Request):
     session_doc = {
         "id": session_id,
         "filename": urlparse(payload.url).netloc,
-        "target": "partner_catalog",
+        "target": payload.target if payload.target in ("partner_catalog", "products") else "partner_catalog",
         "partner_id": payload.vendor_id,
         "country_code": (payload.country_code or "TZ").upper()[:2],
         "headers": headers,

@@ -283,7 +283,15 @@ security = HTTPBearer(auto_error=False)
 STATIC_DIR = Path("/app/static")
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# /app/uploads is the canonical upload root used by url_catalog_import and
+# vendor_agreement modules; keep it in absolute form so it works regardless of
+# the backend's current working directory.
+UPLOADS_DIR = "/app/uploads"
+Path(UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+# Also expose under /api/uploads so Kubernetes ingress (which only proxies /api/*
+# to the backend) can serve product images without going through the frontend.
+app.mount("/api/uploads", StaticFiles(directory=UPLOADS_DIR), name="api_uploads")
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

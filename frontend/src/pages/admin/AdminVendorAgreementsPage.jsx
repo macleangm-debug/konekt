@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { ShieldCheck, CheckCircle2, FileText, Download, AlertCircle, Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
+import { ShieldCheck, CheckCircle2, FileText, Download, AlertCircle, Loader2, RefreshCcw, AlertTriangle, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -17,6 +17,24 @@ export default function AdminVendorAgreementsPage() {
   const [bumpReason, setBumpReason] = useState("");
   const [bumping, setBumping] = useState(false);
   const [nudging, setNudging] = useState(false);
+
+  const downloadBlankTemplate = async () => {
+    try {
+      const r = await api.get("/api/admin/vendor-agreements/template/blank.pdf", { responseType: "blob" });
+      const blob = new Blob([r.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `konekt-vendor-agreement-template-v${stats?.current_version || "1.0"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Template PDF downloaded");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to download template");
+    }
+  };
 
   const nudgeUnsigned = async () => {
     if (!window.confirm("Send a reminder email to every vendor that has NOT signed the current agreement?")) return;
@@ -78,7 +96,10 @@ export default function AdminVendorAgreementsPage() {
           <h1 className="text-2xl font-bold text-[#20364D]">Vendor Supply Agreements</h1>
           <p className="text-sm text-slate-500 mt-1">Track which vendors have signed the current contract version.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={downloadBlankTemplate} data-testid="download-template-btn">
+            <FileDown className="w-4 h-4 mr-2" /> Download blank template
+          </Button>
           <Button variant="outline" onClick={nudgeUnsigned} disabled={nudging} data-testid="nudge-unsigned-btn">
             {nudging ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <AlertCircle className="w-4 h-4 mr-2" />}
             {nudging ? "Sending…" : "Nudge unsigned vendors"}
