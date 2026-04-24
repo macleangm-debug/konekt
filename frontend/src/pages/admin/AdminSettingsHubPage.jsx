@@ -1293,21 +1293,38 @@ function PromotionEngineDefaultsCard() {
 
 
 function PricingPolicyTab() {
+  const CATEGORIES = ["default", "Promotional Materials", "Office Equipment", "Stationery", "Services"];
+  const [category, setCategory] = React.useState("default");
   const [tiers, setTiers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [dirty, setDirty] = React.useState(false);
   const [previewCost, setPreviewCost] = React.useState("");
   const [previewResult, setPreviewResult] = React.useState(null);
   const [validationErrors, setValidationErrors] = React.useState([]);
 
-  React.useEffect(() => {
-    api.get("/api/commission-engine/pricing-policy-tiers").then((res) => {
+  const loadCategory = React.useCallback(async (cat) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/api/commission-engine/pricing-policy-tiers`, { params: { category: cat } });
       setTiers(res.data?.tiers || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+      setValidationErrors([]);
+      setDirty(false);
+    } catch {
+      setTiers([]);
+    }
+    setLoading(false);
   }, []);
 
+  React.useEffect(() => { loadCategory(category); }, [category, loadCategory]);
+
+  const switchCategory = (next) => {
+    if (dirty && !window.confirm("You have unsaved changes in this category. Discard them and switch?")) return;
+    setCategory(next);
+  };
+
   const updateTier = (idx, field, value) => {
+    setDirty(true);
     setTiers((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], [field]: value };
@@ -1316,6 +1333,7 @@ function PricingPolicyTab() {
   };
 
   const updateSplit = (idx, field, value) => {
+    setDirty(true);
     setTiers((prev) => {
       const next = [...prev];
       next[idx] = { ...next[idx], distribution_split: { ...next[idx].distribution_split, [field]: value } };
@@ -1324,6 +1342,7 @@ function PricingPolicyTab() {
   };
 
   const addTier = () => {
+    setDirty(true);
     const lastTier = tiers[tiers.length - 1];
     const newMin = lastTier ? lastTier.max_amount + 1 : 0;
     setTiers([...tiers, {
@@ -1338,6 +1357,7 @@ function PricingPolicyTab() {
   };
 
   const removeTier = (idx) => {
+    setDirty(true);
     setTiers((prev) => prev.filter((_, i) => i !== idx));
   };
 
@@ -1358,8 +1378,9 @@ function PricingPolicyTab() {
     if (!validate()) return;
     setSaving(true);
     try {
-      await api.put("/api/commission-engine/pricing-policy-tiers", { tiers });
-      alert("Pricing policy tiers saved.");
+      await api.put("/api/commission-engine/pricing-policy-tiers", { category, tiers });
+      setDirty(false);
+      alert(`Pricing policy saved for "${category}".`);
     } catch (e) {
       const detail = e?.response?.data?.detail;
       if (detail?.errors) {
@@ -1392,8 +1413,42 @@ function PricingPolicyTab() {
     <>
       <SettingsSectionCard
         title="Margin & Distribution Tiers"
-        description="Unified pricing policy. Each tier defines margin percentages and how the distributable pool is split. This is the single source of truth for margins, promotions, affiliate, referral, sales, and wallet rules."
+        description="Unified pricing policy per category. Switch between Promotional Materials, Office Equipment, Stationery, Services, or the Default fallback. Each tier defines margin percentages and how the distributable pool is split."
       >
+        {/* Category selector — one tier set per branch */}
+        <div className="mb-5 rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap" data-testid="pricing-category-tabs">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Editing:</span>
+              {CATEGORIES.map((cat) => {
+                const isActive = category === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => switchCategory(cat)}
+                    data-testid={`pricing-category-tab-${cat.replace(/\s/g, '-')}`}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                      isActive
+                        ? "bg-[#20364D] text-white shadow-md"
+                        : "bg-white border border-slate-200 text-slate-600 hover:border-[#20364D] hover:text-[#20364D]"
+                    }`}
+                  >
+                    {cat === "default" ? "Default (fallback)" : cat}
+                  </button>
+                );
+              })}
+            </div>
+            {dirty && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-md" data-testid="pricing-dirty-badge">
+                ● Unsaved changes
+              </span>
+            )}
+          </div>
+          <p className="mt-2 text-[11px] text-slate-500">
+            Products use the tier set matching their <code className="text-slate-700 bg-slate-100 px-1 rounded">branch</code> (e.g. <span className="font-semibold">Cooltex Polo</span> → Promotional Materials, <span className="font-semibold">DTC 1250e</span> → Office Equipment). If a branch has no configured tiers, the <span className="font-semibold">Default</span> set is used as a fallback.
+          </p>
+        </div>
+
         {validationErrors.length > 0 && (
           <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 space-y-1" data-testid="pricing-validation-errors">
             <div className="flex items-center gap-1.5 font-semibold"><AlertTriangle className="w-3.5 h-3.5" /> Validation Errors</div>
@@ -1470,7 +1525,7 @@ function PricingPolicyTab() {
             <Plus className="w-3.5 h-3.5" /> Add Tier
           </button>
           <button onClick={saveTiers} disabled={saving} className="rounded-xl bg-[#20364D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50 transition-colors" data-testid="save-pricing-tiers-btn">
-            {saving ? "Saving..." : "Save Pricing Policy"}
+            {saving ? "Saving..." : `Save "${category}" tiers`}
           </button>
         </div>
       </SettingsSectionCard>

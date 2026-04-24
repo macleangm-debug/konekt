@@ -9,6 +9,16 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Settings Hub Category Pricing UI
+1. **Category selector pill tabs** added to `PricingPolicyTab` in `AdminSettingsHubPage.jsx`:
+   • 5 tabs: Default (fallback) / Promotional Materials / Office Equipment / Stationery / Services
+   • Clicking a tab fetches `/api/commission-engine/pricing-policy-tiers?category=X` and swaps the tier editor into edit-mode for that category
+   • Save button label dynamically updates: "Save '{category}' tiers"
+   • Unsaved-changes amber pill + confirmation dialog when switching away with dirty edits
+   • Context-aware description strip explaining how `product.branch` maps to tier set
+2. **Verified via screenshot** — Default shows "Micro (0 – 2K) @ 50%" while Office Equipment shows "Micro Supplies (0 – 2K) @ 45%". Both load correctly with full per-category distribution_split preserved.
+
+
 ### Feb 24, 2026 (later) — Category-Aware Pricing Tiers (4 tier sets)
 1. **Storage refactored** — `admin_settings.settings_hub.pricing_policy_tiers` now supports a **dict shape** keyed by category:
    ```json
