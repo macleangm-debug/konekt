@@ -9,6 +9,12 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Vendor List Shows Konekt Branches (not subcategories)
+1. **Fix**: `vendors_admin_routes.py` `list_vendors` was returning `distinct(category)` values which are *sub*categories (Cooltex, Gift Bags, Awards & Trophies…). Changed to return `distinct(branch)` values filtered to the **4 official Konekt branches** only: `{Promotional Materials, Office Equipment, Stationery, Services}`.
+2. **Darcity now correctly shows** — taxonomy_names = `["Office Equipment", "Promotional Materials"]` — the two branches where Darcity actually has products (596 Promotional Materials + 14 Office Equipment = 610 total).
+3. **Guard** — if `taxonomy_ids` are manually set on a vendor but contain non-branch values, we filter them against the allowed 4 to prevent subcategory leakage in the future.
+
+
 ### Feb 24, 2026 (later) — Vendor List + Vendor Agreements Surfaced in Admin UI
 1. **Sidebar additions** — `config/adminNavigation.js` now shows **Vendors** and **Vendor Agreements** under the "Catalog & Supply" group (previously hidden routes). Dedupe: removed the duplicate Vendor Agreements entry that was in "Payments & Finance".
 2. **Vendor list backend fix** — `vendors_admin_routes.py` now accepts users with `role ∈ {vendor, partner_vendor, supplier}` (previously only `vendor`). Enriches each row with:

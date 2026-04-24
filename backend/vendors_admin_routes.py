@@ -91,17 +91,22 @@ async def list_vendors(request: Request, status: Optional[str] = None, capabilit
         if partner_id and not active_products:
             active_products = await db.products.count_documents({"partner_id": partner_id, "is_active": True})
 
-        # Resolve taxonomy names from taxonomy_ids OR from distinct product categories
-        taxonomy_ids = v.get("taxonomy_ids", []) or []
-        taxonomy_names = []
-        if taxonomy_ids:
-            tax_docs = await db.taxonomy.find({"id": {"$in": taxonomy_ids}}, {"_id": 0, "name": 1}).to_list(50)
-            taxonomy_names = [t["name"] for t in tax_docs]
-        # Fallback — derive branches from the vendor's products
-        if not taxonomy_names and partner_id:
+        # Resolve BRANCH names — the 4 top-level categories only
+        # (Promotional Materials / Office Equipment / Stationery / Services).
+        # These come from product.branch (not product.category which is subcategory).
+        KONEKT_BRANCHES = {"Promotional Materials", "Office Equipment", "Stationery", "Services"}
+        branch_names = []
+        if partner_id:
             branches = await db.products.distinct("branch", {"partner_id": partner_id, "is_active": True})
-            categories = await db.products.distinct("category", {"partner_id": partner_id, "is_active": True})
-            taxonomy_names = sorted(set([b for b in branches if b] + [c for c in categories if c]))[:8]
+            branch_names = sorted(b for b in branches if b and b in KONEKT_BRANCHES)
+
+        # `taxonomy_names` historically meant "categories assigned to this vendor".
+        # For consistency with the Konekt 4-branch taxonomy, return branches here.
+        taxonomy_ids = v.get("taxonomy_ids", []) or []
+        taxonomy_names = branch_names or []
+        if not taxonomy_names and taxonomy_ids:
+            tax_docs = await db.taxonomy.find({"id": {"$in": taxonomy_ids}}, {"_id": 0, "name": 1}).to_list(50)
+            taxonomy_names = [t["name"] for t in tax_docs if t.get("name") in KONEKT_BRANCHES]
 
         result.append({
             "id": vid,
