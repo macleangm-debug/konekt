@@ -9,6 +9,18 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — 8-Tier Pricing Structure (competitiveness fix)
+1. **Tier structure refactored from 5 → 8 tiers** to fix the over-priced 0-100K slab that was quoting Cooltex at TZS 33,750 (on 25K vendor cost). User's competitive target: ~28K at 25K cost.
+2. **New U-curve**: Micro (0-2K: 50%), Ultra-Low (2-10K: 30%), **Low (10-30K: 12% — commodity apparel zone)**, Low-Mid (30-100K: 20%), Mid (100-500K: 22%), Upper-Mid (500K-2M: 18%), Large (2-10M: 14%), Enterprise (10M+: 10%). Protected/distributable ratio ≈ 2:1 preserved per tier.
+3. **Impact on 610 products (vs. old 35%-flat 0-100K tier):**
+   • Commodity apparel (Cooltex, Hoodies, Polos, Diaries) at 10-30K cost → **-17%** price drop (25K → 28K) — competitive win.
+   • Tiny items (<2K, e.g. wristbands 750 TZS → 1,125) → **+11%** — fair absolute margin restored.
+   • Mid-premium (30-500K) → roughly flat.
+   • Equipment/enterprise → -12 to -16% for aggressive quoting.
+4. **Scripts:** `install_granular_pricing_tiers.py` (idempotent tier installer) + `reprice_all_with_pricing_engine.py` (realigned 610/610 products to the new structure, writing `pricing_tier_label`, `pricing_total_margin_pct`, `pricing_protected_margin_pct`, `pricing_distributable_margin_pct` metadata on every record).
+5. **Existing UI:** tier structure is editable anytime via Settings Hub → Commission & Margin Engine → Pricing Policy Tiers (endpoint `PUT /api/admin/commission-margin/pricing-policy-tiers`). Any edit triggers validation (split % can't exceed 100%).
+
+
 ### Feb 24, 2026 (later) — Pricing Engine Enforcement + Per-Product Overrides (P1)
 1. **Verified & hardened the pricing engine** — the Settings Hub `pricing_policy_tiers` are now the single source of truth for Konekt customer prices. Every product's `customer_price = vendor_cost × (1 + tier.total_margin_pct/100)`. Darcity's raw prices are stored as `vendor_cost` (never shown to customers). Example: `Cooltex Polo - Dark Grey - Large` has vendor_cost=25,000 → marketplace price 33,750 (35% Small tier margin = 23% protected + 12% distributable).
 2. **`scripts/reprice_all_with_pricing_engine.py`** realigned 73 products that had drifted from the pricing engine (URL-import used flat 35% markup, which mis-priced items crossing tier boundaries). Now idempotent — also backfills tier metadata (`pricing_tier_label`, `pricing_total_margin_pct`, `pricing_protected_margin_pct`, `pricing_distributable_margin_pct`) on every product, every run.
