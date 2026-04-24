@@ -9,6 +9,22 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 — Customer Copy + Payment UX + Services Mobile UX + Phone Field
+1. **Group deal copy sanitized** — `GroupDealsPages.jsx` renders a friendly "Team up with other buyers to unlock a special group price… you save TZS X per unit" blurb; legacy internal-mechanics text is auto-detected and rewritten client-side. Backend `admin_group_deals_internal_routes.py` now persists the clean `description` from the start; internal rationale stored in `internal_rationale` for admin eyes only. New admin endpoint `POST /api/admin/sanitize-group-deal-descriptions` for on-demand cleanup of existing campaigns. Preview DB sanitized (8 deals). Regenerated `backend/data/production_seed/group_deal_campaigns.json` so future deploys bake in the friendly copy.
+2. **Bank reference / Transaction ID removed** from every customer-facing payment surface (Konekt uses its own order refs):
+   • `GroupDealCheckoutPage.jsx`, `PublicCheckoutPage.jsx`, `PublicPaymentProofPage.jsx`, `InvoicePaymentPage.jsx`, `InvoicePaymentPageV2.jsx` — field removed, validation updated, API payload updated.
+3. **Services mobile UX** (`ServiceCardsSection.jsx`):
+   • Added floating bottom CTA on mobile (`fixed inset-x-3 bottom-3 z-40`) so users never scroll back up to click "Get quote".
+   • Request form is now a mobile bottom sheet (`fixed inset-x-0 bottom-0 z-50`) with backdrop — fixes the reported "Get Quote page underneath the service cards" z-index issue. Inline card layout preserved on desktop.
+   • "Get Quote" submission wiring verified working via curl (endpoint `/api/public/quote-requests` → returns `{success: true, id: ...}`).
+4. **Phone field with country prefix selector** — new `components/ui/PhoneField.jsx`:
+   • Flag + dial-code trigger opens a bottom sheet on mobile (full-viewport modal with search) and a compact search-enabled popover on desktop.
+   • 11 countries (TZ, KE, UG, RW, BI, ZA, NG, GH, US, GB, AE).
+   • Wired into `ServiceCardsSection` + `GroupDealCheckoutPage`. Easy to drop into any remaining form.
+5. **Commit `099330a`** stacks on top of previous work. Ready to deploy.
+
+
+
 ### Feb 24, 2026 (RESOLVED) — Production LIVE with real Darcity data 🎉
 **Final state of konekt.co.tz** (verified via curl + screenshot):
 - ✅ Backend healthy (200 on `/api/health`)
