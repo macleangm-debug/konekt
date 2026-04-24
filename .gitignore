@@ -66,6 +66,7 @@ agenthub/agents/youtube/db
 # Archive files and large assets
 **/*.zip
 **/*.tar.gz
+!backend/data/production_seed/darcity_images.tar.gz
 **/*.tar
 **/*.tgz
 *.pack

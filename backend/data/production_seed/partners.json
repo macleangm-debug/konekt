@@ -1,0 +1,19 @@
+[
+  {
+    "name": "Darcity Promotion",
+    "company_name": "Darcity Promotion Ltd",
+    "email": "info@darcity.tz",
+    "phone": "",
+    "country_code": "TZ",
+    "partner_type": "product",
+    "website": "https://darcity.tz",
+    "payment_modality": "pay_per_order",
+    "status": "active",
+    "source": "url_import",
+    "created_at": "2026-04-23T09:40:43.218000",
+    "updated_at": "2026-04-23T09:40:43.218000",
+    "portal_user_email": "info@darcity.tz",
+    "primary_contact_email": "info@darcity.tz",
+    "_id_hex": "69e9e91b7ef848b59a2f8172"
+  }
+]

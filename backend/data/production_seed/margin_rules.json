@@ -1,0 +1,118 @@
+[
+  {
+    "id": "958e7ccb-80e8-4cc2-9e11-8218045e8192",
+    "scope": "global",
+    "target_id": null,
+    "target_name": "",
+    "method": "percentage",
+    "value": 20,
+    "tiers": [],
+    "active": true,
+    "created_at": "2026-03-30T12:42:17.858697+00:00",
+    "updated_at": "2026-03-30T12:42:17.858706+00:00"
+  },
+  {
+    "id": "7b5d5b3e-4abf-4adb-b210-3df935a294d2",
+    "scope": "product",
+    "target_id": "prod-001",
+    "target_name": "Test Product",
+    "method": "fixed_amount",
+    "value": 500,
+    "tiers": [],
+    "active": true,
+    "created_at": "2026-03-30T12:42:36.139763+00:00",
+    "updated_at": "2026-03-30T12:42:36.139773+00:00"
+  },
+  {
+    "id": "3044f06f-ca71-4696-9469-8c2fb256942b",
+    "scope": "group",
+    "target_id": "grp-001",
+    "target_name": "Electronics",
+    "method": "tiered",
+    "value": 0,
+    "tiers": [
+      {
+        "min_cost": 0,
+        "max_cost": 1000,
+        "value": 30
+      },
+      {
+        "min_cost": 1001,
+        "max_cost": 5000,
+        "value": 20
+      },
+      {
+        "min_cost": 5001,
+        "value": 10
+      }
+    ],
+    "active": true,
+    "created_at": "2026-03-30T12:42:36.555043+00:00",
+    "updated_at": "2026-03-30T12:42:36.555052+00:00"
+  },
+  {
+    "id": "51fe3ade-92aa-4457-9928-b7f7d7f2ce2e",
+    "scope": "group",
+    "target_id": "office-equipment",
+    "target_name": "Office Equipment",
+    "method": "percentage",
+    "value": 15,
+    "tiers": [],
+    "distributable_margin_pct": 5,
+    "active": true,
+    "created_at": "2026-04-08T04:20:35.318644+00:00",
+    "updated_at": "2026-04-08T04:20:35.318657+00:00"
+  },
+  {
+    "scope": "tier",
+    "tier_label": "0 - 50,000",
+    "vendor_price_min": 0,
+    "vendor_price_max": 50000,
+    "margin_pct": 30,
+    "distributable_margin_pct": 10,
+    "active": true,
+    "note": "Low-price band: 30% margin + 10% distributable",
+    "id": "2fa5afc7-87ce-448b-9ea6-e9bae85774a2",
+    "created_at": "2026-04-08T04:57:59.328317+00:00",
+    "updated_at": "2026-04-08T04:57:59.328317+00:00"
+  },
+  {
+    "scope": "tier",
+    "tier_label": "50,000 - 200,000",
+    "vendor_price_min": 50000,
+    "vendor_price_max": 200000,
+    "margin_pct": 25,
+    "distributable_margin_pct": 8,
+    "active": true,
+    "note": "Mid-price band: 25% margin + 8% distributable",
+    "id": "86f97a7a-020f-4c34-af8c-d4cc8cee1e21",
+    "created_at": "2026-04-08T04:57:59.328317+00:00",
+    "updated_at": "2026-04-08T04:57:59.328317+00:00"
+  },
+  {
+    "scope": "tier",
+    "tier_label": "200,000 - 1,000,000",
+    "vendor_price_min": 200000,
+    "vendor_price_max": 1000000,
+    "margin_pct": 20,
+    "distributable_margin_pct": 6,
+    "active": true,
+    "note": "High-price band: 20% margin + 6% distributable",
+    "id": "175c3ccc-79f8-428c-9573-7c1450145bfb",
+    "created_at": "2026-04-08T04:57:59.328317+00:00",
+    "updated_at": "2026-04-08T04:57:59.328317+00:00"
+  },
+  {
+    "scope": "tier",
+    "tier_label": "1,000,000+",
+    "vendor_price_min": 1000000,
+    "vendor_price_max": null,
+    "margin_pct": 15,
+    "distributable_margin_pct": 4,
+    "active": true,
+    "note": "Premium band: 15% margin + 4% distributable",
+    "id": "66cd197d-6a89-4871-be76-22559bc0d86c",
+    "created_at": "2026-04-08T04:57:59.328317+00:00",
+    "updated_at": "2026-04-08T04:57:59.328317+00:00"
+  }
+]

@@ -9,6 +9,31 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (CRITICAL) — Self-Hydrating Production Deploy (11MB seed bundle)
+The previous fix removed the `/api/seed` attack vector but still required the user to manually repopulate production. To make **one-click deploy = live Darcity site**, we now bundle the real data as a repo-committed seed and auto-hydrate on every startup.
+
+1. **Exported real Darcity data** from preview → `/app/backend/data/production_seed/`:
+   • `products.json` — 610 Darcity products (944 KB)
+   • `group_deal_campaigns.json` — 8 real deals (Wrist Bands, Gift Bags, Lanyards)
+   • `partners.json`, `users_darcity.json`, `admin_settings.json`, `margin_rules.json`, `catalog_categories.json`, `catalog_subcategories.json`, `taxonomy.json`, `hero_banners.json`, `platform_promotions.json`, `margin_config.json`, `vendor_profiles.json`
+   • `darcity_images.tar.gz` — 605 product images (9.5 MB, resized to 800px/82% JPEG). Total seed folder = 11 MB.
+
+2. **Re-scraped darcity.tz for fresh images** via a one-shot httpx script (15-concurrency, 3-minute run). 605/610 images recovered (5 products have no image on source, will fall back to placeholder).
+
+3. **Added `services/production_hydration.py`** — runs inside the FastAPI `startup` event on **every** boot:
+   • **Always prunes**: demo-name products (A5 Notebook, Branded Cap, Trucker Cap, KonektSeries*, Ceramic Coffee Mug, Roll-Up Banner…), TEST_* products, orphaned + TEST_* group deals, TEST_* price requests.
+   • **Hydrates ONLY if Darcity has 0 active products** (fresh deploy path): extracts `darcity_images.tar.gz` into `/app/uploads/product_images/url_import/`, bulk-upserts all JSON seeds (keyed correctly — `id` for products, `campaign_id` for group deals, `email` for users, `key` for admin_settings). ISO-string datetime fields are auto-revived to `datetime` objects so downstream routes (group-deal featured endpoint, deal-of-the-day) don't crash on `.tzinfo`.
+   • Fully idempotent — second boot is a no-op.
+   • Escape hatch: set `SKIP_PRODUCTION_HYDRATION=1` env var to disable.
+
+4. **Cleaned `.gitignore`** — removed ~95 stale `*.env` / `.env` / `-e ` patterns that would have blocked the seed folder and `.env` files from being committed. Added explicit allow-list for `backend/data/production_seed/darcity_images.tar.gz` (since `**/*.tar.gz` is still blocked).
+
+5. **End-to-end verified**: simulated a fresh-deploy by wiping all Darcity products + group deals + images + injecting `A5 Notebook` and `TEST_Junk_XYZ` contamination. Restarted backend. Post-startup state: 0 contamination, 610 Darcity products, 8 real group deals, 605 images served via the public API. Featured/deal-of-the-day endpoints return Wrist Bands. Admin + Darcity vendor logins work.
+
+**Deployment flow for user**: Push to GitHub → Deploy → done. konekt.co.tz will self-hydrate on first boot. No post-deploy curl required.
+
+
+
 ### Feb 24, 2026 (CRITICAL) — Removed Public `/api/seed` + Added Production Cleanup Endpoint
 1. **Root cause of test data on konekt.co.tz**: a public, unauthenticated `POST /api/seed` endpoint in `server.py` was wiping `db.products` and inserting hardcoded demo products (A5 Notebook, Branded Cap, Ceramic Coffee Mug, KonektSeries*). Any unauthenticated request could nuke the catalog. Production DB was also contaminated from a separate, earlier test run (TEST_InvalidStatus_*, TEST_DupItem_*, TEST_DOTD_*).
 2. **Fixes shipped**:

@@ -1,0 +1,21 @@
+[
+  {
+    "id": "e2ba085b-5dce-4018-9748-cf202fbdd346",
+    "email": "info@darcity.tz",
+    "full_name": "Darcity Promotion",
+    "company_name": "Darcity Promotion Ltd",
+    "phone": "+255754000000",
+    "role": "partner_vendor",
+    "partner_id": "69e9e91b7ef848b59a2f8172",
+    "password": "$2b$12$Ue8muhBii0PnQqsm1MxBEObyuXlLNXgsbILhtpAuU7/55UWTdSC..",
+    "is_active": true,
+    "is_verified": true,
+    "country_code": "TZ",
+    "created_at": "2026-04-24T14:59:03.398450+00:00",
+    "updated_at": "2026-04-24T14:59:03.398460+00:00",
+    "capability_type": "products",
+    "company": "Darcity Promotion Ltd",
+    "notes": "Primary product vendor \u2014 Promotional Materials, Office Equipment",
+    "vendor_status": "active"
+  }
+]

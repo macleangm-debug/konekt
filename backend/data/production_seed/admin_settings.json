@@ -1,0 +1,3250 @@
+[
+  {
+    "key": "go_to_market_settings",
+    "value": {
+      "minimum_company_margin_percent": "22",
+      "distribution_layer_percent": 10,
+      "affiliate_percent": 10,
+      "sales_percent_self_generated": 15,
+      "sales_percent_affiliate_generated": 10,
+      "promo_percent": 10,
+      "referral_percent": 5,
+      "country_bonus_percent": 5,
+      "payout_threshold": 50000,
+      "payout_cycle": "monthly",
+      "attribution_window_days": 30,
+      "bank_only_payments": true,
+      "payment_verification_mode": "manual",
+      "ai_enabled": true,
+      "ai_handoff_after_messages": 3,
+      "assignment_mode": "auto",
+      "updated_at": "2026-03-22T15:33:30.182244"
+    }
+  },
+  {
+    "key": "settings_hub",
+    "value": {
+      "business_profile": {
+        "legal_name": "Konekt Limited",
+        "brand_name": "Konekt",
+        "tagline": "Test Tagline 3138eb4d",
+        "support_email": "info@konekt.co.tz",
+        "support_phone": "+255715222132",
+        "business_address": "Dar es Salaam, Tanzania",
+        "tax_id": "166 780",
+        "vat_number": "",
+        "website": "www.konekt.co.tz",
+        "base_public_url": "https://konekt.co.tz",
+        "registration_number": ""
+      },
+      "branding": {
+        "primary_logo_url": "/branding/konekt-triad-logo.svg",
+        "secondary_logo_url": "/branding/konekt-triad-logo-white.svg",
+        "favicon_url": "",
+        "primary_color": "#20364D",
+        "accent_color": "#D4A843",
+        "dark_bg_color": "#0f172a",
+        "company_name": "Konekt Limited",
+        "legal_name": "KONEKT LIMITED",
+        "tagline": "Your B2B Procurement Partner"
+      },
+      "notification_sender": {
+        "sender_name": "Konekt",
+        "sender_email": "",
+        "whatsapp_number": "",
+        "email_footer_text": "B2B Platform"
+      },
+      "commercial": {
+        "minimum_company_margin_percent": 20,
+        "distribution_layer_percent": 10,
+        "protected_company_margin_percent": 8,
+        "commission_mode": "fair_balanced",
+        "affiliate_attribution_reduces_sales_commission": true,
+        "vat_percent": 18,
+        "referral_pct": 10,
+        "max_wallet_usage_pct": 30,
+        "max_wallet_per_order": 0,
+        "wallet_enabled": true,
+        "protect_allocations": true,
+        "enforce_single_channel": true,
+        "referral_min_order_amount": 0,
+        "referral_max_reward_per_order": 0,
+        "welcome_bonus_enabled": false,
+        "welcome_bonus_type": "fixed",
+        "welcome_bonus_value": 5000,
+        "welcome_bonus_max_cap": 10000,
+        "welcome_bonus_first_purchase_only": true,
+        "welcome_bonus_trigger_event": "payment_verified",
+        "welcome_bonus_stack_with_referral": false,
+        "welcome_bonus_stack_with_wallet": true
+      },
+      "margin_rules": {
+        "allow_product_group_margin_override": true,
+        "allow_product_margin_override": true,
+        "allow_service_group_margin_override": true,
+        "allow_service_margin_override": true,
+        "pricing_below_minimum_margin_requires_admin_override": true
+      },
+      "pricing_policy_tiers": {
+        "default": [
+          {
+            "label": "Micro (0 \u2013 2K)",
+            "min_amount": 0,
+            "max_amount": 2000,
+            "total_margin_pct": 50,
+            "protected_platform_margin_pct": 33,
+            "distributable_margin_pct": 17,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Ultra-Low (2K \u2013 10K)",
+            "min_amount": 2001,
+            "max_amount": 10000,
+            "total_margin_pct": 30,
+            "protected_platform_margin_pct": 20,
+            "distributable_margin_pct": 10,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low (10K \u2013 30K)",
+            "min_amount": 10001,
+            "max_amount": 30000,
+            "total_margin_pct": 12,
+            "protected_platform_margin_pct": 8,
+            "distributable_margin_pct": 4,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low-Mid (30K \u2013 100K)",
+            "min_amount": 30001,
+            "max_amount": 100000,
+            "total_margin_pct": 20,
+            "protected_platform_margin_pct": 13,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Mid (100K \u2013 500K)",
+            "min_amount": 100001,
+            "max_amount": 500000,
+            "total_margin_pct": 22,
+            "protected_platform_margin_pct": 15,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Upper-Mid (500K \u2013 2M)",
+            "min_amount": 500001,
+            "max_amount": 2000000,
+            "total_margin_pct": 18,
+            "protected_platform_margin_pct": 12,
+            "distributable_margin_pct": 6,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Large (2M \u2013 10M)",
+            "min_amount": 2000001,
+            "max_amount": 10000000,
+            "total_margin_pct": 14,
+            "protected_platform_margin_pct": 9,
+            "distributable_margin_pct": 5,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Enterprise (10M+)",
+            "min_amount": 10000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 10,
+            "protected_platform_margin_pct": 7,
+            "distributable_margin_pct": 3,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          }
+        ],
+        "Promotional Materials": [
+          {
+            "label": "Micro (0 \u2013 2K)",
+            "min_amount": 0,
+            "max_amount": 2000,
+            "total_margin_pct": 50,
+            "protected_platform_margin_pct": 33,
+            "distributable_margin_pct": 17,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Ultra-Low (2K \u2013 10K)",
+            "min_amount": 2001,
+            "max_amount": 10000,
+            "total_margin_pct": 30,
+            "protected_platform_margin_pct": 20,
+            "distributable_margin_pct": 10,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low (10K \u2013 30K)",
+            "min_amount": 10001,
+            "max_amount": 30000,
+            "total_margin_pct": 12,
+            "protected_platform_margin_pct": 8,
+            "distributable_margin_pct": 4,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low-Mid (30K \u2013 100K)",
+            "min_amount": 30001,
+            "max_amount": 100000,
+            "total_margin_pct": 20,
+            "protected_platform_margin_pct": 13,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Mid (100K \u2013 500K)",
+            "min_amount": 100001,
+            "max_amount": 500000,
+            "total_margin_pct": 22,
+            "protected_platform_margin_pct": 15,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Upper-Mid (500K \u2013 2M)",
+            "min_amount": 500001,
+            "max_amount": 2000000,
+            "total_margin_pct": 18,
+            "protected_platform_margin_pct": 12,
+            "distributable_margin_pct": 6,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Large (2M \u2013 10M)",
+            "min_amount": 2000001,
+            "max_amount": 10000000,
+            "total_margin_pct": 14,
+            "protected_platform_margin_pct": 9,
+            "distributable_margin_pct": 5,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Enterprise (10M+)",
+            "min_amount": 10000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 10,
+            "protected_platform_margin_pct": 7,
+            "distributable_margin_pct": 3,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          }
+        ],
+        "Office Equipment": [
+          {
+            "label": "Micro Supplies (0 \u2013 2K)",
+            "min_amount": 0,
+            "max_amount": 2000,
+            "total_margin_pct": 45,
+            "protected_platform_margin_pct": 30,
+            "distributable_margin_pct": 15,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Small Accessories (2K \u2013 10K)",
+            "min_amount": 2001,
+            "max_amount": 10000,
+            "total_margin_pct": 35,
+            "protected_platform_margin_pct": 23,
+            "distributable_margin_pct": 12,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Basics (10K \u2013 30K)",
+            "min_amount": 10001,
+            "max_amount": 30000,
+            "total_margin_pct": 30,
+            "protected_platform_margin_pct": 20,
+            "distributable_margin_pct": 10,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Peripherals (30K \u2013 100K)",
+            "min_amount": 30001,
+            "max_amount": 100000,
+            "total_margin_pct": 28,
+            "protected_platform_margin_pct": 19,
+            "distributable_margin_pct": 9,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Mid Equipment (100K \u2013 500K)",
+            "min_amount": 100001,
+            "max_amount": 500000,
+            "total_margin_pct": 25,
+            "protected_platform_margin_pct": 17,
+            "distributable_margin_pct": 8,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Printers (500K \u2013 2M)",
+            "min_amount": 500001,
+            "max_amount": 2000000,
+            "total_margin_pct": 20,
+            "protected_platform_margin_pct": 13,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Enterprise Gear (2M \u2013 10M)",
+            "min_amount": 2000001,
+            "max_amount": 10000000,
+            "total_margin_pct": 17,
+            "protected_platform_margin_pct": 11,
+            "distributable_margin_pct": 6,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Installations (10M+)",
+            "min_amount": 10000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 14,
+            "protected_platform_margin_pct": 9,
+            "distributable_margin_pct": 5,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          }
+        ],
+        "Stationery": [
+          {
+            "label": "Single-Piece (0 \u2013 500)",
+            "min_amount": 0,
+            "max_amount": 500,
+            "total_margin_pct": 60,
+            "protected_platform_margin_pct": 40,
+            "distributable_margin_pct": 20,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Micro (500 \u2013 2K)",
+            "min_amount": 501,
+            "max_amount": 2000,
+            "total_margin_pct": 45,
+            "protected_platform_margin_pct": 30,
+            "distributable_margin_pct": 15,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Ultra-Low (2K \u2013 10K)",
+            "min_amount": 2001,
+            "max_amount": 10000,
+            "total_margin_pct": 25,
+            "protected_platform_margin_pct": 17,
+            "distributable_margin_pct": 8,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low (10K \u2013 30K)",
+            "min_amount": 10001,
+            "max_amount": 30000,
+            "total_margin_pct": 15,
+            "protected_platform_margin_pct": 10,
+            "distributable_margin_pct": 5,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Low-Mid (30K \u2013 100K)",
+            "min_amount": 30001,
+            "max_amount": 100000,
+            "total_margin_pct": 18,
+            "protected_platform_margin_pct": 12,
+            "distributable_margin_pct": 6,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Mid (100K \u2013 500K)",
+            "min_amount": 100001,
+            "max_amount": 500000,
+            "total_margin_pct": 20,
+            "protected_platform_margin_pct": 13,
+            "distributable_margin_pct": 7,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Upper-Mid (500K \u2013 2M)",
+            "min_amount": 500001,
+            "max_amount": 2000000,
+            "total_margin_pct": 16,
+            "protected_platform_margin_pct": 11,
+            "distributable_margin_pct": 5,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Large (2M+)",
+            "min_amount": 2000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 12,
+            "protected_platform_margin_pct": 8,
+            "distributable_margin_pct": 4,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          }
+        ],
+        "Services": [
+          {
+            "label": "Standard Service (0 \u2013 1M)",
+            "min_amount": 0,
+            "max_amount": 1000000,
+            "total_margin_pct": 35,
+            "protected_platform_margin_pct": 23,
+            "distributable_margin_pct": 12,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          },
+          {
+            "label": "Enterprise Service (1M+)",
+            "min_amount": 1000001,
+            "max_amount": 999999999,
+            "total_margin_pct": 25,
+            "protected_platform_margin_pct": 17,
+            "distributable_margin_pct": 8,
+            "distribution_split": {
+              "affiliate_pct": 25,
+              "promotion_pct": 20,
+              "sales_pct": 20,
+              "referral_pct": 20,
+              "reserve_pct": 15
+            }
+          }
+        ]
+      },
+      "distribution_config": {
+        "protected_company_margin_percent": 8,
+        "affiliate_percent_of_distributable": 10,
+        "sales_percent_of_distributable": 15,
+        "promo_percent_of_distributable": 10,
+        "referral_percent_of_distributable": 5,
+        "country_bonus_percent_of_distributable": 5
+      },
+      "promotions": {
+        "default_promo_type": "safe_distribution",
+        "allow_margin_touching_promos": false,
+        "max_public_promo_discount_percent": 5,
+        "affiliate_visible_campaigns": true,
+        "campaign_start_end_required": true
+      },
+      "affiliate": {
+        "default_affiliate_commission_percent": 10,
+        "affiliate_registration_requires_approval": true,
+        "default_affiliate_status": "pending",
+        "personal_promo_code_enabled": true,
+        "commission_trigger": "payment_approved",
+        "commission_duration": "per_successful_sale",
+        "attribution_sources": "link_and_code",
+        "attribution_window_days": 30,
+        "watchlist_logic_enabled": true,
+        "paused_logic_enabled": true,
+        "suspend_for_abuse_enabled": true,
+        "customer_perk_enabled": true,
+        "customer_perk_type": "percentage_discount",
+        "customer_perk_value": 5,
+        "customer_perk_cap": 30000,
+        "customer_perk_min_order_amount": 100000,
+        "customer_perk_first_order_only": true,
+        "max_active_affiliates": 0,
+        "contracts_starter_min_deals": 5,
+        "contracts_starter_min_earnings": 50000,
+        "contracts_growth_min_deals": 20,
+        "contracts_growth_min_earnings": 250000,
+        "contracts_top_min_deals": 60,
+        "contracts_top_min_earnings": 1000000,
+        "warning_threshold_pct": 50,
+        "probation_threshold_pct": 25,
+        "minimum_payout_threshold": 50000,
+        "payout_cycle": "monthly",
+        "manual_payout_approval": true
+      },
+      "payouts": {
+        "affiliate_minimum_payout": 50000,
+        "sales_minimum_payout": 100000,
+        "payout_cycle": "monthly",
+        "payout_methods_enabled": [
+          "mobile_money",
+          "bank_transfer"
+        ],
+        "manual_payout_approval": true,
+        "payout_review_mode": "admin_required"
+      },
+      "sales": {
+        "default_sales_commission_self_generated": 15,
+        "default_sales_commission_affiliate_generated": 10,
+        "assignment_mode": "auto",
+        "smart_assignment_enabled": true,
+        "lead_source_visibility": true,
+        "commission_type_visibility": true,
+        "sales_referral_link_enabled": true,
+        "sales_promo_codes_enabled": true,
+        "assignment_policy": {
+          "primary_strategy": "customer_ownership",
+          "fallback_strategy": "round_robin",
+          "track_deal_source": true
+        }
+      },
+      "payments": {
+        "bank_only_payments": true,
+        "card_payments_enabled": false,
+        "mobile_money_enabled": false,
+        "kwikpay_enabled": false,
+        "payment_proof_required": true,
+        "payment_proof_auto_link_to_invoice": true,
+        "payment_verification_mode": "manual",
+        "commission_creation_on_payment_approval": true
+      },
+      "payment_accounts": {
+        "default_country": "TZ",
+        "account_name": "KONEKT LIMITED",
+        "account_number": "015C8841347002",
+        "bank_name": "CRDB BANK",
+        "swift_code": "CORUTZTZ",
+        "branch_name": "HOLLAND HOUSE",
+        "currency": "TZS",
+        "currency_symbol": "TSh",
+        "show_on_invoice": true,
+        "show_on_checkout": true
+      },
+      "operational_rules": {
+        "date_format": "DD MMM YYYY",
+        "time_format": "HH:mm",
+        "timezone": "Africa/Dar_es_Salaam",
+        "default_country": "TZ",
+        "follow_up_threshold_days": 3,
+        "stale_deal_threshold_days": 7,
+        "quote_response_threshold_days": 5,
+        "payment_overdue_threshold_days": 7
+      },
+      "countries": {
+        "active_country": "TZ",
+        "available_countries": [
+          {
+            "code": "TZ",
+            "name": "Tanzania",
+            "currency": "TZS",
+            "currency_symbol": "TSh",
+            "timezone": "Africa/Dar_es_Salaam",
+            "vat_rate": 18,
+            "phone_prefix": "+255",
+            "doc_prefix_code": "TZ",
+            "bank_details": {
+              "account_name": "KONEKT LIMITED",
+              "account_number": "015C8841347002",
+              "bank_name": "CRDB BANK",
+              "swift_code": "CORUTZTZ"
+            }
+          },
+          {
+            "code": "KE",
+            "name": "Kenya",
+            "currency": "KES",
+            "currency_symbol": "KSh",
+            "timezone": "Africa/Nairobi",
+            "vat_rate": 16,
+            "phone_prefix": "+254",
+            "doc_prefix_code": "KE",
+            "bank_details": {}
+          },
+          {
+            "code": "UG",
+            "name": "Uganda",
+            "currency": "UGX",
+            "currency_symbol": "USh",
+            "timezone": "Africa/Kampala",
+            "vat_rate": 18,
+            "phone_prefix": "+256",
+            "doc_prefix_code": "UG",
+            "bank_details": {}
+          }
+        ],
+        "clone_config_from": null
+      },
+      "progress_workflows": {
+        "hide_internal_provider_details_from_customer": true,
+        "customer_safe_external_statuses_only": true,
+        "product_workflow_enabled": true,
+        "service_workflow_enabled": true
+      },
+      "ai_assistant": {
+        "ai_enabled": true,
+        "human_handoff_enabled": true,
+        "handoff_after_unresolved_exchanges": 3,
+        "lead_capture_on_handoff": true,
+        "customer_safe_status_translation_only": true
+      },
+      "notifications": {
+        "customer_notifications_enabled": true,
+        "sales_notifications_enabled": true,
+        "affiliate_notifications_enabled": true,
+        "admin_notifications_enabled": true,
+        "vendor_notifications_enabled": true
+      },
+      "report_schedule": {
+        "enabled": true,
+        "day": "monday",
+        "time": "08:00",
+        "timezone": "Africa/Dar_es_Salaam",
+        "recipient_roles": [
+          "admin",
+          "sales_manager",
+          "finance_manager"
+        ]
+      },
+      "vendors": {
+        "vendor_can_update_internal_progress": true,
+        "vendor_sees_only_assigned_jobs": true,
+        "vendor_cannot_see_customer_financials": true,
+        "vendor_cannot_see_commissions": true
+      },
+      "vendor_ops": {
+        "default_sourcing_mode": "preferred",
+        "max_vendors_per_request": 3,
+        "default_quote_expiry_hours": 48,
+        "default_lead_time_days": 3,
+        "auto_select_best_quote": true,
+        "preferred_vendors_by_category": {},
+        "sourcing_mode_by_category": {},
+        "lead_time_by_category": {}
+      },
+      "partner_policy": {
+        "auto_assignment_mode": "capability_match",
+        "logistics_handling_default": "konekt_managed",
+        "vendor_types": [
+          "product_supplier",
+          "service_provider",
+          "logistics_partner"
+        ]
+      },
+      "numbering_rules": {
+        "sku_auto_numbering_enabled": true,
+        "quote_format": "KON-QT-[YY]-[SEQ]",
+        "invoice_format": "KON-IN-[YY]-[SEQ]",
+        "order_format": "KON-OR-[YY]-[SEQ]"
+      },
+      "launch_controls": {
+        "system_mode": "full_live",
+        "manual_payment_verification": true,
+        "manual_payout_approval": true,
+        "affiliate_approval_required": true,
+        "ai_enabled": true,
+        "bank_only_payments": true,
+        "audit_notifications_enabled": true
+      },
+      "customer_activity_rules": {
+        "active_days": 30,
+        "at_risk_days": 90,
+        "default_new_customer_status": "active",
+        "signals": {
+          "orders": true,
+          "invoices": true,
+          "quotes": true,
+          "requests": true,
+          "sales_notes": true,
+          "account_logins": false
+        }
+      },
+      "discount_governance": {
+        "enabled": true,
+        "critical_threshold": 3,
+        "warning_threshold": 5,
+        "rolling_window_days": 7,
+        "dedup_window_hours": 24
+      },
+      "performance_targets": {
+        "monthly_revenue_target": 500000000,
+        "target_margin_pct": 20,
+        "channel_allocation": {
+          "sales_pct": 50,
+          "affiliate_pct": 30,
+          "direct_pct": 10,
+          "group_deals_pct": 10
+        },
+        "sales_staff_count": 10,
+        "affiliate_count": 10,
+        "sales_min_kpi_pct": 70,
+        "affiliate_min_kpi_pct": 60,
+        "min_rating_threshold": 3,
+        "rating_weight_in_kpi_pct": 20
+      },
+      "ratings": {
+        "enabled": true,
+        "trigger": "delivery_confirmed",
+        "scale": 5,
+        "allow_comment": true
+      },
+      "sales_visibility": {
+        "show_total_commission": true,
+        "show_monthly_commission": true,
+        "show_pending_commission": true,
+        "show_paid_commission": true,
+        "show_revenue": false,
+        "show_profit_breakdown": false
+      },
+      "affiliate_emails": {
+        "send_application_received": true,
+        "send_application_approved": true,
+        "send_application_rejected": true,
+        "sla_response_text": "We will review your application within 24-48 hours."
+      },
+      "catalog": {
+        "units_of_measurement": [
+          {
+            "name": "Piece",
+            "abbr": "pcs",
+            "type": "count"
+          },
+          {
+            "name": "Pair",
+            "abbr": "pr",
+            "type": "count"
+          },
+          {
+            "name": "Pack",
+            "abbr": "pk",
+            "type": "count"
+          },
+          {
+            "name": "Box",
+            "abbr": "bx",
+            "type": "count"
+          },
+          {
+            "name": "Carton",
+            "abbr": "ctn",
+            "type": "count"
+          },
+          {
+            "name": "Roll",
+            "abbr": "rl",
+            "type": "count"
+          },
+          {
+            "name": "Set",
+            "abbr": "set",
+            "type": "count"
+          },
+          {
+            "name": "Dozen",
+            "abbr": "dz",
+            "type": "count"
+          },
+          {
+            "name": "Bundle",
+            "abbr": "bdl",
+            "type": "count"
+          },
+          {
+            "name": "Kg",
+            "abbr": "kg",
+            "type": "weight"
+          },
+          {
+            "name": "Gram",
+            "abbr": "g",
+            "type": "weight"
+          },
+          {
+            "name": "Litre",
+            "abbr": "L",
+            "type": "volume"
+          },
+          {
+            "name": "Millilitre",
+            "abbr": "ml",
+            "type": "volume"
+          },
+          {
+            "name": "Meter",
+            "abbr": "m",
+            "type": "length"
+          },
+          {
+            "name": "Square Meter",
+            "abbr": "sqm",
+            "type": "length"
+          },
+          {
+            "name": "Service Unit",
+            "abbr": "svc",
+            "type": "service"
+          }
+        ],
+        "sku_prefix": "KNT",
+        "sku_format": "{PREFIX}-{CATEGORY}-{RANDOM}",
+        "variant_types": [
+          "Size",
+          "Color",
+          "Material",
+          "Weight",
+          "Volume"
+        ],
+        "product_categories": [
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": true,
+            "require_description": true,
+            "show_price_in_list": false,
+            "multi_item_request": true,
+            "search_first": true,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Installation",
+              "Maintenance"
+            ],
+            "fulfillment_type": "on_site",
+            "active": true,
+            "name": "Office Equipment",
+            "subcategories": [
+              "Sub A",
+              "Sub B"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "IT & Electronics"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Furniture"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Printing & Stationery",
+              "Graphics & Design"
+            ],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Promotional Materials",
+            "subcategories": [
+              "T-Shirts",
+              "Caps",
+              "Mugs",
+              "Bags"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Industrial Supplies"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Cleaning & Hygiene"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Safety & PPE"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Packaging"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Food & Beverages"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Fashion & Apparel"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Other"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "competitive",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Electronics",
+            "quote_enabled": false,
+            "sort_order": 12
+          },
+          {
+            "name": "Printing & Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "site_visit_optional": true,
+            "subcategories": [
+              "Business Cards",
+              "Flyers & Brochures",
+              "Banners & Posters",
+              "Large Format Printing",
+              "Screen Printing",
+              "Embroidery",
+              "DTF Printing",
+              "Sticker Printing",
+              "Corporate Gifts Printing",
+              "Packaging Printing",
+              "Custom Merchandise"
+            ]
+          },
+          {
+            "name": "Creative & Design",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "digital",
+            "requires_site_visit": false,
+            "subcategories": [
+              "Logo Design",
+              "Graphic Design",
+              "Presentation Design",
+              "Social Media Design",
+              "Brand Identity",
+              "Website UX/UI Design",
+              "Motion Graphics & Video",
+              "Product Photography",
+              "Pitch Deck Design",
+              "Brand Strategy"
+            ]
+          },
+          {
+            "name": "Facilities Services",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Deep Office Cleaning",
+              "Carpet Cleaning",
+              "Fumigation Services",
+              "Window Cleaning",
+              "Garden & Landscape Maintenance",
+              "Plumbing Services",
+              "HVAC / AC Servicing",
+              "Pest Control",
+              "Waste Management"
+            ]
+          },
+          {
+            "name": "Technical Support",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Printer Servicing",
+              "CCTV Installation",
+              "Access Control",
+              "Office Network Setup",
+              "Equipment Maintenance",
+              "IT Helpdesk (SLA)",
+              "Cybersecurity Audit",
+              "Data Backup & Recovery",
+              "Cloud Migration",
+              "VOIP & Phone Setup"
+            ]
+          },
+          {
+            "name": "Office Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "site_visit_optional": false,
+            "subcategories": [
+              "Wall Branding",
+              "Signage Installation",
+              "Billboard Signs",
+              "Showroom Design",
+              "Reception Branding",
+              "Vehicle Branding & Wraps",
+              "Event Booth Branding",
+              "Window Graphics",
+              "Glass Frosting"
+            ]
+          },
+          {
+            "name": "Uniforms & Workwear",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "installment_payments": true,
+            "installment_split": "60/40",
+            "subcategories": [
+              "Uniform Tailoring",
+              "PPE Supply",
+              "Name Tags & Lanyards",
+              "Corporate Wear",
+              "Hi-Vis / Safety Jackets",
+              "Chef & Hospitality Wear",
+              "Medical Scrubs",
+              "Branded T-Shirts & Polos",
+              "Custom Embroidery"
+            ]
+          }
+        ]
+      },
+      "document_numbering": {
+        "country_code": "TZ",
+        "quote_prefix": "QT",
+        "invoice_prefix": "IN",
+        "order_prefix": "ORD",
+        "delivery_note_prefix": "DN",
+        "use_shared_sequence": true
+      },
+      "updated_at": "2026-04-20T14:05:20.202313",
+      "_country": "TZ"
+    }
+  },
+  {
+    "key": "report_schedule",
+    "value": {
+      "enabled": true,
+      "day": "monday",
+      "time": "08:00",
+      "timezone": "Africa/Dar_es_Salaam",
+      "recipient_roles": [
+        "admin",
+        "sales_manager"
+      ]
+    }
+  },
+  {
+    "key": "report_last_delivery",
+    "value": {
+      "delivered_at": "2026-04-20T05:00:06.862512+00:00",
+      "recipients_count": 6,
+      "status": "success",
+      "error": ""
+    }
+  },
+  {
+    "key": "settings_hub_KE",
+    "value": {
+      "business_profile": {
+        "legal_name": "KONEKT LIMITED",
+        "brand_name": "Konekt",
+        "tagline": "TEST_KE_Tagline_a1cb7b26",
+        "support_email": "info@konekt.co.tz",
+        "support_phone": "+255715222132",
+        "business_address": "Dar es Salaam. Tanzania",
+        "tax_id": "",
+        "vat_number": "",
+        "website": "www.konekt.co.tz",
+        "base_public_url": "https://konekt.co.tz",
+        "registration_number": ""
+      },
+      "branding": {
+        "primary_logo_url": "",
+        "secondary_logo_url": "",
+        "favicon_url": "",
+        "primary_color": "#20364D",
+        "accent_color": "#D4A843",
+        "dark_bg_color": "#0f172a"
+      },
+      "notification_sender": {
+        "sender_name": "Konekt",
+        "sender_email": "",
+        "whatsapp_number": "",
+        "email_footer_text": "B2B Platform"
+      },
+      "commercial": {
+        "minimum_company_margin_percent": 20,
+        "distribution_layer_percent": 10,
+        "protected_company_margin_percent": 8,
+        "commission_mode": "fair_balanced",
+        "affiliate_attribution_reduces_sales_commission": true,
+        "vat_percent": 16,
+        "referral_pct": 10,
+        "max_wallet_usage_pct": 30,
+        "max_wallet_per_order": 0,
+        "wallet_enabled": true,
+        "protect_allocations": true,
+        "enforce_single_channel": true,
+        "referral_min_order_amount": 0,
+        "referral_max_reward_per_order": 0,
+        "welcome_bonus_enabled": false,
+        "welcome_bonus_type": "fixed",
+        "welcome_bonus_value": 5000,
+        "welcome_bonus_max_cap": 10000,
+        "welcome_bonus_first_purchase_only": true,
+        "welcome_bonus_trigger_event": "payment_verified",
+        "welcome_bonus_stack_with_referral": false,
+        "welcome_bonus_stack_with_wallet": true
+      },
+      "margin_rules": {
+        "allow_product_group_margin_override": true,
+        "allow_product_margin_override": true,
+        "allow_service_group_margin_override": true,
+        "allow_service_margin_override": true,
+        "pricing_below_minimum_margin_requires_admin_override": true
+      },
+      "pricing_policy_tiers": [
+        {
+          "label": "Small (0 \u2013 100K)",
+          "min_amount": 0,
+          "max_amount": 100000,
+          "total_margin_pct": 35,
+          "protected_platform_margin_pct": 23,
+          "distributable_margin_pct": 12,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Lower-Medium (100K \u2013 500K)",
+          "min_amount": 100001,
+          "max_amount": 500000,
+          "total_margin_pct": 30,
+          "protected_platform_margin_pct": 20,
+          "distributable_margin_pct": 10,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Medium (500K \u2013 2M)",
+          "min_amount": 500001,
+          "max_amount": 2000000,
+          "total_margin_pct": 25,
+          "protected_platform_margin_pct": 17,
+          "distributable_margin_pct": 8,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Large (2M \u2013 10M)",
+          "min_amount": 2000001,
+          "max_amount": 10000000,
+          "total_margin_pct": 20,
+          "protected_platform_margin_pct": 14,
+          "distributable_margin_pct": 6,
+          "distribution_split": {
+            "affiliate_pct": 30,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 10
+          }
+        },
+        {
+          "label": "Enterprise (10M+)",
+          "min_amount": 10000001,
+          "max_amount": 999999999,
+          "total_margin_pct": 15,
+          "protected_platform_margin_pct": 11,
+          "distributable_margin_pct": 4,
+          "distribution_split": {
+            "affiliate_pct": 30,
+            "promotion_pct": 15,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        }
+      ],
+      "distribution_config": {
+        "protected_company_margin_percent": 8,
+        "affiliate_percent_of_distributable": 10,
+        "sales_percent_of_distributable": 15,
+        "promo_percent_of_distributable": 10,
+        "referral_percent_of_distributable": 5,
+        "country_bonus_percent_of_distributable": 5
+      },
+      "promotions": {
+        "default_promo_type": "safe_distribution",
+        "allow_margin_touching_promos": false,
+        "max_public_promo_discount_percent": 5,
+        "affiliate_visible_campaigns": true,
+        "campaign_start_end_required": true
+      },
+      "affiliate": {
+        "default_affiliate_commission_percent": 10,
+        "affiliate_registration_requires_approval": true,
+        "default_affiliate_status": "pending",
+        "personal_promo_code_enabled": true,
+        "commission_trigger": "payment_approved",
+        "commission_duration": "per_successful_sale",
+        "attribution_sources": "link_and_code",
+        "attribution_window_days": 30,
+        "watchlist_logic_enabled": true,
+        "paused_logic_enabled": true,
+        "suspend_for_abuse_enabled": true,
+        "customer_perk_enabled": true,
+        "customer_perk_type": "percentage_discount",
+        "customer_perk_value": 5,
+        "customer_perk_cap": 30000,
+        "customer_perk_min_order_amount": 100000,
+        "customer_perk_first_order_only": true,
+        "max_active_affiliates": 0,
+        "contracts_starter_min_deals": 5,
+        "contracts_starter_min_earnings": 50000,
+        "contracts_growth_min_deals": 20,
+        "contracts_growth_min_earnings": 250000,
+        "contracts_top_min_deals": 60,
+        "contracts_top_min_earnings": 1000000,
+        "warning_threshold_pct": 50,
+        "probation_threshold_pct": 25,
+        "minimum_payout_threshold": 50000,
+        "payout_cycle": "monthly",
+        "manual_payout_approval": true
+      },
+      "payouts": {
+        "affiliate_minimum_payout": 50000,
+        "sales_minimum_payout": 100000,
+        "payout_cycle": "monthly",
+        "payout_methods_enabled": [
+          "mobile_money",
+          "bank_transfer"
+        ],
+        "manual_payout_approval": true,
+        "payout_review_mode": "admin_required"
+      },
+      "sales": {
+        "default_sales_commission_self_generated": 15,
+        "default_sales_commission_affiliate_generated": 10,
+        "assignment_mode": "auto",
+        "smart_assignment_enabled": true,
+        "lead_source_visibility": true,
+        "commission_type_visibility": true,
+        "sales_referral_link_enabled": true,
+        "sales_promo_codes_enabled": true,
+        "assignment_policy": {
+          "primary_strategy": "customer_ownership",
+          "fallback_strategy": "round_robin",
+          "track_deal_source": true
+        }
+      },
+      "payments": {
+        "bank_only_payments": true,
+        "card_payments_enabled": false,
+        "mobile_money_enabled": false,
+        "kwikpay_enabled": false,
+        "payment_proof_required": true,
+        "payment_proof_auto_link_to_invoice": true,
+        "payment_verification_mode": "manual",
+        "commission_creation_on_payment_approval": true
+      },
+      "payment_accounts": {
+        "default_country": "KE",
+        "account_name": "KONEKT LIMITED",
+        "account_number": "015C8841347002",
+        "bank_name": "CRDB BANK",
+        "swift_code": "CORUTZTZ",
+        "branch_name": "HOLLAND HOUSE",
+        "currency": "KES",
+        "currency_symbol": "TSh",
+        "show_on_invoice": true,
+        "show_on_checkout": true
+      },
+      "operational_rules": {
+        "date_format": "DD MMM YYYY",
+        "time_format": "HH:mm",
+        "timezone": "Africa/Nairobi",
+        "default_country": "KE",
+        "follow_up_threshold_days": 3,
+        "stale_deal_threshold_days": 7,
+        "quote_response_threshold_days": 5,
+        "payment_overdue_threshold_days": 7
+      },
+      "countries": {
+        "active_country": "TZ",
+        "available_countries": [
+          {
+            "code": "TZ",
+            "name": "Tanzania",
+            "currency": "TZS",
+            "currency_symbol": "TSh",
+            "timezone": "Africa/Dar_es_Salaam",
+            "vat_rate": 18,
+            "phone_prefix": "+255",
+            "doc_prefix_code": "TZ",
+            "bank_details": {
+              "account_name": "KONEKT LIMITED",
+              "account_number": "015C8841347002",
+              "bank_name": "CRDB BANK",
+              "swift_code": "CORUTZTZ"
+            }
+          },
+          {
+            "code": "KE",
+            "name": "Kenya",
+            "currency": "KES",
+            "currency_symbol": "KSh",
+            "timezone": "Africa/Nairobi",
+            "vat_rate": 16,
+            "phone_prefix": "+254",
+            "doc_prefix_code": "KE",
+            "bank_details": {}
+          },
+          {
+            "code": "UG",
+            "name": "Uganda",
+            "currency": "UGX",
+            "currency_symbol": "USh",
+            "timezone": "Africa/Kampala",
+            "vat_rate": 18,
+            "phone_prefix": "+256",
+            "doc_prefix_code": "UG",
+            "bank_details": {}
+          }
+        ],
+        "clone_config_from": null
+      },
+      "progress_workflows": {
+        "hide_internal_provider_details_from_customer": true,
+        "customer_safe_external_statuses_only": true,
+        "product_workflow_enabled": true,
+        "service_workflow_enabled": true
+      },
+      "ai_assistant": {
+        "ai_enabled": true,
+        "human_handoff_enabled": true,
+        "handoff_after_unresolved_exchanges": 3,
+        "lead_capture_on_handoff": true,
+        "customer_safe_status_translation_only": true
+      },
+      "notifications": {
+        "customer_notifications_enabled": true,
+        "sales_notifications_enabled": true,
+        "affiliate_notifications_enabled": true,
+        "admin_notifications_enabled": true,
+        "vendor_notifications_enabled": true
+      },
+      "report_schedule": {
+        "enabled": true,
+        "day": "monday",
+        "time": "08:00",
+        "timezone": "Africa/Dar_es_Salaam",
+        "recipient_roles": [
+          "admin",
+          "sales_manager",
+          "finance_manager"
+        ]
+      },
+      "vendors": {
+        "vendor_can_update_internal_progress": true,
+        "vendor_sees_only_assigned_jobs": true,
+        "vendor_cannot_see_customer_financials": true,
+        "vendor_cannot_see_commissions": true
+      },
+      "vendor_ops": {
+        "default_sourcing_mode": "preferred",
+        "max_vendors_per_request": 3,
+        "default_quote_expiry_hours": 48,
+        "default_lead_time_days": 3,
+        "auto_select_best_quote": true,
+        "preferred_vendors_by_category": {},
+        "sourcing_mode_by_category": {},
+        "lead_time_by_category": {}
+      },
+      "partner_policy": {
+        "auto_assignment_mode": "capability_match",
+        "logistics_handling_default": "konekt_managed",
+        "vendor_types": [
+          "product_supplier",
+          "service_provider",
+          "logistics_partner"
+        ]
+      },
+      "numbering_rules": {
+        "sku_auto_numbering_enabled": true,
+        "quote_format": "KON-QT-[YY]-[SEQ]",
+        "invoice_format": "KON-IN-[YY]-[SEQ]",
+        "order_format": "KON-OR-[YY]-[SEQ]"
+      },
+      "launch_controls": {
+        "system_mode": "full_live",
+        "manual_payment_verification": true,
+        "manual_payout_approval": true,
+        "affiliate_approval_required": true,
+        "ai_enabled": true,
+        "bank_only_payments": true,
+        "audit_notifications_enabled": true
+      },
+      "customer_activity_rules": {
+        "active_days": 30,
+        "at_risk_days": 90,
+        "default_new_customer_status": "active",
+        "signals": {
+          "orders": true,
+          "invoices": true,
+          "quotes": true,
+          "requests": true,
+          "sales_notes": true,
+          "account_logins": false
+        }
+      },
+      "discount_governance": {
+        "enabled": true,
+        "critical_threshold": 3,
+        "warning_threshold": 5,
+        "rolling_window_days": 7,
+        "dedup_window_hours": 24
+      },
+      "performance_targets": {
+        "monthly_revenue_target": 500000000,
+        "target_margin_pct": 20,
+        "channel_allocation": {
+          "sales_pct": 50,
+          "affiliate_pct": 30,
+          "direct_pct": 10,
+          "group_deals_pct": 10
+        },
+        "sales_staff_count": 10,
+        "affiliate_count": 10,
+        "sales_min_kpi_pct": 70,
+        "affiliate_min_kpi_pct": 60,
+        "min_rating_threshold": 3,
+        "rating_weight_in_kpi_pct": 20
+      },
+      "ratings": {
+        "enabled": true,
+        "trigger": "delivery_confirmed",
+        "scale": 5,
+        "allow_comment": true
+      },
+      "sales_visibility": {
+        "show_total_commission": true,
+        "show_monthly_commission": true,
+        "show_pending_commission": true,
+        "show_paid_commission": true,
+        "show_revenue": false,
+        "show_profit_breakdown": false
+      },
+      "affiliate_emails": {
+        "send_application_received": true,
+        "send_application_approved": true,
+        "send_application_rejected": true,
+        "sla_response_text": "We will review your application within 24-48 hours."
+      },
+      "catalog": {
+        "units_of_measurement": [
+          {
+            "name": "Piece",
+            "abbr": "pcs",
+            "type": "count"
+          },
+          {
+            "name": "Pair",
+            "abbr": "pr",
+            "type": "count"
+          },
+          {
+            "name": "Pack",
+            "abbr": "pk",
+            "type": "count"
+          },
+          {
+            "name": "Box",
+            "abbr": "bx",
+            "type": "count"
+          },
+          {
+            "name": "Carton",
+            "abbr": "ctn",
+            "type": "count"
+          },
+          {
+            "name": "Roll",
+            "abbr": "rl",
+            "type": "count"
+          },
+          {
+            "name": "Set",
+            "abbr": "set",
+            "type": "count"
+          },
+          {
+            "name": "Dozen",
+            "abbr": "dz",
+            "type": "count"
+          },
+          {
+            "name": "Bundle",
+            "abbr": "bdl",
+            "type": "count"
+          },
+          {
+            "name": "Kg",
+            "abbr": "kg",
+            "type": "weight"
+          },
+          {
+            "name": "Gram",
+            "abbr": "g",
+            "type": "weight"
+          },
+          {
+            "name": "Litre",
+            "abbr": "L",
+            "type": "volume"
+          },
+          {
+            "name": "Millilitre",
+            "abbr": "ml",
+            "type": "volume"
+          },
+          {
+            "name": "Meter",
+            "abbr": "m",
+            "type": "length"
+          },
+          {
+            "name": "Square Meter",
+            "abbr": "sqm",
+            "type": "length"
+          },
+          {
+            "name": "Service Unit",
+            "abbr": "svc",
+            "type": "service"
+          }
+        ],
+        "sku_prefix": "KNT",
+        "sku_format": "{PREFIX}-{CATEGORY}-{RANDOM}",
+        "variant_types": [
+          "Size",
+          "Color",
+          "Material",
+          "Weight",
+          "Volume"
+        ],
+        "product_categories": [
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": true,
+            "require_description": true,
+            "show_price_in_list": false,
+            "multi_item_request": true,
+            "search_first": true,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Installation",
+              "Maintenance"
+            ],
+            "fulfillment_type": "on_site",
+            "active": true,
+            "name": "Office Equipment",
+            "subcategories": [
+              "Sub A",
+              "Sub B"
+            ]
+          },
+          {
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "sourcing_mode": "preferred",
+            "category_type": "service",
+            "allow_custom_items": true,
+            "require_description": true,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": true,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": true,
+            "site_visit_optional": true,
+            "installment_payments": true,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Printing & Stationery",
+            "subcategories": [
+              "Business Cards",
+              "Flyers",
+              "Banners"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "IT & Electronics"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Furniture"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Printing & Stationery",
+              "Graphics & Design"
+            ],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Promotional Materials",
+            "subcategories": [
+              "T-Shirts",
+              "Caps",
+              "Mugs",
+              "Bags"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Industrial Supplies"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Cleaning & Hygiene"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Safety & PPE"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Packaging"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Food & Beverages"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Fashion & Apparel"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Other"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "competitive",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Electronics",
+            "quote_enabled": false,
+            "sort_order": 12
+          },
+          {
+            "name": "Printing & Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "site_visit_optional": true,
+            "subcategories": [
+              "Business Cards",
+              "Flyers & Brochures",
+              "Banners & Posters",
+              "Large Format Printing",
+              "Screen Printing",
+              "Embroidery",
+              "DTF Printing",
+              "Sticker Printing"
+            ]
+          },
+          {
+            "name": "Creative & Design",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "digital",
+            "requires_site_visit": false,
+            "subcategories": [
+              "Logo Design",
+              "Graphic Design",
+              "Presentation Design",
+              "Social Media Design",
+              "Brand Identity"
+            ]
+          },
+          {
+            "name": "Facilities Services",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Deep Office Cleaning",
+              "Carpet Cleaning",
+              "Fumigation Services",
+              "Window Cleaning"
+            ]
+          },
+          {
+            "name": "Technical Support",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Printer Servicing",
+              "CCTV Installation",
+              "Access Control",
+              "Office Network Setup",
+              "Equipment Maintenance"
+            ]
+          },
+          {
+            "name": "Office Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "site_visit_optional": false,
+            "subcategories": [
+              "Wall Branding",
+              "Signage Installation",
+              "Billboard Signs",
+              "Showroom Design",
+              "Reception Branding"
+            ]
+          },
+          {
+            "name": "Uniforms & Workwear",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "installment_payments": true,
+            "installment_split": "60/40",
+            "subcategories": [
+              "Uniform Tailoring",
+              "PPE Supply",
+              "Name Tags & Lanyards",
+              "Corporate Wear"
+            ]
+          }
+        ]
+      },
+      "document_numbering": {
+        "country_code": "TZ",
+        "quote_prefix": "QT",
+        "invoice_prefix": "IN",
+        "order_prefix": "ORD",
+        "delivery_note_prefix": "DN",
+        "use_shared_sequence": true
+      },
+      "updated_at": "2026-04-20T04:50:58.088971",
+      "_country": "KE"
+    }
+  },
+  {
+    "key": "settings_hub_UG",
+    "value": {
+      "business_profile": {
+        "legal_name": "KONEKT LIMITED",
+        "brand_name": "Konekt",
+        "tagline": "Test Tagline 3138eb4d",
+        "support_email": "info@konekt.co.tz",
+        "support_phone": "+255715222132",
+        "business_address": "Dar es Salaam. Tanzania",
+        "tax_id": "",
+        "vat_number": "",
+        "website": "www.konekt.co.tz",
+        "base_public_url": "https://konekt.co.tz",
+        "registration_number": ""
+      },
+      "branding": {
+        "primary_logo_url": "",
+        "secondary_logo_url": "",
+        "favicon_url": "",
+        "primary_color": "#20364D",
+        "accent_color": "#D4A843",
+        "dark_bg_color": "#0f172a"
+      },
+      "notification_sender": {
+        "sender_name": "Konekt",
+        "sender_email": "",
+        "whatsapp_number": "",
+        "email_footer_text": "B2B Platform"
+      },
+      "commercial": {
+        "minimum_company_margin_percent": 20,
+        "distribution_layer_percent": 10,
+        "protected_company_margin_percent": 8,
+        "commission_mode": "fair_balanced",
+        "affiliate_attribution_reduces_sales_commission": true,
+        "vat_percent": 18,
+        "referral_pct": 10,
+        "max_wallet_usage_pct": 30,
+        "max_wallet_per_order": 0,
+        "wallet_enabled": true,
+        "protect_allocations": true,
+        "enforce_single_channel": true,
+        "referral_min_order_amount": 0,
+        "referral_max_reward_per_order": 0,
+        "welcome_bonus_enabled": false,
+        "welcome_bonus_type": "fixed",
+        "welcome_bonus_value": 5000,
+        "welcome_bonus_max_cap": 10000,
+        "welcome_bonus_first_purchase_only": true,
+        "welcome_bonus_trigger_event": "payment_verified",
+        "welcome_bonus_stack_with_referral": false,
+        "welcome_bonus_stack_with_wallet": true
+      },
+      "margin_rules": {
+        "allow_product_group_margin_override": true,
+        "allow_product_margin_override": true,
+        "allow_service_group_margin_override": true,
+        "allow_service_margin_override": true,
+        "pricing_below_minimum_margin_requires_admin_override": true
+      },
+      "pricing_policy_tiers": [
+        {
+          "label": "Small (0 \u2013 100K)",
+          "min_amount": 0,
+          "max_amount": 100000,
+          "total_margin_pct": 35,
+          "protected_platform_margin_pct": 23,
+          "distributable_margin_pct": 12,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Lower-Medium (100K \u2013 500K)",
+          "min_amount": 100001,
+          "max_amount": 500000,
+          "total_margin_pct": 30,
+          "protected_platform_margin_pct": 20,
+          "distributable_margin_pct": 10,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Medium (500K \u2013 2M)",
+          "min_amount": 500001,
+          "max_amount": 2000000,
+          "total_margin_pct": 25,
+          "protected_platform_margin_pct": 17,
+          "distributable_margin_pct": 8,
+          "distribution_split": {
+            "affiliate_pct": 25,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        },
+        {
+          "label": "Large (2M \u2013 10M)",
+          "min_amount": 2000001,
+          "max_amount": 10000000,
+          "total_margin_pct": 20,
+          "protected_platform_margin_pct": 14,
+          "distributable_margin_pct": 6,
+          "distribution_split": {
+            "affiliate_pct": 30,
+            "promotion_pct": 20,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 10
+          }
+        },
+        {
+          "label": "Enterprise (10M+)",
+          "min_amount": 10000001,
+          "max_amount": 999999999,
+          "total_margin_pct": 15,
+          "protected_platform_margin_pct": 11,
+          "distributable_margin_pct": 4,
+          "distribution_split": {
+            "affiliate_pct": 30,
+            "promotion_pct": 15,
+            "sales_pct": 20,
+            "referral_pct": 20,
+            "reserve_pct": 15
+          }
+        }
+      ],
+      "distribution_config": {
+        "protected_company_margin_percent": 8,
+        "affiliate_percent_of_distributable": 10,
+        "sales_percent_of_distributable": 15,
+        "promo_percent_of_distributable": 10,
+        "referral_percent_of_distributable": 5,
+        "country_bonus_percent_of_distributable": 5
+      },
+      "promotions": {
+        "default_promo_type": "safe_distribution",
+        "allow_margin_touching_promos": false,
+        "max_public_promo_discount_percent": 5,
+        "affiliate_visible_campaigns": true,
+        "campaign_start_end_required": true
+      },
+      "affiliate": {
+        "default_affiliate_commission_percent": 10,
+        "affiliate_registration_requires_approval": true,
+        "default_affiliate_status": "pending",
+        "personal_promo_code_enabled": true,
+        "commission_trigger": "payment_approved",
+        "commission_duration": "per_successful_sale",
+        "attribution_sources": "link_and_code",
+        "attribution_window_days": 30,
+        "watchlist_logic_enabled": true,
+        "paused_logic_enabled": true,
+        "suspend_for_abuse_enabled": true,
+        "customer_perk_enabled": true,
+        "customer_perk_type": "percentage_discount",
+        "customer_perk_value": 5,
+        "customer_perk_cap": 30000,
+        "customer_perk_min_order_amount": 100000,
+        "customer_perk_first_order_only": true,
+        "max_active_affiliates": 0,
+        "contracts_starter_min_deals": 5,
+        "contracts_starter_min_earnings": 50000,
+        "contracts_growth_min_deals": 20,
+        "contracts_growth_min_earnings": 250000,
+        "contracts_top_min_deals": 60,
+        "contracts_top_min_earnings": 1000000,
+        "warning_threshold_pct": 50,
+        "probation_threshold_pct": 25,
+        "minimum_payout_threshold": 50000,
+        "payout_cycle": "monthly",
+        "manual_payout_approval": true
+      },
+      "payouts": {
+        "affiliate_minimum_payout": 50000,
+        "sales_minimum_payout": 100000,
+        "payout_cycle": "monthly",
+        "payout_methods_enabled": [
+          "mobile_money",
+          "bank_transfer"
+        ],
+        "manual_payout_approval": true,
+        "payout_review_mode": "admin_required"
+      },
+      "sales": {
+        "default_sales_commission_self_generated": 15,
+        "default_sales_commission_affiliate_generated": 10,
+        "assignment_mode": "auto",
+        "smart_assignment_enabled": true,
+        "lead_source_visibility": true,
+        "commission_type_visibility": true,
+        "sales_referral_link_enabled": true,
+        "sales_promo_codes_enabled": true,
+        "assignment_policy": {
+          "primary_strategy": "customer_ownership",
+          "fallback_strategy": "round_robin",
+          "track_deal_source": true
+        }
+      },
+      "payments": {
+        "bank_only_payments": true,
+        "card_payments_enabled": false,
+        "mobile_money_enabled": false,
+        "kwikpay_enabled": false,
+        "payment_proof_required": true,
+        "payment_proof_auto_link_to_invoice": true,
+        "payment_verification_mode": "manual",
+        "commission_creation_on_payment_approval": true
+      },
+      "payment_accounts": {
+        "default_country": "UG",
+        "account_name": "KONEKT LIMITED",
+        "account_number": "015C8841347002",
+        "bank_name": "CRDB BANK",
+        "swift_code": "CORUTZTZ",
+        "branch_name": "HOLLAND HOUSE",
+        "currency": "UGX",
+        "currency_symbol": "TSh",
+        "show_on_invoice": true,
+        "show_on_checkout": true
+      },
+      "operational_rules": {
+        "date_format": "DD MMM YYYY",
+        "time_format": "HH:mm",
+        "timezone": "Africa/Kampala",
+        "default_country": "UG",
+        "follow_up_threshold_days": 3,
+        "stale_deal_threshold_days": 7,
+        "quote_response_threshold_days": 5,
+        "payment_overdue_threshold_days": 7
+      },
+      "countries": {
+        "active_country": "TZ",
+        "available_countries": [
+          {
+            "code": "TZ",
+            "name": "Tanzania",
+            "currency": "TZS",
+            "currency_symbol": "TSh",
+            "timezone": "Africa/Dar_es_Salaam",
+            "vat_rate": 18,
+            "phone_prefix": "+255",
+            "doc_prefix_code": "TZ",
+            "bank_details": {
+              "account_name": "KONEKT LIMITED",
+              "account_number": "015C8841347002",
+              "bank_name": "CRDB BANK",
+              "swift_code": "CORUTZTZ"
+            }
+          },
+          {
+            "code": "KE",
+            "name": "Kenya",
+            "currency": "KES",
+            "currency_symbol": "KSh",
+            "timezone": "Africa/Nairobi",
+            "vat_rate": 16,
+            "phone_prefix": "+254",
+            "doc_prefix_code": "KE",
+            "bank_details": {}
+          },
+          {
+            "code": "UG",
+            "name": "Uganda",
+            "currency": "UGX",
+            "currency_symbol": "USh",
+            "timezone": "Africa/Kampala",
+            "vat_rate": 18,
+            "phone_prefix": "+256",
+            "doc_prefix_code": "UG",
+            "bank_details": {}
+          }
+        ],
+        "clone_config_from": null
+      },
+      "progress_workflows": {
+        "hide_internal_provider_details_from_customer": true,
+        "customer_safe_external_statuses_only": true,
+        "product_workflow_enabled": true,
+        "service_workflow_enabled": true
+      },
+      "ai_assistant": {
+        "ai_enabled": true,
+        "human_handoff_enabled": true,
+        "handoff_after_unresolved_exchanges": 3,
+        "lead_capture_on_handoff": true,
+        "customer_safe_status_translation_only": true
+      },
+      "notifications": {
+        "customer_notifications_enabled": true,
+        "sales_notifications_enabled": true,
+        "affiliate_notifications_enabled": true,
+        "admin_notifications_enabled": true,
+        "vendor_notifications_enabled": true
+      },
+      "report_schedule": {
+        "enabled": true,
+        "day": "monday",
+        "time": "08:00",
+        "timezone": "Africa/Dar_es_Salaam",
+        "recipient_roles": [
+          "admin",
+          "sales_manager",
+          "finance_manager"
+        ]
+      },
+      "vendors": {
+        "vendor_can_update_internal_progress": true,
+        "vendor_sees_only_assigned_jobs": true,
+        "vendor_cannot_see_customer_financials": true,
+        "vendor_cannot_see_commissions": true
+      },
+      "vendor_ops": {
+        "default_sourcing_mode": "preferred",
+        "max_vendors_per_request": 3,
+        "default_quote_expiry_hours": 48,
+        "default_lead_time_days": 3,
+        "auto_select_best_quote": true,
+        "preferred_vendors_by_category": {},
+        "sourcing_mode_by_category": {},
+        "lead_time_by_category": {}
+      },
+      "partner_policy": {
+        "auto_assignment_mode": "capability_match",
+        "logistics_handling_default": "konekt_managed",
+        "vendor_types": [
+          "product_supplier",
+          "service_provider",
+          "logistics_partner"
+        ]
+      },
+      "numbering_rules": {
+        "sku_auto_numbering_enabled": true,
+        "quote_format": "KON-QT-[YY]-[SEQ]",
+        "invoice_format": "KON-IN-[YY]-[SEQ]",
+        "order_format": "KON-OR-[YY]-[SEQ]"
+      },
+      "launch_controls": {
+        "system_mode": "full_live",
+        "manual_payment_verification": true,
+        "manual_payout_approval": true,
+        "affiliate_approval_required": true,
+        "ai_enabled": true,
+        "bank_only_payments": true,
+        "audit_notifications_enabled": true
+      },
+      "customer_activity_rules": {
+        "active_days": 30,
+        "at_risk_days": 90,
+        "default_new_customer_status": "active",
+        "signals": {
+          "orders": true,
+          "invoices": true,
+          "quotes": true,
+          "requests": true,
+          "sales_notes": true,
+          "account_logins": false
+        }
+      },
+      "discount_governance": {
+        "enabled": true,
+        "critical_threshold": 3,
+        "warning_threshold": 5,
+        "rolling_window_days": 7,
+        "dedup_window_hours": 24
+      },
+      "performance_targets": {
+        "monthly_revenue_target": 500000000,
+        "target_margin_pct": 20,
+        "channel_allocation": {
+          "sales_pct": 50,
+          "affiliate_pct": 30,
+          "direct_pct": 10,
+          "group_deals_pct": 10
+        },
+        "sales_staff_count": 10,
+        "affiliate_count": 10,
+        "sales_min_kpi_pct": 70,
+        "affiliate_min_kpi_pct": 60,
+        "min_rating_threshold": 3,
+        "rating_weight_in_kpi_pct": 20
+      },
+      "ratings": {
+        "enabled": true,
+        "trigger": "delivery_confirmed",
+        "scale": 5,
+        "allow_comment": true
+      },
+      "sales_visibility": {
+        "show_total_commission": true,
+        "show_monthly_commission": true,
+        "show_pending_commission": true,
+        "show_paid_commission": true,
+        "show_revenue": false,
+        "show_profit_breakdown": false
+      },
+      "affiliate_emails": {
+        "send_application_received": true,
+        "send_application_approved": true,
+        "send_application_rejected": true,
+        "sla_response_text": "We will review your application within 24-48 hours."
+      },
+      "catalog": {
+        "units_of_measurement": [
+          {
+            "name": "Piece",
+            "abbr": "pcs",
+            "type": "count"
+          },
+          {
+            "name": "Pair",
+            "abbr": "pr",
+            "type": "count"
+          },
+          {
+            "name": "Pack",
+            "abbr": "pk",
+            "type": "count"
+          },
+          {
+            "name": "Box",
+            "abbr": "bx",
+            "type": "count"
+          },
+          {
+            "name": "Carton",
+            "abbr": "ctn",
+            "type": "count"
+          },
+          {
+            "name": "Roll",
+            "abbr": "rl",
+            "type": "count"
+          },
+          {
+            "name": "Set",
+            "abbr": "set",
+            "type": "count"
+          },
+          {
+            "name": "Dozen",
+            "abbr": "dz",
+            "type": "count"
+          },
+          {
+            "name": "Bundle",
+            "abbr": "bdl",
+            "type": "count"
+          },
+          {
+            "name": "Kg",
+            "abbr": "kg",
+            "type": "weight"
+          },
+          {
+            "name": "Gram",
+            "abbr": "g",
+            "type": "weight"
+          },
+          {
+            "name": "Litre",
+            "abbr": "L",
+            "type": "volume"
+          },
+          {
+            "name": "Millilitre",
+            "abbr": "ml",
+            "type": "volume"
+          },
+          {
+            "name": "Meter",
+            "abbr": "m",
+            "type": "length"
+          },
+          {
+            "name": "Square Meter",
+            "abbr": "sqm",
+            "type": "length"
+          },
+          {
+            "name": "Service Unit",
+            "abbr": "svc",
+            "type": "service"
+          }
+        ],
+        "sku_prefix": "KNT",
+        "sku_format": "{PREFIX}-{CATEGORY}-{RANDOM}",
+        "variant_types": [
+          "Size",
+          "Color",
+          "Material",
+          "Weight",
+          "Volume"
+        ],
+        "product_categories": [
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": true,
+            "require_description": true,
+            "show_price_in_list": false,
+            "multi_item_request": true,
+            "search_first": true,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Installation",
+              "Maintenance"
+            ],
+            "fulfillment_type": "on_site",
+            "active": true,
+            "name": "Office Equipment",
+            "subcategories": [
+              "Sub A",
+              "Sub B"
+            ]
+          },
+          {
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "sourcing_mode": "preferred",
+            "category_type": "service",
+            "allow_custom_items": true,
+            "require_description": true,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": true,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": true,
+            "site_visit_optional": true,
+            "installment_payments": true,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Printing & Stationery",
+            "subcategories": [
+              "Business Cards",
+              "Flyers",
+              "Banners"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "IT & Electronics"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Furniture"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [
+              "Printing & Stationery",
+              "Graphics & Design"
+            ],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Promotional Materials",
+            "subcategories": [
+              "T-Shirts",
+              "Caps",
+              "Mugs",
+              "Bags"
+            ]
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Industrial Supplies"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Cleaning & Hygiene"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Safety & PPE"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Packaging"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Food & Beverages"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Fashion & Apparel"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "preferred",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Other"
+          },
+          {
+            "display_mode": "visual",
+            "commercial_mode": "fixed_price",
+            "sourcing_mode": "competitive",
+            "category_type": "product",
+            "allow_custom_items": false,
+            "require_description": false,
+            "show_price_in_list": true,
+            "multi_item_request": true,
+            "search_first": false,
+            "show_on_marketplace": true,
+            "require_images": true,
+            "requires_site_visit": false,
+            "site_visit_optional": false,
+            "installment_payments": false,
+            "installment_split": "60/40",
+            "related_services": [],
+            "fulfillment_type": "delivery_pickup",
+            "active": true,
+            "name": "Electronics",
+            "quote_enabled": false,
+            "sort_order": 12
+          },
+          {
+            "name": "Printing & Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "site_visit_optional": true,
+            "subcategories": [
+              "Business Cards",
+              "Flyers & Brochures",
+              "Banners & Posters",
+              "Large Format Printing",
+              "Screen Printing",
+              "Embroidery",
+              "DTF Printing",
+              "Sticker Printing"
+            ]
+          },
+          {
+            "name": "Creative & Design",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "digital",
+            "requires_site_visit": false,
+            "subcategories": [
+              "Logo Design",
+              "Graphic Design",
+              "Presentation Design",
+              "Social Media Design",
+              "Brand Identity"
+            ]
+          },
+          {
+            "name": "Facilities Services",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Deep Office Cleaning",
+              "Carpet Cleaning",
+              "Fumigation Services",
+              "Window Cleaning"
+            ]
+          },
+          {
+            "name": "Technical Support",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "subcategories": [
+              "Printer Servicing",
+              "CCTV Installation",
+              "Access Control",
+              "Office Network Setup",
+              "Equipment Maintenance"
+            ]
+          },
+          {
+            "name": "Office Branding",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "on_site",
+            "requires_site_visit": true,
+            "site_visit_optional": false,
+            "subcategories": [
+              "Wall Branding",
+              "Signage Installation",
+              "Billboard Signs",
+              "Showroom Design",
+              "Reception Branding"
+            ]
+          },
+          {
+            "name": "Uniforms & Workwear",
+            "category_type": "service",
+            "display_mode": "list_quote",
+            "commercial_mode": "request_quote",
+            "fulfillment_type": "delivery_pickup",
+            "requires_site_visit": false,
+            "installment_payments": true,
+            "installment_split": "60/40",
+            "subcategories": [
+              "Uniform Tailoring",
+              "PPE Supply",
+              "Name Tags & Lanyards",
+              "Corporate Wear"
+            ]
+          }
+        ]
+      },
+      "document_numbering": {
+        "country_code": "TZ",
+        "quote_prefix": "QT",
+        "invoice_prefix": "IN",
+        "order_prefix": "ORD",
+        "delivery_note_prefix": "DN",
+        "use_shared_sequence": true
+      },
+      "updated_at": "2026-04-20T04:50:57.525300",
+      "number_format": {
+        "thousand_separator": "comma",
+        "decimal_separator": "period",
+        "decimal_places": "0",
+        "currency_position": "before",
+        "currency_symbol": "TZS",
+        "show_currency": true
+      },
+      "_country": "UG"
+    }
+  },
+  {
+    "key": "vendor_agreement_version",
+    "previous": "1.9",
+    "reason": "reset",
+    "updated_at": "2026-04-23T11:17:48.111621+00:00",
+    "value": "1.0"
+  },
+  {
+    "key": "vendor_agreement_last_nudge",
+    "failed": 23,
+    "sent": 0,
+    "value": "2026-04-23T11:17:53.129344+00:00",
+    "version": "1.0"
+  }
+]

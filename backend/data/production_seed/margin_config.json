@@ -1,0 +1,64 @@
+[
+  {
+    "scope": "global",
+    "tiers": [
+      {
+        "min": 0,
+        "max": 2000,
+        "type": "percentage",
+        "value": 50,
+        "label": "Micro (0 \u2013 2K)"
+      },
+      {
+        "min": 2001,
+        "max": 10000,
+        "type": "percentage",
+        "value": 30,
+        "label": "Ultra-Low (2K \u2013 10K)"
+      },
+      {
+        "min": 10001,
+        "max": 30000,
+        "type": "percentage",
+        "value": 12,
+        "label": "Low (10K \u2013 30K)"
+      },
+      {
+        "min": 30001,
+        "max": 100000,
+        "type": "percentage",
+        "value": 20,
+        "label": "Low-Mid (30K \u2013 100K)"
+      },
+      {
+        "min": 100001,
+        "max": 500000,
+        "type": "percentage",
+        "value": 22,
+        "label": "Mid (100K \u2013 500K)"
+      },
+      {
+        "min": 500001,
+        "max": 2000000,
+        "type": "percentage",
+        "value": 18,
+        "label": "Upper-Mid (500K \u2013 2M)"
+      },
+      {
+        "min": 2000001,
+        "max": 10000000,
+        "type": "percentage",
+        "value": 14,
+        "label": "Large (2M \u2013 10M)"
+      },
+      {
+        "min": 10000001,
+        "max": 999999999,
+        "type": "percentage",
+        "value": 10,
+        "label": "Enterprise (10M+)"
+      }
+    ],
+    "updated_at": "2026-04-24T14:28:51.616000"
+  }
+]

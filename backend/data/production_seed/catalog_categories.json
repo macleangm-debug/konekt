@@ -1,0 +1,24 @@
+[
+  {
+    "id": "08405254-f92b-4d57-b390-25623c7dd09a",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Office Equipment",
+    "slug": "office-equipment",
+    "is_active": true,
+    "category_type": "product",
+    "fulfillment_type": "on_site",
+    "sort_order": 0,
+    "created_at": "2026-04-16T23:50:16.455689+00:00"
+  },
+  {
+    "id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Promotional Materials",
+    "slug": "promotional-materials",
+    "is_active": true,
+    "category_type": "product",
+    "fulfillment_type": "delivery_pickup",
+    "sort_order": 4,
+    "created_at": "2026-04-16T23:50:16.461341+00:00"
+  }
+]

@@ -1,0 +1,352 @@
+[
+  {
+    "id": "eeb25b4d-3081-46c0-93dc-4591872eb23f",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Advertising Displays",
+    "slug": "advertising-displays",
+    "is_active": true,
+    "sort_order": 1,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "f3dbc480-f2d5-440c-843d-0887ba606078",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Awards, Trophies And Plaques",
+    "slug": "awards-trophies-and-plaques",
+    "is_active": true,
+    "sort_order": 2,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "171fade3-9154-4eaf-96bd-d0572313656a",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Bags And Folders",
+    "slug": "bags-and-folders",
+    "is_active": true,
+    "sort_order": 3,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "6c9b26e0-249d-42f4-8919-b9b36d68b71b",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Desk Accesories and Workspace Organisers",
+    "slug": "desk-accesories-and-workspace-organisers",
+    "is_active": true,
+    "sort_order": 7,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "136e843a-4041-4bfe-a0f4-06caa095960b",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Foam Board, Acrylic, ACP, ABS And Acrlyc Sheets",
+    "slug": "foam-board-acrylic-acp-abs-and-acrlyc-sheets",
+    "is_active": true,
+    "sort_order": 8,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "7c2f50ea-fc47-435c-ba1d-83bd734cca09",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Garments",
+    "slug": "garments",
+    "is_active": true,
+    "sort_order": 9,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "09fd5b05-3bda-4ae9-a136-ecb028913712",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Gift Bags",
+    "slug": "gift-bags",
+    "is_active": true,
+    "sort_order": 10,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "cd091644-c0a4-4600-9685-b29fc3fb3302",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Gift Sets",
+    "slug": "gift-sets",
+    "is_active": true,
+    "sort_order": 11,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "ca44cc9a-5142-4da3-9045-3a2f95a3962a",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Glass trophies",
+    "slug": "glass-trophies",
+    "is_active": true,
+    "sort_order": 12,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "4da7e810-ded7-4d67-bd01-504a6fa2d1a9",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "H - Large Format Printing",
+    "slug": "h-large-format-printing",
+    "is_active": true,
+    "sort_order": 13,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "1ea537da-b5dc-4676-bb48-18a0b43da6b7",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "ID Printers and Accessories",
+    "slug": "id-printers-and-accessories",
+    "is_active": true,
+    "sort_order": 14,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "7239c2f5-7ff4-440d-a6de-685600219e8e",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Identification",
+    "slug": "identification",
+    "is_active": true,
+    "sort_order": 15,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "eedeb91c-ffa0-4588-8140-eedaf030fd9e",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Jute and Tote Bags",
+    "slug": "jute-and-tote-bags",
+    "is_active": true,
+    "sort_order": 16,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "cff74bc7-43f4-4128-9173-be1645caa118",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Laser Engraving / UV Bottles",
+    "slug": "laser-engraving-uv-bottles",
+    "is_active": true,
+    "sort_order": 17,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "b070fcb2-7078-46d5-b0ad-e30bb23d537f",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Machines",
+    "slug": "machines",
+    "is_active": true,
+    "sort_order": 18,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "e51ebcb1-94a8-4184-a022-7b85af48a351",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Materials",
+    "slug": "materials",
+    "is_active": true,
+    "sort_order": 19,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "b33e6558-9a66-4048-af67-25ad09a2632e",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Next Level Tshirts",
+    "slug": "next-level-tshirts",
+    "is_active": true,
+    "sort_order": 20,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "cafbb08f-82df-49e5-8096-1e85c6bb6475",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Parasols and umbrella",
+    "slug": "parasols-and-umbrella",
+    "is_active": true,
+    "sort_order": 21,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "ebd5fd64-0509-4158-bdd5-29e116f33d87",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Promo Items",
+    "slug": "promo-items",
+    "is_active": true,
+    "sort_order": 22,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "b8441a29-c3fa-4894-b634-855976e8a012",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Promo Keyrings",
+    "slug": "promo-keyrings",
+    "is_active": true,
+    "sort_order": 23,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "10fe579d-f0c2-4ab8-b257-4b7e6d30a3ee",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Promo Notebooks",
+    "slug": "promo-notebooks",
+    "is_active": true,
+    "sort_order": 24,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "240b90ff-1156-490c-80fe-748b7735f33c",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Promo Pens",
+    "slug": "promo-pens",
+    "is_active": true,
+    "sort_order": 25,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "73e1a00b-1ab1-45d6-8f0c-380dc8c208c3",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Rock Slates",
+    "slug": "rock-slates",
+    "is_active": true,
+    "sort_order": 26,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "10e3b8b9-92cd-45a1-889a-27f8f708f652",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Rubber Stamps",
+    "slug": "rubber-stamps",
+    "is_active": true,
+    "sort_order": 27,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "b24cea33-cd51-4524-b8ac-0acb293079f0",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Shelves and Displays",
+    "slug": "shelves-and-displays",
+    "is_active": true,
+    "sort_order": 28,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "9fa35fd2-3619-4954-aa94-77dd43726231",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Sublimation Bottles",
+    "slug": "sublimation-bottles",
+    "is_active": true,
+    "sort_order": 29,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "6efdeac8-577d-4101-81ce-4d927b334658",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Sublimation Mugs",
+    "slug": "sublimation-mugs",
+    "is_active": true,
+    "sort_order": 30,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "fefbd0dd-4b2b-4cfd-ad0e-5ab919bd377b",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Sublimation Promo",
+    "slug": "sublimation-promo",
+    "is_active": true,
+    "sort_order": 31,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "5e5e4df8-7746-4bb4-a409-0de8e23eb6cd",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Timeless - Hoodies and Sweatshirts",
+    "slug": "timeless-hoodies-and-sweatshirts",
+    "is_active": true,
+    "sort_order": 32,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "b83cbb1a-9cf7-408b-a3c3-1a6ddc7a5598",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Timeless - Short Sleeve Jersey",
+    "slug": "timeless-short-sleeve-jersey",
+    "is_active": true,
+    "sort_order": 33,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "a07fc26b-1c88-45f8-9db5-66b956df4e9f",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Timeless DriFit Polo T-shirts",
+    "slug": "timeless-drifit-polo-t-shirts",
+    "is_active": true,
+    "sort_order": 34,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "17da0657-a11a-464e-aa2b-5dd88b5da51a",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Tumblers And Travel Mugs",
+    "slug": "tumblers-and-travel-mugs",
+    "is_active": true,
+    "sort_order": 35,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "dc0c93c5-ead2-4420-a12e-9753380f7d8a",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Wooden Trophies",
+    "slug": "wooden-trophies",
+    "is_active": true,
+    "sort_order": 36,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "0c5ee017-436e-438a-b520-873002275c07",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Year End Products",
+    "slug": "year-end-products",
+    "is_active": true,
+    "sort_order": 37,
+    "created_at": "2026-04-23T12:09:27.007465+00:00"
+  },
+  {
+    "id": "590755d3-1d9f-42f0-8dd0-75d4363ebc63",
+    "category_id": "84d418a3-a8cf-433c-add4-a4c0b29a862f",
+    "group_id": "2a3e8e96-4eef-493d-ae2b-295cd9bd90e0",
+    "name": "Cooltex",
+    "slug": "cooltex",
+    "is_active": true,
+    "sort_order": 10,
+    "created_at": "2026-04-23T12:32:38.025771+00:00"
+  }
+]

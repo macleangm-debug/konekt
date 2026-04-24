@@ -1,0 +1,622 @@
+[
+  {
+    "id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "group": "products",
+    "level": "category",
+    "name": "Office Equipment",
+    "slug": "office_equipment",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.821000",
+    "source": "system_seed"
+  },
+  {
+    "id": "20a39644-af89-40f1-a250-3be91fa252f6",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Printers",
+    "slug": "printers",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.830000",
+    "source": "system_seed"
+  },
+  {
+    "id": "9b6d0deb-1644-48f7-aa04-097a50eb2d96",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Laptops",
+    "slug": "laptops",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.831000",
+    "source": "system_seed"
+  },
+  {
+    "id": "b9b815ae-f4f6-4fc6-8055-55500e62bb92",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Desktops",
+    "slug": "desktops",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.832000",
+    "source": "system_seed"
+  },
+  {
+    "id": "ae2a386c-0b0a-491e-aa8a-fe243065e3f9",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Scanners",
+    "slug": "scanners",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.833000",
+    "source": "system_seed"
+  },
+  {
+    "id": "f9589ed2-c295-4493-bd0a-4d621add86a9",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Projectors",
+    "slug": "projectors",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.833000",
+    "source": "system_seed"
+  },
+  {
+    "id": "956da2d8-07d2-4761-9d82-a0078328434c",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Accessories",
+    "slug": "accessories",
+    "parent_id": "6eef6dd5-2b90-4687-a9c5-f0e041b766c9",
+    "created_at": "2026-04-01T14:35:34.834000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "group": "products",
+    "level": "category",
+    "name": "Stationery",
+    "slug": "stationery",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.835000",
+    "source": "system_seed"
+  },
+  {
+    "id": "bf4a411e-8f47-4f91-add1-d35362b617dc",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Paper",
+    "slug": "paper",
+    "parent_id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "created_at": "2026-04-01T14:35:34.837000",
+    "source": "system_seed"
+  },
+  {
+    "id": "c99d4d4b-04e9-4a4d-915d-7313bc57f739",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Pens",
+    "slug": "pens",
+    "parent_id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "created_at": "2026-04-01T14:35:34.837000",
+    "source": "system_seed"
+  },
+  {
+    "id": "e78846e5-9c49-43d4-ae54-7d6168ce6192",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Diaries",
+    "slug": "diaries",
+    "parent_id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "created_at": "2026-04-01T14:35:34.838000",
+    "source": "system_seed"
+  },
+  {
+    "id": "b39e4526-83d6-4586-9500-aac45675f573",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Files & Folders",
+    "slug": "files_and_folders",
+    "parent_id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "created_at": "2026-04-01T14:35:34.839000",
+    "source": "system_seed"
+  },
+  {
+    "id": "3fe61a4b-ae1b-4924-9154-7aea1602e74b",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Desk Supplies",
+    "slug": "desk_supplies",
+    "parent_id": "6e58b218-cff9-4e05-94f2-44e77022112a",
+    "created_at": "2026-04-01T14:35:34.840000",
+    "source": "system_seed"
+  },
+  {
+    "id": "dab29e88-4f93-49f3-a15f-eed7d1744018",
+    "group": "products",
+    "level": "category",
+    "name": "Furniture",
+    "slug": "furniture",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.841000",
+    "source": "system_seed"
+  },
+  {
+    "id": "d5b9317f-be51-41e4-bec4-fe379a13474a",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Chairs",
+    "slug": "chairs",
+    "parent_id": "dab29e88-4f93-49f3-a15f-eed7d1744018",
+    "created_at": "2026-04-01T14:35:34.841000",
+    "source": "system_seed"
+  },
+  {
+    "id": "75aa098f-cbd0-4038-ba79-d725ca08e2ba",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Desks",
+    "slug": "desks",
+    "parent_id": "dab29e88-4f93-49f3-a15f-eed7d1744018",
+    "created_at": "2026-04-01T14:35:34.842000",
+    "source": "system_seed"
+  },
+  {
+    "id": "40e2c4eb-b197-41b9-908d-6556f9d37dab",
+    "group": "products",
+    "level": "subcategory",
+    "name": "Cabinets",
+    "slug": "cabinets",
+    "parent_id": "dab29e88-4f93-49f3-a15f-eed7d1744018",
+    "created_at": "2026-04-01T14:35:34.843000",
+    "source": "system_seed"
+  },
+  {
+    "id": "52b30227-feeb-4478-9396-19b5f279dec4",
+    "group": "promotional_materials",
+    "level": "category",
+    "name": "Branded Apparel",
+    "slug": "branded_apparel",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.843000",
+    "source": "system_seed"
+  },
+  {
+    "id": "7798590b-0e85-41a6-86d8-e5f7abee3e7c",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "T-Shirts",
+    "slug": "t-shirts",
+    "parent_id": "52b30227-feeb-4478-9396-19b5f279dec4",
+    "created_at": "2026-04-01T14:35:34.844000",
+    "source": "system_seed"
+  },
+  {
+    "id": "d66045b5-6a71-48d5-b664-c4087372ab4d",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Caps",
+    "slug": "caps",
+    "parent_id": "52b30227-feeb-4478-9396-19b5f279dec4",
+    "created_at": "2026-04-01T14:35:34.844000",
+    "source": "system_seed"
+  },
+  {
+    "id": "3615df9a-3656-4c4a-a145-0db78fda1892",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Hoodies",
+    "slug": "hoodies",
+    "parent_id": "52b30227-feeb-4478-9396-19b5f279dec4",
+    "created_at": "2026-04-01T14:35:34.845000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6551af81-5dfd-44f5-91fb-928348cb5a41",
+    "group": "promotional_materials",
+    "level": "category",
+    "name": "Event Materials",
+    "slug": "event_materials",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.845000",
+    "source": "system_seed"
+  },
+  {
+    "id": "c15e7279-28f9-4dc3-846a-edc680d79b58",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Lanyards",
+    "slug": "lanyards",
+    "parent_id": "6551af81-5dfd-44f5-91fb-928348cb5a41",
+    "created_at": "2026-04-01T14:35:34.845000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6e49902d-e19a-4ef5-81ed-14de4c2cd81e",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Name Tags",
+    "slug": "name_tags",
+    "parent_id": "6551af81-5dfd-44f5-91fb-928348cb5a41",
+    "created_at": "2026-04-01T14:35:34.846000",
+    "source": "system_seed"
+  },
+  {
+    "id": "4b9bd5e7-a75f-4aa6-a1ee-9afa3ddecd0e",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Badges",
+    "slug": "badges",
+    "parent_id": "6551af81-5dfd-44f5-91fb-928348cb5a41",
+    "created_at": "2026-04-01T14:35:34.847000",
+    "source": "system_seed"
+  },
+  {
+    "id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "group": "promotional_materials",
+    "level": "category",
+    "name": "Print Materials",
+    "slug": "print_materials",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.847000",
+    "source": "system_seed"
+  },
+  {
+    "id": "dbb36071-d056-4add-b3bc-590190951326",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Flyers",
+    "slug": "flyers",
+    "parent_id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "created_at": "2026-04-01T14:35:34.848000",
+    "source": "system_seed"
+  },
+  {
+    "id": "f79c494f-c95e-4764-bc10-e0ca8c90b2f1",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Brochures",
+    "slug": "brochures",
+    "parent_id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "created_at": "2026-04-01T14:35:34.849000",
+    "source": "system_seed"
+  },
+  {
+    "id": "51e07d23-c5fc-4bbd-afc1-758cf2a06496",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Posters",
+    "slug": "posters",
+    "parent_id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "created_at": "2026-04-01T14:35:34.850000",
+    "source": "system_seed"
+  },
+  {
+    "id": "f4e78943-d3e1-4d79-b0fb-65655c175d73",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Business Cards",
+    "slug": "business_cards",
+    "parent_id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "created_at": "2026-04-01T14:35:34.851000",
+    "source": "system_seed"
+  },
+  {
+    "id": "a2c09cc3-beaf-4823-8010-b7bef0f843af",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Banners",
+    "slug": "banners",
+    "parent_id": "b94669ec-eadb-4167-8975-ff94091f8a2b",
+    "created_at": "2026-04-01T14:35:34.852000",
+    "source": "system_seed"
+  },
+  {
+    "id": "37705d1e-fbd1-4bd6-a700-e31030307d36",
+    "group": "promotional_materials",
+    "level": "category",
+    "name": "Corporate Gifts",
+    "slug": "corporate_gifts",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.853000",
+    "source": "system_seed"
+  },
+  {
+    "id": "aa4ad666-86b0-42f8-ab0d-98ebe218871d",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Mugs",
+    "slug": "mugs",
+    "parent_id": "37705d1e-fbd1-4bd6-a700-e31030307d36",
+    "created_at": "2026-04-01T14:35:34.854000",
+    "source": "system_seed"
+  },
+  {
+    "id": "67b9b70b-055a-4cf1-8bea-2668fb234377",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Bottles",
+    "slug": "bottles",
+    "parent_id": "37705d1e-fbd1-4bd6-a700-e31030307d36",
+    "created_at": "2026-04-01T14:35:34.855000",
+    "source": "system_seed"
+  },
+  {
+    "id": "39b7cce8-75d8-4245-970e-931303887434",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Notebooks",
+    "slug": "notebooks",
+    "parent_id": "37705d1e-fbd1-4bd6-a700-e31030307d36",
+    "created_at": "2026-04-01T14:35:34.856000",
+    "source": "system_seed"
+  },
+  {
+    "id": "47057144-7ca3-4599-a723-73c39da0c3e2",
+    "group": "promotional_materials",
+    "level": "subcategory",
+    "name": "Pens",
+    "slug": "pens",
+    "parent_id": "37705d1e-fbd1-4bd6-a700-e31030307d36",
+    "created_at": "2026-04-01T14:35:34.858000",
+    "source": "system_seed"
+  },
+  {
+    "id": "93bd7932-0f6d-46aa-898c-a7fc97bd00a2",
+    "group": "services",
+    "level": "category",
+    "name": "Printing & Branding",
+    "slug": "printing_and_branding",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.859000",
+    "source": "system_seed"
+  },
+  {
+    "id": "609f2667-2e1d-4488-9813-d888a8955424",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Office Branding",
+    "slug": "office_branding",
+    "parent_id": "93bd7932-0f6d-46aa-898c-a7fc97bd00a2",
+    "created_at": "2026-04-01T14:35:34.861000",
+    "source": "system_seed"
+  },
+  {
+    "id": "1ea01bd9-cc8d-4927-b54d-8b0d7d645122",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Billboard Signs",
+    "slug": "billboard_signs",
+    "parent_id": "93bd7932-0f6d-46aa-898c-a7fc97bd00a2",
+    "created_at": "2026-04-01T14:35:34.863000",
+    "source": "system_seed"
+  },
+  {
+    "id": "040bd086-aa74-475f-bd18-d97ee2e643a9",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Signage Installation",
+    "slug": "signage_installation",
+    "parent_id": "93bd7932-0f6d-46aa-898c-a7fc97bd00a2",
+    "created_at": "2026-04-01T14:35:34.864000",
+    "source": "system_seed"
+  },
+  {
+    "id": "d584753e-246d-451a-99f5-66b6bf2358a1",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Showroom Design",
+    "slug": "showroom_design",
+    "parent_id": "93bd7932-0f6d-46aa-898c-a7fc97bd00a2",
+    "created_at": "2026-04-01T14:35:34.865000",
+    "source": "system_seed"
+  },
+  {
+    "id": "e97ab449-37e5-4a72-9a2e-d2872cdd214d",
+    "group": "services",
+    "level": "category",
+    "name": "Creative & Design",
+    "slug": "creative_and_design",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.866000",
+    "source": "system_seed"
+  },
+  {
+    "id": "bd81c72c-a49c-4dab-9244-318b06594482",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Graphic Design Support",
+    "slug": "graphic_design_support",
+    "parent_id": "e97ab449-37e5-4a72-9a2e-d2872cdd214d",
+    "created_at": "2026-04-01T14:35:34.867000",
+    "source": "system_seed"
+  },
+  {
+    "id": "e4c84832-290d-4d84-ad7a-c300e1d70dfa",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Presentation Design",
+    "slug": "presentation_design",
+    "parent_id": "e97ab449-37e5-4a72-9a2e-d2872cdd214d",
+    "created_at": "2026-04-01T14:35:34.868000",
+    "source": "system_seed"
+  },
+  {
+    "id": "278f89f5-dbec-4a6e-ab92-641ba4aafef5",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Social Media Design",
+    "slug": "social_media_design",
+    "parent_id": "e97ab449-37e5-4a72-9a2e-d2872cdd214d",
+    "created_at": "2026-04-01T14:35:34.869000",
+    "source": "system_seed"
+  },
+  {
+    "id": "cbcf4a5d-9e22-40ec-910d-695e85b1e980",
+    "group": "services",
+    "level": "category",
+    "name": "Facilities Services",
+    "slug": "facilities_services",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.870000",
+    "source": "system_seed"
+  },
+  {
+    "id": "846af219-2f3c-4314-acb4-53ef5237f722",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Deep Office Cleaning",
+    "slug": "deep_office_cleaning",
+    "parent_id": "cbcf4a5d-9e22-40ec-910d-695e85b1e980",
+    "created_at": "2026-04-01T14:35:34.871000",
+    "source": "system_seed"
+  },
+  {
+    "id": "ade8e9c9-d9f4-4e22-9ff4-731f41996415",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Carpet Cleaning",
+    "slug": "carpet_cleaning",
+    "parent_id": "cbcf4a5d-9e22-40ec-910d-695e85b1e980",
+    "created_at": "2026-04-01T14:35:34.871000",
+    "source": "system_seed"
+  },
+  {
+    "id": "0068575b-a969-4f4f-8f4a-0b5b2baac59a",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Fumigation",
+    "slug": "fumigation",
+    "parent_id": "cbcf4a5d-9e22-40ec-910d-695e85b1e980",
+    "created_at": "2026-04-01T14:35:34.872000",
+    "source": "system_seed"
+  },
+  {
+    "id": "f0fcf4dc-3060-496b-b341-6831c031872f",
+    "group": "services",
+    "level": "category",
+    "name": "Technical Support",
+    "slug": "technical_support",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.873000",
+    "source": "system_seed"
+  },
+  {
+    "id": "02e88543-dfcf-47df-9d65-144c1e536ab3",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Printer Servicing",
+    "slug": "printer_servicing",
+    "parent_id": "f0fcf4dc-3060-496b-b341-6831c031872f",
+    "created_at": "2026-04-01T14:35:34.874000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6aae066a-9303-403c-a631-14219935ea00",
+    "group": "services",
+    "level": "subcategory",
+    "name": "CCTV Installation",
+    "slug": "cctv_installation",
+    "parent_id": "f0fcf4dc-3060-496b-b341-6831c031872f",
+    "created_at": "2026-04-01T14:35:34.875000",
+    "source": "system_seed"
+  },
+  {
+    "id": "1b422218-4ee6-40a9-8ab6-4c23bda9728c",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Access Control Installation",
+    "slug": "access_control_installation",
+    "parent_id": "f0fcf4dc-3060-496b-b341-6831c031872f",
+    "created_at": "2026-04-01T14:35:34.876000",
+    "source": "system_seed"
+  },
+  {
+    "id": "1f06366e-4693-4451-8904-e56fcfb9e86e",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Office Network Setup",
+    "slug": "office_network_setup",
+    "parent_id": "f0fcf4dc-3060-496b-b341-6831c031872f",
+    "created_at": "2026-04-01T14:35:34.877000",
+    "source": "system_seed"
+  },
+  {
+    "id": "1673b178-58b8-4681-b794-40b98400adc0",
+    "group": "services",
+    "level": "category",
+    "name": "Business Support",
+    "slug": "business_support",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.877000",
+    "source": "system_seed"
+  },
+  {
+    "id": "a74ab513-9184-4c10-99b2-bb10921c6131",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Procurement Support",
+    "slug": "procurement_support",
+    "parent_id": "1673b178-58b8-4681-b794-40b98400adc0",
+    "created_at": "2026-04-01T14:35:34.878000",
+    "source": "system_seed"
+  },
+  {
+    "id": "629fc8fd-0d3f-42a9-aa34-4f2f545168d1",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Event Support",
+    "slug": "event_support",
+    "parent_id": "1673b178-58b8-4681-b794-40b98400adc0",
+    "created_at": "2026-04-01T14:35:34.879000",
+    "source": "system_seed"
+  },
+  {
+    "id": "12f3423b-2f1e-4a04-af6a-db39e57029b4",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Recurring Office Supply Support",
+    "slug": "recurring_office_supply_support",
+    "parent_id": "1673b178-58b8-4681-b794-40b98400adc0",
+    "created_at": "2026-04-01T14:35:34.880000",
+    "source": "system_seed"
+  },
+  {
+    "id": "11f2b8bd-8023-418d-adf6-ecb58d9d845b",
+    "group": "services",
+    "level": "category",
+    "name": "Uniforms & Workwear",
+    "slug": "uniforms_and_workwear",
+    "parent_id": null,
+    "created_at": "2026-04-01T14:35:34.881000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6970f4fa-ce4c-443e-bfc2-bf54e7f05d7c",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Uniform Tailoring",
+    "slug": "uniform_tailoring",
+    "parent_id": "11f2b8bd-8023-418d-adf6-ecb58d9d845b",
+    "created_at": "2026-04-01T14:35:34.882000",
+    "source": "system_seed"
+  },
+  {
+    "id": "6e313a4c-a3ca-4f2a-9224-134147339ffd",
+    "group": "services",
+    "level": "subcategory",
+    "name": "PPE Supply",
+    "slug": "ppe_supply",
+    "parent_id": "11f2b8bd-8023-418d-adf6-ecb58d9d845b",
+    "created_at": "2026-04-01T14:35:34.883000",
+    "source": "system_seed"
+  },
+  {
+    "id": "4375ff18-1e16-44d2-b0c5-eb47c7373525",
+    "group": "services",
+    "level": "subcategory",
+    "name": "Name Tags & Lanyards",
+    "slug": "name_tags_and_lanyards",
+    "parent_id": "11f2b8bd-8023-418d-adf6-ecb58d9d845b",
+    "created_at": "2026-04-01T14:35:34.883000",
+    "source": "system_seed"
+  }
+]

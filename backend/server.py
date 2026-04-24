@@ -3457,6 +3457,16 @@ async def startup_event():
     except Exception as e:
         logger.warning("Taxonomy seed: %s", e)
 
+    # ─── Production hydration ─────────────────────────────────────────
+    # Prunes demo/TEST_* contamination + (on fresh deploys) auto-loads
+    # the real Darcity catalog so konekt.co.tz is live immediately post
+    # deploy. Fully idempotent, safe on every boot.
+    try:
+        from services.production_hydration import run_production_hydration
+        await run_production_hydration(db)
+    except Exception as e:
+        logger.warning("Production hydration: %s", e)
+
     # Seed notification defaults
     try:
         from services.notification_service import NotificationService
