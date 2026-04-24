@@ -9,6 +9,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Cooltex Variant Fix + Services Layout Split + Service Card Redesign
+1. **Stronger variant grouping** — `backend/services/variant_grouping.py` now recognises size/colour suffixes **without a "-" separator** ("T.Blue 2XL", "White Small", "Yellow 1XL"), **compact XL forms** ("XXLarge", "XLarge", "X Large", "XXXLarge"), **numbered XL** ("1XL", "2XL", "2 XL"), **dash-no-space tails** ("Green Black- XXL"), and a broader colour vocabulary ("T.Blue", "Royal Bue", "Navy Blue", "Golden Yellow", etc). **Cooltex 52 SKUs → 6 cards**, total catalog **616 → 397 cards** (60 variant groups).
+2. **Services/Products split view** — `MarketplaceBrowsePageContent.jsx`: when user selects the Services group in the filter, the product grid + "No listings found" banner disappear and the Services section becomes the primary content. On the default product view, the Services section is hidden (discoverable via the filter/nav). `taxonomyLoading` guard prevents empty-state flash during initial load.
+3. **Premium service card redesign** — `ServiceCardsSection.jsx` rebuilt. Each card has:
+   • Coloured gradient accent strip (unique per category)
+   • Gradient icon disc with lucide icon (FileText/Printer/Paintbrush/Sparkles/Wrench/Building2/Shirt) + soft ring
+   • Category title, service count, fulfilment pills (Site Visit / On-site / Digital / Delivery-Pickup)
+   • Smooth expand → sub-service round chip pills with +/✓ affordance
+   • Sticky "Continue with N services" CTA + premium quote form with tag-chip selection summary
+   • New hero header: "Tell us what you need — we'll quote it in hours"
+4. **Prop support** — `ServiceCardsSection` now accepts `heading`, `description`, `hideSection` props for conditional rendering from parent layouts.
+
+
 ### Feb 24, 2026 (later) — Variant Consolidation + Marketplace Perf + Office Equipment Taxonomy
 1. **Canonical variant grouping** — New `backend/services/variant_grouping.py` strips trailing variant tokens (`- Small/Medium/Large`, `- Navy Blue`, `(L)/(M)/(S)`, `- 45cm`) from product names to compute a canonical key. Products are grouped at query time — no DB migration — returning ONE card per canonical product with `variants: [...]`, `variant_colors`, `variant_sizes`, and `price_from` / `price_to`. **616 → 445 cards** (46 variant groups collapsed: Cooltex Polo ×20, Hoodie ×20, Timeless Polo ×20, Lanyards ×8, 2026 Diary ×5, etc).
 2. **Variant chip selector on PDP** — `MarketplaceListingDetailContent.jsx` now auto-fetches `/api/marketplace/products/:id/variants` after initial load. When the product is part of a variant family, colour/size chip rows appear above the Add-to-Cart. Selecting a chip swaps image, price and cart-bound product_id to the chosen variant. Unavailable combinations are disabled.

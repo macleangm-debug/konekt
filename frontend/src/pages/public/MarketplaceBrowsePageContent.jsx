@@ -42,6 +42,13 @@ export default function MarketplaceBrowsePageContent() {
     sort: searchParams.get("sort") || "relevance",
   });
 
+  // Derived: is the user currently browsing Services?
+  const servicesGroup = taxonomy.groups.find((g) => (g.type === "service") || /services/i.test(g.name || ""));
+  const isServicesView = !!(servicesGroup && filters.group_id === servicesGroup.id);
+  // While taxonomy is still loading, suppress the products empty-state if a group_id is set —
+  // we don't yet know whether it's the Services group.
+  const taxonomyLoading = taxonomy.groups.length === 0;
+
   // Load taxonomy once
   useEffect(() => {
     api.get("/api/marketplace/taxonomy")
@@ -132,7 +139,8 @@ export default function MarketplaceBrowsePageContent() {
         resultCount={items.length}
       />
 
-      {/* Products — 4-card desktop grid */}
+      {/* Products — 4-card desktop grid — hidden when Services tab active */}
+      {!isServicesView && (
       <section className="mt-6">
         {loading ? (
           <ListingGridSkeleton />
@@ -179,19 +187,25 @@ export default function MarketplaceBrowsePageContent() {
           )}
           </>
         ) : (
-          !filters.group_id && !filters.category_id && !filters.q ? null : (
-            <PremiumEmptyState
-              title="No product listings found"
-              description="Try another search term or clear filters. Check the service cards below for available services."
-              ctaLabel="Clear filters"
-              ctaHref="/marketplace"
-            />
+          // Only show empty-state once we know the filters are product filters
+          // (i.e. taxonomy has loaded and we're NOT on the Services tab).
+          !taxonomyLoading && !filters.group_id && !filters.category_id && !filters.q ? null : (
+            !taxonomyLoading && (
+              <PremiumEmptyState
+                title="No product listings found"
+                description="Try another search term or clear filters. Browse our services below for custom work."
+                ctaLabel="Clear filters"
+                ctaHref="/marketplace"
+              />
+            )
           )
         )}
       </section>
+      )}
 
-      <ServiceCardsSection />
-      <CantFindWhatYouNeedBanner className="mt-8" />
+      {/* Services — shown only when the user chose the Services group in the filter */}
+      <ServiceCardsSection hideSection={!isServicesView} />
+      {!isServicesView && <CantFindWhatYouNeedBanner className="mt-8" />}
     </div>
   );
 }
