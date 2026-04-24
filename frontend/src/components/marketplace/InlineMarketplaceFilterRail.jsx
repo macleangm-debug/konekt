@@ -9,12 +9,16 @@ export default function InlineMarketplaceFilterRail({
   subcategories = [],
   resultCount = 0,
 }) {
+  // Source of truth: both desktop and mobile consume exactly the same
+  // filteredCategories / filteredSubcategories so the filter contents never
+  // drift between views. When no group is picked we intentionally show NO
+  // categories (empty list) on both — the user must pick a group first.
   const filteredCategories = filters.group_id
     ? categories.filter((c) => c.group_id === filters.group_id)
-    : categories;
+    : [];
   const filteredSubcategories = filters.category_id
     ? subcategories.filter((s) => s.category_id === filters.category_id)
-    : subcategories;
+    : [];
 
   const hasActiveFilters = filters.group_id || filters.category_id || filters.subcategory_id;
 
@@ -106,6 +110,8 @@ export default function InlineMarketplaceFilterRail({
 
 // ─── Desktop Inline Rail (unchanged layout) ────────────
 function DesktopFilterRail({ filters, onChange, groups, filteredCategories, filteredSubcategories, hasActiveFilters, clearFilters, resultCount }) {
+  const noGroup = !filters.group_id;
+  const noCategory = !filters.category_id;
   return (
     <div className="space-y-3 rounded-2xl border bg-white p-4">
       <div className="grid grid-cols-[minmax(0,2fr)_1fr_1fr_1fr_180px] gap-3">
@@ -119,28 +125,41 @@ function DesktopFilterRail({ filters, onChange, groups, filteredCategories, filt
             data-testid="filter-search-input"
           />
         </div>
-        <select className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white" value={filters.group_id || ""}
-          onChange={(e) => onChange({ ...filters, group_id: e.target.value, category_id: "", subcategory_id: "" })} data-testid="filter-group-select">
-          <option value="">All Groups</option>
-          {groups.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-        <select className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white" value={filters.category_id || ""}
-          onChange={(e) => onChange({ ...filters, category_id: e.target.value, subcategory_id: "" })} data-testid="filter-category-select">
-          <option value="">All Categories</option>
-          {filteredCategories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-        <select className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white" value={filters.subcategory_id || ""}
-          onChange={(e) => onChange({ ...filters, subcategory_id: e.target.value })} data-testid="filter-subcategory-select">
-          <option value="">All Subcategories</option>
-          {filteredSubcategories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-        <select className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white" value={filters.sort || "relevance"}
-          onChange={(e) => onChange({ ...filters, sort: e.target.value })} data-testid="filter-sort-select">
-          <option value="relevance">Sort: Relevance</option>
-          <option value="newest">Newest</option>
-          <option value="price_low">Price: Low to High</option>
-          <option value="price_high">Price: High to Low</option>
-        </select>
+        <DesktopDropdown
+          value={filters.group_id || ""}
+          onChange={(v) => onChange({ ...filters, group_id: v, category_id: "", subcategory_id: "" })}
+          placeholder="All Groups"
+          options={groups.map((g) => ({ value: g.id, label: g.name }))}
+          testId="filter-group-select"
+        />
+        <DesktopDropdown
+          value={filters.category_id || ""}
+          onChange={(v) => onChange({ ...filters, category_id: v, subcategory_id: "" })}
+          placeholder={noGroup ? "Pick a group first" : "All Categories"}
+          options={filteredCategories.map((c) => ({ value: c.id, label: c.name }))}
+          disabled={noGroup}
+          testId="filter-category-select"
+        />
+        <DesktopDropdown
+          value={filters.subcategory_id || ""}
+          onChange={(v) => onChange({ ...filters, subcategory_id: v })}
+          placeholder={noCategory ? "Pick a category first" : "All Subcategories"}
+          options={filteredSubcategories.map((s) => ({ value: s.id, label: s.name }))}
+          disabled={noCategory}
+          testId="filter-subcategory-select"
+        />
+        <DesktopDropdown
+          value={filters.sort || "relevance"}
+          onChange={(v) => onChange({ ...filters, sort: v })}
+          placeholder="Sort: Relevance"
+          options={[
+            { value: "relevance", label: "Sort: Relevance" },
+            { value: "newest", label: "Newest" },
+            { value: "price_low", label: "Price: Low to High" },
+            { value: "price_high", label: "Price: High to Low" },
+          ]}
+          testId="filter-sort-select"
+        />
       </div>
       <div className="flex items-center justify-between">
         <div>
@@ -152,6 +171,69 @@ function DesktopFilterRail({ filters, onChange, groups, filteredCategories, filt
         </div>
         <div className="text-sm text-slate-500" data-testid="result-count">{resultCount} product{resultCount !== 1 ? "s" : ""} found</div>
       </div>
+    </div>
+  );
+}
+
+// Desktop dropdown — always opens DOWNWARD (never a native <select> whose
+// browser UI can flip upward on short pages).
+function DesktopDropdown({ value, onChange, placeholder, options, disabled, testId }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  const selected = options.find((o) => o.value === value);
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`w-full flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5 text-sm bg-white text-left transition ${
+          disabled ? "opacity-50 cursor-not-allowed bg-slate-50" : "hover:border-slate-300"
+        }`}
+        data-testid={testId}
+      >
+        <span className={`truncate ${selected ? "text-slate-900 font-medium" : "text-slate-500"}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-400 flex-shrink-0 ml-2 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && !disabled && (
+        <div className="absolute z-[60] top-[calc(100%+4px)] left-0 right-0 rounded-xl border border-slate-200 bg-white shadow-xl max-h-72 overflow-y-auto">
+          {/* "All" option when placeholder implies it */}
+          {placeholder.startsWith("All") && (
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition ${!value ? "bg-slate-50 font-semibold" : ""}`}
+            >
+              {placeholder}
+            </button>
+          )}
+          {options.length === 0 ? (
+            <div className="px-3 py-3 text-xs text-slate-400 text-center">No options</div>
+          ) : (
+            options.map((o) => (
+              <button
+                type="button"
+                key={o.value}
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-50 transition ${
+                  o.value === value ? "bg-[#20364D]/5 font-semibold text-[#20364D]" : "text-slate-700"
+                }`}
+                data-testid={`${testId}-option-${o.value}`}
+              >
+                {o.label}
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

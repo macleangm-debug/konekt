@@ -3,6 +3,7 @@ import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import PromoAISuggester from "@/components/admin/PromoAISuggester";
 import {
   TrendingUp, Plus, Trash2, Play, Pause, Eye, AlertTriangle,
   Check, X, DollarSign, Percent, Shield, ShieldAlert,
@@ -408,6 +409,9 @@ export default function PromotionEngineAdminPage() {
           <Plus className="w-4 h-4" /> Create Promotion
         </Button>
       </div>
+
+      {/* AI Suggestions — strip above the list so ops see it at a glance */}
+      <PromoAISuggester onCreated={fetchPromotions} />
 
       {/* Form */}
       {showForm && (
