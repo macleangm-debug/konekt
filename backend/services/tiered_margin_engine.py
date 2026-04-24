@@ -68,25 +68,47 @@ async def get_global_tiers(db):
     ]
 
 
-async def save_global_tiers(db, tiers):
-    """Save global tiers to Settings Hub (primary)."""
+async def save_global_tiers(db, tiers, category: str = None):
+    """Save pricing policy tiers to Settings Hub.
+
+    If `category` is None, saves as the "default" tier set (also preserved as a
+    flat list for legacy backward-compat in the margin_config collection).
+
+    If `category` is provided (e.g. "Promotional Materials"), saves into the
+    category-specific slot of a dict-shaped `pricing_policy_tiers`. Preserves
+    any other category slots that were already set.
+    """
     from datetime import datetime, timezone
     from services.settings_resolver import invalidate_settings_cache
 
-    # Save to Settings Hub as pricing_policy_tiers
+    # Load current settings_hub
     hub = await db.admin_settings.find_one({"key": "settings_hub"}, {"_id": 0})
-    if hub and hub.get("value"):
-        value = hub["value"]
-        value["pricing_policy_tiers"] = tiers
-        await db.admin_settings.update_one(
-            {"key": "settings_hub"},
-            {"$set": {"value": value}},
-        )
+    value = hub.get("value", {}) if hub else {}
+    existing = value.get("pricing_policy_tiers", {})
+
+    # Normalise current storage into dict-shape
+    if isinstance(existing, list):
+        existing = {"default": existing}
+    elif not isinstance(existing, dict):
+        existing = {}
+
+    if category is None or category == "default":
+        existing["default"] = tiers
+    else:
+        existing[category] = tiers
+
+    value["pricing_policy_tiers"] = existing
+
+    await db.admin_settings.update_one(
+        {"key": "settings_hub"},
+        {"$set": {"value": value}},
+        upsert=True,
+    )
     invalidate_settings_cache()
 
-    # Also save to legacy collection for backward compat
+    # Legacy mirror (only the default set) — keeps older code paths working
     legacy_tiers = []
-    for t in tiers:
+    for t in existing.get("default", tiers):
         if "min_amount" in t:
             legacy_tiers.append({
                 "min": t["min_amount"],
@@ -97,7 +119,6 @@ async def save_global_tiers(db, tiers):
             })
         else:
             legacy_tiers.append(t)
-
     await db.margin_config.update_one(
         {"scope": "global"},
         {"$set": {"tiers": legacy_tiers, "updated_at": datetime.now(timezone.utc)}},

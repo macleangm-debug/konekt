@@ -246,8 +246,10 @@ async def commit_import(
     stats = {"total": len(rows), "imported": 0, "updated": 0, "skipped": 0, "errors": []}
 
     # Load Settings Hub pricing policy tiers once per commit — used to compute customer_price
-    # with proper protected + distributable margin structure.
-    pricing_tiers = await get_pricing_policy_tiers(db)
+    # with proper protected + distributable margin structure. Category-aware: falls back
+    # to the "default" tier set if the session's branch has no dedicated set configured.
+    session_branch = session.get("branch") or "Promotional Materials"
+    pricing_tiers = await get_pricing_policy_tiers(db, category=session_branch)
 
     # Chunked insert for memory safety with 3000+ rows
     CHUNK = 500

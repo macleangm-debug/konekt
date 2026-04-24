@@ -608,7 +608,58 @@ async def get_margin_tiers(db) -> list:
     return legacy
 
 
-async def get_pricing_policy_tiers(db) -> list:
-    """Returns the unified pricing policy tiers (canonical source of truth)."""
+async def get_pricing_policy_tiers(db, category: str = None) -> list:
+    """Returns pricing policy tiers, optionally for a specific category/branch.
+
+    Storage format (new):
+        pricing_policy_tiers: {
+            "default": [tier, tier, ...],
+            "Promotional Materials": [...],
+            "Office Equipment": [...],
+            "Stationery": [...],
+            "Services": [...],
+        }
+
+    Legacy format (backward-compat):
+        pricing_policy_tiers: [tier, tier, ...]   # treated as default
+
+    Resolution:
+        1. Exact category match (e.g. "Office Equipment")
+        2. Fallback to "default" key if present
+        3. Fallback to legacy flat list
+        4. Finally PLATFORM_DEFAULTS
+    """
     s = await get_platform_settings(db)
-    return s.get("pricing_policy_tiers", PLATFORM_DEFAULTS["pricing_policy_tiers"])
+    stored = s.get("pricing_policy_tiers", PLATFORM_DEFAULTS["pricing_policy_tiers"])
+
+    if isinstance(stored, list):
+        # Legacy flat list — every category uses the same tiers
+        return stored
+
+    if isinstance(stored, dict):
+        # Category-aware storage. Try exact match, then default.
+        if category and category in stored and isinstance(stored[category], list) and stored[category]:
+            return stored[category]
+        if "default" in stored and isinstance(stored["default"], list) and stored["default"]:
+            return stored["default"]
+        # If the dict has any list, return the first as last resort
+        for v in stored.values():
+            if isinstance(v, list) and v:
+                return v
+
+    return PLATFORM_DEFAULTS["pricing_policy_tiers"]
+
+
+async def get_pricing_policy_tiers_all(db) -> dict:
+    """Returns the full per-category tier mapping (dict) or {'default': [...]} for legacy."""
+    s = await get_platform_settings(db)
+    stored = s.get("pricing_policy_tiers", PLATFORM_DEFAULTS["pricing_policy_tiers"])
+    if isinstance(stored, list):
+        return {"default": stored}
+    if isinstance(stored, dict):
+        # Ensure default key present
+        out = dict(stored)
+        if "default" not in out:
+            out["default"] = PLATFORM_DEFAULTS["pricing_policy_tiers"]
+        return out
+    return {"default": PLATFORM_DEFAULTS["pricing_policy_tiers"]}

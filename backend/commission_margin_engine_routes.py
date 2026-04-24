@@ -86,21 +86,34 @@ async def calculate_order(payload: dict, request: Request):
 
 
 @router.get("/pricing-policy-tiers")
-async def get_pricing_policy_tiers_endpoint(request: Request):
-    """Get the current unified pricing policy tiers from Settings Hub."""
+async def get_pricing_policy_tiers_endpoint(request: Request, category: str = None):
+    """Get the current unified pricing policy tiers from Settings Hub.
+
+    Query params:
+        category (optional): "Promotional Materials" / "Office Equipment" /
+            "Stationery" / "Services" / "default". When omitted, returns the
+            full per-category mapping as `tiers_by_category`.
+    """
     db = request.app.mongodb
-    from services.settings_resolver import get_pricing_policy_tiers
-    tiers = await get_pricing_policy_tiers(db)
-    return {"tiers": tiers}
+    from services.settings_resolver import get_pricing_policy_tiers, get_pricing_policy_tiers_all
+
+    if category:
+        tiers = await get_pricing_policy_tiers(db, category=category)
+        return {"category": category, "tiers": tiers}
+
+    tiers_by_cat = await get_pricing_policy_tiers_all(db)
+    return {"tiers_by_category": tiers_by_cat, "tiers": tiers_by_cat.get("default", [])}
 
 
 @router.put("/pricing-policy-tiers")
 async def update_pricing_policy_tiers(payload: dict, request: Request):
     """
-    Update pricing policy tiers. Validates split percentages before saving.
+    Update pricing policy tiers. Accepts an optional `category` key so different
+    branches can have distinct tier structures.
 
     Body:
     {
+        "category": "Office Equipment",   # optional — defaults to "default"
         "tiers": [
             {
                 "label": "Small (0 – 100K)",
@@ -110,18 +123,16 @@ async def update_pricing_policy_tiers(payload: dict, request: Request):
                 "protected_platform_margin_pct": 23,
                 "distributable_margin_pct": 12,
                 "distribution_split": {
-                    "affiliate_pct": 25,
-                    "promotion_pct": 20,
-                    "sales_pct": 20,
-                    "referral_pct": 20,
-                    "reserve_pct": 15
+                    "affiliate_pct": 25, "promotion_pct": 20,
+                    "sales_pct": 20, "referral_pct": 20, "reserve_pct": 15
                 }
-            }
+            }, ...
         ]
     }
     """
     db = request.app.mongodb
     tiers = payload.get("tiers", [])
+    category = payload.get("category")  # None → "default"
 
     # Validate each tier
     errors = []
@@ -151,9 +162,9 @@ async def update_pricing_policy_tiers(payload: dict, request: Request):
         raise HTTPException(status_code=422, detail={"errors": errors})
 
     from services.tiered_margin_engine import save_global_tiers
-    await save_global_tiers(db, tiers)
+    await save_global_tiers(db, tiers, category=category)
 
-    return {"status": "ok", "tiers_saved": len(tiers)}
+    return {"status": "ok", "category": category or "default", "tiers_saved": len(tiers)}
 
 
 @router.post("/validate-wallet")

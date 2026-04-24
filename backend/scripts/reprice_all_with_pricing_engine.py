@@ -27,59 +27,70 @@ from commission_margin_engine_service import resolve_tier  # noqa: E402
 async def main():
     client = AsyncIOMotorClient(os.environ["MONGO_URL"])
     db = client[os.environ.get("DB_NAME", "konekt_db")]
-    tiers = await get_pricing_policy_tiers(db)
-    if not tiers:
-        print("No pricing tiers configured in Settings Hub — aborting.")
-        return
+
+    # Pre-load per-category tier sets once
+    from services.settings_resolver import get_pricing_policy_tiers
+    tier_cache = {}
+
+    async def tiers_for(category: str):
+        if category not in tier_cache:
+            tier_cache[category] = await get_pricing_policy_tiers(db, category=category)
+        return tier_cache[category]
 
     updated = 0
     no_tier = 0
     total = 0
     breakdown = {"preserved": 0, "realigned": 0}
+    by_category = {}
 
-    cursor = db.products.find({"vendor_cost": {"$gt": 0}}, {"_id": 1, "name": 1, "vendor_cost": 1, "customer_price": 1})
+    cursor = db.products.find(
+        {"vendor_cost": {"$gt": 0}},
+        {"_id": 1, "name": 1, "vendor_cost": 1, "customer_price": 1, "branch": 1, "category_name": 1},
+    )
     async for p in cursor:
         total += 1
         cost = float(p.get("vendor_cost") or 0)
+        branch = p.get("branch") or p.get("category_name") or "default"
+        tiers = await tiers_for(branch)
         tier = resolve_tier(cost, tiers)
         if not tier:
             no_tier += 1
             continue
         margin_pct = float(tier.get("total_margin_pct", 0))
-        new_price = round(cost * (1 + margin_pct / 100.0), 0)  # round to whole TZS
+        new_price = round(cost * (1 + margin_pct / 100.0), 0)
         old_price = p.get("customer_price", 0) or 0
 
         tier_meta = {
+            "pricing_branch": branch,
             "pricing_tier_label": tier.get("label"),
             "pricing_total_margin_pct": margin_pct,
             "pricing_protected_margin_pct": float(tier.get("protected_platform_margin_pct", 0)),
             "pricing_distributable_margin_pct": float(tier.get("distributable_margin_pct", 0)),
         }
 
+        by_category[branch] = by_category.get(branch, 0) + 1
+
         if abs(new_price - old_price) <= 1:
-            # Price already correct — still ensure tier metadata is persisted
             await db.products.update_one({"_id": p["_id"]}, {"$set": tier_meta})
             breakdown["preserved"] += 1
             continue
 
         await db.products.update_one(
             {"_id": p["_id"]},
-            {"$set": {
-                **tier_meta,
-                "customer_price": new_price,
-                "base_price": new_price,
-                "pricing_last_realigned": True,
-            }},
+            {"$set": {**tier_meta, "customer_price": new_price, "base_price": new_price, "pricing_last_realigned": True}},
         )
-        print(f"  REALIGNED: {p['name'][:50]:50} cost={cost:>8.0f} {old_price:>7.0f} → {new_price:>7.0f}  [{tier.get('label')}]")
+        print(f"  REALIGNED [{branch[:15]:15}]: {p['name'][:40]:40} cost={cost:>8.0f} {old_price:>7.0f} → {new_price:>7.0f}  [{tier.get('label')}]")
         updated += 1
         breakdown["realigned"] += 1
 
     print()
     print(f"Total products with vendor_cost > 0: {total}")
-    print(f"  Preserved (already correct): {breakdown['preserved']}")
+    print(f"  Preserved: {breakdown['preserved']}")
     print(f"  Realigned: {breakdown['realigned']}")
     print(f"  No matching tier: {no_tier}")
+    print(f"\nPer-branch count:")
+    for cat, n in sorted(by_category.items(), key=lambda x: -x[1]):
+        print(f"  {cat}: {n}")
 
 
 if __name__ == "__main__":

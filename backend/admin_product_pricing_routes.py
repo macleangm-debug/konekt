@@ -62,8 +62,13 @@ async def _find_product(product_id: str):
 
 
 async def _resolve_base_from_tier(product: dict):
-    """Compute the tier-derived base customer_price (before any override)."""
-    tiers = await get_pricing_policy_tiers(db)
+    """Compute the tier-derived base customer_price (before any override).
+
+    Uses the product's `branch` (or `category_name`) to pick the right
+    category-specific tier set.
+    """
+    branch = product.get("branch") or product.get("category_name") or "default"
+    tiers = await get_pricing_policy_tiers(db, category=branch)
     cost = float(product.get("vendor_cost") or 0)
     tier = resolve_tier(cost, tiers)
     if not tier or cost <= 0:
@@ -152,7 +157,14 @@ async def bulk_price_override(
     if payload.mode not in ("fixed", "percentage_off", "clear"):
         raise HTTPException(status_code=400, detail="Invalid mode")
 
-    tiers = await get_pricing_policy_tiers(db)
+    # Cache tier sets per branch to avoid repeated settings reads
+    tier_cache: dict = {}
+
+    async def tiers_for(branch: str):
+        if branch not in tier_cache:
+            tier_cache[branch] = await get_pricing_policy_tiers(db, category=branch)
+        return tier_cache[branch]
+
     updated = 0
     skipped = 0
 
@@ -162,6 +174,8 @@ async def bulk_price_override(
             skipped += 1
             continue
 
+        branch = product.get("branch") or product.get("category_name") or "default"
+        tiers = await tiers_for(branch)
         cost = float(product.get("vendor_cost") or 0)
         tier = resolve_tier(cost, tiers)
         if tier and cost > 0:

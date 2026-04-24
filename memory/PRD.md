@@ -9,6 +9,35 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Category-Aware Pricing Tiers (4 tier sets)
+1. **Storage refactored** — `admin_settings.settings_hub.pricing_policy_tiers` now supports a **dict shape** keyed by category:
+   ```json
+   {
+     "default": [...],
+     "Promotional Materials": [...],
+     "Office Equipment": [...],
+     "Stationery": [...],
+     "Services": [...]
+   }
+   ```
+   Legacy flat-list storage still works (treated as "default"). `get_pricing_policy_tiers(db, category)` resolves exact-match → default → platform-default → hardcoded fallback. `get_pricing_policy_tiers_all(db)` returns the full mapping.
+2. **4 tier structures installed** via `scripts/install_category_pricing_tiers.py`:
+   • **Promotional Materials** — competitive U-curve: Micro 50%, Ultra-Low 30%, **Low 12% (commodity zone Cooltex/Diaries)**, Low-Mid 20%, Mid 22%, Upper-Mid 18%, Large 14%, Enterprise 10%
+   • **Office Equipment** — B2B relationship pricing: Micro 45%, Small Acc 35%, Basics 30%, Peripherals 28%, Mid Equipment 25%, Printers 20%, Enterprise Gear 17%, Installations 14%
+   • **Stationery** — high-volume commodity: Single-Piece 60%, Micro 45%, Ultra-Low 25%, **Low 15%**, Low-Mid 18%, Mid 20%, Upper-Mid 16%, Large 12%
+   • **Services** — bespoke/quoted: Standard 35%, Enterprise 25%
+3. **Backend category-awareness**:
+   • `smart_bulk_import_routes.py` — URL imports use `get_pricing_policy_tiers(db, category=session.branch)`
+   • `admin_product_pricing_routes.py` — price overrides resolve base_price from the product's own branch tier set
+   • `reprice_all_with_pricing_engine.py` — iterates products and picks tier set per `product.branch`
+4. **Admin API endpoints** (`/api/commission-engine/pricing-policy-tiers`):
+   • `GET` without `?category=` → returns `tiers_by_category` (full mapping) + `tiers` (default for legacy callers)
+   • `GET ?category=Office Equipment` → returns that category's tier list
+   • `PUT {category, tiers}` → saves into the specified category slot; preserves other categories
+5. **Reprice result**: 14 Office Equipment products re-priced against the new Office Equipment tiers (e.g. DTC 1250e Printer at 3.5M cost: 3,990,000 → **4,095,000** with 17% Enterprise Gear margin vs 14% default). All 596 Promotional Materials products keep their competitive U-curve prices.
+6. **Every product record** now stores `pricing_branch` field (alongside `pricing_tier_label`, `pricing_total_margin_pct`, `pricing_protected_margin_pct`, `pricing_distributable_margin_pct`) — full auditability.
+
+
 ### Feb 24, 2026 (later) — 8-Tier Pricing Structure (competitiveness fix)
 1. **Tier structure refactored from 5 → 8 tiers** to fix the over-priced 0-100K slab that was quoting Cooltex at TZS 33,750 (on 25K vendor cost). User's competitive target: ~28K at 25K cost.
 2. **New U-curve**: Micro (0-2K: 50%), Ultra-Low (2-10K: 30%), **Low (10-30K: 12% — commodity apparel zone)**, Low-Mid (30-100K: 20%), Mid (100-500K: 22%), Upper-Mid (500K-2M: 18%), Large (2-10M: 14%), Enterprise (10M+: 10%). Protected/distributable ratio ≈ 2:1 preserved per tier.
