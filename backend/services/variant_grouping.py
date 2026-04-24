@@ -132,24 +132,37 @@ def _strip_one_variant_axis(name: str) -> Tuple[str, Optional[str], str]:
 
 
 def canonicalize_name(name: str) -> Tuple[str, Dict[str, str]]:
-    """Extract canonical base name + variant axes (size / color / measurement).
+    """Extract canonical base name + variant axes.
 
-    Recursively strips up to 3 trailing variant tokens so 2-axis names
-    (e.g. "Cooltex Polo - Maroon - XXLarge") work correctly.
+    Rules (in priority order):
+      1. If the name ends in a SIZE token, strip it. Keep everything else
+         (including any colour) as part of the canonical base name.
+         → "Cooltex Polo - Maroon - Large"   →  base="Cooltex Polo - Maroon", size="Large"
+         → "Crystal Trophy - Small"          →  base="Crystal Trophy",        size="Small"
+         → "T.Blue 2XL"                      →  base="T.Blue",                size="2XL"
+      2. Otherwise, if it ends in a COLOUR token, strip the colour
+         (these are colour-only variant families).
+         → "2026 Diary - Brown"              →  base="2026 Diary",            color="Brown"
+      3. Otherwise return the name unchanged.
+
+    Crucially we NEVER strip both axes in a single name — colour survives when
+    size is present so "Cooltex Polo - Maroon" and "Cooltex Polo - Yellow"
+    remain distinct cards (each with size variants).
     """
     axes: Dict[str, str] = {}
     current = name.strip()
-    for _ in range(3):
-        stripped, token, vtype = _strip_one_variant_axis(current)
-        if token is None or not stripped:
-            break
-        if vtype in ("size", "paren", "measurement") and "size" not in axes:
-            axes["size"] = token
-        elif vtype == "color" and "color" not in axes:
-            axes["color"] = token
-        else:
-            break  # axis already filled or unknown type → stop
-        current = stripped
+
+    # Pass 1: try to strip a SIZE axis (including parenthetical / measurement markers)
+    stripped, token, vtype = _strip_one_variant_axis(current)
+    if token is not None and vtype in ("size", "paren", "measurement"):
+        axes["size"] = token
+        return stripped, axes
+
+    # Pass 2: no size found → try to strip a COLOUR axis
+    if token is not None and vtype == "color":
+        axes["color"] = token
+        return stripped, axes
+
     return current, axes
 
 

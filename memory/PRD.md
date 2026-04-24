@@ -9,6 +9,22 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Variant Grouping Correction + Bold Service Card Redesign
+1. **Variant grouping logic corrected** — `canonicalize_name()` now strips **only ONE axis** per product, prioritising SIZE. This means:
+   • Products with both colour+size (e.g. "Cooltex Polo - Maroon - Large") → strip size only, keep the colour in the canonical base name. → "Cooltex Polo - Maroon" with size variants {S, M, L, XL, XXL, XXXL}.
+   • Products with only a colour suffix (e.g. "2026 Diary - Brown", "Umbrella - Red") → strip colour. Colours become the variants.
+   • Previously the function recursively stripped both axes, incorrectly collapsing "Cooltex Polo - Maroon" and "Cooltex Polo - Yellow" into a single "Cooltex Polo" card with 20 mixed variants. Each colour now remains its own card with the correct hero image.
+   • Cooltex: 52 SKUs → 11 cards (4 male colours + 3 women colours + 4 misc). Total catalog: **416 cards** (from 616 raw SKUs, 69 variant families).
+2. **Service cards — magazine layout redesign** — `ServiceCardsSection.jsx` fully rebuilt. Step-change from the old collapsible tile:
+   • Dark editorial hero "Services that ship with a quote in hours." with pattern-overlay background and stat callouts (24h · 7 categories · 34+ services).
+   • Large 2-column magazine-style tiles with full-bleed category gradient covers (sky→indigo, indigo→violet, rose→fuchsia, emerald→teal, amber→red, slate→zinc, cyan→emerald).
+   • SVG textured pattern overlays (dots / grid / waves) on each cover.
+   • Glassmorphic icon disc with lucide icon (FileText/Printer/Paintbrush/Sparkles/Wrench/Building2/Shirt).
+   • "Explore ↗" chip + "X selected" badge on selected cards.
+   • Expanded card goes **full-width** with sub-service chip grid on a gradient.
+   • Sticky selection bar with gold CTA button for "Get quote".
+
+
 ### Feb 24, 2026 (later) — Cooltex Variant Fix + Services Layout Split + Service Card Redesign
 1. **Stronger variant grouping** — `backend/services/variant_grouping.py` now recognises size/colour suffixes **without a "-" separator** ("T.Blue 2XL", "White Small", "Yellow 1XL"), **compact XL forms** ("XXLarge", "XLarge", "X Large", "XXXLarge"), **numbered XL** ("1XL", "2XL", "2 XL"), **dash-no-space tails** ("Green Black- XXL"), and a broader colour vocabulary ("T.Blue", "Royal Bue", "Navy Blue", "Golden Yellow", etc). **Cooltex 52 SKUs → 6 cards**, total catalog **616 → 397 cards** (60 variant groups).
 2. **Services/Products split view** — `MarketplaceBrowsePageContent.jsx`: when user selects the Services group in the filter, the product grid + "No listings found" banner disappear and the Services section becomes the primary content. On the default product view, the Services section is hidden (discoverable via the filter/nav). `taxonomyLoading` guard prevents empty-state flash during initial load.
