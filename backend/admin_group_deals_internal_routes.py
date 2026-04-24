@@ -116,6 +116,13 @@ async def _suggest_for_product(p: dict, tier: dict, pool_share_pct: float) -> Op
         "distributable_margin_pct": distributable_pct,
         "pool_share_pct": pool_share_pct,
         "funding_source": "internal",
+        # Customer-facing blurb — never leak internal pricing mechanics.
+        "customer_description": (
+            f"Team up with other buyers to unlock a special group price on "
+            f"{p.get('name')}. When enough buyers commit, everyone pays the "
+            f"discounted rate — saving TZS {discount_amount:,.0f} per unit."
+        ),
+        # Admin-only internal rationale (never displayed on the deal page).
         "reason": (
             f"Internal deal: fund {pool_share_pct:.0f}% of the "
             f"{distributable_pct:.0f}% distributable margin ({tier.get('label')})."
@@ -217,7 +224,10 @@ async def bulk_create_group_deals(body: BulkCreateRequest, request: Request):
             "product_id": sugg["product_id"],
             "product_name": sugg["product_name"],
             "product_image": sugg["product_image"],
-            "description": sugg["reason"],
+            # Customer-facing description — never leak margin mechanics.
+            "description": sugg["customer_description"],
+            # Admin-only rationale, kept out of the public payload.
+            "internal_rationale": sugg["reason"],
             "category": sugg["category"],
             "branch": sugg["branch"],
             "vendor_cost": sugg["vendor_cost"],

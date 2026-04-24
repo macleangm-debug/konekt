@@ -279,7 +279,7 @@ export default function PublicCheckoutPage() {
     company_name: "", delivery_address: "", city: "", country: "Tanzania", notes: "",
   });
   const [proofForm, setProofForm] = useState({
-    payer_name: "", amount_paid: "", bank_reference: "",
+    payer_name: "", amount_paid: "",
     payment_method: "bank_transfer", payment_date: new Date().toISOString().split("T")[0], notes: "",
   });
 
@@ -419,7 +419,6 @@ export default function PublicCheckoutPage() {
           email: form.email,
           payer_name: proofForm.payer_name,
           amount_paid: parseFloat(proofForm.amount_paid),
-          bank_reference: proofForm.bank_reference,
           payment_method: proofForm.payment_method,
           payment_date: proofForm.payment_date,
           notes: proofForm.notes,
@@ -681,12 +680,6 @@ export default function PublicCheckoutPage() {
                   <input type="number" step="0.01" value={proofForm.amount_paid} onChange={e => setP("amount_paid", e.target.value)}
                     className="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
                     required data-testid="pp-amount" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Bank Reference / Receipt No.</label>
-                  <input type="text" value={proofForm.bank_reference} onChange={e => setP("bank_reference", e.target.value)}
-                    className="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-                    placeholder="e.g. TXN-123456" data-testid="pp-reference" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method</label>

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import PhoneField from "@/components/ui/PhoneField";
 import { toast } from "sonner";
 import api from "@/lib/api";
 
@@ -44,7 +45,7 @@ export default function ServiceCardsSection({ heading, description, hideSection 
   const [showRequest, setShowRequest] = useState(false);
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
-  const [customer, setCustomer] = useState({ name: "", phone: "", email: "" });
+  const [customer, setCustomer] = useState({ name: "", phone_prefix: "+255", phone: "", email: "" });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -99,7 +100,7 @@ export default function ServiceCardsSection({ heading, description, hideSection 
         customer: {
           first_name: customer.name.split(" ")[0],
           last_name: customer.name.split(" ").slice(1).join(" "),
-          phone: customer.phone,
+          phone: `${customer.phone_prefix} ${customer.phone}`.trim(),
           email: customer.email,
           company: "",
         },
@@ -135,7 +136,7 @@ export default function ServiceCardsSection({ heading, description, hideSection 
           Our team will reach out with a detailed quote for the services you selected.
         </p>
         <button
-          onClick={() => { setSuccess(false); setSelected([]); setShowRequest(false); setLocation(""); setNotes(""); setCustomer({ name: "", phone: "", email: "" }); }}
+          onClick={() => { setSuccess(false); setSelected([]); setShowRequest(false); setLocation(""); setNotes(""); setCustomer({ name: "", phone_prefix: "+255", phone: "", email: "" }); }}
           className="mt-5 text-sm font-semibold text-emerald-700 underline underline-offset-4 hover:no-underline"
         >
           Request another service
@@ -181,20 +182,37 @@ export default function ServiceCardsSection({ heading, description, hideSection 
         </div>
       </div>
 
-      {/* Action bar (sticky-ish) */}
-      {selected.length > 0 && (
-        <div className="sticky top-4 z-20 mb-6 rounded-2xl bg-[#0f172a] text-white p-3 pl-5 pr-3 flex items-center justify-between shadow-2xl shadow-slate-900/20 backdrop-blur">
-          <span className="text-sm font-semibold">
-            <span className="text-[#D4A843]">{selected.length}</span> service{selected.length !== 1 ? "s" : ""} selected
-          </span>
-          <Button
-            onClick={() => setShowRequest(true)}
-            className="bg-[#D4A843] hover:bg-[#c49a3d] text-[#17283C] rounded-xl font-bold h-10 px-5"
-            data-testid="request-services-btn"
-          >
-            Get quote <ArrowUpRight className="w-4 h-4 ml-1.5" />
-          </Button>
-        </div>
+      {/* Action bar — sticky to TOP on desktop, BOTTOM on mobile so users
+          never have to scroll back up to find "Get quote". */}
+      {selected.length > 0 && !showRequest && (
+        <>
+          {/* Desktop: pinned near top */}
+          <div className="hidden md:flex sticky top-4 z-20 mb-6 rounded-2xl bg-[#0f172a] text-white p-3 pl-5 pr-3 items-center justify-between shadow-2xl shadow-slate-900/20 backdrop-blur">
+            <span className="text-sm font-semibold">
+              <span className="text-[#D4A843]">{selected.length}</span> service{selected.length !== 1 ? "s" : ""} selected
+            </span>
+            <Button
+              onClick={() => setShowRequest(true)}
+              className="bg-[#D4A843] hover:bg-[#c49a3d] text-[#17283C] rounded-xl font-bold h-10 px-5"
+              data-testid="request-services-btn-desktop"
+            >
+              Get quote <ArrowUpRight className="w-4 h-4 ml-1.5" />
+            </Button>
+          </div>
+          {/* Mobile: floating footer CTA */}
+          <div className="md:hidden fixed inset-x-3 bottom-3 z-40 rounded-2xl bg-[#0f172a] text-white p-3 pl-4 pr-3 flex items-center justify-between shadow-2xl shadow-slate-900/30">
+            <span className="text-sm font-semibold">
+              <span className="text-[#D4A843]">{selected.length}</span> selected
+            </span>
+            <Button
+              onClick={() => setShowRequest(true)}
+              className="bg-[#D4A843] hover:bg-[#c49a3d] text-[#17283C] rounded-xl font-bold h-10 px-5"
+              data-testid="request-services-btn-mobile"
+            >
+              Get quote <ArrowUpRight className="w-4 h-4 ml-1.5" />
+            </Button>
+          </div>
+        </>
       )}
 
       {/* Card grid — 2-column on desktop, larger tiles */}
@@ -324,9 +342,19 @@ export default function ServiceCardsSection({ heading, description, hideSection 
         })}
       </div>
 
-      {/* Request form */}
+      {/* Request form — bottom sheet on mobile, inline card on desktop */}
       {showRequest && selected.length > 0 && (
-        <div className="mt-8 rounded-[22px] border border-slate-200 bg-white p-6 md:p-8 shadow-2xl shadow-slate-900/10 space-y-6" data-testid="service-request-form">
+        <>
+          {/* Mobile backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowRequest(false)}
+            data-testid="service-request-backdrop"
+          />
+          <div
+            className="md:mt-8 md:relative fixed md:static inset-x-0 bottom-0 z-50 md:z-auto rounded-t-[28px] md:rounded-[22px] border border-slate-200 bg-white p-6 md:p-8 shadow-2xl shadow-slate-900/10 space-y-6 max-h-[92vh] md:max-h-none overflow-y-auto"
+            data-testid="service-request-form"
+          >
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold text-[#0f172a]">Send quote request</h3>
@@ -369,7 +397,17 @@ export default function ServiceCardsSection({ heading, description, hideSection 
             </div>
             <div>
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Phone *</label>
-              <Input value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} placeholder="+255 7XX…" className="mt-1.5 text-sm" data-testid="service-customer-phone" />
+              <div className="mt-1.5">
+                <PhoneField
+                  prefix={customer.phone_prefix}
+                  phone={customer.phone}
+                  onPrefixChange={(v) => setCustomer({ ...customer, phone_prefix: v })}
+                  onPhoneChange={(v) => setCustomer({ ...customer, phone: v })}
+                  placeholder="7XX XXX XXX"
+                  required
+                  testId="service-customer-phone"
+                />
+              </div>
             </div>
             <div>
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email</label>
@@ -381,7 +419,8 @@ export default function ServiceCardsSection({ heading, description, hideSection 
             {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
             Submit quote request
           </Button>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

@@ -2584,6 +2584,43 @@ async def wipe_and_hydrate(user: dict = Depends(get_admin_user)):
     }
 
 
+@api_router.post("/admin/sanitize-group-deal-descriptions")
+async def sanitize_group_deal_descriptions(user: dict = Depends(get_admin_user)):
+    """Rewrites every group-deal campaign `description` field to a
+    customer-friendly blurb. Strips any legacy internal-mechanics text
+    (distributable margin %, pool funding, tier labels). Idempotent.
+    """
+    import re as _re
+    rx = _re.compile(
+        r"distributable margin|funding|pool|micro \(|small \(|"
+        r"medium \(|large \(|internal deal",
+        _re.I,
+    )
+    updated = 0
+    async for d in db.group_deal_campaigns.find({}):
+        desc = (d.get("description") or "").strip()
+        if desc and not rx.search(desc):
+            continue
+        name = d.get("product_name") or "this product"
+        orig = float(d.get("original_price") or 0)
+        disc = float(d.get("discounted_price") or 0)
+        save = max(0.0, orig - disc)
+        new_desc = (
+            f"Team up with other buyers to unlock a special group price "
+            f"on {name}. When enough buyers commit, everyone pays the "
+            f"discounted rate — you save TZS {save:,.0f} per unit."
+        )
+        await db.group_deal_campaigns.update_one(
+            {"_id": d["_id"]},
+            {"$set": {
+                "description": new_desc,
+                "internal_rationale": desc,
+            }},
+        )
+        updated += 1
+    return {"updated": updated}
+
+
 
 # ==================== ROOT ====================
 

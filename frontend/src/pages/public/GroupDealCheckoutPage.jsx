@@ -8,6 +8,7 @@ import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import PhoneField from "@/components/ui/PhoneField";
 import { toast } from "sonner";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
@@ -61,10 +62,11 @@ export default function GroupDealCheckoutPage() {
 
   // Forms
   const [form, setForm] = useState({
-    first_name: "", last_name: "", customer_phone: "", customer_email: "", quantity: 1,
+    first_name: "", last_name: "", customer_phone: "", customer_phone_prefix: "+255",
+    customer_email: "", quantity: 1,
   });
   const [proofForm, setProofForm] = useState({
-    payer_name: "", amount_paid: "", bank_reference: "",
+    payer_name: "", amount_paid: "",
     payment_method: "bank_transfer", payment_date: new Date().toISOString().split("T")[0],
   });
 
@@ -95,7 +97,7 @@ export default function GroupDealCheckoutPage() {
         customer_name: fullName,
         first_name: form.first_name,
         last_name: form.last_name,
-        customer_phone: form.customer_phone,
+        customer_phone: `${form.customer_phone_prefix} ${form.customer_phone}`.trim(),
         customer_email: form.customer_email,
         quantity: Math.max(1, form.quantity),
       });
@@ -129,7 +131,6 @@ export default function GroupDealCheckoutPage() {
         commitment_ref: commitmentRef,
         payer_name: proofForm.payer_name,
         amount_paid: parseFloat(proofForm.amount_paid),
-        bank_reference: proofForm.bank_reference,
         payment_method: proofForm.payment_method,
         payment_date: proofForm.payment_date,
       });
@@ -358,7 +359,6 @@ export default function GroupDealCheckoutPage() {
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div><Label>Payer Name *</Label><Input value={proofForm.payer_name} onChange={(e) => setProofForm(p => ({ ...p, payer_name: e.target.value }))} required data-testid="proof-payer-name" /></div>
                   <div><Label>Amount Paid *</Label><Input type="number" value={proofForm.amount_paid} onChange={(e) => setProofForm(p => ({ ...p, amount_paid: e.target.value }))} required data-testid="proof-amount" /></div>
-                  <div><Label>Bank Reference / Transaction ID</Label><Input value={proofForm.bank_reference} onChange={(e) => setProofForm(p => ({ ...p, bank_reference: e.target.value }))} placeholder="e.g. TXN-12345" data-testid="proof-reference" /></div>
                   <div><Label>Payment Method</Label>
                     <select className="w-full border rounded-xl px-3 py-2.5 text-sm bg-white" value={proofForm.payment_method} onChange={(e) => setProofForm(p => ({ ...p, payment_method: e.target.value }))} data-testid="proof-method">
                       <option value="bank_transfer">Bank Transfer</option><option value="mobile_money">Mobile Money</option>
@@ -400,7 +400,16 @@ export default function GroupDealCheckoutPage() {
                     <Input value={form.last_name} onChange={(e) => setForm(p => ({ ...p, last_name: e.target.value }))} placeholder="Last name" required data-testid="input-last-name" />
                   </div>
                 </div>
-                <div><Label>Phone Number *</Label><Input value={form.customer_phone} onChange={(e) => setForm(p => ({ ...p, customer_phone: e.target.value }))} placeholder="+255..." required data-testid="input-phone" /></div>
+                <div><Label>Phone Number *</Label>
+                  <PhoneField
+                    prefix={form.customer_phone_prefix}
+                    phone={form.customer_phone}
+                    onPrefixChange={(v) => setForm(p => ({ ...p, customer_phone_prefix: v }))}
+                    onPhoneChange={(v) => setForm(p => ({ ...p, customer_phone: v }))}
+                    required
+                    testId="commit-phone"
+                  />
+                </div>
                 <div><Label>Email (optional)</Label><Input type="email" value={form.customer_email} onChange={(e) => setForm(p => ({ ...p, customer_email: e.target.value }))} placeholder="you@example.com" data-testid="input-email" /></div>
                 <div><Label>Quantity</Label>
                   <div className="flex items-center gap-2">

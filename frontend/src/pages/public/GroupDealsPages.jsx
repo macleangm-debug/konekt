@@ -278,7 +278,22 @@ export default function GroupDealDetailPage() {
           <div className="lg:col-span-3">
             {deal.product_image ? <img src={deal.product_image} alt="" className="w-full rounded-2xl object-cover max-h-96" loading="lazy" /> :
               <div className="w-full h-72 rounded-2xl bg-gradient-to-br from-[#20364D] to-[#1a365d] flex items-center justify-center"><ShoppingCart className="w-16 h-16 text-white/20" /></div>}
-            {deal.description && <div className="mt-4 bg-white rounded-2xl border p-5"><h3 className="font-bold text-[#20364D] mb-2">About This Deal</h3><p className="text-sm text-slate-600">{deal.description}</p></div>}
+            {(() => {
+              const raw = (deal.description || "").trim();
+              // Strip any legacy internal-mechanics text that may be stored
+              // on older auto-generated campaigns (funding %, distributable
+              // margin, tier labels like "Micro (0 – 2K)").
+              const looksInternal = /distributable margin|funding|pool|micro \(|small \(|medium \(|large \(|internal deal/i.test(raw);
+              const text = looksInternal
+                ? `Team up with other buyers to unlock a special group price on ${deal.product_name}. When enough buyers commit, everyone pays the discounted rate — you save ${fmt(Math.max(0, (deal.original_price || 0) - (deal.discounted_price || 0)))} per unit.`
+                : raw;
+              return text ? (
+                <div className="mt-4 bg-white rounded-2xl border p-5">
+                  <h3 className="font-bold text-[#20364D] mb-2">About This Deal</h3>
+                  <p className="text-sm text-slate-600">{text}</p>
+                </div>
+              ) : null;
+            })()}
             <div className="mt-4 bg-white rounded-2xl border p-5 hidden lg:block">
               <h3 className="font-bold text-[#20364D] mb-2 flex items-center gap-2"><Share2 className="w-4 h-4" /> Share This Deal</h3>
               <p className="text-xs text-slate-500 mb-3">Help this deal reach its target.</p>

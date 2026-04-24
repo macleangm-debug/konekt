@@ -21,7 +21,6 @@ export default function PublicPaymentProofPage() {
     email: prefillEmail,
     payer_name: "",
     amount_paid: "",
-    bank_reference: "",
     payment_method: "bank_transfer",
     payment_date: new Date().toISOString().split("T")[0],
     notes: "",
@@ -162,12 +161,6 @@ export default function PublicPaymentProofPage() {
             <input type="number" step="0.01" value={form.amount_paid} onChange={e => set("amount_paid", e.target.value)}
               className="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
               placeholder="50000" required data-testid="pp-amount" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Bank Reference / Receipt</label>
-            <input type="text" value={form.bank_reference} onChange={e => set("bank_reference", e.target.value)}
-              className="w-full border rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20"
-              placeholder="TXN-123456" data-testid="pp-reference" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Date</label>

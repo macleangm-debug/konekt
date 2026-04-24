@@ -20,7 +20,6 @@ export default function InvoicePaymentPageV2() {
   const [form, setForm] = useState({
     amount_paid: "",
     payment_date: new Date().toISOString().split('T')[0],
-    transaction_reference: "",
     proof_url: "",
     note: "",
   });
@@ -83,8 +82,8 @@ export default function InvoicePaymentPageV2() {
   const submitProof = async (e) => {
     e.preventDefault();
     
-    if (!form.amount_paid || !form.transaction_reference) {
-      toast.error("Please fill in amount paid and transaction reference");
+    if (!form.amount_paid) {
+      toast.error("Please enter the amount paid");
       return;
     }
 
@@ -95,7 +94,6 @@ export default function InvoicePaymentPageV2() {
         invoice_number: invoice?.invoice_number,
         amount_paid: Number(form.amount_paid || 0),
         payment_date: form.payment_date,
-        transaction_reference: form.transaction_reference,
         proof_url: form.proof_url,
         note: form.note,
         payment_method: "bank_transfer",
@@ -318,17 +316,6 @@ export default function InvoicePaymentPageV2() {
                 value={form.payment_date} 
                 onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
                 data-testid="payment-date-input"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Transaction Reference *</label>
-              <input 
-                className="w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#20364D]/20" 
-                placeholder="Bank transaction reference number" 
-                value={form.transaction_reference} 
-                onChange={(e) => setForm({ ...form, transaction_reference: e.target.value })}
-                data-testid="transaction-ref-input"
               />
             </div>
             
