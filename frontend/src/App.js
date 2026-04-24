@@ -14,10 +14,9 @@ import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithVa
 // Components
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ChatWidget from "@/components/ChatWidget";
 // Removed: ExitIntentPopup, PromoBanner (interruptive popups cleaned up)
-import AIChatWidget from "@/components/AIChatWidget";
-import FeedbackWidget from "@/components/feedback/FeedbackWidget";
+// Legacy ChatWidget / standalone AIChatWidget / FeedbackWidget launchers replaced by FloatingHelpHub
+import FloatingHelpHub from "@/components/FloatingHelpHub";
 import ImpersonationBanner from "@/components/admin/ImpersonationBanner";
 import { ConfirmModalProvider } from "@/contexts/ConfirmModalContext";
 import CustomerPortalLayout from "@/components/customer/CustomerPortalLayout";
@@ -1056,7 +1055,6 @@ function App() {
                   </Routes>
                 </main>
                 <Footer />
-                <ChatWidget />
               </div>
             </CartProvider>
           </AuthProvider>
@@ -1064,8 +1062,7 @@ function App() {
       </Routes>
       <ImpersonationBanner />
       <Toaster position="top-center" richColors />
-      <AIChatWidget />
-      <FeedbackWidget />
+      <FloatingHelpHub />
     </BrowserRouter>
     </ConfirmModalProvider>
     </BrandingProvider>

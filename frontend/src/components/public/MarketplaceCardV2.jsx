@@ -8,6 +8,7 @@ const API_BASE = process.env.REACT_APP_BACKEND_URL || "";
 function resolveImageUrl(src) {
   if (!src) return "";
   if (src.startsWith("http")) return src;
+  if (src.startsWith("/")) return `${API_BASE}${src}`;
   return `${API_BASE}/api/files/serve/${src}`;
 }
 

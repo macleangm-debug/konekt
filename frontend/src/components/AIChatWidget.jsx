@@ -27,9 +27,18 @@ function getUserRole() {
   return "customer";
 }
 
-export default function AIChatWidget() {
+export default function AIChatWidget({ controlled = false, isOpen: externalOpen, onOpenChange, hideTrigger = false }) {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlled ? !!externalOpen : internalOpen;
+  const setIsOpen = (next) => {
+    const value = typeof next === "function" ? next(isOpen) : next;
+    if (controlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const [cartOpen, setCartOpen] = useState(false);
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hello! I'm Mr. Konekt, your smart assistant for navigating, selling, and operating on Konekt. How can I help you today?" }
@@ -125,9 +134,13 @@ export default function AIChatWidget() {
   // Hide on transaction pages, admin, and partner portals
   const txPages = ["/account/invoices", "/account/orders", "/account/quotes", "/customer/invoices", "/customer/orders"];
   const onTxPage = txPages.some(p => location.pathname.startsWith(p));
-  if (cartOpen || onTxPage || location.pathname.startsWith("/admin") || location.pathname.startsWith("/partner")) return null;
+  if (cartOpen || onTxPage || location.pathname.startsWith("/admin") || location.pathname.startsWith("/partner")) {
+    // When controlled, still let parent decide; otherwise hide entirely
+    if (!controlled) return null;
+  }
 
   if (!isOpen) {
+    if (hideTrigger) return null;
     return (
       <button
         onClick={() => setIsOpen(true)}

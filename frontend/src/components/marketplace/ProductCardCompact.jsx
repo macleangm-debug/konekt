@@ -11,6 +11,9 @@ function money(v) {
 function resolveImageUrl(src) {
   if (!src) return "";
   if (src.startsWith("http")) return src;
+  // Backend-served paths (e.g. /api/uploads/... or /uploads/...) — prepend API base directly
+  if (src.startsWith("/")) return `${API_BASE}${src}`;
+  // Legacy file-id reference — route through file-serve endpoint
   return `${API_BASE}/api/files/serve/${src}`;
 }
 

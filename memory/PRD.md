@@ -9,6 +9,14 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 — Marketplace Image Fix + Unified Help FAB
+1. **Marketplace product images restored** — `resolveImageUrl()` in `ProductCardCompact.jsx` and `public/MarketplaceCardV2.jsx` now correctly handles `/api/uploads/...` paths by prefixing `REACT_APP_BACKEND_URL` directly instead of wrapping them in `/api/files/serve/` (which 404'd). All 616 Darcity products now render crystal-clear images.
+2. **Single animated "Help Hub" FAB** — New `components/FloatingHelpHub.jsx` replaces the three legacy floating launchers (`ChatWidget`, `AIChatWidget`, `FeedbackWidget`). One button at `bottom-6 left-6` with HelpCircle + pulse aura + orbit accent dot animation expands (speed-dial style) into two labeled options:
+   • **Chat with Mr. Konekt** → opens the AI assistant panel (`AIChatWidget` in controlled mode)
+   • **Give us Feedback** → opens the feedback form (`FeedbackWidget` in controlled mode)
+   Both widgets were refactored to support `controlled` + `hideTrigger` + `isOpen` + `onOpenChange` props for external orchestration. Escape and outside-click close the menu. Hub rotates to an X icon when open.
+
+
 ### Country Intelligence (Latest - Batch 10)
 1. **Auto-detect user country** — Browser timezone → /api/geo/detect-country → auto-sets marketplace country (Africa/Dar_es_Salaam→TZ, Africa/Nairobi→KE, Africa/Kampala→UG)
 2. **Admin Country Reports** — /admin/country-reports with period selector (week/month/quarter/year). Shows revenue, profit, margin, orders, quotes, invoices, new customers, outstanding — broken down by TZ/KE/UG. Export to JSON.

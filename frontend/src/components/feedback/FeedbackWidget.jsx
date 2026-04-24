@@ -15,8 +15,17 @@ const CATEGORIES = [
 // Pages where feedback widget should NOT appear
 const HIDDEN_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/staff-login", "/partner-login", "/checkout", "/account/checkout"];
 
-export default function FeedbackWidget() {
-  const [open, setOpen] = useState(false);
+export default function FeedbackWidget({ controlled = false, isOpen: externalOpen, onOpenChange, hideTrigger = false }) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlled ? !!externalOpen : internalOpen;
+  const setOpen = (next) => {
+    const value = typeof next === "function" ? next(open) : next;
+    if (controlled) {
+      onOpenChange?.(value);
+    } else {
+      setInternalOpen(value);
+    }
+  };
   const location = useLocation();
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -61,7 +70,7 @@ export default function FeedbackWidget() {
   return (
     <>
       {/* Floating Button */}
-      {!open && (
+      {!open && !hideTrigger && (
         <button
           onClick={() => setOpen(true)}
           data-testid="feedback-widget-trigger"
@@ -98,7 +107,7 @@ export default function FeedbackWidget() {
               <h3 className="text-sm font-bold">Help us improve Konekt</h3>
               <p className="text-[10px] text-slate-300 mt-0.5">Your feedback shapes our platform</p>
             </div>
-            <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white">
+            <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white" data-testid="feedback-widget-close">
               <X className="w-5 h-5" />
             </button>
           </div>
