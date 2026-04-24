@@ -9,6 +9,14 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Cooltex Dedup + Services Cleanup + Public Quote Endpoint
+1. **Orphan Cooltex SKUs renamed** — 20 products with name patterns like "Yellow Large", "T.Blue 2XL", "White Small", "Golden Yellow - Small" were missing the "Cooltex Polo -" prefix. Script `scripts/cleanup_cooltex_and_services_2026_02.py` prefixed them all (e.g. "Yellow 1XL" → "Cooltex Polo - Yellow - 1XL") and stored the original name on `original_name_before_cleanup` for auditability.
+2. **True duplicates deleted** — Darcity had both a "Yellow Small" @ 31,050 TZS and a "Cooltex Polo - Yellow - Small" @ 33,750 TZS (different price tiers, same canonical size once notation is normalised — 1XL = XLarge, 2XL = XXLarge, 3XL = XXXLarge). `scripts/dedupe_cooltex_variants.py` normalised size tokens and deleted the cheaper duplicate where a native SKU already existed — **6 duplicates removed**. Cooltex now has 10 clean cards, each colour with a unique size set.
+3. **Printing & Stationery merged into Printing & Branding** — the redundant service category "Printing & Stationery" was deleted. Its 3 subs (Business Cards / Flyers / Banners) were already covered by Printing & Branding's more complete versions. Services drop from 7 → 6 categories.
+4. **Service subcategories expanded** — added 25 new high-demand services across all 6 categories (e.g. Creative & Design +Website UX/UI Design, Motion Graphics, Product Photography, Pitch Deck Design, Brand Strategy; Facilities +Garden Maintenance, Plumbing, HVAC, Pest Control, Waste Management; Technical Support +IT Helpdesk SLA, Cybersecurity Audit, Data Backup & Recovery, Cloud Migration, VOIP). **Total services catalogued: 58+**. These are live in the Settings Hub (stored in `admin_settings.settings_hub.catalog.product_categories`) — admin can edit via the Category Configurator UI.
+5. **Public Quote Requests endpoint built** — new `backend/public_quote_requests_routes.py` exposes `POST /api/public/quote-requests` for marketplace visitors to submit quote requests without an account. Writes to `public_quote_requests` collection AND mirrors into `leads` for CRM pickup. `ServiceCardsSection.jsx`, `CantFindWhatYouNeedBanner.jsx`, and `RequestProductCTA.jsx` now work end-to-end. Service card hero now accurately shows "24h · 6 categories · 58+ services".
+
+
 ### Feb 24, 2026 (later) — Variant Grouping Correction + Bold Service Card Redesign
 1. **Variant grouping logic corrected** — `canonicalize_name()` now strips **only ONE axis** per product, prioritising SIZE. This means:
    • Products with both colour+size (e.g. "Cooltex Polo - Maroon - Large") → strip size only, keep the colour in the canonical base name. → "Cooltex Polo - Maroon" with size variants {S, M, L, XL, XXL, XXXL}.
