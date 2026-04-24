@@ -74,8 +74,10 @@ async def enrich_product_with_promotion(product: dict, db=None) -> dict:
 
     promo_price = round(selling_price - discount_amount)
 
-    # Sanity: promo price must not go below zero
-    if promo_price < 0:
+    # Sanity: promo price must not go below zero, and a promo with no actual
+    # savings (discount_amount == 0, or zero-value promo_value) is noise —
+    # suppress it so the UI doesn't render "TZS 0 OFF / Save TZS 0" cards.
+    if promo_price < 0 or discount_amount <= 0 or promo_value <= 0:
         product["promotion"] = None
         return product
 

@@ -31,7 +31,18 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
   const originalPrice =
     product?.customer_price ?? product?.price ?? product?.base_price ??
     product?.blank_unit_price ?? product?.unit_price ?? 0;
-  const promo = product?.promotion;
+  // Only treat an attached promotion as "active" when it actually saves money.
+  // Backend occasionally emits zero-value promos (group-deal auto-suggest
+  // before the margin engine finalises). These clutter the UI with "TZS 0 OFF"
+  // and "Save TZS 0" noise — suppress them.
+  const rawPromo = product?.promotion;
+  const promo =
+    rawPromo &&
+    Number(rawPromo.discount_amount || 0) > 0 &&
+    Number(rawPromo.promo_price || 0) > 0 &&
+    Number(rawPromo.promo_price) < Number(originalPrice)
+      ? rawPromo
+      : null;
   const price = promo ? promo.promo_price : Number(originalPrice);
   const priceFrom = Number(product?.price_from || 0);
   const priceTo = Number(product?.price_to || 0);
