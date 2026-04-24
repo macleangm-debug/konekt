@@ -66,9 +66,13 @@ async def list_taxonomy(request: Request, group: Optional[str] = None):
 # ─── Vendor CRUD ─────────────────────────────────────────────────────
 @router.get("")
 async def list_vendors(request: Request, status: Optional[str] = None, capability: Optional[str] = None):
-    """List all vendors with enriched counts."""
+    """List all vendors with enriched counts.
+
+    Accepts users with role ∈ {vendor, partner_vendor, supplier} so both
+    legacy and partner-linked vendors surface in the admin list.
+    """
     db = request.app.mongodb
-    query = {"role": "vendor"}
+    query = {"role": {"$in": ["vendor", "partner_vendor", "supplier"]}}
     if status:
         query["vendor_status"] = status
     if capability:
@@ -79,21 +83,33 @@ async def list_vendors(request: Request, status: Optional[str] = None, capabilit
     result = []
     for v in vendors:
         vid = v.get("id", "")
-        # Enrich with counts
+        partner_id = v.get("partner_id")
+
+        # Enrich with product count — supply_records for legacy vendors,
+        # products table for partner-linked vendors (Darcity).
         active_products = await db.vendor_supply.count_documents({"vendor_id": vid})
-        taxonomy_ids = v.get("taxonomy_ids", [])
-        # Resolve taxonomy names
+        if partner_id and not active_products:
+            active_products = await db.products.count_documents({"partner_id": partner_id, "is_active": True})
+
+        # Resolve taxonomy names from taxonomy_ids OR from distinct product categories
+        taxonomy_ids = v.get("taxonomy_ids", []) or []
         taxonomy_names = []
         if taxonomy_ids:
             tax_docs = await db.taxonomy.find({"id": {"$in": taxonomy_ids}}, {"_id": 0, "name": 1}).to_list(50)
             taxonomy_names = [t["name"] for t in tax_docs]
+        # Fallback — derive branches from the vendor's products
+        if not taxonomy_names and partner_id:
+            branches = await db.products.distinct("branch", {"partner_id": partner_id, "is_active": True})
+            categories = await db.products.distinct("category", {"partner_id": partner_id, "is_active": True})
+            taxonomy_names = sorted(set([b for b in branches if b] + [c for c in categories if c]))[:8]
 
         result.append({
             "id": vid,
-            "name": v.get("full_name", v.get("name", "")),
+            "partner_id": partner_id,
+            "name": v.get("full_name", v.get("name", "")) or v.get("company_name", ""),
             "email": v.get("email", ""),
             "phone": v.get("phone", ""),
-            "company": v.get("company", ""),
+            "company": v.get("company", v.get("company_name", "")),
             "capability_type": v.get("capability_type", "products"),
             "taxonomy_ids": taxonomy_ids,
             "taxonomy_names": taxonomy_names,
@@ -110,22 +126,23 @@ async def list_vendors(request: Request, status: Optional[str] = None, capabilit
 
 @router.get("/stats")
 async def vendor_stats(request: Request):
-    """Vendor stat cards."""
+    """Vendor stat cards — includes legacy `vendor` and `partner_vendor` roles."""
     db = request.app.mongodb
-    total = await db.users.count_documents({"role": "vendor"})
-    active = await db.users.count_documents({"role": "vendor", "vendor_status": "active"})
-    inactive = await db.users.count_documents({"role": "vendor", "vendor_status": {"$in": ["inactive", "suspended"]}})
-    products = await db.users.count_documents({"role": "vendor", "capability_type": "products"})
-    services = await db.users.count_documents({"role": "vendor", "capability_type": "services"})
-    promo = await db.users.count_documents({"role": "vendor", "capability_type": "promotional_materials"})
-    multi = await db.users.count_documents({"role": "vendor", "capability_type": "multi"})
+    ROLE_FILTER = {"role": {"$in": ["vendor", "partner_vendor", "supplier"]}}
+    total = await db.users.count_documents(ROLE_FILTER)
+    active = await db.users.count_documents({**ROLE_FILTER, "vendor_status": "active"})
+    inactive = await db.users.count_documents({**ROLE_FILTER, "vendor_status": {"$in": ["inactive", "suspended"]}})
+    products = await db.users.count_documents({**ROLE_FILTER, "capability_type": "products"})
+    services = await db.users.count_documents({**ROLE_FILTER, "capability_type": "services"})
+    promo = await db.users.count_documents({**ROLE_FILTER, "capability_type": "promotional_materials"})
+    multi = await db.users.count_documents({**ROLE_FILTER, "capability_type": "multi"})
     # Count without explicit capability — fallback
     no_cap = total - products - services - promo - multi
     return {
         "total": total,
         "active": active if active else total,
         "inactive": inactive,
-        "products": products + no_cap,
+        "products": products + max(no_cap, 0),
         "services": services,
         "promotional_materials": promo,
         "multi": multi,

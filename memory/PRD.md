@@ -9,6 +9,21 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Vendor List + Vendor Agreements Surfaced in Admin UI
+1. **Sidebar additions** — `config/adminNavigation.js` now shows **Vendors** and **Vendor Agreements** under the "Catalog & Supply" group (previously hidden routes). Dedupe: removed the duplicate Vendor Agreements entry that was in "Payments & Finance".
+2. **Vendor list backend fix** — `vendors_admin_routes.py` now accepts users with `role ∈ {vendor, partner_vendor, supplier}` (previously only `vendor`). Enriches each row with:
+   • `active_products` — counts from `vendor_supply` OR (fallback) `products` collection by `partner_id`
+   • `taxonomy_names` — derives from `taxonomy_ids` OR (fallback) distinct `branch` + `category` values on the vendor's products
+3. **Darcity vendor now visible** — `info@darcity.tz` user enriched with `capability_type: "products"`, `vendor_status: "active"`, `company: "Darcity Promotion Ltd"`. Shows 610 active products and 8 category tags in the admin vendor list.
+4. **Stats fix** — `/api/admin/vendors/stats` now filters by the same role union, so Total/Active/Products cards reflect reality (Darcity = 1/1/1).
+5. **Vendor Agreements page** (`/admin/vendor-agreements`) — existing functionality exposed:
+   • Download blank contract template PDF
+   • Nudge unsigned vendors (bulk email)
+   • Bump contract version (forces all vendors to re-sign)
+   • Table of signed agreements with signatory / version / signed-at / IP / PDF download
+   • Vendors sign via `/partner/agreement` using the current version
+
+
 ### Feb 24, 2026 (later) — Go-Live Cleanup + Internal Group Deals + Auto-Suggest
 1. **Go-live cleanup** via `scripts/go_live_cleanup.py` (idempotent):
    • Deleted 38 test user accounts (TEST_*, @test.com, @example.com, konekt.demo, bot@test.com, etc.)

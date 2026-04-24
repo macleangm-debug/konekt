@@ -49,7 +49,6 @@ export const adminNavigation = [
       { label: "Affiliate Commissions", href: "/admin/affiliate-commissions", icon: DollarSign },
       { label: "Affiliate Payouts", href: "/admin/affiliate-payouts", icon: Wallet },
       { label: "Vendor Payables", href: "/admin/vendor-payables", icon: Banknote },
-      { label: "Vendor Agreements", href: "/admin/vendor-agreements", icon: ShieldCheck },
       { label: "Discount Requests", href: "/admin/discount-requests", icon: BadgePercent, badgeKey: "discount_requests" },
     ],
   },
@@ -59,6 +58,10 @@ export const adminNavigation = [
     roles: ["admin", "marketing", "vendor_ops"],
     children: [
       { label: "Catalog", href: "/admin/catalog", icon: Columns3 },
+      { label: "Vendors", href: "/admin/vendors", icon: Truck },
+      { label: "Vendor Agreements", href: "/admin/vendor-agreements", icon: ShieldCheck },
+      { label: "Vendor Assignments", href: "/admin/vendor-assignments", icon: Network, roles: ["admin", "vendor_ops"] },
+      { label: "Partner Ecosystem", href: "/admin/partner-ecosystem", icon: Network },
       { label: "Product Approvals", href: "/admin/product-approvals", icon: CheckSquare },
     ],
   },
