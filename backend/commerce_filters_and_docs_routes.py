@@ -128,6 +128,7 @@ async def marketplace_filters():
     }
 
 from services.product_promotion_enrichment import enrich_product_with_promotion, enrich_products_batch
+from services.variant_grouping import group_products_by_canonical
 
 @marketplace_router.get("/products/search")
 async def search_products(
@@ -139,8 +140,14 @@ async def search_products(
     subcategory_id: Optional[str] = None,
     group: Optional[str] = None,
     country: Optional[str] = None,
+    group_variants: bool = True,
 ):
-    """Search products with optional filters (legacy + taxonomy + country)"""
+    """Search products with optional filters (legacy + taxonomy + country).
+
+    `group_variants` (default True) collapses SKU-level rows that share a canonical
+    base name (e.g. "Crystal Trophy - Small/Medium/Large") into a single card with
+    a `variants: [...]` array. Pass `group_variants=false` to get raw rows.
+    """
     and_conditions = [{"is_active": True}]
     
     # Country filter — TZ includes products without country_code (legacy data)
@@ -198,6 +205,9 @@ async def search_products(
         out.append(row)
     # Enrich with active promotions
     out = await enrich_products_batch(out, db=db)
+    # Collapse variant SKUs into canonical products (e.g. "Crystal Trophy - S/M/L" → 1 card with 3 variants)
+    if group_variants:
+        out = group_products_by_canonical(out)
     return out
 
 
@@ -226,6 +236,62 @@ async def get_product_detail(product_id: str):
     # Enrich with active promotion
     product = await enrich_product_with_promotion(product, db=db)
     return product
+
+
+@marketplace_router.get("/products/{product_id}/variants")
+async def get_product_variants(product_id: str):
+    """Return all sibling SKU variants that share the same canonical base name
+    (and same category / vendor) as the given product.
+
+    Used by the Product Detail Page to render the size/colour chip selector
+    without bloating every detail response.
+    """
+    from bson import ObjectId
+    from services.variant_grouping import canonicalize_name, group_products_by_canonical
+
+    # Load the target product
+    target = await db.products.find_one({"id": product_id})
+    if not target:
+        try:
+            target = await db.products.find_one({"_id": ObjectId(product_id)})
+        except Exception:
+            pass
+    if not target:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    canonical_name, _axes = canonicalize_name(target.get("name", ""))
+    # Fetch potential siblings in the same category/vendor that share the canonical prefix
+    same_cat = {"is_active": True}
+    if target.get("category_id"):
+        same_cat["category_id"] = target["category_id"]
+    if target.get("vendor_id"):
+        same_cat["vendor_id"] = target["vendor_id"]
+    # Narrow with a case-insensitive name prefix
+    import re
+    same_cat["name"] = {"$regex": f"^{re.escape(canonical_name)}", "$options": "i"}
+
+    rows = await db.products.find(same_cat).to_list(length=100)
+    candidates = []
+    for r in rows:
+        r["id"] = str(r["_id"])
+        del r["_id"]
+        # Only keep rows whose canonical_name matches (protects against coincidental prefix hits)
+        c, _ = canonicalize_name(r.get("name", ""))
+        if c.lower() == canonical_name.lower():
+            candidates.append(r)
+
+    grouped = group_products_by_canonical(candidates)
+    # `grouped` will be a list with 1 entry — the canonical product with .variants
+    if not grouped:
+        return {"canonical_name": canonical_name, "variant_count": 1, "variants": []}
+    g = grouped[0]
+    return {
+        "canonical_name": g.get("name", canonical_name),
+        "variant_count": g.get("variant_count", 1),
+        "variants": g.get("variants", []),
+        "variant_colors": g.get("variant_colors", []),
+        "variant_sizes": g.get("variant_sizes", []),
+    }
 
 
 # ==================== DOCUMENT PDF HOOKS ====================

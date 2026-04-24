@@ -9,6 +9,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Variant Consolidation + Marketplace Perf + Office Equipment Taxonomy
+1. **Canonical variant grouping** — New `backend/services/variant_grouping.py` strips trailing variant tokens (`- Small/Medium/Large`, `- Navy Blue`, `(L)/(M)/(S)`, `- 45cm`) from product names to compute a canonical key. Products are grouped at query time — no DB migration — returning ONE card per canonical product with `variants: [...]`, `variant_colors`, `variant_sizes`, and `price_from` / `price_to`. **616 → 445 cards** (46 variant groups collapsed: Cooltex Polo ×20, Hoodie ×20, Timeless Polo ×20, Lanyards ×8, 2026 Diary ×5, etc).
+2. **Variant chip selector on PDP** — `MarketplaceListingDetailContent.jsx` now auto-fetches `/api/marketplace/products/:id/variants` after initial load. When the product is part of a variant family, colour/size chip rows appear above the Add-to-Cart. Selecting a chip swaps image, price and cart-bound product_id to the chosen variant. Unavailable combinations are disabled.
+3. **Marketplace card polish** — `object-cover` → `object-contain` with `p-3 bg-white` so every product image (including "Navy Blue Laminated Gift Bags") has breathing room. Added `loading="lazy"` + `decoding="async"` on all card images. Variant cards show a `N variants` badge, "N options available" line, "From TZS X" price, and `Select Options` CTA (instead of Add-to-Cart).
+4. **Client-side pagination** — marketplace renders 48 cards initially with a `Load more (N remaining)` button, preventing 445 `<img>` tags from loading eagerly on first paint.
+5. **Richer skeleton loader** — `ListingGridSkeleton` now renders 12 pulsing placeholder cards with staggered animation delays that match the real card geometry (image, category pill, 2-line title, price, CTA, secondary link).
+6. **Office Equipment taxonomy migration** — 14 ID Printer SKUs (DTC 1250e, HDP 5000e, ribbons, cleaning kit, plain ID cards) moved from `Promotional Materials` → `Office Equipment` category via `scripts/move_id_printers_to_office_equipment.py`.
+
+**New endpoints:**
+- `GET /api/marketplace/products/search?group_variants=true` (default) — grouped results.
+- `GET /api/marketplace/products/:product_id/variants` — returns canonical-group siblings.
+
+
 ### Feb 24, 2026 — Marketplace Image Fix + Unified Help FAB
 1. **Marketplace product images restored** — `resolveImageUrl()` in `ProductCardCompact.jsx` and `public/MarketplaceCardV2.jsx` now correctly handles `/api/uploads/...` paths by prefixing `REACT_APP_BACKEND_URL` directly instead of wrapping them in `/api/files/serve/` (which 404'd). All 616 Darcity products now render crystal-clear images.
 2. **Single animated "Help Hub" FAB** — New `components/FloatingHelpHub.jsx` replaces the three legacy floating launchers (`ChatWidget`, `AIChatWidget`, `FeedbackWidget`). One button at `bottom-6 left-6` with HelpCircle + pulse aura + orbit accent dot animation expands (speed-dial style) into two labeled options:

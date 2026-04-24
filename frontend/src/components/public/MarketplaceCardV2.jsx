@@ -20,12 +20,14 @@ export default function MarketplaceCardV2({ item }) {
       className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
       data-testid={`marketplace-card-${item.id}`}
     >
-      <div className="h-44 bg-[#f8fafc] overflow-hidden flex items-center justify-center">
+      <div className="h-44 bg-white overflow-hidden flex items-center justify-center p-3 border-b border-slate-100">
         {imgSrc ? (
           <img
             src={resolveImageUrl(imgSrc)}
             alt={item.name || "Marketplace listing"}
-            className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
+            loading="lazy"
+            decoding="async"
+            className="max-w-full max-h-full object-contain group-hover:scale-[1.04] transition duration-300"
             onError={(e) => { e.target.style.display = "none"; e.target.nextSibling && (e.target.nextSibling.style.display = "flex"); }}
           />
         ) : null}

@@ -32,6 +32,29 @@ export default function MarketplaceListingDetailContent() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedPrintMethod, setSelectedPrintMethod] = useState(null);
   const [showSalesAssist, setShowSalesAssist] = useState(false);
+  // Canonical variant group (siblings that share a base name, e.g. Crystal Trophy S/M/L)
+  const [variantGroup, setVariantGroup] = useState(null); // {canonical_name, variants, variant_colors, variant_sizes}
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+
+  // Load variant siblings after the main listing resolves
+  useEffect(() => {
+    if (!listing?.id) { setVariantGroup(null); return; }
+    axios
+      .get(`${API_URL}/api/marketplace/products/${listing.id}/variants`)
+      .then((res) => {
+        const data = res.data;
+        if (data && data.variant_count > 1) {
+          setVariantGroup(data);
+          setSelectedVariantId(listing.id);
+        } else {
+          setVariantGroup(null);
+        }
+      })
+      .catch(() => setVariantGroup(null));
+  }, [listing?.id]);
+
+  // Derived: currently-selected variant (falls back to listing)
+  const activeVariant = variantGroup?.variants?.find((v) => v.id === selectedVariantId) || null;
 
   useEffect(() => {
     if (!slug) return;
@@ -79,41 +102,50 @@ export default function MarketplaceListingDetailContent() {
   }
 
   // Resolve images — support both image_url (single) and images (array)
+  // If a variant is selected, its image takes precedence
   const allImages = [];
+  if (activeVariant?.image_url) allImages.push(activeVariant.image_url);
   if (listing.images?.length > 0) allImages.push(...listing.images.filter(Boolean));
   else if (listing.hero_image) allImages.push(listing.hero_image);
   else if (listing.image_url) allImages.push(listing.image_url);
   else if (listing.primary_image) allImages.push(listing.primary_image);
   const hasImage = allImages.length > 0;
 
-  // Resolve price — support customer_price, base_price, price
-  const originalPrice = Number(listing.customer_price || listing.base_price || listing.price || 0);
+  // Resolve price — prefer the active variant's price over the listing's
+  const originalPrice = Number(
+    activeVariant?.customer_price ||
+    listing.customer_price || listing.base_price || listing.price || 0
+  );
   const promo = listing.promotion;
   const price = promo ? promo.promo_price : originalPrice;
   const isService = listing.listing_type === "service";
-  const inStock = listing.stock_quantity > 0 || listing.partner_available_qty > 0;
+  const inStock = (activeVariant?.stock ?? (listing.stock_quantity || listing.partner_available_qty || 0)) > 0;
   const minQty = listing.min_quantity || 1;
 
   const handleAddToCart = () => {
+    // If we have a variant group and a selection, add THAT variant to cart
+    const product_id = activeVariant?.id || listing.id || slug;
+    const product_name = activeVariant?.name || listing.name || "";
+    const image_url = activeVariant?.image_url || allImages[0] || "";
     addItem({
-      product_id: listing.id || slug,
-      product_name: listing.name || "",
+      product_id,
+      product_name,
       quantity,
       unit_price: price,
       original_price: originalPrice,
       subtotal: quantity * price,
-      size: selectedSize,
-      color: selectedColor,
+      size: activeVariant?.size || selectedSize,
+      color: activeVariant?.color || selectedColor,
       print_method: selectedPrintMethod,
       listing_type: listing.listing_type || "product",
-      image_url: allImages[0] || "",
+      image_url,
       category: listing.category || "",
       promo_applied: !!promo,
       promo_id: promo?.promo_id || null,
       promo_label: promo?.discount_label || null,
       promo_discount: promo?.discount_amount || 0,
     });
-    toast.success(`${listing.name} added to cart`);
+    toast.success(`${product_name} added to cart`);
   };
 
   return (
@@ -252,6 +284,75 @@ export default function MarketplaceListingDetailContent() {
               )}
             </div>
           </div>
+
+          {/* Canonical-variant selector (for SKU-grouped products like Crystal Trophy S/M/L) */}
+          {variantGroup && variantGroup.variant_count > 1 && (
+            <div className="space-y-4" data-testid="variant-selector">
+              {variantGroup.variant_colors?.length > 0 && (
+                <div data-testid="variant-colors">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Colour{activeVariant?.color ? `: ${activeVariant.color}` : ""}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {variantGroup.variant_colors.map((c) => {
+                      const matchingVariant = variantGroup.variants.find(
+                        (v) => (v.color || "").toLowerCase() === c.value.toLowerCase()
+                          && (!activeVariant?.size || v.size === activeVariant.size)
+                      ) || variantGroup.variants.find((v) => (v.color || "").toLowerCase() === c.value.toLowerCase());
+                      const isActive = activeVariant?.color?.toLowerCase() === c.value.toLowerCase();
+                      return (
+                        <button
+                          key={c.value}
+                          onClick={() => matchingVariant && setSelectedVariantId(matchingVariant.id)}
+                          disabled={!matchingVariant}
+                          className={`px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                            isActive
+                              ? "bg-[#20364D] text-white border-[#20364D]"
+                              : "bg-white text-slate-700 hover:border-[#20364D] disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
+                          data-testid={`variant-color-${c.value}`}
+                        >
+                          {c.value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {variantGroup.variant_sizes?.length > 0 && (
+                <div data-testid="variant-sizes">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Size{activeVariant?.size ? `: ${activeVariant.size}` : ""}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {variantGroup.variant_sizes.map((s) => {
+                      // Match by current colour if applicable
+                      const matchingVariant = variantGroup.variants.find(
+                        (v) => (v.size || "").toLowerCase() === s.value.toLowerCase()
+                          && (!activeVariant?.color || (v.color || "").toLowerCase() === activeVariant.color.toLowerCase())
+                      ) || variantGroup.variants.find((v) => (v.size || "").toLowerCase() === s.value.toLowerCase());
+                      const isActive = activeVariant?.size?.toLowerCase() === s.value.toLowerCase();
+                      return (
+                        <button
+                          key={s.value}
+                          onClick={() => matchingVariant && setSelectedVariantId(matchingVariant.id)}
+                          disabled={!matchingVariant}
+                          className={`min-w-[56px] px-4 py-2 rounded-xl border text-sm font-medium transition ${
+                            isActive
+                              ? "bg-[#20364D] text-white border-[#20364D]"
+                              : "bg-white text-slate-700 hover:border-[#20364D] disabled:opacity-40 disabled:cursor-not-allowed"
+                          }`}
+                          data-testid={`variant-size-${s.value}`}
+                        >
+                          {s.value}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Customization Options */}
           {!isService && (

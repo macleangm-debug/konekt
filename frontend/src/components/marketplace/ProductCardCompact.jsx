@@ -27,15 +27,24 @@ function resolveImageUrl(src) {
  * 4. Add to Cart is primary. Request Quote / View Details is secondary.
  */
 export default function ProductCardCompact({ product, onDetail, onAddToCart, onRequestQuote }) {
+  const hasVariants = (product?.variant_count || 0) > 1;
   const originalPrice =
     product?.customer_price ?? product?.price ?? product?.base_price ??
     product?.blank_unit_price ?? product?.unit_price ?? 0;
   const promo = product?.promotion;
   const price = promo ? promo.promo_price : Number(originalPrice);
+  const priceFrom = Number(product?.price_from || 0);
+  const priceTo = Number(product?.price_to || 0);
+  const priceRange = hasVariants && priceFrom && priceTo && priceFrom !== priceTo;
 
   const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (hasVariants) {
+      // With multiple variants the user must pick one on the detail page
+      onDetail?.(product);
+      return;
+    }
     if (onAddToCart) {
       onAddToCart(product, price, Number(originalPrice));
     }
@@ -57,7 +66,7 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
       {/* ── 1. Image Area (fixed aspect) ──────────────────────── */}
       <div className="relative">
         <button
-          className="w-full h-44 bg-[#f8fafc] overflow-hidden flex items-center justify-center"
+          className="w-full h-44 bg-white overflow-hidden flex items-center justify-center p-3 border-b border-slate-100"
           onClick={() => onDetail?.(product)}
           data-testid={`product-image-${product?.id}`}
         >
@@ -65,7 +74,9 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
             <img
               src={resolveImageUrl(product.image_url || product.images?.[0] || product.hero_image || product.primary_image)}
               alt={product?.name || "Product"}
-              className="w-full h-full object-cover group-hover:scale-[1.03] transition duration-300"
+              loading="lazy"
+              decoding="async"
+              className="max-w-full max-h-full object-contain group-hover:scale-[1.04] transition duration-300"
               onError={(e) => { e.target.style.display = "none"; e.target.nextSibling && (e.target.nextSibling.style.display = "flex"); }}
             />
           ) : null}
@@ -79,6 +90,14 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
             data-testid={`promo-badge-${product?.id}`}
           >
             {promo.discount_label}
+          </span>
+        )}
+        {product?.variant_count > 1 && (
+          <span
+            className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-[#20364D] text-white text-[10px] font-semibold shadow-sm"
+            data-testid={`variant-count-${product?.id}`}
+          >
+            {product.variant_count} variants
           </span>
         )}
       </div>
@@ -109,16 +128,28 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
           <div className="h-[52px]" data-testid={`price-block-${product?.id}`}>
             {/* Line 1: Current price (always) */}
             <div className="flex items-baseline gap-2">
-              <span className="font-bold text-[#0f172a] text-base">{money(price)}</span>
-              {promo && (
-                <span className="text-xs text-slate-400 line-through">{money(originalPrice)}</span>
+              {priceRange ? (
+                <span className="font-bold text-[#0f172a] text-base" data-testid={`price-range-${product?.id}`}>
+                  From {money(priceFrom)}
+                </span>
+              ) : (
+                <>
+                  <span className="font-bold text-[#0f172a] text-base">{money(price)}</span>
+                  {promo && (
+                    <span className="text-xs text-slate-400 line-through">{money(originalPrice)}</span>
+                  )}
+                </>
               )}
             </div>
-            {/* Line 2: Savings text (promo) or reserved empty space (no promo) */}
+            {/* Line 2: Savings text (promo), variant hint, or reserved empty space */}
             <div className="h-[20px] mt-0.5">
               {promo ? (
                 <p className="text-[11px] text-emerald-600 font-medium truncate">
                   Save {money(promo.discount_amount)}
+                </p>
+              ) : hasVariants ? (
+                <p className="text-[11px] text-slate-500 font-medium truncate">
+                  {product.variant_count} options available
                 </p>
               ) : null}
             </div>
@@ -129,9 +160,13 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
             <button
               onClick={handleAdd}
               className="w-full rounded-lg bg-[#0f172a] text-white py-2 text-xs font-semibold hover:bg-[#1e293b] transition-colors flex items-center justify-center gap-1.5"
-              data-testid={`add-to-cart-${product?.id}`}
+              data-testid={hasVariants ? `select-options-${product?.id}` : `add-to-cart-${product?.id}`}
             >
-              <ShoppingCart className="w-3.5 h-3.5" /> Add to Cart
+              {hasVariants ? (
+                <>Select Options</>
+              ) : (
+                <><ShoppingCart className="w-3.5 h-3.5" /> Add to Cart</>
+              )}
             </button>
             <button
               onClick={handleQuote}

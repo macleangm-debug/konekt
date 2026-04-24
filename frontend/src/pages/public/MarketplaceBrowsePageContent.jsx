@@ -23,6 +23,7 @@ export default function MarketplaceBrowsePageContent() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dealCount, setDealCount] = useState(0);
+  const [visibleCount, setVisibleCount] = useState(48);
 
   // Check for active group deals
   useEffect(() => {
@@ -64,6 +65,7 @@ export default function MarketplaceBrowsePageContent() {
       if (filters.sort === "price_low") results.sort((a, b) => (a.customer_price || a.price || 0) - (b.customer_price || b.price || 0));
       if (filters.sort === "price_high") results.sort((a, b) => (b.customer_price || b.price || 0) - (a.customer_price || a.price || 0));
       setItems(results);
+      setVisibleCount(48); // reset pagination on new filter/search
     } catch {
       setItems([]);
     } finally {
@@ -135,8 +137,9 @@ export default function MarketplaceBrowsePageContent() {
         {loading ? (
           <ListingGridSkeleton />
         ) : items.length > 0 ? (
+          <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="marketplace-grid">
-            {items.map((item) => (
+            {items.slice(0, visibleCount).map((item) => (
               <ProductCardCompact
                 key={item.id}
                 product={item}
@@ -163,6 +166,18 @@ export default function MarketplaceBrowsePageContent() {
               />
             ))}
           </div>
+          {visibleCount < items.length && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={() => setVisibleCount((c) => c + 48)}
+                className="rounded-xl bg-[#20364D] text-white px-8 py-3 text-sm font-semibold hover:bg-[#2a4a66] transition-colors"
+                data-testid="load-more-products"
+              >
+                Load more ({items.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
+          </>
         ) : (
           !filters.group_id && !filters.category_id && !filters.q ? null : (
             <PremiumEmptyState
