@@ -108,7 +108,8 @@ async def list_vendors(request: Request, status: Optional[str] = None, capabilit
         # `taxonomy_names` historically meant "categories assigned to this vendor".
         # For consistency with the Konekt 4-branch taxonomy, return branches here.
         taxonomy_ids = v.get("taxonomy_ids", []) or []
-        taxonomy_names = branch_names or []
+        assigned_branches = [b for b in (v.get("branches") or []) if b in KONEKT_BRANCHES]
+        taxonomy_names = branch_names or assigned_branches or []
         if not taxonomy_names and taxonomy_ids:
             tax_docs = await db.taxonomy.find({"id": {"$in": taxonomy_ids}}, {"_id": 0, "name": 1}).to_list(50)
             taxonomy_names = [t["name"] for t in tax_docs if t.get("name") in KONEKT_BRANCHES]
@@ -123,6 +124,7 @@ async def list_vendors(request: Request, status: Optional[str] = None, capabilit
             "capability_type": v.get("capability_type", "products"),
             "taxonomy_ids": taxonomy_ids,
             "taxonomy_names": taxonomy_names,
+            "branches": assigned_branches or branch_names,
             "status": v.get("vendor_status", v.get("status", "active")),
             "active_products": active_products,
             "supply_records": active_products,
@@ -236,6 +238,7 @@ async def get_vendor(vendor_id: str, request: Request):
         "capability_type": vendor.get("capability_type", "products"),
         "taxonomy_ids": taxonomy_ids,
         "taxonomy_names": taxonomy_names,
+        "branches": [b for b in (vendor.get("branches") or []) if b in KONEKT_BRANCHES],
         "status": vendor.get("vendor_status", "active"),
         "notes": vendor.get("notes", ""),
         "supply_records": supply_records,
@@ -261,6 +264,8 @@ async def update_vendor(vendor_id: str, payload: VendorUpdate, request: Request)
         update["capability_type"] = payload.capability_type
     if payload.taxonomy_ids is not None:
         update["taxonomy_ids"] = payload.taxonomy_ids
+    if payload.branches is not None:
+        update["branches"] = [b for b in payload.branches if b in KONEKT_BRANCHES]
     if payload.status is not None:
         update["vendor_status"] = payload.status
     if payload.notes is not None:

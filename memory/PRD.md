@@ -9,6 +9,20 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (latest) — Add-Vendor UI w/ Branches + Test-Data Final Purge
+1. **Add Vendor form now wires branches** — `VendorListPage.jsx` gained a required multi-select chip group (Promotional Materials / Office Equipment / Stationery / Services). Branch list is fetched from `/api/admin/vendors/branches` and filters input to the canonical 4-branch taxonomy. "Create Vendor" is disabled until name + ≥1 branch selected.
+2. **Backend branches plumbing completed** — `VendorUpdate` now persists `branches` (was previously accepted-but-ignored). `list_vendors` returns `branches` field directly from the user doc; `get_vendor/{id}` returns branches in the detail payload. Server strips non-canonical values on both create and update.
+3. **Final test-data purge** (live DB now 100% real Darcity content):
+   • `catalog_subcategory_requests` — 5 deleted (test_user_* entries)
+   • `business_pricing_requests` — 2 deleted (null bodies)
+   • `vendor_import_jobs` — 4 deleted (non-Darcity vendor_id)
+   • `smart_import_sessions` — 16 deleted (null/empty partner_id)
+   • `price_requests` — 36 deleted (TEST_* product names + empty product fields)
+   • `products` — already 100% Darcity (610 published), `vendor_product_submissions` already 0
+4. **Verified end-to-end via curl**: create vendor with 3 branches (incl. 1 invalid) → invalid filtered → list shows 2 branches → update to different 2 branches → re-fetch confirms persisted.
+
+
+
 ### Feb 24, 2026 (later) — Vendor List Shows Konekt Branches (not subcategories)
 1. **Fix**: `vendors_admin_routes.py` `list_vendors` was returning `distinct(category)` values which are *sub*categories (Cooltex, Gift Bags, Awards & Trophies…). Changed to return `distinct(branch)` values filtered to the **4 official Konekt branches** only: `{Promotional Materials, Office Equipment, Stationery, Services}`.
 2. **Darcity now correctly shows** — taxonomy_names = `["Office Equipment", "Promotional Materials"]` — the two branches where Darcity actually has products (596 Promotional Materials + 14 Office Equipment = 610 total).

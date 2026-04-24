@@ -66,7 +66,8 @@ export default function VendorListPage() {
   const [perfDrawer, setPerfDrawer] = useState(null);
 
   // Create form
-  const [newVendor, setNewVendor] = useState({ name: "", email: "", phone: "", company: "", capability_type: "products" });
+  const [newVendor, setNewVendor] = useState({ name: "", email: "", phone: "", company: "", capability_type: "products", branches: [] });
+  const [branchOptions, setBranchOptions] = useState(["Promotional Materials", "Office Equipment", "Stationery", "Services"]);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -78,6 +79,11 @@ export default function VendorListPage() {
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { adminApi.getVendorStats().then(r => setStats(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    adminApi.getVendorBranches()
+      .then(r => { if (r.data?.branches?.length) setBranchOptions(r.data.branches); })
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     adminApi.getVendorTeamPerformance()
       .then(r => {
@@ -109,13 +115,22 @@ export default function VendorListPage() {
   };
 
   const handleCreate = async () => {
+    if (!newVendor.name || !(newVendor.branches || []).length) return;
     try {
       await adminApi.createVendor(newVendor);
-      setNewVendor({ name: "", email: "", phone: "", company: "", capability_type: "products" });
+      setNewVendor({ name: "", email: "", phone: "", company: "", capability_type: "products", branches: [] });
       setShowCreate(false);
       load();
       adminApi.getVendorStats().then(r => setStats(r.data)).catch(() => {});
     } catch {}
+  };
+
+  const toggleBranch = (b) => {
+    setNewVendor(p => {
+      const curr = new Set(p.branches || []);
+      if (curr.has(b)) curr.delete(b); else curr.add(b);
+      return { ...p, branches: Array.from(curr) };
+    });
   };
 
   const filtered = vendors.filter((v) => {
@@ -176,7 +191,43 @@ export default function VendorListPage() {
               <option value="multi">Multi</option>
             </select>
           </div>
-          <button onClick={handleCreate} disabled={!newVendor.name} className="mt-4 rounded-lg bg-[#20364D] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4560] disabled:opacity-40 transition-colors" data-testid="save-vendor-btn">
+
+          {/* Branches — required multi-select aligned with Konekt 4-branch taxonomy */}
+          <div className="mt-5" data-testid="vendor-branches-selector">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                Assigned Branches <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[11px] text-slate-400">Pick at least one branch this vendor supplies</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {branchOptions.map((b) => {
+                const selected = (newVendor.branches || []).includes(b);
+                return (
+                  <button
+                    type="button"
+                    key={b}
+                    onClick={() => toggleBranch(b)}
+                    data-testid={`vendor-branch-chip-${b.toLowerCase().replace(/\s/g, "-")}`}
+                    className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all ${
+                      selected
+                        ? "border-[#20364D] bg-[#20364D] text-white shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    {b}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={handleCreate}
+            disabled={!newVendor.name || !(newVendor.branches || []).length}
+            className="mt-5 rounded-lg bg-[#20364D] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[#2a4560] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            data-testid="save-vendor-btn"
+          >
             Create Vendor
           </button>
         </div>

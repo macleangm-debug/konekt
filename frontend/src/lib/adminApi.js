@@ -159,6 +159,7 @@ export const adminApi = {
   // Vendor Admin
   getVendors: (params) => api.get("/api/admin/vendors", { params }),
   getVendorStats: () => api.get("/api/admin/vendors/stats"),
+  getVendorBranches: () => api.get("/api/admin/vendors/branches"),
   getVendorDetail: (id) => api.get(`/api/admin/vendors/${id}`),
   createVendor: (data) => api.post("/api/admin/vendors", data),
   updateVendor: (id, data) => api.put(`/api/admin/vendors/${id}`, data),
