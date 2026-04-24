@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useConfirmModal } from '../../contexts/ConfirmModalContext';
 import { 
   Search, Plus, Edit, Trash2, Package, ChevronLeft, ChevronRight,
-  Image, DollarSign, Layers
+  Image, DollarSign, Layers, Tag, Save, X as XIcon
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -17,6 +17,138 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Helper: format TZS currency
+const fmtTZS = (n) => `TZS ${(Number(n) || 0).toLocaleString()}`;
+
+// ─── InlinePriceOverride ─────────────────────────────────────────────────
+// Compact inline editor for per-product price overrides. Supports:
+//   • Fixed price (replace customer_price)
+//   • % discount on tier-calculated base
+//   • Clear override (revert to pricing engine)
+function InlinePriceOverride({ product, onSaved }) {
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState(product.customer_price_override ? product.price_override_mode : "percentage_off");
+  const [value, setValue] = useState(product.price_override_value || "");
+  const [reason, setReason] = useState(product.price_override_reason || "");
+  const [saving, setSaving] = useState(false);
+
+  const basePrice = Number(product.base_price || 0);
+  const previewPrice =
+    mode === "fixed"
+      ? Math.round(Number(value) || 0)
+      : mode === "percentage_off"
+      ? Math.round(basePrice * (1 - (Number(value) || 0) / 100))
+      : basePrice;
+
+  const apply = async (chosenMode) => {
+    const finalMode = chosenMode || mode;
+    setSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${API_URL}/api/admin/products/${product.id}/price-override`,
+        { mode: finalMode, value: finalMode === "clear" ? null : Number(value), reason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(finalMode === "clear" ? "Override cleared" : "Price override applied");
+      onSaved?.({
+        customer_price: res.data.final_customer_price,
+        customer_price_override: res.data.override?.mode ? res.data.final_customer_price : null,
+        price_override_mode: res.data.override?.mode || null,
+        price_override_value: res.data.override?.value || null,
+        price_override_reason: reason,
+      });
+      setOpen(false);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        data-testid={`open-price-override-${product.id}`}
+        className="mt-3 w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-xs font-semibold text-slate-600 transition"
+      >
+        <Tag className="w-3.5 h-3.5" />
+        {product.customer_price_override ? "Edit price override" : "Set price override"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50/30 p-3 space-y-2" data-testid={`price-override-editor-${product.id}`}>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setMode("percentage_off")}
+          className={`flex-1 text-[11px] font-semibold py-1.5 rounded-md transition ${mode === "percentage_off" ? "bg-primary text-white" : "bg-white text-slate-600"}`}
+          data-testid={`mode-percent-${product.id}`}
+        >
+          % Off
+        </button>
+        <button
+          onClick={() => setMode("fixed")}
+          className={`flex-1 text-[11px] font-semibold py-1.5 rounded-md transition ${mode === "fixed" ? "bg-primary text-white" : "bg-white text-slate-600"}`}
+          data-testid={`mode-fixed-${product.id}`}
+        >
+          Fixed TZS
+        </button>
+      </div>
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder={mode === "percentage_off" ? "e.g. 15" : "e.g. 25,000"}
+        className="h-8 text-xs"
+        data-testid={`override-value-${product.id}`}
+      />
+      <Input
+        type="text"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Reason (optional)"
+        className="h-8 text-xs"
+        data-testid={`override-reason-${product.id}`}
+      />
+      <div className="text-[11px] text-slate-600 bg-white rounded-md px-2 py-1.5 flex items-center justify-between">
+        <span>Base (engine): <span className="font-semibold">{fmtTZS(basePrice)}</span></span>
+        <span>Final: <span className="font-bold text-primary">{fmtTZS(previewPrice)}</span></span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() => apply()}
+          disabled={saving || !value}
+          className="flex-1 h-8 text-xs"
+          data-testid={`save-override-${product.id}`}
+        >
+          <Save className="w-3.5 h-3.5 mr-1" /> Apply
+        </Button>
+        {product.customer_price_override && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => apply("clear")}
+            disabled={saving}
+            className="h-8 text-xs"
+            data-testid={`clear-override-${product.id}`}
+          >
+            Clear
+          </Button>
+        )}
+        <Button size="sm" variant="ghost" onClick={() => setOpen(false)} className="h-8 text-xs">
+          <XIcon className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
 
 // Branch and category structure
 const branchCategories = {
@@ -291,9 +423,20 @@ export default function AdminProducts() {
                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{product.description}</p>
                 
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Base Price</p>
-                    <p className="font-bold text-primary">TZS {product.base_price?.toLocaleString()}</p>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground">Marketplace Price</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="font-bold text-primary">{fmtTZS(product.customer_price || product.base_price)}</p>
+                      {product.customer_price_override && (
+                        <span className="text-[10px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">Override</span>
+                      )}
+                    </div>
+                    {product.vendor_cost ? (
+                      <p className="text-[10px] text-slate-400 mt-0.5">
+                        vendor cost: {fmtTZS(product.vendor_cost)}
+                        {product.pricing_total_margin_pct ? ` · ${product.pricing_total_margin_pct}% margin` : ""}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">
@@ -302,6 +445,13 @@ export default function AdminProducts() {
                     <p className="font-medium">{product.stock_quantity || 0} in stock</p>
                   </div>
                 </div>
+                {/* Inline price override controls */}
+                <InlinePriceOverride
+                  product={product}
+                  onSaved={(updated) => {
+                    setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, ...updated } : p)));
+                  }}
+                />
               </div>
             </motion.div>
           ))

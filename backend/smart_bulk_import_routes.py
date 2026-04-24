@@ -28,6 +28,8 @@ import pandas as pd
 
 from services.sku_service import generate_konekt_sku, matches_konekt_pattern
 from partner_access_service import get_partner_user_from_header
+from services.settings_resolver import get_pricing_policy_tiers
+from commission_margin_engine_service import resolve_tier
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 db = client[os.environ["DB_NAME"]]
@@ -243,6 +245,10 @@ async def commit_import(
     now = datetime.now(timezone.utc)
     stats = {"total": len(rows), "imported": 0, "updated": 0, "skipped": 0, "errors": []}
 
+    # Load Settings Hub pricing policy tiers once per commit — used to compute customer_price
+    # with proper protected + distributable margin structure.
+    pricing_tiers = await get_pricing_policy_tiers(db)
+
     # Chunked insert for memory safety with 3000+ rows
     CHUNK = 500
     for chunk_start in range(0, len(rows), CHUNK):
@@ -334,9 +340,21 @@ async def commit_import(
                 else:
                     # URL-imported sessions carry source_url → auto-publish to marketplace
                     is_url_source = bool(source_url) or (session.get("source") == "url")
-                    # Compute a customer price using default markup when only vendor_cost is provided
-                    markup = float(session.get("markup_multiplier", 1.35))
-                    customer_price = round(vendor_cost * markup, 0) if vendor_cost and vendor_cost > 0 else 0
+                    # Compute customer_price using the Settings Hub pricing policy engine
+                    # (falls back to 35% flat markup only if no tiers are configured).
+                    tier = resolve_tier(vendor_cost, pricing_tiers) if vendor_cost and vendor_cost > 0 else None
+                    if tier:
+                        margin_pct = float(tier.get("total_margin_pct", 35))
+                        customer_price = round(vendor_cost * (1 + margin_pct / 100.0), 0)
+                        tier_label = tier.get("label")
+                        protected_pct = float(tier.get("protected_platform_margin_pct", 0))
+                        distributable_pct = float(tier.get("distributable_margin_pct", 0))
+                    else:
+                        margin_pct = float(session.get("markup_multiplier", 1.35)) * 100 - 100 if session.get("markup_multiplier") else 35
+                        customer_price = round(vendor_cost * (1 + margin_pct / 100.0), 0) if vendor_cost and vendor_cost > 0 else 0
+                        tier_label = "no_tier_fallback"
+                        protected_pct = 0
+                        distributable_pct = 0
                     doc = {
                         **doc_common,
                         "category_name": konekt_cat,
@@ -344,6 +362,10 @@ async def commit_import(
                         "vendor_cost": vendor_cost,
                         "base_price": customer_price,
                         "customer_price": customer_price,
+                        "pricing_tier_label": tier_label,
+                        "pricing_total_margin_pct": margin_pct,
+                        "pricing_protected_margin_pct": protected_pct,
+                        "pricing_distributable_margin_pct": distributable_pct,
                         "stock": stock,
                         "partner_id": partner_id,
                         "partner_name": partner_name,

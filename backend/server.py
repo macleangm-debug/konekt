@@ -3198,6 +3198,10 @@ app.include_router(public_payment_info_router)
 from public_quote_requests_routes import router as public_quote_requests_router
 app.include_router(public_quote_requests_router)
 
+# Admin Product Pricing — per-product and bulk price overrides
+from admin_product_pricing_routes import router as admin_product_pricing_router
+app.include_router(admin_product_pricing_router)
+
 # Invoice Branding Routes — Phase F Document Branding Unification
 from invoice_branding_routes import router as invoice_branding_router
 app.include_router(invoice_branding_router)

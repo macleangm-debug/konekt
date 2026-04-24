@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 349 — Verified marketplace cart flow (UI), pricing engine, price override (P1), and public quote requests. 8/9 backend tests pass. UI smoke: variant chips work, Large selected, Add to Cart toast shown, price TZS 33,750 = 25,000 * 1.35 (35% tier) — pricing engine is correctly applied in math. Only issue: `pricing_tier_label` field is missing from product documents and search response (reprice script writes it, but DB shows None).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/marketplace/products/search", "issue": "Products are missing the `pricing_tier_label` field (all 30 checked Cooltex SKUs return null). The reprice_all_with_pricing_engine.py script DOES write this field (line 61), but products in DB have pricing_tier_label=None. Either the reprice script wasn't run on these products, or a later write overwrote without setting it. The review explicitly required: 'Confirm every product has a pricing_tier_label field too.' Pricing math is correct (vc=25000 -> cp=33750 = 35% tier; vc=23000 -> cp=31050 = 35% tier)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_iteration_349.py", "/app/test_reports/pytest/iteration_349.xml"],
+  "action_items": [
+    "Re-run /app/backend/scripts/reprice_all_with_pricing_engine.py (or investigate why pricing_tier_label is null on all Cooltex products despite vendor_cost/customer_price being correctly tier-priced). Confirm the reprice script's $set includes pricing_tier_label and that no subsequent bulk update clears it.",
+    "Optionally enrich /api/marketplace/products/search response to derive pricing_tier_label on-the-fly from vendor_cost + tiers if the field is not persisted."
+  ],
+  "critical_code_review_comments": [
+    "admin_product_pricing_routes.py has hardcoded JWT_SECRET default ('konekt-secret-key-change-in-production') — acceptable fallback but ensure production env sets JWT_SECRET explicitly.",
+    "public_quote_requests_routes.py defaults DB_NAME to 'konekt' while admin_product_pricing_routes.py defaults to 'konekt_db'. This inconsistency is dangerous if MONGO env ever falls back to defaults — both should use same default or fail-fast without default.",
+    "commerce_filters_and_docs_routes.py does not project/compute pricing_tier_label onto search responses, though product detail path does (via smart_bulk_import_routes). This is the root cause of the missing field issue."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration_349.py"],
+  "success_rate": {"backend": "89% (8/9)", "frontend": "100%"},
+  "test_credentials": "Admin: admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! — login works via /api/auth/login and /api/admin/auth/login (both return JWT with role=admin). /api/admin/login returns 404 (not wired).",
+  "seed_data_creation": "Created public_quote_request + mirrored lead record (source='iteration_349', customer_note='Iteration 349 test'). Price overrides set then cleared on 3 Cooltex SKUs (no residual state).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All four review items verified. Variant grouping: 10 canonical Cooltex cards; Maroon has 6 sizes (S/M/L/XL/XXL/XXXLarge). Pricing engine math is correct across all checked SKUs. Price override endpoints work for fixed/percentage_off/clear/bulk (auth via /api/auth/login, admin@konekt.co.tz). Public quote-requests endpoint returns success and persists to both public_quote_requests and leads collections. Only unresolved gap: `pricing_tier_label` field not returned by marketplace search (null in DB). UI variant chip flow works end-to-end: Large selected -> TZS 33,750 shown -> Add to Cart toast 'Cooltex Polo - Maroon - Large added to cart' + cart badge increments.",
+  "rca of the issue": "pricing_tier_label null on products: reprice_all_with_pricing_engine.py writes this field, but Cooltex products (imported via url_import) do NOT have it in DB. Likely reprice script was run BEFORE the import, or it was excluded by the query filter. commerce_filters_and_docs_routes.py also does not compute/inject the label on read. Mitigation: (a) re-run reprice script with a filter that includes Cooltex products, OR (b) compute pricing_tier_label in search endpoint from vendor_cost+tier lookup on the fly."
+}
