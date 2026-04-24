@@ -13,6 +13,9 @@ from services.taxonomy_seed_service import seed_taxonomy
 router = APIRouter(prefix="/api/admin/vendors", tags=["Vendor Admin"])
 
 
+KONEKT_BRANCHES = {"Promotional Materials", "Office Equipment", "Stationery", "Services"}
+
+
 # ─── Models ──────────────────────────────────────────────────────────
 class VendorCreate(BaseModel):
     name: str
@@ -21,6 +24,7 @@ class VendorCreate(BaseModel):
     company: Optional[str] = ""
     capability_type: str = "products"  # products | promotional_materials | services | multi
     taxonomy_ids: list = Field(default_factory=list)
+    branches: list = Field(default_factory=list)  # The 4 Konekt branches this vendor supplies
     notes: Optional[str] = ""
 
 
@@ -31,6 +35,7 @@ class VendorUpdate(BaseModel):
     company: Optional[str] = None
     capability_type: Optional[str] = None
     taxonomy_ids: Optional[list] = None
+    branches: Optional[list] = None
     status: Optional[str] = None
     notes: Optional[str] = None
 
@@ -154,12 +159,36 @@ async def vendor_stats(request: Request):
     }
 
 
+@router.get("/branches")
+async def list_branches(request: Request):
+    """Return the canonical Konekt branches (wired from Settings Hub `pricing_policy_tiers`).
+    Admin UI uses this to render a branch multi-select when creating/editing a vendor.
+    """
+    db = request.app.mongodb
+    from services.settings_resolver import get_pricing_policy_tiers_all
+    mapping = await get_pricing_policy_tiers_all(db)
+    # Non-"default" keys are the canonical branches.
+    branches = [k for k in mapping.keys() if k != "default" and k in KONEKT_BRANCHES]
+    # Fallback — guarantee the 4 branches are returned even if tiers haven't been
+    # customised per branch yet.
+    for b in sorted(KONEKT_BRANCHES):
+        if b not in branches:
+            branches.append(b)
+    return {"branches": sorted(branches)}
+
+
 @router.post("")
 async def create_vendor(payload: VendorCreate, request: Request):
-    """Create a new vendor."""
+    """Create a new vendor.
+
+    Accepts either `branches` (list of Konekt branch names, validated) or
+    `taxonomy_ids` (legacy). Both are persisted. `branches` is filtered to the
+    canonical 4 values to prevent subcategory-as-branch mistakes.
+    """
     db = request.app.mongodb
     vendor_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    branches = [b for b in (payload.branches or []) if b in KONEKT_BRANCHES]
     doc = {
         "id": vendor_id,
         "full_name": payload.name,
@@ -169,6 +198,7 @@ async def create_vendor(payload: VendorCreate, request: Request):
         "role": "vendor",
         "capability_type": payload.capability_type,
         "taxonomy_ids": payload.taxonomy_ids,
+        "branches": branches,
         "vendor_status": "active",
         "notes": payload.notes or "",
         "created_at": now,
