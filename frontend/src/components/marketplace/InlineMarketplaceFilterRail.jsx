@@ -239,7 +239,7 @@ function MobileFilterBar({ filters, onChange, groups, filteredCategories, filter
         </span>
       </div>
 
-      {/* ═══ BOTTOM DRAWER ═══ */}
+      {/* ═══ BOTTOM DRAWER — cascading "rainfall" step-by-step flow ═══ */}
       {drawerOpen && (
         <>
           {/* Overlay */}
@@ -247,7 +247,7 @@ function MobileFilterBar({ filters, onChange, groups, filteredCategories, filter
 
           {/* Drawer */}
           <div
-            className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-200"
+            className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl shadow-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-200"
             data-testid="mobile-filter-drawer"
           >
             {/* Handle */}
@@ -255,79 +255,172 @@ function MobileFilterBar({ filters, onChange, groups, filteredCategories, filter
               <div className="w-10 h-1 rounded-full bg-slate-300" />
             </div>
 
-            <div className="px-5 pb-6">
-              {/* Header */}
-              <div className="flex items-center justify-between py-3 border-b mb-4">
-                <h3 className="text-lg font-bold text-[#20364D]">Filters</h3>
-                <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg" data-testid="close-drawer-btn">
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
+            {(() => {
+              // Figure out which step we're on
+              const step = !filters.group_id ? 1 : !filters.category_id ? 2 : 3;
+              const selectedGroup = groups.find((g) => g.id === filters.group_id);
+              const selectedCategory = filteredCategories.find((c) => c.id === filters.category_id);
+              const selectedSubcategory = filteredSubcategories.find((s) => s.id === filters.subcategory_id);
 
-              <div className="space-y-5">
-                {/* Group */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Product Group</label>
-                  <select
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white"
-                    value={filters.group_id || ""}
-                    onChange={(e) => onChange({ ...filters, group_id: e.target.value, category_id: "", subcategory_id: "" })}
-                    data-testid="drawer-group-select"
-                  >
-                    <option value="">All Groups</option>
-                    {groups.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                  </select>
-                </div>
+              const goBack = () => {
+                if (step === 3) onChange({ ...filters, category_id: "", subcategory_id: "" });
+                else if (step === 2) onChange({ ...filters, group_id: "", category_id: "", subcategory_id: "" });
+              };
 
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                  <select
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white"
-                    value={filters.category_id || ""}
-                    onChange={(e) => onChange({ ...filters, category_id: e.target.value, subcategory_id: "" })}
-                    data-testid="drawer-category-select"
-                  >
-                    <option value="">All Categories</option>
-                    {filteredCategories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                  </select>
-                </div>
+              return (
+                <>
+                  {/* Header */}
+                  <div className="flex items-center justify-between py-3 px-5 border-b">
+                    <div className="flex items-center gap-3">
+                      {step > 1 && (
+                        <button onClick={goBack} className="p-2 -ml-2 hover:bg-slate-100 rounded-lg" data-testid="drawer-back-btn" aria-label="Back">
+                          <svg className="w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                      )}
+                      <div>
+                        <h3 className="text-base font-bold text-[#20364D]">
+                          {step === 1 ? "Browse what?" : step === 2 ? "Category" : "Subcategory"}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Step {step} of 3</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg" data-testid="close-drawer-btn">
+                      <X className="w-5 h-5 text-slate-500" />
+                    </button>
+                  </div>
 
-                {/* Subcategory */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Subcategory</label>
-                  <select
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm bg-white"
-                    value={filters.subcategory_id || ""}
-                    onChange={(e) => onChange({ ...filters, subcategory_id: e.target.value })}
-                    data-testid="drawer-subcategory-select"
-                  >
-                    <option value="">All Subcategories</option>
-                    {filteredSubcategories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                  </select>
-                </div>
-              </div>
+                  {/* Breadcrumb — what's already chosen */}
+                  {(selectedGroup || selectedCategory) && (
+                    <div className="px-5 py-2 flex flex-wrap gap-1.5 border-b bg-slate-50 text-[11px]">
+                      {selectedGroup && (
+                        <span className="px-2 py-1 rounded-full bg-[#20364D] text-white font-semibold">{selectedGroup.name}</span>
+                      )}
+                      {selectedCategory && (
+                        <>
+                          <span className="text-slate-400">›</span>
+                          <span className="px-2 py-1 rounded-full bg-amber-500 text-white font-semibold">{selectedCategory.name}</span>
+                        </>
+                      )}
+                      {selectedSubcategory && (
+                        <>
+                          <span className="text-slate-400">›</span>
+                          <span className="px-2 py-1 rounded-full bg-emerald-600 text-white font-semibold">{selectedSubcategory.name}</span>
+                        </>
+                      )}
+                    </div>
+                  )}
 
-              {/* Action buttons */}
-              <div className="flex gap-3 mt-6 pt-4 border-t">
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => { clearFilters(); setDrawerOpen(false); }}
-                    className="flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-                    data-testid="drawer-clear-btn"
-                  >
-                    Clear All
-                  </button>
-                )}
-                <button
-                  onClick={() => setDrawerOpen(false)}
-                  className="flex-1 rounded-xl bg-[#20364D] text-white px-4 py-3 text-sm font-semibold hover:bg-[#2a4a66] transition"
-                  data-testid="drawer-apply-btn"
-                >
-                  Show Results ({resultCount})
-                </button>
-              </div>
-            </div>
+                  {/* Step body — big tappable list */}
+                  <div className="overflow-y-auto flex-1 min-h-[280px] px-5 py-4">
+                    {step === 1 && (
+                      <div className="space-y-2" data-testid="drawer-step-groups">
+                        <button
+                          onClick={() => { onChange({ ...filters, group_id: "", category_id: "", subcategory_id: "" }); setDrawerOpen(false); }}
+                          className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border transition ${!filters.group_id ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}
+                          data-testid="drawer-group-all"
+                        >
+                          <span className="font-semibold text-[#20364D]">Everything</span>
+                          <span className="text-slate-400 text-sm">→</span>
+                        </button>
+                        {groups.map((g) => (
+                          <button
+                            key={g.id}
+                            onClick={() => onChange({ ...filters, group_id: g.id, category_id: "", subcategory_id: "" })}
+                            className="w-full flex items-center justify-between px-4 py-4 rounded-xl border border-slate-200 hover:border-[#20364D] hover:bg-[#20364D]/5 transition"
+                            data-testid={`drawer-group-${g.id}`}
+                          >
+                            <span className="font-semibold text-[#20364D]">{g.name}</span>
+                            <span className="text-slate-400 text-sm">→</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {step === 2 && (
+                      <div className="space-y-2" data-testid="drawer-step-categories">
+                        <button
+                          onClick={() => { onChange({ ...filters, category_id: "__all__", subcategory_id: "" }); setDrawerOpen(false); }}
+                          className="w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 border-dashed border-[#20364D] bg-[#20364D]/5 hover:bg-[#20364D]/10 transition"
+                          data-testid="drawer-category-all"
+                        >
+                          <div className="text-left">
+                            <div className="font-bold text-[#20364D]">All {selectedGroup?.name}</div>
+                            <div className="text-[11px] text-slate-500">Show everything under this group</div>
+                          </div>
+                          <span className="text-slate-400 text-sm">→</span>
+                        </button>
+                        {filteredCategories.length === 0 ? (
+                          <div className="text-center text-sm text-slate-500 py-8">No categories here yet.</div>
+                        ) : (
+                          filteredCategories.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => onChange({ ...filters, category_id: c.id, subcategory_id: "" })}
+                              className="w-full flex items-center justify-between px-4 py-4 rounded-xl border border-slate-200 hover:border-[#20364D] hover:bg-[#20364D]/5 transition"
+                              data-testid={`drawer-category-${c.id}`}
+                            >
+                              <span className="font-semibold text-[#20364D]">{c.name}</span>
+                              <span className="text-slate-400 text-sm">→</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+
+                    {step === 3 && (
+                      <div className="space-y-2" data-testid="drawer-step-subcategories">
+                        <button
+                          onClick={() => { onChange({ ...filters, subcategory_id: "" }); setDrawerOpen(false); }}
+                          className="w-full flex items-center justify-between px-4 py-4 rounded-xl border-2 border-dashed border-[#20364D] bg-[#20364D]/5 hover:bg-[#20364D]/10 transition"
+                          data-testid="drawer-subcategory-all"
+                        >
+                          <div className="text-left">
+                            <div className="font-bold text-[#20364D]">All {selectedCategory?.name}</div>
+                            <div className="text-[11px] text-slate-500">Show everything under this category</div>
+                          </div>
+                          <span className="text-slate-400 text-sm">→</span>
+                        </button>
+                        {filteredSubcategories.length === 0 ? (
+                          <div className="text-center text-sm text-slate-500 py-8">No subcategories here yet.</div>
+                        ) : (
+                          filteredSubcategories.map((s) => (
+                            <button
+                              key={s.id}
+                              onClick={() => { onChange({ ...filters, subcategory_id: s.id }); setDrawerOpen(false); }}
+                              className="w-full flex items-center justify-between px-4 py-4 rounded-xl border border-slate-200 hover:border-[#20364D] hover:bg-[#20364D]/5 transition"
+                              data-testid={`drawer-subcategory-${s.id}`}
+                            >
+                              <span className="font-semibold text-[#20364D]">{s.name}</span>
+                              <span className="text-slate-400 text-sm">→</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer — persistent "Show results" CTA */}
+                  <div className="flex gap-3 px-5 py-3 border-t bg-slate-50">
+                    {hasActiveFilters && (
+                      <button
+                        onClick={() => { clearFilters(); setDrawerOpen(false); }}
+                        className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                        data-testid="drawer-clear-btn"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setDrawerOpen(false)}
+                      className="flex-1 rounded-xl bg-[#20364D] text-white px-4 py-3 text-sm font-semibold hover:bg-[#2a4a66] transition"
+                      data-testid="drawer-apply-btn"
+                    >
+                      Show Results ({resultCount})
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </>
       )}

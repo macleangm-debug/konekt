@@ -202,6 +202,12 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
      - **VAT (18%)** line added explicitly — prices on marketplace/product pages stay VAT-exclusive, tax shown at cart/checkout
      - Total (incl. VAT) renders the full amount customer pays (TZS 1,047,398 in the above example)
      - Each cart item line shows strikethrough original unit price + red "Save TZS X" chip
+123. **Mobile marketplace filter — cascading "rainfall" flow** (was: 3 nested dropdowns). Replaced the mobile filter drawer with a step-by-step picker (Step 1 "Browse what?" → Step 2 "Category" → Step 3 "Subcategory"), each step a big-tappable list of cards with:
+     - Breadcrumb pills showing what's already selected (navy Group → amber Category → emerald Subcategory)
+     - "All <group/category>" CTA at the top of each step with dashed accent border
+     - Back arrow, Close X, persistent "Show Results (N)" CTA at the bottom
+     - No more nested `<select>` pop-ups on mobile (kept on desktop where the drop-down UX works)
+124. **Vendor Contract Generator in Settings Hub → Pricing Policy tab**. Fill vendor legal name / address / phone / signatory name + title + email → "Generate pre-filled PDF" downloads `konekt-agreement-<slug>.pdf` ready to email or WhatsApp. New endpoint `POST /api/admin/vendor-agreements/template/prefilled.pdf` takes a `PrefilledTemplatePayload` and returns the PDF. The existing "Download blank template" button still works for generic copies.
 
 ### Deployment Notes (latest)
 - `products` collection is the canonical marketplace feed (read by `/api/products`, limit 2000). `partner_catalog_items` is the vendor's private SKU list.

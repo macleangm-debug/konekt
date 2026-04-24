@@ -485,6 +485,42 @@ async def admin_blank_template_pdf():
     )
 
 
+class PrefilledTemplatePayload(BaseModel):
+    vendor_legal_name: str
+    vendor_address: str = ""
+    vendor_phone: str = ""
+    signatory_name: str = ""
+    signatory_title: str = ""
+    signatory_email: str = ""
+
+
+@admin_router.post("/template/prefilled.pdf")
+async def admin_prefilled_template_pdf(payload: PrefilledTemplatePayload):
+    """Generate a Konekt Vendor Supply Agreement pre-filled with a prospective
+    vendor's details. Signature block stays blank (to be signed on paper) — use
+    the in-product sign flow for digital signatures."""
+    import tempfile
+    data = {
+        "vendor_legal_name": payload.vendor_legal_name.strip() or "____________________________",
+        "vendor_address": payload.vendor_address.strip() or "____________________________",
+        "vendor_phone": payload.vendor_phone.strip() or "____________________________",
+        "signatory_name": payload.signatory_name.strip() or "____________________________",
+        "signatory_title": payload.signatory_title.strip() or "____________________________",
+        "signatory_email": payload.signatory_email.strip() or "____________________________",
+        "signature_text": "_________________________",
+        "signed_at": "—  (sign on paper or via Konekt vendor portal)",
+        "signed_ip": "—",
+    }
+    slug = "".join(c if c.isalnum() else "-" for c in payload.vendor_legal_name.lower())[:40].strip("-") or "vendor"
+    tmp = Path(tempfile.mkstemp(suffix=".pdf", prefix=f"konekt-agreement-{slug}-v{AGREEMENT_VERSION}-")[1])
+    _generate_pdf(tmp, data)
+    return FileResponse(
+        str(tmp),
+        media_type="application/pdf",
+        filename=f"konekt-vendor-agreement-{slug}-v{AGREEMENT_VERSION}.pdf",
+    )
+
+
 @admin_router.post("/nudge-unsigned")
 async def nudge_unsigned_vendors():
     """Email every vendor that has not yet signed the current agreement version.

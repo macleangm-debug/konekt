@@ -1105,6 +1105,103 @@ function PerformanceTargetsTab({ state, setState }) {
 
 
 
+function VendorContractGeneratorCard() {
+  const [form, setForm] = React.useState({
+    vendor_legal_name: "",
+    vendor_address: "",
+    vendor_phone: "",
+    signatory_name: "",
+    signatory_title: "",
+    signatory_email: "",
+  });
+  const [busy, setBusy] = React.useState(false);
+
+  const generate = async () => {
+    if (!form.vendor_legal_name.trim()) { toast.error("Vendor legal name is required"); return; }
+    setBusy(true);
+    try {
+      const r = await api.post("/api/admin/vendor-agreements/template/prefilled.pdf", form, { responseType: "blob" });
+      const blob = new Blob([r.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const slug = form.vendor_legal_name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "vendor";
+      a.download = `konekt-agreement-${slug}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Contract downloaded — share it with the vendor via email or WhatsApp");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed to generate contract");
+    } finally { setBusy(false); }
+  };
+
+  const downloadBlank = async () => {
+    setBusy(true);
+    try {
+      const r = await api.get("/api/admin/vendor-agreements/template/blank.pdf", { responseType: "blob" });
+      const blob = new Blob([r.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "konekt-vendor-agreement-blank.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Blank template downloaded");
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Failed");
+    } finally { setBusy(false); }
+  };
+
+  const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  return (
+    <SettingsSectionCard
+      title="Vendor Contract Generator"
+      description="Fill vendor details → download a pre-filled PDF of the Konekt Vendor Supply Agreement, ready to email or WhatsApp. For digital signatures, invite the vendor to sign in their portal instead."
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Vendor legal name *</label>
+          <input value={form.vendor_legal_name} onChange={update("vendor_legal_name")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Darcity Promotion Ltd" data-testid="vc-vendor-legal-name" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Vendor phone</label>
+          <input value={form.vendor_phone} onChange={update("vendor_phone")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="+255 XX XXX XXXX" data-testid="vc-vendor-phone" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Vendor registered address</label>
+          <input value={form.vendor_address} onChange={update("vendor_address")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Plot No. 45, Mwenge, Dar es Salaam, Tanzania" data-testid="vc-vendor-address" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Signatory full name</label>
+          <input value={form.signatory_name} onChange={update("signatory_name")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Jane Doe" data-testid="vc-signatory-name" />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Signatory title</label>
+          <input value={form.signatory_title} onChange={update("signatory_title")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Managing Director" data-testid="vc-signatory-title" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="text-xs font-semibold text-slate-700 mb-1 block">Signatory email</label>
+          <input value={form.signatory_email} onChange={update("signatory_email")} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="jane@darcity.tz" data-testid="vc-signatory-email" />
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 mt-4 justify-end">
+        <button onClick={downloadBlank} disabled={busy} className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50" data-testid="vc-download-blank">
+          Download blank template
+        </button>
+        <button onClick={generate} disabled={busy || !form.vendor_legal_name.trim()} className="rounded-xl bg-[#20364D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#1a2d40] disabled:opacity-50" data-testid="vc-generate-btn">
+          {busy ? "Generating…" : "Generate pre-filled PDF"}
+        </button>
+      </div>
+    </SettingsSectionCard>
+  );
+}
+
+
 function PromotionEngineDefaultsCard() {
   const [def, setDef] = React.useState({ sales_preserve_floor_pct: 10, allow_eat_platform_margin: false, default_pools: ["promotion", "reserve"] });
   const [loading, setLoading] = React.useState(true);
@@ -1380,6 +1477,9 @@ function PricingPolicyTab() {
 
       {/* Promotion Engine Defaults */}
       <PromotionEngineDefaultsCard />
+
+      {/* Vendor Contract Generator */}
+      <VendorContractGeneratorCard />
 
       {/* Live Preview */}
       <SettingsSectionCard title="Pricing Preview" description="Test how a specific base cost resolves through the pricing policy.">
