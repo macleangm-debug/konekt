@@ -3202,6 +3202,10 @@ app.include_router(public_quote_requests_router)
 from admin_product_pricing_routes import router as admin_product_pricing_router
 app.include_router(admin_product_pricing_router)
 
+# Internal Group Deals + Auto-Suggest Engine
+from admin_group_deals_internal_routes import router as admin_group_deals_internal_router
+app.include_router(admin_group_deals_internal_router)
+
 # Invoice Branding Routes — Phase F Document Branding Unification
 from invoice_branding_routes import router as invoice_branding_router
 app.include_router(invoice_branding_router)

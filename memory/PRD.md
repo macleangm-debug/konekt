@@ -9,6 +9,26 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Go-Live Cleanup + Internal Group Deals + Auto-Suggest
+1. **Go-live cleanup** via `scripts/go_live_cleanup.py` (idempotent):
+   • Deleted 38 test user accounts (TEST_*, @test.com, @example.com, konekt.demo, bot@test.com, etc.)
+   • Deleted 15 stale promotions
+   • Cleared all existing group deals (clean slate)
+   • Approved/published any still-pending Darcity products
+   • Created Darcity vendor login: **info@darcity.tz / Darcity#Konekt2026** (role=`partner_vendor`, linked to Darcity Promotion Ltd partner_id). Ops can now impersonate via `/api/admin/impersonate-partner/{partner_id}`.
+2. **Internal group deals + auto-suggest engine** — new `backend/admin_group_deals_internal_routes.py`:
+   • `POST /api/admin/group-deals/suggest` — scans catalogue, applies per-branch tier logic, returns ranked list (by discount % desc). Params: `branch`, `min_margin_pct`, `pool_share_pct`, `max_suggestions`.
+   • `POST /api/admin/group-deals/bulk-create` — creates N deals from entries (each with `product_id`, `display_target`, `duration_days`, `pool_share_pct`, `funding_source`).
+   • `GET /api/admin/group-deals/audit-wiring` — verifies every active deal/promo is wired to the correct branch tier set. Returns `{healthy_count, issues_count, issues[], verdict}`.
+3. **Funding sources** — every campaign now carries `funding_source` ∈ {`internal`, `vendor`}:
+   • `internal` — Konekt funds the entire discount from the product's distributable-margin pool (branch-specific). Never touches protected margin, never involves vendor.
+   • `vendor` — legacy behaviour, vendor shares the cost.
+   • Per-unit cap: `discount ≤ (distributable_margin_pct × pool_share_pct / 100) × customer_price`. Safety clamp ensures `discounted_price ≥ vendor_cost`.
+4. **Branch-aware pricing wiring** — every created deal stamps `pricing_branch`, `pricing_tier_label`, `internal_pool_share_pct`, `internal_pool_label` so auditors can trace exactly which tier funded it.
+5. **8 live Promotional Materials group deals** seeded (all internal funding, 40% pool-share, 14-day duration). Audit verdict: `ok` / 0 issues.
+6. **Darcity portal access ready** — `vendor@darcity.tz` user created; no linked user previously. Ops can impersonate. Credentials logged in `/app/memory/test_credentials.md`.
+
+
 ### Feb 24, 2026 (later) — Settings Hub Category Pricing UI
 1. **Category selector pill tabs** added to `PricingPolicyTab` in `AdminSettingsHubPage.jsx`:
    • 5 tabs: Default (fallback) / Promotional Materials / Office Equipment / Stationery / Services
