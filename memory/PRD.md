@@ -9,6 +9,18 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 — Zero-Value Promo Fix + Filter Parity + AI Promotion Assistant
+1. **"TZS 0 OFF" / "Save TZS 0" badges gone** — backend `product_promotion_enrichment.py` now suppresses promos where `discount_amount <= 0` or `promo_value <= 0`; frontend `ProductCardCompact` defensively hides any zero-value promo. Cleaned DB: 1 TEST_ campaign deleted, 25 unused catalog_subcategories deactivated, corrupted "Services" category id regenerated to a clean UUID.
+2. **Marketplace filter: same source of truth** — `InlineMarketplaceFilterRail` now forces desktop & mobile to consume identical `filteredCategories`/`filteredSubcategories`. With no group selected both views now show an empty category list (was: desktop showed ALL, mobile forced wizard). Replaced native `<select>` with `DesktopDropdown` that **always opens downward** with proper disabled states ("Pick a group first").
+3. **AI Promotion Assistant** — new admin feature:
+   • Backend `promotion_suggestion_routes.py`:
+     - `POST /api/admin/promotions/suggest` → ranks up to N products by expected platform profit. Respects `branch`, `min_margin_pct`, `pool_share_pct`, `promo_style` (percentage / flat_off). Never proposes `promo_price ≤ vendor_cost`.
+     - `POST /api/admin/promotions/bulk-create` → publishes selected suggestions as active `platform_promotions` rows in one call.
+   • Frontend `components/admin/PromoAISuggester.jsx` — inline card in Promotions Engine. Admin picks count + parameters → sees per-product headline + current→promo price + expected platform profit → one-click publishes all/selected.
+4. **Commit `6475cf5`**. Curl-verified: suggest returns top-3 X-Banner Stand suggestions ranked by profit (TZS 35,460 / 15,800 / 15,800). Lint clean.
+
+
+
 ### Feb 24, 2026 — Customer Copy + Payment UX + Services Mobile UX + Phone Field
 1. **Group deal copy sanitized** — `GroupDealsPages.jsx` renders a friendly "Team up with other buyers to unlock a special group price… you save TZS X per unit" blurb; legacy internal-mechanics text is auto-detected and rewritten client-side. Backend `admin_group_deals_internal_routes.py` now persists the clean `description` from the start; internal rationale stored in `internal_rationale` for admin eyes only. New admin endpoint `POST /api/admin/sanitize-group-deal-descriptions` for on-demand cleanup of existing campaigns. Preview DB sanitized (8 deals). Regenerated `backend/data/production_seed/group_deal_campaigns.json` so future deploys bake in the friendly copy.
 2. **Bank reference / Transaction ID removed** from every customer-facing payment surface (Konekt uses its own order refs):
