@@ -9,6 +9,17 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (CRITICAL) — Removed Public `/api/seed` + Added Production Cleanup Endpoint
+1. **Root cause of test data on konekt.co.tz**: a public, unauthenticated `POST /api/seed` endpoint in `server.py` was wiping `db.products` and inserting hardcoded demo products (A5 Notebook, Branded Cap, Ceramic Coffee Mug, KonektSeries*). Any unauthenticated request could nuke the catalog. Production DB was also contaminated from a separate, earlier test run (TEST_InvalidStatus_*, TEST_DupItem_*, TEST_DOTD_*).
+2. **Fixes shipped**:
+   • **Removed** `POST /api/seed` entirely (now 404).
+   • **Locked** `POST /api/admin/seed-sample-catalog` behind JWT admin auth (was open).
+   • **Added** `POST /api/admin/production-cleanup` — admin-only, idempotent. Wipes: demo-name products (A5 Notebook etc.), TEST_* products, orphaned/TEST_* group deal campaigns + their commitments, TEST_* price requests, null-body subcategory requests, null-body pricing requests, partner-less smart import sessions, TEST_* vendor submissions.
+3. **Preview DB confirmed 100% clean**: 610 Darcity products, 8 legit group deals (Wrist Bands, Gift Bags, Lanyards). Cleanup endpoint returned zero deletions — nothing left to clean.
+4. **Production DB (konekt.co.tz) still contaminated** — it's a separate deployment that hasn't received our fixes. User must `Save to GitHub` + redeploy, then POST `/api/admin/production-cleanup` once with admin auth.
+
+
+
 ### Feb 24, 2026 (latest) — Add-Vendor UI w/ Branches + Test-Data Final Purge
 1. **Add Vendor form now wires branches** — `VendorListPage.jsx` gained a required multi-select chip group (Promotional Materials / Office Equipment / Stationery / Services). Branch list is fetched from `/api/admin/vendors/branches` and filters input to the canonical 4-branch taxonomy. "Create Vendor" is disabled until name + ≥1 branch selected.
 2. **Backend branches plumbing completed** — `VendorUpdate` now persists `branches` (was previously accepted-but-ignored). `list_vendors` returns `branches` field directly from the user doc; `get_vendor/{id}` returns branches in the detail payload. Server strips non-canonical values on both create and update.

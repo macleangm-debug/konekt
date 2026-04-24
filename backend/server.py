@@ -2441,62 +2441,113 @@ async def delete_offer(offer_id: str, user: dict = Depends(get_admin_user)):
     return {"message": "Offer deleted"}
 
 # ==================== SEED DATA ====================
+# LEGACY: The former public `/api/seed` endpoint has been REMOVED.
+# It wiped `db.products` and inserted hardcoded demo products (A5 Notebook,
+# Branded Cap, KonektSeries, etc.), which caused test products to surface on
+# production after anyone hit it. Replaced by the admin-only, non-destructive
+# `/api/admin/production-cleanup` below.
 
-@api_router.post("/seed")
-async def seed_database():
-    """Seed initial products and admin user"""
-    products = [
-        # Promotional Materials - Apparel
-        {"id": str(uuid.uuid4()), "name": "Classic Cotton T-Shirt", "branch": "Promotional Materials", "category": "Apparel", "description": "Premium 100% cotton t-shirt", "base_price": 8000, "image_url": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800", "sizes": ["S", "M", "L", "XL", "XXL"], "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Black", "hex": "#000000"}, {"name": "Navy", "hex": "#1E3A5F"}], "print_methods": ["Screen Print", "DTG", "Embroidery"], "min_quantity": 10, "is_active": True, "stock_quantity": 500, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        {"id": str(uuid.uuid4()), "name": "Premium Polo Shirt", "branch": "Promotional Materials", "category": "Apparel", "description": "Professional polo shirt", "base_price": 15000, "image_url": "https://images.unsplash.com/photo-1625910513413-5fc44e16c74c?w=800", "sizes": ["S", "M", "L", "XL", "XXL"], "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Black", "hex": "#000000"}, {"name": "Navy", "hex": "#1E3A5F"}], "print_methods": ["Screen Print", "DTG", "Embroidery"], "min_quantity": 10, "is_active": True, "stock_quantity": 300, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        {"id": str(uuid.uuid4()), "name": "Branded Cap", "branch": "Promotional Materials", "category": "Apparel", "description": "Adjustable cotton cap for your brand", "base_price": 6000, "image_url": "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=800", "sizes": ["One Size"], "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Black", "hex": "#000000"}], "print_methods": ["Screen Print", "Embroidery"], "min_quantity": 20, "is_active": True, "stock_quantity": 400, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # Promotional Materials - Drinkware
-        {"id": str(uuid.uuid4()), "name": "Ceramic Coffee Mug", "branch": "Promotional Materials", "category": "Drinkware", "description": "11oz ceramic mug", "base_price": 5000, "image_url": "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=800", "sizes": ["11oz", "15oz"], "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Black", "hex": "#000000"}], "print_methods": ["Screen Print", "DTG"], "min_quantity": 12, "is_active": True, "stock_quantity": 600, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # Promotional Materials - Stationery
-        {"id": str(uuid.uuid4()), "name": "A5 Notebook", "branch": "Promotional Materials", "category": "Stationery", "description": "Hardcover A5 notebook", "base_price": 8000, "image_url": "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800", "sizes": ["A5", "A4"], "colors": [{"name": "Black", "hex": "#000000"}, {"name": "Navy", "hex": "#1E3A5F"}], "print_methods": ["Screen Print", "DTG"], "min_quantity": 25, "is_active": True, "stock_quantity": 350, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # Promotional Materials - Signage
-        {"id": str(uuid.uuid4()), "name": "Roll-Up Banner", "branch": "Promotional Materials", "category": "Signage", "description": "85x200cm retractable banner", "base_price": 45000, "image_url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800", "sizes": ["85x200cm", "100x200cm"], "colors": [], "print_methods": ["Screen Print"], "min_quantity": 1, "is_active": True, "stock_quantity": 100, "is_customizable": True, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # KonektSeries - Caps
-        {"id": str(uuid.uuid4()), "name": "KonektSeries Classic Cap", "branch": "KonektSeries", "category": "Caps", "description": "Premium embroidered cap with exclusive Konekt branding. Perfect for everyday streetwear style.", "base_price": 25000, "image_url": "https://images.unsplash.com/photo-1560774358-d727658f457c?w=800", "sizes": ["One Size"], "colors": [{"name": "Navy", "hex": "#2D3E50"}, {"name": "Black", "hex": "#000000"}], "print_methods": [], "min_quantity": 1, "is_active": True, "stock_quantity": 150, "is_customizable": False, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # KonektSeries - Hats
-        {"id": str(uuid.uuid4()), "name": "KonektSeries Snapback Hat", "branch": "KonektSeries", "category": "Hats", "description": "Stylish snapback hat with signature Konekt logo. Adjustable fit for all head sizes.", "base_price": 28000, "image_url": "https://images.pexels.com/photos/29926576/pexels-photo-29926576.jpeg?w=800", "sizes": ["One Size"], "colors": [{"name": "Navy", "hex": "#2D3E50"}, {"name": "Gold", "hex": "#D4A843"}], "print_methods": [], "min_quantity": 1, "is_active": True, "stock_quantity": 100, "is_customizable": False, "created_at": datetime.now(timezone.utc).isoformat()},
-        {"id": str(uuid.uuid4()), "name": "KonektSeries Premium Bucket Hat", "branch": "KonektSeries", "category": "Hats", "description": "Trendy bucket hat with embroidered Konekt logo. Sun protection with style.", "base_price": 22000, "image_url": "https://images.unsplash.com/photo-1721637700386-9cf9a860bbea?w=800", "sizes": ["S/M", "L/XL"], "colors": [{"name": "Navy", "hex": "#2D3E50"}, {"name": "Tan", "hex": "#D2B48C"}], "print_methods": [], "min_quantity": 1, "is_active": True, "stock_quantity": 120, "is_customizable": False, "created_at": datetime.now(timezone.utc).isoformat()},
-        
-        # KonektSeries - Shorts
-        {"id": str(uuid.uuid4()), "name": "KonektSeries Urban Shorts", "branch": "KonektSeries", "category": "Shorts", "description": "Comfortable cotton shorts with Konekt branding. Perfect for casual wear and outdoor activities.", "base_price": 35000, "image_url": "https://images.pexels.com/photos/5990682/pexels-photo-5990682.jpeg?w=800", "sizes": ["S", "M", "L", "XL", "XXL"], "colors": [{"name": "Navy", "hex": "#2D3E50"}, {"name": "Black", "hex": "#000000"}, {"name": "Grey", "hex": "#6B7280"}], "print_methods": [], "min_quantity": 1, "is_active": True, "stock_quantity": 200, "is_customizable": False, "created_at": datetime.now(timezone.utc).isoformat()},
+
+# ==================== PRODUCTION CLEANUP (admin-only) ====================
+
+@api_router.post("/admin/production-cleanup")
+async def production_cleanup(user: dict = Depends(get_admin_user)):
+    """Idempotent production cleanup — wipes test/demo data WITHOUT touching
+    real Darcity content. Safe to call repeatedly.
+
+    Removes:
+      • Hardcoded demo products (A5 Notebook, Branded Cap, KonektSeries*, etc.)
+      • Any product whose name begins with TEST_ (any casing)
+      • Group deal campaigns referencing TEST_* products
+      • Price requests, sessions, import jobs, subcategory requests from tests
+      • Empty/null placeholder rows in approval queues
+    """
+    DEMO_NAMES = [
+        "A5 Notebook", "A4 Notebook", "Classic Cotton T-Shirt", "Premium Polo Shirt",
+        "Branded Cap", "Trucker Cap", "Ceramic Coffee Mug", "Roll-Up Banner",
+        "KonektSeries Classic Cap", "KonektSeries Snapback Hat",
+        "KonektSeries Premium Bucket Hat", "KonektSeries Urban Shorts",
     ]
-    
-    await db.products.delete_many({})
-    await db.products.insert_many(products)
-    
-    # Create admin user if not exists
-    admin_email = "info@konekt.co.tz"
-    existing_admin = await db.users.find_one({"email": admin_email})
-    if not existing_admin:
-        admin_id = str(uuid.uuid4())
-        admin_doc = {
-            "id": admin_id,
-            "email": admin_email,
-            "password_hash": hash_password("password123"),
-            "full_name": "Konekt Admin",
-            "phone": "+255 XXX XXX XXX",
-            "company": "Konekt Limited",
-            "points": 0,
-            "referral_code": generate_referral_code(admin_id),
-            "referred_by": None,
-            "total_referrals": 0,
-            "role": "admin",
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.users.insert_one(admin_doc)
-    
-    return {"message": f"Seeded {len(products)} products and admin user"}
+    TEST_RX = {"$regex": "^TEST_", "$options": "i"}
+    report = {}
+
+    # 1) Products — delete demo seed names + TEST_* regardless of source
+    r = await db.products.delete_many({
+        "$or": [
+            {"name": {"$in": DEMO_NAMES}},
+            {"name": TEST_RX},
+        ]
+    })
+    report["products_deleted"] = r.deleted_count
+
+    # 2) Group deal campaigns — strip TEST_ + orphaned (product no longer exists)
+    live_pids = set(await db.products.distinct("id"))
+    gd_kill = []
+    async for d in db.group_deal_campaigns.find({}, {"_id": 0, "id": 1, "product_name": 1, "product_id": 1}):
+        pn = (d.get("product_name") or "").upper()
+        if pn.startswith("TEST_") or (d.get("product_id") and d["product_id"] not in live_pids):
+            gd_kill.append(d["id"])
+    if gd_kill:
+        r = await db.group_deal_campaigns.delete_many({"id": {"$in": gd_kill}})
+        report["group_deals_deleted"] = r.deleted_count
+        # Also remove any commitments pointing at them
+        r = await db.group_deal_commitments.delete_many({"campaign_id": {"$in": gd_kill}})
+        report["group_deal_commitments_deleted"] = r.deleted_count
+    else:
+        report["group_deals_deleted"] = 0
+        report["group_deal_commitments_deleted"] = 0
+
+    # 3) Price requests — TEST_ prefix or clearly empty
+    r = await db.price_requests.delete_many({
+        "$or": [
+            {"product_or_service": TEST_RX},
+            {"product_or_service": ""},
+            {"requested_by": {"$regex": "test", "$options": "i"}},
+            {"requested_by_name": {"$regex": "test", "$options": "i"}},
+        ]
+    })
+    report["price_requests_deleted"] = r.deleted_count
+
+    # 4) Catalog subcategory requests — null-name entries are test artifacts
+    r = await db.catalog_subcategory_requests.delete_many({
+        "$or": [
+            {"requested_by": {"$regex": "^test", "$options": "i"}},
+            {"requested_by": None},
+            {"name": None},
+        ]
+    })
+    report["subcategory_requests_deleted"] = r.deleted_count
+
+    # 5) Business pricing requests with null bodies
+    r = await db.business_pricing_requests.delete_many({
+        "$and": [
+            {"vendor_id": None}, {"partner_id": None}, {"requested_by": None},
+        ]
+    })
+    report["business_pricing_requests_deleted"] = r.deleted_count
+
+    # 6) Smart import sessions without a real partner
+    r = await db.smart_import_sessions.delete_many({
+        "$or": [{"partner_id": None}, {"partner_id": ""}],
+    })
+    report["smart_import_sessions_deleted"] = r.deleted_count
+
+    # 7) Vendor product submissions that are orphaned / TEST
+    r = await db.vendor_product_submissions.delete_many({
+        "$or": [
+            {"name": TEST_RX},
+            {"product_name": TEST_RX},
+        ]
+    })
+    report["vendor_product_submissions_deleted"] = r.deleted_count
+
+    report["products_remaining"] = await db.products.count_documents({})
+    report["group_deals_remaining"] = await db.group_deal_campaigns.count_documents({})
+    report["executed_by"] = user.get("email")
+    report["executed_at"] = datetime.now(timezone.utc).isoformat()
+    return report
+
+
 
 # ==================== ROOT ====================
 

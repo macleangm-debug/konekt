@@ -1,11 +1,15 @@
 """
 Seed Sample Catalog Routes
 Seeds sample products and services for testing
+SECURITY: Admin-only. Was previously publicly accessible and is a vector for
+          re-introducing demo data onto production. Guard added Apr 2026.
 """
 import os
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorClient
+import jwt
 
 router = APIRouter(prefix="/api/admin/seed-sample-catalog", tags=["Seed Sample Catalog"])
 
@@ -15,10 +19,26 @@ db_name = os.environ.get('DB_NAME', 'konekt_db')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
+JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
+_security = HTTPBearer(auto_error=False)
+
+
+async def _require_admin(credentials: HTTPAuthorizationCredentials = Depends(_security)):
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=["HS256"])
+        user = await db.users.find_one({"id": payload.get("user_id")}, {"_id": 0})
+        if not user or user.get("role") not in ("admin", "super_admin"):
+            raise HTTPException(status_code=403, detail="Admin access required")
+        return user
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.post("")
-async def seed_sample_catalog():
-    """Seed sample products and services for testing"""
+async def seed_sample_catalog(user: dict = Depends(_require_admin)):
+    """Seed sample products and services for testing (admin-only)."""
     now = datetime.utcnow()
     
     # Sample service groups
