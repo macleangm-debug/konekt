@@ -49,19 +49,25 @@ async def main():
         new_price = round(cost * (1 + margin_pct / 100.0), 0)  # round to whole TZS
         old_price = p.get("customer_price", 0) or 0
 
+        tier_meta = {
+            "pricing_tier_label": tier.get("label"),
+            "pricing_total_margin_pct": margin_pct,
+            "pricing_protected_margin_pct": float(tier.get("protected_platform_margin_pct", 0)),
+            "pricing_distributable_margin_pct": float(tier.get("distributable_margin_pct", 0)),
+        }
+
         if abs(new_price - old_price) <= 1:
+            # Price already correct — still ensure tier metadata is persisted
+            await db.products.update_one({"_id": p["_id"]}, {"$set": tier_meta})
             breakdown["preserved"] += 1
             continue
 
         await db.products.update_one(
             {"_id": p["_id"]},
             {"$set": {
+                **tier_meta,
                 "customer_price": new_price,
                 "base_price": new_price,
-                "pricing_tier_label": tier.get("label"),
-                "pricing_total_margin_pct": margin_pct,
-                "pricing_protected_margin_pct": float(tier.get("protected_platform_margin_pct", 0)),
-                "pricing_distributable_margin_pct": float(tier.get("distributable_margin_pct", 0)),
                 "pricing_last_realigned": True,
             }},
         )

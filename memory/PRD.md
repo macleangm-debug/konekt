@@ -9,6 +9,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (later) — Pricing Engine Enforcement + Per-Product Overrides (P1)
+1. **Verified & hardened the pricing engine** — the Settings Hub `pricing_policy_tiers` are now the single source of truth for Konekt customer prices. Every product's `customer_price = vendor_cost × (1 + tier.total_margin_pct/100)`. Darcity's raw prices are stored as `vendor_cost` (never shown to customers). Example: `Cooltex Polo - Dark Grey - Large` has vendor_cost=25,000 → marketplace price 33,750 (35% Small tier margin = 23% protected + 12% distributable).
+2. **`scripts/reprice_all_with_pricing_engine.py`** realigned 73 products that had drifted from the pricing engine (URL-import used flat 35% markup, which mis-priced items crossing tier boundaries). Now idempotent — also backfills tier metadata (`pricing_tier_label`, `pricing_total_margin_pct`, `pricing_protected_margin_pct`, `pricing_distributable_margin_pct`) on every product, every run.
+3. **URL-import pipeline now uses the pricing engine** — `smart_bulk_import_routes.py` loads `pricing_policy_tiers` once per commit and applies `resolve_tier(vendor_cost)` per row. Future imports auto-apply proper Konekt margin structure (no more flat 35%).
+4. **Catalog-wide duplicate audit** — `scripts/catalog_wide_dedup.py` scans every product across every category for variant duplicates (same canonical base + normalised size token, treating 1XL=XLarge, 2XL=XXLarge etc.). Result: **0 remaining duplicates** after Cooltex cleanup. Re-runnable with `--apply`.
+5. **P1: Per-product price overrides** — new `backend/admin_product_pricing_routes.py`:
+   • `POST /api/admin/products/{product_id}/price-override` — modes: `percentage_off`, `fixed`, `clear`. Preserves `base_price` as engine-calculated reference; sets `customer_price_override` + audit fields (`price_override_mode`, `price_override_value`, `price_override_reason`, `price_override_set_by`, `price_override_set_at`).
+   • `POST /api/admin/products/bulk-price-override` — apply same override to an array of product_ids.
+   • Stacks on top of bulk promotions (promotion engine wins when active); override survives tier realignment because `customer_price_override` is preserved.
+6. **Inline admin UI** — `AdminProducts.js` now has an `InlinePriceOverride` mini-editor on every product card: `% Off` / `Fixed TZS` toggle + reason input + live preview of final price. "Override" badge shows when active. Card price line shows "vendor cost + margin %" under the marketplace price.
+7. **Testing agent verification (iteration 349)** — 8/9 backend tests pass, 100% frontend smoke. Cooltex variant chip selector works end-to-end (image + price swap on chip click). Only flagged issue was `pricing_tier_label` missing on preserved products — fixed via the reprice backfill.
+
+
 ### Feb 24, 2026 (later) — Cooltex Dedup + Services Cleanup + Public Quote Endpoint
 1. **Orphan Cooltex SKUs renamed** — 20 products with name patterns like "Yellow Large", "T.Blue 2XL", "White Small", "Golden Yellow - Small" were missing the "Cooltex Polo -" prefix. Script `scripts/cleanup_cooltex_and_services_2026_02.py` prefixed them all (e.g. "Yellow 1XL" → "Cooltex Polo - Yellow - 1XL") and stored the original name on `original_name_before_cleanup` for auditability.
 2. **True duplicates deleted** — Darcity had both a "Yellow Small" @ 31,050 TZS and a "Cooltex Polo - Yellow - Small" @ 33,750 TZS (different price tiers, same canonical size once notation is normalised — 1XL = XLarge, 2XL = XXLarge, 3XL = XXXLarge). `scripts/dedupe_cooltex_variants.py` normalised size tokens and deleted the cheaper duplicate where a native SKU already existed — **6 duplicates removed**. Cooltex now has 10 clean cards, each colour with a unique size set.
