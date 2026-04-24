@@ -100,7 +100,7 @@ export default function ProductCardCompact({ product, onDetail, onAddToCart, onR
             className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold shadow-sm"
             data-testid={`promo-badge-${product?.id}`}
           >
-            {promo.discount_label}
+            Save {money(promo.discount_amount)}
           </span>
         )}
         {product?.variant_count > 1 && (

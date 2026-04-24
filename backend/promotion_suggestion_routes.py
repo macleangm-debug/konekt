@@ -116,11 +116,21 @@ def _suggest_for_product(
     # Round the percentage to a whole number for cleaner promo labels (e.g. 12% off)
     round_pct = round(max_discount_pct)
 
-    # Generate a punchy customer-facing headline
-    if promo_style == "percentage":
+    # Headline rule: always show TZS saved, because distributable margin %
+    # on a full price is typically small (e.g. 4%) and "4% off" reads like
+    # a non-event. The ONLY time we show a percent is when the admin forces
+    # `promo_style="percentage"` AND the percent exceeds the distributable
+    # margin — i.e. they're running a deeper promo that's meaningful in %
+    # terms.
+    use_percent = (
+        promo_style == "percentage" and max_discount_pct > distributable_pct
+    )
+    if use_percent:
         headline = f"{round_pct}% off {p.get('name')}"
+        effective_style = "percentage"
     else:
-        headline = f"TZS {int(discount_amount):,} off {p.get('name')}"
+        headline = f"Save TZS {int(discount_amount):,} on {p.get('name')}"
+        effective_style = "flat_off"
 
     return {
         "product_id": p.get("id") or str(p.get("_id")),
@@ -138,14 +148,15 @@ def _suggest_for_product(
         "total_margin_pct": total_margin_pct,
         "distributable_margin_pct": distributable_pct,
         "expected_platform_profit": expected_platform_profit,
-        "promo_style": promo_style,
+        "promo_style": effective_style,
         "suggested_duration_days": 14,
         "headline": headline,
         # Hidden admin reasoning — kept separate from any customer-visible fields.
         "internal_rationale": (
             f"Pool-share {pool_share_pct:.0f}% of the {distributable_pct:.0f}% "
-            f"distributable margin for {tier['label']} tier → {round_pct}% off "
-            f"preserves ~{expected_platform_profit:,.0f} TZS platform profit/unit."
+            f"distributable margin for {tier['label']} tier → customers save "
+            f"TZS {int(discount_amount):,} while preserving ~"
+            f"{expected_platform_profit:,.0f} TZS platform profit/unit."
         ),
     }
 
@@ -159,7 +170,7 @@ class SuggestParams(BaseModel):
     pool_share_pct: float = 35.0
     max_suggestions: int = 5
     product_ids: Optional[List[str]] = None
-    promo_style: str = "percentage"  # "percentage" | "flat_off"
+    promo_style: str = "flat_off"  # "flat_off" (default) | "percentage" (override)
 
 
 class BulkEntry(BaseModel):
@@ -167,7 +178,7 @@ class BulkEntry(BaseModel):
     discount_pct: float = 0.0
     discount_amount: float = 0.0
     duration_days: int = 14
-    promo_style: str = "percentage"
+    promo_style: str = "flat_off"
     headline: Optional[str] = None
 
 
@@ -243,7 +254,7 @@ async def bulk_create_promotions(req: BulkCreateRequest, user: dict = Depends(_r
 
         doc = {
             "id": promo_id,
-            "title": e.headline or f"{int(e.discount_pct)}% off {product.get('name')}",
+            "title": e.headline or f"Save TZS {int(e.discount_amount):,} on {product.get('name')}",
             "promo_type": promo_type,
             "promo_value": promo_value,
             "target_product_ids": [e.product_id],

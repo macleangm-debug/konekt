@@ -26,8 +26,9 @@ export default function PromoAISuggester({ onCreated }) {
     min_margin_pct: 10,
     pool_share_pct: 35,
     max_suggestions: 5,
-    promo_style: "percentage",
+    promo_style: "flat_off",
   });
+  const [advanced, setAdvanced] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -135,7 +136,7 @@ export default function PromoAISuggester({ onCreated }) {
       {open && (
         <div className="mt-5 pt-5 border-t border-amber-200/60 space-y-4">
           {/* Parameters */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
               <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">How many?</label>
               <input
@@ -177,19 +178,41 @@ export default function PromoAISuggester({ onCreated }) {
                 data-testid="ai-param-pool-share"
               />
             </div>
-            <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1">Style</label>
-              <select
-                value={params.promo_style}
-                onChange={(e) => setParams((p) => ({ ...p, promo_style: e.target.value }))}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-[#D4A843]"
-                data-testid="ai-param-style"
-              >
-                <option value="percentage">% off</option>
-                <option value="flat_off">Flat TZS off</option>
-              </select>
-            </div>
           </div>
+
+          {/* Advanced: let an admin force percentage-style labels (only
+              meaningful if they're running a promo deeper than the
+              distributable margin).  Hidden by default — the default
+              label "Save TZS X" is what we use in 99% of cases. */}
+          <button
+            type="button"
+            onClick={() => setAdvanced((v) => !v)}
+            className="text-xs text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
+            data-testid="ai-advanced-toggle"
+          >
+            {advanced ? "– Hide" : "+ Advanced"} label style
+          </button>
+          {advanced && (
+            <div className="mt-1 flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-slate-200">
+              <span className="text-[11px] uppercase tracking-wider font-bold text-slate-600">Label</span>
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input
+                  type="radio" name="promo_style" value="flat_off"
+                  checked={params.promo_style === "flat_off"}
+                  onChange={() => setParams((p) => ({ ...p, promo_style: "flat_off" }))}
+                />
+                Save TZS X
+              </label>
+              <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                <input
+                  type="radio" name="promo_style" value="percentage"
+                  checked={params.promo_style === "percentage"}
+                  onChange={() => setParams((p) => ({ ...p, promo_style: "percentage" }))}
+                />
+                % off (only when &gt; distributable margin)
+              </label>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <Button

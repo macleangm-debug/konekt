@@ -90,7 +90,11 @@ async def enrich_product_with_promotion(product: dict, db=None) -> dict:
         "original_price": selling_price,
         "promo_price": promo_price,
         "discount_amount": discount_amount,
-        "discount_label": f"{promo_value}% OFF" if promo_type == "percentage" else f"TZS {int(promo_value):,} OFF",
+        # House style: customer-facing label is ALWAYS "Save TZS X" — we
+        # don't surface % because distributable-margin slices are typically
+        # single-digit percents on full prices. The raw percent stays
+        # available via promo_type/promo_value for admin surfaces.
+        "discount_label": f"Save TZS {int(discount_amount):,}",
     }
 
     return product
