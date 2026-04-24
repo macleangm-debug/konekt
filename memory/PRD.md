@@ -9,6 +9,27 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (RESOLVED) — Production LIVE with real Darcity data 🎉
+**Final state of konekt.co.tz** (verified via curl + screenshot):
+- ✅ Backend healthy (200 on `/api/health`)
+- ✅ **415 real Darcity products** on the marketplace page
+- ✅ **6 active Group Deals** (Wrist Bands x3 colors, Gift Bags x2, Lanyards)
+- ✅ **Deal of the Day: "Wrist Bands — White"** at TZS 2,796 with real product photo
+- ✅ Zero TEST_ / A5 Notebook / demo contamination
+- ✅ Images load correctly (HTTP 200, ~30KB each)
+
+**What finally unlocked it**:
+1. Previous commits (seed bundle + background hydration) had deployed successfully — `/api/admin/force-hydrate` returned 200, reporting "610 Darcity products already present".
+2. The user's browser was showing **stale cached data**. Hard refresh revealed the real live state.
+3. Also committed `backend/.env` + `frontend/.env` + cleaned `.gitignore` (commit `3e8baa6`) as a deployment safety net — these weren't technically causing the current issue but would have caused issues on any fresh environment.
+
+**Admin endpoints now available on prod**:
+- `POST /api/admin/force-hydrate` — idempotent re-seed from bundle
+- `POST /api/admin/wipe-and-hydrate` — nuke + re-seed (destructive)
+- `POST /api/admin/production-cleanup` — prune test/demo contamination (currently returns 500 on prod — low-priority since data is already clean)
+
+
+
 ### Feb 24, 2026 (HOTFIX) — Hydration Moved to Background + Read-only FS Defence
 **Problem**: After the first deploy of the hydration service, production (`konekt.co.tz`) started returning 502 Bad Gateway / 520 on most endpoints. Root cause: the startup `run_production_hydration` call was running synchronously in `@app.on_event("startup")` and could take 15-30s (tarball extraction of 605 images + bulk insert of 610 products). Kubernetes readiness probe timed out → container killed → crash loop.
 
