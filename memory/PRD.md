@@ -208,6 +208,19 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
      - Back arrow, Close X, persistent "Show Results (N)" CTA at the bottom
      - No more nested `<select>` pop-ups on mobile (kept on desktop where the drop-down UX works)
 124. **Vendor Contract Generator in Settings Hub → Pricing Policy tab**. Fill vendor legal name / address / phone / signatory name + title + email → "Generate pre-filled PDF" downloads `konekt-agreement-<slug>.pdf` ready to email or WhatsApp. New endpoint `POST /api/admin/vendor-agreements/template/prefilled.pdf` takes a `PrefilledTemplatePayload` and returns the PDF. The existing "Download blank template" button still works for generic copies.
+125. **Taxonomy locked to 4 production categories** — deactivated all other categories. Final state:
+     - Products group → Promotional Materials (39 subs), Office Equipment (11 subs), Stationery (10 subs)
+     - Services group → Services (1 default)
+     - All 616 Darcity products map cleanly to Promotional Materials; other categories ready for new vendors.
+126. **Legacy launch promos cleared** — `TEST_Admin Override Promo` (`discount_value: 0`) in `promotions` collection and `Launch Special 5% Off` in `platform_promotions` were rendering "TZS 0 OFF" / bogus "Save TZS 0" chips on every Darcity card because they resolved against global scope. Both deactivated; Smart Promotion Engine now the only active promo path.
+127. **Sort moved to bottom sheet on mobile** — matches the Filter drawer UX. Handle bar, "Sort by" title, big tappable options with checkmark on the active sort, slides up from bottom. Same file as the cascading filter rail so behaviour is consistent across mobile views.
+128. **Clean launch state** — 616 Darcity products only, 5 partners (Darcity + platform defaults), 0 marketplace_listings, 0 test submissions.
+
+### IndexNow setup complete (Apr 24, 2026)
+129. **INDEXNOW_KEY** generated and wired:
+     - Key file at `/app/frontend/public/c91fe737d8f5e21468194482909dda48.txt` (verified HTTP 200 at preview URL; will flip to 200 on konekt.co.tz post-deploy)
+     - `INDEXNOW_KEY=c91fe737d8f5e21468194482909dda48` added to `/app/backend/.env`
+     - Sitemap regen automatically pings IndexNow — Bing/Yandex/Naver/Seznam will auto-index catalog changes within minutes post-deploy
 
 ### Deployment Notes (latest)
 - `products` collection is the canonical marketplace feed (read by `/api/products`, limit 2000). `partner_catalog_items` is the vendor's private SKU list.

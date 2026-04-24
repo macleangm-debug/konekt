@@ -206,38 +206,55 @@ function MobileFilterBar({ filters, onChange, groups, filteredCategories, filter
           )}
         </button>
 
-        {/* Sort dropdown */}
-        <div className="relative" ref={sortRef}>
-          <button
-            onClick={() => setSortOpen(!sortOpen)}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium hover:bg-slate-50 transition"
-            data-testid="mobile-sort-btn"
-          >
-            <ArrowUpDown className="w-4 h-4" />
-            {sortLabels[filters.sort] || "Sort"}
-            <ChevronDown className={`w-3 h-3 transition-transform ${sortOpen ? "rotate-180" : ""}`} />
-          </button>
-          {sortOpen && (
-            <div className="absolute top-full left-0 mt-1 z-50 w-44 rounded-xl bg-white border shadow-lg overflow-hidden" data-testid="mobile-sort-dropdown">
-              {Object.entries(sortLabels).map(([val, label]) => (
-                <button
-                  key={val}
-                  onClick={() => { onChange({ ...filters, sort: val }); setSortOpen(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm transition
-                    ${filters.sort === val ? "bg-[#20364D]/5 text-[#20364D] font-semibold" : "hover:bg-slate-50"}`}
-                  data-testid={`mobile-sort-${val}`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Sort — bottom sheet on mobile (matches Filter UX) */}
+        <button
+          onClick={() => setSortOpen(true)}
+          className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium hover:bg-slate-50 transition"
+          data-testid="mobile-sort-btn"
+        >
+          <ArrowUpDown className="w-4 h-4" />
+          {sortLabels[filters.sort] || "Sort"}
+          <ChevronDown className="w-3 h-3" />
+        </button>
 
         <span className="ml-auto text-xs text-slate-500" data-testid="mobile-result-count">
           {resultCount} result{resultCount !== 1 ? "s" : ""}
         </span>
       </div>
+
+      {/* Sort bottom sheet (mobile) */}
+      {sortOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-[60]" onClick={() => setSortOpen(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col animate-in slide-in-from-bottom duration-200" data-testid="mobile-sort-sheet">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-slate-300" />
+            </div>
+            <div className="flex items-center justify-between py-3 px-5 border-b">
+              <h3 className="text-base font-bold text-[#20364D]">Sort by</h3>
+              <button onClick={() => setSortOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+            <div className="px-5 py-3 space-y-2">
+              {Object.entries(sortLabels).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => { onChange({ ...filters, sort: val }); setSortOpen(false); }}
+                  className={`w-full flex items-center justify-between px-4 py-4 rounded-xl border transition
+                    ${filters.sort === val ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 hover:border-slate-300"}`}
+                  data-testid={`mobile-sort-${val}`}
+                >
+                  <span className={`font-semibold ${filters.sort === val ? "text-[#20364D]" : "text-slate-700"}`}>{label}</span>
+                  {filters.sort === val && (
+                    <svg className="w-5 h-5 text-[#20364D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* ═══ BOTTOM DRAWER — cascading "rainfall" step-by-step flow ═══ */}
       {drawerOpen && (
