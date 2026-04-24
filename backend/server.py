@@ -2548,6 +2548,42 @@ async def production_cleanup(user: dict = Depends(get_admin_user)):
     return report
 
 
+@api_router.post("/admin/force-hydrate")
+async def force_hydrate(user: dict = Depends(get_admin_user)):
+    """Manually trigger Darcity hydration from the bundled seed.
+
+    Useful when the startup hydration was skipped because the DB already
+    had some (non-Darcity) products, or on a deployed environment where
+    you want to reset + reload without redeploying. Runs synchronously
+    and returns the report.
+    """
+    from services.production_hydration import run_production_hydration
+    report = await run_production_hydration(db)
+    return report
+
+
+@api_router.post("/admin/wipe-and-hydrate")
+async def wipe_and_hydrate(user: dict = Depends(get_admin_user)):
+    """Destructive: wipe `products` + `group_deal_campaigns` then re-seed
+    from the bundled Darcity snapshot. Use ONLY to reset a contaminated
+    production to the clean Darcity baseline.
+    """
+    wiped_products = (await db.products.delete_many({})).deleted_count
+    wiped_gd = (await db.group_deal_campaigns.delete_many({})).deleted_count
+    wiped_commit = (await db.group_deal_commitments.delete_many({})).deleted_count
+
+    from services.production_hydration import run_production_hydration
+    report = await run_production_hydration(db)
+    return {
+        "wiped": {
+            "products": wiped_products,
+            "group_deal_campaigns": wiped_gd,
+            "group_deal_commitments": wiped_commit,
+        },
+        "hydration": report,
+    }
+
+
 
 # ==================== ROOT ====================
 
@@ -3460,12 +3496,14 @@ async def startup_event():
     # ─── Production hydration ─────────────────────────────────────────
     # Prunes demo/TEST_* contamination + (on fresh deploys) auto-loads
     # the real Darcity catalog so konekt.co.tz is live immediately post
-    # deploy. Fully idempotent, safe on every boot.
+    # deploy. Scheduled as a BACKGROUND task so it never blocks startup —
+    # Kubernetes readiness probes have short timeouts; tarball extraction
+    # must not hold up the HTTP server boot.
     try:
-        from services.production_hydration import run_production_hydration
-        await run_production_hydration(db)
+        from services.production_hydration import schedule_production_hydration
+        schedule_production_hydration(db)
     except Exception as e:
-        logger.warning("Production hydration: %s", e)
+        logger.warning("Production hydration schedule: %s", e)
 
     # Seed notification defaults
     try:

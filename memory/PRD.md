@@ -9,6 +9,25 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ## ALL FEATURES COMPLETE (Apr 17-20, 2026)
 
+### Feb 24, 2026 (HOTFIX) — Hydration Moved to Background + Read-only FS Defence
+**Problem**: After the first deploy of the hydration service, production (`konekt.co.tz`) started returning 502 Bad Gateway / 520 on most endpoints. Root cause: the startup `run_production_hydration` call was running synchronously in `@app.on_event("startup")` and could take 15-30s (tarball extraction of 605 images + bulk insert of 610 products). Kubernetes readiness probe timed out → container killed → crash loop.
+
+**Fix**:
+1. `services/production_hydration.py` now exposes `schedule_production_hydration(db)` that wraps the heavy work in `asyncio.create_task(...)` so FastAPI startup returns in ~2s. Hydration runs immediately after (but doesn't block serving).
+2. `server.py` startup hook calls the scheduler instead of awaiting the hydration.
+3. Hardened `_extract_image_tarball`:
+   • Write-probe on `/app/uploads` before extracting — on a read-only filesystem it no-ops gracefully instead of crashing.
+   • Every step wrapped in try/except, returns `0` extracted on any failure.
+   • Logs a loud warning if the tarball file isn't in the deploy image (e.g. excluded by deploy build).
+4. Added two admin-only endpoints:
+   • `POST /api/admin/force-hydrate` — manually trigger hydration on demand, returns the report.
+   • `POST /api/admin/wipe-and-hydrate` — destructive: wipe `products` + `group_deal_campaigns` + commitments, then re-seed. Last resort to reset a contaminated production.
+5. **Preview re-verified**: backend healthy in 2s after restart, marketplace returns 610 Darcity products, group deals return 8 real deals.
+
+**Net result**: One deploy → backend boots instantly → hydration populates 610 products + 8 deals + 605 images in the background → homepage lights up within ~30s. If anything fails, `/api/admin/force-hydrate` and `/api/admin/wipe-and-hydrate` are available for manual recovery.
+
+
+
 ### Feb 24, 2026 (CRITICAL) — Self-Hydrating Production Deploy (11MB seed bundle)
 The previous fix removed the `/api/seed` attack vector but still required the user to manually repopulate production. To make **one-click deploy = live Darcity site**, we now bundle the real data as a repo-committed seed and auto-hydrate on every startup.
 

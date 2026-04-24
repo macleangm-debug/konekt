@@ -138,16 +138,34 @@ async def _prune_contamination(db) -> dict:
 
 
 async def _extract_image_tarball() -> int:
-    """Unpack the bundled product images if they're not yet on disk."""
+    """Unpack the bundled product images if they're not yet on disk.
+
+    Safe on read-only / containerised filesystems: any failure is caught
+    and reported as 0 rather than crashing startup.
+    """
     tar_path = SEED_DIR / "darcity_images.tar.gz"
     if not tar_path.exists():
+        logger.warning("production_hydration: no image tarball at %s", tar_path)
         return 0
     target_root = Path("/app/uploads")
-    target_root.mkdir(parents=True, exist_ok=True)
+    try:
+        target_root.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        logger.warning("cannot create upload dir %s: %s", target_root, exc)
+        return 0
+
+    # Quick writability probe — abort gracefully on read-only mounts
+    probe = target_root / ".write_probe"
+    try:
+        probe.write_bytes(b"ok")
+        probe.unlink(missing_ok=True)
+    except Exception as exc:
+        logger.warning("upload dir not writable (read-only?): %s", exc)
+        return 0
+
     try:
         with tarfile.open(tar_path, "r:gz") as tf:
             tf.extractall(path=target_root)
-        # Count extracted files for the log line
         count = 0
         for _r, _d, files in os.walk(target_root / "product_images" / "url_import"):
             count += len(files)
@@ -242,9 +260,8 @@ async def _hydrate_darcity(db) -> dict:
     report["darcity_users"] = len(darcity_users)
 
     # 4) Products (the main payload)
-    report["products_loaded"] = await _bulk_upsert(
-        db, "products", _read_seed("products")
-    )
+    products_seed = _read_seed("products")
+    report["products_loaded"] = await _bulk_upsert(db, "products", products_seed)
 
     # 5) Group deals (keyed by campaign_id, not id)
     report["group_deals_loaded"] = await _bulk_upsert(
@@ -286,3 +303,32 @@ async def run_production_hydration(db) -> dict:
     except Exception as exc:
         logger.error("production_hydration failed: %s", exc, exc_info=True)
         return {"error": str(exc)}
+
+
+def schedule_production_hydration(db) -> None:
+    """Fire-and-forget the hydration.
+
+    The heavy work (tarball extraction, 610-doc bulk insert) must NOT block
+    FastAPI startup — Kubernetes readiness probes time out in seconds and will
+    kill the container, causing a crash loop on konekt.co.tz.
+
+    We launch a background asyncio task so `startup_event` returns immediately
+    and the HTTP server starts serving traffic straight away. The hydration
+    then runs asynchronously and logs its progress. On first boot the homepage
+    may show 'loading' for ~15-30s before Darcity products populate — that's
+    vastly preferable to a container that never comes up.
+    """
+    import asyncio
+
+    async def _runner():
+        try:
+            await run_production_hydration(db)
+        except Exception as exc:
+            logger.error("background hydration crashed: %s", exc, exc_info=True)
+
+    try:
+        asyncio.create_task(_runner())
+        logger.info("production_hydration: scheduled in background")
+    except Exception as exc:
+        logger.error("failed to schedule hydration: %s", exc, exc_info=True)
+
