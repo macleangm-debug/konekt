@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 352 — Affiliate Gap Closure. Backend: 7/7 executed pytest tests passed (1 skipped because admin notifications listing endpoint not publicly accessible from BASE_URL — verified persistence via direct DB query: notifications collection has affiliate_application_received entries with target_type=admin). Frontend: /earn page clean (no Program Guidelines / margin protection, has 'Why Konekt Affiliates Win' with 3 bullets, single PublicNavbarV2). /partners/apply uses single PublicNavbarV2, all step-1 fields present including Gender Male/Female, DOB date input, Country prefix selector (+255), WhatsApp consent. Check Status tab toggles between By Email and By Phone with prefix selector. Admin /admin/affiliate-applications shows 7-column table with DATE as first header, rows sorted newest-first (25 Apr, 25 Apr, 15 Apr).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/affiliate-applications/check/{email}", "issue": "endpoint lowercases input email before matching (ident.lower()), but submit_application stores email as-typed (Pydantic EmailStr only normalizes domain). Mixed-case emails submitted (e.g., 'TEST_x@example.com') become unfindable by their own email. Recommend lower-casing on submit OR using case-insensitive regex on lookup."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AffiliateApplicationsPage", "issue": "React console warning: 'Each child in a list should have a unique key prop' on table render", "selector": "table tbody tr", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_352_affiliate_gap.py",
+    "/app/test_reports/pytest/iteration_352.xml"
+  ],
+  "action_items": [
+    "Optional: lowercase email on AffiliateApplicationCreate submit OR switch /check/{email} to case-insensitive regex so users can re-check their status with any casing.",
+    "Optional: add unique key prop on rows rendered inside AffiliateApplicationsPage table to silence React warning."
+  ],
+  "critical_code_review_comments": [
+    "affiliate_application_routes.py /check email path is case-mismatched with submit storage (see backend minor).",
+    "Reject endpoint enforces canonical reasons strictly (good). final_note correctly persists 'Reason — custom note' (verified)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_352_affiliate_gap.py"
+  ],
+  "success_rate": {"backend": "100% executed (7/7); 1 test skipped (no public admin-notifications list endpoint, persistence confirmed via direct DB query)", "frontend": "Earn page, Apply page, Admin applications header+sort all PASS. Not verified live: reject-dialog (no pending row left after backend regression auto-rejected the seeded one); affiliate welcome cards (requires affiliate login)."},
+  "test_credentials": {"admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!"},
+  "seed_data_creation": "Created fresh affiliate application via POST /api/affiliate-applications (lowercase email) then rejected with canonical reason 'Insufficient online presence' + custom note 'custom add-on'. Admin notifications (kind=affiliate_application_received, target_type=admin) inserted.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression file: /app/backend/tests/test_iteration_352_affiliate_gap.py. To re-verify Reject dialog UI: seed a fresh pending application via POST /api/affiliate-applications, refresh /admin/affiliate-applications, click Reject (the regression rejects whatever pending row it creates so dialog won't open after the test run). Affiliate welcome cards (AffiliateWelcomeCards.jsx) require affiliate-role login (no seeded affiliate password); use approve+activate flow or set localStorage `konekt_affiliate_welcome_dismissed_v1` removed before navigating /partner/affiliate-dashboard with an authenticated affiliate session."
+}

@@ -12,8 +12,8 @@ import { bootstrapAffiliateAttribution } from "@/lib/attribution";
 import ProtectedRouteWithValidation from "@/components/auth/ProtectedRouteWithValidation";
 
 // Components
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import Navbar from "@/components/public/PublicNavbarV2";
+import Footer from "@/components/public/PremiumFooterV2";
 // Removed: ExitIntentPopup, PromoBanner (interruptive popups cleaned up)
 // Legacy ChatWidget / standalone AIChatWidget / FeedbackWidget launchers replaced by FloatingHelpHub
 import FloatingHelpHub from "@/components/FloatingHelpHub";

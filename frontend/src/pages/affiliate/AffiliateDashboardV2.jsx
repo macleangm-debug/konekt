@@ -5,6 +5,7 @@ import SectionCard from "../../components/dashboard/SectionCard";
 import AffiliateCard from "../../components/affiliate/AffiliateCard";
 import AffiliateProductPromoTable from "../../components/affiliate/AffiliateProductPromoTable";
 import AffiliateEarningsTable from "../../components/affiliate/AffiliateEarningsTable";
+import AffiliateWelcomeCards from "../../components/affiliate/AffiliateWelcomeCards";
 import { Loader2 } from "lucide-react";
 
 function money(v) {
@@ -57,6 +58,9 @@ export default function AffiliateDashboardV2() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8" data-testid="affiliate-dashboard-v2">
+      {/* Welcome cards — first-visit walkthrough (bright-blue industry-standard cards) */}
+      <AffiliateWelcomeCards affiliateName={affiliateName} promoCode={promoCode} />
+
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard label="Total Earned" value={money(summary.total_earned)} helper="All time" accent="emerald" />
@@ -71,7 +75,7 @@ export default function AffiliateDashboardV2() {
           <div className="grid gap-3 text-sm text-slate-700">
             <div className="rounded-xl border bg-slate-50 p-4">Your code and links are ready to share at all times.</div>
             <div className="rounded-xl border bg-slate-50 p-4">Each eligible order tracks your commission automatically.</div>
-            <div className="rounded-xl border bg-slate-50 p-4">Customers receive discounts from the distributable margin pool.</div>
+            <div className="rounded-xl border bg-slate-50 p-4">You earn on every closed order — pending earnings clear when the customer's payment is confirmed.</div>
           </div>
         </SectionCard>
       </div>

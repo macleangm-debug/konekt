@@ -21,6 +21,21 @@ const ACTIVATION_STYLES = {
   expired: "bg-red-100 text-red-600",
 };
 
+function fmtDate(iso) {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "2-digit" });
+  } catch { return "—"; }
+}
+function fmtTime(iso) {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  } catch { return ""; }
+}
+
 function fitScore(app) {
   let score = 0;
   const aud = app.audience_size || "";
@@ -44,6 +59,10 @@ export default function AffiliateApplicationsPage() {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [rejectionReasons, setRejectionReasons] = useState([]);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectNote, setRejectNote] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,7 +71,14 @@ export default function AffiliateApplicationsPage() {
         api.get(filter === "all" ? "/api/affiliate-applications" : `/api/affiliate-applications?status=${filter}`),
         api.get("/api/affiliate-applications/stats"),
       ]);
-      setItems(appRes.data?.applications || []);
+      // Always sort newest-first regardless of API order, so the latest
+      // application is on top.
+      const apps = (appRes.data?.applications || []).slice().sort((a, b) => {
+        const ta = new Date(a.created_at || 0).getTime();
+        const tb = new Date(b.created_at || 0).getTime();
+        return tb - ta;
+      });
+      setItems(apps);
       setStats(statsRes.data || {});
     } catch { toast.error("Failed to load"); }
     setLoading(false);
@@ -60,7 +86,15 @@ export default function AffiliateApplicationsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Load canonical rejection reasons once
+  useEffect(() => {
+    api.get("/api/affiliate-applications/rejection-reasons")
+      .then((r) => setRejectionReasons(r.data?.reasons || []))
+      .catch(() => {});
+  }, []);
+
   const openDetail = (item) => { setSelected(item); setAdminNotes(item.admin_notes || ""); };
+  const openReject = () => { setRejectReason(""); setRejectNote(""); setRejectOpen(true); };
 
   const approve = async (id) => {
     try {
@@ -75,10 +109,19 @@ export default function AffiliateApplicationsPage() {
     } catch (err) { toast.error(err.response?.data?.detail || "Failed"); }
   };
 
-  const reject = async (id) => {
+  const confirmReject = async () => {
+    if (!rejectReason) { toast.error("Please pick a rejection reason"); return; }
     try {
-      await api.post(`/api/affiliate-applications/${id}/reject`, { admin_notes: adminNotes });
-      toast.success("Rejected");
+      const res = await api.post(`/api/affiliate-applications/${selected.id}/reject`, {
+        rejection_reason: rejectReason,
+        admin_notes: rejectNote.trim(),
+      });
+      toast.success("Application rejected — applicant has been notified.");
+      // Optionally surface the WhatsApp link so admin can also DM if needed
+      if (res.data?.whatsapp_link) {
+        window.open(res.data.whatsapp_link, "_blank");
+      }
+      setRejectOpen(false);
       setSelected(null);
       load();
     } catch (err) { toast.error(err.response?.data?.detail || "Failed"); }
@@ -146,6 +189,7 @@ export default function AffiliateApplicationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-slate-50/60">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Date</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Applicant</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Platform</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-slate-600 uppercase">Audience</th>
@@ -159,6 +203,7 @@ export default function AffiliateApplicationsPage() {
                   const fit = fitScore(item);
                   return (
                     <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition" onClick={() => openDetail(item)} data-testid={`app-row-${item.id}`}>
+                      <td className="px-4 py-3 whitespace-nowrap"><div className="text-xs font-medium text-[#20364D]">{fmtDate(item.created_at)}</div><div className="text-[10px] text-slate-400 mt-0.5">{fmtTime(item.created_at)}</div></td>
                       <td className="px-4 py-3"><div className="font-medium text-[#20364D]">{item.full_name}</div><div className="text-[10px] text-slate-400">{item.email}</div></td>
                       <td className="px-4 py-3 text-xs text-slate-600">{item.primary_platform || "\u2014"}</td>
                       <td className="px-4 py-3 text-xs text-slate-600">{item.audience_size || "\u2014"}</td>
@@ -184,7 +229,7 @@ export default function AffiliateApplicationsPage() {
         testId="application-detail-drawer"
         footer={selected && selected.status === "pending" ? (
           <div className="flex items-center gap-2 justify-end">
-            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => reject(selected.id)} data-testid="drawer-reject-btn"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject</Button>
+            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={openReject} data-testid="drawer-reject-btn"><XCircle className="w-3.5 h-3.5 mr-1.5" /> Reject</Button>
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => approve(selected.id)} data-testid="drawer-approve-btn"><CheckCircle className="w-3.5 h-3.5 mr-1.5" /> Approve</Button>
           </div>
         ) : null}
@@ -201,6 +246,24 @@ export default function AffiliateApplicationsPage() {
                 <div className="text-center"><p className="text-[10px] font-semibold text-slate-500 uppercase">Fit</p><p className={`text-sm font-bold mt-0.5 ${fit.color} inline-block px-2 py-0.5 rounded-full`}>{fit.label}</p></div>
               </div>
             ); })()}
+
+            {/* Identity Verification — surfaced for admin review */}
+            {(selected.gender || selected.date_of_birth || selected.id_number || selected.id_document_url) && (
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 space-y-3" data-testid="identity-section">
+                <h3 className="text-xs font-semibold text-blue-900 uppercase tracking-wide">Identity</h3>
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  {selected.gender && <div><div className="text-slate-500">Gender</div><div className="text-sm font-medium text-[#20364D] mt-0.5">{selected.gender}</div></div>}
+                  {selected.date_of_birth && <div><div className="text-slate-500">Date of Birth</div><div className="text-sm font-medium text-[#20364D] mt-0.5">{selected.date_of_birth}</div></div>}
+                  {selected.id_type && <div><div className="text-slate-500">ID Type</div><div className="text-sm font-medium text-[#20364D] mt-0.5 capitalize">{selected.id_type.replace("_", " ")}</div></div>}
+                  {selected.id_number && <div><div className="text-slate-500">ID Number</div><div className="text-sm font-medium text-[#20364D] mt-0.5 font-mono">{selected.id_number}</div></div>}
+                </div>
+                {selected.id_document_url && (
+                  <a href={selected.id_document_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:text-blue-900" data-testid="id-document-link">
+                    <ExternalLink className="w-3 h-3" /> View ID document
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Personal Info */}
             <div className="grid grid-cols-2 gap-4">
@@ -285,6 +348,41 @@ export default function AffiliateApplicationsPage() {
           </div>
         )}
       </StandardDrawerShell>
+
+      {/* Rejection Dialog with canonical reasons */}
+      {rejectOpen && selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setRejectOpen(false)} data-testid="reject-dialog">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b">
+              <h3 className="text-base font-semibold text-[#20364D]">Reject Application</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{selected.full_name} · {selected.email}</p>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 uppercase">Reason *</label>
+                <div className="mt-2 space-y-1.5">
+                  {rejectionReasons.map((r) => (
+                    <label key={r} className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer text-sm transition ${rejectReason === r ? "bg-red-50 border-red-200 text-red-800" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
+                      <input type="radio" name="reject-reason" value={r} checked={rejectReason === r} onChange={(e) => setRejectReason(e.target.value)} className="accent-red-600" data-testid={`reject-reason-${r.toLowerCase().replace(/\s+/g, "-")}`} />
+                      <span>{r}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 uppercase">Custom note (optional)</label>
+                <Textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} placeholder="Add a personalized message to the applicant…" className="mt-1.5 min-h-[70px]" data-testid="reject-note-input" />
+              </div>
+            </div>
+            <div className="px-5 py-3 border-t flex items-center justify-end gap-2 bg-slate-50/60 rounded-b-2xl">
+              <Button size="sm" variant="outline" onClick={() => setRejectOpen(false)} data-testid="reject-cancel-btn">Cancel</Button>
+              <Button size="sm" className="bg-red-600 hover:bg-red-700" disabled={!rejectReason} onClick={confirmReject} data-testid="reject-confirm-btn">
+                <XCircle className="w-3.5 h-3.5 mr-1.5" /> Send Rejection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

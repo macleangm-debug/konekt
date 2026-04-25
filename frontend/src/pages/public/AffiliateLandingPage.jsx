@@ -38,7 +38,7 @@ export default function AffiliateLandingPage() {
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4A843] text-[#17283C] px-7 py-3.5 font-bold hover:bg-[#c49a3d] transition"
                 data-testid="join-affiliate-btn"
               >
-                Join as Affiliate <ArrowRight className="w-4 h-4" />
+                Apply Now <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/login"
@@ -146,17 +146,41 @@ export default function AffiliateLandingPage() {
               </div>
             </div>
             <div className="rounded-2xl bg-[#0E1A2B] text-white p-8 md:p-10">
-              <h3 className="text-xl font-bold mb-4">Program Guidelines</h3>
-              <div className="space-y-4 text-slate-300 text-sm leading-relaxed">
-                <p>
-                  Affiliate commissions are governed by Konekt's margin protection rules. This ensures promotional activity supports business growth without impacting pricing integrity.
-                </p>
-                <p>
-                  Commissions are paid only on valid, completed orders. Your dashboard shows real-time attribution so there are no surprises.
-                </p>
-                <p>
-                  All affiliates must comply with Konekt's promotional guidelines. Misleading claims or unauthorized branding will result in account suspension.
-                </p>
+              <h3 className="text-xl font-bold mb-4">Why Konekt Affiliates Win</h3>
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#D4A843]/15 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="w-5 h-5 text-[#D4A843]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Transparent earnings</p>
+                    <p className="text-slate-300 text-sm leading-relaxed mt-1">
+                      Every promo and group deal shows you exactly what you earn — per click and per closed order. No hidden formulas.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#D4A843]/15 flex items-center justify-center flex-shrink-0">
+                    <BarChart3 className="w-5 h-5 text-[#D4A843]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Real attribution</p>
+                    <p className="text-slate-300 text-sm leading-relaxed mt-1">
+                      Live dashboard with click-through, conversion, and pending vs paid commissions — updated as orders close.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#D4A843]/15 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-[#D4A843]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Paid only on completed orders</p>
+                    <p className="text-slate-300 text-sm leading-relaxed mt-1">
+                      Commissions clear when orders close. Cancelled or refunded orders never count against your payout.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

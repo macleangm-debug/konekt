@@ -19,6 +19,11 @@ class AffiliateApplicationCreate(BaseModel):
     full_name: str
     email: EmailStr
     phone: str
+    gender: Optional[str] = None  # "Male" or "Female"
+    date_of_birth: Optional[str] = None  # ISO date YYYY-MM-DD
+    id_type: Optional[str] = None  # "national_id" | "passport" | "driver_license"
+    id_number: Optional[str] = None
+    id_document_url: Optional[str] = None  # uploaded image/PDF path
     location: Optional[str] = None
     primary_platform: str
     social_instagram: Optional[str] = None
@@ -33,8 +38,19 @@ class AffiliateApplicationCreate(BaseModel):
     expected_monthly_sales: int = 0
     willing_to_promote_weekly: bool = True
     why_join: str
+    whatsapp_consent: bool = True  # confirms phone is WhatsApp-enabled
     agreed_performance_terms: bool = True
     agreed_terms: bool = True
+
+
+REJECTION_REASONS = [
+    "Insufficient online presence",
+    "Incomplete information",
+    "Doesn't meet network criteria",
+    "Conflicting interests",
+    "Already rejected previously",
+    "Other",
+]
 
 
 async def _get_base_url(db):
@@ -102,6 +118,24 @@ async def submit_application(payload: AffiliateApplicationCreate, request: Reque
     }
     await db.affiliate_applications.insert_one(doc)
     doc.pop("_id", None)
+
+    # Wire an in-app notification to admin/ops so the bell rings the moment
+    # a new application lands. The admin Notifications page picks it up via
+    # target_type='admin'.
+    try:
+        await db.notifications.insert_one({
+            "id": str(uuid4()),
+            "target_type": "admin",
+            "target_id": "ops",
+            "kind": "affiliate_application_received",
+            "title": "New affiliate application",
+            "message": f"{payload.full_name} just applied — {payload.primary_platform or 'no platform'} · {payload.audience_size or 'unknown audience'}",
+            "deep_link": "/admin/affiliate-applications",
+            "read": False,
+            "created_at": now,
+        })
+    except Exception as e:
+        print(f"Warning: affiliate notification insert failed: {e}")
 
     # Send application received email
     try:
@@ -306,6 +340,45 @@ def _urlencode(text):
     return urllib.parse.quote(text, safe="")
 
 
+@router.get("/rejection-reasons")
+async def list_rejection_reasons():
+    """Canonical list of pre-listed rejection reasons surfaced in the admin UI."""
+    return {"reasons": REJECTION_REASONS}
+
+
+@router.post("/upload-id-document")
+async def upload_id_document(request: Request):
+    """Public endpoint: applicant uploads their ID document (image or PDF).
+    Returns a `{url}` that the form embeds into id_document_url before
+    submitting. Storage is local under /app/uploads/affiliate_ids/.
+    """
+    import os
+    from pathlib import Path
+
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        raise HTTPException(status_code=400, detail="No file uploaded")
+
+    # 8 MB limit, only image/* or application/pdf
+    content = await file.read()
+    if len(content) > 8 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 8 MB)")
+    mime = (file.content_type or "").lower()
+    if not (mime.startswith("image/") or mime == "application/pdf"):
+        raise HTTPException(status_code=400, detail="Only image or PDF accepted")
+
+    target_dir = Path("/app/uploads/affiliate_ids")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    ext = (os.path.splitext(file.filename or "")[1] or "").lower()
+    if ext not in (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".pdf"):
+        ext = ".pdf" if mime == "application/pdf" else ".jpg"
+    fname = f"{uuid4()}{ext}"
+    fpath = target_dir / fname
+    fpath.write_bytes(content)
+    return {"url": f"/api/uploads/affiliate_ids/{fname}", "filename": fname}
+
+
 @router.post("/{application_id}/reject")
 async def reject_application(application_id: str, request: Request):
     """Reject an application with notes."""
@@ -323,23 +396,50 @@ async def reject_application(application_id: str, request: Request):
     except Exception:
         pass
 
+    rejection_reason = body.get("rejection_reason", "").strip()
+    custom_note = body.get("admin_notes", body.get("note", "")).strip()
+    # Compose final note: pre-listed reason + optional custom add-on
+    if rejection_reason and rejection_reason not in REJECTION_REASONS:
+        # Reject anything not in the canonical list (forces UI compliance)
+        raise HTTPException(status_code=400, detail="Invalid rejection_reason")
+    final_note = rejection_reason
+    if custom_note:
+        final_note = f"{rejection_reason} — {custom_note}" if rejection_reason else custom_note
+
     now = datetime.now(timezone.utc).isoformat()
     await db.affiliate_applications.update_one(
         {"id": application_id},
         {"$set": {
             "status": "rejected",
-            "admin_notes": body.get("admin_notes", body.get("note", "")),
+            "rejection_reason": rejection_reason or None,
+            "admin_notes": final_note,
             "reviewed_at": now,
             "updated_at": now,
         }}
+    )
+
+    # Build WhatsApp deep-link for the rejection (optional, admin clicks)
+    whatsapp_phone = (app_doc.get("phone") or "").replace("+", "").replace(" ", "")
+    whatsapp_message = (
+        f"Hello {app_doc.get('full_name', '')},\n\n"
+        f"Thank you for applying to the Konekt affiliate program. "
+        f"After reviewing your application, we are unable to approve it at this time."
+        f"{(chr(10) + chr(10) + 'Reason: ' + final_note) if final_note else ''}"
+        f"\n\nYou are welcome to reapply in the future.\n\n- Konekt Team"
+    )
+    whatsapp_link = (
+        f"https://wa.me/{whatsapp_phone}?text={_urlencode(whatsapp_message)}"
+        if whatsapp_phone else None
     )
 
     # Send rejection email
     try:
         email_settings = await _get_affiliate_email_settings(db)
         if email_settings.get("send_application_rejected", True):
-            reason = body.get("admin_notes", body.get("note", ""))
-            reason_html = f'<p style="color:#475569;font-size:14px;">Reason: {reason}</p>' if reason else ""
+            reason_html = (
+                f'<p style="color:#475569;font-size:14px;">Reason: {final_note}</p>'
+                if final_note else ""
+            )
             from services.canonical_email_engine import send_email
             await send_email(
                 db, app_doc["email"],
@@ -353,7 +453,12 @@ async def reject_application(application_id: str, request: Request):
     except Exception as e:
         print(f"Warning: Rejection email error: {e}")
 
-    return {"ok": True, "status": "rejected"}
+    return {
+        "ok": True,
+        "status": "rejected",
+        "whatsapp_link": whatsapp_link,
+        "whatsapp_message": whatsapp_message,
+    }
 
 
 @router.post("/{application_id}/resend-activation")
@@ -482,15 +587,38 @@ async def activate_account(request: Request):
 
 @router.get("/check/{identifier}")
 async def check_status(identifier: str, request: Request):
-    """Check application status by email or phone (public)."""
-    db = request.app.mongodb
-    query = {"$or": [{"email": identifier}]}
-    if not re.match(r"[^@]+@[^@]+\.[^@]+", identifier):
-        query = {"$or": [{"phone": {"$regex": identifier.replace("+", "\\+")}}]}
-    else:
-        query["$or"].append({"phone": identifier})
+    """Check application status by email or phone (public).
 
-    doc = await db.affiliate_applications.find_one(query, {"_id": 0, "status": 1, "created_at": 1, "reviewed_at": 1, "admin_notes": 1})
+    `identifier` may be either a valid email, OR a phone number. Phone may
+    include a leading `+` country prefix (URL-decoded by FastAPI) — we match
+    on `phone` exactly, with `+` stripped, AND on the trailing-digits suffix
+    so frontend can pass either `+255712345678` or `712345678`.
+    """
+    db = request.app.mongodb
+
+    ident = (identifier or "").strip()
+    if not ident:
+        return {"exists": False, "status": None}
+
+    if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", ident):
+        query = {"email": ident.lower()}
+    else:
+        digits_only = re.sub(r"\D", "", ident)
+        if len(digits_only) < 6:
+            return {"exists": False, "status": None}
+        # Match either the full +-prefixed form OR a phone whose last 9 digits
+        # equal the input's last 9 digits (handles users typing local-only).
+        tail = digits_only[-9:]
+        query = {"$or": [
+            {"phone": ident},
+            {"phone": {"$regex": re.escape(tail) + r"$"}},
+        ]}
+
+    doc = await db.affiliate_applications.find_one(
+        query,
+        {"_id": 0, "status": 1, "created_at": 1, "reviewed_at": 1,
+         "admin_notes": 1, "rejection_reason": 1, "full_name": 1},
+    )
     if not doc:
         return {"exists": False, "status": None}
     notes = doc.get("admin_notes", "") if doc.get("status") == "rejected" else ""
@@ -499,5 +627,94 @@ async def check_status(identifier: str, request: Request):
         "status": doc.get("status"),
         "submitted_at": doc.get("created_at"),
         "reviewed_at": doc.get("reviewed_at"),
-        "rejection_reason": notes,
+        "rejection_reason": notes or doc.get("rejection_reason") or "",
+        "full_name": doc.get("full_name", ""),
+    }
+
+
+@router.get("/admin/margin-audit")
+async def affiliate_margin_audit(request: Request):
+    """Audit every active promotion / group deal to confirm the affiliate
+    commission allocation never exceeds the tier's distributable margin.
+
+    Returns:
+      • `healthy[]` — each promo with its computed affiliate share + headroom
+      • `issues[]` — any promo where affiliate share would dip into protected
+        margin (must be capped by admin)
+      • `summary` — totals + verdict
+    """
+    db = request.app.mongodb
+
+    # Pull current pricing tiers (per-branch fallback to default)
+    settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
+    s = settings_row.get("value", {}) if settings_row else {}
+    tier_map = s.get("pricing_policy_tiers") or {}
+    if isinstance(tier_map, list):
+        tier_map = {"default": tier_map}
+
+    def _resolve_tier(branch: str, vendor_cost: float):
+        tiers = tier_map.get(branch) or tier_map.get("default") or []
+        if not isinstance(tiers, list):
+            return None
+        for t in tiers:
+            if not isinstance(t, dict):
+                continue
+            lo = float(t.get("min", 0) or 0)
+            hi = float(t.get("max", 0) or 0)
+            if vendor_cost >= lo and (hi == 0 or vendor_cost < hi):
+                return t
+        return tiers[0] if tiers else None
+
+    healthy, issues = [], []
+
+    async for promo in db.platform_promotions.find(
+        {"is_active": True}, {"_id": 0}
+    ):
+        product_id = promo.get("product_id")
+        product = await db.products.find_one(
+            {"id": product_id}, {"_id": 0}
+        ) if product_id else None
+        if not product:
+            continue
+        vc = float(product.get("vendor_cost") or 0)
+        cp = float(product.get("customer_price") or 0)
+        branch = product.get("branch") or "default"
+        tier = _resolve_tier(branch, vc)
+        if not tier:
+            continue
+        distributable_pct = float(tier.get("distributable_margin_pct", 0) or 0)
+        distributable_tzs = round(vc * distributable_pct / 100)
+        affiliate_share_pct = float(promo.get("affiliate_share_pct", 0) or 0)
+        affiliate_share_tzs = round(distributable_tzs * affiliate_share_pct / 100)
+        headroom = distributable_tzs - affiliate_share_tzs
+
+        row = {
+            "promo_id": promo.get("id"),
+            "promo_label": promo.get("label") or promo.get("name"),
+            "product_id": product_id,
+            "product_name": product.get("name"),
+            "branch": branch,
+            "tier_label": tier.get("label", ""),
+            "vendor_cost": vc,
+            "customer_price": cp,
+            "distributable_pct": distributable_pct,
+            "distributable_tzs": distributable_tzs,
+            "affiliate_share_pct": affiliate_share_pct,
+            "affiliate_share_tzs": affiliate_share_tzs,
+            "headroom_tzs": headroom,
+        }
+        if affiliate_share_tzs > distributable_tzs:
+            row["issue"] = "affiliate share exceeds distributable margin — auto-cap recommended"
+            issues.append(row)
+        else:
+            healthy.append(row)
+
+    return {
+        "healthy": healthy,
+        "issues": issues,
+        "summary": {
+            "active_promos_audited": len(healthy) + len(issues),
+            "issues_count": len(issues),
+            "verdict": "ok" if not issues else "needs_attention",
+        },
     }
