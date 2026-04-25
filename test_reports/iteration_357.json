@@ -1,0 +1,54 @@
+{
+  "summary": "Iteration 357 — End-to-end Affiliate referral attribution verified. Backend pytest 7/7 PASS: POST /api/orders accepts referral_code, persists attribution dict with kind=affiliate / affiliate_id / affiliate_email / affiliate_name on order doc, and inserts an attribution_events row (status=pending, kind=affiliate, code=KONTEST). Invalid/empty referral_code creates an order with attribution=null and zero attribution_events rows. /api/affiliate-program/my-status returns affiliate_code=KONTEST locked (legacy /me/dashboard route returns 404 — only my-status is wired). Frontend live verified: visiting / with ?ref=KONTEST drops localStorage konekt_referral={code,KONTEST, 30-day TTL, first_seen, landing_path}; key persists across /shop navigation. Cart.js:73 and CheckoutPageV2.jsx:168 confirmed by code inspection to send referral_code:readReferralCode()||null on POST /api/orders. TWO ISSUES SURFACED — (a) /r/KONTEST renders 'Invalid Referral Code — Referral code not found' because the page calls GET /api/referrals/code/KONTEST which returns 404 (that legacy endpoint looks up users.referral_code, not affiliates.affiliate_code), and (b) legacy /app/frontend/src/pages/CheckoutPage.jsx line 174 sends affiliate_code:… NOT referral_code, which Pydantic OrderCreate silently drops, so the legacy checkout path never credits the affiliate.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/referrals/code/{code}", "issue": "Returns 404 for affiliate codes (e.g. KONTEST). Endpoint only queries users.referral_code, not affiliates.affiliate_code. Breaks /r/:code referral landing page rendering.", "priority": "HIGH"}
+    ],
+    "minor": [
+      {"endpoint": "/api/affiliate-program/me/dashboard", "issue": "Returns 404 — only /api/affiliate-program/my-status is wired. Review request explicitly named /me/dashboard or equivalent."},
+      {"endpoint": "GET /api/orders/{id}", "issue": "Returns 404 when called by the order owner (used customer JWT). Customer cannot fetch their own order detail by id."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ReferralLandingPage.jsx (/r/:code)", "issue": "Renders 'Invalid Referral Code / Referral code not found' for the live affiliate code KONTEST because GET /api/referrals/code/KONTEST 404s. Affiliate lookup must include the affiliates collection (affiliate_code field), not just users.referral_code.", "selector": "/r/KONTEST page heading 'Invalid Referral Code'", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Legacy CheckoutPage.jsx attribution payload", "issue": "Line 174 sends body field 'affiliate_code' but backend OrderCreate model declares 'referral_code'. Pydantic ignores unknown fields → attribution silently never credited via the legacy checkout path. Must rename to referral_code (or extend OrderCreate to accept affiliate_code as alias).", "affected_selectors": ["POST /api/orders payload key 'affiliate_code'"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_referral_attribution_e2e_v357.py",
+    "/app/test_reports/pytest/iter357.xml"
+  ],
+  "action_items": [
+    "FIX: /api/referrals/code/{code} should also resolve affiliates.affiliate_code (and ideally users.sales_promo_code) so /r/KONTEST renders an active CTA instead of the 'Invalid' empty-state.",
+    "FIX: /app/frontend/src/pages/CheckoutPage.jsx line 174 — rename body key 'affiliate_code' → 'referral_code'. Currently legacy checkout drops attribution silently.",
+    "WIRE: Add /api/affiliate-program/me/dashboard or document that /my-status is the canonical source — review request explicitly asked for /me/dashboard.",
+    "OPTIONAL: Expose GET /api/orders/{id} for the order owner so customers can fetch their own order detail."
+  ],
+  "critical_code_review_comments": [
+    "OrderCreate (server.py:448) is correctly typed with optional referral_code; create_order (1806-1888) resolves affiliate via db.affiliates.find_one({affiliate_code: ref_code}) and falls back to db.users.find_one({sales_promo_code: ref_code}) — sound 2-tier lookup. attribution_events insert is wrapped in try/except so a write failure won't break the order — good. However, attribution dict on the order doc is set to None when the code is unknown (line 1810) — verified persisted as null in Mongo.",
+    "CheckoutPage.jsx legacy fallback uses key 'affiliate_code' instead of 'referral_code' — this is a silent attribution leak on the legacy path. CheckoutPageV2.jsx and Cart.js use the correct key.",
+    "ReferralAttribution.jsx is clean — VALID_RX whitelists [A-Z0-9_]{2,20}, TTL is exactly 30 days, gracefully handles localStorage quota errors, expiry auto-clears the key on read.",
+    "ReferralLandingPage relies on /api/referrals/code/{code}; that backend endpoint is the wrong source of truth for affiliate codes — it queries the users.referral_code legacy signup-reward field. Affiliate KONTEST lives in affiliates.affiliate_code so the lookup never resolves and the page paints 'Invalid Referral Code'.",
+    "/api/orders response is wrapped {order: {...}} — frontend should not assume top-level fields. Worth standardising one shape across V2 and legacy."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_referral_attribution_e2e_v357.py (new — 7 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (7/7 pytest covering KONTEST lock, valid-code attribution + DB persistence + attribution_events row, no-code & invalid-code create order with attribution=null and zero events, dashboard reflects KONTEST)",
+    "frontend": "75% (3/4 — localStorage drop with 30d TTL ✓, persistence across navigation ✓, Cart/CheckoutV2 send referral_code per code-inspection ✓, /r/KONTEST landing page FAILS — shows 'Invalid Referral Code')"
+  },
+  "test_credentials": {
+    "affiliate": "affiliate.test@konekt.co.tz / Affiliate#Konekt2026 (KONTEST locked, my-status verified)",
+    "test_customer": "Auto-registered each test run via /api/auth/register (email pattern test+attr357.<uuid>@example.com / TestPass123!) — note backend rejects @konekt.test as reserved TLD"
+  },
+  "seed_data_creation": "Each pytest run registers a fresh customer (test+attr357.<uuid>@example.com) and creates 3 test orders (1 with KONTEST, 1 without referral, 1 with DOESNOTEXIST). Orders are NOT cleaned up; they remain in db.orders + db.attribution_events for inspection.",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend attribution pipeline is fully verified and persistence is confirmed at the Mongo level — the test file at /app/backend/tests/test_referral_attribution_e2e_v357.py is the regression. Frontend localStorage drop and persistence are verified via Playwright. Two real bugs need main agent: (1) /api/referrals/code/{code} — extend lookup to include affiliates.affiliate_code so /r/KONTEST renders the affiliate CTA, (2) CheckoutPage.jsx:174 — rename 'affiliate_code' key to 'referral_code' so legacy path credits attribution. Cart.js and CheckoutPageV2 are already correct. After fixes, retest via the existing pytest + a Playwright reload of /r/KONTEST asserting heading text != 'Invalid Referral Code'.",
+  "rca_of_the_issue": "Two distinct attribution gaps: (A) Storefront referral landing page /r/:code calls GET /api/referrals/code/{code} which queries users.referral_code (created by generate_referral_code() at signup for reward purposes) — affiliate codes live in db.affiliates.affiliate_code and are never matched, so the live affiliate KONTEST renders as Invalid. Mitigation: union-lookup affiliates first, then users, then sales_promo_code. (B) Legacy CheckoutPage.jsx still uses the field name affiliate_code which Pydantic OrderCreate silently drops (model only declares referral_code with no alias). Mitigation: either rename the JS key to referral_code (lowest-risk, matches Cart.js + CheckoutPageV2.jsx) or add Field(..., alias='affiliate_code') with model_config populate_by_name on the backend."
+}
