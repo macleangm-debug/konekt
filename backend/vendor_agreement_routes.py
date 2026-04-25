@@ -774,16 +774,39 @@ async def nudge_unsigned_vendors():
 
 @admin_router.get("/stats")
 async def admin_agreement_stats():
-    # Count only ACTIVE vendor partners — exclude soft-deleted, archived,
-    # or test entities. The previous query counted every doc in `partners`
-    # which on a busy environment includes inactive shells.
-    total_vendors = await db.partners.count_documents({
-        "$and": [
-            {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
-            {"$or": [{"status": {"$ne": "archived"}}, {"status": {"$exists": False}}]},
-            {"$or": [{"deleted_at": None}, {"deleted_at": {"$exists": False}}]},
-        ]
-    })
+    # Count only REAL vendor partners — those that are active AND have at
+    # least one active product attached. This naturally excludes zombie
+    # partner shells (created during testing / failed onboarding) that
+    # never put a product on the marketplace.
+    from bson import ObjectId
+
+    # 1. Distinct partner_ids that own at least one active product
+    active_partner_ids = await db.products.distinct(
+        "partner_id", {"is_active": True}
+    )
+    real_partner_object_ids = []
+    for pid in active_partner_ids:
+        if not pid:
+            continue
+        # partner_id may be stored as str or ObjectId; normalise to ObjectId
+        if isinstance(pid, str) and len(pid) == 24:
+            try:
+                real_partner_object_ids.append(ObjectId(pid))
+            except Exception:
+                pass
+
+    # 2. Of those, only count partners that are themselves active
+    if real_partner_object_ids:
+        total_vendors = await db.partners.count_documents({
+            "_id": {"$in": real_partner_object_ids},
+            "$and": [
+                {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
+                {"$or": [{"status": {"$ne": "archived"}}, {"status": {"$exists": False}}]},
+            ],
+        })
+    else:
+        total_vendors = 0
+
     signed = await db.vendor_agreements.count_documents(
         {"version": AGREEMENT_VERSION, "status": "signed"}
     )

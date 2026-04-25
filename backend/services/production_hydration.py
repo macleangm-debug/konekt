@@ -184,6 +184,9 @@ KONEKT_BRANCHES = {
 async def _normalise_taxonomy(db) -> dict:
     """Deactivate any catalog_categories that aren't one of the canonical
     Konekt branches, plus deactivate subcategories with zero products.
+    Also reassign any subcategory whose `category_id` disagrees with the
+    `category_id` of the products that use it (drift caused by older
+    imports that pointed everything at Promotional Materials).
     Idempotent.
     """
     rep = {}
@@ -192,6 +195,37 @@ async def _normalise_taxonomy(db) -> dict:
         {"$set": {"is_active": False}},
     )
     rep["categories_deactivated"] = r.modified_count
+
+    # Reassign subcategories to the category that their products actually
+    # belong to — i.e. if 14 products with category_id=X share a single
+    # subcategory_id=S, then S.category_id should be X.
+    realigned = 0
+    pipeline = [
+        {"$match": {"is_active": True, "subcategory_id": {"$nin": [None, ""]}}},
+        {"$group": {
+            "_id": "$subcategory_id",
+            "category_ids": {"$addToSet": "$category_id"},
+            "count": {"$sum": 1},
+        }},
+    ]
+    async for row in db.products.aggregate(pipeline):
+        sub_id = row["_id"]
+        # Only act when products on this subcategory unanimously sit under
+        # one category_id — anything else needs a human decision.
+        cats = [c for c in row["category_ids"] if c]
+        if len(cats) != 1:
+            continue
+        target_cat_id = cats[0]
+        sub = await db.catalog_subcategories.find_one(
+            {"id": sub_id}, {"_id": 0, "category_id": 1}
+        )
+        if sub and sub.get("category_id") != target_cat_id:
+            await db.catalog_subcategories.update_one(
+                {"id": sub_id},
+                {"$set": {"category_id": target_cat_id}},
+            )
+            realigned += 1
+    rep["subcategories_realigned"] = realigned
 
     used_sub_ids = [
         x for x in await db.products.distinct(
@@ -211,29 +245,76 @@ async def _normalise_partners(db) -> dict:
     real, signed-up vendors only. Idempotent.
 
     A partner is treated as stale if:
+      • It's a TEST_* / @example.com / @test.com partner, OR
       • It has no `name` AND no `email`, OR
-      • It's the legacy demo/internal "Konekt Limited" partner with no
-        products attached, OR
-      • Its email matches *@example.com / *@test.com / TEST_*
+      • It has zero active products attached AND is NOT the canonical
+        Darcity vendor (catches legacy onboarding shells that never went
+        live, e.g. "On Demand Limited", "John Printers Limited").
     """
-    rep = {"partners_deactivated": 0}
+    from bson import ObjectId
+
+    rep = {"partners_deactivated": 0, "test_partners_deleted": 0}
     test_rx = {"$regex": r"(@example\.com|@test\.com|^TEST_)", "$options": "i"}
-    query = {
-        "$and": [
-            {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
-            {"$or": [
-                {"$and": [
-                    {"$or": [{"name": ""}, {"name": None}, {"name": {"$exists": False}}]},
-                    {"$or": [{"email": ""}, {"email": None}, {"email": {"$exists": False}}]},
-                ]},
-                {"email": test_rx},
-            ]},
+
+    # 1) Hard-delete obvious test partners (so they don't even show as
+    # archived in admin lists).
+    r = await db.partners.delete_many({
+        "$or": [
+            {"email": test_rx},
+            {"name": {"$regex": r"^TEST", "$options": "i"}},
         ]
+    })
+    rep["test_partners_deleted"] = r.deleted_count
+
+    # 2) Archive shells with no products attached (excluding Darcity, which
+    # may briefly have 0 products mid-hydration).
+    active_partner_ids = {
+        pid for pid in await db.products.distinct(
+            "partner_id", {"is_active": True}
+        ) if pid
     }
-    r = await db.partners.update_many(
-        query, {"$set": {"is_active": False, "status": "archived"}}
-    )
-    rep["partners_deactivated"] = r.modified_count
+    deactivated = 0
+    async for p in db.partners.find(
+        {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
+        {"_id": 1, "name": 1, "email": 1},
+    ):
+        pid_str = str(p["_id"])
+        if pid_str == DARCITY_PARTNER_ID:
+            continue
+        if pid_str in active_partner_ids:
+            continue
+        # No active products attached → archive
+        await db.partners.update_one(
+            {"_id": p["_id"]},
+            {"$set": {"is_active": False, "status": "archived"}},
+        )
+        deactivated += 1
+    rep["partners_deactivated"] = deactivated
+
+    # 3) Ensure the persisted vendor-agreement version stays in sync with
+    # the current code constant (v2.0 — 15 clauses, no solicit clause).
+    # Older deploys persisted '1.0' which used to override the code on
+    # startup via `_load_persisted_version`.
+    try:
+        row = await db.admin_settings.find_one(
+            {"key": "vendor_agreement_version"}, {"_id": 0}
+        )
+        if not row or str(row.get("value") or "") != "2.0":
+            await db.admin_settings.update_one(
+                {"key": "vendor_agreement_version"},
+                {"$set": {
+                    "key": "vendor_agreement_version",
+                    "value": "2.0",
+                    "previous": (row or {}).get("value", "1.0"),
+                    "reason": "15-clause v2.0 (no solicit clause)",
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }},
+                upsert=True,
+            )
+            rep["agreement_version_set"] = "2.0"
+    except Exception:
+        pass
+
     return rep
 
 
@@ -384,6 +465,11 @@ async def run_production_hydration(db) -> dict:
         # Always run data-integrity backfill — fixes products imported on
         # earlier deploys before the engine fields were standardised.
         report["data_integrity"] = await _backfill_darcity_data_integrity(db)
+        # Always normalise partners + taxonomy so admin counters stay
+        # accurate (Darcity = the only real vendor; Konekt has 4 canonical
+        # branches).
+        report["taxonomy"] = await _normalise_taxonomy(db)
+        report["partners"] = await _normalise_partners(db)
 
         # Log a crisp one-line summary so prod supervisor logs tell the story
         pruned = report["pruned"]

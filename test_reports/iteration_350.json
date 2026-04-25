@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 350 — Konekt fork (vendor=1, 4 canonical branches, Office Equipment cascade). Backend 8/8 PASS. Critical frontend issues found: (a) UI login form submits but does not redirect / persist session — every /admin/* route bounces back to /login even though POST /api/auth/login returns 200 with token+user; (b) public /products marketplace branch chip strip shows 'Promotional Materials, Office Equipment, KonektSeries' instead of the canonical 4 (Stationery and Services missing, KonektSeries appears extraneously); (c) /products page does NOT render the Group→Category→Subcategory cascade (InlineMarketplaceFilterRail) at all — only flat 3-chip branch row with testids filter-promotional-materials/filter-office-equipment/filter-konektseries.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Login flow / AuthContext", "issue": "Sign In button posts /api/auth/login successfully (200, token+user with role=admin) but the SPA does not store the session / redirect. URL stays at /login; subsequent navigation to /admin/* bounces to /login. Setting localStorage keys (token, access_token, auth_token, konekt_token, adminToken, user, konekt_user) manually still does not authenticate the route guard — auth state machine probably keys off something else (httpOnly cookie not set by /api/auth/login, or React state hydrated from a different key).", "selector": "button:has-text('Sign In')", "priority": "CRITICAL"},
+      {"component": "Marketplace /products branch strip", "issue": "Branch chip row displays 3 chips: Promotional Materials, Office Equipment, KonektSeries. Canonical 4 spec says Promotional Materials, Office Equipment, Stationery, Services. 'KonektSeries' is extraneous; Stationery & Services are missing. Header nav also shows KonektSeries + Service & Maintenance. The branch source is not aligned with /api/admin/catalog-workspace/stats.", "selector": "[data-testid='filter-konektseries']", "priority": "HIGH"},
+      {"component": "InlineMarketplaceFilterRail cascade (desktop & mobile)", "issue": "The Group → Category → Subcategory cascade described in the review is not rendered on /products. Only flat branch chips exist. Could not verify (a) Group=Products → Category dropdown lists 3 cats nor (b) selecting Office Equipment lists ID Printers and Accessories sub. Mobile drawer wizard (filter button → step 1/2/3) also could not be located.", "selector": "[data-testid*='filter-rail'], [data-testid*='cascade'], [data-testid='filter-group'], [data-testid='filter-category'], [data-testid='filter-subcategory']", "priority": "HIGH"}
+    ],
+    "integration_issues": [
+      {"flow": "Admin authentication", "issue": "POST /api/auth/login returns {token, user:{role:'admin'}} but SPA route guards never see it. Cannot exercise /admin/vendor-agreements or /admin/catalog-workspace UI.", "affected_selectors": ["/admin/vendor-agreements", "/admin/catalog-workspace"]},
+      {"flow": "Marketplace filter cascade", "issue": "Component InlineMarketplaceFilterRail.jsx is not mounted on the /products page (or is conditionally hidden). Only the legacy Branch chip row is shown.", "affected_selectors": ["[data-testid*='filter-rail']", "[data-testid='filter-group']"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_350.py",
+    "/app/test_reports/pytest/iteration_350.xml"
+  ],
+  "action_items": [
+    "FIX login UX: ensure successful /api/auth/login (a) sets the token in the storage key the AuthContext actually reads (likely something like 'konekt-auth' / sessionStorage / a cookie), and (b) navigates to the post-login route. Currently the click silently no-ops.",
+    "FIX /products branch strip: the chip strip must render the 4 canonical branches from /api/admin/catalog-workspace/stats (or /api/marketplace/taxonomy Products group + Services group) — replace 'KonektSeries' with 'Stationery' and 'Services'. The source-of-truth taxonomy already has Stationery and Services but the page is sourcing branches from somewhere stale.",
+    "FIX /products cascade rendering: mount InlineMarketplaceFilterRail on the marketplace page so the Group → Category → Subcategory cascade is exercised end-to-end (and the mobile drawer wizard at viewport ≤768px). Confirm data-testids are exposed (e.g. filter-rail-group, filter-rail-category, filter-rail-subcategory, mobile-filter-drawer)."
+  ],
+  "critical_code_review_comments": [
+    "Backend hydration is excellent: vendor-agreement-stats={total_vendors:1, current_version:'2.0'}, catalog-workspace/stats returns exactly the 4 canonical branches with counts {PM:596, OE:14, Stationery:0, Services:0, total active=610, category_count=4}, taxonomy Products group has 3 categories (PM/OE/Stationery), Office Equipment has subcategory 'ID Printers and Accessories', PM has 34 subs, search?category_id=<OE> returns 14 products, force-hydrate is idempotent and reports pruned/hydrated/data_integrity/taxonomy/partners.",
+    "Frontend marketplace branch list is NOT sourced from the same canonical taxonomy that the admin endpoint exposes — 'KonektSeries' is hardcoded or coming from another feed. Single source of truth principle violated.",
+    "UI auth flow is broken — login API succeeds but session is not propagated. This blocks ALL admin pages including catalog-workspace and vendor-agreements UI verification."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration_350.py"
+  ],
+  "success_rate": {"backend": "100% (8/8)", "frontend": "33% (public products page renders but cascade missing & login broken)"},
+  "test_credentials": "Admin admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! works on /api/auth/login (returns role=admin token) but UI login redirect is broken.",
+  "seed_data_creation": "None.",
+  "retest_needed": true,
+  "main_agent_can_self_test": false,
+  "context_for_next_testing_agent": "Backend is fully green for the 5 review items (vendor stats, catalog stats, taxonomy, OE search, force-hydrate idempotent). Three frontend gaps remain: (1) UI login does not redirect/persist session — cannot exercise /admin/* UI; (2) marketplace /products branch chip row shows 'KonektSeries' instead of Stationery+Services; (3) Group→Category→Subcategory cascade (InlineMarketplaceFilterRail) is not rendered on /products at all (neither desktop nor mobile drawer). Once login is fixed and the cascade component is mounted, re-run the UI portion to verify Promotional Materials shows 34 subs, Office Equipment shows 'ID Printers and Accessories' and selecting it returns the 14 ID-printer products in the grid.",
+  "rca of the issue": "Login redirect: form posts /api/auth/login (200) but SPA's AuthContext appears to read auth state from a different storage location (httpOnly cookie or a custom key not in our common set). Root cause likely a mismatch between login submission handler and auth-state hydrator after the recent vendor-agreement_version='2.0' change. Branch strip: /products is hardcoding/legacy-fetching branches ('KonektSeries' is no longer canonical) — should switch to /api/admin/catalog-workspace/stats or /api/marketplace/taxonomy. Cascade: InlineMarketplaceFilterRail.jsx exists in the codebase but is not imported/rendered by the products page; need to wire it into pages/marketplace/ProductsPage.jsx (or equivalent) with proper testids."
+}

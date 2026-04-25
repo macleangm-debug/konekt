@@ -24,21 +24,44 @@ async def catalog_stats(request: Request):
     draft_products = await db.products.count_documents({"status": {"$in": ["draft", "pending", "pending_review"]}})
     services_count = await db.services.count_documents({}) if "services" in await db.list_collection_names() else 0
 
-    # Get categories from settings
+    # Konekt's 4 canonical branches — these are what the admin Catalog
+    # Workspace must surface as category cards. Anything else in
+    # admin_settings.product_categories is legacy / experimental and is
+    # intentionally hidden here.
+    KONEKT_BRANCHES = ["Promotional Materials", "Office Equipment", "Stationery", "Services"]
+
     settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
     s = settings_row.get("value", {}) if settings_row else {}
     catalog = s.get("catalog", {})
     raw_cats = catalog.get("product_categories", [])
-    categories = []
+
+    # Index settings rows by name so we keep their config (display_mode, etc.)
+    settings_by_name = {}
     for c in raw_cats:
         if isinstance(c, str):
-            cat_obj = {"name": c, "display_mode": "visual", "commercial_mode": "fixed_price", "sourcing_mode": "preferred", "active": True}
-        else:
-            cat_obj = c
-        if cat_obj.get("active", True):
-            count = await db.products.count_documents({"category": cat_obj["name"]})
-            cat_obj["product_count"] = count
-            categories.append(cat_obj)
+            settings_by_name[c] = {"name": c, "display_mode": "visual",
+                                    "commercial_mode": "fixed_price",
+                                    "sourcing_mode": "preferred", "active": True}
+        elif isinstance(c, dict) and c.get("name"):
+            settings_by_name[c["name"]] = c
+
+    categories = []
+    for branch_name in KONEKT_BRANCHES:
+        cfg = settings_by_name.get(branch_name) or {
+            "name": branch_name, "display_mode": "visual",
+            "commercial_mode": "fixed_price", "sourcing_mode": "preferred",
+            "active": True,
+        }
+        # Product counts must use `branch` (the canonical mapping). Fall
+        # back to `category_name` for older rows that didn't carry a branch.
+        count = await db.products.count_documents({
+            "is_active": True,
+            "$or": [{"branch": branch_name}, {"category_name": branch_name}],
+        })
+        cat_obj = dict(cfg)
+        cat_obj["name"] = branch_name
+        cat_obj["product_count"] = count
+        categories.append(cat_obj)
 
     # Product health from supply review
     pricing_issues = await db.products.count_documents({"$or": [
