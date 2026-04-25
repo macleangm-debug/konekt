@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 import { ShieldCheck, Truck, CreditCard, Tag, Gift, Sparkles } from "lucide-react";
 import api from "../lib/api";
+import { readReferralCode } from "../components/common/ReferralAttribution";
 import AffiliatePerkPreviewBox from "../components/checkout/AffiliatePerkPreviewBox";
 import { bootstrapAffiliateAttribution, getStoredAffiliateCode } from "../lib/attribution";
 import PhoneNumberField from "../components/forms/PhoneNumberField";
@@ -168,8 +169,9 @@ export default function CheckoutPage() {
         discount: totalDiscount,
         total: grandTotal,
         status: "pending",
-        // Attribution fields
-        affiliate_code: affiliatePerk?.affiliateCode || detectedAffiliate?.affiliate_code || null,
+        // Attribution fields — fall back to the 30-day localStorage cookie
+        // dropped by ReferralAttribution when ?ref=<code> first hit any page.
+        affiliate_code: affiliatePerk?.affiliateCode || detectedAffiliate?.affiliate_code || readReferralCode() || null,
         affiliate_email: null, // Will be looked up by backend
         campaign_id: appliedCampaign?.campaign_id || null,
         campaign_name: appliedCampaign?.campaign_name || null,

@@ -11,6 +11,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import PhoneNumberField from '../components/forms/PhoneNumberField';
+import { readReferralCode } from '../components/common/ReferralAttribution';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -68,7 +69,8 @@ export default function Cart() {
         delivery_address: deliveryAddress,
         delivery_phone: deliveryPhone ? `${deliveryPhonePrefix}${deliveryPhone}` : "",
         notes: notes || null,
-        deposit_percentage: parseInt(depositPercentage)
+        deposit_percentage: parseInt(depositPercentage),
+        referral_code: readReferralCode() || null,
       });
 
       clearCart();

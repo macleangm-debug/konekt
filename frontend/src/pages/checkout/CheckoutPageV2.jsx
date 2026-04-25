@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
+import { readReferralCode } from "../../components/common/ReferralAttribution";
 import PageHeader from "../../components/ui/PageHeader";
 import SurfaceCard from "../../components/ui/SurfaceCard";
 import PaymentMethodOption from "../../components/payments/PaymentMethodOption";
@@ -162,6 +163,9 @@ export default function CheckoutPageV2() {
         total: Math.max(0, subtotal - (walletApplied ? walletApplyAmount : 0)),
         wallet_applied: walletApplied ? walletApplyAmount : 0,
         payment_method: "bank_transfer",
+        // 30-day attribution cookie — credits the affiliate / sales rep
+        // who originally drove this customer to Konekt.
+        referral_code: readReferralCode() || null,
       });
 
       toast.success("Order submitted! Proceed to bank transfer.");

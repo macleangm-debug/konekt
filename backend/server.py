@@ -451,6 +451,10 @@ class OrderCreate(BaseModel):
     delivery_phone: str
     notes: Optional[str] = None
     deposit_percentage: int = 30
+    # Affiliate / sales attribution code carried by the storefront from
+    # the 30-day localStorage cookie set by ReferralAttribution.jsx.
+    # Optional and never-required at the API layer — falls back to None.
+    referral_code: Optional[str] = None
 
 class OrderStatusUpdate(BaseModel):
     status: str
@@ -1798,6 +1802,39 @@ async def create_order(data: OrderCreate, user: dict = Depends(get_current_user)
     
     order_id = str(uuid.uuid4())
     order_number = generate_order_number()
+
+    # Resolve affiliate / sales attribution from the optional referral_code.
+    # Validation is silent — an invalid / unknown code never blocks an
+    # order, it just doesn't credit anyone.
+    ref_code = (data.referral_code or "").strip().upper() if data.referral_code else ""
+    attribution = None
+    if ref_code:
+        aff = await db.affiliates.find_one(
+            {"affiliate_code": ref_code}, {"_id": 0, "id": 1, "email": 1, "name": 1}
+        )
+        if aff:
+            attribution = {
+                "kind": "affiliate",
+                "code": ref_code,
+                "affiliate_id": aff.get("id"),
+                "affiliate_email": aff.get("email"),
+                "affiliate_name": aff.get("name"),
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+            }
+        else:
+            sales_user = await db.users.find_one(
+                {"sales_promo_code": ref_code}, {"_id": 0, "id": 1, "email": 1, "name": 1}
+            )
+            if sales_user:
+                attribution = {
+                    "kind": "sales",
+                    "code": ref_code,
+                    "sales_user_id": sales_user.get("id"),
+                    "sales_user_email": sales_user.get("email"),
+                    "sales_user_name": sales_user.get("name"),
+                    "captured_at": datetime.now(timezone.utc).isoformat(),
+                }
+
     order_doc = {
         "id": order_id,
         "order_number": order_number,
@@ -1818,12 +1855,37 @@ async def create_order(data: OrderCreate, user: dict = Depends(get_current_user)
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "image_url": None
         }],
+        # Attribution snapshot — read by the affiliate/sales analytics
+        # pipeline when the order closes to credit the right earner.
+        "referral_code": ref_code or None,
+        "attribution": attribution,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.orders.insert_one(order_doc)
     await db.users.update_one({"id": user["id"]}, {"$inc": {"points": int(total * 0.1)}})
+
+    # Drop a pending-attribution row so the affiliate/sales dashboard can
+    # surface "X orders attributed in last 24h" even before the customer
+    # pays the deposit. Idempotent — no-op when attribution is None.
+    if attribution:
+        try:
+            await db.attribution_events.insert_one({
+                "id": str(uuid.uuid4()),
+                "kind": attribution["kind"],
+                "code": ref_code,
+                "order_id": order_id,
+                "order_number": order_number,
+                "amount": total,
+                "user_id": user["id"],
+                "user_email": user.get("email"),
+                "status": "pending",   # pending → confirmed once deposit is paid
+                **{k: v for k, v in attribution.items() if k.startswith(("affiliate_", "sales_"))},
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            logger.warning(f"attribution_event insert failed: {e}")
     
     # Send order confirmation email to customer (fire and forget)
     asyncio.create_task(EmailService.send_order_confirmation(

@@ -6,7 +6,13 @@ Role-based promo code injection. Amount-based promotions only (no percentages).
 from datetime import datetime, timezone
 import os
 
-FRONTEND_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://konekt.co.tz")
+# Share links must always point at the canonical production domain so
+# old WhatsApp screenshots / printed flyers stay valid post-launch.
+FRONTEND_URL = (
+    os.environ.get("PRODUCTION_DOMAIN")
+    or os.environ.get("CANONICAL_FRONTEND_URL")
+    or "https://konekt.co.tz"
+).rstrip("/")
 
 
 async def generate_campaign_content(db, products, user_role, promo_code=None):
@@ -103,7 +109,8 @@ async def generate_group_deal_campaigns(db, promo_code=None):
         {"status": "active"}, {"_id": 1, "campaign_id": 1, "product_name": 1,
          "original_price": 1, "discounted_price": 1, "display_target": 1,
          "current_committed": 1, "buyer_count": 1, "deadline": 1, "image_url": 1,
-         "vendor_threshold": 1}
+         "vendor_threshold": 1, "vendor_cost": 1, "margin_per_unit": 1,
+         "commission_mode": 1, "affiliate_share_pct": 1, "affiliate_fixed_amount": 1}
     ).to_list(50)
 
     campaigns = []
@@ -114,8 +121,27 @@ async def generate_group_deal_campaigns(db, promo_code=None):
         target = d.get("display_target", d.get("vendor_threshold", 1))
         current = d.get("current_committed", 0)
 
+        # Per-deal affiliate earning, computed from the deal's own
+        # commission settings — surfaces the exact TZS the affiliate
+        # receives on every closed unit, so the dashboard table is
+        # never blank.
+        margin_per_unit = float(d.get("margin_per_unit") or 0)
+        if margin_per_unit <= 0:
+            margin_per_unit = max(0.0, discounted - float(d.get("vendor_cost") or 0))
+        mode = (d.get("commission_mode") or "").lower()
+        share_pct = float(d.get("affiliate_share_pct") or 0)
+        fixed_amt = float(d.get("affiliate_fixed_amount") or 0)
+        if mode == "affiliate_share" and share_pct > 0:
+            your_earning = round(margin_per_unit * share_pct / 100)
+        elif mode in ("fixed", "affiliate_fixed") and fixed_amt > 0:
+            your_earning = round(fixed_amt)
+        else:
+            your_earning = 0
+
+        # Public link → /group-deals/<id>?ref=<code>
+        # (DealEndedFallback handles missing/expired; ?ref drops the 30d cookie.)
         ref_param = f"?ref={promo_code}" if promo_code else ""
-        deal_link = f"{FRONTEND_URL}/group-deals/checkout?campaign_id={d['_id']}{ref_param}"
+        deal_link = f"{FRONTEND_URL}/group-deals/{d['_id']}{ref_param}"
 
         lines = ["Group Deal Live!\n"]
         if savings > 0:
@@ -138,6 +164,7 @@ async def generate_group_deal_campaigns(db, promo_code=None):
             "savings_text": f"Save TZS {savings:,.0f}" if savings > 0 else "",
             "target": target,
             "current_committed": current,
+            "your_earning": your_earning,
             "product_link": deal_link,
             "caption": caption,
             "promo_code": promo_code or "",

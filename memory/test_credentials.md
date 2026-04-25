@@ -24,7 +24,7 @@
 - Email: affiliate.test@konekt.co.tz
 - Password: Affiliate#Konekt2026
 - Role: affiliate
-- Promo Code: TEST2026
+- Promo Code: KONTEST  (was PARTNER10 — renamed because PARTNER10 was already taken by Partner Marketing Agency)
 - Phone: +255712345678
 - Status: approved + activated (use for live dashboard / content studio testing)
 
