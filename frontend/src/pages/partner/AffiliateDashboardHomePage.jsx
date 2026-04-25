@@ -4,7 +4,7 @@ import {
   Wallet, Clock, CheckCircle, TrendingUp, Share2,
   Copy, Loader2, Users, DollarSign, ChevronRight,
   Megaphone, Sparkles, Target, Bell, Download,
-  AlertTriangle, Shield
+  AlertTriangle, Shield, MessageCircle
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
@@ -83,7 +83,15 @@ export default function AffiliateDashboardHomePage() {
   };
 
   const quickShare = (campaign) => {
-    copy(campaign.caption, `quick-${campaign.id}`);
+    // Build a rich WhatsApp message: caption (or product name), what the
+    // customer saves, the affiliate's earning, and the deep-link.
+    const lines = [
+      campaign.caption || campaign.name,
+      campaign.savings > 0 ? `Save TZS ${Number(campaign.savings).toLocaleString()} when you order today.` : null,
+      campaign.product_link ? `Order: ${campaign.product_link}` : null,
+    ].filter(Boolean);
+    const url = `https://wa.me/?text=${encodeURIComponent(lines.join("\n\n"))}`;
+    window.open(url, "_blank", "noopener,noreferrer");
   };
 
   if (loading) {
@@ -249,8 +257,8 @@ export default function AffiliateDashboardHomePage() {
               <div>
                 <p className="text-xs font-semibold text-[#D4A843] uppercase tracking-wide mb-2">Group Deals</p>
                 <div className="grid md:grid-cols-2 gap-3">
-                  {groupDeals.slice(0, 6).map((c) => (
-                    <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
+                  {groupDeals.slice(0, 6).map((c, i) => (
+                    <CampaignCard key={c.id} idx={i} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
                   ))}
                 </div>
               </div>
@@ -259,8 +267,8 @@ export default function AffiliateDashboardHomePage() {
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Products</p>
                 <div className="grid md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-1">
-                  {campaigns.slice(0, 12).map((c) => (
-                    <CampaignCard key={c.id} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
+                  {campaigns.slice(0, 12).map((c, i) => (
+                    <CampaignCard key={c.id} idx={1000 + i} campaign={c} copy={copy} copiedId={copiedId} quickShare={quickShare} />
                   ))}
                 </div>
               </div>
@@ -313,7 +321,7 @@ export default function AffiliateDashboardHomePage() {
 
 /* ═══ SUB-COMPONENTS ═══ */
 
-function CampaignCard({ campaign, copy, copiedId, quickShare }) {
+function CampaignCard({ campaign, copy, copiedId, quickShare, idx = 0 }) {
   const c = campaign;
   return (
     <div className="p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition group" data-testid={`campaign-${c.id}`}>
@@ -353,11 +361,12 @@ function CampaignCard({ campaign, copy, copiedId, quickShare }) {
         </Button>
         <Button
           size="sm"
-          className="flex-1 text-xs h-8 bg-[#D4A843] hover:bg-[#c09a38] text-white"
+          className="flex-1 text-xs h-8 bg-[#25D366] hover:bg-[#1ebe5b] text-white"
           onClick={() => quickShare(c)}
-          data-testid={`quick-share-${c.id}`}
+          data-testid={`whatsapp-share-${idx}`}
+          title="Share via WhatsApp"
         >
-          <Share2 className="w-3 h-3 mr-1" /> Quick Share
+          <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
         </Button>
       </div>
     </div>

@@ -1,0 +1,46 @@
+{
+  "summary": "Iteration 354 — Verified the WhatsApp launcher is now correctly wired into the LIVE route /partner/affiliate-dashboard via AffiliateDashboardHomePage.jsx (CampaignCard sub-component). Code review on the route component (the actual mounted component per App.js line 850) confirms every CampaignCard renders a green (#25D366) Button with label 'WhatsApp', data-testid `whatsapp-share-${idx}`, idx=0..N for groupDeals (line 261) and 1000+i for products (line 271). onClick calls quickShare(c) which builds `https://wa.me/?text=` + URL-encoded(caption || name + savings + product_link) and invokes window.open(url, '_blank', 'noopener,noreferrer'). Live click test could not be performed because no approved affiliate exists in DB (all 41 affiliate records are status='pending' — same blocker reported in iter 353). Admin role is redirected to /login by the partner route guard (verified). Per request, code review acceptance is allowed when no live affiliate session is feasible.\n\nBackend regression: /api/admin/force-hydrate still returns the sanitised_descriptions block ({scanned:610, cleaned:0}) — PASS. HOWEVER, marketplace product search /api/marketplace/products/search leaks vendor identity in the `source_url` field on 415/415 items (e.g. 'https://darcity.tz/product-details?Product=...'). This contradicts the 'verified clean' precondition in this iteration's request and the iter-353 zero-leak claim — iter 353 likely scanned only descriptive text fields and missed source_url.",
+  "backend_issues": {
+    "critical": [
+      {
+        "endpoint": "/api/marketplace/products/search",
+        "issue": "Every product item in the public, unauthenticated search response includes `source_url` = 'https://darcity.tz/product-details?Product=<uuid>' AND `source`='url_import'. 415/415 sampled items leak vendor identity. Affects all queries (q=lanyard, blank q, etc). The vendor-scrub claim is therefore NOT clean for the marketplace search endpoint.",
+        "priority": "CRITICAL"
+      }
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_353_vendor_scrub.py",
+    "/app/test_reports/iteration_354.json"
+  ],
+  "action_items": [
+    "Strip `source_url` (and any `source`-style vendor fields) from the public response of /api/marketplace/products/search and any related public marketplace listing endpoints. Either drop the field entirely from the public schema, or replace with a non-vendor-identifying internal id. Re-run leak scan against q='', q='lanyard', q='diary' covering the full domain whitelist {'darcity','dar city','sourced from','.tz/product-details'}.",
+    "Once an approved affiliate seed account is provisioned (or admin can be allowed to preview the affiliate dashboard), do a live click-and-stub test of the WhatsApp button on /partner/affiliate-dashboard to assert the wa.me URL contains caption + product_link. Pure code review was sufficient this round per the review_request fallback."
+  ],
+  "critical_code_review_comments": [
+    "AffiliateDashboardHomePage.jsx — quickShare correctly URL-encodes a multi-line message (caption||name + savings + product_link) and uses window.open with noopener,noreferrer. CampaignCard third button (lines 362-370) is a green #25D366 Button with data-testid `whatsapp-share-${idx}`, label 'WhatsApp', icon MessageCircle. Idx propagation: groupDeals -> i (line 261), products -> 1000+i (line 271). Implementation matches the spec exactly.",
+    "Routing: App.js line 850 mounts AffiliateDashboardHomePage at /partner/affiliate-dashboard. The legacy AffiliateProductPromoTable still exists at /partner/affiliate (different route) — both share the WhatsApp share UX with consistent testid format.",
+    "Marketplace search leaks source_url (vendor URL) on every public item — see backend_issues.critical above.",
+    "Suggestion: also exclude the `source` field ('url_import') as it is a vendor-process leak, even if not the vendor name itself."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "50% (force-hydrate sanitised_descriptions PASS; marketplace search vendor scrub FAIL — 415/415 items leak source_url)",
+    "frontend": "100% via code review (WhatsApp button correctly rendered on the live route per spec; live click test deferred — no approved affiliate)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (works)",
+    "approved_affiliate": "STILL NONE — all 41 records in /api/admin/affiliates have status='pending'. Same blocker as iter 353."
+  },
+  "seed_data_creation": "None",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "WhatsApp launcher acceptance criterion is satisfied at /partner/affiliate-dashboard via AffiliateDashboardHomePage.jsx (verified by code review of the live-mounted component). The OPEN regression that blocks claiming 'vendor identity stripped from public-facing fields' is in /api/marketplace/products/search returning `source_url: https://darcity.tz/...` and `source: url_import` on every item (415/415 in q='' sample). To reproduce: GET /api/marketplace/products/search?limit=50 (no auth) and inspect any item.source_url. To live-test the WhatsApp button, seed/approve one affiliate account via admin UI (POST /api/admin/affiliates/<id>/approve) and run the existing stub: override window.open before clicking [data-testid^='whatsapp-share-'].",
+  "rca_of_the_issue": "Vendor source_url leak: the marketplace product documents in MongoDB store the original ingestion URL on `source_url` and the import method on `source`. When /api/marketplace/products/search serialises items it returns the raw document (minus _id), so vendor URLs are exposed publicly. Fix: in the search endpoint's response projection, exclude `source_url`, `source`, and any other ingest-metadata keys from the public payload. A regex/keyword post-filter on description fields alone is insufficient — explicit field whitelisting or projection is required."
+}
