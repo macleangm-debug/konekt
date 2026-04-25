@@ -238,7 +238,7 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
             item.type === "brand" ? (
               <BrandTemplateCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
             ) : (
-              <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
+              <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} viewerPromoCode={viewerPromoCode} />
             )
           ))}
         </div>
@@ -247,7 +247,7 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
       {selectedItem && (
         <CreativeDrawer
           item={selectedItem} theme={theme} format={format} layout={layout}
-          branding={branding} open={showPreview}
+          branding={branding} open={showPreview} viewerPromoCode={viewerPromoCode}
           onClose={() => { setShowPreview(false); setSelectedItem(null); }}
           onThemeChange={setTheme} onFormatChange={setFormat} onLayoutChange={setLayout}
         />
@@ -257,7 +257,7 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
 }
 
 /* ═══ Item Card ═══ */
-function ItemCard({ item, onSelect }) {
+function ItemCard({ item, onSelect, viewerPromoCode = "" }) {
   return (
     <div className="group rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer" onClick={onSelect} data-testid={`studio-item-${item.id}`}>
       <div className="relative bg-slate-50 aspect-square overflow-hidden">
@@ -287,6 +287,7 @@ function ItemCard({ item, onSelect }) {
               kind={item.type === "group_deal" ? "group_deal" : item.type === "promotion" ? "promo_campaign" : "product"}
               id={item.id}
               label="QR"
+              ref={viewerPromoCode}
             />
           </div>
         </div>
@@ -338,7 +339,7 @@ function BrandTemplateCard({ item, onSelect }) {
 /* ═══════════════════════════════════════════
    CREATIVE DRAWER
    ═══════════════════════════════════════════ */
-function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, onThemeChange, onFormatChange, onLayoutChange }) {
+function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, onThemeChange, onFormatChange, onLayoutChange, viewerPromoCode = "" }) {
   const canvasRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -413,7 +414,7 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
           {/* WYSIWYG Preview — exact same container used for export */}
           <div className="rounded-xl border border-slate-200 bg-[#e5e5e5] p-3 mb-3 flex justify-center overflow-hidden" style={{ maxHeight: format.key === "vertical" ? "540px" : "500px" }} data-testid="creative-preview-area">
             <div style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
-              <BrandedCreative ref={canvasRef} item={item} theme={theme} format={format} layout={layout} branding={branding} />
+              <BrandedCreative ref={canvasRef} item={item} theme={theme} format={format} layout={layout} branding={branding} viewerPromoCode={viewerPromoCode} />
             </div>
           </div>
 
@@ -460,7 +461,7 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
    BRANDED CREATIVE — The Render Template
    Single container: preview + export (true WYSIWYG)
    ═══════════════════════════════════════════ */
-const BrandedCreative = React.forwardRef(({ item, theme, format, layout, branding }, ref) => {
+const BrandedCreative = React.forwardRef(({ item, theme, format, layout, branding, viewerPromoCode = "" }, ref) => {
   const v = format.key === "vertical";
   const w = format.w;
   const h = format.h;
@@ -484,12 +485,12 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
   };
 
   const layoutRenderer = {
-    product: () => <LayoutProduct item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
-    promo: () => <LayoutPromo item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
-    service: () => <LayoutService item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
-    minimal: () => <LayoutMinimal item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} />,
-    authority: () => <LayoutAuthority item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} />,
-    trust: () => <LayoutTrust item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} />,
+    product: () => <LayoutProduct item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    promo: () => <LayoutPromo item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    service: () => <LayoutService item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    minimal: () => <LayoutMinimal item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    authority: () => <LayoutAuthority item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    trust: () => <LayoutTrust item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
   };
 
   return (
@@ -501,7 +502,7 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
 BrandedCreative.displayName = "BrandedCreative";
 
 /* ═══ LAYOUT A: Product Focus ═══ */
-function LayoutProduct({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight }) {
+function LayoutProduct({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight, viewerPromoCode = "" }) {
   return (
     <>
       <LogoBar theme={theme} S={S} branding={branding} isLight={isLight} hasDsc={hasDsc} discount={item.discount_amount} />
@@ -519,13 +520,13 @@ function LayoutProduct({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
           <PromoCode item={item} theme={theme} S={S} />
         </div>
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
 
 /* ═══ LAYOUT B: Promo Focus ═══ */
-function LayoutPromo({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight }) {
+function LayoutPromo({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight, viewerPromoCode = "" }) {
   return (
     <>
       <LogoBar theme={theme} S={S} branding={branding} isLight={isLight} hasDsc={false} discount={0} />
@@ -548,13 +549,13 @@ function LayoutPromo({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLigh
           <PriceBlock item={item} theme={theme} S={S} v={v} hasDsc={hasDsc} />
         </div>
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
 
 /* ═══ LAYOUT C: Service Focus ═══ */
-function LayoutService({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight }) {
+function LayoutService({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight, viewerPromoCode = "" }) {
   return (
     <>
       <LogoBar theme={theme} S={S} branding={branding} isLight={isLight} hasDsc={hasDsc} discount={item.discount_amount} />
@@ -576,13 +577,13 @@ function LayoutService({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
           Get a Quote
         </div>
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
 
 /* ═══ LAYOUT D: Minimal Brand ═══ */
-function LayoutMinimal({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight }) {
+function LayoutMinimal({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLight, viewerPromoCode = "" }) {
   const [logoErr, setLogoErr] = useState(false);
   const showUploadedLogo = branding.resolved_logo_url && !logoErr;
   return (
@@ -608,13 +609,13 @@ function LayoutMinimal({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
         )}
         <PromoCode item={item} theme={theme} S={S} />
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
 
 /* ═══ LAYOUT E: Authority (Brand Statement) ═══ */
-function LayoutAuthority({ item, theme, S, v, w, h, branding, isLight }) {
+function LayoutAuthority({ item, theme, S, v, w, h, branding, isLight, viewerPromoCode = "" }) {
   const [logoErr, setLogoErr] = useState(false);
   const showUploadedLogo = branding.resolved_logo_url && !logoErr;
   return (
@@ -651,13 +652,13 @@ function LayoutAuthority({ item, theme, S, v, w, h, branding, isLight }) {
 
         <PromoCode item={item} theme={theme} S={S} />
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
 
 /* ═══ LAYOUT F: Trust (Checklist Style) ═══ */
-function LayoutTrust({ item, theme, S, v, w, h, branding, isLight }) {
+function LayoutTrust({ item, theme, S, v, w, h, branding, isLight, viewerPromoCode = "" }) {
   const [logoErr, setLogoErr] = useState(false);
   const showUploadedLogo = branding.resolved_logo_url && !logoErr;
   const trustPoints = (item.description || "").split(". ").filter(Boolean);
@@ -695,7 +696,7 @@ function LayoutTrust({ item, theme, S, v, w, h, branding, isLight }) {
 
         <PromoCode item={item} theme={theme} S={S} />
       </div>
-      <FooterBar theme={theme} S={S} branding={branding} />
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
     </>
   );
 }
@@ -750,15 +751,35 @@ function PromoCode({ item, theme, S }) {
 }
 
 /* ═══ Shared: Footer Bar ═══ */
-function FooterBar({ theme, S, branding }) {
+function FooterBar({ theme, S, branding, viewerPromoCode = "", item }) {
   const contactParts = [branding.phone, branding.email].filter(Boolean).join(" | ");
+  // The "Scan here" QR is only baked into the visual when the viewer is
+  // a sales/affiliate user (i.e. they have a personal promo code). It
+  // encodes the canonical product URL with `?ref=<code>` so an attribution
+  // cookie is dropped even if the customer only saw the screenshot.
+  const apiBase = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
+  const qrKind = item?.type === "group_deal" ? "group_deal" : item?.type === "promotion" ? "promo_campaign" : "product";
+  const showQr = !!viewerPromoCode && !!item?.id && item?.type !== "brand";
+  const qrUrl = showQr ? `${apiBase}/api/qr/${qrKind}/${item.id}.png?ref=${encodeURIComponent(viewerPromoCode)}` : "";
   return (
-    <div style={{ backgroundColor: theme.footerBg, padding: `${S.pad * 0.55}px ${S.pad}px`, display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${theme.textSecondary}20` }}>
+    <div style={{ backgroundColor: theme.footerBg, padding: `${S.pad * 0.55}px ${S.pad}px`, display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${theme.textSecondary}20`, gap: 16 }}>
       <div>
         <div style={{ fontSize: S.footer + 2, fontWeight: 700, color: theme.textPrimary || theme.footerText }}>{branding.trading_name || branding.company_name || ""}</div>
         {contactParts && <div style={{ fontSize: S.footer, color: theme.footerText, marginTop: 2 }}>{contactParts}</div>}
       </div>
-      <div style={{ fontSize: S.footer + 1, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 1 }}>Order Now</div>
+      {showQr ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: S.footer + 1, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 1 }}>Scan to Order</div>
+            <div style={{ fontSize: S.footer - 1, color: theme.footerText, marginTop: 2, fontFamily: "monospace" }}>Code: {viewerPromoCode}</div>
+          </div>
+          <div style={{ background: "#fff", padding: 6, borderRadius: 8, lineHeight: 0 }}>
+            <img src={qrUrl} alt="QR" crossOrigin="anonymous" style={{ width: S.pad * 1.6, height: S.pad * 1.6, display: "block" }} />
+          </div>
+        </div>
+      ) : (
+        <div style={{ fontSize: S.footer + 1, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 1 }}>Order Now</div>
+      )}
     </div>
   );
 }

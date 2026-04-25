@@ -92,7 +92,11 @@ export default function SalesPromoStudio() {
           <Tag className="w-4 h-4 text-[#D4A843]" />
           <h2 className="text-base font-bold text-[#20364D]">Set Up Your Promo Code</h2>
         </div>
-        <p className="text-sm text-slate-500 mb-4">Create your personal promo code to activate content sharing and earn commissions on referrals.</p>
+        <p className="text-sm text-slate-500 mb-2">Create your personal promo code to activate content sharing and earn commissions on referrals.</p>
+        <div className="flex items-start gap-2 mb-4 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-900">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+          <span><span className="font-semibold">Choose carefully</span> — once created, your code is permanent. This protects every post you share so old screenshots and printed flyers keep crediting you forever.</span>
+        </div>
         <div className="max-w-sm">
           <Label className="text-xs font-semibold">Your Promo Code</Label>
           <div className="relative mt-1">
@@ -130,7 +134,7 @@ export default function SalesPromoStudio() {
           <span className="text-xs text-slate-400">({campaigns.length + groupDeals.length} items)</span>
         </div>
         <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg">
-          <span className="text-[10px] font-semibold text-slate-400 uppercase">Your Code</span>
+          <span className="text-[10px] font-semibold text-slate-400 uppercase">Your Code · Locked</span>
           <span className="font-bold text-[#D4A843] text-sm font-mono">{promoCode}</span>
           <button onClick={() => copy(promoCode, "my-code")} className="p-1 rounded hover:bg-slate-200 transition" data-testid="copy-my-code">
             {copiedId === "my-code" ? <CheckCircle className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3 text-slate-400" />}

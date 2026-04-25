@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 355 — Verified the QR-overlay + ?ref attribution + promo-code lock + dead-link fallback feature pack end-to-end. Backend pytest suite (10/10 PASS): GET /api/qr/product/<id>.png with ?ref=PARTNER10 returns image/png 200 and writes /app/static/qr/product/<id>__ref-PARTNER10.png; without ?ref writes /app/static/qr/product/<id>.png (no suffix); invalid refs (lowercase 'partner10', special chars 'bad!') are silently dropped — no __ref- file is created and the no-suffix file is served instead. JSON endpoint /api/qr/product/<id>?ref=PARTNER10 returns target_url and qr_image_url BOTH containing '?ref=PARTNER10'. Promo-code lock for affiliate.test@konekt.co.tz: GET /api/affiliate-program/my-status → affiliate_code='PARTNER10' AND affiliate_code_locked=true; POST /api/affiliate-program/setup/promo-code with a different code → 409 'Your promo code is locked. Promo codes cannot be changed after first activation…' AND the persisted code remained PARTNER10 (re-fetched after the failing POST). Sales-promo /create-code requires auth (401 without token). Frontend (live): /partner/affiliate-content-studio drawer renders <img alt='QR' src='…/api/qr/product/<id>.png?ref=PARTNER10'> + 'SCAN TO ORDER' + 'Code: PARTNER10' label, and all 3 caption blocks (Short Caption, Social Post, WhatsApp/Sales) embed PARTNER10 (visually + DOM verified). /admin/content-studio is clean — NO QR overlay, NO 'SCAN TO ORDER', NO 'PARTNER10' anywhere in the grid or drawer. /group-deals/<bad-id> and /promo/<bad-id> both render data-testid='deal-ended-fallback' with the 3 CTAs (View live deals / Browse marketplace / See active promotions). ReferralAttribution: visiting /marketplace?ref=PARTNER10 writes localStorage.konekt_referral={code:'PARTNER10', expires_at:<future ms>, first_seen, landing_path}; visiting again with no ?ref persists the cookie unchanged.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_qr_promo_lock_v355.py",
+    "/app/test_reports/pytest/iter355.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ReferralAttribution.jsx (lazy expiry purge): the component itself never purges expired entries — purging only happens when checkout calls readReferralCode(). This matches the spec ('readReferralCode() returns null and clears the entry'), but if a stale konekt_referral with expires_at in the past sits in localStorage and the customer never reaches a code path that calls readReferralCode(), it lingers indefinitely. Acceptable per spec; flagging for future hardening (e.g. purge on mount).",
+    "qr_code_routes._normalise_ref correctly enforces ^[A-Z0-9_]{2,20}$ and silently drops invalid refs — verified for lowercase and special characters. PARTNER10 (8 chars uppercase alnum) passes.",
+    "qr_code_routes._target_url uses PRODUCTION_DOMAIN if set, else FRONTEND_URL, else falls back to https://konekt.co.tz. The QR will encode the production domain even from preview — intentional per the inline comment, so printed creatives don't break after go-live. Confirmed correct.",
+    "affiliate_program_routes.setup_promo_code returns 409 with a clear 'Your promo code is locked' message and refuses to persist; sets affiliate_code_locked=True on first save. /my-status derives affiliate_code_locked from bool(affiliate.get('affiliate_code')) which is the same source of truth — clean.",
+    "AdminContentStudioPage.jsx renders FooterBar without the QR/Code overlay when viewerPromoCode is unset (admin path) — visually confirmed: footer reads only 'ORDER NOW' on admin, vs 'SCAN TO ORDER · Code: PARTNER10' + QR <img> on /partner/affiliate-content-studio.",
+    "DealEndedFallback is correctly mounted on both /group-deals/<bad> (existing GroupDealsPages) and /promo/<bad> (new PromotionLandingPage) routes. data-testid='deal-ended-fallback' is consistent. The 3 CTAs are present and the section also lists 'Live group deals' as filler content."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_qr_promo_lock_v355.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 pytest)",
+    "frontend": "100% (all 5 acceptance criteria — QR overlay, admin clean, group-deal fallback, promo fallback, referral attribution — verified via Playwright)"
+  },
+  "test_credentials": {
+    "admin": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (works)",
+    "affiliate": "affiliate.test@konekt.co.tz / Affiliate#Konekt2026 (works, code=PARTNER10, locked)"
+  },
+  "seed_data_creation": "QR PNGs auto-generated on first request: /app/static/qr/product/qr-test-product-iter355.png and /app/static/qr/product/qr-test-product-iter355__ref-PARTNER10.png",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All acceptance criteria for the iteration-355 feature pack are GREEN. To re-verify: (1) run pytest /app/backend/tests/test_qr_promo_lock_v355.py — covers QR caching/normalisation + affiliate lock 409 + my-status. (2) For UI, login as affiliate.test@konekt.co.tz / Affiliate#Konekt2026, go to /partner/affiliate-content-studio, click any [data-testid^='studio-item-'], assert img[alt='QR'].src contains '?ref=PARTNER10'. (3) Visit /group-deals/x or /promo/x with bad IDs — expect [data-testid='deal-ended-fallback']. (4) Hit /marketplace?ref=PARTNER10 → localStorage.konekt_referral has {code:'PARTNER10', expires_at:<number ms>}. The 'fresh sales user' path of /api/sales-promo/create-code (200 first call, 409 second) was NOT exercised — no fresh sales-role test account exists; the auth contract is verified instead. If a fresh sales user is provisioned, extend the existing test file with two POSTs to /api/sales-promo/create-code.",
+  "rca_of_the_issue": "N/A — no failing scenarios this iteration."
+}

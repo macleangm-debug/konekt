@@ -4,6 +4,7 @@ import { Clock, Users, Check, ArrowLeft, ShoppingCart, Shield, Share2, Copy, Mes
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import DealEndedFallback from "@/components/public/DealEndedFallback";
 
 const fmt = (v) => `TZS ${Number(v || 0).toLocaleString("en-US")}`;
 
@@ -245,16 +246,22 @@ export default function GroupDealDetailPage() {
   const navigate = useNavigate();
   const [deal, setDeal] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [missing, setMissing] = useState(false);
 
   useEffect(() => {
     api.get(`/api/public/group-deals/${id}`)
       .then((r) => setDeal(r.data))
-      .catch(() => toast.error("Deal not found"))
+      .catch(() => setMissing(true))
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-500">Loading...</div>;
-  if (!deal) return <div className="min-h-screen flex items-center justify-center text-slate-500">Deal not found</div>;
+  if (missing || !deal) return <DealEndedFallback kind="group deal" reason="missing" />;
+
+  // Treat finished/expired deals as ended → fallback page (not a blank screen)
+  const isExpired = deal.deadline && new Date(deal.deadline) < new Date();
+  const isFinished = ["closed", "fulfilled", "expired", "cancelled"].includes((deal.status || "").toLowerCase());
+  if (isExpired || isFinished) return <DealEndedFallback kind="group deal" reason="ended" />;
 
   const progress = deal.display_target > 0 ? Math.round((deal.current_committed / deal.display_target) * 100) : 0;
   const daysLeft = deal.deadline ? Math.max(0, Math.ceil((new Date(deal.deadline) - new Date()) / 86400000)) : 0;

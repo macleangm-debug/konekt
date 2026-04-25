@@ -14,17 +14,18 @@ const API = process.env.REACT_APP_BACKEND_URL || "";
  *   label?: text on the trigger (default "QR")
  *   size?: "sm" | "default"
  */
-export default function QrCodeButton({ kind, id, label = "QR", size = "sm" }) {
+export default function QrCodeButton({ kind, id, label = "QR", size = "sm", ref = "" }) {
   const [open, setOpen] = useState(false);
   if (!kind || !id) return null;
 
-  const imageUrl = `${API}/api/qr/${kind}/${id}.png`;
-  const targetPath = {
+  const refQuery = ref ? `?ref=${encodeURIComponent(ref)}` : "";
+  const imageUrl = `${API}/api/qr/${kind}/${id}.png${refQuery}`;
+  const targetPath = ({
     product: `/shop/product/${id}`,
     group_deal: `/group-deals/${id}`,
     promo_campaign: `/promo/${id}`,
     content_post: `/content/${id}`,
-  }[kind] || "";
+  }[kind] || "") + (ref ? `?ref=${ref}` : "");
 
   const copy = async (text) => {
     try { await navigator.clipboard.writeText(text); toast.success("Copied"); } catch { toast.error("Copy failed"); }

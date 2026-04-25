@@ -61,6 +61,7 @@ async def get_my_affiliate_status(request: Request, credentials: HTTPAuthorizati
         "email": affiliate.get("email"),
         "setup_complete": affiliate.get("setup_complete", False),
         "affiliate_code": affiliate.get("affiliate_code", ""),
+        "affiliate_code_locked": bool(affiliate.get("affiliate_code")),
         "payout_method": affiliate.get("payout_method", ""),
         "payout_details": affiliate.get("payout_details", {}),
         "contract_tier": affiliate.get("contract_tier", "starter"),
@@ -126,10 +127,23 @@ async def setup_payout(request: Request, credentials: HTTPAuthorizationCredentia
 
 @router.post("/setup/promo-code")
 async def setup_promo_code(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Step 2: Create unique promo code."""
+    """Step 2: Create unique promo code. ENTER ONCE → LOCKED FOREVER.
+
+    Once an affiliate sets their code, every published creative + caption
+    + QR code on every WhatsApp screenshot/IG story already carries that
+    code. Editing it later would silently break attribution on every
+    historical share, so we hard-lock the code on first save.
+    """
     db = request.app.mongodb
     affiliate = await _get_affiliate_from_token(credentials, db)
     body = await request.json()
+
+    # Hard lock: refuse update once a code is already in place
+    if affiliate.get("affiliate_code"):
+        raise HTTPException(
+            status_code=409,
+            detail="Your promo code is locked. Promo codes cannot be changed after first activation so your previous posts keep working.",
+        )
 
     code = (body.get("code") or "").strip().upper()
     if not code:
@@ -145,6 +159,10 @@ async def setup_promo_code(request: Request, credentials: HTTPAuthorizationCrede
     if existing:
         raise HTTPException(status_code=409, detail="This promo code is already taken")
 
+    existing_sales = await db.users.find_one({"sales_promo_code": code}, {"_id": 0})
+    if existing_sales:
+        raise HTTPException(status_code=409, detail="This code is already taken by another team member")
+
     existing_promo = await db.promotions.find_one({"code": code}, {"_id": 0})
     if existing_promo:
         raise HTTPException(status_code=409, detail="This code conflicts with an existing promotion")
@@ -155,13 +173,15 @@ async def setup_promo_code(request: Request, credentials: HTTPAuthorizationCrede
         {"email": affiliate["email"]},
         {"$set": {
             "affiliate_code": code,
+            "affiliate_code_locked": True,
+            "affiliate_code_created_at": now,
             "affiliate_link": f"/a/{code}",
             "referral_link": f"{base_url}/?ref={code}",
             "updated_at": now,
         }}
     )
 
-    return {"ok": True, "code": code, "link": f"{base_url}/?ref={code}"}
+    return {"ok": True, "code": code, "locked": True, "link": f"{base_url}/?ref={code}"}
 
 
 @router.get("/validate-code/{code}")

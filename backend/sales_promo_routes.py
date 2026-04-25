@@ -43,15 +43,30 @@ async def get_my_promo_code(request: Request, credentials: HTTPAuthorizationCred
         "promo_code": user.get("sales_promo_code", ""),
         "promo_code_created_at": user.get("sales_promo_code_created_at"),
         "has_code": bool(user.get("sales_promo_code")),
+        "locked": bool(user.get("sales_promo_code")),
     }
 
 
 @router.post("/create-code")
 async def create_promo_code(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Create or update sales promo code. Validates uniqueness across system."""
+    """Create sales promo code. ENTER ONCE → LOCKED FOREVER.
+
+    Rationale: a sales member's published posts (WhatsApp screenshots, IG
+    stories, printed flyers) all carry their promo code. If they ever
+    edit it, every historical post stops attributing them. So we lock
+    it on first save. Admin can override via direct DB write if a typo
+    correction is genuinely required.
+    """
     db = request.app.mongodb
     user = await _get_sales_user(credentials, db)
     body = await request.json()
+
+    # Hard lock: refuse any update once a code is set
+    if user.get("sales_promo_code"):
+        raise HTTPException(
+            status_code=409,
+            detail="Your promo code is locked. Promo codes cannot be changed after first activation so your previous posts keep working.",
+        )
 
     settings_row = await db.admin_settings.find_one({"key": "settings_hub"})
     settings = settings_row.get("value", {}) if settings_row else {}
@@ -89,10 +104,11 @@ async def create_promo_code(request: Request, credentials: HTTPAuthorizationCred
         {"$set": {
             "sales_promo_code": code,
             "sales_promo_code_created_at": now,
+            "sales_promo_code_locked": True,
         }}
     )
 
-    return {"ok": True, "code": code}
+    return {"ok": True, "code": code, "locked": True}
 
 
 @router.get("/validate-code/{code}")

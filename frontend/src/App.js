@@ -167,6 +167,8 @@ import WalkInSalePage from "@/pages/admin/WalkInSalePage";
 import AdvancedAnalyticsDashboard from "@/pages/admin/AdvancedAnalyticsDashboard";
 import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
 import GroupDealDetailPage, { GroupDealsListPage } from "@/pages/public/GroupDealsPages";
+import PromotionLandingPage from "@/pages/public/PromotionLandingPage";
+import ReferralAttribution from "@/components/common/ReferralAttribution";
 import GroupDealCheckoutPage from "@/pages/public/GroupDealCheckoutPage";
 import AccountGroupDealsPage from "@/pages/customer/AccountGroupDealsPage";
 import PerformanceDashboardPage from "@/pages/admin/PerformanceDashboardPage";
@@ -588,6 +590,7 @@ function App() {
     <ConfirmModalProvider>
     {!launcherDone && <AppLauncher onComplete={() => setLauncherDone(true)} />}
     <BrowserRouter>
+      <ReferralAttribution />
       <Routes>
         {/* Main Login Page - V2 Branded Design */}
         <Route path="/login" element={
@@ -925,6 +928,7 @@ function App() {
           <Route path="confirm-completion" element={<ConfirmCompletionPage />} />
           <Route path="group-deals" element={<GroupDealsListPage />} />
           <Route path="group-deals/:id" element={<GroupDealDetailPage />} />
+          <Route path="promo/:id" element={<PromotionLandingPage />} />
           <Route path="group-deals/checkout" element={<GroupDealCheckoutPage />} />
           <Route path="about" element={<AboutPageContent />} />
           <Route path="contact" element={<ContactPageContent />} />
