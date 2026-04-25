@@ -7,10 +7,11 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ---
 
-## Latest Session — Feb 25, 2026 (live affiliate + Content Studio)
-1. **Live affiliate account activated** — `affiliate.test@konekt.co.tz` / `Affiliate#Konekt2026` with promo_code `PARTNER10`. Logs into `/partner/affiliate-dashboard` and renders 18 campaigns with the green WhatsApp share button on every row. Click test confirmed: opens https://wa.me/?text=… → redirects to WhatsApp with caption + savings + promo code pre-filled.
-2. **Affiliate Content Studio** — new route `/partner/affiliate-content-studio` (Sparkles icon in sidebar). Reuses `AdminContentStudioPage` 1:1 so every campaign / caption / template stays perfectly in sync with the admin Content Studio. Affiliates get the same 200 product templates · 6 services · 6 group deals · 12 brand templates with Light/Dark/Promo/Minimal themes, Square/Vertical formats and 6 Layout intents.
-3. Credentials saved in `/app/memory/test_credentials.md`.
+## Latest Session — Feb 25, 2026 (live affiliate + Content Studio with promo-code injection)
+1. **Live affiliate account activated** — `affiliate.test@konekt.co.tz` / `Affiliate#Konekt2026` with promo_code `PARTNER10`. Logs into `/partner/affiliate-dashboard` and renders 18 campaigns with the green WhatsApp share button on every row. Live click test confirmed → opens https://wa.me/?text=… with caption + savings + promo code pre-filled.
+2. **Affiliate Content Studio with personalised promo-code overlay** — new route `/partner/affiliate-content-studio`. Reuses `AdminContentStudioPage` for the visual creative engine, but injects the affiliate's promo code (PARTNER10) into every product/service/deal so the creative badge ("Use code: PARTNER10") + Short / Social / WhatsApp / Story captions are all discount-driven and personalised — matching the existing sales studio behaviour.
+3. **Admin Content Studio remains clean** — when admin views the Content Studio, no `viewerPromoCode` is passed, so creatives stay neutral (no personal code overlay), preserving the original admin behaviour. Sales already had its own dedicated SalesContentHubPage with sales-agent code injection — untouched.
+4. Credentials saved in `/app/memory/test_credentials.md`.
 
 ---
 

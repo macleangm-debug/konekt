@@ -81,7 +81,7 @@ function TriadSVG({ size = 56, variant = "dark", accent = "#D4A843", primary = "
 /* ═══════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════ */
-export default function AdminContentStudioPage() {
+export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLabel = "" } = {}) {
   const [products, setProducts] = useState([]);
   const [services, setServices] = useState([]);
   const [groupDeals, setGroupDeals] = useState([]);
@@ -93,6 +93,19 @@ export default function AdminContentStudioPage() {
   const [format, setFormat] = useState(FORMATS[0]);
   const [layout, setLayout] = useState(LAYOUTS[0]);
   const [showPreview, setShowPreview] = useState(false);
+
+  // When viewer is sales/affiliate, overlay their personal promo code on
+  // every item — exactly the discount-driven creative the original
+  // sales/affiliate post designs surfaced. Admin (no viewerPromoCode)
+  // keeps the clean creatives.
+  const applyViewerPromoCode = useCallback((items) => {
+    if (!viewerPromoCode) return items;
+    return items.map((it) => ({
+      ...it,
+      promo_code: viewerPromoCode,
+      has_promotion: true,
+    }));
+  }, [viewerPromoCode]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -126,11 +139,13 @@ export default function AdminContentStudioPage() {
   useEffect(() => { load(); }, [load]);
 
   const getItems = () => {
-    if (tab === "products") return products;
-    if (tab === "services") return services;
-    if (tab === "group_deals") return groupDeals;
-    if (tab === "brand") return BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
-    return products;
+    let raw;
+    if (tab === "products") raw = products;
+    else if (tab === "services") raw = services;
+    else if (tab === "group_deals") raw = groupDeals;
+    else if (tab === "brand") raw = BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
+    else raw = products;
+    return applyViewerPromoCode(raw);
   };
   const items = getItems();
 
