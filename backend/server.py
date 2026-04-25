@@ -2949,6 +2949,10 @@ app.include_router(seo_sitemap_router)
 from admin_promotions_routes import router as admin_promotions_router, expire_due_promotions
 app.include_router(admin_promotions_router)
 
+# ── Automation engine routes (Settings Hub → Automation tab) ──
+from automation_engine_routes import router as automation_engine_router
+app.include_router(automation_engine_router)
+
 from vendor_payables_routes import admin_router as vendor_payables_admin_router, vendor_router as vendor_payables_vendor_router
 app.include_router(vendor_payables_admin_router)
 app.include_router(vendor_payables_vendor_router)
@@ -3733,6 +3737,14 @@ async def startup_event():
         logger.info("Weekly digest scheduler started")
     except Exception as e:
         logger.warning("Failed to start weekly digest scheduler: %s", e)
+
+    # ── Start automation engine (promotions + group deals) ──
+    try:
+        from services.automation_engine_service import automation_engine_loop
+        asyncio.create_task(automation_engine_loop(app))
+        logger.info("Automation engine loop started")
+    except Exception as e:
+        logger.warning("Failed to start automation engine loop: %s", e)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

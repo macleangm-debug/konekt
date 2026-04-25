@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target, Package, DollarSign } from "lucide-react";
+import { Building2, CreditCard, FileText, BarChart3, Users, Globe, Bell, Shield, Rocket, Wallet, Eye, CalendarClock, Settings, Truck, Plus, Trash2, AlertTriangle, CheckCircle2, Target, Package, DollarSign, Bot } from "lucide-react";
 import api from "../../lib/api";
 import SettingsSectionCard from "../../components/admin/settings/SettingsSectionCard";
 import SettingsNumberField from "../../components/admin/settings/SettingsNumberField";
@@ -13,6 +13,7 @@ import NotificationPreferencesSection from "../../components/shared/Notification
 import ReportScheduleSection from "../../components/admin/settings/ReportScheduleSection";
 import SystemNotificationControlPanel from "../../components/admin/settings/SystemNotificationControlPanel";
 import SettingsLockGate from "../../components/admin/SettingsLockGate";
+import AutomationEngineSection from "../../components/admin/settings/AutomationEngineSection";
 
 import { toast } from "sonner";
 
@@ -57,6 +58,14 @@ const GROUPS = [
       { key: "partners", label: "Partner Config", icon: Truck },
       { key: "operations", label: "Operational Rules", icon: Settings },
       { key: "performance_targets", label: "Performance Targets", icon: Target },
+    ],
+  },
+  {
+    key: "automation",
+    label: "Automation",
+    icon: Bot,
+    tabs: [
+      { key: "automation_engine", label: "Promotion & Deal Engine", icon: Bot },
     ],
   },
   {
@@ -105,6 +114,7 @@ const TAB_DESCRIPTIONS = {
   catalog_variants: "Define variant types (Size, Color, Material) for product listings",
   catalog_sku: "SKU format, prefix, and auto-generation configuration",
   vendor_ops_settings: "Sourcing mode, quote expiry, lead times, and vendor assignment strategy",
+  automation_engine: "Self-running engine that keeps promotions and group deals stocked, scores winners, and silently fulfills group deals at expiry.",
 };
 
 const defaultState = {
@@ -400,6 +410,7 @@ export default function AdminSettingsHubPage() {
             {tab === "catalog_variants" && <CatalogVariantsTab state={state} setState={setState} />}
             {tab === "catalog_sku" && <CatalogSkuTab state={state} setState={setState} />}
             {tab === "vendor_ops_settings" && <VendorOpsSettingsTab state={state} setState={setState} />}
+            {tab === "automation_engine" && <SettingsLockGate><AutomationEngineSection /></SettingsLockGate>}
           </div>
         </div>
       </main>
