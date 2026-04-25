@@ -3,7 +3,33 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 357 ITERATIONS — 100% PASS RATE
+## System Status: 358 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Promotion & Group-Deal Automation Engine)
+1. **Self-running engine** in Settings Hub → Automation → Promotion & Deal Engine.
+   - **Promotions**: daily cadence, configurable per-category quota (default 20), exploration ratio (30% explorers / 70% winners), discount pool share %, auto-expiry by max age + scope branch.
+   - **Group Deals**: configurable cadence (daily/every_3_days/weekly), target count (default 25), duration window (default 14 days), funding source (internal/vendor).
+   - **Margin pool funding** (4 default-on checkboxes): Promotion + Referral + Sales (assisted) + Affiliate (assisted). Reserve & Platform Margin off by default.
+   - **Scoring weights** (default 50% revenue / 30% conversion / 20% margin) — editable.
+   - **Performance dashboard** (last 30 days): top performers, dead promos, total orders, total revenue, deal counts.
+   - Manual buttons: **Run Now** · **Dry Run** · **Promote Everything** (one-click sitewide sale with margin-aware safety).
+2. **Silent group-deal "always sell"** (backend-only). Customer-facing UI is unchanged: countdown + buyer count still shown. At expiry, every committed buyer is silently confirmed at the advertised discounted price even if the target wasn't reached. Matches participant orders by both `group_deal_id` (ObjectId-string) and short `campaign_id` for forward/back compatibility.
+3. **Engine reuses existing margin-aware primitives** from `admin_promotions_routes._compute_max_giveaway_per_line` and `admin_group_deals_internal_routes._suggest_for_product` — never breaks margins, respects sales-preserve floor, and never eats platform margin unless explicitly opted in.
+4. **Background loop** runs every 30 minutes from `services.automation_engine_service.automation_engine_loop`, ticking the promotion pass (daily), group-deal pass (per cadence), and silent finaliser. Master toggle starts OFF — admin opts in via UI.
+5. **Iteration 358 — 12/12 backend pytests PASS** (config CRUD + deep-merge, dry-run, real run, second-run quota respect, /performance shape, /promote-everything validation, silent finaliser order flip, 401/403 auth guards). Frontend Settings Hub render verified through SettingsLockGate unlock.
+
+**New endpoints**:
+- `GET /api/admin/automation/config` · `PUT /api/admin/automation/config`
+- `POST /api/admin/automation/run` (RunOptions: promotions/group_deals/finalize_deals/dry_run)
+- `GET /api/admin/automation/performance?lookback_days=30`
+- `POST /api/admin/automation/promote-everything` (discount_pct 1..90, duration_days 1..30)
+
+**New files**:
+- `/app/backend/services/automation_engine_service.py`
+- `/app/backend/automation_engine_routes.py`
+- `/app/frontend/src/components/admin/settings/AutomationEngineSection.jsx`
 
 ---
 

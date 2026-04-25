@@ -659,9 +659,19 @@ async def silent_finalize_expired_deals(db) -> dict:
         # fulfilling. No-op when the cohort hit the target naturally.
         if always or target_met:
             try:
+                # Match either group_deal_id (stringified ObjectId, the canonical
+                # key used by /join) or the short uppercase campaign_id field
+                # for any legacy code paths.
+                gd_id_str = str(gd_id)
+                gd_short = gd.get("campaign_id")
+                or_clauses = [{"group_deal_id": gd_id_str},
+                              {"campaign_id": gd_id_str}]
+                if gd_short:
+                    or_clauses.extend([{"group_deal_id": gd_short},
+                                        {"campaign_id": gd_short}])
                 await db.orders.update_many(
                     {
-                        "group_deal_id": str(gd_id),
+                        "$or": or_clauses,
                         "status": {"$in": ["awaiting_target", "pending_group"]},
                     },
                     {"$set": {
@@ -721,9 +731,6 @@ async def compute_performance_dashboard(db, lookback_days: int = 30) -> dict:
 
     # Aggregate orders that referenced these promos
     pids_to_promo: dict[str, str] = {}
-    for promo in promo_stats.values():
-        for _ in []:
-            pass
 
     async for promo in db.catalog_promotions.find(
         {"auto_created": True}, {"_id": 0, "id": 1, "product_ids": 1}
