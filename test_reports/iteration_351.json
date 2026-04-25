@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 351 — Konekt fork final regression. Backend 4/4 PASS (vendor stats, catalog stats, taxonomy, OE search). Frontend: login, /admin/vendor-agreements (Total Vendors=1, v2.0), /admin/catalog (Categories=4, Products=610, Active=610, chips PM/OE/Stationery/Services), /marketplace cascade rail mounted (filter-group-select / filter-category-select / filter-subcategory-select), /products → /marketplace redirect, and mobile-filter-btn drawer all PASS. Previous iteration's 'login broken' was indeed a false positive caused by page.fill not firing React onChange on the password field; using keyboard.type works perfectly and storage gets token + konekt_admin_token + userRole=admin.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login page", "issues": ["Password input does not respond to playwright page.fill() — it accepts characters via keyboard.type only. Likely the show/hide eye button wraps the input in a way that intercepts programmatic value setters. Real users are unaffected, but it makes automation fragile. Consider exposing a stable input or accepting native value-set events."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration_351.py",
+    "/app/test_reports/pytest/iteration_351.xml"
+  ],
+  "action_items": [
+    "Optional: make the password field tolerant to programmatic .value assignment so automation tools using page.fill() work without keyboard.type — minor DX concern only, not blocking production."
+  ],
+  "critical_code_review_comments": [
+    "Backend hydration is solid: vendor-agreements/stats={total_vendors:1, current_version:'2.0'}, catalog-workspace/stats returns the canonical 4 categories with correct counts (PM:596, OE:14, Stationery:0, Services:0; total active=610), taxonomy returns flat groups/categories/subcategories arrays with Office Equipment id=08405254-f92b-4d57-b390-25623c7dd09a and 'ID Printers and Accessories' subcategory, and /api/marketplace/products/search?category_id=<OE> returns exactly 14 products.",
+    "Frontend /products page now redirects (Navigate) to /marketplace and InlineMarketplaceFilterRail is mounted with proper data-testids (marketplace-filter-rail, filter-group-select, filter-category-select, filter-subcategory-select) for both desktop and mobile (mobile-filter-btn opens the sheet).",
+    "Single source of truth principle restored: marketplace branch source aligned with /api/marketplace/taxonomy (no more 'KonektSeries' artefact).",
+    "Admin Ops Onboarding modal still pops on first admin load; localStorage flag 'admin_onboarding_seen=1' suppresses it. Consider auto-marking it after the user finishes the tour to avoid re-popping for testers."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration_351.py"],
+  "success_rate": {"backend": "100% (4/4)", "frontend": "100% (login, vendor-agreements stats, catalog KPIs+chips, /products redirect, /marketplace cascade rail mounted, mobile drawer all PASS)"},
+  "test_credentials": "Admin admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! works. Storage keys after login: token, konekt_admin_token, userRole=admin, userName, userEmail, userId.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 5 review items GREEN end-to-end. Backend pytest at /app/backend/tests/test_iteration_351.py covers vendor-agreements/stats, catalog-workspace/stats (4 canonical categories with exact counts), marketplace/taxonomy (groups Products+Services, OE→ID Printers and Accessories sub), and OE category search returning 14 products. For UI, IMPORTANT NOTE: do NOT use page.fill() on [data-testid=login-password-input] — it silently no-ops because of the show/hide eye wrapper. Always use keyboard.type. After login, evaluate localStorage.setItem('admin_onboarding_seen','1') before navigating to /admin/* to dismiss the Ops Onboarding modal. Vendor Agreements card label is uppercase 'TOTAL VENDORS' (not 'Total Vendors') — match accordingly in regex.",
+  "rca of the issue": "Iteration 350's 'login broken' false positive root cause: the Password input is wrapped with a show/hide eye toggle that re-renders on focus/blur. Playwright's page.fill() sets value via the JS .value setter; React reads from controlled state which is only updated via dispatched input events. The wrapper apparently intercepts and the controlled state never receives the password value, so on submit the form posts an empty password (or never submits). Solution for testers: use page.keyboard.type with a small delay after click()."
+}

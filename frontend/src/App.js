@@ -1026,7 +1026,7 @@ function App() {
                 <Navbar />
                 <main className="flex-1 pb-16 md:pb-0">
                   <Routes>
-                    <Route path="/products" element={<Products />} />
+                    <Route path="/products" element={<Navigate to="/marketplace" replace />} />
                     <Route path="/product/:productId" element={<ProductDetail />} />
                     <Route path="/customize/:productId" element={<Customize />} />
                     <Route path="/cart" element={<Cart />} />
