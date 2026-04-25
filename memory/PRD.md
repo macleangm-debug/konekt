@@ -3,7 +3,17 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 346 ITERATIONS — 100% PASS RATE
+## System Status: 351 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 25, 2026 (vendor count + 4-branch taxonomy + marketplace cascade)
+1. **Vendor count card now reads 1 (was 25)** — `/api/admin/vendor-agreements/stats` now counts only partners that own ≥1 active product. Zombie partner shells from earlier onboarding ("On Demand Limited", "John Printers Limited", 2× TEST_*) no longer inflate the metric. Darcity Promotion is the sole live vendor.
+2. **Agreement version now persists at 2.0** — production_hydration auto-syncs `admin_settings.vendor_agreement_version` to the current code constant on every boot, so the old persisted "1.0" can never override the new 15-clause v2.0 template again.
+3. **Catalog Workspace shows the 4 canonical branches only** — `/api/admin/catalog-workspace/stats` now hardcodes Promotional Materials / Office Equipment / Stationery / Services and computes `product_count` from the `branch` field (Promotional Materials = 596, Office Equipment = 14, Stationery = 0, Services = 0). The legacy 18-card chip strip pulled from `settings_hub.product_categories` is gone.
+4. **Marketplace filter cascade hardened** — `/products` route now redirects to `/marketplace` (the canonical browse surface that mounts InlineMarketplaceFilterRail). Group → Category → Subcategory works end-to-end on both desktop and mobile drawer wizard. Office Equipment correctly surfaces "ID Printers and Accessories" subcategory (was orphaned under Promotional Materials before — production_hydration._normalise_taxonomy now realigns subcategory.category_id to match its products).
+5. **production_hydration extended** — every boot now (a) deletes TEST_* partners, (b) archives partner shells with 0 active products (excluding Darcity), (c) realigns subcategory.category_id when products consensus disagrees, (d) persists agreement v2.0. Zero manual cleanup required on future deploys.
+6. **Backend 4/4 + Frontend cascade tests PASS** (iteration 351). Test-credentials and route paths captured in `/app/memory/test_credentials.md`.
 
 ---
 
