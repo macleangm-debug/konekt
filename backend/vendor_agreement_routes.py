@@ -774,7 +774,16 @@ async def nudge_unsigned_vendors():
 
 @admin_router.get("/stats")
 async def admin_agreement_stats():
-    total_vendors = await db.partners.count_documents({})
+    # Count only ACTIVE vendor partners — exclude soft-deleted, archived,
+    # or test entities. The previous query counted every doc in `partners`
+    # which on a busy environment includes inactive shells.
+    total_vendors = await db.partners.count_documents({
+        "$and": [
+            {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
+            {"$or": [{"status": {"$ne": "archived"}}, {"status": {"$exists": False}}]},
+            {"$or": [{"deleted_at": None}, {"deleted_at": {"$exists": False}}]},
+        ]
+    })
     signed = await db.vendor_agreements.count_documents(
         {"version": AGREEMENT_VERSION, "status": "signed"}
     )

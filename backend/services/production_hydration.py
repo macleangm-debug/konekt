@@ -173,6 +173,70 @@ async def _backfill_darcity_data_integrity(db) -> dict:
     return {"backfilled_products": upd}
 
 
+# Konekt's canonical 4-branch taxonomy. Anything outside this set is legacy
+# / experimental and gets deactivated automatically on every boot so the
+# admin UI category counters always read 4.
+KONEKT_BRANCHES = {
+    "Office Equipment", "Promotional Materials", "Stationery", "Services",
+}
+
+
+async def _normalise_taxonomy(db) -> dict:
+    """Deactivate any catalog_categories that aren't one of the canonical
+    Konekt branches, plus deactivate subcategories with zero products.
+    Idempotent.
+    """
+    rep = {}
+    r = await db.catalog_categories.update_many(
+        {"name": {"$nin": list(KONEKT_BRANCHES)}, "is_active": True},
+        {"$set": {"is_active": False}},
+    )
+    rep["categories_deactivated"] = r.modified_count
+
+    used_sub_ids = [
+        x for x in await db.products.distinct(
+            "subcategory_id", {"is_active": True}
+        ) if x
+    ]
+    r = await db.catalog_subcategories.update_many(
+        {"id": {"$nin": used_sub_ids}, "is_active": True},
+        {"$set": {"is_active": False}},
+    )
+    rep["subcategories_deactivated"] = r.modified_count
+    return rep
+
+
+async def _normalise_partners(db) -> dict:
+    """Mark stale / test partners as inactive so vendor counters reflect
+    real, signed-up vendors only. Idempotent.
+
+    A partner is treated as stale if:
+      • It has no `name` AND no `email`, OR
+      • It's the legacy demo/internal "Konekt Limited" partner with no
+        products attached, OR
+      • Its email matches *@example.com / *@test.com / TEST_*
+    """
+    rep = {"partners_deactivated": 0}
+    test_rx = {"$regex": r"(@example\.com|@test\.com|^TEST_)", "$options": "i"}
+    query = {
+        "$and": [
+            {"$or": [{"is_active": True}, {"is_active": {"$exists": False}}]},
+            {"$or": [
+                {"$and": [
+                    {"$or": [{"name": ""}, {"name": None}, {"name": {"$exists": False}}]},
+                    {"$or": [{"email": ""}, {"email": None}, {"email": {"$exists": False}}]},
+                ]},
+                {"email": test_rx},
+            ]},
+        ]
+    }
+    r = await db.partners.update_many(
+        query, {"$set": {"is_active": False, "status": "archived"}}
+    )
+    rep["partners_deactivated"] = r.modified_count
+    return rep
+
+
 async def _extract_image_tarball() -> int:
     """Unpack the bundled product images if they're not yet on disk.
 
