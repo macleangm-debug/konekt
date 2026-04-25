@@ -48,12 +48,28 @@ _REF_RX = re.compile(r"^[A-Z0-9_]{2,20}$")
 
 
 def _frontend_base() -> str:
-    base = (os.environ.get("FRONTEND_URL") or "").rstrip("/")
-    # Prefer the production live domain when running against preview, so QR prints don't break after go-live
+    """Resolve the canonical public domain for QR target URLs.
+
+    Priority:
+      1. PRODUCTION_DOMAIN env (e.g. https://konekt.co.tz) — set this on
+         deploy so QR codes printed at preview-time still resolve to
+         production after go-live.
+      2. CANONICAL_FRONTEND_URL env — explicit override.
+      3. konekt.co.tz hard-default — guarantees screenshots shared today
+         keep working even if env config drifts.
+
+    `FRONTEND_URL` is intentionally NOT used: in preview pods it points
+    at konekt-payments-fix.preview.emergentagent.com, which would leak
+    the preview domain into every printed QR. QRs must always encode
+    the production domain.
+    """
     prod = os.environ.get("PRODUCTION_DOMAIN")
     if prod:
         return prod.rstrip("/")
-    return base or "https://konekt.co.tz"
+    canonical = os.environ.get("CANONICAL_FRONTEND_URL")
+    if canonical:
+        return canonical.rstrip("/")
+    return "https://konekt.co.tz"
 
 
 def _normalise_ref(ref: str | None) -> str | None:

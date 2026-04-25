@@ -9,7 +9,9 @@ import {
 import { Button } from "../../components/ui/button";
 import { toast } from "sonner";
 import api from "../../lib/api";
+import { useNavigate } from "react-router-dom";
 import AffiliateSetupWizard from "../../components/affiliate/AffiliateSetupWizard";
+import AffiliateOnboardingModal, { isAffiliateOnboardingDismissed } from "../../components/affiliate/AffiliateOnboardingModal";
 
 function money(v) {
   return `TZS ${Number(v || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -39,6 +41,7 @@ const STATUS_BADGE = {
 };
 
 export default function AffiliateDashboardHomePage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [setupComplete, setSetupComplete] = useState(null);
   const [status, setStatus] = useState({});
@@ -48,6 +51,7 @@ export default function AffiliateDashboardHomePage() {
   const [notifications, setNotifications] = useState({ notifications: [], unread_count: 0 });
   const [wallet, setWallet] = useState({});
   const [copiedId, setCopiedId] = useState(null);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     try {
@@ -106,10 +110,23 @@ export default function AffiliateDashboardHomePage() {
     return <AffiliateSetupWizard onComplete={() => { setSetupComplete(true); loadAll(); }} />;
   }
 
+  // Open the welcome modal once per browser, only after setup is done
+  if (setupComplete === true && !welcomeOpen && !isAffiliateOnboardingDismissed()) {
+    // Defer to next tick so React batches state updates
+    Promise.resolve().then(() => setWelcomeOpen(true));
+  }
+
   const perfStatus = STATUS_BADGE[status.performance_status] || STATUS_BADGE.active;
 
   return (
     <div className="space-y-5" data-testid="affiliate-dashboard-v2">
+      <AffiliateOnboardingModal
+        open={welcomeOpen}
+        promoCode={status.affiliate_code || ""}
+        name={status.name || ""}
+        onClose={() => setWelcomeOpen(false)}
+        onCta={(path) => { if (path) navigate(path); }}
+      />
       {/* ═══ HEADER ═══ */}
       <div className="bg-gradient-to-r from-[#20364D] to-[#1a2d41] text-white rounded-2xl p-6 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

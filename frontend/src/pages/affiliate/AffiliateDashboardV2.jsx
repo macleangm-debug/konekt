@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../../lib/api";
 import KpiCard from "../../components/dashboard/KpiCard";
 import SectionCard from "../../components/dashboard/SectionCard";
 import AffiliateCard from "../../components/affiliate/AffiliateCard";
 import AffiliateProductPromoTable from "../../components/affiliate/AffiliateProductPromoTable";
 import AffiliateEarningsTable from "../../components/affiliate/AffiliateEarningsTable";
-import AffiliateWelcomeCards from "../../components/affiliate/AffiliateWelcomeCards";
+import AffiliateOnboardingModal, { isAffiliateOnboardingDismissed } from "../../components/affiliate/AffiliateOnboardingModal";
 import { Loader2 } from "lucide-react";
 
 function money(v) {
@@ -13,6 +14,7 @@ function money(v) {
 }
 
 export default function AffiliateDashboardV2() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [earnings, setEarnings] = useState([]);
   const [summary, setSummary] = useState({});
@@ -20,10 +22,18 @@ export default function AffiliateDashboardV2() {
   const [affiliateName, setAffiliateName] = useState("");
   const [referralLink, setReferralLink] = useState("");
   const [loading, setLoading] = useState(true);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Show the welcome modal once per browser session for new affiliates
+  useEffect(() => {
+    if (!loading && !isAffiliateOnboardingDismissed()) {
+      setWelcomeOpen(true);
+    }
+  }, [loading]);
 
   const loadData = async () => {
     try {
@@ -58,8 +68,14 @@ export default function AffiliateDashboardV2() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8" data-testid="affiliate-dashboard-v2">
-      {/* Welcome cards — first-visit walkthrough (bright-blue industry-standard cards) */}
-      <AffiliateWelcomeCards affiliateName={affiliateName} promoCode={promoCode} />
+      {/* Brand-coloured 3-step onboarding modal — shown once per browser */}
+      <AffiliateOnboardingModal
+        open={welcomeOpen}
+        promoCode={promoCode}
+        name={affiliateName}
+        onClose={() => setWelcomeOpen(false)}
+        onCta={(path) => { if (path) navigate(path); }}
+      />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
