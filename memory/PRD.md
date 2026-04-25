@@ -3,7 +3,17 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 354 ITERATIONS — 100% PASS RATE
+## System Status: 355 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 25, 2026 (QR overlay + promo code lock + dead-link handling)
+1. **QR overlay baked onto every affiliate creative** — `FooterBar` of `AdminContentStudioPage` now renders a "SCAN TO ORDER" block with a high-contrast QR + `Code: <PROMO>` whenever a `viewerPromoCode` is passed. The QR image source is `/api/qr/{product|group_deal|promo_campaign}/{id}.png?ref=<code>` so any customer who scans the screenshot still credits the affiliate.
+2. **QR backend cache per ref** — `qr_code_routes.py` now reads optional `?ref=<CODE>` and caches `/app/static/qr/<kind>/<id>__ref-<CODE>.png` per code. Invalid refs (lowercase/special-chars) are silently dropped → no-ref version served.
+3. **Promo code locked on first save** — `/api/affiliate-program/setup/promo-code` and `/api/sales-promo/create-code` both 409 with "Your promo code is locked…" once a code is set. Affiliate `/my-status` returns `affiliate_code_locked: true`. Setup wizard already blocks the change UI; previous shared posts/QRs/captions stay attributed forever.
+4. **Dead-link fallback page** — `DealEndedFallback` replaces the old blank screens. Group-deal detail page falls back when deal is missing OR expired OR closed. New `/promo/:id` route falls back when promotion is missing/expired/paused. Fallback shows 3 CTAs (View live deals · Browse marketplace · See active promotions) plus auto-loaded Live Group Deals + Active Promotions sections so traffic the affiliate already sent doesn't bounce.
+5. **30-day attribution cookie** — `<ReferralAttribution />` mounted globally inside `<BrowserRouter>` reads `?ref=<CODE>` from any URL and stores it in `localStorage.konekt_referral` for 30 days. `readReferralCode()` helper returns the live code or null after expiry.
+6. **Backend 10/10 + frontend regression PASS** (iteration 355).
 
 ---
 
