@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle, ClipboardList, FileText } from "lucide-react";
+import { LayoutDashboard, Package, Upload, Truck, Receipt, Menu, X, ListPlus, PlusCircle, TrendingUp, Award, DollarSign, Wallet, User, BarChart3, Briefcase, HelpCircle, ClipboardList, FileText, Sparkles } from "lucide-react";
 import partnerApi from "../lib/partnerApi";
 import NotificationBell from "../components/shared/NotificationBell";
 import OnboardingGate from "../components/onboarding/OnboardingGate";
@@ -99,6 +99,7 @@ export default function PartnerLayout() {
   const affiliateItems = [
     { path: "/partner/affiliate-dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/partner/affiliate-promotions", label: "Products & Promotions", icon: TrendingUp },
+    { path: "/partner/affiliate-content-studio", label: "Content Studio", icon: Sparkles },
     { path: "/partner/affiliate-earnings", label: "Earnings", icon: DollarSign },
     { path: "/partner/affiliate-payouts", label: "Payouts", icon: Wallet },
     { path: "/partner/affiliate-profile", label: "Profile", icon: User },

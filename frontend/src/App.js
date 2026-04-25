@@ -222,6 +222,7 @@ import AffiliateSalesPage from "@/pages/partner/AffiliateSalesPage";
 import AffiliateEarningsPage from "@/pages/partner/AffiliateEarningsPage";
 import PartnerAffiliatePayoutsPage from "@/pages/partner/AffiliatePayoutsPage";
 import AffiliateProfilePage from "@/pages/partner/AffiliateProfilePage";
+import AffiliateContentStudioPage from "@/pages/affiliate/AffiliateContentStudioPage";
 
 // Growth Engine Admin Pages
 import CommissionEngineAdminPage from "@/pages/admin/CommissionEngineAdminPage";
@@ -853,6 +854,7 @@ function App() {
           <Route path="affiliate-earnings" element={<AffiliateEarningsPage />} />
           <Route path="affiliate-payouts" element={<PartnerAffiliatePayoutsPage />} />
           <Route path="affiliate-profile" element={<AffiliateProfilePage />} />
+          <Route path="affiliate-content-studio" element={<AffiliateContentStudioPage />} />
           {/* Affiliate Performance Page */}
           <Route path="affiliate-performance" element={<AffiliatePerformancePage />} />
           {/* Affiliate Help */}

@@ -7,6 +7,13 @@ React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Stor
 
 ---
 
+## Latest Session — Feb 25, 2026 (live affiliate + Content Studio)
+1. **Live affiliate account activated** — `affiliate.test@konekt.co.tz` / `Affiliate#Konekt2026` with promo_code `PARTNER10`. Logs into `/partner/affiliate-dashboard` and renders 18 campaigns with the green WhatsApp share button on every row. Click test confirmed: opens https://wa.me/?text=… → redirects to WhatsApp with caption + savings + promo code pre-filled.
+2. **Affiliate Content Studio** — new route `/partner/affiliate-content-studio` (Sparkles icon in sidebar). Reuses `AdminContentStudioPage` 1:1 so every campaign / caption / template stays perfectly in sync with the admin Content Studio. Affiliates get the same 200 product templates · 6 services · 6 group deals · 12 brand templates with Light/Dark/Promo/Minimal themes, Square/Vertical formats and 6 Layout intents.
+3. Credentials saved in `/app/memory/test_credentials.md`.
+
+---
+
 ## Latest Session — Feb 25, 2026 (vendor identity scrub + WhatsApp launcher)
 1. **Vendor identity stripped from public surfaces (P0)** — backfilled all 610 products in DB + the seed JSON to remove the "sourced from Darcity Promotion Ltd." phrase that was leaking on the customer product detail page. Public marketplace search now returns 0 leaks across 401 grouped products. Pattern coverage: "sourced from <X>", "Source: <X>", "Vendor: <X>", "Supplied by <X>", direct mentions of "Darcity"/"Dar City".
 2. **production_hydration._sanitise_public_descriptions** — runs on every backend boot AND on /api/admin/force-hydrate; idempotent. Future re-imports cannot reintroduce vendor leakage. Fields scrubbed: description, short_description, long_description, seo_description, meta_description, meta_title, tagline, subtitle, tags, keywords.

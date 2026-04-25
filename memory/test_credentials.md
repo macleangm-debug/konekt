@@ -20,7 +20,15 @@
 - Linked Partner: Darcity Promotion Ltd (partner_id: 69e9e91b7ef848b59a2f8172)
 - Ops impersonation: POST /api/admin/impersonate-partner/69e9e91b7ef848b59a2f8172
 
-## Affiliate
+## Affiliate (LIVE — activated)
+- Email: affiliate.test@konekt.co.tz
+- Password: Affiliate#Konekt2026
+- Role: affiliate
+- Promo Code: TEST2026
+- Phone: +255712345678
+- Status: approved + activated (use for live dashboard / content studio testing)
+
+## Affiliate (legacy / qualifier flow only)
 - Email: qualifier.test@example.com
 - Password: Qualifier123!
 
