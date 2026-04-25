@@ -3,7 +3,16 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 355 ITERATIONS — 100% PASS RATE
+## System Status: 356 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 25, 2026 (QR base-URL fix + Konekt-branded onboarding modal)
+1. **QR code target now uses konekt.co.tz** — `qr_code_routes._frontend_base()` hard-defaults to `https://konekt.co.tz` and intentionally ignores `FRONTEND_URL` (which leaked the preview-emergent domain into printed QR codes). Verified: `/api/qr/product/<id>?ref=PARTNER10` returns `target_url='https://konekt.co.tz/shop/product/<id>?ref=PARTNER10'`. Cache wiped + regenerated.
+2. **AffiliateOnboardingModal v2 (Konekt-branded)** — replaces the old bright-blue welcome cards. Layout matches Ops Onboarding modal (3-step modal with progress dots, hero icon, body copy + bullets, Skip/Back/CTA/Next footer) but uses Konekt brand: deep navy `#20364D` gradient + gold `#D4A843` accents. Steps: Share → Customers buy → Get paid. Mounts on both `/partner/affiliate-dashboard` and the V2 dashboard. Persists via `konekt_affiliate_onboarding_v2_dismissed`.
+3. **Fresh affiliate truly fresh** — wiped `affiliate.test@konekt.co.tz` stats (total_earnings/pending/paid/clicks/orders/deals all = 0) and deleted any stale commissions/orders/clicks/payouts.
+4. **Group Deals visibility** — Content Studio Deals tab works (6 deal templates show); on the live dashboard, Group Deals only render when admin sets `allow_affiliate=true` (no admin-created deals exist in the DB yet, hence 0 active group_deals).
+5. **Backend + frontend regression PASS** (iteration 356) with zero issues across all 9 test cases.
 
 ---
 
