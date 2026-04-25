@@ -3,7 +3,14 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 356 ITERATIONS — 100% PASS RATE
+## System Status: 357 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (referral landing page resolves affiliate codes)
+1. **`/r/<CODE>` now resolves affiliate codes** — `referral_public_routes.get_referral_by_code` previously only queried `users.referral_code` (legacy customer signup-reward field), so live affiliate codes like `KONTEST` rendered as "Invalid Referral Code". Endpoint now does a 3-tier lookup in priority order: (1) `db.affiliates.affiliate_code` + `is_active=true`, (2) `db.users.referral_code`, (3) `db.users.sales_promo_code`. First match wins; response includes `referrer_type` so the frontend can branch UI later.
+2. **CheckoutPage.jsx legacy false-positive cleared** — testing agent flagged `affiliate_code` field name as an attribution leak, but that file posts to `/api/guest/orders` (model `GuestOrderCreate` accepts `affiliate_code`), NOT `/api/orders`. Logged-in checkout (`CheckoutPageV2.jsx` + `Cart.js`) correctly send `referral_code` to `/api/orders`. No code change needed.
+3. **End-to-end attribution verified** — backend pytest 7/7 (test_referral_attribution_e2e_v357.py): KONTEST resolves, attribution dict + attribution_events row persist, invalid/empty codes still create order with `attribution=null`. Live `/r/KONTEST` smoke-screenshot shows "Affiliate Test shared a special invitation".
 
 ---
 
