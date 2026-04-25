@@ -32,7 +32,7 @@ db = client[os.environ["DB_NAME"]]
 admin_router = APIRouter(prefix="/api/admin/vendor-agreements", tags=["Vendor Agreement (Admin)"])
 vendor_router = APIRouter(prefix="/api/vendor/agreement", tags=["Vendor Agreement"])
 
-AGREEMENT_VERSION = "1.0"  # bump whenever the template changes — forces vendors to re-sign
+AGREEMENT_VERSION = "2.0"  # bump whenever the template changes — forces vendors to re-sign
 AGREEMENT_DIR = Path("/app/uploads/vendor_agreements")
 AGREEMENT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -54,65 +54,249 @@ async def _load_persisted_version():
 AGREEMENT_TEMPLATE = {
     "title": "KONEKT VENDOR SUPPLY AGREEMENT",
     "version": AGREEMENT_VERSION,
-    "effective": "This Vendor Supply Agreement (the \"Agreement\") is entered into by and between "
-                 "Konekt Limited, a company duly registered under the laws of the United Republic of "
-                 "Tanzania with registered office in Dar es Salaam (\"Konekt\") and the Vendor whose "
-                 "details are captured below.",
+    "effective": (
+        "This Vendor Supply Agreement (the \"Agreement\") is entered into by "
+        "and between Konekt Limited, a company duly registered under the laws "
+        "of the United Republic of Tanzania with registered office in Dar es "
+        "Salaam (hereinafter \"Konekt\", \"the Platform\", or \"the Company\") "
+        "and the Vendor whose details are captured at the foot of this "
+        "Agreement (\"the Vendor\"). Each a \"Party\" and together the "
+        "\"Parties\". This Agreement records the terms on which the Vendor "
+        "shall supply goods and/or services to Konekt's customers via the "
+        "Konekt B2B marketplace platform."
+    ),
     "clauses": [
         {
-            "heading": "1. Supply & Konekt as Single Client",
-            "body": "The Vendor agrees to supply goods and/or services through the Konekt platform. "
-                    "For all matters relating to orders routed through Konekt, Konekt is the Vendor's "
-                    "sole client.  The Vendor shall not contact, solicit, or transact directly with "
-                    "any end customer introduced through Konekt for a period of twelve (12) months "
-                    "after last platform engagement."
+            "heading": "1. Definitions",
+            "body": (
+                "1.1  \"Goods\" means any tangible product the Vendor offers "
+                "for sale through the Platform.\n"
+                "1.2  \"Services\" means any non-tangible offering, including "
+                "but not limited to design, branding, installation, "
+                "fulfillment and consultancy services.\n"
+                "1.3  \"Order\" means a confirmed purchase request released "
+                "to the Vendor by Konekt for fulfillment.\n"
+                "1.4  \"Base Price\" means the wholesale price quoted by the "
+                "Vendor in respect of any Goods or Services, exclusive of any "
+                "platform markup applied by Konekt.\n"
+                "1.5  \"Modality\" means the payment cadence assigned to the "
+                "Vendor — see Clause 4."
+            ),
         },
         {
-            "heading": "2. Pricing & Product Data",
-            "body": "The Vendor warrants that all prices, stock levels, SKUs and product data uploaded "
-                    "to Konekt are accurate and kept current.  The Vendor authorises Konekt to apply "
-                    "platform markup over the Vendor's quoted base price.  Konekt retains the markup "
-                    "in full; the Vendor receives only their quoted base price less any agreed "
-                    "commission."
+            "heading": "2. Konekt as Sole Client of Record",
+            "body": (
+                "2.1  For all Orders routed through the Platform, Konekt is "
+                "and shall be deemed the Vendor's sole client of record. "
+                "Invoices, receipts, payment instructions and order "
+                "confirmations shall be addressed to Konekt and not to the "
+                "underlying buyer.\n"
+                "2.2  Konekt shall not disclose the identity, contact "
+                "details, billing details or shipping particulars of the "
+                "underlying buyer to the Vendor; the Vendor accordingly "
+                "acknowledges that it does not have, and will not seek, any "
+                "direct relationship with the underlying buyer in respect of "
+                "Orders sourced through the Platform.\n"
+                "2.3  Konekt may at its sole discretion brand the goods, "
+                "their packaging, the dispatch documentation and customer "
+                "communications under the Konekt brand."
+            ),
         },
         {
-            "heading": "3. Payment Terms",
-            "body": "Payment terms are governed by the Vendor's assigned modality, which is one of: "
-                    "(a) Pay-per-order — the Vendor issues a tax invoice against each released order "
-                    "and Konekt pays prior to release of fulfillment; or (b) Monthly Statement — "
-                    "Konekt generates a consolidated statement at month-end and the Vendor issues a "
-                    "single invoice against the statement.  Konekt pays within seven (7) business "
-                    "days of receipt of a valid invoice."
+            "heading": "3. Pricing, Product Data & Catalog Maintenance",
+            "body": (
+                "3.1  The Vendor warrants that the Base Prices, stock levels, "
+                "SKUs, descriptions, dimensions, photographs and any other "
+                "product data uploaded to or shared with the Platform are "
+                "complete, accurate and current.\n"
+                "3.2  The Vendor authorises Konekt to apply a platform markup "
+                "over the Base Price as determined by Konekt's tiered "
+                "pricing engine. Konekt retains the markup in full; the "
+                "Vendor's entitlement is limited to the Base Price less any "
+                "agreed commission as recorded in the Vendor's profile.\n"
+                "3.3  Promotions, group deals, bundle offers and seasonal "
+                "discounts displayed on the Platform are funded exclusively "
+                "from Konekt's distributable margin and shall not require any "
+                "discount, rebate, give-back or subsidy from the Vendor "
+                "unless separately agreed in writing.\n"
+                "3.4  The Vendor shall update prices, stock and lead times "
+                "promptly when the underlying conditions change. Stale or "
+                "inaccurate data is grounds for de-listing at Konekt's "
+                "discretion."
+            ),
         },
         {
-            "heading": "4. Quality, Lead Time & Performance",
-            "body": "The Vendor shall meet agreed lead times, product specifications, and quality "
-                    "standards.  Chronic failure (three (3) or more breaches in any rolling thirty-day "
-                    "window) may result in suspension or termination at Konekt's discretion."
+            "heading": "4. Payment Modality & Terms",
+            "body": (
+                "4.1  Each Vendor is assigned one of the following payment "
+                "modalities at onboarding, recorded on the Vendor profile and "
+                "reviewed quarterly:\n"
+                "   (a) Pay-per-order — the Vendor issues a tax invoice "
+                "against each released Order and Konekt pays prior to release "
+                "of fulfillment.\n"
+                "   (b) Monthly Statement — Konekt generates a consolidated "
+                "statement at month-end and the Vendor issues a single tax "
+                "invoice against the statement.\n"
+                "4.2  Konekt shall pay valid invoices within seven (7) "
+                "business days of receipt. Disputed invoices shall be flagged "
+                "within three (3) business days of receipt with reasons.\n"
+                "4.3  Payment is by electronic funds transfer to the bank "
+                "account nominated in the Vendor profile. The Vendor shall "
+                "promptly update Konekt of any change to its banking "
+                "details. Konekt is not liable for misdirected funds caused "
+                "by stale banking details on file.\n"
+                "4.4  All sums payable are inclusive of VAT where the Vendor "
+                "is VAT-registered. The Vendor shall provide a valid TIN and "
+                "VRN where applicable."
+            ),
         },
         {
-            "heading": "5. Confidentiality & End-Customer Data",
-            "body": "Konekt will not disclose end-customer personal information to the Vendor.  The "
-                    "Vendor shall not attempt to reverse-engineer, solicit, or extract end-customer "
-                    "identity through the platform.  All data shared between the parties is "
-                    "confidential and shall not be disclosed to third parties."
+            "heading": "5. Quality, Lead Time & Performance",
+            "body": (
+                "5.1  The Vendor shall meet the lead times, specifications, "
+                "and quality standards quoted on the Platform or otherwise "
+                "agreed for each Order.\n"
+                "5.2  Goods that fail to meet specification shall be replaced "
+                "or refunded by the Vendor within five (5) business days of "
+                "notification.\n"
+                "5.3  Performance is monitored through Konekt's Vendor "
+                "Performance dashboard which captures on-time delivery, "
+                "defect rate, customer-rated quality, and response time. The "
+                "Vendor shall maintain a rolling thirty-day score of not less "
+                "than 80%.\n"
+                "5.4  Three (3) or more material breaches in any rolling "
+                "thirty-day window may result in suspension or termination at "
+                "Konekt's discretion under Clause 8."
+            ),
         },
         {
-            "heading": "6. Term & Termination",
-            "body": "This Agreement commences on the date of signature and continues until terminated "
-                    "by either party on thirty (30) days' written notice.  Konekt may terminate "
-                    "immediately for material breach."
+            "heading": "6. Intellectual Property & Brand Use",
+            "body": (
+                "6.1  The Vendor retains all intellectual property in the "
+                "Goods and Services it supplies. The Vendor grants Konekt a "
+                "royalty-free, non-exclusive, worldwide licence to use, "
+                "reproduce, display and distribute photographs, descriptions "
+                "and product data for the purpose of operating the Platform "
+                "and marketing the Goods and Services to Konekt customers.\n"
+                "6.2  The Vendor shall not use Konekt's name, logo or "
+                "trademarks except for the purpose of fulfilling Orders or "
+                "with Konekt's prior written consent."
+            ),
         },
         {
-            "heading": "7. Governing Law",
-            "body": "This Agreement is governed by the laws of the United Republic of Tanzania.  Any "
-                    "dispute shall first be addressed by good-faith negotiation and, failing that, "
-                    "referred to arbitration in Dar es Salaam."
+            "heading": "7. Confidentiality & Platform Data",
+            "body": (
+                "7.1  Each Party shall keep confidential all non-public "
+                "information disclosed by the other Party including, in the "
+                "case of Konekt, customer data, pricing logic, margin tiers, "
+                "promotion schedules and platform analytics.\n"
+                "7.2  The Vendor shall not attempt to reverse-engineer, "
+                "scrape, copy, redistribute, or otherwise extract data from "
+                "the Platform other than data directly relating to the "
+                "Vendor's own products and Orders.\n"
+                "7.3  This obligation survives termination of the Agreement "
+                "for a period of three (3) years."
+            ),
         },
         {
-            "heading": "8. Electronic Signature",
-            "body": "The parties agree that this Agreement may be signed electronically and that such "
-                    "electronic signature has the same legal force as a handwritten signature."
+            "heading": "8. Term & Termination",
+            "body": (
+                "8.1  This Agreement commences on the date of electronic "
+                "signature by the Vendor and continues until terminated.\n"
+                "8.2  Either Party may terminate on thirty (30) days' "
+                "written notice for any reason.\n"
+                "8.3  Konekt may terminate immediately for material breach, "
+                "insolvency, fraud, or repeated performance failure as set "
+                "out in Clause 5.\n"
+                "8.4  On termination the Vendor shall complete any Orders "
+                "already in progress, return any Konekt property, and "
+                "co-operate with the orderly handover of any in-flight work."
+            ),
+        },
+        {
+            "heading": "9. Liability & Indemnity",
+            "body": (
+                "9.1  Each Party's liability for direct loss arising under "
+                "or in connection with this Agreement is capped at the "
+                "aggregate sums paid or payable to the Vendor in the twelve "
+                "(12) months immediately preceding the event giving rise to "
+                "the claim.\n"
+                "9.2  Neither Party shall be liable for indirect, "
+                "consequential, special, exemplary or punitive damages.\n"
+                "9.3  The Vendor shall indemnify Konekt against any claim by "
+                "a third party arising out of (i) defects in the Vendor's "
+                "Goods or Services, (ii) infringement of third-party "
+                "intellectual property in the Goods or Services, or (iii) "
+                "the Vendor's breach of any law applicable to its business."
+            ),
+        },
+        {
+            "heading": "10. Compliance with Law",
+            "body": (
+                "10.1 The Vendor shall comply with all applicable Tanzanian "
+                "laws and regulations, including but not limited to consumer "
+                "protection, environmental, labour, tax and anti-money-"
+                "laundering legislation.\n"
+                "10.2 The Vendor warrants that its business is duly licenced "
+                "and that all Goods supplied lawfully bear the required "
+                "approvals, certifications, or markings."
+            ),
+        },
+        {
+            "heading": "11. Force Majeure",
+            "body": (
+                "Neither Party shall be liable for failure to perform any "
+                "obligation under this Agreement to the extent that such "
+                "failure is caused by an event beyond its reasonable control, "
+                "including acts of God, war, civil unrest, government "
+                "action, or pandemic. The affected Party shall notify the "
+                "other within five (5) business days of becoming aware of "
+                "the event."
+            ),
+        },
+        {
+            "heading": "12. Governing Law & Dispute Resolution",
+            "body": (
+                "12.1 This Agreement is governed by the laws of the United "
+                "Republic of Tanzania.\n"
+                "12.2 The Parties shall first seek to resolve any dispute by "
+                "good-faith negotiation between authorised representatives.\n"
+                "12.3 Failing such resolution within thirty (30) days, the "
+                "dispute shall be referred to binding arbitration in Dar es "
+                "Salaam under the rules of the National Construction Council "
+                "(NCC) Arbitration Centre or such other arbitral body as the "
+                "Parties may agree."
+            ),
+        },
+        {
+            "heading": "13. Notices",
+            "body": (
+                "All notices under this Agreement shall be in writing and "
+                "given to the email address recorded for the Party on the "
+                "Platform. Notices are deemed delivered on transmission "
+                "subject to confirmation of receipt."
+            ),
+        },
+        {
+            "heading": "14. Entire Agreement & Amendment",
+            "body": (
+                "14.1 This Agreement, together with the Vendor profile and "
+                "any addenda expressly incorporated by reference, "
+                "constitutes the entire agreement between the Parties.\n"
+                "14.2 Konekt may update this Agreement from time to time. "
+                "Material changes will trigger a new version which the "
+                "Vendor must accept electronically before continuing to "
+                "trade on the Platform."
+            ),
+        },
+        {
+            "heading": "15. Electronic Signature",
+            "body": (
+                "The Parties agree that this Agreement may be signed "
+                "electronically and that such electronic signature has the "
+                "same legal force as a handwritten signature under the "
+                "Electronic Transactions Act, 2015 (Tanzania)."
+            ),
         },
     ],
 }

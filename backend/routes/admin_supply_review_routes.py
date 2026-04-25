@@ -162,7 +162,23 @@ async def supply_review_dashboard(
     for p in products:
         stats["total"] += 1
         vendor_cost = float(p.get("vendor_cost", 0) or 0)
-        sell_price = float(p.get("selling_price", 0) or 0)
+        # selling_price is the legacy field; the pricing engine writes to
+        # `customer_price`. Treat them as aliases so the review surface
+        # shows the live price, not "Missing".
+        sell_price = float(
+            p.get("selling_price")
+            or p.get("customer_price")
+            or p.get("base_price")
+            or 0
+        )
+        # Normalise the `images` array — most imports populate `image_url`
+        # only. Treat a single image_url as one valid image so the
+        # "missing images" warning doesn't fire incorrectly.
+        images_field = p.get("images")
+        image_url = p.get("image_url") or ""
+        effective_image_count = (
+            len(images_field) if images_field else (1 if image_url else 0)
+        )
         status = p.get("status", "draft")
 
         # Pricing health
@@ -183,23 +199,30 @@ async def supply_review_dashboard(
         elif vendor_cost <= 0 and sell_price > 0:
             flags.append({"type": "info", "msg": "No vendor cost set"})
 
-        # Check if pricing engine was used
-        if not p.get("pricing_rule_source") and vendor_cost > 0:
+        # Pricing engine signal — accept any of the modern engine fields.
+        engine_used = (
+            p.get("pricing_rule_source")
+            or p.get("pricing_tier_label")
+            or p.get("pricing_branch")
+        )
+        if not engine_used and vendor_cost > 0:
             flags.append({"type": "warning", "msg": "Not processed by pricing engine"})
             if pricing_health == "healthy":
                 pricing_health = "warning"
 
-        # Data completeness
+        # Data completeness — uses effective_image_count which already
+        # accounts for `image_url` fallback, plus permissive matching on
+        # vendor_sku for SKU and product name as a description fallback.
         missing = []
-        if not p.get("images") or len(p.get("images", [])) == 0:
+        if effective_image_count == 0:
             missing.append("images")
         if not p.get("unit_of_measurement"):
             missing.append("unit")
-        if not p.get("sku"):
+        if not (p.get("sku") or p.get("vendor_sku")):
             missing.append("SKU")
         if not p.get("category"):
             missing.append("category")
-        if not p.get("description"):
+        if not p.get("description") and not p.get("short_description"):
             missing.append("description")
 
         if missing:
@@ -228,13 +251,17 @@ async def supply_review_dashboard(
             "margin_amount": margin_amount,
             "expected_sell_price": expected_sell,
             "min_sell_price": min_sell,
-            "pricing_rule_source": p.get("pricing_rule_source", ""),
+            "pricing_rule_source": (
+                p.get("pricing_rule_source")
+                or p.get("pricing_tier_label")
+                or p.get("pricing_branch", "")
+            ),
             "pricing_warning": p.get("pricing_warning"),
             "has_override": bool(p.get("pricing_warning")),
-            "unit_of_measurement": p.get("unit_of_measurement", ""),
-            "sku": p.get("sku", ""),
+            "unit_of_measurement": p.get("unit_of_measurement") or "Piece",
+            "sku": p.get("sku") or p.get("vendor_sku", ""),
             "stock": p.get("stock", 0),
-            "image_count": len(p.get("images", [])),
+            "image_count": effective_image_count,
             "image_url": p.get("image_url", ""),
             "status": status,
             "pricing_health": pricing_health,
@@ -266,8 +293,14 @@ async def supply_review_dashboard(
         enriched.append(item)
 
     # Pricing integrity check
-    using_engine = sum(1 for p in products if p.get("pricing_rule_source"))
-    not_using_engine = sum(1 for p in products if not p.get("pricing_rule_source") and float(p.get("vendor_cost", 0) or 0) > 0)
+    def _engine_used(p):
+        return bool(
+            p.get("pricing_rule_source")
+            or p.get("pricing_tier_label")
+            or p.get("pricing_branch")
+        )
+    using_engine = sum(1 for p in products if _engine_used(p))
+    not_using_engine = sum(1 for p in products if not _engine_used(p) and float(p.get("vendor_cost", 0) or 0) > 0)
 
     return {
         "products": enriched,

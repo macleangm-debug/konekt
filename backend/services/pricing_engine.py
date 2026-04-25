@@ -17,6 +17,11 @@ async def get_tier_margin(db, amount: float):
 
     tiers = hub["value"].get("pricing_policy_tiers", [])
     for tier in tiers:
+        # Defensive: some legacy/imported tier rows are stored as strings
+        # (e.g. "Micro (0 – 2K)"). Skip non-dict rows so we don't crash the
+        # whole pricing pipeline.
+        if not isinstance(tier, dict):
+            continue
         min_amt = float(tier.get("min_amount", 0) or 0)
         max_amt = float(tier.get("max_amount", 999999999) or 999999999)
         if min_amt <= amount <= max_amt:

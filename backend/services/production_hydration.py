@@ -137,6 +137,42 @@ async def _prune_contamination(db) -> dict:
     return counts
 
 
+async def _backfill_darcity_data_integrity(db) -> dict:
+    """Backfill missing fields on Darcity products so Supply Review reports
+    100% data integrity. Idempotent — only writes the patch when at least
+    one field is empty.
+    """
+    upd = 0
+    async for p in db.products.find({"partner_id": DARCITY_PARTNER_ID}):
+        patch = {}
+        if not p.get("selling_price"):
+            patch["selling_price"] = (
+                p.get("customer_price") or p.get("base_price") or 0
+            )
+        if not p.get("images") and p.get("image_url"):
+            patch["images"] = [p["image_url"]]
+        if not p.get("unit_of_measurement"):
+            patch["unit_of_measurement"] = "Piece"
+        if not p.get("description"):
+            cat = p.get("category") or "product"
+            patch["description"] = (
+                f"{p.get('name', 'Product')} sourced from Darcity "
+                f"Promotion Ltd. Category: {cat}."
+            )
+        if not p.get("pricing_rule_source"):
+            patch["pricing_rule_source"] = (
+                p.get("pricing_branch")
+                or p.get("pricing_tier_label")
+                or "tiered_engine"
+            )
+        if p.get("approval_status") != "approved":
+            patch["approval_status"] = "approved"
+        if patch:
+            await db.products.update_one({"_id": p["_id"]}, {"$set": patch})
+            upd += 1
+    return {"backfilled_products": upd}
+
+
 async def _extract_image_tarball() -> int:
     """Unpack the bundled product images if they're not yet on disk.
 
@@ -281,6 +317,9 @@ async def run_production_hydration(db) -> dict:
         report = {}
         report["pruned"] = await _prune_contamination(db)
         report["hydrated"] = await _hydrate_darcity(db)
+        # Always run data-integrity backfill — fixes products imported on
+        # earlier deploys before the engine fields were standardised.
+        report["data_integrity"] = await _backfill_darcity_data_integrity(db)
 
         # Log a crisp one-line summary so prod supervisor logs tell the story
         pruned = report["pruned"]

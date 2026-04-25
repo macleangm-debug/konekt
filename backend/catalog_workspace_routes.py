@@ -14,8 +14,14 @@ async def catalog_stats(request: Request):
     db = request.app.mongodb
 
     products_count = await db.products.count_documents({})
-    active_products = await db.products.count_documents({"status": "active", "is_active": True})
-    draft_products = await db.products.count_documents({"status": "draft"})
+    # Darcity products land with status="published" + is_active=True; the older
+    # query of {"status": "active"} returns 0 even on a healthy catalog. Treat
+    # any of the “live” statuses as active for the purposes of this counter.
+    active_products = await db.products.count_documents({
+        "is_active": True,
+        "status": {"$in": ["active", "published", "approved"]},
+    })
+    draft_products = await db.products.count_documents({"status": {"$in": ["draft", "pending", "pending_review"]}})
     services_count = await db.services.count_documents({}) if "services" in await db.list_collection_names() else 0
 
     # Get categories from settings
@@ -39,7 +45,12 @@ async def catalog_stats(request: Request):
         {"selling_price": {"$lte": 0}, "vendor_cost": {"$gt": 0}},
         {"selling_price": {"$lte": 0}, "status": {"$in": ["active", "draft"]}},
     ]})
-    missing_images = await db.products.count_documents({"$or": [{"images": {"$size": 0}}, {"images": {"$exists": False}}]})
+    missing_images = await db.products.count_documents({
+        "$and": [
+            {"$or": [{"images": {"$size": 0}}, {"images": {"$exists": False}}, {"images": None}]},
+            {"$or": [{"image_url": {"$exists": False}}, {"image_url": None}, {"image_url": ""}]},
+        ]
+    })
     pending_review = await db.products.count_documents({"status": {"$in": ["draft", "pending_review"]}})
 
     # Quote items (price requests)
