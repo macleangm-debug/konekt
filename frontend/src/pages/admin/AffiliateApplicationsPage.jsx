@@ -199,10 +199,10 @@ export default function AffiliateApplicationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((item) => {
+                {filtered.map((item, idx) => {
                   const fit = fitScore(item);
                   return (
-                    <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition" onClick={() => openDetail(item)} data-testid={`app-row-${item.id}`}>
+                    <tr key={item.id || `${item.email || "x"}-${item.created_at || idx}`} className="border-b border-slate-50 hover:bg-slate-50/50 cursor-pointer transition" onClick={() => openDetail(item)} data-testid={`app-row-${item.id || idx}`}>
                       <td className="px-4 py-3 whitespace-nowrap"><div className="text-xs font-medium text-[#20364D]">{fmtDate(item.created_at)}</div><div className="text-[10px] text-slate-400 mt-0.5">{fmtTime(item.created_at)}</div></td>
                       <td className="px-4 py-3"><div className="font-medium text-[#20364D]">{item.full_name}</div><div className="text-[10px] text-slate-400">{item.email}</div></td>
                       <td className="px-4 py-3 text-xs text-slate-600">{item.primary_platform || "\u2014"}</td>

@@ -3,7 +3,20 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 351 ITERATIONS — 100% PASS RATE
+## System Status: 352 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 25, 2026 (affiliate gap closure)
+1. **Apply form rebuilt** — 6 steps now collect Gender (Male/Female only), Date of Birth (18+ enforced), ID Type (national_id/passport/driver_license), ID Number, and a required ID document upload (image or PDF, max 8 MB). WhatsApp consent ticked by default with disclaimer.
+2. **/earn redesigned** — 'Program Guidelines / margin protection rules' (internal pricing engine talk) replaced with positive 'Why Konekt Affiliates Win' (Transparent earnings · Real attribution · Paid only on completed orders).
+3. **Legacy navbar removed app-wide** — `App.js` now imports `PublicNavbarV2` and `PremiumFooterV2` for all customer-facing routes. Apply page now renders a single, current Konekt nav.
+4. **Admin Applications upgrade** — Date column added on the LEFT, rows always sorted newest-first, IDs/gender/DOB visible in the detail drawer with a click-to-view ID document link, and Reject button now opens a dialog with the canonical 6 rejection reasons + optional custom note.
+5. **Admin notification on submit** — every new application inserts a `notifications` row (`target_type='admin'`, `kind='affiliate_application_received'`) so the bell rings instantly.
+6. **Check Status email/phone toggle** — public status check now offers an explicit Email / Phone toggle; phone uses the country-prefix selector and resolves both `+255712345678` and trailing-9-digit forms case-insensitively.
+7. **Welcome cards on first login** — bright-blue gradient `AffiliateWelcomeCards` with 4 industry-standard step cards (Share link · Customers buy · You earn · Get paid out), localStorage dismissal.
+8. **Affiliate ↔ pricing engine wired** — new `GET /api/affiliate-applications/admin/margin-audit` endpoint reports every active promo with vendor cost, distributable margin, affiliate share TZS, headroom; flags any promo where the affiliate share exceeds the tier's distributable margin. AffiliateProductPromoTable already shows per-product per-promo earnings.
+9. **Backend 7/7 + Frontend regression PASS** (iteration 352) plus minor email case fix.
 
 ---
 

@@ -86,6 +86,10 @@ async def submit_application(payload: AffiliateApplicationCreate, request: Reque
     if not settings.get("application_enabled", True):
         raise HTTPException(status_code=403, detail="Affiliate applications are currently closed")
 
+    # Normalise email to lowercase so duplicate-detection and later
+    # case-insensitive lookups behave consistently.
+    payload.email = payload.email.lower().strip()
+
     existing = await db.affiliate_applications.find_one(
         {"email": payload.email, "status": {"$in": ["pending", "approved"]}}, {"_id": 0}
     )
@@ -601,7 +605,9 @@ async def check_status(identifier: str, request: Request):
         return {"exists": False, "status": None}
 
     if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", ident):
-        query = {"email": ident.lower()}
+        # Match email case-insensitively — older rows might have been stored
+        # with the case the applicant typed in.
+        query = {"email": {"$regex": f"^{re.escape(ident)}$", "$options": "i"}}
     else:
         digits_only = re.sub(r"\D", "", ident)
         if len(digits_only) < 6:
