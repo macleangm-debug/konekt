@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -238,6 +239,68 @@ async def _normalise_taxonomy(db) -> dict:
     )
     rep["subcategories_deactivated"] = r.modified_count
     return rep
+
+
+# Public-facing fields that must never leak vendor identity
+_VENDOR_LEAK_PATTERNS = [
+    re.compile(r"\s*sourced from [^.]+\.\s*", re.I),
+    re.compile(r"\s*Source\s*:\s*[^\n.]+\.?\s*", re.I),
+    re.compile(r"\s*Vendor\s*:\s*[^\n.]+\.?\s*", re.I),
+    re.compile(r"\s*Supplied by [^.]+\.\s*", re.I),
+    re.compile(r"\s*from\s+Darcity[^.]*\.\s*", re.I),
+    re.compile(r"Darcity Promotion(?:\s+Ltd\.?)?", re.I),
+    re.compile(r"\bDarcity\b", re.I),
+    re.compile(r"\bDar\s*City\b", re.I),
+]
+_PUBLIC_LEAK_FIELDS = (
+    "description", "short_description", "long_description",
+    "seo_description", "meta_description", "meta_title",
+    "tagline", "subtitle",
+)
+
+
+def _scrub_public_text(value):
+    if not isinstance(value, str) or not value:
+        return value
+    out = value
+    for rx in _VENDOR_LEAK_PATTERNS:
+        out = rx.sub(" ", out)
+    out = re.sub(r"\s+", " ", out).strip()
+    out = re.sub(r"\s+([,.])", r"\1", out)
+    out = re.sub(r"^[\s,.;:-]+", "", out)
+    return out
+
+
+async def _sanitise_public_descriptions(db) -> dict:
+    """Strip any vendor-identity leakage from public-facing product fields.
+    Runs every boot — protects against seed regressions.
+    """
+    cleaned = 0
+    scanned = 0
+    fields = list(_PUBLIC_LEAK_FIELDS)
+    proj = {f: 1 for f in fields}
+    proj.update({"_id": 1, "tags": 1, "keywords": 1, "search_tags": 1})
+    async for p in db.products.find({}, proj):
+        scanned += 1
+        update = {}
+        for f in fields:
+            v = p.get(f)
+            if isinstance(v, str):
+                new_v = _scrub_public_text(v)
+                if new_v != v:
+                    update[f] = new_v
+        for f in ("tags", "keywords", "search_tags"):
+            v = p.get(f)
+            if isinstance(v, list):
+                new_v = [_scrub_public_text(x) if isinstance(x, str) else x for x in v]
+                if new_v != v:
+                    update[f] = new_v
+        if update:
+            await db.products.update_one({"_id": p["_id"]}, {"$set": update})
+            cleaned += 1
+    return {"scanned": scanned, "cleaned": cleaned}
+
+
 
 
 async def _normalise_partners(db) -> dict:
@@ -470,6 +533,10 @@ async def run_production_hydration(db) -> dict:
         # branches).
         report["taxonomy"] = await _normalise_taxonomy(db)
         report["partners"] = await _normalise_partners(db)
+        # Always strip vendor identity from public-facing product fields —
+        # protects against any seed regression that re-introduces the
+        # "sourced from <vendor>" phrasing.
+        report["sanitised_descriptions"] = await _sanitise_public_descriptions(db)
 
         # Log a crisp one-line summary so prod supervisor logs tell the story
         pruned = report["pruned"]
