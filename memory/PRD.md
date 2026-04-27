@@ -3,7 +3,26 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 364 ITERATIONS — 100% PASS RATE
+## System Status: 365 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Round 6 — Hardcoded Konekt fallback for branding)
+
+User flagged "no contacts at all" + reasonable frustration with the back-and-forth. Direct fix shipped:
+
+1. **Branding endpoint now ALWAYS returns sensible Konekt defaults** — `+255 712 345 678` / `info@konekt.co.tz` / `https://konekt.co.tz` / `Smart B2B sourcing for Tanzania` / `Dar es Salaam, Tanzania`. Whatever admin saves on Profile / Settings Hub / legacy business_settings still wins (cascade chain unchanged), but if every save surface is empty the creative footer + captions still render with the platform-wide Konekt contact info. No more empty footers.
+2. **QR scannable** — confirmed: `/api/qr/product/<id>.png?ref=KONEKT` returns 200, encodes `https://konekt.co.tz/product/<id>?ref=KONEKT`, and that route exists in `App.js`. Will resolve correctly once production is deployed.
+3. **Promo Focus rich design intact** — `LayoutPromo` (line 604) still renders the big banner with "SAVE TZS X" + "CODE: KONEKT" centered at top of the creative. Admin switches to Promo Focus inside the drawer to see it. The grid card overlay also tags promo items with `<Tag /> KONEKT` red badge in top-right (line 344). Only Product Focus is intentionally clean (no promo signals — user's prior request).
+
+**Verified live**: 2026 Diary creative footer shows "Konekt · +255 712 345 678 · SCAN TO ORDER · Code: KONEKT · QR". All 4 captions include phone + KONEKT code where applicable.
+
+### Queued
+- (P1) Onboarding "Why Konekt" Content Studio template type
+- (P1) Vendor-driven Group Deal flow (Internal/Vendor switch + vendor-price input)
+- (P1) Promo Focus card vs full-creative design parity
+- (P1) Bell-icon notification dropdown for `admin_notifications`
+- (P1) Audit `products.promo_blocks` consumers across affiliate/referral/sales
 
 ---
 

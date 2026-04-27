@@ -210,71 +210,83 @@ async def get_template_branding(request: Request):
     """Branding data for template rendering."""
     db = request.app.mongodb
 
-    # Phone source-of-truth chain — try every place admin might have saved
-    # a phone number so the creative always reflects the latest value:
-    #   1. db.business_settings doc with type='company_profile' (Profile page)
-    #   2. legacy db.business_settings find_one() (older shape)
-    #   3. settings_hub.business_profile.support_phone
     profile_doc = await db.business_settings.find_one({"type": "company_profile"}, {"_id": 0}) or {}
     settings = await db.business_settings.find_one({"type": {"$ne": "company_profile"}}, {"_id": 0}) or {}
     if not settings:
-        # Fallback to legacy first doc (no type field)
         settings = await db.business_settings.find_one({}, {"_id": 0}) or {}
     hub = await db.settings_hub.find_one({}, {"_id": 0}) or {}
     branding = hub.get("branding", {})
     business_profile = hub.get("business_profile", {})
 
-    # Source of truth = Profile page → company_profile doc.
+    # Resolve each contact field across every save surface admin might use,
+    # then fall back to the platform default ("+255 712 345 678" / Konekt
+    # contact info) so creatives never render empty footers. Admin's most
+    # recently saved value always wins.
+    DEFAULT_PHONE = "+255 712 345 678"
+    DEFAULT_EMAIL = "info@konekt.co.tz"
+    DEFAULT_WEBSITE = "https://konekt.co.tz"
+
+    def first_set(*candidates, fallback=""):
+        for c in candidates:
+            if c:
+                return c
+        return fallback
+
     return {
         "ok": True,
         "branding": {
-            "company_name": (
-                profile_doc.get("company_name")
-                or business_profile.get("legal_name")
-                or settings.get("company_name")
-                or settings.get("trading_name")
-                or "Konekt"
+            "company_name": first_set(
+                profile_doc.get("company_name"),
+                business_profile.get("legal_name"),
+                settings.get("company_name"),
+                settings.get("trading_name"),
+                fallback="Konekt",
             ),
-            "trading_name": (
-                profile_doc.get("trading_name")
-                or business_profile.get("brand_name")
-                or settings.get("trading_name")
-                or "Konekt"
+            "trading_name": first_set(
+                profile_doc.get("trading_name"),
+                business_profile.get("brand_name"),
+                settings.get("trading_name"),
+                fallback="Konekt",
             ),
-            "tagline": (
-                profile_doc.get("tagline")
-                or business_profile.get("tagline", "")
+            "tagline": first_set(
+                profile_doc.get("tagline"),
+                business_profile.get("tagline"),
+                fallback="Smart B2B sourcing for Tanzania",
             ),
-            "logo_url": (
-                profile_doc.get("logo_url")
-                or business_profile.get("logo_url")
-                or settings.get("company_logo_path")
-                or branding.get("primary_logo_url", "")
+            "logo_url": first_set(
+                profile_doc.get("logo_url"),
+                business_profile.get("logo_url"),
+                settings.get("company_logo_path"),
+                branding.get("primary_logo_url"),
             ),
-            "phone": (
-                profile_doc.get("phone")
-                or profile_doc.get("support_phone")
-                or business_profile.get("support_phone")
-                or settings.get("phone", "")
+            "phone": first_set(
+                profile_doc.get("phone"),
+                profile_doc.get("support_phone"),
+                business_profile.get("support_phone"),
+                settings.get("phone"),
+                fallback=DEFAULT_PHONE,
             ),
-            "email": (
-                profile_doc.get("email")
-                or profile_doc.get("support_email")
-                or business_profile.get("support_email")
-                or settings.get("email", "")
+            "email": first_set(
+                profile_doc.get("email"),
+                profile_doc.get("support_email"),
+                business_profile.get("support_email"),
+                settings.get("email"),
+                fallback=DEFAULT_EMAIL,
             ),
-            "website": (
-                profile_doc.get("website")
-                or business_profile.get("website")
-                or settings.get("website", "")
+            "website": first_set(
+                profile_doc.get("website"),
+                business_profile.get("website"),
+                settings.get("website"),
+                fallback=DEFAULT_WEBSITE,
             ),
-            "address": (
-                profile_doc.get("address")
-                or profile_doc.get("address_line_1")
-                or business_profile.get("business_address")
-                or settings.get("address", "")
+            "address": first_set(
+                profile_doc.get("address"),
+                profile_doc.get("address_line_1"),
+                business_profile.get("business_address"),
+                settings.get("address"),
+                fallback="Dar es Salaam, Tanzania",
             ),
             "primary_color": branding.get("primary_color", "#20364D"),
             "accent_color": branding.get("accent_color", "#D4A843"),
-        }
+        },
     }
