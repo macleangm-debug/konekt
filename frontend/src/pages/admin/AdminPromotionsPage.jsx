@@ -68,11 +68,12 @@ export default function AdminPromotionsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    // Hide drafts and engine-created auto promos from the manual Promotions
-    // table — they live in the Engine Drafts panel above instead.
-    const visible = promos.filter(
-      (p) => p.status !== "draft" && !p.auto_created
-    );
+    // Hide DRAFT engine promos from the manual Promotions table — they
+    // live in the Engine Drafts panel above. Approved engine promos
+    // (auto_created=true, status='active') DO appear here so admin sees
+    // them alongside manually-created ones (same as group deals flowing
+    // to the Group Deals tab on approve).
+    const visible = promos.filter((p) => p.status !== "draft");
     if (!search.trim()) return visible;
     const q = search.toLowerCase();
     return visible.filter(p => p.code?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q));

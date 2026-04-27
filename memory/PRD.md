@@ -3,7 +3,28 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 363 ITERATIONS — 100% PASS RATE
+## System Status: 364 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Round 5 — Engine→Promotions table sync + Profile phone field)
+
+User reported: (a) approved engine promos didn't appear in the Promotions tab, (b) phone still showed default value because there was no Phone input on the Profile page.
+
+### Fixed
+1. **Approved engine promos now flow into the Promotions tab.** Root cause: two collections — manual UI writes to `db.promotions`, engine writes to `db.catalog_promotions`. The frontend only saw the legacy collection. Updated `routes/promotions_routes.list_promotions` to UNION both collections (engine drafts excluded, only active/ended surface). Engine rows are coerced to the legacy shape (scope flattened, preview-derived discount value, target product/category names) so the existing render code needs zero branching. Verified end-to-end: approved an engine draft for "Metallic Pink Plated Mug" with code TESTRUN → it now appears in the Promotions tab as expected.
+2. **Profile page now has Phone, Email, Website, Address, Tagline fields.** `BusinessSettingsPageV2` Profile section was missing these — admin had nothing to edit. Added all 5 fields plus an inline help text explaining where they show up. Save target unchanged (`POST /api/admin/settings/business-profile` → `db.business_settings.type=company_profile`). Admin saves → next Content Studio refresh picks up the new phone everywhere (creative footer + all 4 caption variants).
+3. **Cleared the demo phone seed** so when admin saves their real phone it wins immediately. No more "+255 123 456 789" placeholder lingering on creatives.
+4. **Promotions tab filter relaxed** — was hiding ALL `auto_created` promos; now only hides drafts (status='draft'). Approved engine promos are first-class citizens of the Promotions tab.
+
+**Tested**: Visual screenshot — Promotions tab shows 30 promos including the just-approved `TESTRUN · Auto · Metallic Pink Plated Mug`. Inline expandable details (Configuration / Window / Performance + Edit button) render cleanly. Backend curl confirms `/api/admin/promotions` returns the union with engine rows tagged `auto_created=true`.
+
+### Queued
+- (P1) **Onboarding "Why Konekt" content** — new Content Studio template type
+- (P1) **Vendor-driven Group Deal flow** — manual creation switch (Internal/Vendor-driven) with vendor-price input
+- (P1) **Promo Focus visual unification** — grid card vs full-creative drawer design parity
+- (P1) **Bell-icon notification dropdown** for `admin_notifications`
+- (P1) **Audit `products.promo_blocks`** consumers across affiliate/referral/sales
 
 ---
 

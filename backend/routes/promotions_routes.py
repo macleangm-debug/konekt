@@ -12,11 +12,68 @@ router = APIRouter(prefix="/api/admin/promotions", tags=["Promotions"])
 
 @router.get("")
 async def list_promotions(request: Request, status: str = "all", scope: str = "all"):
-    """List all promotions with optional filters."""
+    """List all promotions with optional filters.
+
+    Returns the UNION of legacy `db.promotions` (manual UI) and
+    `db.catalog_promotions` (auto-engine). After admin approves an engine
+    draft, it shows up here alongside manually-created entries so a single
+    "Promotions" tab is the source of truth across both flows.
+    """
     db = request.app.mongodb
     from services.promotions_service import list_promotions as _list
-    promos = await _list(db, status_filter=status, scope_filter=scope)
-    return {"promotions": promos, "total": len(promos)}
+    legacy = await _list(db, status_filter=status, scope_filter=scope)
+
+    # Surface ACTIVE / ENDED engine promos here too (drafts stay in the
+    # engine drafts panel only). We coerce them to the same shape the UI
+    # expects so the existing render code doesn't need branching logic.
+    engine: list[dict] = []
+    q = {"status": {"$ne": "draft"}}
+    if status and status != "all":
+        q = {"status": status}
+    async for p in db.catalog_promotions.find(q, {"_id": 0}).sort("created_at", -1):
+        scope_obj = p.get("scope")
+        if isinstance(scope_obj, dict):
+            scope_label = (
+                "product" if scope_obj.get("skus")
+                else ("category" if scope_obj.get("branch") else "global")
+            )
+        else:
+            scope_label = scope_obj or "global"
+        preview = p.get("preview") or {}
+        engine.append({
+            "id": p.get("id"),
+            "name": p.get("name"),
+            "code": p.get("code") or "",
+            "description": p.get("description") or (
+                f"Auto-engine · saves {preview.get('save_tzs', 0)} TZS" if preview else ""
+            ),
+            "scope": scope_label,
+            "target_product_id": (preview.get("product_id") if preview else None),
+            "target_product_name": (preview.get("product_name") if preview else None),
+            "target_category_name": (
+                (scope_obj or {}).get("branch") if isinstance(scope_obj, dict) else None
+            ),
+            "discount_type": "fixed_amount",
+            "discount_value": preview.get("save_tzs", 0) if preview else 0,
+            "stacking_rule": "no_stack",
+            "status": p.get("status"),
+            "auto_created": bool(p.get("auto_created")),
+            "engine_origin": p.get("engine_origin"),
+            "current_uses": 0,
+            "max_total_uses": None,
+            "max_uses_per_customer": None,
+            "start_date": p.get("start_date"),
+            "end_date": p.get("end_date"),
+            "created_at": (
+                p.get("approved_at") or p.get("created_at")
+            ),
+            "preview": preview,
+        })
+    combined = list(legacy) + engine
+    combined.sort(
+        key=lambda x: str(x.get("created_at") or ""), reverse=True,
+    )
+    return {"promotions": combined, "total": len(combined)}
 
 
 @router.get("/{promo_id}")

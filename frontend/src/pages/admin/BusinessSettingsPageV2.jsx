@@ -356,11 +356,22 @@ export default function BusinessSettingsPageV2() {
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 max-w-2xl">
           {section === "profile" && (<>
             <SettingsField label="Company Name" value={data.company_name} onChange={v => update("company_name", v)} />
+            <SettingsField label="Trading Name" value={data.trading_name} onChange={v => update("trading_name", v)} />
+            <SettingsField label="Tagline" value={data.tagline} onChange={v => update("tagline", v)} />
+            <SettingsField label="Support Phone" value={data.phone} onChange={v => update("phone", v)} placeholder="+255 712 345 678" />
+            <SettingsField label="Support Email" value={data.email} onChange={v => update("email", v)} placeholder="info@konekt.co.tz" />
+            <SettingsField label="Website" value={data.website} onChange={v => update("website", v)} placeholder="https://konekt.co.tz" />
+            <SettingsField label="Business Address" value={data.address} onChange={v => update("address", v)} />
             <SettingsField label="Country" value={data.country} onChange={v => update("country", v)} type="select" options={["TZ", "KE", "UG", "RW"]} />
             <SettingsField label="Currency" value={data.currency} onChange={v => update("currency", v)} type="select" options={["TZS", "KES", "UGX", "USD"]} />
             <SettingsField label="Phone Prefix" value={data.phone_prefix} onChange={v => update("phone_prefix", v)} />
             <SettingsField label="Tax Rate (%)" value={data.tax_rate} onChange={v => update("tax_rate", v)} type="number" />
             <SettingsField label="Tax Name" value={data.tax_name} onChange={v => update("tax_name", v)} />
+            <p className="mt-3 text-xs text-slate-500">
+              Phone, email, address, and tagline saved here power Content Studio
+              creatives (footer + captions) and customer-facing pages. Save and
+              the next creative refresh picks them up automatically.
+            </p>
           </>)}
           {section === "commercial" && (<>
             <SettingsField label="Quote Validity (days)" value={data.quote_validity_days} onChange={v => update("quote_validity_days", v)} type="number" />
