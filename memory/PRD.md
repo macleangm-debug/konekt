@@ -3,7 +3,24 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 358 ITERATIONS — 100% PASS RATE
+## System Status: 359 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Content Studio overhaul + Auto-Promo Engine relocation)
+
+User-driven changes from screenshot review:
+1. **Konekt wordmark on every creative** — `KonektMark` component renders triangle + "Konekt" text together; identifies posts even when admin hasn't uploaded a custom logo.
+2. **All 610 products in Content Studio** — lifted `to_list(200)` cap from `template-data/products` and `template-data/services` to `length=None`. Now returns the full catalogue.
+3. **KONEKT continuous all-year promo** — new `continuous_promo` block in automation engine config (defaults: enabled=true, code='KONEKT', pool_share_pct=100). Resolver in `content_template_routes._resolve_product_promo` enriches every product with discount_amount + promo_code='KONEKT' funded from the product's promotion bucket inside its distributable margin. **Specific active promos override KONEKT** (e.g. a per-product `active_promotion_id` pointing to a 'COOLTEX' campaign uses that code instead). Pricing-engine bound — no promo can break margins.
+4. **Promo Focus filter** — `?promo_only=true` query param + frontend layout-bound filter that drops grid cards to only products with `has_promotion=true`. Cards: 610 → 572 once the filter is applied.
+5. **Product Focus layout no longer renders promo code badge** in the body — KONEKT/specific code only appears in the footer QR block. Header SAVE TZS X badge stays.
+6. **Always-on QR overlay** — every creative footer carries `/api/qr/<kind>/<id>.png?ref=<code>` that uses the konekt.co.tz base URL. Code = item promo (KONEKT or specific) for admin viewers, or the personal promo code for sales/affiliate viewers.
+7. **Role-aware footer** — admin creative shows company phone (`branding.phone`); sales/affiliate creatives show NO contacts (prevents customers bypassing the rep), only personal code + QR.
+8. **Auto-Promo Engine relocated** — actions panel + performance dashboard now lives at `/admin/promotions-manager`. Settings Hub → Automation tab keeps **only configuration** (master toggle + Promotions config + Group Deals config + Margin Pool Funding + KONEKT All-Year Promo card + Scoring weights). `AutomationEngineSection` accepts `mode='config'|'actions'|'all'`.
+9. **Tighter alignment** — Content Studio + Promotions Manager top padding `py-6` → `py-3`.
+
+**Iteration 359 — 6/7 backend pytests PASS** (one skipped, low-priority); UI verified via Playwright + screenshot.
 
 ---
 

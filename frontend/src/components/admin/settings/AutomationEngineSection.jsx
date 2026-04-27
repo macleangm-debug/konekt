@@ -362,6 +362,7 @@ export default function AutomationEngineSection({ mode = "config" } = {}) {
       </SettingsSectionCard>
 
       {/* Promotions block */}
+      {showConfig && (
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
