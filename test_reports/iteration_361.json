@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration 361 — Tested Konekt Promotions Hub umbrella feature: unified drafts queue (promotion + group_deal kinds), full pricing-engine preview fields, pools_override on approve, group-deal approve/reject, approve-all, and the override-eats-no-margin sanity guard. Backend pytest 9/9 PASS. Frontend deep UI click-through of /admin/promotions-manager tabs was blocked by programmatic-login redirect (same issue flagged in iteration 360) — login form submit + localStorage token seeding both left the page on /login. Backend endpoints behind every UI action are fully verified, so functional risk is low; a human-initiated login can exercise the visible tabs + PoolPills + details expansion.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/automation/run", "issue": "After approve_all drained the queue, re-running engine produced created_count=0 because active+draft count already saturates per-category quota. This is intentional per automation_engine_service._active_promo_count (counts drafts toward quota to avoid duplicates). Main agent may need to manually insert synthetic drafts or raise per-category quota if it wants the queue repopulated for visual demo."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Admin login via /login on preview env", "issue": "Automated login via fill+Sign-In click and via direct localStorage token seeding both fail to transition the SPA past /login. Likely the AuthContext stores token under a non-standard key OR the preview env has SameSite cookie requirements that Playwright isn't carrying. NOT caused by this iteration's changes — same behaviour observed in v360. Backend /api/auth/login returns a valid token.", "affected_selectors": ["button:has-text('Sign In')", "localStorage.token/auth_token"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_automation_engine_v361.py",
+    "/app/test_reports/pytest/v361_results.xml"
+  ],
+  "action_items": [
+    "Main agent: after visual review of /admin/promotions-manager is complete by user, optionally raise promotions.per_category_quota or insert a fresh batch of synthetic drafts to repopulate the review queue — because the approve_all test in v361 drained the 56 pre-seeded drafts (all promoted to active) and the engine will not regenerate while quota is saturated by active promos.",
+    "Main agent: investigate why admin login does not round-trip in automated Playwright sessions — check AuthContext for non-standard localStorage key or cookie-only auth that bypasses token LS. This blocks E2E UI regression testing from this environment.",
+    "(Optional) Expose data-testid on tab triggers ([data-testid='tab-engine'|'tab-promotions'|'tab-group-deals']) to make future Playwright selection unambiguous."
+  ],
+  "critical_code_review_comments": [
+    "GET /api/admin/automation/drafts correctly unifies promotion + group_deal drafts with 'kind' discriminator. id for group_deal is stringified ObjectId — approve/reject correctly converts back via bson.ObjectId. Verified via live queue (31 promotion + 25 group_deal).",
+    "Promotion preview preview block includes ALL required pricing-engine source-of-truth fields: vendor_cost, tier_label, tier_total_margin_pct, distributable_margin_pct, distributable_margin_tzs, distribution_split, per_pool_capacity_tzs (all 5 pools), per_pool_used_tzs, post_promo_margin_tzs, post_promo_margin_pct, pool_share_pct. Verified on live drafts.",
+    "approve_draft with pools_override=['promotion','reserve']: correctly persists pools=['promotion','reserve'] on catalog_promotions, updates products.promo_blocks={affiliate:false, referral:false, sales:false, reserve:true}, rewrites customer_price + original_price + base_price, sets active_promotion_id. New price math via _recompute_with_pools uses per_pool_capacity_tzs × pool_share_pct rounded to nearest 100. Verified live.",
+    "Sanity guard override_eats_no_margin correctly returns HTTP 400 when the overridden pool set cannot produce a new_price < current_price (verified by synthesizing a draft with capacity so small that rounding keeps the price flat).",
+    "approve_group_deal_draft correctly flips status='active', is_active=true, sets approved_at datetime on db.group_deal_campaigns. Verified via ObjectId lookup after POST.",
+    "reject group_deal hard-deletes the document (filter includes auto_created=true AND status='draft' — good guard against accidental deletion of live campaigns). Verified via find_one returning None post-reject.",
+    "approve_all_drafts iterates list_drafts() and approves each — works for mixed kinds. Verified: before=(31 promo + 25 gd) → after=(0 + 0).",
+    "Note: approve_all_drafts calls approve_draft(db, d['id']) WITHOUT pools_override; behaviour for promotion-kind is correct (keeps original engine-selected pools). Admin must use per-draft approve to change pools.",
+    "Potential edge case not tested: if a group_deal draft's _id was generated by a non-ObjectId-compatible path, ObjectId(draft_id) would throw. Current code catches this and returns draft_not_found — acceptable."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_automation_engine_v361.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 pytests PASS)",
+    "frontend": "blocked (automated login redirect loop — verified on two attempts with both form submit and token-seeding approaches)"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (from /app/memory/test_credentials.md — verified active on /api/auth/login)",
+  "seed_data_creation": "One synthetic TEST_OVERRIDE_PROD_* product + matching catalog_promotions draft inserted and cleaned up within test_override_eats_margin_returns_400 teardown. No other synthetic data introduced.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All backend endpoints for Konekt Promotions Hub umbrella verified PASS: GET /api/admin/automation/drafts (unified kinds + full preview fields), POST /run with both flags, POST /drafts/{id}/approve with pools_override for promotion kind, approve group_deal, reject group_deal, approve-all, and 400 sanity guard. After v361 the draft queue is EMPTY (0 promo + 0 gd) — approve_all_drafts promoted all 56 pre-seeded drafts to active. Engine config was left as test_run_creates_both_kinds set it (enabled=true, promotions.enabled=true, group_deals.enabled=true). Because _active_promo_count counts drafts AND active promos toward quota, re-running /run will not generate new drafts while quota is saturated. To get visual drafts back, main agent should either (a) lower the active count by ending promos, (b) temporarily raise per_category_quota, or (c) directly insert synthetic drafts. Auth: admin login via Playwright is currently broken on this preview env — both form submit and localStorage seeding (keys 'token'/'auth_token'/'user') leave the SPA on /login. Recommend investigating AuthContext storage key.",
+  "rca_of_the_issue": "N/A — no bugs found in the umbrella feature itself. The only outstanding concern is that _active_promo_count's design choice (count drafts toward quota) combined with approve-all produces a UX side-effect: once all drafts are approved, no new ones generate until some active promos expire. This is by-design and documented in the code comment."
+}

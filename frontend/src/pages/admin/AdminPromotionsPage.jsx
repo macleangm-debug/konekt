@@ -6,6 +6,8 @@ import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import AutomationEngineSection from "@/components/admin/settings/AutomationEngineSection";
 import PromoDraftsPanel from "@/components/admin/promotions/PromoDraftsPanel";
+import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
+import { Bot, Tag as TagIcon, Users as UsersIcon } from "lucide-react";
 
 const SCOPE_OPTIONS = [
   { value: "global", label: "All Products" },
@@ -106,28 +108,83 @@ export default function AdminPromotionsPage() {
     totalUses: promos.reduce((s, p) => s + (p.current_uses || 0), 0),
   }), [promos]);
 
+  // Tab persistence — remember the last-viewed tab across reloads.
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return localStorage.getItem("promotionsTab") || "engine"; } catch { return "engine"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("promotionsTab", activeTab); } catch {}
+  }, [activeTab]);
+
+  const TABS = [
+    { key: "engine", label: "Engine", icon: Bot },
+    { key: "promotions", label: "Promotions", icon: TagIcon },
+    { key: "group_deals", label: "Group Deals", icon: UsersIcon },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-5" data-testid="admin-promotions-page">
-      {/* Auto-Promo Engine — actions + performance (config lives in Settings Hub) */}
-      <AutomationEngineSection mode="actions" />
-
-      {/* Engine drafts queue — admin reviews/approves engine suggestions */}
-      <PromoDraftsPanel />
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[#20364D]">Promotions</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Manage discount codes and promotional campaigns</p>
+          <h1 className="text-xl font-bold text-[#20364D]">Promotions Hub</h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            One umbrella for the auto-promo engine, manual promotions, and group deals.
+            Drafts approved here flow back to their respective pages.
+          </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="rounded-xl bg-[#20364D] text-white px-4 py-2 text-sm font-semibold flex items-center gap-2 hover:bg-[#1a2d40] transition-colors"
-          data-testid="create-promo-btn"
-        >
-          <Plus className="w-4 h-4" /> New Promotion
-        </button>
+        {activeTab === "promotions" && (
+          <button
+            onClick={openCreate}
+            className="rounded-xl bg-[#20364D] text-white px-4 py-2 text-sm font-semibold flex items-center gap-2 hover:bg-[#1a2d40] transition-colors"
+            data-testid="create-promo-btn"
+          >
+            <Plus className="w-4 h-4" /> New Promotion
+          </button>
+        )}
       </div>
+
+      {/* Tabs */}
+      <div
+        className="flex border-b border-slate-200 gap-1"
+        data-testid="promotions-tabs"
+      >
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const active = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${
+                active
+                  ? "text-[#20364D] border-[#D4A843] bg-amber-50/30"
+                  : "text-slate-500 border-transparent hover:text-[#20364D] hover:bg-slate-50"
+              }`}
+              data-testid={`promotions-tab-${t.key}`}
+            >
+              <Icon className="w-4 h-4" />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeTab === "engine" && (
+        <div className="space-y-5">
+          <AutomationEngineSection mode="actions" />
+          <PromoDraftsPanel />
+        </div>
+      )}
+
+      {activeTab === "group_deals" && (
+        <div data-testid="group-deals-tab-pane">
+          <GroupDealsAdminPage embedded />
+        </div>
+      )}
+
+      {activeTab === "promotions" && (
+        <div className="space-y-5">
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
@@ -242,8 +299,10 @@ export default function AdminPromotionsPage() {
           </table>
         </div>
       </div>
+        </div>
+      )}
 
-      {/* Create/Edit Drawer */}
+      {/* Create/Edit Drawer — accessible from the Promotions tab */}
       <StandardDrawerShell
         open={showForm}
         onClose={() => { setShowForm(false); setEditPromo(null); }}

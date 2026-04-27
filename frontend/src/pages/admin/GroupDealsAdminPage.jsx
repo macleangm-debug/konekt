@@ -140,7 +140,7 @@ function ProductSelector({ onSelect, selected }) {
   );
 }
 
-export default function GroupDealsAdminPage() {
+export default function GroupDealsAdminPage({ embedded = false } = {}) {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -323,7 +323,7 @@ export default function GroupDealsAdminPage() {
   }, [campaigns, stats, stageTab, searchQ]);
 
   return (
-    <div className="p-6 space-y-5" data-testid="group-deals-admin">
+    <div className={embedded ? "space-y-5" : "p-6 space-y-5"} data-testid="group-deals-admin">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#20364D]">Group Deal Campaigns</h1>

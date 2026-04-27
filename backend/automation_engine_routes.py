@@ -114,6 +114,7 @@ async def promote_everything_now(payload: PromoteEverythingPayload, request: Req
 class ApproveDraftPayload(BaseModel):
     code: str = ""
     required: bool = False
+    pools_override: Optional[list[str]] = None
 
 
 @router.get("/drafts")
@@ -126,7 +127,12 @@ async def get_drafts(request: Request):
 @router.post("/drafts/{draft_id}/approve")
 async def approve_draft_route(draft_id: str, payload: ApproveDraftPayload, request: Request):
     await _assert_admin(request)
-    res = await approve_draft(db, draft_id, code=payload.code, required=payload.required)
+    res = await approve_draft(
+        db, draft_id,
+        code=payload.code,
+        required=payload.required,
+        pools_override=payload.pools_override,
+    )
     if not res.get("ok"):
         raise HTTPException(status_code=404, detail=res.get("error", "not_found"))
     return res

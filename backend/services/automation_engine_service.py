@@ -319,6 +319,37 @@ async def _create_engine_promotion(db, product: dict, config: dict) -> Optional[
     if new_price >= price:
         return None
 
+    # Per-pool capacity snapshot — admin sees what each pool can fund and
+    # how much of it the engine actually used. The "all_pools" capacity
+    # tells admin what's possible if they opt into reserve / platform margin.
+    all_pools_capacity = _compute_max_giveaway_per_line(
+        base_cost=cost,
+        tier=tier,
+        pools=["promotion", "referral", "sales", "affiliate", "reserve"],
+        sales_preserve_floor_pct=10.0,
+        allow_eat_platform_margin=False,
+    )
+    distributable_tzs = cost * float(tier.get("distributable_margin_pct") or 0) / 100.0
+    split = tier.get("distribution_split") or {}
+    per_pool_capacity = {
+        "promotion": round(distributable_tzs * float(split.get("promotion_pct") or 0) / 100.0, 2),
+        "referral": round(distributable_tzs * float(split.get("referral_pct") or 0) / 100.0, 2),
+        "sales": round(distributable_tzs * float(split.get("sales_pct") or 0) / 100.0 * 0.9, 2),  # 10% preserve
+        "affiliate": round(distributable_tzs * float(split.get("affiliate_pct") or 0) / 100.0, 2),
+        "reserve": round(distributable_tzs * float(split.get("reserve_pct") or 0) / 100.0, 2),
+    }
+    # Per-pool "used" — distribute the actual giveaway proportionally to
+    # each enabled pool's capacity inside the selected pool set.
+    used_total = price - new_price
+    enabled_capacity_sum = sum(per_pool_capacity.get(p, 0) for p in pools) or 1
+    per_pool_used = {
+        p: round(used_total * (per_pool_capacity.get(p, 0) / enabled_capacity_sum), 2)
+        for p in pools
+    }
+    # Margin headroom — selling price minus cost minus total used.
+    post_promo_margin = round(new_price - cost, 2)
+    post_promo_margin_pct = round((post_promo_margin / new_price) * 100, 1) if new_price else 0
+
     promo_id = str(uuid4())
     now = datetime.now(timezone.utc)
     duration = int(config["promotions"].get("default_duration_days", 7))
@@ -341,23 +372,40 @@ async def _create_engine_promotion(db, product: dict, config: dict) -> Optional[
         "end_date": end_date,
         # Drafts are NOT active. They wait for admin approval before going live.
         "status": "draft",
+        "kind": "promotion",
         "product_ids": [product["id"]],
         # Snapshot the price math so admin sees exactly what will happen.
         "preview": {
+            "kind": "promotion",
             "product_id": product["id"],
             "product_name": product.get("name"),
             "product_image": product.get("image_url") or product.get("hero_image"),
             "category": branch,
+            # Pricing-engine source-of-truth fields
+            "vendor_cost": cost,
             "current_price": price,
             "suggested_price": new_price,
             "save_tzs": price - new_price,
             "save_pct": round((price - new_price) / price * 100, 1) if price else 0,
             "duration_days": duration,
-            "tier_label": tier.get("name") or tier.get("label"),
+            "tier_label": tier.get("label") or tier.get("name") or tier.get("tier_label"),
+            "tier_total_margin_pct": tier.get("total_margin_pct") or 0,
+            "distributable_margin_pct": tier.get("distributable_margin_pct") or 0,
+            "distributable_margin_tzs": round(distributable_tzs, 2),
+            "distribution_split": split,
+            "per_pool_capacity_tzs": per_pool_capacity,
+            "per_pool_used_tzs": per_pool_used,
+            "max_safe_giveaway_tzs": round(capacity["max_giveaway"], 2),
+            "max_aggressive_giveaway_tzs": round(all_pools_capacity["max_giveaway"], 2),
+            "post_promo_margin_tzs": post_promo_margin,
+            "post_promo_margin_pct": post_promo_margin_pct,
+            "pool_share_pct": float(config["promotions"].get("discount_pool_share_pct", 60)),
         },
         "blocks": {
             "affiliate": "affiliate" in pools,
             "referral": "referral" in pools,
+            "sales": "sales" in pools,
+            "reserve": "reserve" in pools,
         },
         "created_by": "automation_engine",
         "created_at": now.isoformat(),
@@ -613,8 +661,11 @@ async def run_group_deal_pass(db, dry_run: bool = False) -> dict:
             "pricing_branch": sugg["branch"],
             "commission_mode": "none",
             "affiliate_share_pct": 0,
-            "status": "active",
-            "is_active": True,
+            # Group deal drafts go through the same admin review queue as
+            # promotions. Customer-facing UI never shows status='draft'.
+            "status": "draft",
+            "is_active": False,
+            "kind": "group_deal",
             "threshold_met": False,
             "is_featured": False,
             "created_by": "automation_engine",
@@ -622,6 +673,23 @@ async def run_group_deal_pass(db, dry_run: bool = False) -> dict:
             "always_fulfill_silent": bool(
                 config["group_deals"].get("always_fulfill_silent", True)
             ),
+            "preview": {
+                "kind": "group_deal",
+                "product_id": sugg["product_id"],
+                "product_name": sugg["product_name"],
+                "product_image": sugg["product_image"],
+                "category": sugg["branch"],
+                "vendor_cost": sugg["vendor_cost"],
+                "current_price": sugg["current_customer_price"],
+                "suggested_price": sugg["suggested_discounted_price"],
+                "save_tzs": sugg["suggested_discount_amount"],
+                "save_pct": sugg["suggested_discount_pct"],
+                "duration_days": duration,
+                "tier_label": sugg["tier_label"],
+                "distributable_margin_pct": sugg.get("distributable_margin_pct"),
+                "display_target": display_target,
+                "funding_source": funding_source,
+            },
             "created_at": now,
             "updated_at": now,
         }
@@ -834,16 +902,22 @@ async def compute_performance_dashboard(db, lookback_days: int = 30) -> dict:
 
 # ── Draft management (admin review queue) ──────────────────
 async def list_drafts(db) -> list[dict]:
-    """Return all engine-created promotion drafts pending admin review."""
+    """Return all engine-created promotion AND group-deal drafts pending admin review.
+
+    Drafts are surfaced as a unified list with a `kind` discriminator
+    ('promotion' | 'group_deal') so the admin reviews everything in one
+    panel. After approval each kind flows back to its native page.
+    """
     drafts: list[dict] = []
+    # Promotion drafts
     async for d in db.catalog_promotions.find(
         {"auto_created": True, "status": "draft"},
         {"_id": 0},
     ).sort("created_at", -1):
-        # Only surface fields the UI cares about (compact payload).
         preview = d.get("preview") or {}
         drafts.append({
             "id": d["id"],
+            "kind": "promotion",
             "name": d.get("name"),
             "category": (d.get("scope") or {}).get("branch"),
             "code": d.get("code") or "",
@@ -855,32 +929,133 @@ async def list_drafts(db) -> list[dict]:
             "preview": preview,
             "pools": d.get("pools") or [],
         })
+    # Group-deal drafts
+    async for g in db.group_deal_campaigns.find(
+        {"auto_created": True, "status": "draft"},
+        {"_id": 1},
+    ).sort("created_at", -1):
+        gid = str(g["_id"])
+        full = await db.group_deal_campaigns.find_one({"_id": g["_id"]})
+        if not full:
+            continue
+        full.pop("_id", None)
+        preview = full.get("preview") or {}
+        drafts.append({
+            "id": gid,
+            "kind": "group_deal",
+            "name": f"Deal · {full.get('product_name')}",
+            "category": full.get("branch") or full.get("category"),
+            "code": "",
+            "promo_code_required": False,
+            "duration_days": full.get("duration_days") or preview.get("duration_days") or 0,
+            "start_date": (full.get("created_at").isoformat() if hasattr(full.get("created_at"), "isoformat") else str(full.get("created_at") or "")),
+            "end_date": (full.get("deadline").isoformat() if hasattr(full.get("deadline"), "isoformat") else str(full.get("deadline") or "")),
+            "created_at": full.get("created_at"),
+            "preview": preview or {
+                "kind": "group_deal",
+                "product_id": full.get("product_id"),
+                "product_name": full.get("product_name"),
+                "product_image": full.get("product_image"),
+                "category": full.get("branch"),
+                "vendor_cost": full.get("vendor_cost"),
+                "current_price": full.get("original_price"),
+                "suggested_price": full.get("discounted_price"),
+                "save_tzs": full.get("savings_amount"),
+                "save_pct": full.get("margin_pct"),
+                "duration_days": full.get("duration_days"),
+                "display_target": full.get("display_target"),
+                "funding_source": full.get("funding_source"),
+            },
+            "pools": [],
+        })
+    drafts.sort(key=lambda x: str(x.get("created_at") or ""), reverse=True)
     return drafts
 
 
-async def approve_draft(db, draft_id: str, code: str | None = None,
-                          required: bool = False) -> dict:
-    """Promote a draft to active and apply the price change to the product.
+def _recompute_with_pools(preview: dict, override_pools: list[str]) -> tuple[float, float, dict]:
+    """Recompute the suggested price when admin overrides which pools to draw from.
 
-    code:     optional campaign code (uppercased). Empty string = open promo.
-    required: when True, the customer must enter the code at checkout.
+    Returns (new_price, save_tzs, per_pool_used).
+    Falls back to the original preview values when override is empty/equal.
     """
-    d = await db.catalog_promotions.find_one({"id": draft_id, "status": "draft"})
-    if not d:
-        return {"ok": False, "error": "draft_not_found"}
-
-    pools = d.get("pools") or []
-    promo_blocks = {
-        "affiliate": "affiliate" in pools,
-        "referral": "referral" in pools,
+    if not override_pools:
+        return (
+            float(preview.get("suggested_price") or 0),
+            float(preview.get("save_tzs") or 0),
+            preview.get("per_pool_used_tzs") or {},
+        )
+    cap = preview.get("per_pool_capacity_tzs") or {}
+    cur_price = float(preview.get("current_price") or 0)
+    pool_share_pct = float(preview.get("pool_share_pct") or 60) / 100.0
+    capacity_sum = sum(float(cap.get(p) or 0) for p in override_pools)
+    avail = capacity_sum * pool_share_pct
+    # Round to nearest 100 like the engine
+    new_price = max(0.0, cur_price - avail)
+    new_price = round(new_price / 100) * 100
+    save = max(0.0, cur_price - new_price)
+    used_total = save
+    enabled_capacity_sum = sum(float(cap.get(p) or 0) for p in override_pools) or 1
+    per_pool_used = {
+        p: round(used_total * (float(cap.get(p) or 0) / enabled_capacity_sum), 2)
+        for p in override_pools
     }
-    preview = d.get("preview") or {}
+    return (new_price, save, per_pool_used)
+
+
+async def approve_draft(db, draft_id: str, code: str | None = None,
+                          required: bool = False,
+                          pools_override: list[str] | None = None) -> dict:
+    """Promote a draft (promotion OR group-deal) to active.
+
+    code:           optional campaign code (uppercased). Empty = open promo.
+    required:       when True, the customer must enter the code at checkout.
+    pools_override: optional list — admin can change which margin pools fund
+                    the giveaway (e.g. add 'reserve'). Recomputes price.
+                    Only applies to promotion-kind drafts.
+    """
+    # Try promotion first
+    d = await db.catalog_promotions.find_one({"id": draft_id, "status": "draft"})
+    if d:
+        return await _approve_promotion_draft(db, d, code, required, pools_override)
+
+    # Then group deal — id may be the ObjectId-string
+    try:
+        from bson import ObjectId
+        gd_id = ObjectId(draft_id)
+    except Exception:
+        return {"ok": False, "error": "draft_not_found"}
+    gd = await db.group_deal_campaigns.find_one({"_id": gd_id, "status": "draft"})
+    if not gd:
+        return {"ok": False, "error": "draft_not_found"}
+    return await _approve_group_deal_draft(db, gd)
+
+
+async def _approve_promotion_draft(db, d: dict, code, required, pools_override):
+    pools = list(d.get("pools") or [])
+    preview = dict(d.get("preview") or {})
     pid = preview.get("product_id")
     cur_price = float(preview.get("current_price") or 0)
     new_price = float(preview.get("suggested_price") or 0)
     save_tzs = float(preview.get("save_tzs") or 0)
-    name_for_label = d.get("name") or "Auto Promotion"
 
+    # Apply pool override if provided
+    if pools_override and set(pools_override) != set(pools):
+        new_price, save_tzs, per_pool_used = _recompute_with_pools(preview, pools_override)
+        if new_price >= cur_price:
+            return {"ok": False, "error": "override_eats_no_margin"}
+        pools = list(pools_override)
+        preview["suggested_price"] = new_price
+        preview["save_tzs"] = save_tzs
+        preview["save_pct"] = round(save_tzs / cur_price * 100, 1) if cur_price else 0
+        preview["per_pool_used_tzs"] = per_pool_used
+
+    promo_blocks = {
+        "affiliate": "affiliate" in pools,
+        "referral": "referral" in pools,
+        "sales": "sales" in pools,
+        "reserve": "reserve" in pools,
+    }
+    name_for_label = d.get("name") or "Auto Promotion"
     if pid and cur_price > 0 and new_price > 0:
         await db.products.update_one(
             {"id": pid},
@@ -897,22 +1072,51 @@ async def approve_draft(db, draft_id: str, code: str | None = None,
 
     code_clean = (code or "").strip().upper()
     await db.catalog_promotions.update_one(
-        {"id": draft_id},
+        {"id": d["id"]},
         {"$set": {
             "status": "active",
             "approved_at": datetime.now(timezone.utc).isoformat(),
             "code": code_clean,
             "promo_code_required": bool(required and code_clean),
+            "pools": pools,
+            "preview": preview,
+            "blocks": promo_blocks,
         }},
     )
-    return {"ok": True, "id": draft_id, "code": code_clean}
+    return {"ok": True, "id": d["id"], "kind": "promotion", "code": code_clean}
+
+
+async def _approve_group_deal_draft(db, gd: dict):
+    """Group-deal drafts simply flip to active; their price + visibility wire
+    is already populated. Customer-facing UI picks them up immediately."""
+    await db.group_deal_campaigns.update_one(
+        {"_id": gd["_id"]},
+        {"$set": {
+            "status": "active",
+            "is_active": True,
+            "approved_at": datetime.now(timezone.utc),
+        }},
+    )
+    return {"ok": True, "id": str(gd["_id"]), "kind": "group_deal"}
 
 
 async def reject_draft(db, draft_id: str) -> dict:
+    # Promotion?
     res = await db.catalog_promotions.delete_one(
         {"id": draft_id, "auto_created": True, "status": "draft"}
     )
-    return {"ok": res.deleted_count == 1, "id": draft_id}
+    if res.deleted_count == 1:
+        return {"ok": True, "id": draft_id, "kind": "promotion"}
+    # Group deal?
+    try:
+        from bson import ObjectId
+        gd_id = ObjectId(draft_id)
+    except Exception:
+        return {"ok": False, "id": draft_id}
+    res2 = await db.group_deal_campaigns.delete_one(
+        {"_id": gd_id, "auto_created": True, "status": "draft"}
+    )
+    return {"ok": res2.deleted_count == 1, "id": draft_id, "kind": "group_deal"}
 
 
 async def approve_all_drafts(db) -> dict:
