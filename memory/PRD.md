@@ -3,7 +3,32 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 360 ITERATIONS — 100% PASS RATE
+## System Status: 361 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Promotions Hub umbrella + per-pool override)
+
+User asked for one umbrella page where Engine, Promotions, and Group Deals live as tabs, with rich draft details that show vendor base price + the exact slice of distributable margin being given out, plus the ability to opt deeper into other pools (referral / sales / affiliate / reserve) — and any pool the admin enables blocks that pool's incentive on the product during the promo. Pricing-engine source-of-truth, no made-up math.
+
+### Backend
+1. **Engine drafts now carry the full pricing-engine snapshot.** `_create_engine_promotion` writes a `preview` block with `vendor_cost`, `tier_label`, `tier_total_margin_pct`, `distributable_margin_pct`, `distributable_margin_tzs`, `distribution_split`, `per_pool_capacity_tzs` (promotion / referral / sales / affiliate / reserve — sales × 0.9 floor preserved), `per_pool_used_tzs`, `post_promo_margin_tzs/pct`, and `pool_share_pct` so the UI never invents a number.
+2. **Group-deal pass also creates DRAFTS** (status='draft', is_active=false) with their own `preview` block. They surface in the same review queue as promotions.
+3. **Unified `list_drafts(db)`** returns both kinds with a `kind` discriminator. Group-deal id is the stringified ObjectId — approve/reject convert it back via `bson.ObjectId`.
+4. **`approve_draft` accepts `pools_override`**. Admin can change which margin pools fund the discount before publishing. `_recompute_with_pools` applies `(sum capacities) × pool_share_pct ÷ 100`, rounds to nearest 100, validates `new_price < current_price`, otherwise returns 400 `override_eats_no_margin`.
+5. **`promo_blocks` extended** to all four pools: `affiliate / referral / sales / reserve`. Whatever pools the admin enables become true on `products.promo_blocks` — downstream incentive flows must read this and skip the product.
+6. **Group-deal approval** simply flips `status='active'` + `is_active=true` + `approved_at`; reject hard-deletes the campaign.
+
+### Frontend
+7. **Promotions Hub page** at `/admin/promotions-manager` rebuilt with 3 tabs (Engine | Promotions | Group Deals). Tab choice persists in `localStorage.promotionsTab`. Group Deals tab embeds `GroupDealsAdminPage` via new `embedded` prop (no double padding).
+8. **`PromoDraftsPanel` rewritten** — each row has a thumbnail · kind badge (purple Group Deal / emerald Promotion) · 5-col summary (vendor cost · selling now · new price · customer saves · duration with start→end dates) and a Show details toggle.
+9. **Show details** reveals two cards:
+   - **Pricing engine math**: vendor cost → tier markup → selling price → distributable margin → customer saves → after-promo margin (all from preview, all monospace numbers).
+   - **Margin pools to draw from**: 5 toggleable pills (Promotion / Referral / Sales / Affiliate / Reserve) showing TZS capacity + "using TZS X / TZS Y" when checked. Reserve OFF by default and tagged "deeper".
+10. **Group-deal drafts skip the pool selector** — instead they show a purple "Group Deal funding" card with funding source + display target + the always-fulfill rule reminder. Their code input + required-checkbox are disabled.
+11. **Approve & Publish** sends `pools_override` only when the toggled set differs from the engine's original pools — keeps the API call minimal and lets the backend skip the recompute path for unchanged pools.
+
+**Iteration 361 — 9/9 backend pytests PASS.** Frontend live-verified via screenshot: tabs render, 56 drafts (31 promo + 25 group_deal) load, expanded view shows the Hoodie - Maroon - Large draft with Vendor cost TZS 45,000 → Selling TZS 58,500 → Distributable TZS 3,150 → Save TZS 1,600 → After-promo margin TZS 11,900 (20.9%); per-pool pills show capacities (Promotion 630 / Referral 630 / Sales 567 / Affiliate 788 / Reserve 473). Engine left enabled with 55 fresh drafts ready for admin review.
 
 ---
 
