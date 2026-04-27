@@ -3,7 +3,38 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 367 ITERATIONS — 100% PASS RATE
+## System Status: 368 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 27, 2026 (Round 3 — Studio polish, regression fix, ?e2e=1)
+
+User reported (after iter-363):
+- **Phone wrong on creatives + captions** — must read `+255 715222132` (the value admin saved on the Settings Hub Profile page, stored as `business_settings.contact_phone` on the doc with `type='invoice_branding'`).
+- **Download & Share on socials buttons "not going through"** — silent failure / no toast.
+- **Tagline on creative posts must be "Everything Your Business Needs"** — and aligned with the Konekt wordmark.
+- **QR code on creatives must be larger.**
+- **(P2) Suppress Ops Onboarding tour when `?e2e=1`.**
+
+### Shipped (iter-364, 100% pass)
+
+1. **Branding resolver fix** — `/api/content-engine/template-data/branding` now MERGES every non-profile `business_settings` doc (instead of grabbing only the first), and reads `contact_phone` / `primary_phone` fallback fields. Result: phone now resolves to `+255 715222132` everywhere — creative footers AND caption text. (`backend/routes/content_template_routes.py`)
+
+2. **Download / Share regression fix** — `CreativeDrawer.renderCanvas` now (a) awaits `document.fonts.ready` with a 1.5s timeout (no more hangs), (b) walks every `<img>` in the export node and tags it `crossOrigin='anonymous'` + waits for load, so the canvas isn't tainted, (c) logs `console.error('[ContentStudio] …')` and surfaces the real error in the toast. `handleShareOnSocials` now ALWAYS triggers download + `window.open(wa.me/?text=…)` immediately on click (regardless of `navigator.share` support) so the popup blocker doesn't kill the share. Verified with Playwright `page.expect_download` — both buttons emit a 649KB PNG.
+
+3. **Tagline hardcoded on creatives** — `LogoBar` now ignores `branding.tagline` and always renders `"Everything Your Business Needs"` directly under the wordmark (marginLeft = `S.triad + 12`, anchored to wordmark x-position). The global app tagline ("One-stop shop…") is unchanged for non-creative UI.
+
+4. **QR size** — `FooterBar` QR `<img>` width changed from `S.pad * 1.6` (~70px) → `S.pad * 2.4` (~106px) — exactly 50% larger. Added a soft drop-shadow + 8px white padding for clarity.
+
+5. **`?e2e=1` onboarding suppression** — `OnboardingGate.useEffect` now checks `URLSearchParams.get('e2e')` + `localStorage.konekt_e2e`. `OpsOnboardingModal.isOnboardingDismissed()` returns `true` when either flag is set. Test agents can now visit `/admin/group-deals?e2e=1` and complete the wizard walkthrough without a tour intercept.
+
+### Verification (testing_agent_v3 iter-364)
+- ✅ Branding curl: `phone="+255 715222132"`, `tagline="One-stop shop…"` (global).
+- ✅ Drawer download: PNG 649KB downloaded successfully (Playwright download event).
+- ✅ Drawer share: PNG downloaded + WhatsApp Web tab opened with caption containing `+255 715222132`.
+- ✅ Creative innerText: contains "Everything Your Business Needs", does NOT contain "One-stop shop".
+- ✅ QR rendered at 105.6px (was 70.4px) — 50% larger.
+- ✅ `/admin/group-deals?e2e=1` — no wizard/tour overlay; walkthroughs unblocked.
 
 ---
 
