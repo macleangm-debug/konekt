@@ -211,7 +211,16 @@ async def get_template_branding(request: Request):
     db = request.app.mongodb
 
     profile_doc = await db.business_settings.find_one({"type": "company_profile"}, {"_id": 0}) or {}
-    settings = await db.business_settings.find_one({"type": {"$ne": "company_profile"}}, {"_id": 0}) or {}
+    # Merge ALL non-profile business_settings docs (legacy + invoice_branding +
+    # whatever future docs admin may save) so we never miss a field that lives
+    # on a sibling doc. Newer docs win when keys collide.
+    settings: dict = {}
+    async for s in db.business_settings.find(
+        {"type": {"$ne": "company_profile"}}, {"_id": 0}
+    ):
+        for k, v in s.items():
+            if v not in (None, "", []):
+                settings[k] = v
     if not settings:
         settings = await db.business_settings.find_one({}, {"_id": 0}) or {}
     hub = await db.settings_hub.find_one({}, {"_id": 0}) or {}
@@ -262,8 +271,14 @@ async def get_template_branding(request: Request):
             "phone": first_set(
                 profile_doc.get("phone"),
                 profile_doc.get("support_phone"),
+                profile_doc.get("contact_phone"),
+                profile_doc.get("primary_phone"),
                 business_profile.get("support_phone"),
+                business_profile.get("contact_phone"),
+                business_profile.get("phone"),
                 settings.get("phone"),
+                settings.get("contact_phone"),
+                settings.get("primary_phone"),
                 fallback=DEFAULT_PHONE,
             ),
             "email": first_set(

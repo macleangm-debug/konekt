@@ -1,0 +1,82 @@
+{
+  "summary": "Frontend + backend verification of iter-364 fixes (post-iter-363 user regression report). All 7 items PASS end-to-end on the LIVE preview URL with admin@konekt.co.tz creds.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Branding resolver in /app/backend/routes/content_template_routes.py correctly merges all non-profile business_settings docs and reads contact_phone — verified GET /api/content-engine/template-data/branding now returns phone='+255 715222132' (the admin-saved invoice_branding.contact_phone value, NOT the placeholder default).",
+    "CreativeDrawer Download (data-testid=download-creative-btn) and Share-on-socials (data-testid=share-on-socials-btn) BOTH actually trigger a PNG download — confirmed via Playwright page.expect_download. Download size ~649KB, suggested filename '2026_Diary-square-promo-light.png' (Download) and '2026_Diary-square-promo.png' (Share). No '[ContentStudio]' console errors during click flow.",
+    "Share-on-socials also pops a new tab to https://api.whatsapp.com/send/?text=… (browser auto-redirects from wa.me/?text=) and the URL-encoded caption contains '+255 715222132'.",
+    "LogoBar tagline in Promo Focus layout is hardcoded to 'Everything Your Business Needs' (NOT inheriting branding.tagline 'One-stop shop for products, services & deals') — verified by inspecting innerText of [data-testid=branded-creative]: contains_everything_your_business=True, contains_one_stop_global=False.",
+    "FooterBar QR <img alt='QR'> inline style width is 105.6px (was ~70.4px before — change from S.pad*1.6 → S.pad*2.4 = exactly 50% larger). Visually anchored bottom-right of creative.",
+    "OnboardingGate + OpsOnboardingModal correctly suppress on ?e2e=1: navigated /admin/group-deals?e2e=1 with localStorage konekt_e2e='1' set; no wizard/tour overlay rendered (wizard_visible=False), allowing testing-agent walkthroughs to proceed unblocked.",
+    "Caption panel inside drawer also shows '+255 715222132' (Short Caption text: '2026 Diary at TZS 32,500. +255 715222132'; Social Post: 'Konekt · +255 715222132'). No leakage of the old default '+255 712 345 678'."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iter-364 fixes ALL green. The download + share-on-socials buttons DO trigger downloads — caught via Playwright page.expect_download(timeout=25000). If user STILL reports 'not going through' after this round, the issue is likely environmental (browser popup blocker, ad-blocker, or specific OS/browser combo) — not a code regression. The offscreen export clone (left:-99999) renders fine inside the Sheet (drawer count=2 in DOM, both width=1080px). E2E flag works via both URL ?e2e=1 and localStorage konekt_e2e='1'.",
+  "detailed_verifications": {
+    "1_backend_branding_phone": {
+      "endpoint": "GET /api/content-engine/template-data/branding",
+      "phone": "+255 715222132",
+      "tagline": "One-stop shop for products, services & deals",
+      "status": "PASS"
+    },
+    "2_download_button": {
+      "testid": "download-creative-btn",
+      "click_triggered_download": true,
+      "filename": "2026_Diary-square-promo-light.png",
+      "size_bytes": 649182,
+      "console_errors": "none (only unrelated 404 asset errors)",
+      "status": "PASS"
+    },
+    "3_share_on_socials_button": {
+      "testid": "share-on-socials-btn",
+      "triggered_download": true,
+      "download_filename": "2026_Diary-square-promo.png",
+      "popup_opened": true,
+      "popup_url_prefix": "https://api.whatsapp.com/send/?text=Hi%21+We+have+%2A2026+Diary%2A...",
+      "popup_caption_contains_correct_phone": true,
+      "status": "PASS"
+    },
+    "4_promo_focus_tagline": {
+      "layout": "promo",
+      "creative_dom_count": 2,
+      "contains_everything_your_business_needs": true,
+      "contains_global_one_stop_shop": false,
+      "status": "PASS"
+    },
+    "5_qr_size_increase": {
+      "qr_inline_width": "105.6px",
+      "previous_width": "~70.4px (S.pad * 1.6)",
+      "new_formula": "S.pad * 2.4",
+      "increase": "~50%",
+      "status": "PASS"
+    },
+    "6_creative_footer_phone": {
+      "creative_innerText_contains_+255_715222132": true,
+      "creative_innerText_contains_default_+255_712_345_678": false,
+      "captions_panel_phone_correct": true,
+      "status": "PASS"
+    },
+    "7_e2e_onboarding_suppression": {
+      "tested_routes": ["/admin/content-studio?e2e=1", "/admin/group-deals?e2e=1"],
+      "wizard_visible": false,
+      "ops_modal_visible": false,
+      "localStorage_konekt_e2e": "1",
+      "status": "PASS"
+    }
+  }
+}

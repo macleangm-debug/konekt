@@ -8,6 +8,21 @@ export default function OnboardingGate({ children }) {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    // E2E test suppression — skip the wizard when ?e2e=1 is in the URL.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("e2e") === "1") {
+        try { localStorage.setItem("konekt_e2e", "1"); } catch (_) {}
+      }
+      if (
+        params.get("e2e") === "1" ||
+        localStorage.getItem("konekt_e2e") === "1"
+      ) {
+        setChecking(false);
+        return;
+      }
+    } catch (_) {}
+
     const check = async () => {
       try {
         const token = localStorage.getItem("konekt_token") || localStorage.getItem("konekt_admin_token") || localStorage.getItem("partner_token");

@@ -509,37 +509,72 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
   const captions = generateCaptions(item, branding);
 
   const renderCanvas = async () => {
-    // Render from the OFF-SCREEN, full-1:1-scale clone — never the scaled
-    // preview, otherwise html2canvas mis-measures glyph positions and the
-    // exported text glitches/overlaps. Also wait for fonts so Inter is
-    // applied (default fallback was rendering with Times-like metrics).
+    // Capture the offscreen full-1:1-scale clone (preferred) else fall back
+    // to the visible scaled node. Wait for fonts + tick before capture so
+    // images and Inter glyphs are fully laid out.
     const node = exportRef.current || canvasRef.current;
-    if (!node) return null;
-    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
-    return html2canvas(node, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: null,
-      width: format.w,
-      height: format.h,
-      windowWidth: format.w,
-      windowHeight: format.h,
-      logging: false,
-    });
+    if (!node) {
+      console.error("[ContentStudio] no canvas node");
+      return null;
+    }
+    try {
+      if (document.fonts && document.fonts.ready) {
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((res) => setTimeout(res, 1500)),
+        ]);
+      }
+    } catch (e) { /* non-blocking */ }
+
+    // Pre-load every <img> inside the node and tag them with crossOrigin so
+    // the canvas isn't tainted (which would block toBlob/toDataURL).
+    const imgs = Array.from(node.querySelectorAll("img"));
+    await Promise.all(imgs.map((img) => new Promise((resolve) => {
+      try {
+        if (!img.crossOrigin) img.setAttribute("crossorigin", "anonymous");
+      } catch (_) {}
+      if (img.complete && img.naturalWidth > 0) return resolve();
+      const t = setTimeout(resolve, 2500);
+      img.addEventListener("load", () => { clearTimeout(t); resolve(); }, { once: true });
+      img.addEventListener("error", () => { clearTimeout(t); resolve(); }, { once: true });
+    })));
+
+    try {
+      return await html2canvas(node, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        width: format.w,
+        height: format.h,
+        windowWidth: format.w,
+        windowHeight: format.h,
+        logging: false,
+        imageTimeout: 4000,
+      });
+    } catch (e) {
+      console.error("[ContentStudio] html2canvas failed:", e);
+      throw e;
+    }
   };
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
       const c = await renderCanvas();
-      if (!c) throw new Error();
+      if (!c) throw new Error("renderCanvas returned null");
+      const dataUrl = c.toDataURL("image/png");
       const a = document.createElement("a");
-      a.download = `${item.name.replace(/\s+/g, "_")}-${format.key}-${layout.key}-${theme.key}.png`;
-      a.href = c.toDataURL("image/png");
+      a.download = `${(item.name || "creative").replace(/\s+/g, "_")}-${format.key}-${layout.key}-${theme.key}.png`;
+      a.href = dataUrl;
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       toast.success("Creative downloaded");
-    } catch { toast.error("Download failed"); }
+    } catch (e) {
+      console.error("[ContentStudio] Download error:", e);
+      toast.error(`Download failed: ${e?.message || "see console"}`);
+    }
     setDownloading(false);
   };
 
@@ -547,7 +582,7 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
     setPublishing(true);
     try {
       const c = await renderCanvas();
-      if (!c) throw new Error();
+      if (!c) throw new Error("renderCanvas returned null");
       await api.post("/api/admin/content-center/publish", {
         image_data: c.toDataURL("image/png"),
         item_name: item.name, item_id: item.id, item_type: item.type,
@@ -559,7 +594,10 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
       });
       toast.success("Saved as draft");
       onClose();
-    } catch { toast.error("Save failed"); }
+    } catch (e) {
+      console.error("[ContentStudio] Save draft error:", e);
+      toast.error(`Save failed: ${e?.message || "see console"}`);
+    }
     setPublishing(false);
   };
 
@@ -567,31 +605,43 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
     setSharing(true);
     try {
       const c = await renderCanvas();
-      if (!c) throw new Error();
-      const blob = await new Promise((res) => c.toBlob(res, "image/png"));
-      const fileName = `${item.name.replace(/\s+/g, "_")}-${format.key}-${layout.key}.png`;
-      const file = new File([blob], fileName, { type: "image/png" });
+      if (!c) throw new Error("renderCanvas returned null");
+      const dataUrl = c.toDataURL("image/png");
+      const fileName = `${(item.name || "creative").replace(/\s+/g, "_")}-${format.key}-${layout.key}.png`;
       const shareText = captions.whatsapp || captions.social || captions.short || `${item.name}`;
 
-      // Try the native Web Share API with a file (mobile + supported browsers)
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], text: shareText, title: item.name });
-        toast.success("Shared");
-      } else {
-        // Desktop fallback: download the image, copy caption, open WhatsApp Web
-        const a = document.createElement("a");
-        a.download = fileName;
-        a.href = c.toDataURL("image/png");
-        a.click();
-        try { await navigator.clipboard.writeText(shareText); } catch (_) {}
-        window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
-        toast.success("Image downloaded · caption copied · WhatsApp opened");
-      }
+      // Always download + open WhatsApp Web in a single user gesture so the
+      // popup blocker doesn't kill the share. We try Web Share API as a
+      // bonus AFTER the fallback has been triggered.
+      const a = document.createElement("a");
+      a.download = fileName;
+      a.href = dataUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
-      // Also persist a copy to the Content Center so admin keeps a record
+      try { await navigator.clipboard.writeText(shareText); } catch (_) {}
+      const waWindow = window.open(
+        `https://wa.me/?text=${encodeURIComponent(shareText)}`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+
+      // Bonus path on mobile / supported browsers
+      try {
+        const blob = await new Promise((res, rej) => c.toBlob((b) => b ? res(b) : rej(new Error("toBlob null")), "image/png"));
+        const file = new File([blob], fileName, { type: "image/png" });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text: shareText, title: item.name });
+        }
+      } catch (_) { /* desktop fallback already fired */ }
+
+      toast.success(waWindow ? "Image downloaded · caption copied · WhatsApp opened" : "Image downloaded · caption copied (popup blocked — paste in WhatsApp manually)");
+
+      // Persist asset for record-keeping (non-blocking)
       try {
         await api.post("/api/admin/content-center/publish", {
-          image_data: c.toDataURL("image/png"),
+          image_data: dataUrl,
           item_name: item.name, item_id: item.id, item_type: item.type,
           format: format.key, theme: theme.key, category: item.category || "",
           headline: item.name, selling_price: item.selling_price || 0,
@@ -600,7 +650,10 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
           captions, status: "active",
         });
       } catch (_) { /* non-blocking */ }
-    } catch { toast.error("Share failed"); }
+    } catch (e) {
+      console.error("[ContentStudio] Share error:", e);
+      toast.error(`Share failed: ${e?.message || "see console"}`);
+    }
     setSharing(false);
   };
 
@@ -990,16 +1043,25 @@ function KonektMark({ S, theme, isLight, branding }) {
   );
 }
 
-/* ═══ Shared: Logo Bar ═══ */
+/* ═══ Shared: Logo Bar ═══
+ * Tagline is intentionally hardcoded for creatives ("Everything Your Business
+ * Needs") even though the global app tagline differs — admin asked for this
+ * specifically on social posts. Indent matches the wordmark ("Konekt") so the
+ * tagline visually anchors under it.
+ */
 function LogoBar({ theme, S, branding, isLight, hasDsc, discount }) {
+  const creativeTagline = "Everything Your Business Needs";
+  const taglineIndent = S.triad + 12; // icon width + KonektMark gap
   return (
-    <div style={{ padding: `${S.pad * 0.7}px ${S.pad}px ${S.pad * 0.4}px`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div>
+    <div style={{ padding: `${S.pad * 0.7}px ${S.pad}px ${S.pad * 0.4}px`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4 }}>
         <KonektMark S={S} theme={theme} isLight={isLight} branding={branding} />
-        {branding.tagline && <div style={{ fontSize: S.tagline, color: theme.textSecondary, marginTop: 4, marginLeft: S.triad + 12 }}>{branding.tagline}</div>}
+        <div style={{ fontSize: S.tagline, color: theme.textSecondary, marginLeft: taglineIndent, fontWeight: 500, letterSpacing: 0.3, lineHeight: 1.2 }}>
+          {creativeTagline}
+        </div>
       </div>
       {hasDsc && discount > 0 && (
-        <div style={{ backgroundColor: theme.badgeBg, color: theme.badgeText, padding: `${S.badge * 0.5}px ${S.badge}px`, borderRadius: 8, fontSize: S.badge, fontWeight: 800, letterSpacing: 0.5 }}>
+        <div style={{ backgroundColor: theme.badgeBg, color: theme.badgeText, padding: `${S.badge * 0.5}px ${S.badge}px`, borderRadius: 8, fontSize: S.badge, fontWeight: 800, letterSpacing: 0.5, whiteSpace: "nowrap" }}>
           SAVE {money(discount)}
         </div>
       )}
@@ -1082,8 +1144,8 @@ function FooterBar({ theme, S, branding, viewerPromoCode = "", item }) {
               </div>
             )}
           </div>
-          <div style={{ background: "#fff", padding: 6, borderRadius: 8, lineHeight: 0 }}>
-            <img src={qrUrl} alt="QR" crossOrigin="anonymous" style={{ width: S.pad * 1.6, height: S.pad * 1.6, display: "block" }} />
+          <div style={{ background: "#fff", padding: 8, borderRadius: 10, lineHeight: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.18)" }}>
+            <img src={qrUrl} alt="QR" crossOrigin="anonymous" style={{ width: S.pad * 2.4, height: S.pad * 2.4, display: "block" }} />
           </div>
         </div>
       ) : (

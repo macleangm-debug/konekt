@@ -47,7 +47,11 @@ const STEPS = [
 ];
 
 export function isOnboardingDismissed() {
-  try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; }
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("e2e") === "1" || localStorage.getItem("konekt_e2e") === "1") return true;
+    return localStorage.getItem(STORAGE_KEY) === "1";
+  } catch { return false; }
 }
 
 export default function OpsOnboardingModal({ open, onClose, onCta }) {
