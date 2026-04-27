@@ -1,0 +1,87 @@
+{
+  "summary": "Frontend-only verification of post-iter-362 UI pack (5 fixes): content-studio download fix, footer phone correction, 'Share on socials' button, uniform admin navbar gap, new tagline. All 5 fixes CONFIRMED WORKING end-to-end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "OPTIONAL (non-blocking): backend/public_branding_routes.py L14 and backend/services/settings_resolver.py L27 still contain legacy tagline 'Business Procurement Simplified' as default fallback. These files are outside the primary branding endpoint (/api/content-engine/template-data/branding) and are not surfaced in the content creatives or admin UI from this pass, but main agent may want to sync them to 'One-stop shop for products, services & deals' for global consistency."
+  ],
+  "critical_code_review_comments": [
+    "CreativeDrawer now correctly renders a 1:1 off-screen clone (data-testid=branded-creative duplicated with left:-99999px) for html2canvas export — verified DOM has 2 instances, one at left=1342 (scaled preview) and one at left=-99999 w=1080 (export target).",
+    "renderCanvas awaits document.fonts.ready and passes width/height/windowWidth/windowHeight to html2canvas — downloaded PNG is a valid 2160x2160 RGBA (≈847KB) file with correct aspect ratio and non-zero content.",
+    "Font stack switched from Inter to 'Arial, Helvetica, Segoe UI, sans-serif' on .branded-creative wrapper — eliminates the glyph-fallback overlap issue.",
+    "Share handler correctly falls back on desktop: triggers image download + opens https://wa.me/?text=<caption> (browser auto-redirects to api.whatsapp.com/send/?text=… which is expected WhatsApp Web behaviour)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iter-363 fixes green. If user reports the downloaded image still looks bad, the raw fetched PNG is 2160x2160 RGBA ~847KB, so html2canvas IS capturing the off-screen 1:1 clone correctly. Any remaining visual complaints at that point would be purely content-layout, not the garbled-glyph bug.",
+  "detailed_verifications": {
+    "1_branding_endpoint": {
+      "url": "GET /api/content-engine/template-data/branding",
+      "phone": "+255 712 345 678",
+      "tagline": "One-stop shop for products, services & deals",
+      "status": "PASS"
+    },
+    "2_download_export_clean": {
+      "branded_creative_count_in_DOM": 2,
+      "offscreen_clone_position_left_px": -99999,
+      "offscreen_clone_width_px": 1080,
+      "downloaded_png_dims": "2160x2160 (2x scale)",
+      "downloaded_png_size_bytes": 847468,
+      "downloaded_png_mode": "RGBA",
+      "export_includes_correct_phone": true,
+      "export_includes_old_phone_leak": false,
+      "status": "PASS"
+    },
+    "3_footer_phone": {
+      "creative_innerText_contains_+255_712_345_678": true,
+      "creative_innerText_contains_legacy_+255_759_110_453": false,
+      "status": "PASS"
+    },
+    "4_share_on_socials_button": {
+      "share_on_socials_btn_exists": true,
+      "share_btn_label": "Share on socials",
+      "old_save_publish_btn_gone": true,
+      "download_btn_present": true,
+      "save_draft_btn_present": true,
+      "desktop_fallback_triggers_download": true,
+      "desktop_fallback_opens_whatsapp_tab": true,
+      "whatsapp_url_contains_caption_with_phone": true,
+      "status": "PASS"
+    },
+    "5_admin_layout_uniform_padding": {
+      "main_className": "px-6 pt-3 pb-6",
+      "computed_padding": "12px 24px 24px",
+      "header_bottom_to_first_child_top_gap_px": 12,
+      "pages_tested": ["/admin", "/admin/content-studio", "/admin/promotions-manager", "/admin/group-deals"],
+      "gap_uniform_across_all_pages": true,
+      "status": "PASS"
+    },
+    "6_tagline_cleanup": {
+      "frontend_has_no_Smart_B2B": true,
+      "frontend_has_no_Business_Procurement_Simplified": true,
+      "BrandingContext_default_tagline": "One-stop shop for products, services & deals",
+      "BrandLogo_default_tagline": "One-stop shop for products, services & deals",
+      "AppLauncher_default_tagline": "One-stop shop for products, services & deals",
+      "index_html_meta_description_updated": true,
+      "backend_legacy_remains_in": ["backend/public_branding_routes.py L14", "backend/services/settings_resolver.py L27"],
+      "status": "PASS (frontend) / MINOR NOTE (backend legacy fallbacks)"
+    },
+    "7_iter362_parity_preserved": {
+      "content_studio_loads_with_cards": true,
+      "drawer_opens_on_card_click": true,
+      "console_errors": "only generic 404s on assets, no JS runtime errors"
+    }
+  }
+}

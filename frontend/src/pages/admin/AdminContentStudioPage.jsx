@@ -501,14 +501,32 @@ function WhyKonektCard({ item, onSelect }) {
    ═══════════════════════════════════════════ */
 function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, onThemeChange, onFormatChange, onLayoutChange, viewerPromoCode = "" }) {
   const canvasRef = useRef(null);
+  const exportRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [copiedKey, setCopiedKey] = useState("");
   const captions = generateCaptions(item, branding);
 
   const renderCanvas = async () => {
-    if (!canvasRef.current) return null;
-    return html2canvas(canvasRef.current, { scale: 2, useCORS: true, allowTaint: true, backgroundColor: null });
+    // Render from the OFF-SCREEN, full-1:1-scale clone — never the scaled
+    // preview, otherwise html2canvas mis-measures glyph positions and the
+    // exported text glitches/overlaps. Also wait for fonts so Inter is
+    // applied (default fallback was rendering with Times-like metrics).
+    const node = exportRef.current || canvasRef.current;
+    if (!node) return null;
+    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (_) {}
+    return html2canvas(node, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      width: format.w,
+      height: format.h,
+      windowWidth: format.w,
+      windowHeight: format.h,
+      logging: false,
+    });
   };
 
   const handleDownload = async () => {
@@ -525,7 +543,7 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
     setDownloading(false);
   };
 
-  const handlePublish = async (status) => {
+  const handleSaveDraft = async () => {
     setPublishing(true);
     try {
       const c = await renderCanvas();
@@ -537,12 +555,53 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
         headline: item.name, selling_price: item.selling_price || 0,
         final_price: item.final_price || 0, discount_amount: item.discount_amount || 0,
         promo_code: item.promo_code || "", promotion_name: item.promo_name || "",
-        captions, status,
+        captions, status: "draft",
       });
-      toast.success(status === "draft" ? "Saved as draft" : "Published to Content Center");
+      toast.success("Saved as draft");
       onClose();
-    } catch { toast.error("Publish failed"); }
+    } catch { toast.error("Save failed"); }
     setPublishing(false);
+  };
+
+  const handleShareOnSocials = async () => {
+    setSharing(true);
+    try {
+      const c = await renderCanvas();
+      if (!c) throw new Error();
+      const blob = await new Promise((res) => c.toBlob(res, "image/png"));
+      const fileName = `${item.name.replace(/\s+/g, "_")}-${format.key}-${layout.key}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      const shareText = captions.whatsapp || captions.social || captions.short || `${item.name}`;
+
+      // Try the native Web Share API with a file (mobile + supported browsers)
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text: shareText, title: item.name });
+        toast.success("Shared");
+      } else {
+        // Desktop fallback: download the image, copy caption, open WhatsApp Web
+        const a = document.createElement("a");
+        a.download = fileName;
+        a.href = c.toDataURL("image/png");
+        a.click();
+        try { await navigator.clipboard.writeText(shareText); } catch (_) {}
+        window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
+        toast.success("Image downloaded · caption copied · WhatsApp opened");
+      }
+
+      // Also persist a copy to the Content Center so admin keeps a record
+      try {
+        await api.post("/api/admin/content-center/publish", {
+          image_data: c.toDataURL("image/png"),
+          item_name: item.name, item_id: item.id, item_type: item.type,
+          format: format.key, theme: theme.key, category: item.category || "",
+          headline: item.name, selling_price: item.selling_price || 0,
+          final_price: item.final_price || 0, discount_amount: item.discount_amount || 0,
+          promo_code: item.promo_code || "", promotion_name: item.promo_name || "",
+          captions, status: "active",
+        });
+      } catch (_) { /* non-blocking */ }
+    } catch { toast.error("Share failed"); }
+    setSharing(false);
   };
 
   const handleCopy = (k, t) => { navigator.clipboard.writeText(t); setCopiedKey(k); toast.success("Copied"); setTimeout(() => setCopiedKey(""), 2000); };
@@ -555,7 +614,7 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
         <div className="p-5" data-testid="creative-preview-drawer">
           <SheetHeader className="mb-3">
             <SheetTitle className="text-lg font-bold text-[#20364D]">{item.name}</SheetTitle>
-            <SheetDescription className="text-xs text-slate-500">Choose theme, layout, and format — then download or publish</SheetDescription>
+            <SheetDescription className="text-xs text-slate-500">Choose theme, layout, and format — then download or share</SheetDescription>
           </SheetHeader>
 
           {/* Switchers */}
@@ -571,23 +630,28 @@ function CreativeDrawer({ item, theme, format, layout, branding, open, onClose, 
             </div>
           </div>
 
-          {/* WYSIWYG Preview — exact same container used for export */}
+          {/* WYSIWYG Preview — visually scaled, but export uses the offscreen 1:1 clone below */}
           <div className="rounded-xl border border-slate-200 bg-[#e5e5e5] p-3 mb-3 flex justify-center overflow-hidden" style={{ maxHeight: format.key === "vertical" ? "540px" : "500px" }} data-testid="creative-preview-area">
             <div style={{ transform: `scale(${previewScale})`, transformOrigin: "top center" }}>
               <BrandedCreative ref={canvasRef} item={item} theme={theme} format={format} layout={layout} branding={branding} viewerPromoCode={viewerPromoCode} />
             </div>
           </div>
 
+          {/* Off-screen full-1:1-scale clone for clean exports — html2canvas reads from this */}
+          <div aria-hidden style={{ position: "fixed", left: -99999, top: 0, pointerEvents: "none", zIndex: -1 }}>
+            <BrandedCreative ref={exportRef} item={item} theme={theme} format={format} layout={layout} branding={branding} viewerPromoCode={viewerPromoCode} />
+          </div>
+
           {/* Actions */}
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <button onClick={handleDownload} disabled={downloading || publishing} className="flex items-center justify-center gap-1.5 bg-[#20364D] text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-[#1a2d40] disabled:opacity-50" data-testid="download-creative-btn">
+            <button onClick={handleDownload} disabled={downloading || publishing || sharing} className="flex items-center justify-center gap-1.5 bg-[#20364D] text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-[#1a2d40] disabled:opacity-50" data-testid="download-creative-btn">
               {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Download
             </button>
-            <button onClick={() => handlePublish("draft")} disabled={downloading || publishing} className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white text-slate-700 rounded-lg py-2.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-testid="save-draft-btn">
+            <button onClick={handleSaveDraft} disabled={downloading || publishing || sharing} className="flex items-center justify-center gap-1.5 border border-slate-200 bg-white text-slate-700 rounded-lg py-2.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-50" data-testid="save-draft-btn">
               {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Save Draft
             </button>
-            <button onClick={() => handlePublish("active")} disabled={downloading || publishing} className="flex items-center justify-center gap-1.5 bg-emerald-600 text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50" data-testid="save-publish-btn">
-              {publishing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileCheck className="w-3.5 h-3.5" />} Publish
+            <button onClick={handleShareOnSocials} disabled={downloading || publishing || sharing} className="flex items-center justify-center gap-1.5 bg-emerald-600 text-white rounded-lg py-2.5 text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50" data-testid="share-on-socials-btn">
+              {sharing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />} Share on socials
             </button>
           </div>
 
@@ -655,7 +719,7 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
   };
 
   return (
-    <div ref={ref} style={{ width: w, height: h, backgroundColor: theme.bg, fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }} data-testid="branded-creative">
+    <div ref={ref} style={{ width: w, height: h, backgroundColor: theme.bg, fontFamily: "Arial, Helvetica, 'Segoe UI', sans-serif", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" }} data-testid="branded-creative">
       {(layoutRenderer[layout.key] || layoutRenderer.product)()}
     </div>
   );
@@ -675,7 +739,7 @@ function LayoutProduct({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
         )}
         <div style={{ flex: hasImg && !v ? 1 : "none", display: "flex", flexDirection: "column", justifyContent: "center", gap: v ? 20 : 14 }}>
           {item.category && <div style={{ fontSize: S.category, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 2 }}>{item.category}</div>}
-          <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -1 }}>{item.name}</div>
+          <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: 0 }}>{item.name}</div>
           {item.description && <div style={{ fontSize: S.desc, color: theme.textSecondary, lineHeight: 1.4, maxWidth: 500 }}>{item.description}</div>}
           <PriceBlock item={item} theme={theme} S={S} v={v} hasDsc={hasDsc} />
           {/* Product Focus intentionally omits the promo code badge —
@@ -725,7 +789,7 @@ function LayoutService({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
         {/* Accent line */}
         <div style={{ width: 70, height: 5, backgroundColor: theme.accent, borderRadius: 3 }} />
         {item.category && <div style={{ fontSize: S.category, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 2 }}>{item.category}</div>}
-        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -1 }}>{item.name}</div>
+        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: 0 }}>{item.name}</div>
         {item.description && <div style={{ fontSize: S.desc + 2, color: theme.textSecondary, lineHeight: 1.5, maxWidth: 700 }}>{item.description}</div>}
         {item.final_price > 0 && (
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 8 }}>
@@ -796,7 +860,7 @@ function LayoutAuthority({ item, theme, S, v, w, h, branding, isLight, viewerPro
         <div style={{ width: 80, height: 5, backgroundColor: theme.accent, borderRadius: 3 }} />
 
         {/* Statement */}
-        <div style={{ fontSize: v ? S.headline * 1.1 : S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.08, letterSpacing: -1.5, maxWidth: v ? 900 : 800 }}>
+        <div style={{ fontSize: v ? S.headline * 1.1 : S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.08, letterSpacing: 0, maxWidth: v ? 900 : 800 }}>
           {item.name}
         </div>
 
@@ -832,7 +896,7 @@ function LayoutTrust({ item, theme, S, v, w, h, branding, isLight, viewerPromoCo
         <div style={{ width: 70, height: 5, backgroundColor: theme.accent, borderRadius: 3 }} />
 
         {/* Main statement */}
-        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -1 }}>
+        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: 0 }}>
           {item.name}
         </div>
 
@@ -876,7 +940,7 @@ function LayoutWhyKonekt({ item, theme, S, v, w, h, branding, isLight, viewerPro
         <div style={{ display: "inline-flex", alignSelf: "flex-start", padding: `${v ? 8 : 6}px ${v ? 18 : 14}px`, borderRadius: 999, backgroundColor: `${theme.accent}22`, color: theme.accent, fontSize: S.category, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
           {isBusiness ? "For Businesses" : "For Individuals"}
         </div>
-        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.05, letterSpacing: -1.5 }}>
+        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.05, letterSpacing: 0 }}>
           {headline}
         </div>
         {tagline && (
@@ -921,7 +985,7 @@ function KonektMark({ S, theme, isLight, branding }) {
       ) : (
         <TriadSVG size={S.triad} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
       )}
-      <div style={{ fontSize: S.logoText * 1.05, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -0.5 }}>{wordmark}</div>
+      <div style={{ fontSize: S.logoText * 1.05, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: 0 }}>{wordmark}</div>
     </div>
   );
 }
@@ -948,7 +1012,7 @@ function PriceBlock({ item, theme, S, v, hasDsc }) {
   if (!item.final_price || item.final_price <= 0) return null;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 8 }}>
-      <div style={{ backgroundColor: theme.priceBg, color: theme.priceText, padding: `${v ? 14 : 10}px ${v ? 28 : 20}px`, borderRadius: 12, fontSize: S.price, fontWeight: 800, letterSpacing: -0.5 }}>{money(item.final_price)}</div>
+      <div style={{ backgroundColor: theme.priceBg, color: theme.priceText, padding: `${v ? 14 : 10}px ${v ? 28 : 20}px`, borderRadius: 12, fontSize: S.price, fontWeight: 800, letterSpacing: 0 }}>{money(item.final_price)}</div>
       {hasDsc && item.selling_price > 0 && <div style={{ fontSize: S.desc, color: theme.textSecondary, textDecoration: "line-through" }}>{money(item.selling_price)}</div>}
     </div>
   );

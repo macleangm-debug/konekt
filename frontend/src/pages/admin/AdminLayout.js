@@ -405,7 +405,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="px-6 pt-3 pb-6">
           <OnboardingGate>
             <div key={location.pathname} className="k-page-fade-in">
               <Outlet />

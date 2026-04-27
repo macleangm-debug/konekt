@@ -251,7 +251,7 @@ async def get_template_branding(request: Request):
             "tagline": first_set(
                 profile_doc.get("tagline"),
                 business_profile.get("tagline"),
-                fallback="Smart B2B sourcing for Tanzania",
+                fallback="One-stop shop for products, services & deals",
             ),
             "logo_url": first_set(
                 profile_doc.get("logo_url"),

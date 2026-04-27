@@ -73,7 +73,7 @@ export default function BrandLogo({
   const tagFontSize = Math.max(9, iconSize * 0.19);
   const gap = Math.max(6, iconSize * 0.25);
   const brandName = b.brand_name || "Konekt";
-  const tagline = b.tagline || "Business Procurement Simplified";
+  const tagline = b.tagline || "One-stop shop for products, services & deals";
   const logoUrl = null; // Always use TriadIcon for nav/UI; documents use render-settings API
 
   return (

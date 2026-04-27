@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_BACKEND_URL || "";
 const FALLBACK = {
   brand_name: "Konekt",
   legal_name: "KONEKT LIMITED",
-  tagline: "Business Procurement Simplified",
+  tagline: "One-stop shop for products, services & deals",
   primary_logo_url: "",
   secondary_logo_url: "",
   favicon_url: "",
