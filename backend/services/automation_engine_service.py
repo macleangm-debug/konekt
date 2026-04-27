@@ -259,9 +259,13 @@ async def _list_categories(db) -> list[str]:
 
 
 async def _active_promo_count(db, category: str) -> int:
-    """Count active engine-created promotions whose scope.branch == category."""
+    """Count active OR pending engine promotions whose scope.branch == category.
+
+    We count drafts toward the quota so the engine doesn't keep generating
+    duplicates while the admin is still reviewing them.
+    """
     return await db.catalog_promotions.count_documents({
-        "status": "active",
+        "status": {"$in": ["active", "draft"]},
         "auto_created": True,
         "$or": [
             {"scope.branch": category},
@@ -271,8 +275,13 @@ async def _active_promo_count(db, category: str) -> int:
 
 
 async def _create_engine_promotion(db, product: dict, config: dict) -> Optional[dict]:
-    """Create a single-product auto promotion using the existing margin-aware
-    primitive from admin_promotions_routes."""
+    """Create a single-product auto-engine promotion AS A DRAFT.
+
+    The draft does NOT modify the product price or the active_promotion_id —
+    it only records the engine's suggestion. An admin must approve the draft
+    via /api/admin/automation/drafts/{id}/approve before the promo goes live
+    and the product price is rewritten.
+    """
     from admin_promotions_routes import (
         _resolve_tier_for_cost,
         _compute_max_giveaway_per_line,
@@ -330,8 +339,22 @@ async def _create_engine_promotion(db, product: dict, config: dict) -> Optional[
         "rounding": rounding,
         "start_date": now.date().isoformat(),
         "end_date": end_date,
-        "status": "active",
+        # Drafts are NOT active. They wait for admin approval before going live.
+        "status": "draft",
         "product_ids": [product["id"]],
+        # Snapshot the price math so admin sees exactly what will happen.
+        "preview": {
+            "product_id": product["id"],
+            "product_name": product.get("name"),
+            "product_image": product.get("image_url") or product.get("hero_image"),
+            "category": branch,
+            "current_price": price,
+            "suggested_price": new_price,
+            "save_tzs": price - new_price,
+            "save_pct": round((price - new_price) / price * 100, 1) if price else 0,
+            "duration_days": duration,
+            "tier_label": tier.get("name") or tier.get("label"),
+        },
         "blocks": {
             "affiliate": "affiliate" in pools,
             "referral": "referral" in pools,
@@ -340,25 +363,12 @@ async def _create_engine_promotion(db, product: dict, config: dict) -> Optional[
         "created_at": now.isoformat(),
         "auto_created": True,
         "engine_origin": "automation",
+        # Open promo by default — no code required at checkout. Admin can
+        # set `code` during approval to turn it into a campaign code.
+        "code": "",
+        "promo_code_required": False,
     }
     await db.catalog_promotions.insert_one(promo)
-
-    promo_blocks = {
-        "affiliate": "affiliate" in pools,
-        "referral": "referral" in pools,
-    }
-    await db.products.update_one(
-        {"id": product["id"]},
-        {"$set": {
-            "original_price": price,
-            "customer_price": new_price,
-            "base_price": new_price,
-            "active_promotion_id": promo_id,
-            "active_promotion_label": promo["name"],
-            "promo_saves_tzs": price - new_price,
-            "promo_blocks": promo_blocks,
-        }},
-    )
     promo.pop("_id", None)
     promo["new_price"] = new_price
     promo["original_price"] = price
@@ -754,15 +764,30 @@ async def compute_performance_dashboard(db, lookback_days: int = 30) -> dict:
             {"created_at": {"$gte": cutoff_iso}},
             {"created_at": {"$gte": cutoff}},
         ]},
-        {"_id": 0, "items": 1, "line_items": 1},
+        {"_id": 0, "items": 1, "line_items": 1, "created_at": 1},
     ):
         items = o.get("items") or o.get("line_items") or []
+        order_created = o.get("created_at")
+        # Normalise to a comparable string for downstream attribution check.
+        order_iso = (
+            order_created.isoformat() if hasattr(order_created, "isoformat")
+            else str(order_created or "")
+        )
         for it in items:
             pid = it.get("product_id") or it.get("id")
             if not pid:
                 continue
             promo_id = pids_to_promo.get(pid)
             if not promo_id or promo_id not in promo_stats:
+                continue
+            # STRICT attribution: only count orders placed AFTER the promo
+            # was created. Otherwise the dashboard inflates by stale orders
+            # for products that happen to be re-promoted now.
+            promo_created = promo_stats[promo_id].get("created_at")
+            if promo_created and order_iso and order_iso < (
+                promo_created.isoformat() if hasattr(promo_created, "isoformat")
+                else str(promo_created)
+            ):
                 continue
             qty = float(it.get("quantity") or 1)
             unit = float(it.get("unit_price") or it.get("price") or 0)
@@ -805,6 +830,137 @@ async def compute_performance_dashboard(db, lookback_days: int = 30) -> dict:
             "completed_or_fulfilled": gd_completed,
         },
     }
+
+
+# ── Draft management (admin review queue) ──────────────────
+async def list_drafts(db) -> list[dict]:
+    """Return all engine-created promotion drafts pending admin review."""
+    drafts: list[dict] = []
+    async for d in db.catalog_promotions.find(
+        {"auto_created": True, "status": "draft"},
+        {"_id": 0},
+    ).sort("created_at", -1):
+        # Only surface fields the UI cares about (compact payload).
+        preview = d.get("preview") or {}
+        drafts.append({
+            "id": d["id"],
+            "name": d.get("name"),
+            "category": (d.get("scope") or {}).get("branch"),
+            "code": d.get("code") or "",
+            "promo_code_required": bool(d.get("promo_code_required", False)),
+            "duration_days": preview.get("duration_days") or 0,
+            "start_date": d.get("start_date"),
+            "end_date": d.get("end_date"),
+            "created_at": d.get("created_at"),
+            "preview": preview,
+            "pools": d.get("pools") or [],
+        })
+    return drafts
+
+
+async def approve_draft(db, draft_id: str, code: str | None = None,
+                          required: bool = False) -> dict:
+    """Promote a draft to active and apply the price change to the product.
+
+    code:     optional campaign code (uppercased). Empty string = open promo.
+    required: when True, the customer must enter the code at checkout.
+    """
+    d = await db.catalog_promotions.find_one({"id": draft_id, "status": "draft"})
+    if not d:
+        return {"ok": False, "error": "draft_not_found"}
+
+    pools = d.get("pools") or []
+    promo_blocks = {
+        "affiliate": "affiliate" in pools,
+        "referral": "referral" in pools,
+    }
+    preview = d.get("preview") or {}
+    pid = preview.get("product_id")
+    cur_price = float(preview.get("current_price") or 0)
+    new_price = float(preview.get("suggested_price") or 0)
+    save_tzs = float(preview.get("save_tzs") or 0)
+    name_for_label = d.get("name") or "Auto Promotion"
+
+    if pid and cur_price > 0 and new_price > 0:
+        await db.products.update_one(
+            {"id": pid},
+            {"$set": {
+                "original_price": cur_price,
+                "customer_price": new_price,
+                "base_price": new_price,
+                "active_promotion_id": d["id"],
+                "active_promotion_label": name_for_label,
+                "promo_saves_tzs": save_tzs,
+                "promo_blocks": promo_blocks,
+            }},
+        )
+
+    code_clean = (code or "").strip().upper()
+    await db.catalog_promotions.update_one(
+        {"id": draft_id},
+        {"$set": {
+            "status": "active",
+            "approved_at": datetime.now(timezone.utc).isoformat(),
+            "code": code_clean,
+            "promo_code_required": bool(required and code_clean),
+        }},
+    )
+    return {"ok": True, "id": draft_id, "code": code_clean}
+
+
+async def reject_draft(db, draft_id: str) -> dict:
+    res = await db.catalog_promotions.delete_one(
+        {"id": draft_id, "auto_created": True, "status": "draft"}
+    )
+    return {"ok": res.deleted_count == 1, "id": draft_id}
+
+
+async def approve_all_drafts(db) -> dict:
+    drafts = await list_drafts(db)
+    for d in drafts:
+        await approve_draft(db, d["id"])
+    return {"ok": True, "approved": len(drafts)}
+
+
+async def emit_expiry_renewal_notifications(db) -> int:
+    """Find active engine promos that just ended and create an admin
+    notification asking for review/renewal. Returns count emitted.
+    """
+    today_iso = datetime.now(timezone.utc).date().isoformat()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    emitted = 0
+    async for promo in db.catalog_promotions.find(
+        {
+            "auto_created": True,
+            "status": "active",
+            "end_date": {"$ne": None, "$lt": today_iso},
+            "renewal_notified_at": {"$exists": False},
+        },
+        {"_id": 0, "id": 1, "name": 1, "scope": 1},
+    ):
+        try:
+            await db.admin_notifications.insert_one({
+                "id": str(uuid4()),
+                "kind": "promo_expiry_renewal",
+                "title": f"Promo ended · {promo.get('name')}",
+                "body": (
+                    "An auto-engine promo has reached its end date. Review the "
+                    "performance and approve a fresh promo for this product, "
+                    "or close the slot."
+                ),
+                "promo_id": promo["id"],
+                "category": (promo.get("scope") or {}).get("branch"),
+                "is_read": False,
+                "created_at": now_iso,
+            })
+            await db.catalog_promotions.update_one(
+                {"id": promo["id"]},
+                {"$set": {"renewal_notified_at": now_iso}},
+            )
+            emitted += 1
+        except Exception as e:
+            logger.warning("renewal notification failed: %s", e)
+    return emitted
 
 
 # ── Promote-everything override ─────────────────────────────
@@ -935,6 +1091,12 @@ async def automation_engine_loop(app):
                     await silent_finalize_expired_deals(db)
                 except Exception as e:
                     logger.warning("silent finaliser failed: %s", e)
+
+                # Renewal notifications for expired engine promos
+                try:
+                    await emit_expiry_renewal_notifications(db)
+                except Exception as e:
+                    logger.warning("renewal notifications failed: %s", e)
 
                 # Promotion pass — daily
                 if config["promotions"].get("enabled"):

@@ -19,6 +19,11 @@ from services.automation_engine_service import (
     silent_finalize_expired_deals,
     compute_performance_dashboard,
     promote_everything,
+    list_drafts,
+    approve_draft,
+    reject_draft,
+    approve_all_drafts,
+    emit_expiry_renewal_notifications,
 )
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-change-in-production")
@@ -103,3 +108,48 @@ async def promote_everything_now(payload: PromoteEverythingPayload, request: Req
     return await promote_everything(
         db, discount_pct=payload.discount_pct, duration_days=payload.duration_days
     )
+
+
+# ── Drafts (admin review queue) ─────────────────────────────
+class ApproveDraftPayload(BaseModel):
+    code: str = ""
+    required: bool = False
+
+
+@router.get("/drafts")
+async def get_drafts(request: Request):
+    await _assert_admin(request)
+    drafts = await list_drafts(db)
+    return {"drafts": drafts, "count": len(drafts)}
+
+
+@router.post("/drafts/{draft_id}/approve")
+async def approve_draft_route(draft_id: str, payload: ApproveDraftPayload, request: Request):
+    await _assert_admin(request)
+    res = await approve_draft(db, draft_id, code=payload.code, required=payload.required)
+    if not res.get("ok"):
+        raise HTTPException(status_code=404, detail=res.get("error", "not_found"))
+    return res
+
+
+@router.post("/drafts/{draft_id}/reject")
+async def reject_draft_route(draft_id: str, request: Request):
+    await _assert_admin(request)
+    res = await reject_draft(db, draft_id)
+    if not res.get("ok"):
+        raise HTTPException(status_code=404, detail="draft_not_found")
+    return res
+
+
+@router.post("/drafts/approve-all")
+async def approve_all_drafts_route(request: Request):
+    await _assert_admin(request)
+    return await approve_all_drafts(db)
+
+
+@router.post("/notifications/sweep-renewals")
+async def sweep_renewals(request: Request):
+    """Manual trigger for the same renewal-notification job the loop runs."""
+    await _assert_admin(request)
+    emitted = await emit_expiry_renewal_notifications(db)
+    return {"emitted": emitted}

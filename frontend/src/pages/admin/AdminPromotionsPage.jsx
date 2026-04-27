@@ -5,6 +5,7 @@ import QrCodeButton from "@/components/common/QrCodeButton";
 import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import AutomationEngineSection from "@/components/admin/settings/AutomationEngineSection";
+import PromoDraftsPanel from "@/components/admin/promotions/PromoDraftsPanel";
 
 const SCOPE_OPTIONS = [
   { value: "global", label: "All Products" },
@@ -104,6 +105,9 @@ export default function AdminPromotionsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-5" data-testid="admin-promotions-page">
       {/* Auto-Promo Engine — actions + performance (config lives in Settings Hub) */}
       <AutomationEngineSection mode="actions" />
+
+      {/* Engine drafts queue — admin reviews/approves engine suggestions */}
+      <PromoDraftsPanel />
 
       {/* Header */}
       <div className="flex items-center justify-between">

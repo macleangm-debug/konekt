@@ -213,18 +213,46 @@ async def get_template_branding(request: Request):
     settings = await db.business_settings.find_one({}, {"_id": 0}) or {}
     hub = await db.settings_hub.find_one({}, {"_id": 0}) or {}
     branding = hub.get("branding", {})
+    business_profile = hub.get("business_profile", {})
 
+    # Source of truth = Settings Hub → Profile → Company Information.
+    # Falls back to legacy business_settings only when the Hub field is empty.
     return {
         "ok": True,
         "branding": {
-            "company_name": settings.get("company_name") or settings.get("trading_name") or "",
-            "trading_name": settings.get("trading_name") or "",
-            "tagline": hub.get("business_profile", {}).get("tagline", ""),
-            "logo_url": settings.get("company_logo_path") or branding.get("primary_logo_url", ""),
-            "phone": settings.get("phone", ""),
-            "email": settings.get("email", ""),
-            "website": settings.get("website", ""),
-            "address": settings.get("address", ""),
+            "company_name": (
+                business_profile.get("legal_name")
+                or settings.get("company_name")
+                or settings.get("trading_name")
+                or ""
+            ),
+            "trading_name": (
+                business_profile.get("brand_name")
+                or settings.get("trading_name")
+                or ""
+            ),
+            "tagline": business_profile.get("tagline", ""),
+            "logo_url": (
+                business_profile.get("logo_url")
+                or settings.get("company_logo_path")
+                or branding.get("primary_logo_url", "")
+            ),
+            "phone": (
+                business_profile.get("support_phone")
+                or settings.get("phone", "")
+            ),
+            "email": (
+                business_profile.get("support_email")
+                or settings.get("email", "")
+            ),
+            "website": (
+                business_profile.get("website")
+                or settings.get("website", "")
+            ),
+            "address": (
+                business_profile.get("business_address")
+                or settings.get("address", "")
+            ),
             "primary_color": branding.get("primary_color", "#20364D"),
             "accent_color": branding.get("accent_color", "#D4A843"),
         }
