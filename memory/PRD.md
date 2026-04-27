@@ -3,7 +3,36 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 361 ITERATIONS — 100% PASS RATE
+## System Status: 362 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Math funnel + Clean Product Focus + KONEKT Global Campaign card)
+
+User feedback after seeing the screenshot:
+
+1. **Math wasn't intuitive**. Rewrote `PriceMath` card as a numbered funnel:
+   1. Vendor cost
+   2. Selling now (catalog price) · with tier label & "markup baked into selling price" hint
+   3. Distributable margin (X% of cost)
+   4. Capacity from N active pools — sum + breakdown ("promotion 120 + referral 120 + sales 108 + affiliate 150")
+   5. Engine pool-share (60%) → ≈ raw amount
+   6. Rounded → customer saves
+   - Plus After-promo margin in the bordered footer.
+   - Card title now reads "How we got TZS 300 saved" — directly answers the admin's question.
+
+2. **Product Focus is now a clean post — no promo info at all**. `getItems()` strips `final_price`/`discount_amount`/`has_promotion`/`promo_code`/`active_promotion_id` from every item when `layout.key === "product"`. Header SAVE badge, inline "Use code", and discount strikethrough all gone in Product Focus. Promo Focus retains the full continuous-promo overlay.
+
+3. **KONEKT Global Campaign card** now lives at the top of the Promotions Hub Engine tab (`/admin/promotions-manager`):
+   - Megaphone header + LIVE/PAUSED status badge + big Pause/Start campaign button
+   - 3 stat tiles: **Active code** (KONEKT), **Promotion pool draw** (100%), **Override status** (per-product promos win)
+   - Editor row: Campaign code input · Pool draw % · Save (only enabled when dirty)
+   - **Quick presets**: Default KONEKT · Christmas XMAS · New Year NY2026 · Eid EID · Independence INDEPENDENCE
+   - Wired to the same singleton `automation_engine_config.continuous_promo` the Settings Hub Automation tab edits — single source of truth.
+
+**New file**: `/app/frontend/src/components/admin/promotions/KonektGlobalCampaignCard.jsx`
+
+Visual verification via screenshot: math funnel renders for the Pink Plated Mug showing all 6 steps culminating in "Rounded → customer saves TZS 300". Global Campaign card shows LIVE badge with KONEKT active. Product Focus 2026 Diary - Black creative shows clean single-price TZS 32,500 with no promo overlays.
 
 ---
 

@@ -83,26 +83,77 @@ function PoolPill({ on, capacity, used, label, blurb, onToggle, locked }) {
 }
 
 function PriceMath({ p }) {
-  // Vendor cost → tier markup → selling price → distributable margin →
-  // promotion bucket → after-promo margin. Single source of truth.
+  // Show the funnel exactly as the engine computed it so admin can audit
+  // every TZS:  Vendor cost → selling now → distributable margin →
+  // pool capacity (only ON pools) × engine share-% → rounded → save TZS.
+  const cap = p.per_pool_capacity_tzs || {};
+  const used = p.per_pool_used_tzs || {};
+  const onPools = Object.keys(used);
+  const capacitySum = onPools.reduce(
+    (s, k) => s + Number(cap[k] || 0),
+    0
+  );
+  const shareRaw = capacitySum * (Number(p.pool_share_pct || 0) / 100);
   return (
     <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 space-y-2 text-xs">
       <div className="font-semibold text-[#20364D] flex items-center gap-1.5">
-        <Wallet className="h-3.5 w-3.5" /> Pricing engine math
+        <Wallet className="h-3.5 w-3.5" /> How we got TZS {Number(p.save_tzs || 0).toLocaleString()} saved
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 font-mono">
-        <span className="text-slate-500">Vendor cost</span>
-        <span className="text-right">{moneyZ(p.vendor_cost)}</span>
-        <span className="text-slate-500">Tier markup</span>
-        <span className="text-right">{Number(p.tier_total_margin_pct || 0).toFixed(1)}% ({p.tier_label || "—"})</span>
-        <span className="text-slate-500">Selling price</span>
-        <span className="text-right">{moneyZ(p.current_price)}</span>
-        <span className="text-slate-500">Distributable margin</span>
-        <span className="text-right">{moneyZ(p.distributable_margin_tzs)} ({Number(p.distributable_margin_pct || 0).toFixed(1)}%)</span>
-        <span className="text-slate-500 border-t pt-1 mt-0.5">Customer saves</span>
-        <span className="text-right border-t pt-1 mt-0.5 font-bold text-[#D4A843]">{moneyZ(p.save_tzs)}</span>
-        <span className="text-slate-500">After-promo margin</span>
-        <span className="text-right">{moneyZ(p.post_promo_margin_tzs)} ({Number(p.post_promo_margin_pct || 0).toFixed(1)}%)</span>
+      <ol className="space-y-1.5 list-decimal pl-5">
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">Vendor cost</span>
+            <span className="font-mono text-slate-700">{moneyZ(p.vendor_cost)}</span>
+          </div>
+        </li>
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">Selling now (catalog price)</span>
+            <span className="font-mono text-[#20364D]">{moneyZ(p.current_price)}</span>
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            {p.tier_label || "tier"} · markup baked into selling price
+          </div>
+        </li>
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">
+              Distributable margin ({Number(p.distributable_margin_pct || 0).toFixed(1)}% of cost)
+            </span>
+            <span className="font-mono text-slate-700">{moneyZ(p.distributable_margin_tzs)}</span>
+          </div>
+        </li>
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">
+              Capacity from {onPools.length} active pool{onPools.length === 1 ? "" : "s"}
+            </span>
+            <span className="font-mono text-slate-700">{moneyZ(capacitySum)}</span>
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            sum of: {onPools.map((k) => `${k} ${moneyZ(cap[k] || 0)}`).join(" + ") || "—"}
+          </div>
+        </li>
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">
+              Engine pool-share ({Number(p.pool_share_pct || 0).toFixed(0)}%)
+            </span>
+            <span className="font-mono text-slate-700">≈ {moneyZ(shareRaw)}</span>
+          </div>
+        </li>
+        <li>
+          <div className="flex justify-between">
+            <span className="text-slate-600">Rounded → customer saves</span>
+            <span className="font-mono text-[#D4A843] font-bold">{moneyZ(p.save_tzs)}</span>
+          </div>
+        </li>
+      </ol>
+      <div className="border-t pt-2 mt-1 flex justify-between font-semibold">
+        <span className="text-slate-700">After-promo margin</span>
+        <span className="font-mono text-emerald-700">
+          {moneyZ(p.post_promo_margin_tzs)} ({Number(p.post_promo_margin_pct || 0).toFixed(1)}%)
+        </span>
       </div>
     </div>
   );

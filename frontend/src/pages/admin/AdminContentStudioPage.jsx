@@ -146,10 +146,24 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
     else if (tab === "brand") raw = BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
     else raw = products;
     let withCode = applyViewerPromoCode(raw);
-    // Promo Focus → only show items that actually carry an active promo
-    // (either a per-product/category promo or the global KONEKT continuous).
-    if (layout?.key === "promo" && tab !== "brand") {
-      withCode = withCode.filter((it) => it.has_promotion && (it.discount_amount || 0) > 0);
+    if (tab !== "brand") {
+      if (layout?.key === "promo") {
+        // Promo Focus → only show items that actually carry an active promo
+        withCode = withCode.filter((it) => it.has_promotion && (it.discount_amount || 0) > 0);
+      } else if (layout?.key === "product") {
+        // Product Focus → strip ALL promo metadata so the creative is a
+        // clean product post: no SAVE badge, no promo code, no discount
+        // strikethrough, no engine pricing. Catalog price only.
+        withCode = withCode.map((it) => ({
+          ...it,
+          final_price: it.selling_price,
+          discount_amount: 0,
+          has_promotion: false,
+          promo_code: "",
+          promo_name: "",
+          active_promotion_id: null,
+        }));
+      }
     }
     return withCode;
   };

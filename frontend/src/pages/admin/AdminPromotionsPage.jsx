@@ -6,6 +6,7 @@ import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
 import AutomationEngineSection from "@/components/admin/settings/AutomationEngineSection";
 import PromoDraftsPanel from "@/components/admin/promotions/PromoDraftsPanel";
+import KonektGlobalCampaignCard from "@/components/admin/promotions/KonektGlobalCampaignCard";
 import GroupDealsAdminPage from "@/pages/admin/GroupDealsAdminPage";
 import { Bot, Tag as TagIcon, Users as UsersIcon } from "lucide-react";
 
@@ -172,6 +173,7 @@ export default function AdminPromotionsPage() {
 
       {activeTab === "engine" && (
         <div className="space-y-5">
+          <KonektGlobalCampaignCard />
           <AutomationEngineSection mode="actions" />
           <PromoDraftsPanel />
         </div>
