@@ -3,7 +3,39 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 366 ITERATIONS — 100% PASS RATE
+## System Status: 367 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 27, 2026 (Round 2 — Studio export + UX polish)
+
+User reported 5 issues post-iter-362:
+
+1. **Downloaded image was garbled** — text glyphs overlapped/scrambled, did not match drawer preview.
+   - Root cause: html2canvas was reading from the *scaled* preview node (transform:scale parent) and Inter font wasn't reliably loaded → font fallback caused glyph-width drift; negative letter-spacing values amplified the overlap.
+   - Fix: `CreativeDrawer` now mounts a hidden, off-screen, full-1:1-scale `<BrandedCreative>` clone (left:-99999px) and `renderCanvas` exports from THAT node. `await document.fonts.ready` before capture. `width/height/windowWidth/windowHeight` passed to html2canvas. Font stack switched from Inter → `Arial, Helvetica, "Segoe UI", sans-serif`. All negative `letterSpacing` values normalised to 0. Verified by testing agent: downloaded PNG is a valid 2160×2160 RGBA file with clean glyph rendering.
+
+2. **Phone number wrong on creatives** — was a symptom of the rendering bug. Branding endpoint was already returning the correct `+255 712 345 678` default; once the export fix landed, the phone renders cleanly.
+
+3. **Publish → Share on socials** — replaced the green "Publish" button with **"Share on socials"** (`data-testid=share-on-socials-btn`). Mobile: native `navigator.share` with the image File. Desktop fallback: download the PNG + copy caption to clipboard + open `https://wa.me/?text=<caption>` in a new tab. Also persists the asset to `/api/admin/content-center/publish` with status='active' for record-keeping.
+
+4. **Uniform navbar→page gap** — `AdminLayout.js` main padding `p-6` → `px-6 pt-3 pb-6`. Reduces the gap between the header and page content uniformly across all admin routes.
+
+5. **New tagline** — replaced "Smart B2B sourcing for Tanzania" / "Business Procurement Simplified" with **"One-stop shop for products, services & deals"** in:
+   - `backend/routes/content_template_routes.py` (creative branding fallback)
+   - `backend/public_branding_routes.py` + `backend/services/settings_resolver.py` (downstream fallbacks)
+   - `frontend/src/contexts/BrandingContext.jsx`, `components/branding/BrandLogo.jsx`, `components/branding/AppLauncher.jsx` (UI defaults)
+   - `frontend/public/index.html` meta description
+   - DB profile doc patched if it had a legacy/empty tagline
+
+### Verification
+- iter-363 frontend-only run: **100% (5/5 fixes confirmed end-to-end)** — exported PNG inspected (2160×2160 RGBA), branding endpoint curl-verified, drawer DOM has the off-screen clone, Share button verified to open WhatsApp Web on desktop.
+
+### Queued / Next
+- (P2) Suppress Ops Onboarding tour when `?e2e=1` to unblock automated wizard walkthroughs.
+- (P2) Refactor `AdminContentStudioPage.jsx` (~1100 lines) into `components/admin/content-studio/`.
+- (P2) Image CDN + server-side pagination when catalog > 2000 items.
+- (P2) Photographic cover-art slot per service category in Settings Hub.
 
 ---
 

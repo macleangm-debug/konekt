@@ -24,7 +24,7 @@ PLATFORM_DEFAULTS = {
     "business_profile": {
         "legal_name": "KONEKT LIMITED",
         "brand_name": "Konekt",
-        "tagline": "Business Procurement Simplified",
+        "tagline": "One-stop shop for products, services & deals",
         "support_email": "",
         "support_phone": "",
         "website": "",

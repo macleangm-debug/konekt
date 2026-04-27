@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/public", tags=["Public Branding"])
 SAFE_DEFAULTS = {
     "brand_name": "Konekt",
     "legal_name": "KONEKT LIMITED",
-    "tagline": "Business Procurement Simplified",
+    "tagline": "One-stop shop for products, services & deals",
     "primary_logo_url": "",
     "secondary_logo_url": "",
     "favicon_url": "",
