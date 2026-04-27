@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Plus, Search, Tag, Percent, DollarSign, Calendar, Users, Layers, Trash2, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, X, Loader2, ChevronRight } from "lucide-react";
+import { Plus, Search, Tag, Percent, DollarSign, Calendar, Users, Layers, Trash2, ToggleLeft, ToggleRight, AlertTriangle, CheckCircle2, X, Loader2, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import api from "@/lib/api";
 import QrCodeButton from "@/components/common/QrCodeButton";
 import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
@@ -77,6 +77,131 @@ export default function AdminPromotionsPage() {
     const q = search.toLowerCase();
     return visible.filter(p => p.code?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q));
   }, [promos, search]);
+
+  // Expandable-row component reused inside the manual Promotions table
+  // so admins audit pricing/discount details inline (same UX as the engine
+  // drafts panel — no popup drawer).
+  function PromoRow({ p, onEdit, onToggleStatus, onDelete }) {
+    const [open, setOpen] = useState(false);
+    const discountLabel =
+      p.discount_type === "policy_driven"
+        ? "Auto (policy)"
+        : p.discount_type === "percentage"
+        ? `${p.discount_value}%`
+        : `TZS ${Number(p.discount_value || 0).toLocaleString()}`;
+    return (
+      <>
+        <tr
+          className="border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer"
+          onClick={() => setOpen((v) => !v)}
+          data-testid={`promo-row-${p.id}`}
+        >
+          <td className="px-4 py-3">
+            <span className="font-mono font-bold text-sm text-[#20364D]" data-testid={`promo-code-${p.id}`}>
+              {safeDisplay(p.code, "code")}
+            </span>
+          </td>
+          <td className="px-4 py-3">
+            <div className="text-sm font-medium text-slate-700 flex items-center gap-2">
+              {open ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+              {safeDisplay(p.name, "text")}
+            </div>
+            {p.description && (
+              <div className="text-xs text-slate-400 truncate max-w-[280px] mt-0.5">{p.description}</div>
+            )}
+          </td>
+          <td className="px-4 py-3">
+            <ScopeBadge scope={p.scope} targetName={p.target_category_name || p.target_product_name} />
+          </td>
+          <td className="px-4 py-3">
+            <span className="text-sm font-semibold text-[#20364D]">{discountLabel}</span>
+          </td>
+          <td className="px-4 py-3">
+            <span className="text-xs text-slate-600">
+              {STACKING_RULES.find((s) => s.value === p.stacking_rule)?.label || safeDisplay(p.stacking_rule, "text")}
+            </span>
+          </td>
+          <td className="px-4 py-3 text-sm text-slate-600">
+            {p.current_uses || 0}{p.max_total_uses ? ` / ${p.max_total_uses}` : ""}
+          </td>
+          <td className="px-4 py-3">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status] || "bg-slate-100 text-slate-600"}`}>
+              {p.status}
+            </span>
+          </td>
+          <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-end gap-1">
+              <QrCodeButton kind="promo_campaign" id={p.id} label="QR" />
+              <button onClick={onToggleStatus} className="text-slate-400 hover:text-amber-600 p-1 transition-colors" data-testid={`toggle-promo-${p.id}`}>
+                {p.status === "active" ? <ToggleRight className="w-4 h-4 text-emerald-500" /> : <ToggleLeft className="w-4 h-4" />}
+              </button>
+              <button onClick={onDelete} className="text-slate-400 hover:text-red-500 p-1 transition-colors" data-testid={`delete-promo-${p.id}`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </td>
+        </tr>
+        {open && (
+          <tr className="bg-slate-50/60" data-testid={`promo-row-${p.id}-details`}>
+            <td colSpan={8} className="px-6 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-500">Configuration</div>
+                  <div className="grid grid-cols-2 gap-y-1 font-mono">
+                    <span className="text-slate-500">Scope</span>
+                    <span className="text-right">
+                      {typeof p.scope === "string"
+                        ? p.scope
+                        : p.scope?.branch || (p.scope?.skus?.length ? `${p.scope.skus.length} SKU(s)` : "global")}
+                    </span>
+                    <span className="text-slate-500">Discount</span>
+                    <span className="text-right">{discountLabel}</span>
+                    <span className="text-slate-500">Stacking</span>
+                    <span className="text-right">{p.stacking_rule || "—"}</span>
+                    <span className="text-slate-500">Min basket</span>
+                    <span className="text-right">{p.min_basket_value ? `TZS ${Number(p.min_basket_value).toLocaleString()}` : "—"}</span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-500">Window</div>
+                  <div className="grid grid-cols-2 gap-y-1 font-mono">
+                    <span className="text-slate-500">Starts</span>
+                    <span className="text-right">{p.start_date || "—"}</span>
+                    <span className="text-slate-500">Ends</span>
+                    <span className="text-right">{p.end_date || "—"}</span>
+                    <span className="text-slate-500">Created</span>
+                    <span className="text-right">
+                      {p.created_at ? new Date(p.created_at).toLocaleDateString() : "—"}
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-white border border-slate-200 p-3 space-y-1">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-500">Performance</div>
+                  <div className="grid grid-cols-2 gap-y-1 font-mono">
+                    <span className="text-slate-500">Total uses</span>
+                    <span className="text-right">{p.current_uses || 0}</span>
+                    <span className="text-slate-500">Max uses</span>
+                    <span className="text-right">{p.max_total_uses || "∞"}</span>
+                    <span className="text-slate-500">Per customer</span>
+                    <span className="text-right">{p.max_uses_per_customer || "∞"}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  onClick={onEdit}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-[#20364D] text-white px-3 py-1.5 text-xs font-semibold hover:bg-[#2a4865]"
+                  data-testid={`edit-promo-${p.id}`}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" /> Edit promotion
+                </button>
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
+    );
+  }
 
   const openCreate = () => { setEditPromo(null); setShowForm(true); };
   const openEdit = (p) => { setEditPromo(p); setShowForm(true); };
@@ -248,54 +373,13 @@ export default function AdminPromotionsPage() {
                   <p className="text-xs text-slate-400 mt-1">Create your first promotion to get started</p>
                 </td></tr>
               ) : filtered.map(p => (
-                <tr key={p.id} className="border-b last:border-0 hover:bg-slate-50 transition-colors" data-testid={`promo-row-${p.id}`}>
-                  <td className="px-4 py-3">
-                    <span className="font-mono font-bold text-sm text-[#20364D]" data-testid={`promo-code-${p.id}`}>{safeDisplay(p.code, "code")}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm font-medium text-slate-700">{safeDisplay(p.name, "text")}</div>
-                    {p.description && <div className="text-xs text-slate-400 truncate max-w-[200px]">{p.description}</div>}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ScopeBadge scope={p.scope} targetName={p.target_category_name || p.target_product_name} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm font-semibold text-[#20364D]">
-                      {p.discount_type === "policy_driven" ? (
-                        <span className="text-xs text-slate-500 italic">Auto (policy)</span>
-                      ) : p.discount_type === "percentage" ? (
-                        `${p.discount_value}%`
-                      ) : (
-                        `TZS ${Number(p.discount_value || 0).toLocaleString()}`
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs text-slate-600">{STACKING_RULES.find(s => s.value === p.stacking_rule)?.label || safeDisplay(p.stacking_rule, "text")}</span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-600">
-                    {p.current_uses || 0}{p.max_total_uses ? ` / ${p.max_total_uses}` : ""}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[p.status] || "bg-slate-100 text-slate-600"}`}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <QrCodeButton kind="promo_campaign" id={p.id} label="QR" />
-                      <button onClick={() => openEdit(p)} className="text-slate-400 hover:text-[#20364D] p-1 transition-colors" data-testid={`edit-promo-${p.id}`}>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => toggleStatus(p)} className="text-slate-400 hover:text-amber-600 p-1 transition-colors" data-testid={`toggle-promo-${p.id}`}>
-                        {p.status === "active" ? <ToggleRight className="w-4 h-4 text-emerald-500" /> : <ToggleLeft className="w-4 h-4" />}
-                      </button>
-                      <button onClick={() => deletePromo(p)} className="text-slate-400 hover:text-red-500 p-1 transition-colors" data-testid={`delete-promo-${p.id}`}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <PromoRow
+                  key={p.id}
+                  p={p}
+                  onEdit={() => openEdit(p)}
+                  onToggleStatus={() => toggleStatus(p)}
+                  onDelete={() => deletePromo(p)}
+                />
               ))}
             </tbody>
           </table>

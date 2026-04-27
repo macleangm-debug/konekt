@@ -78,10 +78,11 @@ export const adminNavigation = [
     label: "Campaigns & Growth",
     roles: ["admin", "marketing", "sales_manager"],
     children: [
-      { label: "Group Deals", href: "/admin/group-deals", icon: Users },
+      // Group Deals are now a tab inside the Promotions Hub umbrella —
+      // standalone link removed to avoid duplication.
+      { label: "Promotions Hub", href: "/admin/promotions-manager", icon: BadgePercent },
       { label: "Affiliates", href: "/admin/partnerships/affiliates", icon: Megaphone },
       { label: "Applications", href: "/admin/affiliate-applications", icon: ClipboardList },
-      { label: "Promotions", href: "/admin/promotions-manager", icon: BadgePercent },
       { label: "Content Studio", href: "/admin/content-studio", icon: Palette },
     ],
   },

@@ -165,9 +165,38 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
         }));
       }
     }
+    // Dedupe variants by base name. Variants follow the pattern
+    // "Base Name - Variant1 - Variant2" (space-hyphen-space). We collapse
+    // every variant under the same base to a single representative — the
+    // first one alphabetically. Images on creatives stay accurate because
+    // variants share the same hero image. Saves admins from scrolling
+    // through 12 hoodie SKUs to find one to post.
+    if (tab === "products" || tab === "services") {
+      const seen = new Map();
+      for (const it of withCode) {
+        const baseName = (it.name || "").split(" - ")[0].trim() || it.name || "";
+        const key = `${baseName}__${it.category || ""}`;
+        const prev = seen.get(key);
+        if (!prev) {
+          seen.set(key, { ...it, _variant_count: 1, _display_name: baseName });
+        } else {
+          prev._variant_count = (prev._variant_count || 1) + 1;
+        }
+      }
+      withCode = Array.from(seen.values()).map((it) => (
+        it._variant_count > 1 ? { ...it, name: it._display_name } : it
+      ));
+    }
     return withCode;
   };
   const items = getItems();
+  // Lazy render — only paint the first N cards to keep the studio snappy
+  // even with 600+ catalog items. Admin clicks "Show more" to load batches.
+  const PAGE_SIZE = 60;
+  const [renderLimit, setRenderLimit] = useState(PAGE_SIZE);
+  useEffect(() => { setRenderLimit(PAGE_SIZE); }, [tab, layout?.key]);
+  const visibleItems = items.slice(0, renderLimit);
+  const remaining = Math.max(0, items.length - renderLimit);
 
   const handleSelectItem = (item) => {
     setSelectedItem(item);
@@ -202,8 +231,8 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
       <div className="flex items-center gap-3 flex-wrap" data-testid="studio-controls">
         <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden">
           {[
-            { key: "products", label: `Products (${products.length})` },
-            { key: "services", label: `Services (${services.length})` },
+            { key: "products", label: `Products (${tab === "products" ? items.length : products.length})` },
+            { key: "services", label: `Services (${tab === "services" ? items.length : services.length})` },
             { key: "group_deals", label: `Deals (${groupDeals.length})` },
             { key: "brand", label: `Brand (${BRAND_TEMPLATES.length})` },
           ].map((t) => (
@@ -254,13 +283,38 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" data-testid="studio-grid">
-          {items.map((item) => (
+          {visibleItems.map((item) => (
             item.type === "brand" ? (
               <BrandTemplateCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
             ) : (
               <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} viewerPromoCode={viewerPromoCode} />
             )
           ))}
+        </div>
+      )}
+
+      {/* Showing N of M + Show more — keeps the studio snappy with 600+ items */}
+      {!loading && remaining > 0 && (
+        <div className="flex items-center justify-center gap-3 py-4" data-testid="studio-pagination">
+          <span className="text-xs text-slate-500">
+            Showing {visibleItems.length} of {items.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => setRenderLimit((l) => l + 60)}
+            className="rounded-full bg-[#20364D] text-white px-5 py-1.5 text-xs font-semibold hover:bg-[#2a4865]"
+            data-testid="studio-show-more-btn"
+          >
+            Show 60 more
+          </button>
+          <button
+            type="button"
+            onClick={() => setRenderLimit(items.length)}
+            className="text-xs text-slate-500 underline hover:text-[#20364D]"
+            data-testid="studio-show-all-btn"
+          >
+            Show all ({items.length})
+          </button>
         </div>
       )}
 
@@ -848,8 +902,13 @@ function FooterBar({ theme, S, branding, viewerPromoCode = "", item }) {
 
 /* ═══ Caption Generator ═══ */
 function generateCaptions(item, branding) {
-  const brand = branding.trading_name || branding.company_name || "";
-  const contact = [branding.phone, branding.email].filter(Boolean).join(" | ");
+  const brand = branding.trading_name || branding.company_name || "Konekt";
+  // Phone source — Settings Hub → Profile → Support Phone (auto-pulled
+  // by the /branding endpoint). Always include phone in every caption
+  // so a screenshot stands alone.
+  const phone = branding.phone || "";
+  const contact = [phone, branding.email].filter(Boolean).join(" | ");
+  const phoneLine = phone ? `Call/WhatsApp: ${phone}` : "";
 
   // Brand/Message content (no price)
   if (item.type === "brand" || (!item.final_price && !item.selling_price)) {
@@ -857,6 +916,7 @@ function generateCaptions(item, branding) {
     let social = `${item.name}.`;
     if (item.description) social += ` ${item.description}`;
     if (brand) social += `\n\n${brand}`;
+    if (phone) social += ` · ${phone}`;
     if (item.promo_code) social += `\nUse code ${item.promo_code}`;
 
     let whatsapp = `*${item.name}*`;
@@ -864,7 +924,7 @@ function generateCaptions(item, branding) {
     if (item.promo_code) whatsapp += `\n\nPromo code: *${item.promo_code}*`;
     if (brand || contact) whatsapp += `\n\n${[brand, contact].filter(Boolean).join("\n")}`;
 
-    return { short, social: social.trim(), whatsapp: whatsapp.trim(), story: `${item.name}\n${item.description || ""}` };
+    return { short, social: social.trim(), whatsapp: whatsapp.trim(), story: `${item.name}\n${item.description || ""}${phone ? `\n${phone}` : ""}` };
   }
 
   // Product/Service/Deal content (has price)
@@ -875,12 +935,14 @@ function generateCaptions(item, branding) {
   let short = `${item.name} at ${price}.`;
   if (save) short += ` Save ${save}.`;
   if (item.promo_code) short += ` Code: ${item.promo_code}`;
+  if (phone) short += ` ${phone}`;
 
   let social = `${item.name} is available at ${price}.`;
   if (save && orig) social += ` Was ${orig}, now ${price} — save ${save}.`;
   if (item.promo_code) social += ` Use code ${item.promo_code} at checkout.`;
   if (item.category) social += ` Browse our ${item.category} collection.`;
-  if (brand) social += ` ${brand}`;
+  if (brand) social += `\n\n${brand}`;
+  if (phone) social += ` · ${phone}`;
 
   let whatsapp = `Hi! We have *${item.name}* available at *${price}*.`;
   if (save) whatsapp += ` Current offer saves you *${save}*.`;
@@ -888,5 +950,6 @@ function generateCaptions(item, branding) {
   if (item.promo_code) whatsapp += ` Promo code: *${item.promo_code}*`;
   if (brand || contact) whatsapp += `\n\n${[brand, contact].filter(Boolean).join("\n")}`;
 
-  return { short: short.trim(), social: social.trim(), whatsapp: whatsapp.trim(), story: `${item.name}\n${price}${save ? `\nSave ${save}` : ""}` };
+  const story = `${item.name}\n${price}${save ? `\nSave ${save}` : ""}${phoneLine ? `\n${phoneLine}` : ""}`;
+  return { short: short.trim(), social: social.trim(), whatsapp: whatsapp.trim(), story };
 }

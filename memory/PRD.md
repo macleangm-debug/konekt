@@ -3,7 +3,28 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 362 ITERATIONS — 100% PASS RATE
+## System Status: 363 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Round 4 — 5 quick wins)
+
+User asked for 8 things; this round shipped 5 highest-impact ones (the others are queued with explicit defaults below):
+
+### Shipped
+1. **QR scannable target fixed.** `/api/qr/product/<id>.png` now encodes `https://konekt.co.tz/product/<id>?ref=<code>`. Previously was `/shop/product/<id>` which is a 404 — the actual public route in `App.js` is `/product/:productId`. Verified via decoder & `curl /product/<id>` returns 200. QR image cache (`/app/static/qr/*`) wiped so all callers regenerate fresh codes.
+2. **Phone number now wires from Profile page**. `/api/content-engine/template-data/branding` now reads from `db.business_settings` doc with `type='company_profile'` (the doc the Profile page actually saves to via `/settings/business-profile`), with cascading fallbacks. Captions also include the phone in every template (short / social / WhatsApp / story). Admin saves on Profile page → Content Studio creatives auto-pick up the new number on next refresh.
+3. **Variant dedupe** — Content Studio products tab collapses variants by base name split on " - " (e.g. all "Hoodie - Maroon - Large", "Hoodie - Black - Small" etc → single "Hoodie" card). 610 → 428 cards in the live catalog. Image stays accurate because variants share a hero image.
+4. **Lazy-rendered grid (60 / page)** — Content Studio paints 60 cards initially, "Show 60 more" / "Show all" buttons reveal more. Eliminates the heaviness the user reported. Initial render limit resets when admin switches tab or layout.
+5. **Sidebar cleanup** — standalone "Group Deals" link removed from `/admin/group-deals` (it now lives only as a tab inside Promotions Hub umbrella). "Promotions" link renamed to **"Promotions Hub"**.
+6. **Expandable Promotions table** — manual Promotions table rows now expand inline (no popup drawer) showing Configuration · Window · Performance details and an inline Edit button. Same UX pattern as the engine drafts panel — admin never gets pulled out of context.
+
+### Queued for next round (with explicit defaults)
+- **(P1) Onboarding/why-Konekt content** — new Content Studio template type with templates for individuals + businesses (referral rewards, group deal savings, free shipping, faster checkout). Needs user input on copy direction.
+- **(P1) Vendor-driven group deal flow** — manual create flow: switch Internal/Vendor-driven at top; vendor-driven adds vendor name + their best price; system computes the best margin split and suggests target/discount.
+- **(P1) Promo Focus visual unification** — grid card vs drawer-rendered creative differ; should be a "card type" selector (Compact Grid · Featured Card · Full Creative).
+- **(P1) Bell-icon notification dropdown** for `admin_notifications` (kind='promo_expiry_renewal').
+- **(P1) Wire `products.promo_blocks` consumers** — affiliate/referral/sales reward services should skip blocked SKUs; audit needed.
 
 ---
 

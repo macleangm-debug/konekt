@@ -36,11 +36,16 @@ router = APIRouter(tags=["QR Codes"])
 QR_CACHE_ROOT = Path("/app/static/qr")
 QR_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
 
-# Deep-link templates per kind.  Safe paths — no PII.
+# Deep-link templates per kind. These MUST match the public-facing routes
+# in /app/frontend/src/App.js — verified ~Feb 2026:
+#   /product/:productId           → ProductDetail
+#   /group-deals/:dealId          → public group deal page
+#   /promotions/:promoId          → public campaign landing
+#   /content/:postId              → content gallery item
 DEEP_LINKS = {
-    "product": "/shop/product/{id}",
+    "product": "/product/{id}",
     "group_deal": "/group-deals/{id}",
-    "promo_campaign": "/promo/{id}",
+    "promo_campaign": "/promotions/{id}",
     "content_post": "/content/{id}",
 }
 

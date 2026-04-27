@@ -210,47 +210,68 @@ async def get_template_branding(request: Request):
     """Branding data for template rendering."""
     db = request.app.mongodb
 
-    settings = await db.business_settings.find_one({}, {"_id": 0}) or {}
+    # Phone source-of-truth chain — try every place admin might have saved
+    # a phone number so the creative always reflects the latest value:
+    #   1. db.business_settings doc with type='company_profile' (Profile page)
+    #   2. legacy db.business_settings find_one() (older shape)
+    #   3. settings_hub.business_profile.support_phone
+    profile_doc = await db.business_settings.find_one({"type": "company_profile"}, {"_id": 0}) or {}
+    settings = await db.business_settings.find_one({"type": {"$ne": "company_profile"}}, {"_id": 0}) or {}
+    if not settings:
+        # Fallback to legacy first doc (no type field)
+        settings = await db.business_settings.find_one({}, {"_id": 0}) or {}
     hub = await db.settings_hub.find_one({}, {"_id": 0}) or {}
     branding = hub.get("branding", {})
     business_profile = hub.get("business_profile", {})
 
-    # Source of truth = Settings Hub → Profile → Company Information.
-    # Falls back to legacy business_settings only when the Hub field is empty.
+    # Source of truth = Profile page → company_profile doc.
     return {
         "ok": True,
         "branding": {
             "company_name": (
-                business_profile.get("legal_name")
+                profile_doc.get("company_name")
+                or business_profile.get("legal_name")
                 or settings.get("company_name")
                 or settings.get("trading_name")
-                or ""
+                or "Konekt"
             ),
             "trading_name": (
-                business_profile.get("brand_name")
+                profile_doc.get("trading_name")
+                or business_profile.get("brand_name")
                 or settings.get("trading_name")
-                or ""
+                or "Konekt"
             ),
-            "tagline": business_profile.get("tagline", ""),
+            "tagline": (
+                profile_doc.get("tagline")
+                or business_profile.get("tagline", "")
+            ),
             "logo_url": (
-                business_profile.get("logo_url")
+                profile_doc.get("logo_url")
+                or business_profile.get("logo_url")
                 or settings.get("company_logo_path")
                 or branding.get("primary_logo_url", "")
             ),
             "phone": (
-                business_profile.get("support_phone")
+                profile_doc.get("phone")
+                or profile_doc.get("support_phone")
+                or business_profile.get("support_phone")
                 or settings.get("phone", "")
             ),
             "email": (
-                business_profile.get("support_email")
+                profile_doc.get("email")
+                or profile_doc.get("support_email")
+                or business_profile.get("support_email")
                 or settings.get("email", "")
             ),
             "website": (
-                business_profile.get("website")
+                profile_doc.get("website")
+                or business_profile.get("website")
                 or settings.get("website", "")
             ),
             "address": (
-                business_profile.get("business_address")
+                profile_doc.get("address")
+                or profile_doc.get("address_line_1")
+                or business_profile.get("business_address")
                 or settings.get("address", "")
             ),
             "primary_color": branding.get("primary_color", "#20364D"),
