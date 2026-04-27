@@ -336,7 +336,7 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
           <h1 className="text-xl font-bold text-[#20364D]">Group Deal Campaigns</h1>
           <p className="text-sm text-slate-500">Demand aggregation — commitments first, orders on finalize</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="bg-[#20364D]" data-testid="create-campaign-btn">
+        <Button onClick={() => setShowCreate(true)} className="bg-[#20364D]" data-testid="create-group-deal-btn">
           <Plus className="w-4 h-4 mr-2" /> New Campaign
         </Button>
       </div>

@@ -3,7 +3,50 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 365 ITERATIONS — 100% PASS RATE
+## System Status: 366 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 27, 2026 (P1 Pack — 5 items in one batch)
+
+User asked: "Tackle all in one pass." All 5 queued P1 items shipped + tested in iteration 362.
+
+### Shipped
+
+1. **`promo_blocks` consumer audit (P1, financial-risk)** — new `services/promo_blocks_service.py` with `compute_eligible_amount(items, channel)` + `filter_eligible_items(items, channel)` helpers. Wired into:
+   - `referral_hooks.calculate_tier_aware_referral_reward` — skips lines whose `products.promo_blocks.referral=true`
+   - `affiliate_commission_service.create_affiliate_commission_on_closed_business` — subtracts blocked-line totals from `sale_amount` BEFORE percentage commission; persists `eligible_amount` + `blocked_product_ids` on the commission doc; returns `None` if every line was blocked.
+   - `commission_trigger_service.trigger_commission_on_payment_approval` — scales `affiliate_distributable` + `sales_distributable` by per-channel `eligible / base` ratio; persists `eligible_amount` + `blocked_product_ids` on `commission_records` rows.
+   - **No more financial leak**: when admin approves a draft and ticks "sacrifice referral pool", the customer gets the deeper discount AND the referral payout for that product is correctly suppressed downstream.
+
+2. **Bell-icon notification dropdown for engine renewals (P1)** — `services/automation_engine_service.emit_expiry_renewal_notifications` now writes into the unified `db.notifications` collection with `recipient_role='admin'`, `kind='promo_expiry_renewal'`, `target_url='/admin/promotions-manager'`, `priority='high'`, `is_read=false`. The existing `NotificationBell` (polls `/api/notifications/unread-count` + `/api/notifications?unread_only=true` every 15s) surfaces them in real time. Idempotent — second sweep does not duplicate. Previously emitted into `db.admin_notifications` which was never read.
+
+3. **Vendor-driven Group Deal flow (P1)** — `GroupDealsAdminPage.jsx` create wizard step 2 now opens with a Funding Source toggle (Internal vs Vendor-driven). Vendor-driven exposes `vendor_name`, `vendor_best_price`, `customer_share_pct` inputs + a "Suggest deal" button.
+   - Backend: new `POST /api/admin/group-deals/suggest-from-vendor` endpoint computes the suggested discounted_price + display_target. Math: `saving_per_unit = current_vendor_cost - vendor_best_price`; `customer_discount = saving × share%`; `discounted_price = current_price - customer_discount` (clamped above vendor_best_price).
+   - `POST /api/admin/group-deals/campaigns` now persists `funding_source`, `vendor_name`, `vendor_best_price`, `vendor_involved` on the campaign.
+
+4. **"Why Konekt" Content Studio template (P1)** — new tab in `AdminContentStudioPage.jsx` with 2 cards (Individuals + Businesses), each carrying 4 numbered bullets:
+   - Individual: Referral rewards · Group savings · Free shipping · Faster checkout
+   - Business: Volume pricing · Verified vendors · Cash-flow terms · Affiliate revenue
+   - New `LayoutWhyKonekt` renderer: full-bleed creative with audience pill, headline, tagline, 4 numbered bullet tiles in a 2-col grid (vertical: 1-col). Auto-selected when admin opens any Why Konekt card. New `whykonekt` chip in the layout selector.
+
+5. **Promo Focus card vs full-creative parity (P1)** — `ItemCard` now accepts a `layout` prop. When `layout.key === "promo"` and the item has an active promotion, the grid card renders the same red SAVE banner ("SAVE TZS X" + "CODE: KONEKT") used by the drawer's `LayoutPromo` — across the top of the thumbnail (`data-testid=card-promo-banner`). WYSIWYG between card and creative.
+
+### Backend Tests
+- `/app/backend/tests/test_p1_pack_v362.py` (4 tests) + `/app/backend/tests/test_p1_pack_v362_extended.py` (5 tests added by testing agent) — **9/9 PASS**.
+- Coverage: blocked-line elimination math, referral reward zero on full block, notifications collection routing + idempotency, vendor suggester math + edge cases, persistence round-trip on the campaign create endpoint.
+
+### Frontend Verification (testing agent, Playwright)
+- ✅ Why Konekt tab + 2 cards + drawer with `LayoutWhyKonekt` preview + ready-to-use captions
+- ✅ Promo Focus card SAVE banners — 60 banners with `data-testid=card-promo-banner` showing "SAVE TZS X / CODE: KONEKT"
+- ⚠️ Group Deals wizard end-to-end walkthrough was not exercised by Playwright (Ops Onboarding tour modal intercepted clicks). Backend endpoints exercised by the wizard are 100% green via HTTP pytest.
+- 🔧 Fixed: renamed Group Deals "+ New Campaign" CTA `data-testid` from `create-campaign-btn` → `create-group-deal-btn` for cleaner E2E selector targeting next round.
+
+### Queued / Next
+- (P2) Suppress Ops Onboarding tour when `?e2e=1` to unblock automated wizard walkthroughs.
+- (P2) Refactor `AdminContentStudioPage.jsx` (~1100 lines) into `components/admin/content-studio/` (LayoutPromo, LayoutProduct, LayoutWhyKonekt, ItemCard, FooterBar) — non-blocking.
+- (P2) Image CDN + server-side pagination when catalog > 2000 items.
+- (P2) Photographic cover-art slot per service category in Settings Hub.
 
 ---
 
