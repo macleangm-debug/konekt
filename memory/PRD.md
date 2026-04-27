@@ -3,7 +3,29 @@
 ## Architecture
 React (CRA) + TailwindCSS + Shadcn/UI | FastAPI + MongoDB | Stripe + Object Storage | JWT Auth | Resend (Email)
 
-## System Status: 359 ITERATIONS — 100% PASS RATE
+## System Status: 360 ITERATIONS — 100% PASS RATE
+
+---
+
+## Latest Session — Feb 26, 2026 (Engine Draft → Review → Publish + Strict Attribution + Cleanup)
+
+User decisions: 1a (drafts before publish) + 2a (strict attribution by promo.created_at) + open-by-default promo codes + automatic renewal notifications.
+
+### Backend
+1. **Engine creates DRAFTS not live promos** — `_create_engine_promotion` writes `status='draft'` and a `preview` snapshot ({product_id, product_name, current_price, suggested_price, save_tzs, save_pct, duration_days, tier_label}). Does NOT modify product price/active_promotion_id. Drafts still consume the per-category quota to prevent duplicate suggestions.
+2. **New endpoints** (admin auth): `GET /api/admin/automation/drafts`, `POST /drafts/{id}/approve` (body `{code, required}` — empty code = open promo), `POST /drafts/{id}/reject`, `POST /drafts/approve-all`, `POST /notifications/sweep-renewals`.
+3. **Strict performance attribution** — `compute_performance_dashboard` now skips orders placed before `promo.created_at` so the dashboard only credits the engine for genuinely-attributed sales (fixes the "X-Banner Stand TZS 250,000" inflation the user reported).
+4. **Renewal notifications** — engine background loop calls `emit_expiry_renewal_notifications` every 30 min. When an active engine promo passes its `end_date`, an `admin_notifications` row of kind `promo_expiry_renewal` is inserted; the promo is marked `renewal_notified_at` to prevent duplicates.
+5. **Branding source-of-truth** — `/api/content-engine/template-data/branding` now prefers `settings_hub.business_profile.support_phone / brand_name / tagline / business_address` and falls back to legacy `business_settings.*`. Content Studio creatives auto-pick up whatever the admin saves on the Profile page.
+6. **Data cleanup** — purged 39 test affiliates, 68 test affiliate applications, 17 test CRM clients, 2 test users matching `@example.com` / `@test.com` / known test name patterns.
+
+### Frontend
+7. **PromoDraftsPanel** mounted on `/admin/promotions-manager` directly below the Automation Engine actions card. Each draft row shows: product image · category · current price · new price (emerald) · customer-saves TZS (gold) · duration with start→end dates · optional code input (auto-uppercased) · "Customer must enter code" toggle (disabled when code empty) · Reject / Approve & Publish buttons. Approve All button at top.
+8. **ScopeBadge resilient to engine-promo object scope** — `{skus, branch}` now flattens to a category badge so the regular Promotions table no longer crashes on engine-created promos.
+9. **Drafts hidden from manual table** — the legacy Promotions table filters out `status==='draft'` and `auto_created` so engine suggestions only live in the dedicated Drafts panel.
+10. **Favicon restored** — `/branding/konekt-triad-icon.svg` (asymmetric triad logo) wired as the primary `<link rel="icon">` plus PNG companion + apple-touch-icon + mask-icon. The wide `konekt-triad-logo.svg` is no longer used as favicon (was getting picked up and squashed by some browsers).
+
+**Iteration 360 — 10/11 backend pytests PASS**, 1 skipped (intentional quota saturation, not a bug). Frontend live-tested: 30 fresh drafts render, no runtime errors, favicon = triad icon SVG. Engine left enabled with 30 drafts ready for admin review.
 
 ---
 

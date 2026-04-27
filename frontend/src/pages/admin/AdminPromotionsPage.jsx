@@ -65,9 +65,14 @@ export default function AdminPromotionsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return promos;
+    // Hide drafts and engine-created auto promos from the manual Promotions
+    // table — they live in the Engine Drafts panel above instead.
+    const visible = promos.filter(
+      (p) => p.status !== "draft" && !p.auto_created
+    );
+    if (!search.trim()) return visible;
     const q = search.toLowerCase();
-    return promos.filter(p => p.code?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q));
+    return visible.filter(p => p.code?.toLowerCase().includes(q) || p.name?.toLowerCase().includes(q));
   }, [promos, search]);
 
   const openCreate = () => { setEditPromo(null); setShowForm(true); };
@@ -274,10 +279,17 @@ function StatCard({ label, value, icon: Icon }) {
 
 function ScopeBadge({ scope, targetName }) {
   const colors = { global: "bg-blue-50 text-blue-700", category: "bg-purple-50 text-purple-700", product: "bg-amber-50 text-amber-700" };
+  // Engine-created promos store scope as {skus, branch} object — flatten to a label
+  let scopeKey = scope;
+  let scopeLabel = scope;
+  if (scope && typeof scope === "object") {
+    scopeKey = scope.skus?.length ? "product" : (scope.branch ? "category" : "global");
+    scopeLabel = scope.branch || (scope.skus?.length ? `${scope.skus.length} SKU(s)` : "All Products");
+  }
   return (
     <div>
-      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[scope] || "bg-slate-100 text-slate-600"}`}>
-        {scope === "global" ? "All Products" : scope}
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${colors[scopeKey] || "bg-slate-100 text-slate-600"}`}>
+        {scopeKey === "global" ? "All Products" : scopeLabel}
       </span>
       {targetName && <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[120px]">{targetName}</div>}
     </div>
