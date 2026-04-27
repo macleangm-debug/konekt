@@ -1129,6 +1129,9 @@ async def approve_all_drafts(db) -> dict:
 async def emit_expiry_renewal_notifications(db) -> int:
     """Find active engine promos that just ended and create an admin
     notification asking for review/renewal. Returns count emitted.
+
+    Writes to the unified `db.notifications` collection (recipient_role='admin')
+    so the standard NotificationBell dropdown surfaces them in real time.
     """
     today_iso = datetime.now(timezone.utc).date().isoformat()
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -1143,18 +1146,29 @@ async def emit_expiry_renewal_notifications(db) -> int:
         {"_id": 0, "id": 1, "name": 1, "scope": 1},
     ):
         try:
-            await db.admin_notifications.insert_one({
+            await db.notifications.insert_one({
                 "id": str(uuid4()),
                 "kind": "promo_expiry_renewal",
+                "notification_type": "promo_expiry_renewal",
                 "title": f"Promo ended · {promo.get('name')}",
+                "message": (
+                    "An auto-engine promo has reached its end date. Review the "
+                    "performance and approve a fresh promo for this product, "
+                    "or close the slot."
+                ),
                 "body": (
                     "An auto-engine promo has reached its end date. Review the "
                     "performance and approve a fresh promo for this product, "
                     "or close the slot."
                 ),
+                "target_url": "/admin/promotions-manager",
+                "cta_label": "Review promo",
+                "recipient_role": "admin",
+                "priority": "high",
                 "promo_id": promo["id"],
                 "category": (promo.get("scope") or {}).get("branch"),
                 "is_read": False,
+                "read": False,
                 "created_at": now_iso,
             })
             await db.catalog_promotions.update_one(

@@ -147,6 +147,10 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [form, setForm] = useState({
+    funding_source: "internal",
+    vendor_name: "",
+    vendor_best_price: "",
+    customer_share_pct: "50",
     vendor_cost: "", original_price: "", discounted_price: "",
     display_target: "50", vendor_threshold: "30", duration_days: "14",
     commission_mode: "none", affiliate_share_pct: "0", description: "",
@@ -194,6 +198,9 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
         product_image: selectedProduct.image || "",
         category: selectedProduct.category || "",
         description: form.description,
+        funding_source: form.funding_source || "internal",
+        vendor_name: form.vendor_name || "",
+        vendor_best_price: form.vendor_best_price || 0,
         vendor_cost: form.vendor_cost,
         original_price: form.original_price || String(Number(form.discounted_price) * 1.25),
         discounted_price: form.discounted_price,
@@ -207,7 +214,7 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
       toast.success("Campaign created");
       setShowCreate(false);
       setSelectedProduct(null);
-      setForm({ vendor_cost: "", original_price: "", discounted_price: "", display_target: "50", vendor_threshold: "30", duration_days: "14", commission_mode: "none", affiliate_share_pct: "0", description: "" });
+      setForm({ funding_source: "internal", vendor_name: "", vendor_best_price: "", customer_share_pct: "50", vendor_cost: "", original_price: "", discounted_price: "", display_target: "50", vendor_threshold: "30", duration_days: "14", commission_mode: "none", affiliate_share_pct: "0", description: "" });
       loadCampaigns();
     } catch (err) { toast.error(err.response?.data?.detail || "Failed to create campaign"); }
     finally { setCreating(false); }
@@ -533,17 +540,114 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
               </div>
             )}
 
-            {/* Step 2: Deal Pricing */}
+            {/* Step 2: Funding Source + Deal Pricing */}
             {wizardStep === 2 && selectedProduct && (
               <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Deal Pricing</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block">Funding Source</Label>
+                <div className="grid grid-cols-2 gap-3" data-testid="funding-source-toggle">
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, funding_source: "internal" }))}
+                    className={`text-left rounded-xl border-2 p-3 transition ${form.funding_source === "internal" ? "border-[#20364D] bg-[#20364D]/5" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                    data-testid="funding-source-internal"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#20364D]">Internal</span>
+                      {form.funding_source === "internal" && <Check className="w-4 h-4 text-[#20364D]" />}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Konekt funds the discount from the product's distributable margin pool. Vendor cost unchanged.</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, funding_source: "vendor" }))}
+                    className={`text-left rounded-xl border-2 p-3 transition ${form.funding_source === "vendor" ? "border-[#D4A843] bg-[#D4A843]/5" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                    data-testid="funding-source-vendor"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-[#20364D]">Vendor-driven</span>
+                      {form.funding_source === "vendor" && <Check className="w-4 h-4 text-[#D4A843]" />}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Vendor offers a lower unit price for a minimum quantity. System suggests the customer discount + target.</p>
+                  </button>
+                </div>
+
+                {form.funding_source === "vendor" && (
+                  <div className="space-y-3 rounded-xl border border-[#D4A843]/40 bg-amber-50/40 p-3">
+                    <div className="text-xs font-bold uppercase tracking-wider text-[#D4A843]">Vendor Inputs</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-xs">Vendor Name</Label>
+                        <Input
+                          type="text"
+                          value={form.vendor_name}
+                          onChange={(e) => setForm(p => ({ ...p, vendor_name: e.target.value }))}
+                          placeholder="e.g. Darcity Promotion Ltd"
+                          data-testid="input-vendor-name"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Vendor's Best Unit Price *</Label>
+                        <CurrencyInput
+                          value={form.vendor_best_price}
+                          onChange={(v) => setForm(p => ({ ...p, vendor_best_price: v }))}
+                          placeholder="e.g. 18,500"
+                          data-testid="input-vendor-best-price"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 items-end">
+                      <div>
+                        <Label className="text-xs">Customer share of vendor saving (%)</Label>
+                        <Input
+                          type="number" step="1" min="0" max="90"
+                          value={form.customer_share_pct}
+                          onChange={(e) => setForm(p => ({ ...p, customer_share_pct: e.target.value }))}
+                          data-testid="input-customer-share-pct"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1">50% splits the saving between customer and Konekt margin.</p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className="h-9"
+                        disabled={!form.vendor_best_price}
+                        onClick={async () => {
+                          try {
+                            const r = await api.post("/api/admin/group-deals/suggest-from-vendor", {
+                              product_id: selectedProduct.id,
+                              vendor_best_price: Number(form.vendor_best_price || 0),
+                              customer_share_pct: Number(form.customer_share_pct || 50),
+                            });
+                            const s = r.data || {};
+                            setForm(p => ({
+                              ...p,
+                              vendor_cost: String(s.vendor_best_price || form.vendor_best_price),
+                              original_price: String(s.current_customer_price || form.original_price),
+                              discounted_price: String(s.suggested_discounted_price || ""),
+                              display_target: String(s.suggested_display_target || form.display_target),
+                            }));
+                            toast.success(`Suggested: ${fmt(s.suggested_discounted_price)} · ${s.suggested_discount_pct}% off · ${s.suggested_display_target} units`);
+                          } catch (err) {
+                            toast.error(err.response?.data?.detail || "Failed to suggest");
+                          }
+                        }}
+                        data-testid="suggest-vendor-deal-btn"
+                      >
+                        Suggest deal
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block pt-2">Deal Pricing</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Base Price (from product)</Label>
                     <div className="px-3 py-2.5 bg-slate-50 border rounded-xl text-sm font-semibold text-slate-600" data-testid="base-price-display">{fmt(form.original_price || 0)}</div>
                   </div>
                   <div>
-                    <Label className="text-xs">Vendor Best Price *</Label>
+                    <Label className="text-xs">{form.funding_source === "vendor" ? "Vendor Best Price *" : "Vendor Cost *"}</Label>
                     <CurrencyInput value={form.vendor_cost} onChange={(v) => setForm(p => ({ ...p, vendor_cost: v }))} required data-testid="input-vendor-cost" placeholder="e.g. 800,000" />
                   </div>
                   <div>
@@ -598,7 +702,8 @@ export default function GroupDealsAdminPage({ embedded = false } = {}) {
                 <div className="bg-slate-50 rounded-xl border p-4 space-y-2 text-sm">
                   <div className="flex justify-between"><span className="text-slate-500">Product:</span><span className="font-semibold">{selectedProduct?.name}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Category:</span><span>{selectedProduct?.category}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Vendor Cost:</span><span>{fmt(form.vendor_cost)}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Funding:</span><span className="capitalize">{form.funding_source}{form.funding_source === "vendor" && form.vendor_name ? ` · ${form.vendor_name}` : ""}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">{form.funding_source === "vendor" ? "Vendor Best Price:" : "Vendor Cost:"}</span><span>{fmt(form.vendor_cost)}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Deal Price:</span><span className="font-bold text-emerald-600">{fmt(form.discounted_price)}</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Target Qty:</span><span>{form.display_target} units</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Duration:</span><span>{form.duration_days} days</span></div>

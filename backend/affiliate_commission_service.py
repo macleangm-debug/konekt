@@ -26,11 +26,17 @@ async def create_affiliate_commission_on_closed_business(
     - Invoice is paid
     - Order is paid and fulfilled
     - NOT on signup, lead, or click
-    
+
+    Honours `products.promo_blocks.affiliate=true` — line totals for products
+    blocked on the affiliate pool are excluded from `sale_amount` before
+    commission is computed (since their distributable affiliate share was
+    already given away as a customer discount).
+
     Includes fraud protection and campaign override support.
     """
     # Read settings — prefer Settings Hub, fallback to legacy affiliate_settings collection
     from services.settings_resolver import get_affiliate_settings as get_hub_affiliate
+    from services.promo_blocks_service import compute_eligible_amount, resolve_order_items
     hub_affiliate = await get_hub_affiliate(db)
 
     settings = await db.affiliate_settings.find_one({})
@@ -82,9 +88,34 @@ async def create_affiliate_commission_on_closed_business(
     if commission_type == "fixed":
         commission_amount = float(partner_rate or default_fixed or 0)
         effective_rate = None
+        eligible_amount = float(sale_amount or 0)
+        blocked_pids: list[str] = []
     else:
+        # Subtract blocked-line amounts before percentage commission is applied.
+        order_id_for_lookup = None
+        invoice_id_for_lookup = None
+        if (source_document or "").lower() == "order":
+            order_id_for_lookup = source_document_id
+        elif (source_document or "").lower() == "invoice":
+            invoice_id_for_lookup = source_document_id
+        items = await resolve_order_items(
+            db,
+            order_id=order_id_for_lookup,
+            invoice_id=invoice_id_for_lookup,
+        )
+        if items:
+            eligible_amount, blocked_pids = await compute_eligible_amount(
+                db, items, "affiliate"
+            )
+            if eligible_amount <= 0 and blocked_pids:
+                # Every line was blocked → no commission payable.
+                return None
+        else:
+            eligible_amount = float(sale_amount or 0)
+            blocked_pids = []
+
         effective_rate = float(partner_rate if partner_rate is not None else default_rate)
-        commission_amount = round(float(sale_amount or 0) * (effective_rate / 100), 2)
+        commission_amount = round(eligible_amount * (effective_rate / 100), 2)
 
     if commission_amount <= 0:
         return None
@@ -97,6 +128,8 @@ async def create_affiliate_commission_on_closed_business(
         "source_document": source_document,
         "source_document_id": source_document_id,
         "sale_amount": float(sale_amount or 0),
+        "eligible_amount": float(eligible_amount),
+        "blocked_product_ids": blocked_pids,
         "commission_type": commission_type,
         "commission_rate": effective_rate,
         "commission_amount": commission_amount,

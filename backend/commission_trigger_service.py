@@ -11,8 +11,15 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
     """
     Trigger commission creation when payment is approved.
     This ensures the Payment → Commission → Payout chain works correctly.
+
+    Honours `products.promo_blocks.{affiliate,sales}=true` — line totals for
+    products whose pool was already given away as a customer discount during
+    an active promo are excluded from the per-channel base before commission
+    is computed.
     """
     try:
+        from services.promo_blocks_service import compute_eligible_amount, resolve_order_items
+
         # Get the invoice/order to find attribution
         invoice = None
         order = None
@@ -58,7 +65,35 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
         # Calculate distributable amount
         base_protected = amount_paid * (settings.get("company_markup_percent", 20) / 100)
         distributable = amount_paid * (settings.get("extra_sell_percent", 10) / 100)
-        
+
+        # Compute per-channel eligible distributable — exclude blocked lines.
+        items = await resolve_order_items(
+            db,
+            order_id=str(order_id) if order_id else None,
+            invoice_id=str(invoice_id) if invoice_id else None,
+        )
+        affiliate_eligible_amount = amount_paid
+        sales_eligible_amount = amount_paid
+        affiliate_blocked: list[str] = []
+        sales_blocked: list[str] = []
+        if items:
+            aff_amt, aff_blk = await compute_eligible_amount(db, items, "affiliate")
+            sal_amt, sal_blk = await compute_eligible_amount(db, items, "sales")
+            if aff_amt > 0 or aff_blk:
+                affiliate_eligible_amount = aff_amt
+                affiliate_blocked = aff_blk
+            if sal_amt > 0 or sal_blk:
+                sales_eligible_amount = sal_amt
+                sales_blocked = sal_blk
+
+        def _scaled(base: float, eligible: float) -> float:
+            if base <= 0:
+                return 0.0
+            return distributable * (eligible / base)
+
+        affiliate_distributable = _scaled(amount_paid, affiliate_eligible_amount)
+        sales_distributable = _scaled(amount_paid, sales_eligible_amount)
+
         commissions_created = []
         now = datetime.now(timezone.utc)
         
@@ -72,10 +107,10 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
             sales_user_id = order.get("assigned_sales_id")
         
         # Create affiliate commission if applicable
-        if is_affiliate_lead and affiliate_user_id:
+        if is_affiliate_lead and affiliate_user_id and affiliate_distributable > 0:
             affiliate_percent = settings.get("affiliate_percent", 10)
-            affiliate_amount = distributable * (affiliate_percent / 100)
-            
+            affiliate_amount = affiliate_distributable * (affiliate_percent / 100)
+
             affiliate_commission = {
                 "beneficiary_type": "affiliate",
                 "beneficiary_user_id": affiliate_user_id,
@@ -84,7 +119,9 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
                 "invoice_id": str(invoice_id) if invoice_id else None,
                 "payment_proof_id": str(proof.get("_id", "")),
                 "base_amount": amount_paid,
-                "distributable_amount": distributable,
+                "eligible_amount": round(affiliate_eligible_amount, 2),
+                "blocked_product_ids": affiliate_blocked,
+                "distributable_amount": round(affiliate_distributable, 2),
                 "commission_percent": affiliate_percent,
                 "amount": affiliate_amount,
                 "currency": proof.get("currency", "TZS"),
@@ -110,15 +147,15 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
             )
         
         # Create sales commission
-        if sales_user_id:
+        if sales_user_id and sales_distributable > 0:
             # Reduced commission if affiliate lead, full if self-generated
             if is_affiliate_lead:
                 sales_percent = settings.get("sales_affiliate_lead_percent", 10)
             else:
                 sales_percent = settings.get("sales_self_lead_percent", 15)
-            
-            sales_amount = distributable * (sales_percent / 100)
-            
+
+            sales_amount = sales_distributable * (sales_percent / 100)
+
             sales_commission = {
                 "beneficiary_type": "sales",
                 "beneficiary_user_id": sales_user_id,
@@ -127,7 +164,9 @@ async def trigger_commission_on_payment_approval(db, invoice_id: str, proof: dic
                 "invoice_id": str(invoice_id) if invoice_id else None,
                 "payment_proof_id": str(proof.get("_id", "")),
                 "base_amount": amount_paid,
-                "distributable_amount": distributable,
+                "eligible_amount": round(sales_eligible_amount, 2),
+                "blocked_product_ids": sales_blocked,
+                "distributable_amount": round(sales_distributable, 2),
                 "commission_percent": sales_percent,
                 "amount": sales_amount,
                 "currency": proof.get("currency", "TZS"),

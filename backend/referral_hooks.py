@@ -34,8 +34,13 @@ async def calculate_tier_aware_referral_reward(db, order: dict) -> float:
     Calculate referral reward dynamically from the resolved margin tier.
     Uses the canonical margin engine to get the actual distributable margin
     per item, then applies referral_pct to that pool.
+
+    Honours `products.promo_blocks.referral=true` — items whose product has
+    the referral pool blocked (because the active promo is funded from it)
+    are skipped entirely so we never double-pay the same pool.
     """
     from services.margin_engine import resolve_margin_rule_for_price, get_split_settings
+    from services.promo_blocks_service import filter_eligible_items
 
     settings = await _get_referral_settings(db)
     split = await get_split_settings(db)
@@ -45,7 +50,13 @@ async def calculate_tier_aware_referral_reward(db, order: dict) -> float:
         return 0.0
 
     total_referral_reward = Decimal("0")
-    items = order.get("items", [])
+    raw_items = order.get("items", [])
+    items, blocked_pids = await filter_eligible_items(db, raw_items, "referral")
+    if blocked_pids:
+        logger.info(
+            "Referral pool blocked for %d product(s) on order %s — skipped lines: %s",
+            len(blocked_pids), order.get("order_number") or order.get("id"), blocked_pids,
+        )
 
     for item in items:
         vendor_price = float(

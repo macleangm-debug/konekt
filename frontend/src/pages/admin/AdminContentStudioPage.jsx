@@ -40,6 +40,39 @@ const LAYOUTS = [
   { key: "minimal", label: "Minimal Brand" },
   { key: "authority", label: "Authority" },
   { key: "trust", label: "Trust" },
+  { key: "whykonekt", label: "Why Konekt" },
+];
+
+/* ═══ WHY KONEKT TEMPLATES ═══ */
+const WHY_KONEKT_TEMPLATES = [
+  {
+    id: "wk_individual",
+    intent: "why_konekt",
+    audience: "individual",
+    name: "Why Individuals Choose Konekt",
+    description: "Earn referral rewards. Group savings. Free shipping. Faster checkout.",
+    category: "Why Konekt",
+    bullets: [
+      { icon: "gift", title: "Referral rewards", body: "Earn TZS credits when friends order using your code." },
+      { icon: "users", title: "Group savings", body: "Team up with other buyers to unlock volume discounts." },
+      { icon: "truck", title: "Free shipping", body: "On qualifying orders across Tanzania." },
+      { icon: "zap", title: "Faster checkout", body: "Saved profile + one-tap reorder of past purchases." },
+    ],
+  },
+  {
+    id: "wk_business",
+    intent: "why_konekt",
+    audience: "business",
+    name: "Why Businesses Choose Konekt",
+    description: "Volume pricing. Verified vendors. Cash-flow terms. Affiliate revenue.",
+    category: "Why Konekt",
+    bullets: [
+      { icon: "trending", title: "Volume pricing", body: "Tier-based discounts that scale with your spend." },
+      { icon: "check", title: "Verified vendors", body: "Every supplier is vetted before they join the catalog." },
+      { icon: "wallet", title: "Cash-flow terms", body: "Net-7 invoicing on qualifying business accounts." },
+      { icon: "share", title: "Affiliate revenue", body: "Earn commissions when peers in your network order." },
+    ],
+  },
 ];
 
 /* ═══ BRAND CONTENT TEMPLATES ═══ */
@@ -144,9 +177,10 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
     else if (tab === "services") raw = services;
     else if (tab === "group_deals") raw = groupDeals;
     else if (tab === "brand") raw = BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
+    else if (tab === "why_konekt") raw = WHY_KONEKT_TEMPLATES.map((t) => ({ ...t, type: "why_konekt", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
     else raw = products;
     let withCode = applyViewerPromoCode(raw);
-    if (tab !== "brand") {
+    if (tab !== "brand" && tab !== "why_konekt") {
       if (layout?.key === "promo") {
         // Promo Focus → only show items that actually carry an active promo
         withCode = withCode.filter((it) => it.has_promotion && (it.discount_amount || 0) > 0);
@@ -205,6 +239,8 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
       const intent = item.intent || "authority";
       if (intent === "trust") setLayout(LAYOUTS.find((l) => l.key === "trust") || LAYOUTS[3]);
       else setLayout(LAYOUTS.find((l) => l.key === "authority") || LAYOUTS[3]);
+    } else if (item.type === "why_konekt") {
+      setLayout(LAYOUTS.find((l) => l.key === "whykonekt") || LAYOUTS[6]);
     } else if (tab === "services") {
       setLayout(LAYOUTS[2]); // Service Focus
     } else if (tab === "group_deals") {
@@ -235,6 +271,7 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
             { key: "services", label: `Services (${tab === "services" ? items.length : services.length})` },
             { key: "group_deals", label: `Deals (${groupDeals.length})` },
             { key: "brand", label: `Brand (${BRAND_TEMPLATES.length})` },
+            { key: "why_konekt", label: `Why Konekt (${WHY_KONEKT_TEMPLATES.length})` },
           ].map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)} className={`px-4 py-2 text-xs font-semibold transition-colors ${tab === t.key ? "bg-[#20364D] text-white" : "text-slate-500 hover:bg-slate-50"}`} data-testid={`tab-${t.key}`}>
               {t.label}
@@ -286,8 +323,10 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
           {visibleItems.map((item) => (
             item.type === "brand" ? (
               <BrandTemplateCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
+            ) : item.type === "why_konekt" ? (
+              <WhyKonektCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} />
             ) : (
-              <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} viewerPromoCode={viewerPromoCode} />
+              <ItemCard key={item.id} item={item} onSelect={() => handleSelectItem(item)} viewerPromoCode={viewerPromoCode} layout={layout} />
             )
           ))}
         </div>
@@ -331,7 +370,8 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
 }
 
 /* ═══ Item Card ═══ */
-function ItemCard({ item, onSelect, viewerPromoCode = "" }) {
+function ItemCard({ item, onSelect, viewerPromoCode = "", layout = null }) {
+  const isPromoFocus = layout?.key === "promo";
   return (
     <div className="group rounded-xl border border-slate-200 bg-white overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all cursor-pointer" onClick={onSelect} data-testid={`studio-item-${item.id}`}>
       <div className="relative bg-slate-50 aspect-square overflow-hidden">
@@ -340,7 +380,16 @@ function ItemCard({ item, onSelect, viewerPromoCode = "" }) {
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-slate-300"><ImageIcon className="w-10 h-10 mb-1" /><span className="text-[10px]">No Image</span></div>
         )}
-        {item.has_promotion && (
+        {/* Promo Focus mini banner — matches the full creative WYSIWYG */}
+        {isPromoFocus && item.has_promotion && item.discount_amount > 0 && (
+          <div className="absolute top-0 inset-x-0 bg-red-500 text-white text-center py-1.5" data-testid="card-promo-banner">
+            <div className="text-[11px] font-extrabold tracking-wider uppercase leading-tight">SAVE {money(item.discount_amount)}</div>
+            {item.promo_code && (
+              <div className="text-[9px] font-bold font-mono tracking-widest leading-tight">CODE: {item.promo_code}</div>
+            )}
+          </div>
+        )}
+        {!isPromoFocus && item.has_promotion && (
           <div className="absolute top-2.5 right-2.5"><span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-red-500 text-white"><Tag className="w-3 h-3" /> {item.promo_code}</span></div>
         )}
         {item.type === "group_deal" && (
@@ -405,6 +454,43 @@ function BrandTemplateCard({ item, onSelect }) {
       <div className="bg-black/10 px-4 py-2.5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <Sparkles className="w-3.5 h-3.5 text-white" />
         <span className="text-xs font-semibold text-white">Generate Creative</span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══ Why Konekt Card ═══ */
+function WhyKonektCard({ item, onSelect }) {
+  const isBusiness = item.audience === "business";
+  return (
+    <div
+      className={`group rounded-xl border overflow-hidden hover:shadow-lg transition-all cursor-pointer ${isBusiness ? "bg-[#20364D] border-[#20364D]" : "bg-gradient-to-br from-amber-50 via-white to-amber-50 border-[#D4A843]/40"}`}
+      onClick={onSelect}
+      data-testid={`why-konekt-${item.id}`}
+    >
+      <div className="p-5 min-h-[260px] flex flex-col">
+        <div className={`text-[10px] font-bold uppercase tracking-widest mb-2 ${isBusiness ? "text-[#D4A843]" : "text-[#D4A843]"}`}>
+          {item.category} · {isBusiness ? "Business" : "Individual"}
+        </div>
+        <h3 className={`text-lg font-bold leading-tight mb-1 ${isBusiness ? "text-white" : "text-[#20364D]"}`}>{item.name}</h3>
+        <p className={`text-xs leading-relaxed mb-4 ${isBusiness ? "text-slate-200" : "text-slate-600"}`}>{item.description}</p>
+        <div className="space-y-2 mt-auto">
+          {(item.bullets || []).slice(0, 4).map((b, i) => (
+            <div key={i} className="flex items-start gap-2">
+              <span className={`mt-0.5 inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${isBusiness ? "bg-[#D4A843] text-[#20364D]" : "bg-[#20364D] text-white"}`}>
+                {i + 1}
+              </span>
+              <div>
+                <div className={`text-xs font-bold ${isBusiness ? "text-white" : "text-[#20364D]"}`}>{b.title}</div>
+                <div className={`text-[10px] leading-snug ${isBusiness ? "text-slate-300" : "text-slate-500"}`}>{b.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className={`px-4 py-2.5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ${isBusiness ? "bg-black/30" : "bg-[#20364D]/10"}`}>
+        <Sparkles className={`w-3.5 h-3.5 ${isBusiness ? "text-white" : "text-[#20364D]"}`} />
+        <span className={`text-xs font-semibold ${isBusiness ? "text-white" : "text-[#20364D]"}`}>Generate Creative</span>
       </div>
     </div>
   );
@@ -565,6 +651,7 @@ const BrandedCreative = React.forwardRef(({ item, theme, format, layout, brandin
     minimal: () => <LayoutMinimal item={item} theme={theme} S={S} v={v} w={w} h={h} hasImg={hasImg} hasDsc={hasDsc} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
     authority: () => <LayoutAuthority item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
     trust: () => <LayoutTrust item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
+    whykonekt: () => <LayoutWhyKonekt item={item} theme={theme} S={S} v={v} w={w} h={h} branding={branding} isLight={isLight} viewerPromoCode={viewerPromoCode} />,
   };
 
   return (
@@ -775,6 +862,48 @@ function LayoutTrust({ item, theme, S, v, w, h, branding, isLight, viewerPromoCo
     </>
   );
 }
+
+/* ═══ LAYOUT G: Why Konekt ═══ */
+function LayoutWhyKonekt({ item, theme, S, v, w, h, branding, isLight, viewerPromoCode = "" }) {
+  const isBusiness = item.audience === "business";
+  const headline = item.name || "Why Konekt";
+  const tagline = item.description || "";
+  const bullets = (item.bullets || []).slice(0, 4);
+  return (
+    <>
+      <LogoBar theme={theme} S={S} branding={branding} isLight={isLight} hasDsc={false} discount={0} />
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: `0 ${S.pad}px`, gap: v ? 28 : 20 }}>
+        <div style={{ display: "inline-flex", alignSelf: "flex-start", padding: `${v ? 8 : 6}px ${v ? 18 : 14}px`, borderRadius: 999, backgroundColor: `${theme.accent}22`, color: theme.accent, fontSize: S.category, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
+          {isBusiness ? "For Businesses" : "For Individuals"}
+        </div>
+        <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.05, letterSpacing: -1.5 }}>
+          {headline}
+        </div>
+        {tagline && (
+          <div style={{ fontSize: S.desc + 2, color: theme.textSecondary, lineHeight: 1.4, maxWidth: 760 }}>
+            {tagline}
+          </div>
+        )}
+        <div style={{ display: "grid", gridTemplateColumns: v ? "1fr" : "1fr 1fr", gap: v ? 18 : 22, marginTop: v ? 6 : 12 }}>
+          {bullets.map((b, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: v ? 16 : 14, borderRadius: 14, backgroundColor: `${theme.accent}10`, border: `1px solid ${theme.accent}30` }}>
+              <div style={{ flexShrink: 0, width: v ? 40 : 34, height: v ? 40 : 34, borderRadius: 10, backgroundColor: theme.accent, color: theme.bg === "#FFFFFF" || theme.bg === "#fafaf9" ? "#fff" : theme.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: v ? 20 : 18, fontWeight: 800 }}>
+                {i + 1}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: v ? S.desc + 2 : S.desc, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.2 }}>{b.title}</div>
+                <div style={{ fontSize: v ? S.desc - 2 : S.desc - 4, color: theme.textSecondary, lineHeight: 1.35, marginTop: 4 }}>{b.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
+    </>
+  );
+}
+
+
 
 
 /* ═══ Shared: Konekt Wordmark (icon + text) ═══ */

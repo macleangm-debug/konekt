@@ -349,3 +349,78 @@ async def audit_pricing_wiring(request: Request):
         "issues": issues,
         "verdict": "ok" if not issues else "branch_mismatch_detected",
     }
+
+
+
+# ---------- Vendor-driven deal suggester ----------
+
+class VendorDealSuggestParams(BaseModel):
+    product_id: str
+    vendor_best_price: float
+    vendor_min_quantity: Optional[int] = None
+    customer_share_pct: float = 50.0   # % of vendor savings passed to customer
+
+
+@router.post("/suggest-from-vendor")
+async def suggest_from_vendor(payload: VendorDealSuggestParams, request: Request):
+    """Vendor-driven group deal suggester.
+
+    Given a vendor's best unit price (when they commit to a min quantity),
+    return a suggested discounted_price + display_target so admin can review
+    and publish in one click.
+
+    Math:
+      saving_per_unit = current_customer_price - vendor_best_price
+      customer_discount = saving_per_unit × (customer_share_pct / 100)
+      discounted_price = current_customer_price - customer_discount
+      display_target = vendor_min_quantity (or fallback to 30)
+    """
+    await _assert_admin(request)
+
+    product = await db.products.find_one({"id": payload.product_id})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    current_price = float(product.get("customer_price") or product.get("base_price") or 0)
+    vendor_cost_baseline = float(product.get("vendor_cost") or 0)
+    vbp = float(payload.vendor_best_price or 0)
+    if vbp <= 0:
+        raise HTTPException(status_code=400, detail="vendor_best_price must be > 0")
+    if current_price <= 0:
+        raise HTTPException(status_code=400, detail="Product has no current customer price")
+    if vbp >= current_price:
+        raise HTTPException(status_code=400, detail="Vendor best price must be below current selling price")
+
+    # Saving = how much cheaper the vendor sold vs current vendor cost
+    # If vbp ≥ baseline cost, the saving is computed off current_price instead.
+    if vendor_cost_baseline > 0 and vbp < vendor_cost_baseline:
+        vendor_saving_per_unit = vendor_cost_baseline - vbp
+    else:
+        vendor_saving_per_unit = current_price - vbp
+
+    share = max(0.0, min(float(payload.customer_share_pct or 0), 90.0)) / 100.0
+    customer_discount = round(vendor_saving_per_unit * share, 0)
+    discounted_price = max(round(current_price - customer_discount, 0), vbp + 100)
+    discount_amount = round(current_price - discounted_price, 0)
+    discount_pct = round((discount_amount / current_price) * 100, 1) if current_price else 0
+
+    margin_per_unit = discounted_price - vbp
+    margin_pct = round((margin_per_unit / discounted_price) * 100, 1) if discounted_price else 0
+
+    target = int(payload.vendor_min_quantity or 30)
+    target = max(target, 20)
+
+    return {
+        "product_id": payload.product_id,
+        "product_name": product.get("name"),
+        "current_customer_price": current_price,
+        "current_vendor_cost": vendor_cost_baseline,
+        "vendor_best_price": vbp,
+        "suggested_discounted_price": discounted_price,
+        "suggested_discount_amount": discount_amount,
+        "suggested_discount_pct": discount_pct,
+        "suggested_display_target": target,
+        "margin_per_unit_at_deal": margin_per_unit,
+        "margin_pct_at_deal": margin_pct,
+        "customer_share_pct": payload.customer_share_pct,
+    }

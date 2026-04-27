@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 362 — P1 pack (5 items) review complete. Backend: 9/9 pytest PASS (4 original + 5 new HTTP-level extended tests covering affiliate commission eligible_amount persistence, commission_trigger distributable scaling, /api/notifications bell surface via real admin JWT, vendor-field persistence on POST /api/admin/group-deals/campaigns, and suggest-from-vendor edge-case robustness). Frontend: admin login succeeded this iteration (v361 blocker is resolved). Content Studio Why Konekt tab, Individuals+Businesses cards with 4 numbered bullets each, Why Konekt layout chip in the layout selector, and Promo Focus card SAVE banners (60 banners found with data-testid=card-promo-banner showing 'SAVE TZS X / CODE: KONEKT') all verified visually. Drawer opens with LayoutWhyKonekt preview + ready-to-use captions. Group Deals wizard vendor-driven toggle was not fully walked through in Playwright because the primary CTA on /admin/group-deals is labelled '+ New Campaign' (not 'Create Group Deal' per spec) and the Ops Onboarding tour modal intercepted initial interaction — but the backend endpoints /api/admin/group-deals/suggest-from-vendor and /api/admin/group-deals/campaigns (with vendor_name/vendor_best_price/funding_source=vendor/vendor_involved persistence) are fully verified via HTTP pytest.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/admin/group-deals", "issues": ["Primary CTA is labelled '+ New Campaign' while the review_request references a 'Create Group Deal' button. Functional impact: none, but automated tests using the spec's selector text will miss it. Consider aligning label or adding data-testid='create-group-deal-btn'."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_p1_pack_v362.py",
+    "/app/backend/tests/test_p1_pack_v362_extended.py",
+    "/app/test_reports/pytest/v362_p1_pack_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Add data-testid='create-group-deal-btn' on the '+ New Campaign' button on /admin/group-deals to make the vendor-driven wizard walkthrough automatable without brittle text selectors.",
+    "(Optional) The Ops Onboarding tour modal auto-opens on first visit to Content Studio / Group Deals and intercepts clicks for automated tests. Consider suppressing it when ?e2e=1 or when localStorage.konekt_e2e=true is set."
+  ],
+  "critical_code_review_comments": [
+    "services/promo_blocks_service.compute_eligible_amount correctly skips products with promo_blocks.<channel>=true. Verified with direct unit test + via referral_hooks integration test.",
+    "affiliate_commission_service.create_affiliate_commission_on_closed_business correctly subtracts blocked line totals BEFORE applying percentage commission, persists eligible_amount AND blocked_product_ids on the commission doc, and returns None when eligible_amount collapses to 0. Verified with live 20k sale, 10k blocked → 1000 commission (10% of 10k eligible).",
+    "commission_trigger_service.trigger_commission_on_payment_approval correctly scales distributable_amount by (eligible/base) — verified with 50/50 blocked-vs-open split: 20k base, 2000 base distributable (10% extra_sell), scaled to 1000 for both affiliate and sales commission rows. eligible_amount + blocked_product_ids persisted on commission_records.",
+    "services/automation_engine_service.emit_expiry_renewal_notifications writes to db.notifications with recipient_role='admin', kind='promo_expiry_renewal', target_url='/admin/promotions-manager', is_read=false. Idempotent on second sweep. /api/notifications/unread-count returned 28 (including the seeded row) and /api/notifications?unread_only=true returned it in the bell feed via real admin JWT — confirming the bell dropdown will surface renewal alerts as designed.",
+    "POST /api/admin/group-deals/suggest-from-vendor math: vendor_cost=25k, vendor_best_price=18.5k → saving=6.5k, customer_share=50% → discount=3250, suggested_discounted_price=30500 (matches 33_750 - 3_250 within ±500 rounding), margin_per_unit_at_deal>0. Handles at-cost/above-cost vendor bids without crashing.",
+    "POST /api/admin/group-deals/campaigns correctly persists funding_source, vendor_name, vendor_best_price, and derives vendor_involved=(funding_source=='vendor'). Verified via DB round-trip after HTTP POST.",
+    "UI: AdminContentStudioPage Why Konekt tab present with tab-why_konekt testid, renders 2 cards (why-konekt-wk_individual + why-konekt-wk_business) each with 4 numbered bullets, opens drawer (LayoutWhyKonekt) with full creative + ready-to-use captions. Why Konekt chip appears in the layout selector sub-row alongside Product Focus / Promo Focus / Service Focus / Minimal Brand / Authority / Trust.",
+    "UI: Promo Focus layout renders 60 data-testid='card-promo-banner' red ribbons on product thumbnails with 'SAVE TZS X' and 'CODE: <promo_code>' text — matches the full-creative drawer banner styling. Parity achieved.",
+    "Two /api/notifications routers exist (legacy notifications_routes.py at line 3178 and modern notification_routes.py at line 3082 of server.py). FastAPI matches in registration order → modern router (recipient_role + is_read semantics) wins for GET /api/notifications and /unread-count, which is the correct behaviour for the bell. The legacy router is effectively dead code for those two endpoints. Main agent may want to delete it to avoid confusion."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_p1_pack_v362_extended.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 pytest PASS — 4 original + 5 new extended)",
+    "frontend": "90% (Content Studio Why Konekt + Promo Focus fully verified visually + via DOM testids; Group Deals vendor-driven wizard end-to-end walkthrough blocked by tour-modal interception + 'New Campaign' vs 'Create Group Deal' label mismatch, but backend endpoints exercised by the wizard are 100% green)"
+  },
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd!",
+  "seed_data_creation": "All tests insert TEST_-prefixed or uuid-suffixed ephemeral docs (products / orders / invoices / attribution_records / notifications / catalog_promotions / group_deal_campaigns / affiliates) and clean up in finally blocks. No residual test data.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_p1_pack_v362_extended.py is the new canonical regression suite for this pack. It covers affiliate commission eligible_amount + blocked_product_ids persistence, commission_trigger scaling, the full /api/notifications bell HTTP surface with real admin login, campaigns vendor-field persistence, and suggest-from-vendor edge cases. Combined with the original test_p1_pack_v362.py (4 unit-level tests) this gives 9/9 backend coverage for the 5 P1 items. Admin login via Playwright now works on this preview env (v361 blocker resolved). Gotchas for next agent: (a) GET /api/notifications/unread-count returns field 'count' NOT 'unread_count'; (b) two /api/notifications routers both registered — modern one (recipient_role/is_read semantics) wins by registration order; (c) /admin/group-deals CTA is '+ New Campaign' not 'Create Group Deal'; (d) Ops Onboarding tour modal intercepts first-visit clicks — send Escape or click Skip tour before wizard interaction.",
+  "rca_of_the_issue": "N/A — no bugs. One cosmetic naming inconsistency flagged (Create Group Deal vs New Campaign button label) and one stale legacy router (notifications_routes.py) noted for cleanup but neither is blocking."
+}
