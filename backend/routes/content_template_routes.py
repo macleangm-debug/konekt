@@ -2,6 +2,17 @@
 Content Template Data API
 Provides product/service data enriched with customer-safe pricing,
 active promotions, and branding for the dynamic graphics generator.
+
+Promo resolution priority for every product:
+  1. Product has `active_promotion_id` → use that promo's code + saves_tzs
+     (covers manual ad-hoc promos AND auto-engine promos)
+  2. Otherwise, KONEKT continuous promo (if enabled in automation engine
+     config) → "KONEKT" code + flat TZS amount funded from the product's
+     distributable margin (promotion pool share).
+  3. Otherwise, no promo on the creative.
+
+This keeps everything pricing-engine-bound: the discount shown is always
+margin-safe unless an admin explicitly configures a deeper draw.
 """
 from fastapi import APIRouter, Request
 from typing import Optional
@@ -9,15 +20,83 @@ from typing import Optional
 router = APIRouter(prefix="/api/content-engine", tags=["content-template"])
 
 
+async def _load_continuous_promo(db) -> dict:
+    """Read the KONEKT continuous-promo block from automation engine config.
+
+    Returns a normalised dict with safe defaults when config missing.
+    """
+    cfg = await db.system_settings.find_one(
+        {"_id": "automation_engine_config"}, {"_id": 0}
+    ) or {}
+    cont = (cfg.get("continuous_promo") or {}) if isinstance(cfg, dict) else {}
+    return {
+        "enabled": bool(cont.get("enabled", True)),
+        "code": (cont.get("code") or "KONEKT").upper(),
+        "pool_share_pct": float(cont.get("pool_share_pct", 30)),
+    }
+
+
+async def _resolve_product_promo(db, product: dict, tier: dict | None,
+                                   selling_price: float,
+                                   continuous: dict) -> tuple[float, str, str]:
+    """Return (discount_amount, code, name) for the given product.
+
+    Priority:
+      1) active_promotion_id from db.catalog_promotions (per-product override)
+      2) KONEKT continuous if enabled and a per-product promo wasn't found
+      3) zero discount
+    """
+    active_id = product.get("active_promotion_id")
+    if active_id:
+        promo = await db.catalog_promotions.find_one(
+            {"id": active_id, "status": "active"}, {"_id": 0}
+        )
+        if promo:
+            saves = float(product.get("promo_saves_tzs") or 0)
+            code = (promo.get("code") or promo.get("name") or "").strip()
+            # Synthesise a short uppercase code from name when missing
+            if not code:
+                base = (promo.get("name") or "").upper()
+                # take first word of name as code
+                first = "".join(ch for ch in base.split(" ")[0] if ch.isalnum())
+                code = first[:12] or "PROMO"
+            return saves, code.upper(), promo.get("name") or code
+
+    # Continuous KONEKT promo — pricing-engine-safe
+    if continuous.get("enabled") and tier and selling_price > 0:
+        try:
+            distributable_pct = float(tier.get("distributable_margin_pct") or 0)
+            split = tier.get("distribution_split") or {}
+            promo_pool_pct = float(split.get("promotion_pct") or 0)
+            base_cost = float(product.get("base_cost") or product.get("vendor_cost") or 0)
+            if distributable_pct > 0 and promo_pool_pct > 0 and base_cost > 0:
+                promo_pool_tzs = base_cost * (distributable_pct / 100.0) * (promo_pool_pct / 100.0)
+                share = float(continuous.get("pool_share_pct", 30)) / 100.0
+                saves = round(promo_pool_tzs * share, 0)
+                # Round to nearest 100 TZS for clean creatives
+                saves = round(saves / 100) * 100
+                if saves > 0:
+                    return float(saves), continuous.get("code", "KONEKT"), "Konekt All-Year Sale"
+        except Exception:
+            pass
+
+    return 0.0, "", ""
+
+
 @router.get("/template-data/products")
-async def get_template_products(request: Request):
-    """Products with customer-safe pricing for template rendering."""
+async def get_template_products(request: Request, promo_only: bool = False):
+    """Products with customer-safe pricing for template rendering.
+
+    Query params:
+      promo_only=true  → only return products with an active promo
+                         (used by Promo Focus tab in Content Studio)
+    """
     db = request.app.mongodb
 
     products = await db.products.find(
         {"status": {"$in": ["active", "published", None]}},
         {"_id": 0}
-    ).sort("name", 1).to_list(200)
+    ).sort("name", 1).to_list(length=None)
 
     # Resolve pricing
     tiers = []
@@ -27,43 +106,28 @@ async def get_template_products(request: Request):
     except Exception:
         pass
 
+    continuous = await _load_continuous_promo(db)
+
     enriched = []
     for p in products:
-        base_cost = float(p.get("base_cost") or p.get("base_price") or p.get("partner_cost") or 0)
-        selling_price = base_cost
+        base_cost = float(p.get("base_cost") or p.get("base_price") or p.get("partner_cost") or p.get("vendor_cost") or 0)
+        selling_price = float(p.get("customer_price") or 0) or base_cost
+        tier = None
         if base_cost > 0 and tiers:
             try:
                 from commission_margin_engine_service import resolve_tier
                 tier = resolve_tier(base_cost, tiers)
-                if tier:
+                if tier and not p.get("customer_price"):
                     selling_price = round(base_cost * (1 + tier["total_margin_pct"] / 100.0), 2)
             except Exception:
                 selling_price = round(base_cost * 1.25, 2)
 
-        # Check active promotions
-        promo = await db.promotions.find_one({
-            "status": "active",
-            "$or": [
-                {"scope": "global"},
-                {"scope": "product", "target_product_id": p.get("id")},
-                {"scope": "category", "target_category_id": p.get("category_id")},
-            ]
-        }, {"_id": 0})
+        discount_amount, promo_code, promo_name = await _resolve_product_promo(
+            db, p, tier, selling_price, continuous
+        )
+        final_price = max(0.0, round(selling_price - discount_amount, 2))
 
-        discount_amount = 0
-        promo_code = ""
-        promo_name = ""
-        if promo:
-            promo_code = promo.get("code", "")
-            promo_name = promo.get("name", "")
-            if promo.get("discount_type") == "percentage":
-                discount_amount = round(selling_price * (promo.get("discount_value", 0) / 100.0), 2)
-            elif promo.get("discount_type") == "fixed_amount":
-                discount_amount = float(promo.get("discount_value", 0))
-
-        final_price = round(selling_price - discount_amount, 2)
-
-        enriched.append({
+        item = {
             "id": p.get("id", ""),
             "name": p.get("name", ""),
             "category": p.get("category_name") or p.get("category") or p.get("group_name", ""),
@@ -72,13 +136,22 @@ async def get_template_products(request: Request):
             "selling_price": selling_price,
             "final_price": final_price,
             "discount_amount": discount_amount,
-            "has_promotion": bool(promo),
+            "has_promotion": discount_amount > 0,
             "promo_code": promo_code,
             "promo_name": promo_name,
+            "active_promotion_id": p.get("active_promotion_id"),
             "type": "product",
-        })
+        }
+        if promo_only and not item["has_promotion"]:
+            continue
+        enriched.append(item)
 
-    return {"ok": True, "items": enriched}
+    return {
+        "ok": True,
+        "items": enriched,
+        "continuous_promo": continuous,
+        "total": len(enriched),
+    }
 
 
 @router.get("/template-data/services")
@@ -89,7 +162,7 @@ async def get_template_services(request: Request):
     services = await db.services.find(
         {"status": {"$in": ["active", "published", None]}},
         {"_id": 0}
-    ).sort("name", 1).to_list(200)
+    ).sort("name", 1).to_list(length=None)
 
     # Check global promotions
     global_promo = await db.promotions.find_one(

@@ -4,6 +4,7 @@ import api from "@/lib/api";
 import QrCodeButton from "@/components/common/QrCodeButton";
 import { safeDisplay, safeMoney } from "@/utils/safeDisplay";
 import StandardDrawerShell from "@/components/ui/StandardDrawerShell";
+import AutomationEngineSection from "@/components/admin/settings/AutomationEngineSection";
 
 const SCOPE_OPTIONS = [
   { value: "global", label: "All Products" },
@@ -100,7 +101,10 @@ export default function AdminPromotionsPage() {
   }), [promos]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6" data-testid="admin-promotions-page">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-5" data-testid="admin-promotions-page">
+      {/* Auto-Promo Engine — actions + performance (config lives in Settings Hub) */}
+      <AutomationEngineSection mode="actions" />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

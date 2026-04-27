@@ -100,7 +100,7 @@ function SelectRow({ label, value, options, onChange, hint, "data-testid": dataT
   );
 }
 
-export default function AutomationEngineSection() {
+export default function AutomationEngineSection({ mode = "config" } = {}) {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -228,9 +228,12 @@ export default function AutomationEngineSection() {
   const lastPromoRun = config.last_run?.promotions_at;
   const lastDealRun = config.last_run?.group_deals_at;
 
+  const showActions = mode === "actions" || mode === "all";
+  const showConfig = mode === "config" || mode === "all";
+
   return (
     <div className="space-y-6">
-      {/* Header / master toggle */}
+      {/* Header / master toggle — always shown so admin sees engine state */}
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
@@ -247,63 +250,81 @@ export default function AutomationEngineSection() {
             </span>
           </div>
         }
-        description="Self-running engine that keeps the catalogue stocked with promotions and group deals. The engine picks winners (top performers) plus fresh explorers, funds discounts from the margin pools you allow, and silently fulfills group deals at expiry so customer orders never break."
+        description={
+          showActions
+            ? "Run the engine, trigger sitewide overrides, and review performance. Configuration lives in Settings Hub → Automation."
+            : "Self-running engine that keeps the catalogue stocked with promotions and group deals. The engine picks winners (top performers) plus fresh explorers, funds discounts from the margin pools you allow, and silently fulfills group deals at expiry so customer orders never break."
+        }
       >
         <ToggleRow
           label="Master switch — enable the automation engine"
           value={config.enabled}
-          onChange={(v) => setConfig({ ...config, enabled: v })}
+          onChange={(v) => {
+            setConfig({ ...config, enabled: v });
+            if (showActions) {
+              // From Promotions page we save immediately for convenience
+              persist({ enabled: v });
+            }
+          }}
           hint="When ON, promotions refresh daily and group deals refresh on their cadence. When OFF, nothing runs (manual promos remain untouched)."
           data-testid="automation-master-toggle"
         />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs text-slate-500">
-          <div className="rounded-lg bg-slate-50 px-3 py-2">
-            <div className="font-semibold text-[#20364D]">Last promotions pass</div>
-            <div>{lastPromoRun ? new Date(lastPromoRun).toLocaleString() : "—"}</div>
+        {showActions && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 text-xs text-slate-500">
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="font-semibold text-[#20364D]">Last promotions pass</div>
+              <div>{lastPromoRun ? new Date(lastPromoRun).toLocaleString() : "—"}</div>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2">
+              <div className="font-semibold text-[#20364D]">Last group deal pass</div>
+              <div>{lastDealRun ? new Date(lastDealRun).toLocaleString() : "—"}</div>
+            </div>
           </div>
-          <div className="rounded-lg bg-slate-50 px-3 py-2">
-            <div className="font-semibold text-[#20364D]">Last group deal pass</div>
-            <div>{lastDealRun ? new Date(lastDealRun).toLocaleString() : "—"}</div>
+        )}
+        {showActions && (
+          <div className="flex flex-wrap gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => runNow(false)}
+              disabled={running}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#20364D] text-white px-4 py-2 text-sm font-semibold hover:bg-[#2a4865] disabled:opacity-50"
+              data-testid="automation-run-now-btn"
+            >
+              <Play className="h-4 w-4" /> {running ? "Running…" : "Run Now"}
+            </button>
+            <button
+              type="button"
+              onClick={() => runNow(true)}
+              disabled={running}
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-[#20364D] hover:bg-slate-50 disabled:opacity-50"
+              data-testid="automation-dry-run-btn"
+            >
+              <Activity className="h-4 w-4" /> Dry Run
+            </button>
+            <button
+              type="button"
+              onClick={() => setOverrideOpen((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-lg bg-[#D4A843] text-[#20364D] px-4 py-2 text-sm font-semibold hover:bg-[#c79937]"
+              data-testid="automation-promote-everything-btn"
+            >
+              <Sparkles className="h-4 w-4" /> Promote Everything
+            </button>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2 pt-2">
-          <button
-            type="button"
-            onClick={() => runNow(false)}
-            disabled={running}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#20364D] text-white px-4 py-2 text-sm font-semibold hover:bg-[#2a4865] disabled:opacity-50"
-            data-testid="automation-run-now-btn"
-          >
-            <Play className="h-4 w-4" /> {running ? "Running…" : "Run Now"}
-          </button>
-          <button
-            type="button"
-            onClick={() => runNow(true)}
-            disabled={running}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-[#20364D] hover:bg-slate-50 disabled:opacity-50"
-            data-testid="automation-dry-run-btn"
-          >
-            <Activity className="h-4 w-4" /> Dry Run
-          </button>
-          <button
-            type="button"
-            onClick={() => setOverrideOpen((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#D4A843] text-[#20364D] px-4 py-2 text-sm font-semibold hover:bg-[#c79937]"
-            data-testid="automation-promote-everything-btn"
-          >
-            <Sparkles className="h-4 w-4" /> Promote Everything
-          </button>
-          <button
-            type="button"
-            onClick={saveAll}
-            disabled={saving}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-emerald-500 text-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-50 disabled:opacity-50"
-            data-testid="automation-save-btn"
-          >
-            <CheckCircle2 className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
-          </button>
-        </div>
-        {overrideOpen && (
+        )}
+        {showConfig && (
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={saveAll}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-lg border border-emerald-500 text-emerald-700 px-4 py-2 text-sm font-semibold hover:bg-emerald-50 disabled:opacity-50"
+              data-testid="automation-save-btn"
+            >
+              <CheckCircle2 className="h-4 w-4" /> {saving ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        )}
+        {showActions && overrideOpen && (
           <div className="mt-3 rounded-lg border border-[#D4A843] bg-amber-50 p-4 space-y-3">
             <div className="text-sm font-semibold text-[#20364D]">
               Sitewide Sale — one-click override
@@ -409,8 +430,10 @@ export default function AutomationEngineSection() {
           />
         </div>
       </SettingsSectionCard>
+      )}
 
       {/* Group Deals block */}
+      {showConfig && (
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
@@ -498,8 +521,10 @@ export default function AutomationEngineSection() {
           </span>
         </div>
       </SettingsSectionCard>
+      )}
 
       {/* Margin pool funding */}
+      {showConfig && (
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
@@ -519,8 +544,62 @@ export default function AutomationEngineSection() {
           />
         ))}
       </SettingsSectionCard>
+      )}
+
+      {/* KONEKT continuous all-year promo */}
+      {showConfig && (
+      <SettingsSectionCard
+        title={
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[#D4A843]" /> KONEKT All-Year Promo
+          </div>
+        }
+        description={
+          <>
+            Continuous default promo shown on every product creative when no more
+            specific active promotion exists. Code defaults to <b>KONEKT</b>;
+            discount is calculated from the product's promotion bucket inside its
+            distributable margin. Specific active promos (e.g. a <b>COOLTEX</b>
+            campaign) automatically override this default for products in their scope.
+          </>
+        }
+      >
+        <ToggleRow
+          label="Enable KONEKT continuous promo"
+          value={config.continuous_promo?.enabled}
+          onChange={(v) => updateSection("continuous_promo", { enabled: v })}
+          hint="When OFF, products without their own active promo show no code at all."
+          data-testid="continuous-promo-enabled-toggle"
+        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+          <div className="flex items-center justify-between gap-3 py-1">
+            <div className="flex-1">
+              <div className="text-sm font-medium text-[#20364D]">Promo code</div>
+              <div className="text-xs text-slate-500 mt-0.5">Always shown uppercase. Customers type this at checkout.</div>
+            </div>
+            <input
+              type="text"
+              value={config.continuous_promo?.code || "KONEKT"}
+              onChange={(e) => updateSection("continuous_promo", { code: e.target.value.toUpperCase().slice(0, 16) })}
+              className="w-44 rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-[#D4A843]"
+              data-testid="continuous-promo-code-input"
+            />
+          </div>
+          <NumberRow
+            label="Promotion-pool share %"
+            value={config.continuous_promo?.pool_share_pct}
+            onChange={(v) => updateSection("continuous_promo", { pool_share_pct: v })}
+            min={0}
+            max={100}
+            hint="What % of the promotion bucket inside distributable margin to give away. 100 = use the entire bucket."
+            data-testid="continuous-promo-pool-input"
+          />
+        </div>
+      </SettingsSectionCard>
+      )}
 
       {/* Scoring weights */}
+      {showConfig && (
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
@@ -565,8 +644,10 @@ export default function AutomationEngineSection() {
           data-testid="expiry-max-age-input"
         />
       </SettingsSectionCard>
+      )}
 
       {/* Performance dashboard */}
+      {showActions && (
       <SettingsSectionCard
         title={
           <div className="flex items-center gap-2">
@@ -650,6 +731,7 @@ export default function AutomationEngineSection() {
           </>
         )}
       </SettingsSectionCard>
+      )}
     </div>
   );
 }

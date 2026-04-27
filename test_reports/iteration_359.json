@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration 359 — Tested Content Studio + Continuous KONEKT Promo + Auto-Promo Engine relocation. Backend 6/7 pytests PASS (1 skipped — no products with active_promotion_id remained after v358 cleanup). Frontend Content Studio creative drawer renders correctly with Konekt wordmark, SAVE TZS badge, QR code, and admin phone footer; Promo Focus filter reduces visible cards from 610 → 572. Promotions Manager actions panel (Run Now / Dry Run / Promote Everything / Performance dashboard) is in place at top, BUT the page still renders the 'Promotions (single products)' config card with Quota/Discount/Exploration/Duration/Min-giveaway inputs which should live only in Settings Hub.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/content-engine/template-data/products?promo_only=true", "issue": "No assertion failure but coverage gap: no fixture product has active_promotion_id pointing to active catalog_promotions, so the override-priority test was skipped. Cannot verify per-product code overrides KONEKT in live data."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "AdminPromotionsPage (/admin/promotions-manager)", "issue": "Config card 'Promotions (single products)' (Quota per category / Exploration ratio % / Discount pool share % / Default duration / Min giveaway TZS) is rendered on this page. Requirement says NO config cards on /admin/promotions-manager — only the actions panel + performance dashboard. The card shows even though Group Deals config / Margin Pool Funding / KONEKT All-Year / Scoring weights cards were correctly omitted.", "selector": "section containing 'Promotions (single products)' heading", "priority": "HIGH"},
+      {"component": "AdminPromotionsPage", "issue": "A stray '}' character is rendered as visible text below the Promotions config card (likely a JSX template literal escaped wrong).", "selector": "main", "priority": "MEDIUM"},
+      {"component": "Routing /admin/promotions", "issue": "Direct navigation to /admin/promotions returns a page with no engine actions or config — likely an old/empty route still mounted. Either remove or redirect to /admin/promotions-manager.", "selector": "route", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Content Studio Promo Focus", "issues": ["Layout filter reduces cards (610→572) but the 'Products (610)' tab count remains the total — minor UX hint that 'showing 572 of 610' could be displayed."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_content_studio_v359.py", "/app/test_reports/pytest/v359_results.xml"],
+  "action_items": [
+    "Remove the 'Promotions (single products)' config block from /admin/promotions-manager — it should only live under Settings Hub → Automation → Promotion & Deal Engine. The AutomationEngineSection mode='actions' on the Promotions page is rendering config cards in addition to the actions panel; verify the mode prop is being respected by every child sub-card.",
+    "Fix stray '}' character rendered as text on /admin/promotions-manager (likely orphaned JSX expression).",
+    "(Optional) Either remove /admin/promotions route or redirect to /admin/promotions-manager to avoid confusion.",
+    "(Optional) Seed at least one product with a non-KONEKT active_promotion_id so the override-priority test can run end-to-end."
+  ],
+  "critical_code_review_comments": [
+    "content_template_routes.py /template-data/products: cap removed via to_list(length=None) — verified returning 610 items. Good.",
+    "_resolve_product_promo correctly prioritises active_promotion_id over KONEKT continuous, and falls back to (0, '', '') when no promo applies.",
+    "automation_engine_service.DEFAULT_CONFIG.continuous_promo defaults are correct (enabled=True, code='KONEKT', pool_share_pct=100). PUT round-trip via /api/admin/automation/config preserves new pool_share_pct and uppercases code on read.",
+    "Disabling continuous_promo correctly drops has_promotion=false on KONEKT-only products (verified 572 → 0 → restored).",
+    "AdminPromotionsPage.jsx mode='actions' is not actually filtering out the Promotions config sub-card — investigate the mode prop wiring inside AutomationEngineSection."
+  ],
+  "updated_files": ["/app/backend/tests/test_content_studio_v359.py"],
+  "success_rate": {"backend": "86% (6/7, 1 skipped)", "frontend": "70% (Content Studio creative ✓, Promo Focus filter ✓, Promotions Manager actions ✓, BUT config-leak on Promotions Manager ✗)"},
+  "test_credentials": "admin@konekt.co.tz / KnktcKk_L-hw1wSyquvd! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — used live data. continuous_promo singleton was toggled off then restored to {enabled:true, code:'KONEKT', pool_share_pct:100} via test teardown.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend continuous_promo flow + 610-product cap + promo_only filter + KONEKT enrichment all PASS. Frontend creative drawer (Konekt wordmark, SAVE TZS, QR, +255 footer) renders correctly — confirmed visually in screenshot, not just text-matching. Outstanding: AdminPromotionsPage still renders the 'Promotions (single products)' config card despite requirement to keep config-only cards in Settings Hub. The 'KONEKT All-Year', 'Group Deals config', 'Margin Pool Funding', 'Scoring weights' cards are correctly missing — only the single-product Promotions config slipped through. Stray '}' artifact is rendered after the config block.",
+  "rca_of_the_issue": "AdminPromotionsPage mounts AutomationEngineSection with mode='actions' but the inner Promotions sub-card likely doesn't gate on mode==='actions'. Check AutomationEngineSection.jsx — the per-section render-guards must skip ALL of: Promotions config, Group Deals config, Margin Pool Funding, KONEKT All-Year Promo, Scoring weights when mode='actions'. Currently 4/5 are gated; 1 (Promotions single-products) is not."
+}

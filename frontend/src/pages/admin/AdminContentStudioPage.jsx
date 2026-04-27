@@ -145,7 +145,13 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
     else if (tab === "group_deals") raw = groupDeals;
     else if (tab === "brand") raw = BRAND_TEMPLATES.map((t) => ({ ...t, type: "brand", final_price: 0, selling_price: 0, discount_amount: 0, has_promotion: false, promo_code: "", image_url: "" }));
     else raw = products;
-    return applyViewerPromoCode(raw);
+    let withCode = applyViewerPromoCode(raw);
+    // Promo Focus → only show items that actually carry an active promo
+    // (either a per-product/category promo or the global KONEKT continuous).
+    if (layout?.key === "promo" && tab !== "brand") {
+      withCode = withCode.filter((it) => it.has_promotion && (it.discount_amount || 0) > 0);
+    }
+    return withCode;
   };
   const items = getItems();
 
@@ -167,7 +173,7 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-5" data-testid="content-studio">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-4" data-testid="content-studio">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-[#20364D]">Content Studio</h1>
@@ -517,7 +523,8 @@ function LayoutProduct({ item, theme, S, v, w, h, hasImg, hasDsc, branding, isLi
           <div style={{ fontSize: S.headline, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -1 }}>{item.name}</div>
           {item.description && <div style={{ fontSize: S.desc, color: theme.textSecondary, lineHeight: 1.4, maxWidth: 500 }}>{item.description}</div>}
           <PriceBlock item={item} theme={theme} S={S} v={v} hasDsc={hasDsc} />
-          <PromoCode item={item} theme={theme} S={S} />
+          {/* Product Focus intentionally omits the promo code badge —
+              the QR + footer carry attribution; the headline stays clean. */}
         </div>
       </div>
       <FooterBar theme={theme} S={S} branding={branding} viewerPromoCode={viewerPromoCode} item={item} />
@@ -702,22 +709,33 @@ function LayoutTrust({ item, theme, S, v, w, h, branding, isLight, viewerPromoCo
 }
 
 
+/* ═══ Shared: Konekt Wordmark (icon + text) ═══ */
+function KonektMark({ S, theme, isLight, branding }) {
+  // Always render an icon + the word "Konekt" so social posts are
+  // identifiable even when the admin has not uploaded a custom logo.
+  // Falls back to TriadSVG when no uploaded logo is configured.
+  const [logoErr, setLogoErr] = useState(false);
+  const showUploadedLogo = branding?.resolved_logo_url && !logoErr;
+  const wordmark = (branding?.trading_name || branding?.company_name || "Konekt").trim() || "Konekt";
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      {showUploadedLogo ? (
+        <img src={branding.resolved_logo_url} alt="" crossOrigin="anonymous" onError={() => setLogoErr(true)} style={{ height: S.triad, width: "auto", objectFit: "contain", borderRadius: 4 }} />
+      ) : (
+        <TriadSVG size={S.triad} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
+      )}
+      <div style={{ fontSize: S.logoText * 1.05, fontWeight: 800, color: theme.textPrimary, lineHeight: 1.1, letterSpacing: -0.5 }}>{wordmark}</div>
+    </div>
+  );
+}
+
 /* ═══ Shared: Logo Bar ═══ */
 function LogoBar({ theme, S, branding, isLight, hasDsc, discount }) {
-  const [logoErr, setLogoErr] = useState(false);
-  const showUploadedLogo = branding.resolved_logo_url && !logoErr;
   return (
     <div style={{ padding: `${S.pad * 0.7}px ${S.pad}px ${S.pad * 0.4}px`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {showUploadedLogo ? (
-          <img src={branding.resolved_logo_url} alt="" crossOrigin="anonymous" onError={() => setLogoErr(true)} style={{ height: S.triad, width: "auto", objectFit: "contain", borderRadius: 4 }} />
-        ) : (
-          <TriadSVG size={S.triad} variant={isLight} primary={theme.textPrimary === "#fff" || theme.textPrimary === "#ffffff" || theme.textPrimary === "#f1f5f9" ? "#FFFFFF" : "#20364D"} accent={theme.accent} />
-        )}
-        <div>
-          <div style={{ fontSize: S.logoText, fontWeight: 700, color: theme.textPrimary, lineHeight: 1.2 }}>{branding.trading_name || branding.company_name || ""}</div>
-          {branding.tagline && <div style={{ fontSize: S.tagline, color: theme.textSecondary, marginTop: 1 }}>{branding.tagline}</div>}
-        </div>
+      <div>
+        <KonektMark S={S} theme={theme} isLight={isLight} branding={branding} />
+        {branding.tagline && <div style={{ fontSize: S.tagline, color: theme.textSecondary, marginTop: 4, marginLeft: S.triad + 12 }}>{branding.tagline}</div>}
       </div>
       {hasDsc && discount > 0 && (
         <div style={{ backgroundColor: theme.badgeBg, color: theme.badgeText, padding: `${S.badge * 0.5}px ${S.badge}px`, borderRadius: 8, fontSize: S.badge, fontWeight: 800, letterSpacing: 0.5 }}>
@@ -750,28 +768,58 @@ function PromoCode({ item, theme, S }) {
   );
 }
 
-/* ═══ Shared: Footer Bar ═══ */
+/* ═══ Shared: Footer Bar ═══
+ *
+ * Per-role rules (locked, do not soften):
+ *  - Admin (no viewerPromoCode):
+ *      * shows the company phone in the footer
+ *      * QR encodes konekt.co.tz/<route>?ref=<KONEKT-or-active-promo-code>
+ *      * code shown next to the QR is the item's promo_code (KONEKT or
+ *        the more specific active-promo code, e.g. COOLTEX)
+ *  - Affiliate / Sales (viewerPromoCode set):
+ *      * NO company contacts shown (prevents customers bypassing the rep)
+ *      * QR encodes konekt.co.tz/<route>?ref=<their personal code>
+ *      * code shown is their personal code
+ *
+ * QR target uses the konekt.co.tz base url (production), never the
+ * preview domain — keeps printed/screenshotted creatives valid forever.
+ */
 function FooterBar({ theme, S, branding, viewerPromoCode = "", item }) {
-  const contactParts = [branding.phone, branding.email].filter(Boolean).join(" | ");
-  // The "Scan here" QR is only baked into the visual when the viewer is
-  // a sales/affiliate user (i.e. they have a personal promo code). It
-  // encodes the canonical product URL with `?ref=<code>` so an attribution
-  // cookie is dropped even if the customer only saw the screenshot.
   const apiBase = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
-  const qrKind = item?.type === "group_deal" ? "group_deal" : item?.type === "promotion" ? "promo_campaign" : "product";
-  const showQr = !!viewerPromoCode && !!item?.id && item?.type !== "brand";
-  const qrUrl = showQr ? `${apiBase}/api/qr/${qrKind}/${item.id}.png?ref=${encodeURIComponent(viewerPromoCode)}` : "";
+  const isAffiliateOrSales = !!viewerPromoCode;
+  const itemPromo = (item?.promo_code || "").trim();
+  const refCode = isAffiliateOrSales ? viewerPromoCode : itemPromo;
+  const qrKind = item?.type === "group_deal" ? "group_deal"
+    : item?.type === "promotion" ? "promo_campaign"
+    : "product";
+  const showQr = !!item?.id && item?.type !== "brand";
+  const qrUrl = showQr && refCode
+    ? `${apiBase}/api/qr/${qrKind}/${item.id}.png?ref=${encodeURIComponent(refCode)}`
+    : (showQr ? `${apiBase}/api/qr/${qrKind}/${item.id}.png` : "");
+
   return (
     <div style={{ backgroundColor: theme.footerBg, padding: `${S.pad * 0.55}px ${S.pad}px`, display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: `1px solid ${theme.textSecondary}20`, gap: 16 }}>
       <div>
-        <div style={{ fontSize: S.footer + 2, fontWeight: 700, color: theme.textPrimary || theme.footerText }}>{branding.trading_name || branding.company_name || ""}</div>
-        {contactParts && <div style={{ fontSize: S.footer, color: theme.footerText, marginTop: 2 }}>{contactParts}</div>}
+        <div style={{ fontSize: S.footer + 2, fontWeight: 700, color: theme.textPrimary || theme.footerText }}>
+          {branding.trading_name || branding.company_name || "Konekt"}
+        </div>
+        {/* Admin sees company phone; affiliate/sales see nothing here to
+            prevent the customer from bypassing the rep on the post. */}
+        {!isAffiliateOrSales && branding.phone && (
+          <div style={{ fontSize: S.footer, color: theme.footerText, marginTop: 2 }}>
+            {branding.phone}
+          </div>
+        )}
       </div>
       {showQr ? (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: S.footer + 1, fontWeight: 700, color: theme.accent, textTransform: "uppercase", letterSpacing: 1 }}>Scan to Order</div>
-            <div style={{ fontSize: S.footer - 1, color: theme.footerText, marginTop: 2, fontFamily: "monospace" }}>Code: {viewerPromoCode}</div>
+            {refCode && (
+              <div style={{ fontSize: S.footer - 1, color: theme.footerText, marginTop: 2, fontFamily: "monospace" }}>
+                Code: {refCode}
+              </div>
+            )}
           </div>
           <div style={{ background: "#fff", padding: 6, borderRadius: 8, lineHeight: 0 }}>
             <img src={qrUrl} alt="QR" crossOrigin="anonymous" style={{ width: S.pad * 1.6, height: S.pad * 1.6, display: "block" }} />

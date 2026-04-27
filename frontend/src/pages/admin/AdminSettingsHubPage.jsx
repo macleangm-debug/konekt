@@ -410,7 +410,7 @@ export default function AdminSettingsHubPage() {
             {tab === "catalog_variants" && <CatalogVariantsTab state={state} setState={setState} />}
             {tab === "catalog_sku" && <CatalogSkuTab state={state} setState={setState} />}
             {tab === "vendor_ops_settings" && <VendorOpsSettingsTab state={state} setState={setState} />}
-            {tab === "automation_engine" && <SettingsLockGate><AutomationEngineSection /></SettingsLockGate>}
+            {tab === "automation_engine" && <SettingsLockGate><AutomationEngineSection mode="config" /></SettingsLockGate>}
           </div>
         </div>
       </main>

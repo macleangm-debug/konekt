@@ -83,6 +83,17 @@ DEFAULT_CONFIG: dict = {
         "fifo_when_over_quota": True,
     },
 
+    # KONEKT continuous all-year promo — read by Content Studio template
+    # endpoint to overlay a "save TZS X" badge on every product that doesn't
+    # already have a more specific active_promotion_id. Pricing-engine bound:
+    # the saving comes from a configurable share of the product's promotion
+    # pool inside its distributable margin.
+    "continuous_promo": {
+        "enabled": True,
+        "code": "KONEKT",
+        "pool_share_pct": 100,
+    },
+
     "last_run": {
         "promotions_at": None,
         "group_deals_at": None,
