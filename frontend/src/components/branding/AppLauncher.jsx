@@ -15,7 +15,7 @@ import React, { useState, useEffect } from "react";
  *   6. Fade out → app visible
  */
 
-export default function AppLauncher({ onComplete, brandName = "Konekt", tagline = "One-stop shop for products, services & deals" }) {
+export default function AppLauncher({ onComplete, brandName = "Konekt", tagline = "Everything Your Business Needs" }) {
   const [phase, setPhase] = useState("intro"); // intro → fading → done
 
   useEffect(() => {
