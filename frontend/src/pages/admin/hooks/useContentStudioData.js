@@ -32,8 +32,9 @@ export default function useContentStudioData() {
       setGroupDeals(deals);
       const b = bR.data?.branding || {};
       const hub = hubR.data || {};
-      b.phone = b.phone || hub?.business_profile?.support_phone || hub?.invoice_branding?.contact_phone || "";
-      b.email = b.email || hub?.business_profile?.support_email || hub?.invoice_branding?.contact_email || "";
+      // Business Profile is source-of-truth for Content Studio contacts.
+      b.phone = hub?.business_profile?.support_phone || hub?.invoice_branding?.contact_phone || b.phone || "";
+      b.email = hub?.business_profile?.support_email || hub?.invoice_branding?.contact_email || b.email || "";
       b.resolved_logo_url = resolveLogoUrl(b.logo_url);
       setBranding(b);
     } finally {
