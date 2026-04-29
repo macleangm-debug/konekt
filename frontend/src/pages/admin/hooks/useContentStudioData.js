@@ -19,13 +19,14 @@ export default function useContentStudioData() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pR, sR, bR, gdR, hubR] = await Promise.all([
+      const [pR, sR, bR, gdR] = await Promise.all([
         api.get("/api/content-engine/template-data/products"),
         api.get("/api/content-engine/template-data/services"),
         api.get("/api/content-engine/template-data/branding"),
         api.get("/api/public/group-deals/featured").catch(() => ({ data: [] })),
-        api.get("/api/admin/settings-hub").catch(() => ({ data: {} })),
       ]);
+      const activeCountry = bR?.data?.branding?.country_code || "TZ";
+      const hubR = await api.get(`/api/admin/settings-hub?country=${activeCountry}`).catch(() => ({ data: {} }));
       setProducts(pR.data?.items || []);
       setServices(sR.data?.items || []);
       const deals = (gdR.data || []).map((d) => ({ id: d.id, name: d.product_name, description: d.description || "", image_url: d.product_image || "", category: "Group Deal", type: "group_deal", final_price: d.discounted_price || 0, selling_price: d.original_price || 0, discount_amount: (d.original_price || 0) > (d.discounted_price || 0) ? (d.original_price - d.discounted_price) : 0, has_promotion: false, promo_code: "", current_committed: d.current_committed || 0, display_target: d.display_target || 0, buyer_count: d.buyer_count || 0 }));
