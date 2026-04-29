@@ -278,19 +278,19 @@ api_router = APIRouter(prefix="/api")
 admin_router = APIRouter(prefix="/api/admin")
 security = HTTPBearer(auto_error=False)
 
-# Mount static files for uploads
-STATIC_DIR = Path("/app/static")
+# Mount static files for uploads (Render-compatible writable paths)
+BASE_DIR = Path(__file__).parent
+STATIC_DIR = BASE_DIR / "static"
+UPLOADS_DIR = BASE_DIR / "uploads"
+
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-# /app/uploads is the canonical upload root used by url_catalog_import and
-# vendor_agreement modules; keep it in absolute form so it works regardless of
-# the backend's current working directory.
-UPLOADS_DIR = "/app/uploads"
-Path(UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
-# Also expose under /api/uploads so Kubernetes ingress (which only proxies /api/*
-# to the backend) can serve product images without going through the frontend.
-app.mount("/api/uploads", StaticFiles(directory=UPLOADS_DIR), name="api_uploads")
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+# Also expose under /api/uploads so ingress configs that only proxy /api/*
+# can still serve upload assets.
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="api_uploads")
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
