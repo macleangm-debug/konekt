@@ -29,16 +29,20 @@ const SERVICE_CATEGORIES = [
   { value: "other", label: "Other / Not Sure" },
 ];
 
-const BUDGET_RANGES = [
-  { value: "", label: "Select budget range (optional)" },
-  { value: "under_100k", label: "Under TZS 100,000" },
-  { value: "100k_500k", label: "TZS 100,000 – 500,000" },
-  { value: "500k_2m", label: "TZS 500,000 – 2,000,000" },
-  { value: "2m_5m", label: "TZS 2,000,000 – 5,000,000" },
-  { value: "over_5m", label: "Over TZS 5,000,000" },
-  { value: "not_sure", label: "Not sure yet" },
-];
 
+const DESCRIPTION_PLACEHOLDERS = {
+  products: "e.g., 500 branded notebooks, 60 office chairs, and 20 desks for HQ rollout...",
+  promo: "e.g., 300 mugs + 300 t-shirts with logo print for customer giveaways...",
+  services: "e.g., logo redesign, storefront branding, and installation at 3 branches...",
+  other: "Tell us what you need and we will guide you with options...",
+};
+
+const QUANTITY_PLACEHOLDERS = {
+  products: "e.g., 200 units, 3 branches",
+  promo: "e.g., 500 giveaway kits",
+  services: "e.g., 1 project, 3 locations",
+  other: "e.g., approximate quantity or project scope",
+};
 const URGENCY_OPTIONS = [
   { value: "flexible", label: "Flexible — no rush" },
   { value: "within_month", label: "Within a month" },
@@ -87,7 +91,6 @@ export default function QuoteRequestPage() {
     description: "",
     quantity: "",
     urgency: "flexible",
-    budget_range: "",
     first_name: "",
     last_name: "",
     email: "",
@@ -146,7 +149,6 @@ export default function QuoteRequestPage() {
           primary_lane: form.primary_need,
           service_category: form.service_category,
           urgency: form.urgency,
-          budget_range: form.budget_range,
           quantity: form.quantity,
           scope_message: form.description,
         },
@@ -189,11 +191,11 @@ export default function QuoteRequestPage() {
               Our sales team will review your request and follow up within <strong>24 hours</strong>.
             </div>
 
-            {submitted.account_invite && (
+            {(!user || submitted.account_invite) && (
               <div className="mt-5 rounded-xl bg-blue-50 border border-blue-200 p-4 text-left text-sm" data-testid="quote-activation-banner">
                 <p className="font-bold text-blue-900">Track this request</p>
                 <p className="text-blue-800 mt-1">Create a free account to follow progress and manage future orders.</p>
-                <a href={submitted.account_invite.invite_url} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold text-sm hover:bg-blue-700 transition">
+                <a href={submitted?.account_invite?.invite_url || "/register"} className="inline-block mt-3 rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold text-sm hover:bg-blue-700 transition">
                   Create Account
                 </a>
               </div>
@@ -226,23 +228,23 @@ export default function QuoteRequestPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50" data-testid="quote-request-page">
       <PublicNavbarV2 />
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-8 py-8 sm:py-12">
         <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-[#20364D] transition-colors mb-6" data-testid="quote-back-btn">
           <ArrowLeft className="w-4 h-4" />Back
         </button>
 
         {/* Hero */}
         <div className="mb-8">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#20364D] tracking-tight">
+          <h1 className="text-[46px] leading-[1.05] font-extrabold text-[#20364D] tracking-tight">
             Request a Quote
           </h1>
-          <p className="text-slate-500 mt-2 max-w-lg">
+          <p className="text-slate-500 mt-2 max-w-lg text-lg leading-8">
             Tell us what you need and our team will follow up with pricing within 24 hours.
           </p>
         </div>
 
         {/* Progress indicator */}
-        <div className="flex items-center gap-2 mb-8">
+        <div className="flex items-center gap-3.5 mb-8">
           {[
             { n: 1, label: "What you need" },
             { n: 2, label: "Timeline" },
@@ -253,7 +255,7 @@ export default function QuoteRequestPage() {
               <button
                 type="button"
                 onClick={() => s.n <= step && setStep(s.n)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   step === s.n ? "bg-[#20364D] text-white" : step > s.n ? "bg-[#20364D]/10 text-[#20364D]" : "bg-slate-100 text-slate-400"
                 }`}
               >
@@ -268,13 +270,13 @@ export default function QuoteRequestPage() {
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-2xl bg-white border p-6 sm:p-8 space-y-6" data-testid="quote-form">
+        <form onSubmit={handleSubmit} className="rounded-[22px] bg-white border border-slate-200 p-6 sm:p-8 space-y-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]" data-testid="quote-form">
           {/* ────── Step 1: What do you need? ────── */}
           {step === 1 && (
             <div className="space-y-6" data-testid="quote-step-1">
               <div>
                 <h2 className="text-lg font-bold text-[#20364D] mb-4">What do you need?</h2>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   {NEED_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
                     const active = form.primary_need === opt.value;
@@ -284,8 +286,8 @@ export default function QuoteRequestPage() {
                         type="button"
                         onClick={() => set("primary_need", opt.value)}
                         data-testid={`primary-lane-${opt.value}`}
-                        className={`rounded-xl border p-4 text-left transition-all ${
-                          active ? "border-[#20364D] bg-[#20364D]/5 ring-1 ring-[#20364D]" : "border-slate-200 hover:border-slate-300"
+                        className={`rounded-xl border p-4 text-left transition-all min-h-[88px] ${
+                          active ? "border-[#1f3b5b] bg-white ring-2 ring-[#1f3b5b]" : "border-slate-200 hover:border-slate-300 bg-white"
                         }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
@@ -331,14 +333,14 @@ export default function QuoteRequestPage() {
                       value={form.description}
                       onChange={(e) => set("description", e.target.value)}
                       className={`${INPUT_CLS} min-h-[100px] resize-none`}
-                      placeholder="e.g., 500 branded notebooks for a conference, logo design for a new product line, office branding for 3 floors..."
+                      placeholder={DESCRIPTION_PLACEHOLDERS[form.primary_need] || "e.g., 500 branded notebooks for a conference..."}
                       data-testid="quote-details"
                     />
                   </div>
                   <div>
                     <label className={LABEL_CLS}>Quantity (optional)</label>
                     <input type="text" value={form.quantity} onChange={(e) => set("quantity", e.target.value)}
-                      className={INPUT_CLS} placeholder="e.g., 200 units, 3 locations, 1 project"
+                      className={INPUT_CLS} placeholder={QUANTITY_PLACEHOLDERS[form.primary_need] || "e.g., 200 units, 3 locations"}
                       data-testid="quote-quantity"
                     />
                   </div>
@@ -350,7 +352,7 @@ export default function QuoteRequestPage() {
                   type="button"
                   disabled={!canAdvance()}
                   onClick={() => setStep(2)}
-                  className="rounded-xl bg-[#20364D] text-white px-6 py-3 font-semibold hover:bg-[#17283c] transition disabled:opacity-40 flex items-center gap-2"
+                  className="rounded-xl bg-[#20364D] text-white px-8 py-3.5 text-lg font-semibold hover:bg-[#17283c] transition disabled:opacity-40 flex items-center gap-2"
                   data-testid="quote-next-step-1"
                 >
                   Next <ArrowRight className="w-4 h-4" />
@@ -359,10 +361,10 @@ export default function QuoteRequestPage() {
             </div>
           )}
 
-          {/* ────── Step 2: Timeline & Budget ────── */}
+          {/* ────── Step 2: Timeline ────── */}
           {step === 2 && (
             <div className="space-y-5" data-testid="quote-step-2">
-              <h2 className="text-lg font-bold text-[#20364D]">Timeline & Budget</h2>
+              <h2 className="text-lg font-bold text-[#20364D]">Timeline</h2>
               <div>
                 <label className={LABEL_CLS}>When do you need this?</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -378,12 +380,6 @@ export default function QuoteRequestPage() {
                     );
                   })}
                 </div>
-              </div>
-              <div>
-                <label className={LABEL_CLS}>Budget range (optional)</label>
-                <select value={form.budget_range} onChange={(e) => set("budget_range", e.target.value)} className={INPUT_CLS} data-testid="quote-budget">
-                  {BUDGET_RANGES.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
-                </select>
               </div>
 
               <div className="flex justify-between pt-2">
@@ -422,7 +418,7 @@ export default function QuoteRequestPage() {
                 </div>
                 <div>
                   <label className={LABEL_CLS}><Building2 className="w-3.5 h-3.5 inline mr-1.5 text-slate-400" />Company</label>
-                  <input type="text" value={form.company_name} onChange={(e) => set("company_name", e.target.value)} className={INPUT_CLS} placeholder="Acme Corp" data-testid="quote-company" />
+                  <input type="text" value={form.company_name} onChange={(e) => set("company_name", e.target.value)} className={INPUT_CLS} placeholder="Konekt Limited" data-testid="quote-company" />
                 </div>
                 <PhoneNumberField
                   prefix={form.phone_prefix}
@@ -440,7 +436,6 @@ export default function QuoteRequestPage() {
                 {form.service_name && <p><span className="text-slate-500">Service:</span> <span className="font-medium text-[#20364D]">{form.service_name}</span></p>}
                 {form.description && <p><span className="text-slate-500">Details:</span> <span className="text-slate-600 line-clamp-2">{form.description}</span></p>}
                 <p><span className="text-slate-500">Timeline:</span> <span className="text-slate-600">{URGENCY_OPTIONS.find((u) => u.value === form.urgency)?.label}</span></p>
-                {form.budget_range && form.budget_range !== "" && <p><span className="text-slate-500">Budget:</span> <span className="text-slate-600">{BUDGET_RANGES.find((b) => b.value === form.budget_range)?.label}</span></p>}
               </div>
 
               <div className="flex justify-between pt-2">
