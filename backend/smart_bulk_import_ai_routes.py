@@ -46,7 +46,7 @@ _LLM_AVAILABLE = True
 logger = logging.getLogger("smart_import_ai")
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 router = APIRouter(prefix="/api/smart-import", tags=["Smart Bulk Import — AI"])
 

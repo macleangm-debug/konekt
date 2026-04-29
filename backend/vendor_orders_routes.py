@@ -15,7 +15,7 @@ from partner_access_service import get_partner_user_from_header
 router = APIRouter(prefix="/api/vendor", tags=["Vendor Orders"])
 
 mongo_url = os.environ['MONGO_URL']
-db_name = os.environ['DB_NAME']
+db_name = os.environ.get('DB_NAME', 'konekt')
 client = AsyncIOMotorClient(mongo_url)
 db = client[db_name]
 
