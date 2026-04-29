@@ -9,6 +9,7 @@ from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 
 router = APIRouter(prefix="/api/pdf", tags=["PDF Generation"])
+BASE_DIR = Path(__file__).resolve().parent
 
 # ── Konekt brand palette ──
 NAVY = "#20364D"
@@ -136,7 +137,7 @@ def _header_block(doc_type, doc_number, doc_date, status_label, status_class, br
     tagline = branding.get("tagline") or "B2B Commerce Platform"
     # Use uploaded logo if available, otherwise render Connected Triad SVG + wordmark
     if logo_url:
-        logo_html = f'<img src="file:///app/backend{logo_url}" style="height:44px; object-fit:contain;" />'
+        logo_html = f'<img src="file://{BASE_DIR}{logo_url}" style="height:44px; object-fit:contain;" />'
     else:
         triad_svg = _connected_triad_logo_svg()
         logo_html = f'''<div style="display:flex; align-items:center; gap:10px;">
@@ -212,7 +213,7 @@ def _auth_column_html(branding):
         if sig_url and sig_url.startswith("data:"):
             sig_img = f'<img src="{sig_url}" class="signature-img" />'
         elif sig_url:
-            sig_img = f'<img src="file:///app/backend{sig_url}" class="signature-img" />'
+            sig_img = f'<img src="file://{BASE_DIR}{sig_url}" class="signature-img" />'
         else:
             sig_img = '<div class="sig-line"></div>'
         cfo_name = branding.get("cfo_name", "")
@@ -229,9 +230,9 @@ def _auth_column_html(branding):
         stamp_mode = branding.get("stamp_mode", "generated")
         stamp_content = ""
         if stamp_mode == "uploaded" and branding.get("stamp_uploaded_url"):
-            stamp_content = f'<img src="file:///app/backend{branding["stamp_uploaded_url"]}" class="stamp-img" />'
+            stamp_content = f'<img src="file://{BASE_DIR}{branding["stamp_uploaded_url"]}" class="stamp-img" />'
         elif stamp_mode == "generated" and branding.get("stamp_preview_url"):
-            svg_path = f"/app/backend{branding['stamp_preview_url']}"
+            svg_path = f"{BASE_DIR}{branding['stamp_preview_url']}"
             try:
                 with open(svg_path, "r") as f:
                     svg_raw = f.read()

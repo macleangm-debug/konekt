@@ -391,7 +391,8 @@ async def _extract_image_tarball() -> int:
     if not tar_path.exists():
         logger.warning("production_hydration: no image tarball at %s", tar_path)
         return 0
-    target_root = Path("/app/uploads")
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    target_root = BASE_DIR / "uploads"
     try:
         target_root.mkdir(parents=True, exist_ok=True)
     except Exception as exc:

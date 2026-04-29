@@ -10,7 +10,8 @@ from PIL import Image
 
 logger = logging.getLogger("image_pipeline")
 
-UPLOAD_DIR = "/app/uploads/product_images"
+BASE_DIR = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = str(BASE_DIR / "uploads" / "product_images")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 VARIANTS = {

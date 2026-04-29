@@ -372,7 +372,8 @@ async def upload_id_document(request: Request):
     if not (mime.startswith("image/") or mime == "application/pdf"):
         raise HTTPException(status_code=400, detail="Only image or PDF accepted")
 
-    target_dir = Path("/app/uploads/affiliate_ids")
+    BASE_DIR = Path(__file__).resolve().parent
+    target_dir = BASE_DIR / "uploads" / "affiliate_ids"
     target_dir.mkdir(parents=True, exist_ok=True)
     ext = (os.path.splitext(file.filename or "")[1] or "").lower()
     if ext not in (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".pdf"):

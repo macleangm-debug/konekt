@@ -28,7 +28,7 @@ router = APIRouter(tags=["Customer Orders"])
 
 # Database connection (same pattern as server.py)
 client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
-db = client[os.environ.get('DB_NAME')]
+db = client[os.environ.get('DB_NAME') or 'konekt']
 
 
 class OrderLineItem(BaseModel):

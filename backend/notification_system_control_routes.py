@@ -23,7 +23,7 @@ from services.notification_multichannel_service import EVENT_CATALOG
 router = APIRouter(prefix="/api/admin/notification-system", tags=["Notification System Control"])
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-2024")
 logger = logging.getLogger("notif_system")
