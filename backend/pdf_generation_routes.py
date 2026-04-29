@@ -3,6 +3,7 @@ Konekt Premium Document Templates — Invoice, Quote, Order
 Settings-driven, Zoho-level quality, unified brand family
 """
 import os
+from pathlib import Path
 from io import BytesIO
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, HTTPException
