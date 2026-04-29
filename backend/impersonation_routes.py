@@ -27,7 +27,7 @@ import jwt
 router = APIRouter(prefix="/api/admin", tags=["Impersonation"])
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 PARTNER_SECRET = os.environ.get("PARTNER_JWT_SECRET", "konekt-partner-secret-2024")
 ADMIN_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-2024")
