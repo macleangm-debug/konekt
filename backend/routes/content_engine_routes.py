@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 from typing import Optional, List
+from pathlib import Path
 
 router = APIRouter(tags=["content-engine"])
 

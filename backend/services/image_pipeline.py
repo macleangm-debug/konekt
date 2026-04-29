@@ -7,6 +7,7 @@ import io
 import logging
 from uuid import uuid4
 from PIL import Image
+from pathlib import Path
 
 logger = logging.getLogger("image_pipeline")
 

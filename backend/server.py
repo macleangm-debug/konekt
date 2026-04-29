@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, Request
+print("SERVER STARTING...")
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -257,40 +258,44 @@ from notification_routes import router as notification_router
 # Checkout Points Validation
 from checkout_points_routes import router as checkout_points_router
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+try:
+    ROOT_DIR = Path(__file__).parent
+    load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'konekt')]
+    # MongoDB connection
+    mongo_url = os.environ['MONGO_URL']
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[os.environ.get('DB_NAME', 'konekt')]
 
-# JWT config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
-JWT_ALGORITHM = "HS256"
+    # JWT config
+    JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
+    JWT_ALGORITHM = "HS256"
 
-# LLM Key
-EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
+    # LLM Key
+    EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
-# Create the main app
-app = FastAPI(title="Konekt API")
-api_router = APIRouter(prefix="/api")
-admin_router = APIRouter(prefix="/api/admin")
-security = HTTPBearer(auto_error=False)
+    # Create the main app
+    app = FastAPI(title="Konekt API")
+    api_router = APIRouter(prefix="/api")
+    admin_router = APIRouter(prefix="/api/admin")
+    security = HTTPBearer(auto_error=False)
 
-# Mount static files for uploads (Render-compatible writable paths)
-BASE_DIR = Path(__file__).parent
-STATIC_DIR = BASE_DIR / "static"
-UPLOADS_DIR = BASE_DIR / "uploads"
+    # Mount static files for uploads (Render-compatible writable paths)
+    BASE_DIR = Path(__file__).parent
+    STATIC_DIR = BASE_DIR / "static"
+    UPLOADS_DIR = BASE_DIR / "uploads"
 
-STATIC_DIR.mkdir(parents=True, exist_ok=True)
-UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
-# Also expose under /api/uploads so ingress configs that only proxy /api/*
-# can still serve upload assets.
-app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="api_uploads")
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+    # Also expose under /api/uploads so ingress configs that only proxy /api/*
+    # can still serve upload assets.
+    app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="api_uploads")
+except Exception as e:
+    print("STARTUP ERROR:", e)
+    raise
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -3754,3 +3759,8 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("server:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))

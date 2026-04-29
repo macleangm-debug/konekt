@@ -12,6 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from services.checkout_totals_service import get_vat_percent, calculate_totals
 from services.product_promotion_enrichment import resolve_checkout_item_price
 from attribution_capture_service import (
+from pathlib import Path
     extract_attribution_from_payload,
     hydrate_affiliate_from_code,
     build_attribution_block,
