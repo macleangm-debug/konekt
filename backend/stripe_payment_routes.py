@@ -9,10 +9,7 @@ from pydantic import BaseModel
 from typing import Optional
 import os
 
-from emergentintegrations.payments.stripe.checkout import (
-    StripeCheckout,
-    CheckoutSessionRequest,
-)
+from services.optional_integrations import get_stripe_checkout_classes
 
 router = APIRouter(prefix="/api/payments/stripe", tags=["Stripe Payments"])
 
@@ -61,6 +58,9 @@ async def create_invoice_checkout(payload: InvoiceCheckoutRequest, request: Requ
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}/api/webhook/stripe"
 
+    StripeCheckout, CheckoutSessionRequest = get_stripe_checkout_classes()
+    if not StripeCheckout or not CheckoutSessionRequest:
+        raise HTTPException(status_code=503, detail="Stripe integration unavailable: emergentintegrations not installed")
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
     metadata = {
@@ -132,6 +132,9 @@ async def get_checkout_status(session_id: str, request: Request):
 
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}/api/webhook/stripe"
+    StripeCheckout, CheckoutSessionRequest = get_stripe_checkout_classes()
+    if not StripeCheckout or not CheckoutSessionRequest:
+        raise HTTPException(status_code=503, detail="Stripe integration unavailable: emergentintegrations not installed")
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
     try:
