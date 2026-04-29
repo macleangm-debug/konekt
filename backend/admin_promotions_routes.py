@@ -60,7 +60,7 @@ async def _assert_admin(request: Request) -> dict:
 
 
 mongo_url = os.environ["MONGO_URL"]
-db_name = os.environ["DB_NAME"]
+db_name = os.environ.get("DB_NAME", "konekt")
 _client = AsyncIOMotorClient(mongo_url)
 db = _client[db_name]
 

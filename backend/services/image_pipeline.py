@@ -7,10 +7,12 @@ import io
 import logging
 from uuid import uuid4
 from PIL import Image
+from pathlib import Path
 
 logger = logging.getLogger("image_pipeline")
 
-UPLOAD_DIR = "/app/uploads/product_images"
+BASE_DIR = Path(__file__).resolve().parent.parent
+UPLOAD_DIR = str(BASE_DIR / "uploads" / "product_images")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 VARIANTS = {

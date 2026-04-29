@@ -31,16 +31,22 @@ import tempfile
 
 from partner_access_service import get_partner_user_from_header
 
-try:
-    from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
-    _LLM_AVAILABLE = True
-except Exception:
-    _LLM_AVAILABLE = False
+from services.optional_integrations import get_llm_chat_classes
+import importlib
+
+def _file_content_cls():
+    try:
+        mod = importlib.import_module("emergentintegrations.llm.chat")
+        return getattr(mod, "FileContentWithMimeType")
+    except Exception:
+        return None
+
+_LLM_AVAILABLE = True
 
 logger = logging.getLogger("smart_import_ai")
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 router = APIRouter(prefix="/api/smart-import", tags=["Smart Bulk Import — AI"])
 
@@ -160,8 +166,10 @@ def _parse_rows(text: str) -> List[Dict]:
 
 async def _run_ai(system: str, user_text: str, file_paths_with_mime: List[tuple]) -> List[Dict]:
     """Run the LLM once with primary model, fallback to secondary on failure."""
-    if not _LLM_AVAILABLE:
-        raise HTTPException(status_code=500, detail="AI library not installed (emergentintegrations)")
+    LlmChat, UserMessage = get_llm_chat_classes()
+    FileContentWithMimeType = _file_content_cls()
+    if not LlmChat or not UserMessage or not FileContentWithMimeType:
+        raise HTTPException(status_code=503, detail="AI import unavailable outside Emergent (missing emergentintegrations)")
     if not EMERGENT_KEY:
         raise HTTPException(status_code=500, detail="EMERGENT_LLM_KEY not configured")
 

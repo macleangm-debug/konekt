@@ -33,7 +33,8 @@ from qrcode.constants import ERROR_CORRECT_M
 
 router = APIRouter(tags=["QR Codes"])
 
-QR_CACHE_ROOT = Path("/app/static/qr")
+BASE_DIR = Path(__file__).resolve().parent
+QR_CACHE_ROOT = BASE_DIR / "static" / "qr"
 QR_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Deep-link templates per kind. These MUST match the public-facing routes

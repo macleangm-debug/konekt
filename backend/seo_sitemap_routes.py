@@ -13,12 +13,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 router = APIRouter(prefix="/api/seo", tags=["seo"])
 
 mongo_url = os.environ["MONGO_URL"]
-db_name = os.environ["DB_NAME"]
+db_name = os.environ.get("DB_NAME", "konekt")
 _client = AsyncIOMotorClient(mongo_url)
 db = _client[db_name]
 
 SITE_BASE = (os.environ.get("PUBLIC_SITE_URL") or "https://konekt.co.tz").rstrip("/")
-PUBLIC_DIR = Path(os.environ.get("FRONTEND_PUBLIC_DIR", "/app/frontend/public"))
+BASE_DIR = Path(__file__).resolve().parent
+PUBLIC_DIR = Path(os.environ.get("FRONTEND_PUBLIC_DIR", str(BASE_DIR.parent / "frontend" / "public")))
 PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
 
 # Static high-value landing pages included in the sitemap

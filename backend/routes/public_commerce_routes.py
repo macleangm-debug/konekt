@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, File, UploadFile
 from motor.motor_asyncio import AsyncIOMotorClient
 from services.checkout_totals_service import get_vat_percent, calculate_totals
 from services.product_promotion_enrichment import resolve_checkout_item_price
+from pathlib import Path
 from attribution_capture_service import (
     extract_attribution_from_payload,
     hydrate_affiliate_from_code,
@@ -543,7 +544,8 @@ async def public_order_status(order_number: str, email: str = ""):
 
 # ─── Payment Proof File Upload ────────────────────────────
 
-PROOF_UPLOAD_DIR = "/app/backend/uploads/payment_proofs"
+BASE_DIR = Path(__file__).resolve().parent.parent
+PROOF_UPLOAD_DIR = str(BASE_DIR / "uploads" / "payment_proofs")
 os.makedirs(PROOF_UPLOAD_DIR, exist_ok=True)
 ALLOWED_PROOF_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
 MAX_PROOF_SIZE = 10 * 1024 * 1024  # 10MB
