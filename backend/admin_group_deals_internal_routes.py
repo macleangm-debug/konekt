@@ -30,7 +30,7 @@ from services.settings_resolver import get_pricing_policy_tiers
 from commission_margin_engine_service import resolve_tier
 
 MONGO_URL = os.environ["MONGO_URL"]
-DB_NAME = os.environ["DB_NAME"]
+DB_NAME = os.environ.get("DB_NAME", "konekt")
 JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-change-in-production")
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
