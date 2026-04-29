@@ -32,7 +32,7 @@ from services.settings_resolver import get_pricing_policy_tiers
 from commission_margin_engine_service import resolve_tier
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 router = APIRouter(prefix="/api/smart-import", tags=["Smart Bulk Import"])
 

@@ -46,10 +46,12 @@ logger = logging.getLogger("url_import")
 router = APIRouter(prefix="/api/admin/url-import", tags=["URL Catalog Import"])
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 JWT_SECRET = os.environ.get("JWT_SECRET", "konekt-secret-key-2024")
 
-IMAGE_ROOT = Path("/app/uploads/product_images/url_import")
+BASE_DIR = Path(__file__).resolve().parent
+UPLOADS_ROOT = BASE_DIR / "uploads"
+IMAGE_ROOT = UPLOADS_ROOT / "product_images" / "url_import"
 IMAGE_ROOT.mkdir(parents=True, exist_ok=True)
 
 MAX_PAGES_DEFAULT = 60           # hard cap to prevent runaway crawls
@@ -224,7 +226,7 @@ async def _download_image(http: httpx.AsyncClient, url: str, dest_dir: Path, key
                 raw_path.rename(final_path)
         else:
             raw_path.rename(final_path)
-        rel = final_path.relative_to(Path("/app/uploads"))
+        rel = final_path.relative_to(UPLOADS_ROOT)
         return f"/api/uploads/{rel.as_posix()}"
     except Exception as e:
         logger.warning("Image download failed for %s: %s", url, e)

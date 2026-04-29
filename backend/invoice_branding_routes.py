@@ -12,7 +12,8 @@ from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix="/api/admin/settings/invoice-branding", tags=["Invoice Branding"])
 
-UPLOAD_DIR = Path("/app/backend/uploads/branding")
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_DIR = BASE_DIR / "uploads" / "branding"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_BRANDING = {

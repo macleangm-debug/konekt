@@ -543,7 +543,8 @@ async def public_order_status(order_number: str, email: str = ""):
 
 # ─── Payment Proof File Upload ────────────────────────────
 
-PROOF_UPLOAD_DIR = "/app/backend/uploads/payment_proofs"
+BASE_DIR = Path(__file__).resolve().parent.parent
+PROOF_UPLOAD_DIR = str(BASE_DIR / "uploads" / "payment_proofs")
 os.makedirs(PROOF_UPLOAD_DIR, exist_ok=True)
 ALLOWED_PROOF_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".pdf"}
 MAX_PROOF_SIZE = 10 * 1024 * 1024  # 10MB

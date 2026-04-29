@@ -274,7 +274,7 @@ def generate_commercial_document_pdf(doc, settings, document_type="invoice"):
             import qrcode
             from qrcode.constants import ERROR_CORRECT_M
             from reportlab.platypus import Image as _RLImage
-            qr_dir = _Path("/app/static/qr/invoices") if document_type == "invoice" else _Path("/app/static/qr/quotes")
+            qr_dir = (_Path(__file__).resolve().parent / "static" / "qr" / "invoices") if document_type == "invoice" else (_Path(__file__).resolve().parent / "static" / "qr" / "quotes")
             qr_dir.mkdir(parents=True, exist_ok=True)
             qr_path = qr_dir / f"{qr_id}.png"
             if not qr_path.exists():
