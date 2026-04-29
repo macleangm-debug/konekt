@@ -221,7 +221,8 @@ async def publish_creative(payload: PublishCreativeIn, request: Request):
     except Exception:
         # Fallback: save locally
         import os
-        local_dir = "/app/backend/static/content-studio"
+        BASE_DIR = Path(__file__).resolve().parent.parent
+        local_dir = str(BASE_DIR / "static" / "content-studio")
         os.makedirs(local_dir, exist_ok=True)
         fname = f"{uuid.uuid4().hex[:12]}.png"
         fpath = os.path.join(local_dir, fname)

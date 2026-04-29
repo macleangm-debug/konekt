@@ -3546,7 +3546,7 @@ async def market_settings_endpoint(request: Request):
 
 
 # Mount static directory for listing media uploads
-LISTING_MEDIA_DIR = Path("/app/uploads/listing_media")
+LISTING_MEDIA_DIR = Path(UPLOADS_DIR) / "listing_media"
 LISTING_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 app.add_middleware(SecurityHeadersMiddleware)

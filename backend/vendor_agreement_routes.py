@@ -33,7 +33,8 @@ admin_router = APIRouter(prefix="/api/admin/vendor-agreements", tags=["Vendor Ag
 vendor_router = APIRouter(prefix="/api/vendor/agreement", tags=["Vendor Agreement"])
 
 AGREEMENT_VERSION = "2.0"  # bump whenever the template changes — forces vendors to re-sign
-AGREEMENT_DIR = Path("/app/uploads/vendor_agreements")
+BASE_DIR = Path(__file__).resolve().parent
+AGREEMENT_DIR = BASE_DIR / "uploads" / "vendor_agreements"
 AGREEMENT_DIR.mkdir(parents=True, exist_ok=True)
 
 

@@ -64,7 +64,8 @@ admin_router = APIRouter(prefix="/api/admin/vendor-payables", tags=["Vendor Paya
 vendor_router = APIRouter(prefix="/api/vendor/payables", tags=["Vendor Payables (Vendor)"])
 
 # Local disk dir for vendor-uploaded invoice PDFs (served via /uploads)
-INVOICE_DIR = Path("/app/uploads/vendor_invoices")
+BASE_DIR = Path(__file__).resolve().parent
+INVOICE_DIR = BASE_DIR / "uploads" / "vendor_invoices"
 INVOICE_DIR.mkdir(parents=True, exist_ok=True)
 
 VALID_MODALITIES = {"pay_per_order", "monthly_statement"}
