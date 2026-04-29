@@ -7,7 +7,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Request, HTTPException
 import os
 
-from emergentintegrations.payments.stripe.checkout import StripeCheckout
+from services.optional_integrations import get_stripe_checkout_classes
 
 router = APIRouter(tags=["Stripe Webhook"])
 
@@ -27,6 +27,9 @@ async def stripe_webhook(request: Request):
 
     host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}/api/webhook/stripe"
+    StripeCheckout, _ = get_stripe_checkout_classes()
+    if not StripeCheckout:
+        raise HTTPException(status_code=503, detail="Stripe integration unavailable: emergentintegrations not installed")
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
     try:

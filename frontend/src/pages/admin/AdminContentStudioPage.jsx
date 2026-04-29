@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import useContentStudioData from "./hooks/useContentStudioData";
 import api from "@/lib/api";
 import QrCodeButton from "@/components/common/QrCodeButton";
 import { toast } from "sonner";
@@ -115,11 +116,7 @@ function TriadSVG({ size = 56, variant = "dark", accent = "#D4A843", primary = "
    MAIN PAGE
    ═══════════════════════════════════════════ */
 export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLabel = "" } = {}) {
-  const [products, setProducts] = useState([]);
-  const [services, setServices] = useState([]);
-  const [groupDeals, setGroupDeals] = useState([]);
-  const [branding, setBranding] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { products, services, groupDeals, branding, loading, reload: load } = useContentStudioData();
   const [tab, setTab] = useState("products");
   const [selectedItem, setSelectedItem] = useState(null);
   const [theme, setTheme] = useState(THEMES[0]);
@@ -139,37 +136,6 @@ export default function AdminContentStudioPage({ viewerPromoCode = "", viewerLab
       has_promotion: true,
     }));
   }, [viewerPromoCode]);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [pR, sR, bR, gdR] = await Promise.all([
-        api.get("/api/content-engine/template-data/products"),
-        api.get("/api/content-engine/template-data/services"),
-        api.get("/api/content-engine/template-data/branding"),
-        api.get("/api/public/group-deals/featured").catch(() => ({ data: [] })),
-      ]);
-      setProducts(pR.data?.items || []);
-      setServices(sR.data?.items || []);
-      const deals = (gdR.data || []).map((d) => ({
-        id: d.id, name: d.product_name, description: d.description || "",
-        image_url: d.product_image || "", category: "Group Deal",
-        type: "group_deal", final_price: d.discounted_price || 0,
-        selling_price: d.original_price || 0,
-        discount_amount: (d.original_price || 0) > (d.discounted_price || 0) ? (d.original_price - d.discounted_price) : 0,
-        has_promotion: false, promo_code: "",
-        current_committed: d.current_committed || 0, display_target: d.display_target || 0,
-        buyer_count: d.buyer_count || 0,
-      }));
-      setGroupDeals(deals);
-      const b = bR.data?.branding || {};
-      b.resolved_logo_url = resolveLogoUrl(b.logo_url);
-      setBranding(b);
-    } catch { /* silent */ }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   const getItems = () => {
     let raw;

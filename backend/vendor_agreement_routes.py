@@ -27,7 +27,7 @@ import os
 from partner_access_service import get_partner_user_from_header
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
-db = client[os.environ["DB_NAME"]]
+db = client[os.environ.get("DB_NAME", "konekt")]
 
 admin_router = APIRouter(prefix="/api/admin/vendor-agreements", tags=["Vendor Agreement (Admin)"])
 vendor_router = APIRouter(prefix="/api/vendor/agreement", tags=["Vendor Agreement"])
