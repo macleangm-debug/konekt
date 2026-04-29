@@ -146,7 +146,7 @@ const defaultState = {
   },
   doc_template: { selected_template: "classic" },
   launch_controls: { system_mode: "controlled_launch", manual_payment_verification: true, manual_payout_approval: true, affiliate_approval_required: true, ai_enabled: true, bank_only_payments: true, audit_notifications_enabled: true },
-  business_profile: { legal_name: "", brand_name: "", tagline: "", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "", base_public_url: "" },
+  business_profile: { legal_name: "", brand_name: "", tagline: "Everything Your Business Needs", support_email: "", support_phone: "", business_address: "", tax_id: "", vat_number: "", website: "", base_public_url: "" },
   branding: { primary_logo_url: "", secondary_logo_url: "", favicon_url: "", primary_color: "#20364D", accent_color: "#D4A843", dark_bg_color: "#0f172a" },
   notification_sender: { sender_name: "", sender_email: "", whatsapp_number: "", email_footer_text: "" },
   customer_activity_rules: { active_days: 30, at_risk_days: 90, default_new_customer_status: "active", signals: { orders: true, invoices: true, quotes: true, requests: true, sales_notes: true, account_logins: false } },
