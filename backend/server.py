@@ -17,8 +17,7 @@ from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
 import base64
-from emergentintegrations.llm.chat import LlmChat, UserMessage
-from emergentintegrations.llm.openai.image_generation import OpenAIImageGeneration
+from services.optional_integrations import get_llm_chat_classes, get_image_generation_class
 from email_service import EmailService
 from sales_routes import sales_router, create_sales_routes
 from sales_automation import init_automation_engine
@@ -264,7 +263,7 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'konekt')]
 
 # JWT config
 JWT_SECRET = os.environ.get('JWT_SECRET', 'konekt-secret-key-2024')
@@ -279,19 +278,19 @@ api_router = APIRouter(prefix="/api")
 admin_router = APIRouter(prefix="/api/admin")
 security = HTTPBearer(auto_error=False)
 
-# Mount static files for uploads
-STATIC_DIR = Path("/app/static")
+# Mount static files for uploads (Render-compatible writable paths)
+BASE_DIR = Path(__file__).parent
+STATIC_DIR = BASE_DIR / "static"
+UPLOADS_DIR = BASE_DIR / "uploads"
+
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-# /app/uploads is the canonical upload root used by url_catalog_import and
-# vendor_agreement modules; keep it in absolute form so it works regardless of
-# the backend's current working directory.
-UPLOADS_DIR = "/app/uploads"
-Path(UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
-# Also expose under /api/uploads so Kubernetes ingress (which only proxies /api/*
-# to the backend) can serve product images without going through the frontend.
-app.mount("/api/uploads", StaticFiles(directory=UPLOADS_DIR), name="api_uploads")
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+# Also expose under /api/uploads so ingress configs that only proxy /api/*
+# can still serve upload assets.
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="api_uploads")
 
 # Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -2030,6 +2029,9 @@ async def chat_with_assistant(data: ChatRequest, user: dict = Depends(get_option
     session_id = data.session_id or str(uuid.uuid4())
     chat_history = await db.chat_sessions.find_one({"session_id": session_id}, {"_id": 0})
     
+    LlmChat, UserMessage = get_llm_chat_classes()
+    if not LlmChat or not UserMessage:
+        raise HTTPException(status_code=503, detail="AI chat unavailable: emergentintegrations not installed")
     chat = LlmChat(api_key=EMERGENT_LLM_KEY, session_id=session_id, system_message=SYSTEM_PROMPT).with_model("openai", "gpt-5.2")
     
     try:
@@ -2068,6 +2070,9 @@ Style requirements: {data.prompt}
 Make it clean, scalable, suitable for printing on promotional materials."""
     
     try:
+        OpenAIImageGeneration = get_image_generation_class()
+        if not OpenAIImageGeneration:
+            raise HTTPException(status_code=503, detail="Image generation unavailable: emergentintegrations not installed")
         image_gen = OpenAIImageGeneration(api_key=EMERGENT_LLM_KEY)
         images = await image_gen.generate_images(prompt=prompt, model="gpt-image-1", number_of_images=1)
         

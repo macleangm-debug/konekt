@@ -7,11 +7,11 @@ import uuid
 from datetime import datetime, timezone
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from typing import List
+from upload_config import UPLOAD_ROOT
 
 router = APIRouter(prefix="/api/media-upload", tags=["Media Upload"])
 
-UPLOAD_ROOT = "/app/backend/uploads"
-LISTING_MEDIA_DIR = os.path.join(UPLOAD_ROOT, "listing_media")
+LISTING_MEDIA_DIR = str(UPLOAD_ROOT / "listing_media")
 
 # Ensure directories exist
 os.makedirs(LISTING_MEDIA_DIR, exist_ok=True)
